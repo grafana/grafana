@@ -2,18 +2,18 @@ import { render, screen, waitForElementToBeRemoved, within } from '@testing-libr
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
+import { Provider } from 'react-redux';
 import 'whatwg-fetch';
 import { BrowserRouter } from 'react-router-dom';
-import { TestProvider } from 'test/helpers/TestProvider';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
 
 import { ListPublicDashboardResponse } from '../../types';
 
-import { PublicDashboardListTable } from './PublicDashboardListTable';
+import { PublicDashboardListTable, viewPublicDashboardUrl } from './PublicDashboardListTable';
 
 const publicDashboardListResponse: ListPublicDashboardResponse[] = [
   {
@@ -77,23 +77,29 @@ afterEach(() => {
 const selectors = e2eSelectors.pages.PublicDashboards;
 
 const renderPublicDashboardTable = async (waitForListRendering?: boolean) => {
-  const context = getGrafanaContextMock();
+  const store = configureStore();
 
   render(
-    <TestProvider grafanaContext={context}>
+    <Provider store={store}>
       <BrowserRouter>
         <PublicDashboardListTable />
       </BrowserRouter>
-    </TestProvider>
+    </Provider>
   );
 
-  waitForListRendering && (await waitForElementToBeRemoved(screen.getAllByTestId('Spinner')[1], { timeout: 3000 }));
+  waitForListRendering && (await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 3000 }));
 };
+
+describe('viewPublicDashboardUrl', () => {
+  it('has the correct url', () => {
+    expect(viewPublicDashboardUrl('abcd')).toEqual('public-dashboards/abcd');
+  });
+});
 
 describe('Show table', () => {
   it('renders loader spinner while loading', async () => {
     await renderPublicDashboardTable();
-    const spinner = screen.getAllByTestId('Spinner')[1];
+    const spinner = screen.getByTestId('Spinner');
     expect(spinner).toBeInTheDocument();
 
     await waitForElementToBeRemoved(spinner);
@@ -101,7 +107,8 @@ describe('Show table', () => {
   it('renders public dashboard list items', async () => {
     await renderPublicDashboardTable(true);
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(publicDashboardListResponse.length);
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    expect(within(tableBody).getAllByRole('row')).toHaveLength(publicDashboardListResponse.length);
   });
   it('renders empty list', async () => {
     server.use(
@@ -112,7 +119,8 @@ describe('Show table', () => {
 
     await renderPublicDashboardTable(true);
 
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    expect(within(tableBody).queryAllByRole('row')).toHaveLength(0);
   });
   it('renders public dashboards in a good way without trashcan', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
@@ -121,11 +129,37 @@ describe('Show table', () => {
     publicDashboardListResponse.forEach((pd, idx) => {
       renderPublicDashboardItemCorrectly(pd, idx, false);
     });
+
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    const tableRows = within(tableBody).getAllByRole('row');
+
+    publicDashboardListResponse.forEach((pd, idx) => {
+      const tableRow = tableRows[idx];
+      const rowDataCells = within(tableRow).getAllByRole('cell');
+      expect(within(rowDataCells[2]).queryByTestId(selectors.ListItem.trashcanButton)).toBeNull();
+    });
   });
   it('renders public dashboards in a good way with trashcan', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
 
     await renderPublicDashboardTable(true);
+    publicDashboardListResponse.forEach((pd, idx) => {
+      renderPublicDashboardItemCorrectly(pd, idx, true);
+    });
+
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    const tableRows = within(tableBody).getAllByRole('row');
+
+    publicDashboardListResponse.forEach((pd, idx) => {
+      const tableRow = tableRows[idx];
+      const rowDataCells = within(tableRow).getAllByRole('cell');
+      expect(within(rowDataCells[2]).getByTestId(selectors.ListItem.trashcanButton));
+    });
+  });
+  it('renders public dashboards items correctly', async () => {
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
+    await renderPublicDashboardTable(true);
+
     publicDashboardListResponse.forEach((pd, idx) => {
       renderPublicDashboardItemCorrectly(pd, idx, true);
     });
@@ -137,13 +171,17 @@ describe('Delete public dashboard', () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
     await renderPublicDashboardTable(true);
 
-    expect(screen.queryAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(0);
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    expect(within(tableBody).queryAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(0);
   });
   it('when user has public dashboard write permissions, then dashboards are listed with delete button', async () => {
     jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
     await renderPublicDashboardTable(true);
 
-    expect(screen.getAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(publicDashboardListResponse.length);
+    const tableBody = screen.getAllByRole('rowgroup')[1];
+    expect(within(tableBody).getAllByTestId(selectors.ListItem.trashcanButton)).toHaveLength(
+      publicDashboardListResponse.length
+    );
   });
 });
 
@@ -167,14 +205,22 @@ describe('Orphaned public dashboard', () => {
 const renderPublicDashboardItemCorrectly = (pd: ListPublicDashboardResponse, idx: number, hasWriteAccess: boolean) => {
   const isOrphaned = !pd.dashboardUid;
 
-  const cardItems = screen.getAllByRole('listitem');
+  const tableBody = screen.getAllByRole('rowgroup')[1];
+  const tableRows = within(tableBody).getAllByRole('row');
 
-  const linkButton = within(cardItems[idx]).getByTestId(selectors.ListItem.linkButton);
-  const configButton = within(cardItems[idx]).getByTestId(selectors.ListItem.configButton);
-  const trashcanButton = within(cardItems[idx]).queryByTestId(selectors.ListItem.trashcanButton);
+  const tableRow = tableRows[idx];
+  const rowDataCells = within(tableRow).getAllByRole('cell');
+  expect(rowDataCells).toHaveLength(3);
 
-  expect(within(cardItems[idx]).getByText(isOrphaned ? 'Orphaned public dashboard' : pd.title)).toBeInTheDocument();
-  isOrphaned
+  const statusTag = within(rowDataCells[1]).getByText(pd.isEnabled ? 'enabled' : 'paused');
+  const linkButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.linkButton);
+  const configButton = within(rowDataCells[2]).getByTestId(selectors.ListItem.configButton);
+  const trashcanButton = within(rowDataCells[2]).queryByTestId(selectors.ListItem.trashcanButton);
+
+  expect(within(rowDataCells[0]).getByText(isOrphaned ? 'Orphaned public dashboard' : pd.title)).toBeInTheDocument();
+  expect(statusTag).toBeInTheDocument();
+  isOrphaned ? expect(statusTag).toHaveStyle('background-color: rgb(110, 110, 110)') : expect(statusTag).toBeEnabled();
+  isOrphaned || !pd.isEnabled
     ? expect(linkButton).toHaveStyle('pointer-events: none')
     : expect(linkButton).not.toHaveStyle('pointer-events: none');
   isOrphaned

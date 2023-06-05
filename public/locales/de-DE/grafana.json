@@ -12,12 +12,12 @@
       "light-theme": "Hell"
     },
     "search-box": {
-      "placeholder": "Suche oder springe zu ..."
+      "placeholder": ""
     },
     "section": {
       "actions": "Aktionen",
       "dashboard-search-results": "Dashboards",
-      "folder-search-results": "Ordner",
+      "folder-search-results": "",
       "pages": "Seiten",
       "preferences": "Einstellungen",
       "recent-dashboards": "Kürzliche Dashboards"
@@ -30,23 +30,6 @@
     "save": "Speichern"
   },
   "dashboard": {
-    "add-menu": {
-      "import": "Aus Bibliothek importieren",
-      "paste-panel": "Panel einfügen",
-      "row": "Zeile",
-      "visualization": "Visualisierung"
-    },
-    "empty": {
-      "add-import-body": "Visualisierungen importieren, die mit anderen Dashboards geteilt werden.",
-      "add-import-button": "Bibliotheks-Panel importieren",
-      "add-import-header": "Panel importieren",
-      "add-row-body": "Gruppieren Sie Ihre Visualisierungen in erweiterbare Abschnitte.",
-      "add-row-button": "Zeile hinzufügen",
-      "add-row-header": "Eine Zeile hinzufügen",
-      "add-visualization-body": "Wählen Sie eine Datenquelle aus und visualisieren und fragen Sie dann Ihre Daten mit Diagrammen, Statistiken und Tabellen ab oder erstellen Sie Listen, Markierungen und andere Widgets.",
-      "add-visualization-button": "Visualisierung hinzufügen",
-      "add-visualization-header": "Starten Sie Ihr neues Dashboard, indem Sie eine Visualisierung hinzufügen"
-    },
     "inspect": {
       "data-tab": "Daten",
       "error-tab": "Fehler",
@@ -92,7 +75,6 @@
     },
     "inspect-stats": {
       "data-title": "Statistiken zu Datenquellen",
-      "data-traceids": "IDs nachverfolgen",
       "processing-time": "Datenverarbeitungszeit",
       "queries": "Anzahl der Abfragen",
       "request-time": "Gesamte Anfragezeit",
@@ -100,7 +82,6 @@
       "table-title": "Statistiken"
     },
     "toolbar": {
-      "add": "Hinzufügen",
       "add-panel": "Panel hinzufügen",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
@@ -111,17 +92,27 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
+      "tv-button": "Zyklus-Ansichtsmodus",
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
+    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
+    "new-dashboard": "Neues Dashboard",
+    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
+    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
+    "viewAll": "Alle anzeigen",
+    "welcome": "Willkommen bei Grafana Dashboards!"
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
   "grafana-ui": {
     "segment-async": {
-      "error": "Fehler beim Laden der Optionen",
-      "loading": "Optionen werden geladen ...",
-      "no-options": "Keine Optionen gefunden"
+      "error": "",
+      "loading": "",
+      "no-options": ""
     }
   },
   "library-panel": {
@@ -132,9 +123,6 @@
       "folder": "In Ordner speichern",
       "folder-description": "Berechtigungen des Bibliotheks-Panels werden von den Ordnerberechtigungen übernommen",
       "name": "Name des Bibliotheks-Panels"
-    },
-    "add-widget": {
-      "title": "Panel aus Panel-Bibliothek hinzufügen"
     }
   },
   "library-panels": {
@@ -177,7 +165,7 @@
       "title": "Warnregeln"
     },
     "alerting-receivers": {
-      "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
+      "subtitle": "",
       "title": "Kontaktpunkte"
     },
     "alerting-silences": {
@@ -186,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
-      "title": "Warnungen und IRM"
+      "title": "Warnungen & Vorfälle"
     },
     "api-keys": {
       "subtitle": "Verwalte und erstelle API-Schlüssel, die für die Interaktion mit HTTP-APIs von Grafana verwendet werden",
@@ -197,7 +185,8 @@
       "title": "Apps"
     },
     "config": {
-      "title": "Verwaltung"
+      "title": "Verwaltung",
+      "titleBeforeTopnav": "Konfiguration"
     },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
@@ -207,7 +196,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": "Alarmregel erstellen"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -216,7 +205,7 @@
       "title": "Ordner"
     },
     "create-import": {
-      "title": "Dashboard importieren"
+      "title": ""
     },
     "dashboards": {
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
@@ -235,7 +224,8 @@
     },
     "global-users": {
       "subtitle": "Benutzer in Grafana verwalten",
-      "title": "Benutzer"
+      "title": "Benutzer",
+      "titleBeforeTopnav": "Benutzer"
     },
     "help": {
       "title": "Hilfe"
@@ -251,12 +241,15 @@
       "subtitle": "Wiederverwendbare Panels, die zu mehreren Dashboards hinzugefügt werden können",
       "title": "Bibliotheks-Panels"
     },
+    "manage-dashboards": {
+      "title": "Durchsuchen"
+    },
     "manage-folder": {
-      "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
-      "title": "Beobachtbarkeit"
+      "title": "Überwachung"
     },
     "new": {
       "title": "Neu"
@@ -269,7 +262,8 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "Standardeinstellungen"
+      "title": "Standardeinstellungen",
+      "titleBeforeTopnav": "Einstellungen"
     },
     "playlists": {
       "subtitle": "Gruppen von Dashboards, die in einer bestimmten Reihenfolge angezeigt werden",
@@ -288,14 +282,15 @@
     "profile/settings": {
       "title": "Profil"
     },
+    "profile/switch-org": "Organisation wechseln",
     "public": {
-      "title": "Öffentliche Dashboards"
+      "title": ""
     },
     "scenes": {
       "title": "Szenen"
     },
     "search": {
-      "placeholderCommandPalette": "Suche oder springe zu ..."
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
@@ -308,6 +303,7 @@
       "subtitle": "Verwende Servicekonten, um automatisierte Arbeitsabläufe in Grafana auszuführen",
       "title": "Servicekonten"
     },
+    "sign-in": "Anmelden",
     "sign-out": {
       "title": "Abmelden"
     },
@@ -346,9 +342,9 @@
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
     },
     "toolbar": {
-      "enable-kiosk": "Kiosk-Modus aktivieren",
-      "toggle-menu": "Menü umschalten",
-      "toggle-search-bar": "Obere Suchleiste umschalten"
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -398,12 +394,13 @@
   },
   "search": {
     "actions": {
-      "include-panels": "Panels einschließen",
-      "remove-datasource-filter": "Datenquelle: {{datasource}}",
-      "sort-placeholder": "Sortieren",
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
       "starred": "Hervorgehoben",
-      "view-as-folders": "Nach Ordnern anzeigen",
-      "view-as-list": "Als Liste anzeigen"
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
     },
     "dashboard-actions": {
       "import": "Importieren",
@@ -412,26 +409,26 @@
       "new-folder": "Neuer Ordner"
     },
     "folder-view": {
-      "go-to-folder": "Zum Ordner",
-      "select-folder": "Ordner auswählen"
+      "go-to-folder": "",
+      "select-folder": ""
     },
     "result-kind": {
       "dashboard": "Dashboard",
       "folder": "Ordner",
-      "panel": "Panel"
+      "panel": ""
     },
     "results-table": {
-      "datasource-header": "Datenquelle",
-      "location-header": "Standort",
+      "datasource-header": "",
+      "location-header": "",
       "name-header": "Name",
-      "tags-header": "Tags",
+      "tags-header": "",
       "type-dashboard": "Dashboard",
       "type-folder": "Ordner",
-      "type-header": "Typ"
+      "type-header": ""
     },
     "search-input": {
-      "include-panels-placeholder": "Nach Dashboards und Panels suchen",
-      "placeholder": "Nach Dashboards suchen"
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -509,15 +506,6 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "",
-        "light-label": "",
-        "system-label": ""
-      }
-    }
-  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zeitzone"
@@ -533,14 +521,17 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "default-label": "Standard"
+      "dark-label": "Dunkel",
+      "default-label": "Standard",
+      "light-label": "Hell",
+      "system-label": ""
     },
     "title": "Einstellungen"
   },
   "tag-filter": {
-    "loading": "Wird geladen ...",
-    "no-tags": "Keine Tags gefunden",
-    "placeholder": "Nach Tag filtern"
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -618,7 +609,7 @@
   },
   "variable": {
     "adhoc": {
-      "placeholder": "Wert auswählen"
+      "placeholder": ""
     },
     "dropdown": {
       "placeholder": "Variablenwert eingeben"

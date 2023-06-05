@@ -1,4 +1,5 @@
-// Wrap the DocsContainer for storybook-dark-mode theme switching support.
+// This is a temporary workaround to allow theme switching storybook docs
+// see https://github.com/storybookjs/storybook/issues/10523 for further details
 import { DocsContainer, DocsContextProps } from '@storybook/addon-docs';
 import React from 'react';
 import { useDarkMode } from 'storybook-dark-mode';
@@ -14,7 +15,24 @@ export const ThemedDocsContainer = ({ children, context }: Props) => {
   const dark = useDarkMode();
 
   return (
-    <DocsContainer theme={dark ? GrafanaDark : GrafanaLight} context={context}>
+    <DocsContainer
+      context={{
+        ...context,
+        storyById: (id) => {
+          const storyContext = context.storyById(id);
+          return {
+            ...storyContext,
+            parameters: {
+              ...storyContext?.parameters,
+              docs: {
+                ...storyContext?.parameters.docs,
+                theme: dark ? GrafanaDark : GrafanaLight,
+              },
+            },
+          };
+        },
+      }}
+    >
       {children}
     </DocsContainer>
   );

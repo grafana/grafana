@@ -9,7 +9,7 @@ keywords:
   - guide
   - rules
   - view
-title: Pause an alert rule
+title: Pause alert rule
 weight: 400
 ---
 

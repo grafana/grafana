@@ -12,7 +12,7 @@ import * as ui from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface Options {
+export interface PanelOptions {
   /**
    * Controls the height of the rows
    */
@@ -39,7 +39,7 @@ export interface Options {
   sortBy?: Array<ui.TableSortByFieldState>;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   cellHeight: ui.TableCellHeight.Sm,
   footer: {
     /**

@@ -1,16 +1,20 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import React, { useState } from 'react';
 
-import { CoreApp, createDataFrame } from '@grafana/data';
+import { CoreApp, MutableDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer, nestedSetToLevels } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
+import { SelectedView } from '../types';
 
 import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
 
 describe('FlameGraphTopTableContainer', () => {
   const FlameGraphTopTableContainerWithProps = () => {
-    const flameGraphData = createDataFrame(data);
+    const [search, setSearch] = useState('');
+    const [selectedView, _] = useState(SelectedView.Both);
+
+    const flameGraphData = new MutableDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData);
     const levels = nestedSetToLevels(container);
 
@@ -19,7 +23,13 @@ describe('FlameGraphTopTableContainer', () => {
         data={container}
         app={CoreApp.Explore}
         totalLevels={levels.length}
-        onSymbolClick={jest.fn()}
+        selectedView={selectedView}
+        search={search}
+        setSearch={setSearch}
+        setTopLevelIndex={jest.fn()}
+        setSelectedBarIndex={jest.fn()}
+        setRangeMin={jest.fn()}
+        setRangeMax={jest.fn()}
       />
     );
   };

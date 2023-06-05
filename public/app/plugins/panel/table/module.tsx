@@ -19,13 +19,13 @@ import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
 const cellCategory = ['Cell options'];
 
-export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
+export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
@@ -112,12 +112,12 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
       .addBooleanSwitch({
         path: 'showHeader',
         name: 'Show table header',
-        defaultValue: defaultOptions.showHeader,
+        defaultValue: defaultPanelOptions.showHeader,
       })
       .addRadio({
         path: 'cellHeight',
         name: 'Cell height',
-        defaultValue: defaultOptions.cellHeight,
+        defaultValue: defaultPanelOptions.cellHeight,
         settings: {
           options: [
             { value: TableCellHeight.Sm, label: 'Small' },
@@ -130,7 +130,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
         path: 'footer.show',
         category: [footerCategory],
         name: 'Show table footer',
-        defaultValue: defaultOptions.footer?.show,
+        defaultValue: defaultPanelOptions.footer?.show,
       })
       .addCustomEditor({
         id: 'footer.reducer',
@@ -147,7 +147,7 @@ export const plugin = new PanelPlugin<Options, TableFieldOptions>(TablePanel)
         category: [footerCategory],
         name: 'Count rows',
         description: 'Display a single count for all data rows',
-        defaultValue: defaultOptions.footer?.countRows,
+        defaultValue: defaultPanelOptions.footer?.countRows,
         showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
       })
       .addMultiSelect({

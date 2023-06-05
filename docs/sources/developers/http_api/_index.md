@@ -62,7 +62,6 @@ Grafana Enterprise includes all of the Grafana OSS APIs as well as those that fo
 
 - [Role-based access control API]({{< relref "access_control/" >}})
 - [Data source permissions API]({{< relref "datasource_permissions/" >}})
-- [Team sync API]({{< relref "team_sync/" >}})
+- [External group sync API]({{< relref "external_group_sync/" >}})
 - [License API]({{< relref "licensing/" >}})
 - [Reporting API]({{< relref "reporting/" >}})
-- [Query and resource caching API]({{< relref "query_and_resource_caching/" >}})

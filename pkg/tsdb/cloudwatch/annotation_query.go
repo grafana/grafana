@@ -1,7 +1,6 @@
 package cloudwatch
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 )
 
 type annotationEvent struct {
@@ -21,7 +19,7 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
+func (e *cloudWatchExecutor) executeAnnotationQuery(pluginCtx backend.PluginContext, model DataQueryJson, query backend.DataQuery) (*backend.QueryDataResponse, error) {
 	result := backend.NewQueryDataResponse()
 	statistic := ""
 
@@ -50,7 +48,7 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 	actionPrefix := model.ActionPrefix
 	alarmNamePrefix := model.AlarmNamePrefix
 
-	cli, err := e.getCWClient(ctx, pluginCtx, model.Region)
+	cli, err := e.getCWClient(pluginCtx, model.Region)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +58,6 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 	if model.MetricName != nil {
 		metricName = *model.MetricName
 	}
-
-	dimensions := dataquery.Dimensions{}
-	if model.Dimensions != nil {
-		dimensions = *model.Dimensions
-	}
-
 	if prefixMatching {
 		params := &cloudwatch.DescribeAlarmsInput{
 			MaxRecords:      aws.Int64(100),
@@ -76,14 +68,14 @@ func (e *cloudWatchExecutor) executeAnnotationQuery(ctx context.Context, pluginC
 		if err != nil {
 			return nil, fmt.Errorf("%v: %w", "failed to call cloudwatch:DescribeAlarms", err)
 		}
-		alarmNames = filterAlarms(resp, model.Namespace, metricName, dimensions, statistic, period)
+		alarmNames = filterAlarms(resp, model.Namespace, metricName, model.Dimensions, statistic, period)
 	} else {
 		if model.Region == "" || model.Namespace == "" || metricName == "" || statistic == "" {
 			return result, errors.New("invalid annotations query")
 		}
 
 		var qd []*cloudwatch.Dimension
-		for k, v := range dimensions {
+		for k, v := range model.Dimensions {
 			if vv, ok := v.([]interface{}); ok {
 				for _, vvv := range vv {
 					if vvvv, ok := vvv.(string); ok {

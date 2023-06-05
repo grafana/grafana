@@ -13,7 +13,7 @@ keywords:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-# Alerting provisioning HTTP API
+# Alerting provisioning API
 
 ## Information
 
@@ -96,12 +96,10 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-{{% responsive-table %}}
-| Name | Source | Type | Go type | Separator | Required | Default | Description |
+| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
 | -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID | `path` | string | `string` | | ✓ | | Alert rule UID |
-| X-Disable-Provenance | `header` | string | `string` | | | | |
-{{% /responsive-table %}}
+| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
 
 #### All responses
 

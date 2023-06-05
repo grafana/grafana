@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Roles definition
@@ -181,7 +180,15 @@ var (
 		Permissions: []Permission{
 			{
 				Action: ActionSettingsRead,
+				Scope:  ScopeSettingsAuth,
+			},
+			{
+				Action: ActionSettingsRead,
 				Scope:  ScopeSettingsSAML,
+			},
+			{
+				Action: ActionSettingsWrite,
+				Scope:  ScopeSettingsAuth,
 			},
 			{
 				Action: ActionSettingsWrite,
@@ -192,7 +199,7 @@ var (
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
+func DeclareFixedRoles(service Service) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -225,15 +232,10 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Role:   usersWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
-
-	// TODO: Move to own service when implemented
 	authenticationConfigWriter := RoleRegistration{
-		Role:   authenticationConfigWriterRole,
-		Grants: []string{RoleGrafanaAdmin},
-	}
-
-	if cfg.AuthConfigUIAdminAccess {
-		authenticationConfigWriter.Grants = append(authenticationConfigWriter.Grants, string(org.RoleAdmin))
+		Role:                authenticationConfigWriterRole,
+		Grants:              []string{RoleGrafanaAdmin},
+		AllowGrantsOverride: true,
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,

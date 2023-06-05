@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode } from 'react';
+import React, { FC, Fragment, ReactNode, useMemo } from 'react';
+import { useEnabled } from 'react-enable';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -17,9 +18,11 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
+import { AlertingFeature } from '../../features';
 import { getNotificationsPermissions } from '../../utils/access-control';
-import { normalizeMatchers } from '../../utils/matchers';
+import { normalizeMatchers } from '../../utils/amroutes';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
+import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -41,9 +44,6 @@ interface PolicyComponentProps {
   readOnly?: boolean;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
-  // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
-
-  matchingInstancesPreview?: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -64,7 +64,6 @@ const Policy: FC<PolicyComponentProps> = ({
   routeTree,
   inheritedProperties,
   routesMatchingFilters = [],
-  matchingInstancesPreview = { enabled: false },
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -72,6 +71,7 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
+  const showMatchingInstances = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -114,12 +114,12 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
+  const matchingAlertGroups = useMemo(() => {
+    return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
+  }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
 
   // sum all alert instances for all groups we're handling
-  const numberOfAlertInstances = matchingAlertGroups
-    ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
-    : undefined;
+  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -196,15 +196,15 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              {matchingInstancesPreview.enabled && (
+              {showMatchingInstances && (
                 <MetaText
                   icon="layers-alt"
                   onClick={() => {
-                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
+                    onShowAlertInstances(matchingAlertGroups, matchers);
                   }}
                   data-testid="matching-instances"
                 >
-                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
+                  <Strong>{numberOfAlertInstances}</Strong>
                   <span>{pluralize('instance', numberOfAlertInstances)}</span>
                 </MetaText>
               )}
@@ -298,7 +298,6 @@ const Policy: FC<PolicyComponentProps> = ({
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
               routesMatchingFilters={routesMatchingFilters}
-              matchingInstancesPreview={matchingInstancesPreview}
             />
           );
         })}
@@ -465,7 +464,6 @@ const INTEGRATION_ICONS: Record<string, IconName> = {
   telegram: 'telegram-alt',
 };
 
-// @TODO make this work for cloud AMs too
 const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
   alertManagerSourceName,
   contactPoint,

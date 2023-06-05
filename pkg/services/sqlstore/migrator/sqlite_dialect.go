@@ -148,7 +148,7 @@ func (db *SQLite3) ErrorMessage(err error) string {
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
+	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

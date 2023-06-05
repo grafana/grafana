@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +24,7 @@ func TestLogGroupsRoute(t *testing.T) {
 
 	mockFeatures := mocks.MockFeatures{}
 	mockFeatures.On("IsEnabled", featuremgmt.FlagCloudWatchCrossAccountQuerying).Return(false)
-	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
+	reqCtxFunc := func(pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
 		return models.RequestContext{Features: &mockFeatures}, err
 	}
 
@@ -38,7 +37,7 @@ func TestLogGroupsRoute(t *testing.T) {
 			},
 			AccountId: utils.Pointer("111"),
 		}}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -69,7 +68,7 @@ func TestLogGroupsRoute(t *testing.T) {
 					AccountId: utils.Pointer("222"),
 				},
 			}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -100,7 +99,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("returns error when both logGroupPrefix and logGroup Pattern are provided", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -116,7 +115,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes default log group limit and nil for logGroupNamePrefix, accountId, and logGroupPattern", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -136,7 +135,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes default log group limit and nil for logGroupNamePrefix when both are absent", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -154,7 +153,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes log group limit from query parameter", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -171,7 +170,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes logGroupPrefix from query parameter", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -189,7 +188,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -207,7 +206,7 @@ func TestLogGroupsRoute(t *testing.T) {
 	t.Run("passes logGroupPattern from query parameter", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroup]{}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -226,7 +225,7 @@ func TestLogGroupsRoute(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroups", mock.Anything).
 			Return([]resources.ResourceResponse[resources.LogGroup]{}, fmt.Errorf("some error"))
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 

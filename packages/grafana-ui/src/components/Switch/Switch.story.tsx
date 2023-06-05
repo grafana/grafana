@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState, useCallback } from 'react';
 
 import { InlineField, Switch, InlineSwitch } from '@grafana/ui';
@@ -9,7 +9,7 @@ import { InlineFieldRow } from '../Forms/InlineFieldRow';
 
 import mdx from './Switch.mdx';
 
-const meta: Meta<typeof Switch> = {
+const meta: ComponentMeta<typeof Switch> = {
   title: 'Forms/Switch',
   component: Switch,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -22,21 +22,20 @@ const meta: Meta<typeof Switch> = {
     disabled: false,
     value: false,
     transparent: false,
-    invalid: false,
   },
 };
 
-export const Controlled: StoryFn<typeof Switch> = (args) => {
+export const Controlled: ComponentStory<typeof Switch> = (args) => {
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
-        <Field label="Normal switch" description="For horizontal forms" invalid={args.invalid}>
+        <Field label="Normal switch" description="For horizontal forms">
           <Switch value={args.value} disabled={args.disabled} transparent={args.transparent} />
         </Field>
       </div>
       <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
-          <InlineField label="My switch" invalid={args.invalid}>
+          <InlineField label="My switch">
             <InlineSwitch value={args.value} disabled={args.disabled} transparent={args.transparent} />
           </InlineField>
         </InlineFieldRow>
@@ -50,7 +49,6 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
             value={args.value}
             disabled={args.disabled}
             transparent={args.transparent}
-            invalid={args.invalid}
           />
         </span>
       </div>
@@ -58,21 +56,13 @@ export const Controlled: StoryFn<typeof Switch> = (args) => {
   );
 };
 
-export const Uncontrolled: StoryFn<typeof Switch> = (args) => {
+export const Uncontrolled: ComponentStory<typeof Switch> = (args) => {
   const [checked, setChecked] = useState(args.value);
   const onChange = useCallback(
     (e: React.FormEvent<HTMLInputElement>) => setChecked(e.currentTarget.checked),
     [setChecked]
   );
-  return (
-    <Switch
-      value={checked}
-      disabled={args.disabled}
-      transparent={args.transparent}
-      onChange={onChange}
-      invalid={args.invalid}
-    />
-  );
+  return <Switch value={checked} disabled={args.disabled} transparent={args.transparent} onChange={onChange} />;
 };
 
 export default meta;

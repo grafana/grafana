@@ -21,7 +21,7 @@ export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: s
 }
 
 function toPanelSaveModel(panel: PanelModel): any {
-  let { scopedVars, ...panelSaveModel } = panel.getSaveModel();
+  let panelSaveModel = panel.getSaveModel();
   panelSaveModel = {
     libraryPanel: {
       name: panel.title,

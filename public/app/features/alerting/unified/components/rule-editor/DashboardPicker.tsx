@@ -6,15 +6,15 @@ import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import {
-  Alert,
-  Button,
-  clearButtonStyles,
   FilterInput,
-  Icon,
   LoadingPlaceholder,
-  Modal,
-  Tooltip,
   useStyles2,
+  Icon,
+  Modal,
+  Button,
+  Alert,
+  clearButtonStyles,
+  Tooltip,
 } from '@grafana/ui';
 
 import { dashboardApi } from '../../api/dashboardApi';
@@ -230,7 +230,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
         </div>
       </div>
       <Modal.ButtonRow>
-        <Button type="button" variant="secondary" onClick={onDismiss} fill="text">
+        <Button type="button" variant="secondary" onClick={onDismiss}>
           Cancel
         </Button>
         <Button

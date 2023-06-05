@@ -10,8 +10,8 @@ import { CombinedRule, Rule } from '../../../types/unified-alerting';
 import { PromRuleType } from '../../../types/unified-alerting-dto';
 
 import { RedirectToRuleViewer } from './RedirectToRuleViewer';
-import * as combinedRuleHooks from './hooks/useCombinedRule';
 import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import * as combinedRuleHooks from './hooks/useCombinedRule';
 import { getRulesSourceByName } from './utils/datasource';
 
 jest.mock('./hooks/useCombinedRule');
@@ -119,7 +119,6 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
-      totals: {},
     },
     promRule: {
       health: 'ok',
@@ -141,8 +140,6 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
-    instanceTotals: {},
-    filteredInstanceTotals: {},
   },
   {
     name: 'Cloud test alert',
@@ -152,7 +149,6 @@ const mockedRules: CombinedRule[] = [
     group: {
       name: 'test',
       rules: [],
-      totals: {},
     },
     promRule: {
       health: 'ok',
@@ -174,7 +170,5 @@ const mockedRules: CombinedRule[] = [
         readOnly: false,
       },
     },
-    instanceTotals: {},
-    filteredInstanceTotals: {},
   },
 ];

@@ -5,8 +5,7 @@ import renderer from 'react-test-renderer';
 import { VariableModel } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../datasource';
-import { MetricFindQueryTypes } from '../types/query';
-import { CloudMonitoringVariableQuery } from '../types/types';
+import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from '../types';
 
 import { CloudMonitoringVariableQueryEditor, Props } from './VariableQueryEditor';
 

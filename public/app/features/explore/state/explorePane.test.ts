@@ -29,11 +29,9 @@ function setupStore(state?: any) {
   return configureStore({
     ...defaultInitialState,
     explore: {
-      panes: {
-        [ExploreId.left]: {
-          ...defaultInitialState.explore.panes.left,
-          ...(state || {}),
-        },
+      [ExploreId.left]: {
+        ...defaultInitialState.explore[ExploreId.left],
+        ...(state || {}),
       },
     },
   } as any);
@@ -100,7 +98,7 @@ describe('refreshExplore', () => {
     await dispatch(
       refreshExplore(ExploreId.left, serializeStateToUrlParam({ datasource: 'newDs', queries: [], range: testRange }))
     );
-    expect(getState().explore.panes.left!.datasourceInstance?.name).toBe('newDs');
+    expect(getState().explore[ExploreId.left].datasourceInstance?.name).toBe('newDs');
   });
 
   it('should change and run new queries from the URL', async () => {
@@ -113,19 +111,21 @@ describe('refreshExplore', () => {
       )
     );
     // same
-    const state = getState().explore.panes.left!;
+    const state = getState().explore[ExploreId.left];
     expect(state.datasourceInstance?.name).toBe('someDs');
     expect(state.queries.length).toBe(1);
     expect(state.queries).toMatchObject([{ expr: 'count()' }]);
     expect(datasources.someDs.query).toHaveBeenCalledTimes(1);
   });
 
-  it('should not do anything if pane is not present', async () => {
-    const { dispatch, getState } = setup({});
+  it('should not do anything if pane is not initialized', async () => {
+    const { dispatch, getState } = setup({
+      initialized: false,
+    });
     const state = getState();
     await dispatch(
       refreshExplore(
-        ExploreId.right,
+        ExploreId.left,
         serializeStateToUrlParam({ datasource: 'newDs', queries: [{ expr: 'count()', refId: 'A' }], range: testRange })
       )
     );

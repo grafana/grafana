@@ -35,10 +35,6 @@ func (s *sqlStore) Insert(ctx context.Context, cmd *star.StarDashboardCommand) e
 		}
 
 		_, err := sess.Insert(&entity)
-		if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-			return nil
-		}
-
 		return err
 	})
 }

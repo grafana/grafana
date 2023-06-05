@@ -21,7 +21,7 @@ export function StorageFolderPage(props: Props) {
 
   const renderListing = () => {
     if (listing.value) {
-      const names = listing.value.fields[0].values;
+      const names = listing.value.fields[0].values.toArray();
       return names.map((item: string) => {
         let name = item;
         const isFolder = name.indexOf('.') < 0;

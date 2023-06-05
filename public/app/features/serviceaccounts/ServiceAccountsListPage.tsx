@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2, OrgRole } from '@grafana/data';
-import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2, InlineField } from '@grafana/ui';
+import { ConfirmModal, FilterInput, LinkButton, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -154,13 +154,12 @@ export const ServiceAccountsListPageUnconnected = ({
       target="_blank"
       rel="noopener noreferrer"
     >
-      documentation.
+      here.
     </a>
   );
   const subTitle = (
     <span>
-      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more in our{' '}
-      {docsLink}
+      Service accounts and their tokens can be used to authenticate against the Grafana API. Find out more {docsLink}
     </span>
   );
 
@@ -168,14 +167,14 @@ export const ServiceAccountsListPageUnconnected = ({
     <Page navId="serviceaccounts" subTitle={subTitle}>
       <Page.Contents>
         <div className="page-action-bar">
-          <InlineField grow>
+          <div className="gf-form gf-form--grow">
             <FilterInput
               placeholder="Search service account by name"
               value={query}
               onChange={onQueryChange}
               width={50}
             />
-          </InlineField>
+          </div>
           <RadioButtonGroup
             options={[
               { label: 'All', value: ServiceAccountStateFilter.All },

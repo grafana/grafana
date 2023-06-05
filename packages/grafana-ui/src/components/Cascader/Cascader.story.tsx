@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { Cascader } from '@grafana/ui';
@@ -34,7 +34,7 @@ const options = [
   },
 ];
 
-const meta: Meta<typeof Cascader> = {
+const meta: ComponentMeta<typeof Cascader> = {
   title: 'Forms/Cascader',
   component: Cascader,
   decorators: [withCenteredStory],
@@ -64,7 +64,7 @@ const meta: Meta<typeof Cascader> = {
   },
 };
 
-const Template: StoryFn<typeof Cascader> = (args) => <Cascader {...args} />;
+const Template: ComponentStory<typeof Cascader> = (args) => <Cascader {...args} />;
 
 export const Simple = Template.bind({});
 Simple.args = {

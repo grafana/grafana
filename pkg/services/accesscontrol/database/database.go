@@ -35,12 +35,9 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			INNER JOIN role ON role.id = permission.role_id
 		` + filter
 
-		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
-			q = q[:len(q)-4] + " )" // remove last " OR "
-			for i := range query.RolePrefixes {
-				params = append(params, query.RolePrefixes[i]+"%")
-			}
+		if query.RolePrefix != "" {
+			q += " WHERE role.name LIKE ?"
+			params = append(params, query.RolePrefix+"%")
 		}
 
 		if err := sess.SQL(q, params...).Find(&result); err != nil {

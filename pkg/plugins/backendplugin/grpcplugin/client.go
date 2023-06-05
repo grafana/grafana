@@ -83,20 +83,10 @@ func getV2PluginSet() goplugin.PluginSet {
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, true)
-}
-
-// NewUnmanagedBackendPlugin creates a new backend plugin factory used for registering an unmanaged backend plugin.
-func NewUnmanagedBackendPlugin(pluginID, executablePath string) backendplugin.PluginFactoryFunc {
-	return newBackendPlugin(pluginID, executablePath, false)
-}
-
-// NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
-func newBackendPlugin(pluginID, executablePath string, managed bool) backendplugin.PluginFactoryFunc {
 	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
-		managed:        managed,
+		managed:        true,
 		versionedPlugins: map[int]goplugin.PluginSet{
 			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},

@@ -5,43 +5,33 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, IconName, useStyles2 } from '@grafana/ui';
 
-interface BaseQueryOperationActionProps {
+export interface QueryOperationActionProps {
   icon: IconName;
   title: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  active?: boolean;
 }
 
-function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperationToggleActionProps) {
+export const QueryOperationAction = ({ icon, active, disabled, title, onClick }: QueryOperationActionProps) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(styles.icon, 'active' in props && props.active && styles.active)}>
+    <div className={cx(styles.icon, active && styles.active)}>
       <IconButton
-        name={props.icon}
-        tooltip={props.title}
+        name={icon}
+        tooltip={title}
         className={styles.icon}
-        disabled={!!props.disabled}
-        onClick={props.onClick}
+        disabled={!!disabled}
+        onClick={onClick}
         type="button"
-        aria-label={selectors.components.QueryEditorRow.actionButton(props.title)}
-        {...('active' in props && { 'aria-pressed': props.active })}
+        aria-label={selectors.components.QueryEditorRow.actionButton(title)}
       />
     </div>
   );
-}
-
-interface QueryOperationActionProps extends BaseQueryOperationActionProps {}
-export function QueryOperationAction(props: QueryOperationActionProps) {
-  return <BaseQueryOperationAction {...props} />;
-}
-
-interface QueryOperationToggleActionProps extends BaseQueryOperationActionProps {
-  active: boolean;
-}
-export const QueryOperationToggleAction = (props: QueryOperationToggleActionProps) => {
-  return <BaseQueryOperationAction {...props} />;
 };
+
+QueryOperationAction.displayName = 'QueryOperationAction';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

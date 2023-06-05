@@ -22,18 +22,18 @@ import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
 export class TimeSrv {
-  time: RawTimeRange;
-  refreshTimer: number | undefined;
+  time: any;
+  refreshTimer: any;
   refresh: any;
+  autoRefreshPaused = false;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
-  timeAtLoad: RawTimeRange;
+  timeAtLoad: any;
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
     this.time = getDefaultTimeRange().raw;
-    this.timeAtLoad = getDefaultTimeRange().raw;
     this.refreshTimeModel = this.refreshTimeModel.bind(this);
 
     appEvents.subscribe(ZoomOutEvent, (e) => {
@@ -106,7 +106,7 @@ export class TimeSrv {
     }
   }
 
-  private parseUrlParam(value: string) {
+  private parseUrlParam(value: any) {
     if (value.indexOf('now') !== -1) {
       return value;
     }
@@ -122,7 +122,7 @@ export class TimeSrv {
       }
     }
 
-    if (!isNaN(Number(value))) {
+    if (!isNaN(value)) {
       const epoch = parseInt(value, 10);
       return toUtc(epoch);
     }
@@ -235,9 +235,9 @@ export class TimeSrv {
     const validInterval = this.contextSrv.getValidInterval(interval);
     const intervalMs = rangeUtil.intervalToMs(validInterval);
 
-    this.refreshTimer = window.setTimeout(() => {
+    this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
-      this.refreshTimeModel();
+      !this.autoRefreshPaused && this.refreshTimeModel();
     }, intervalMs);
 
     const refresh = this.contextSrv.getValidInterval(interval);
@@ -252,10 +252,10 @@ export class TimeSrv {
   }
 
   private startNextRefreshTimer(afterMs: number) {
-    this.refreshTimer = window.setTimeout(() => {
+    this.refreshTimer = setTimeout(() => {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshTimeModel();
+        !this.autoRefreshPaused && this.refreshTimeModel();
       } else {
         this.autoRefreshBlocked = true;
       }
@@ -264,14 +264,18 @@ export class TimeSrv {
 
   stopAutoRefresh() {
     clearTimeout(this.refreshTimer);
-    this.refreshTimer = undefined;
+  }
+
+  // store timeModel refresh value and pause auto-refresh in some places
+  // i.e panel edit
+  pauseAutoRefresh() {
+    this.autoRefreshPaused = true;
   }
 
   // resume auto-refresh based on old dashboard refresh property
   resumeAutoRefresh() {
-    if (this.timeModel?.refresh) {
-      this.setAutoRefresh(this.timeModel.refresh);
-    }
+    this.autoRefreshPaused = false;
+    this.refreshTimeModel();
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {

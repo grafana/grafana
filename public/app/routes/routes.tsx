@@ -2,9 +2,9 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 
 import { isTruthy } from '@grafana/data';
+import { ErrorPage } from 'app/core/components/ErrorPage/ErrorPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPage';
-import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -46,11 +46,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
-      roles: () => contextSrv.evaluatePermission(() => [], [AccessControlAction.DashboardsCreate]),
+      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardPage')
       ),
     },
     {
@@ -140,6 +140,9 @@ export function getAppRoutes(): RouteDescriptor[] {
             )
       ),
     },
+
+    ...(config.featureToggles.nestedFolders ? getNestedFoldersRoutes() : []),
+
     {
       path: '/dashboards',
       component: SafeDynamicImport(
@@ -153,7 +156,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NewDashboardsFolder"*/ 'app/features/folders/components/NewDashboardsFolder')
       ),
     },
-    !config.featureToggles.nestedFolders && {
+    {
       path: '/dashboards/f/:uid/:slug/permissions',
       component: config.rbacEnabled
         ? SafeDynamicImport(
@@ -192,7 +195,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
-          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/EmptyStateWrapper')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },
@@ -306,13 +309,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin/authentication',
-      roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component:
-        config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
-          ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-            )
-          : () => <Redirect to="/admin" />,
+      component: config.featureToggles.authenticationConfigUI
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin',
@@ -477,13 +478,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/f/:uid/:slug/library-panels',
       component: SafeDynamicImport(
-        config.featureToggles.nestedFolders
-          ? () =>
-              import(
-                /* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/browse-dashboards/BrowseFolderLibraryPanelsPage'
-              )
-          : () =>
-              import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
+        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
       ),
     },
     {
@@ -491,10 +486,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
-        config.featureToggles.nestedFolders
-          ? () =>
-              import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
-          : () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
+        () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
       ),
     },
     {
@@ -519,8 +511,10 @@ export function getAppRoutes(): RouteDescriptor[] {
     ...getDataConnectionsRoutes(),
     {
       path: '/*',
-      component: PageNotFound,
+      component: ErrorPage,
     },
+    // TODO[Router]
+    // ...playlistRoutes,
   ].filter(isTruthy);
 }
 
@@ -570,6 +564,25 @@ export function getDynamicDashboardRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/scenes/:name',
       component: SafeDynamicImport(() => import(/* webpackChunkName: "scenes"*/ 'app/features/scenes/ScenePage')),
+    },
+  ];
+}
+
+function getNestedFoldersRoutes(): RouteDescriptor[] {
+  return [
+    {
+      path: '/nested-dashboards',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
+    },
+
+    {
+      path: '/nested-dashboards/f/:uid',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
+    },
+
+    {
+      path: '/nested-dashboards/f/:uid/:slug',
+      component: SafeDynamicImport(() => import('app/features/browse-dashboards/BrowseDashboardsPage')),
     },
   ];
 }

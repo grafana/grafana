@@ -51,7 +51,6 @@ export const AnnotationPicker = ({ annotation, events, onEnabledChanged }: Annot
           data-testid={selectors.pages.Dashboard.SubMenu.Annotations.annotationLabel(annotation.name)}
         >
           <InlineSwitch
-            label={annotation.name}
             value={annotation.enable}
             onChange={() => onEnabledChanged(annotation)}
             disabled={loading}

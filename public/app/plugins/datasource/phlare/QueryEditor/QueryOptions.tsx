@@ -1,11 +1,11 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 import { useToggle } from 'react-use';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Icon, useStyles2, RadioButtonGroup, MultiSelect, Input, clearButtonStyles, Button } from '@grafana/ui';
+import { Icon, useStyles2, RadioButtonGroup, MultiSelect } from '@grafana/ui';
 
-import { Query } from '../types';
+import { Query, SeriesMessage } from '../types';
 
 import { EditorField } from './EditorField';
 import { Stack } from './Stack';
@@ -14,7 +14,7 @@ export interface Props {
   query: Query;
   onQueryChange: (query: Query) => void;
   app?: CoreApp;
-  labels?: string[];
+  series?: SeriesMessage;
 }
 
 const typeOptions: Array<{ value: Query['queryType']; label: string; description: string }> = [
@@ -30,24 +30,32 @@ function getTypeOptions(app?: CoreApp) {
   return typeOptions.filter((option) => option.value !== 'both');
 }
 
+function getGroupByOptions(series?: SeriesMessage) {
+  let options: SelectableValue[] = [];
+  if (series) {
+    const labels = series.flatMap((val) => {
+      return val.labels.map((l) => l.name);
+    });
+    options = Array.from(new Set(labels)).map((l) => ({
+      label: l,
+      value: l,
+    }));
+  }
+  return options;
+}
+
 /**
  * Base on QueryOptionGroup component from grafana/ui but that is not available yet.
  */
-export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
+export function QueryOptions({ query, onQueryChange, app, series }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
   const typeOptions = getTypeOptions(app);
-  const groupByOptions = labels
-    ? labels.map((l) => ({
-        label: l,
-        value: l,
-      }))
-    : [];
-  const buttonStyles = useStyles2(clearButtonStyles);
+  const groupByOptions = getGroupByOptions(series);
 
   return (
     <Stack gap={0} direction="column">
-      <Button className={cx(styles.header, buttonStyles)} onClick={toggleOpen} title="Click to edit options">
+      <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
         <div className={styles.toggle}>
           <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
         </div>
@@ -61,7 +69,7 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
               ))}
           </div>
         )}
-      </Button>
+      </div>
       {isOpen && (
         <div className={styles.body}>
           <EditorField label={'Query Type'}>
@@ -89,18 +97,6 @@ export function QueryOptions({ query, onQueryChange, app, labels }: Props) {
                   return c.value!;
                 });
                 onQueryChange({ ...query, groupBy: changes });
-              }}
-            />
-          </EditorField>
-          <EditorField label={'Max Nodes'} tooltip={<>Sets the maximum number of nodes to return in the flamegraph.</>}>
-            <Input
-              value={query.maxNodes || ''}
-              type="number"
-              placeholder="16384"
-              onChange={(event: React.SyntheticEvent<HTMLInputElement>) => {
-                let newValue = parseInt(event.currentTarget.value, 10);
-                newValue = isNaN(newValue) ? 0 : newValue;
-                onQueryChange({ ...query, maxNodes: newValue });
               }}
             />
           </EditorField>

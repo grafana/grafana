@@ -1,4 +1,3 @@
-import { Interception } from 'cypress/types/net-stubbing';
 import { load } from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,20 +22,6 @@ type AzureMonitorProvision = { datasources: AzureMonitorConfig[] };
 
 const dataSourceName = `Azure Monitor E2E Tests - ${uuidv4()}`;
 
-const maxRetryCount = 3;
-
-Cypress.Commands.add('checkHealthRetryable', function (fn: Function, retryCount: number) {
-  cy.then(() => {
-    const result = fn(++retryCount);
-    result.then((res: Interception) => {
-      if (retryCount < maxRetryCount && res.response.statusCode !== 200) {
-        cy.wait(20000);
-        cy.checkHealthRetryable(fn, retryCount);
-      }
-    });
-  });
-});
-
 function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) {
   const datasource = datasources[0].datasources[0];
 
@@ -58,11 +43,8 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
-
-      // We can do this because awaitHealth is set to true so @health is defined
-      cy.checkHealthRetryable(() => {
-        return e2e.pages.DataSource.saveAndTest().click().wait('@health');
-      }, 0);
+      // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
+      e2e().wait(30000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
     // Reduce the timeout from 30s to error faster when an invalid alert message is presented
@@ -118,10 +100,6 @@ const addAzureMonitorVariable = (
   e2e.pages.Dashboard.Settings.Actions.close().click();
 };
 
-const storageAcctName = 'azmonteststorage';
-const logAnalyticsName = 'az-mon-test-logs';
-const applicationInsightsName = 'az-mon-test-ai-a';
-
 e2e.scenario({
   describeName: 'Add Azure Monitor datasource',
   itName: 'fills out datasource connection configuration',
@@ -162,7 +140,7 @@ e2e.scenario({
 
 e2e.scenario({
   describeName: 'Create dashboard and add a panel for each query type',
-  itName: 'create dashboard, add panel for metrics, log analytics, ARG, and traces queries',
+  itName: 'create dashboard, add panel for metrics query, log analytics query, and ARG query',
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
@@ -182,15 +160,14 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
-          .type(storageAcctName)
+          .type('azmonmetricstest')
           .wait(500)
           .type('{enter}');
-        e2e().contains(storageAcctName).click();
+        e2e().contains('azmonmetricstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');
       },
-      timeout: 10000,
     });
     e2e.components.PanelEditor.applyButton().click();
     e2e.flows.addPanel({
@@ -202,15 +179,14 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
-          .type(logAnalyticsName)
+          .type('azmonlogstest')
           .wait(500)
           .type('{enter}');
-        e2e().contains(logAnalyticsName).click();
+        e2e().contains('azmonlogstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e.components.CodeEditor.container().type('AzureDiagnostics');
         e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Time series{enter}');
       },
-      timeout: 10000,
     });
     e2e.components.PanelEditor.applyButton().click();
     e2e.flows.addPanel({
@@ -229,27 +205,6 @@ e2e.scenario({
         );
         e2e.components.PanelEditor.toggleTableView().click({ force: true });
       },
-      timeout: 10000,
-    });
-    e2e.components.PanelEditor.applyButton().click();
-    e2e.flows.addPanel({
-      dataSourceName,
-      visitDashboardAtStart: false,
-      queriesForm: () => {
-        e2eSelectors.queryEditor.header.select().find('input').type('Traces{enter}');
-        e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search
-          .input()
-          .wait(100)
-          .type(applicationInsightsName)
-          .wait(500)
-          .type('{enter}');
-        e2e().contains(applicationInsightsName).click();
-        e2eSelectors.queryEditor.resourcePicker.apply.button().click();
-        e2e().wait(10000);
-        e2eSelectors.queryEditor.logsQueryEditor.formatSelection.input().type('Trace{enter}');
-      },
-      timeout: 10000,
     });
   },
 });
@@ -300,7 +255,7 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
       .parent()
       .find('input')
-      .type(`${storageAcctName}{downArrow}{enter}`);
+      .type('azmonmetricstest{downArrow}{enter}');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
@@ -315,7 +270,6 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
       },
-      timeout: 10000,
     });
   },
 });
@@ -337,8 +291,8 @@ e2e.scenario({
     e2e.pages.Dashboard.Settings.Annotations.Settings.name().type('TestAnnotation');
     e2e.components.DataSourcePicker.inputV2().click().type(`${dataSourceName}{enter}`);
     e2eSelectors.queryEditor.resourcePicker.select.button().click();
-    e2eSelectors.queryEditor.resourcePicker.search.input().type(storageAcctName);
-    e2e().contains(storageAcctName).click();
+    e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
+    e2e().contains('azmonmetricstest').click();
     e2eSelectors.queryEditor.resourcePicker.apply.button().click();
     e2e().contains('microsoft.storage/storageaccounts');
     e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
@@ -349,8 +303,8 @@ e2e.scenario({
       visitDashboardAtStart: false,
       queriesForm: () => {
         e2eSelectors.queryEditor.resourcePicker.select.button().click();
-        e2eSelectors.queryEditor.resourcePicker.search.input().type(storageAcctName);
-        e2e().contains(storageAcctName).click();
+        e2eSelectors.queryEditor.resourcePicker.search.input().type('azmonmetricstest');
+        e2e().contains('azmonmetricstest').click();
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2e().contains('microsoft.storage/storageaccounts');
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Used capacity{enter}');

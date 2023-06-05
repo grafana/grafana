@@ -12,15 +12,15 @@
       "light-theme": "Claro"
     },
     "search-box": {
-      "placeholder": "Buscar o saltar a..."
+      "placeholder": ""
     },
     "section": {
       "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
-      "folder-search-results": "Carpetas",
+      "folder-search-results": "",
       "pages": "Páginas",
       "preferences": "Preferencias",
-      "recent-dashboards": "Paneles de control recientes"
+      "recent-dashboards": ""
     }
   },
   "common": {
@@ -30,23 +30,6 @@
     "save": "Guardar"
   },
   "dashboard": {
-    "add-menu": {
-      "import": "Importar de la biblioteca",
-      "paste-panel": "Pegar panel",
-      "row": "Fila",
-      "visualization": "Visualización"
-    },
-    "empty": {
-      "add-import-body": "Importar las visualizaciones que se compartan con otros paneles de control.",
-      "add-import-button": "Importar el panel de la biblioteca",
-      "add-import-header": "Importar panel",
-      "add-row-body": "Agrupa tus visualizaciones en secciones ampliables.",
-      "add-row-button": "Añadir fila",
-      "add-row-header": "Añadir una fila",
-      "add-visualization-body": "Selecciona una fuente de datos y luego consulta y visualiza tus datos con gráficos, estadísticas y tablas o cree listas, anotaciones y otros widgets.",
-      "add-visualization-button": "Añadir visualización",
-      "add-visualization-header": "Comienza tu nuevo panel de control añadiendo una visualización"
-    },
     "inspect": {
       "data-tab": "Datos",
       "error-tab": "Error",
@@ -92,7 +75,6 @@
     },
     "inspect-stats": {
       "data-title": "Estadísticas de origen de datos",
-      "data-traceids": "Trazar ID",
       "processing-time": "Tiempo de procesamiento de datos",
       "queries": "Número de consultas",
       "request-time": "Tiempo total de solicitud",
@@ -100,7 +82,6 @@
       "table-title": "Estadísticas"
     },
     "toolbar": {
-      "add": "Añadir",
       "add-panel": "Añadir panel",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
@@ -111,17 +92,27 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "tv-button": "Alternar entre los modos de vista",
       "unmark-favorite": "Deshacer marca como favorito"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
+    "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
+    "new-dashboard": "Nuevo panel de control",
+    "preferred": "Conecte su fuente de datos preferida:",
+    "sampleData": "O configure un nuevo panel de control con datos de muestra",
+    "viewAll": "Ver todo",
+    "welcome": "¡Te damos la bienvenida a los paneles de Grafana!"
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
     "segment-async": {
-      "error": "No se han podido cargar las opciones",
-      "loading": "Cargando las opciones...",
-      "no-options": "No se ha encontrado ninguna opción"
+      "error": "",
+      "loading": "",
+      "no-options": ""
     }
   },
   "library-panel": {
@@ -132,9 +123,6 @@
       "folder": "Guardar en carpeta",
       "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
       "name": "Nombre del panel de librería"
-    },
-    "add-widget": {
-      "title": "Añadir panel de la biblioteca de paneles"
     }
   },
   "library-panels": {
@@ -177,7 +165,7 @@
       "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "Elige cómo notificar tus puntos de contacto cuando se dispara una instancia de alerta",
+      "subtitle": "",
       "title": "Puntos de contacto"
     },
     "alerting-silences": {
@@ -186,7 +174,7 @@
     },
     "alerts-and-incidents": {
       "subtitle": "Aplicaciones de gestión de alertas e incidentes",
-      "title": "Alertas e IRM"
+      "title": "Alertas e incidentes"
     },
     "api-keys": {
       "subtitle": "Administrar y crear claves de API que se utilizan para interactuar con las API de HTTP de Grafana",
@@ -197,7 +185,8 @@
       "title": "Aplicaciones"
     },
     "config": {
-      "title": "Administración"
+      "title": "Administración",
+      "titleBeforeTopnav": "Configuración"
     },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
@@ -207,7 +196,7 @@
       "title": "Crear"
     },
     "create-alert": {
-      "title": "Crear regla de alerta"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Panel de control"
@@ -216,7 +205,7 @@
       "title": "Carpeta"
     },
     "create-import": {
-      "title": "Importar panel de control"
+      "title": ""
     },
     "dashboards": {
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
@@ -235,7 +224,8 @@
     },
     "global-users": {
       "subtitle": "Gestionar usuarios de Grafana",
-      "title": "Usuarios"
+      "title": "Usuarios",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -251,12 +241,15 @@
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
       "title": "Paneles de librería"
     },
+    "manage-dashboards": {
+      "title": "Navegar"
+    },
     "manage-folder": {
-      "subtitle": "Gestionar paneles de control de carpetas y permisos"
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
-      "title": "Observabilidad"
+      "title": "Seguimiento"
     },
     "new": {
       "title": "Nuevo"
@@ -269,7 +262,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias por defecto"
+      "title": "Preferencias por defecto",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -288,14 +282,15 @@
     "profile/settings": {
       "title": "Perfil"
     },
+    "profile/switch-org": "Cambiar de organización",
     "public": {
-      "title": "Paneles de control públicos"
+      "title": ""
     },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholderCommandPalette": "Buscar o saltar a..."
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -308,6 +303,7 @@
       "subtitle": "Use cuentas de servicio para ejecutar cargas de trabajo automatizadas en Grafana",
       "title": "Cuentas de servicios"
     },
+    "sign-in": "Iniciar sesión",
     "sign-out": {
       "title": "Cerrar sesión"
     },
@@ -346,9 +342,9 @@
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
     },
     "toolbar": {
-      "enable-kiosk": "Activar el modo de quiosco",
-      "toggle-menu": "Activar o desactivar menú",
-      "toggle-search-bar": "Activar o desactivar la barra de búsqueda superior"
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -398,12 +394,13 @@
   },
   "search": {
     "actions": {
-      "include-panels": "Incluir paneles",
-      "remove-datasource-filter": "Fuente de datos: {{datasource}}",
-      "sort-placeholder": "Ordenar",
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
       "starred": "Destacado",
-      "view-as-folders": "Ver por carpetas",
-      "view-as-list": "Ver como lista"
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
     },
     "dashboard-actions": {
       "import": "Importar",
@@ -412,26 +409,26 @@
       "new-folder": "Nueva carpeta"
     },
     "folder-view": {
-      "go-to-folder": "Ir a la carpeta",
-      "select-folder": "Seleccionar carpeta"
+      "go-to-folder": "",
+      "select-folder": ""
     },
     "result-kind": {
       "dashboard": "Panel de control",
       "folder": "Carpeta",
-      "panel": "Panel"
+      "panel": ""
     },
     "results-table": {
-      "datasource-header": "Fuente de datos",
-      "location-header": "Ubicación",
+      "datasource-header": "",
+      "location-header": "",
       "name-header": "Nombre",
-      "tags-header": "Etiquetas",
+      "tags-header": "",
       "type-dashboard": "Panel de control",
       "type-folder": "Carpeta",
-      "type-header": "Tipo"
+      "type-header": ""
     },
     "search-input": {
-      "include-panels-placeholder": "Buscar paneles de control y paneles",
-      "placeholder": "Buscar paneles de control"
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -509,15 +506,6 @@
       "copy-button": "Copiar al portapapeles"
     }
   },
-  "shared": {
-    "preferences": {
-      "theme": {
-        "dark-label": "",
-        "light-label": "",
-        "system-label": ""
-      }
-    }
-  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zona horaria"
@@ -533,14 +521,17 @@
       "week-start-label": "Inicio de la semana"
     },
     "theme": {
-      "default-label": "Por defecto"
+      "dark-label": "Oscuro",
+      "default-label": "Por defecto",
+      "light-label": "Claro",
+      "system-label": ""
     },
     "title": "Preferencias"
   },
   "tag-filter": {
-    "loading": "Cargando...",
-    "no-tags": "No se ha encontrado ninguna etiqueta",
-    "placeholder": "Filtrar por etiqueta"
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -618,7 +609,7 @@
   },
   "variable": {
     "adhoc": {
-      "placeholder": "Seleccionar valor"
+      "placeholder": ""
     },
     "dropdown": {
       "placeholder": "Introducir el valor de la variable"

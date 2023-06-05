@@ -260,7 +260,7 @@ abstract class DataSourceApi<
    * a TestingStatus object. Unknown errors and HTTP errors can be re-thrown and will be handled here:
    * public/app/features/datasources/state/actions.ts
    */
-  abstract testDatasource(): Promise<TestDataSourceResponse>;
+  abstract testDatasource(): Promise<any>;
 
   /**
    * Override to skip executing a query
@@ -471,13 +471,6 @@ export interface DataQueryResponse {
    * traceIds related to the response, if available
    */
   traceIds?: string[];
-}
-
-export interface TestDataSourceResponse {
-  status: string;
-  message: string;
-  error?: Error;
-  details?: { message?: string; verboseMessage?: string };
 }
 
 export enum DataQueryErrorType {

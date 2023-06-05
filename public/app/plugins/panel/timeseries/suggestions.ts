@@ -1,21 +1,8 @@
-import {
-  FieldColorModeId,
-  VisualizationSuggestionsBuilder,
-  VisualizationSuggestion,
-  DataTransformerID,
-} from '@grafana/data';
-import {
-  GraphDrawStyle,
-  GraphFieldConfig,
-  GraphGradientMode,
-  LineInterpolation,
-  StackingMode,
-  VizLegendOptions,
-} from '@grafana/schema';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
+import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { Options } from './panelcfg.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 export class TimeSeriesSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -25,11 +12,11 @@ export class TimeSeriesSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<Options, GraphFieldConfig>({
+    const list = builder.getListAppender<PanelOptions, GraphFieldConfig>({
       name: SuggestionName.LineChart,
       pluginId: 'timeseries',
       options: {
-        legend: {} as VizLegendOptions,
+        legend: {} as any,
       },
       fieldConfig: {
         defaults: {
@@ -212,25 +199,4 @@ export class TimeSeriesSuggestionsSupplier {
       });
     }
   }
-}
-
-// This will try to get a suggestion that will add a long to wide conversion
-export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSuggestion | undefined {
-  const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
-  if (panel) {
-    const transformations = panel.transformations ? [...panel.transformations] : [];
-    transformations.push({
-      id: DataTransformerID.prepareTimeSeries,
-      options: {
-        format: 'wide',
-      },
-    });
-
-    return {
-      name: 'Transform to wide time series format',
-      pluginId: 'timeseries',
-      transformations,
-    };
-  }
-  return undefined;
 }

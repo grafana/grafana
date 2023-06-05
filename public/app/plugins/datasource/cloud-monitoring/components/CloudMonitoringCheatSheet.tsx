@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 import { QueryEditorHelpProps } from '@grafana/data';
 
-import { CloudMonitoringQuery } from '../types/query';
+import { CloudMonitoringQuery } from '../types';
 
 export default class CloudMonitoringCheatSheet extends PureComponent<
   QueryEditorHelpProps<CloudMonitoringQuery>,

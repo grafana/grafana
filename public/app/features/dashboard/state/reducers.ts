@@ -14,7 +14,6 @@ export const initialState: DashboardState = {
   getModel: () => null,
   permissions: [],
   initError: null,
-  initialDatasource: undefined,
 };
 
 const dashboardSlice = createSlice({
@@ -54,9 +53,6 @@ const dashboardSlice = createSlice({
     addPanel: (state, action: PayloadAction<PanelModel>) => {
       //state.panels[action.payload.id] = { pluginId: action.payload.type };
     },
-    setInitialDatasource: (state, action: PayloadAction<string | undefined>) => {
-      state.initialDatasource = action.payload;
-    },
   },
 });
 
@@ -83,7 +79,6 @@ export const {
   dashboardInitServices,
   cleanUpDashboard,
   addPanel,
-  setInitialDatasource,
 } = dashboardSlice.actions;
 
 export const dashboardReducer = dashboardSlice.reducer;

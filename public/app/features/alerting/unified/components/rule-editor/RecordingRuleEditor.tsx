@@ -7,16 +7,19 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, LoadingState } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { TABLE, TIMESERIES } from '../../utils/constants';
 import { isPromOrLokiQuery } from '../../utils/rule-form';
+import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
 import { VizWrapper } from './VizWrapper';
 
 export interface RecordingRuleEditorProps {
   queries: AlertQuery[];
   onChangeQuery: (updatedQueries: AlertQuery[]) => void;
-  runQueries: () => void;
+  runQueries: (queries: AlertQuery[]) => void;
   panelData: Record<string, PanelData>;
   dataSourceName: string;
 }
@@ -35,6 +38,10 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   });
 
   const styles = useStyles2(getStyles);
+
+  const isExpression = isExpressionQuery(queries[0]?.model);
+
+  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
 
   useEffect(() => {
     setData(panelData?.[queries[0]?.refId]);
@@ -94,14 +101,14 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
           queries={queries}
           app={CoreApp.UnifiedAlerting}
           onChange={handleChangedQuery}
-          onRunQuery={runQueries}
+          onRunQuery={() => runQueries(queries)}
           datasource={dataSource}
         />
       )}
 
       {data && (
         <div className={styles.vizWrapper}>
-          <VizWrapper data={data} />
+          <VizWrapper data={data} currentPanel={pluginId} changePanel={changePluginId} />
         </div>
       )}
     </>

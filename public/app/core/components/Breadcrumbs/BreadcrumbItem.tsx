@@ -10,11 +10,9 @@ import { Breadcrumb } from './types';
 
 type Props = Breadcrumb & {
   isCurrent: boolean;
-  index: number;
-  flexGrow: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text }: Props) {
   const styles = useStyles2(getStyles);
 
   const onBreadcrumbClick = () => {
@@ -22,14 +20,9 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
   };
 
   return (
-    <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
+    <li className={styles.breadcrumbWrapper}>
       {isCurrent ? (
-        <span
-          data-testid={Components.Breadcrumbs.breadcrumb(text)}
-          className={styles.breadcrumb}
-          aria-current="page"
-          title={text}
-        >
+        <span data-testid={Components.Breadcrumbs.breadcrumb(text)} className={styles.breadcrumb} aria-current="page">
           {text}
         </span>
       ) : (
@@ -38,7 +31,6 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
             onClick={onBreadcrumbClick}
             data-testid={Components.Breadcrumbs.breadcrumb(text)}
             className={cx(styles.breadcrumb, styles.breadcrumbLink)}
-            title={text}
             href={href}
           >
             {text}
@@ -53,6 +45,10 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const separator = css({
+    color: theme.colors.text.secondary,
+  });
+
   return {
     breadcrumb: css({
       display: 'block',
@@ -79,19 +75,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       // logic for small screens
       // hide any breadcrumbs that aren't the second to last child (the parent)
       // unless there's only one breadcrumb, in which case we show it
-      [theme.breakpoints.down('sm')]: {
+      [theme.breakpoints.down('md')]: {
         display: 'none',
         '&:nth-last-child(2)': {
           display: 'flex',
-          minWidth: '40px',
+          flexDirection: 'row-reverse',
+
+          [`.${separator}`]: {
+            transform: 'rotate(180deg)',
+          },
         },
-        '&:last-child': {
+        '&:first-child&:last-child': {
           display: 'flex',
+
+          [`.${separator}`]: {
+            display: 'none',
+          },
         },
       },
     }),
-    separator: css({
-      color: theme.colors.text.secondary,
-    }),
+    separator,
   };
 };

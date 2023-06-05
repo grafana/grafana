@@ -3,7 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SortOrder } from 'app/core/utils/richHistory';
-import { ExploreId } from 'app/types';
+
+import { ExploreId } from '../../../types/explore';
 
 import { RichHistory, RichHistoryProps, Tabs } from './RichHistory';
 

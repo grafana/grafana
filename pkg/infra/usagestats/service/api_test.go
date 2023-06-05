@@ -23,37 +23,37 @@ func TestApi_getUsageStats(t *testing.T) {
 	type getUsageStatsTestCase struct {
 		desc           string
 		expectedStatus int
-		permissions    map[string][]string
+		IsGrafanaAdmin bool
 		enabled        bool
 	}
 	tests := []getUsageStatsTestCase{
 		{
 			desc:           "expect usage stats",
 			enabled:        true,
-			permissions:    map[string][]string{ActionRead: {}},
+			IsGrafanaAdmin: true,
 			expectedStatus: 200,
 		},
 		{
 			desc:           "expect usage stat preview still there after disabling",
 			enabled:        false,
-			permissions:    map[string][]string{ActionRead: {}},
+			IsGrafanaAdmin: true,
 			expectedStatus: 200,
 		},
 		{
-			desc:           "expect http status 403 when does not have the right permissions",
+			desc:           "expect http status 403 when not admin",
 			enabled:        false,
-			permissions:    map[string][]string{},
+			IsGrafanaAdmin: false,
 			expectedStatus: 403,
 		},
 	}
 	sqlStore := dbtest.NewFakeDB()
-	uss := createService(t, sqlStore, false)
+	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			uss.Cfg.ReportingEnabled = tt.enabled
-			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: tt.permissions}}, uss)
+			server := setupTestServer(t, &user.SignedInUser{OrgID: 1, IsGrafanaAdmin: tt.IsGrafanaAdmin}, uss)
 
 			usageStats, recorder := getUsageStats(t, server)
 			require.Equal(t, tt.expectedStatus, recorder.Code)

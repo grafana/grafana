@@ -1,5 +1,5 @@
 import { DataQuery } from '@grafana/data';
-import { Dashboard, DataSourceRef } from '@grafana/schema';
+import { Dashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { DashboardAcl } from './acl';
@@ -101,7 +101,6 @@ export interface QueriesToUpdateOnDashboardLoad {
 export interface DashboardState {
   getModel: GetMutableDashboardModelFn;
   initPhase: DashboardInitPhase;
-  initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
   permissions: DashboardAcl[];
 }

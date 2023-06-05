@@ -1,9 +1,10 @@
 import { DataFrame, Field } from '@grafana/data';
 import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
-import { ScaleDimensionConfig, ScaleDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier, ScaleDimensionOptions } from './types';
+import { ScaleDimensionConfig, DimensionSupplier, ScaleDimensionOptions } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
+
+import { ScaleDimensionMode } from '.';
 
 //---------------------------------------------------------
 // Scale dimension
@@ -42,7 +43,7 @@ export function getScaledDimensionForField(
   }
 
   let scaled = (percent: number) => config.min + percent * delta;
-  if (mode === ScaleDimensionMode.Quad) {
+  if (mode === ScaleDimensionMode.Quadratic) {
     const maxArea = Math.PI * (config.max / 2) ** 2;
     const minArea = Math.PI * (config.min / 2) ** 2;
     const deltaArea = maxArea - minArea;

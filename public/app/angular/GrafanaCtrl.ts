@@ -10,6 +10,7 @@ import { AngularLoader } from 'app/angular/services/AngularLoader';
 import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
+import { initGrafanaLive } from 'app/features/live';
 import { AppEventEmitter, AppEventConsumer } from 'app/types';
 
 import { UtilSrv } from './services/UtilSrv';
@@ -30,6 +31,8 @@ export class GrafanaCtrl {
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setLegacyAngularInjector($injector);
+
+    initGrafanaLive();
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;

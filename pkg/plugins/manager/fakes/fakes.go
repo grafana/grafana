@@ -200,9 +200,9 @@ func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
 }
 
 type FakePluginRepo struct {
-	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
+	GetPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -223,27 +223,49 @@ func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL s
 	return &repo.PluginArchive{}, nil
 }
 
-// GetPluginArchiveInfo fetches information for downloading the requested plugin.
-func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
-	if r.GetPluginArchiveInfoFunc != nil {
-		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
+// GetPluginDownloadOptions fetches information for downloading the requested plugin.
+func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
+	if r.GetPluginDownloadOptionsFunc != nil {
+		return r.GetPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
 	}
-	return &repo.PluginArchiveInfo{}, nil
+	return &repo.PluginDownloadOptions{}, nil
 }
 
 type FakePluginStorage struct {
-	ExtractFunc func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	Store        map[string]struct{}
+	AddFunc      func(_ context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error)
+	RegisterFunc func(_ context.Context, pluginID, pluginDir string) error
+	RemoveFunc   func(_ context.Context, pluginID string) error
 }
 
 func NewFakePluginStorage() *FakePluginStorage {
-	return &FakePluginStorage{}
+	return &FakePluginStorage{
+		Store: map[string]struct{}{},
+	}
 }
 
-func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
-	if s.ExtractFunc != nil {
-		return s.ExtractFunc(ctx, pluginID, z)
+func (s *FakePluginStorage) Register(ctx context.Context, pluginID, pluginDir string) error {
+	s.Store[pluginID] = struct{}{}
+	if s.RegisterFunc != nil {
+		return s.RegisterFunc(ctx, pluginID, pluginDir)
+	}
+	return nil
+}
+
+func (s *FakePluginStorage) Add(ctx context.Context, pluginID string, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+	s.Store[pluginID] = struct{}{}
+	if s.AddFunc != nil {
+		return s.AddFunc(ctx, pluginID, z)
 	}
 	return &storage.ExtractedPluginArchive{}, nil
+}
+
+func (s *FakePluginStorage) Remove(ctx context.Context, pluginID string) error {
+	delete(s.Store, pluginID)
+	if s.RemoveFunc != nil {
+		return s.RemoveFunc(ctx, pluginID)
+	}
+	return nil
 }
 
 type FakeProcessManager struct {
@@ -341,8 +363,7 @@ func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ str
 }
 
 type FakePluginFiles struct {
-	OpenFunc   func(name string) (fs.File, error)
-	RemoveFunc func() error
+	OpenFunc func(name string) (fs.File, error)
 
 	base string
 }
@@ -364,15 +385,8 @@ func (f *FakePluginFiles) Base() string {
 	return f.base
 }
 
-func (f *FakePluginFiles) Files() ([]string, error) {
-	return []string{}, nil
-}
-
-func (f *FakePluginFiles) Remove() error {
-	if f.RemoveFunc != nil {
-		return f.RemoveFunc()
-	}
-	return nil
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
 }
 
 type FakeSourceRegistry struct {

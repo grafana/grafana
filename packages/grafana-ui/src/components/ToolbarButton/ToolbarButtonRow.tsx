@@ -7,7 +7,6 @@ import React, { forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, c
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -30,10 +29,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         onClose: () => setShowOverflowItems(false),
         isDismissable: true,
         isOpen: showOverflowItems,
-        shouldCloseOnInteractOutside: (element: Element) => {
-          const portalContainer = getPortalContainer();
-          return !overflowRef.current?.contains(element) && !portalContainer.contains(element);
-        },
+        shouldCloseOnInteractOutside: (element: Element) => !overflowRef.current?.contains(element),
       },
       overflowItemsRef
     );

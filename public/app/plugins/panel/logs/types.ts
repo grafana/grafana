@@ -1,1 +1,1 @@
-export { Options } from './panelcfg.gen';
+export { PanelOptions as Options } from './panelcfg.gen';

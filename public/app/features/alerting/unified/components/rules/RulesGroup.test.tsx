@@ -62,7 +62,6 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
-      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {
@@ -90,7 +89,6 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
-      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {
@@ -149,7 +147,6 @@ describe('Rules group tests', () => {
     const group: CombinedRuleGroup = {
       name: 'TestGroup',
       rules: [mockCombinedRule()],
-      totals: {},
     };
 
     const namespace: CombinedRuleNamespace = {
@@ -166,11 +163,11 @@ describe('Rules group tests', () => {
 
       await userEvent.click(ui.editGroupButton.get());
 
-      expect(screen.getByText('Cancel')).toBeInTheDocument();
+      expect(screen.getByText('Close')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByText('Cancel'));
+      await userEvent.click(screen.getByText('Close'));
 
-      expect(screen.queryByText('Cancel')).not.toBeInTheDocument();
+      expect(screen.queryByText('Close')).not.toBeInTheDocument();
       expect(logInfo).toHaveBeenCalledWith(LogMessages.leavingRuleGroupEdit);
     });
   });

@@ -30,10 +30,8 @@ Once you've added the Elasticsearch data source, you can [configure it]({{< relr
 
 This data source supports these versions of Elasticsearch:
 
-- v7.16+
+- v7.10+
 - v8.x
-
-Our maintenance policy for Elasticsearch data source is aligned with the [Elastic Product End of Life Dates](https://www.elastic.co/support/eol) and we ensure proper functionality for supported versions. If you are using an Elasticsearch with version that is past its end-of-life (EOL), you can still execute queries, but you will receive a notification in the query builder indicating that the version of Elasticsearch you are using is no longer supported. It's important to note that in such cases, we do not guarantee the correctness of the functionality, and we will not be addressing any related issues.
 
 ## Configure the data source
 
@@ -94,9 +92,7 @@ Toggle this to enable `X-Pack`-specific features and options, which provide the 
 
 When the "X-Pack enabled" setting is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
-{{% admonition type="note" %}}
-Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
-{{% /admonition %}}
+> **Note:** Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
 
 ### Logs
 
@@ -130,9 +126,7 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-{{% admonition type="note" %}}
-Available in Grafana v7.3 and higher.
-{{% /admonition %}}
+> **Note:** Available in Grafana v7.3 and higher.
 
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
@@ -146,11 +140,9 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-{{% admonition type="note" %}}
-The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
-You should now use the `index` field in `jsonData` to store the index name.
-Please see the examples below.
-{{% /admonition %}}
+> **Note:** The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+> You should now use the `index` field in `jsonData` to store the index name.
+> Please see the examples below.
 
 #### Provisioning examples
 

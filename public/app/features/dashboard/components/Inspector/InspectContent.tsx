@@ -1,4 +1,3 @@
-import { isEmpty } from 'lodash';
 import React, { useState } from 'react';
 
 import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
@@ -69,7 +68,9 @@ export const InspectContent = ({
     <Drawer
       title={title}
       subtitle={data && formatStats(data)}
+      width="50%"
       onClose={onClose}
+      expandable
       scrollableContent
       tabs={
         <TabsBar>
@@ -115,8 +116,7 @@ export const InspectContent = ({
 
 function formatStats(data: PanelData) {
   const { request } = data;
-
-  if (!request || isEmpty(request)) {
+  if (!request) {
     return '';
   }
 

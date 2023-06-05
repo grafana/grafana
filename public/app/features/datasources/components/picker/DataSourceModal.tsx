@@ -1,44 +1,30 @@
 import { css } from '@emotion/css';
-import { once } from 'lodash';
 import React, { useState } from 'react';
 import { DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
 import {
   Modal,
   FileDropzone,
   FileDropzoneDefaultChildren,
   CustomScrollbar,
+  LinkButton,
   useStyles2,
   Input,
   Icon,
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
 
-import { AddNewDataSourceButton } from './AddNewDataSourceButton';
-import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
-import { matchDataSourceWithSearch } from './utils';
-
-const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
-const INTERACTION_ITEM = {
-  SELECT_DS: 'select_ds',
-  UPLOAD_FILE: 'upload_file',
-  CONFIG_NEW_DS: 'config_new_ds',
-  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
-  SEARCH: 'search',
-  DISMISS: 'dismiss',
-};
 
 interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
+  datasources: DataSourceInstanceSettings[];
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
-  reportedInteractionFrom?: string;
 }
 
 export function DataSourceModal({
@@ -47,32 +33,9 @@ export function DataSourceModal({
   onChange,
   current,
   onDismiss,
-  reportedInteractionFrom,
 }: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
-  const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
-
-  const onDismissModal = () => {
-    onDismiss();
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.DISMISS, src: analyticsInteractionSrc });
-  };
-  const onChangeDataSource = (ds: DataSourceInstanceSettings) => {
-    onChange(ds);
-    reportInteraction(INTERACTION_EVENT_NAME, {
-      item: INTERACTION_ITEM.SELECT_DS,
-      ds_type: ds.type,
-      src: analyticsInteractionSrc,
-    });
-  };
-  // Memoizing to keep once() cached so it avoids reporting multiple times
-  const reportSearchUsageOnce = React.useMemo(
-    () =>
-      once(() => {
-        reportInteraction(INTERACTION_EVENT_NAME, { item: 'search', src: analyticsInteractionSrc });
-      }),
-    [analyticsInteractionSrc]
-  );
 
   return (
     <Modal
@@ -81,84 +44,63 @@ export function DataSourceModal({
       closeOnBackdropClick={true}
       isOpen={true}
       className={styles.modal}
-      contentClassName={styles.modalContent}
-      onClickBackdrop={onDismissModal}
-      onDismiss={onDismissModal}
+      onClickBackdrop={onDismiss}
+      onDismiss={onDismiss}
     >
-      <div className={styles.leftColumn}>
-        <Input
-          autoFocus
-          className={styles.searchInput}
-          value={search}
-          prefix={<Icon name="search" />}
-          placeholder="Search data source"
-          onChange={(e) => {
-            setSearch(e.currentTarget.value);
-            reportSearchUsageOnce();
-          }}
-        />
-        <CustomScrollbar>
-          <DataSourceList
-            dashboard={false}
-            mixed={false}
-            variables
-            filter={(ds) => matchDataSourceWithSearch(ds, search) && !ds.meta.builtIn}
-            onChange={onChangeDataSource}
-            current={current}
-            onClickEmptyStateCTA={() =>
-              reportInteraction(INTERACTION_EVENT_NAME, {
-                item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-                src: analyticsInteractionSrc,
-              })
-            }
+      <div className={styles.modalContent}>
+        <div className={styles.leftColumn}>
+          <Input
+            className={styles.searchInput}
+            value={search}
+            prefix={<Icon name="search" />}
+            placeholder="Search data source"
+            onChange={(e) => setSearch(e.currentTarget.value)}
           />
-          <BuiltInDataSourceList
-            className={styles.appendBuiltInDataSourcesList}
-            onChange={onChangeDataSource}
-            current={current}
-          />
-        </CustomScrollbar>
-      </div>
-      <div className={styles.rightColumn}>
-        <div className={styles.builtInDataSources}>
-          <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+          <CustomScrollbar>
+            <DataSourceList
+              dashboard={false}
+              mixed={false}
+              // FIXME: Filter out the grafana data source in a hacky way
+              filter={(ds) => ds.name.includes(search) && ds.name !== '-- Grafana --'}
+              onChange={onChange}
+              current={current}
+            />
           </CustomScrollbar>
-          {enableFileUpload && (
-            <FileDropzone
-              readAs="readAsArrayBuffer"
-              fileListRenderer={() => undefined}
-              options={{
-                maxSize: DFImport.maxFileSize,
-                multiple: false,
-                accept: DFImport.acceptedFiles,
-                ...fileUploadOptions,
-                onDrop: (...args) => {
-                  fileUploadOptions?.onDrop?.(...args);
-                  onDismiss();
-                  reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: INTERACTION_ITEM.UPLOAD_FILE,
-                    src: analyticsInteractionSrc,
-                  });
-                },
-              }}
-            >
-              <FileDropzoneDefaultChildren />
-            </FileDropzone>
-          )}
         </div>
-        <div className={styles.newDSSection}>
-          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
-          <AddNewDataSourceButton
-            variant="secondary"
-            onClick={() => {
-              reportInteraction(INTERACTION_EVENT_NAME, {
-                item: INTERACTION_ITEM.CONFIG_NEW_DS,
-                src: analyticsInteractionSrc,
-              });
-              onDismiss();
-            }}
-          />
+        <div className={styles.rightColumn}>
+          <div className={styles.builtInDataSources}>
+            <DataSourceList
+              className={styles.builtInDataSourceList}
+              filter={(ds) => !!ds.meta.builtIn}
+              dashboard
+              mixed
+              onChange={onChange}
+              current={current}
+            />
+            {enableFileUpload && (
+              <FileDropzone
+                readAs="readAsArrayBuffer"
+                fileListRenderer={() => undefined}
+                options={{
+                  maxSize: DFImport.maxFileSize,
+                  multiple: false,
+                  accept: DFImport.acceptedFiles,
+                  ...fileUploadOptions,
+                  onDrop: (...args) => {
+                    fileUploadOptions?.onDrop?.(...args);
+                    onDismiss();
+                  },
+                }}
+              >
+                <FileDropzoneDefaultChildren />
+              </FileDropzone>
+            )}
+          </div>
+          <div className={styles.dsCTAs}>
+            <LinkButton variant="secondary" href={`datasources/new`}>
+              Configure a new data source
+            </LinkButton>
+          </div>
         </div>
       </div>
     </Modal>
@@ -170,87 +112,44 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
     modal: css`
       width: 80%;
       height: 80%;
-      max-width: 1200px;
-      max-height: 900px;
-
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-      }
     `,
     modalContent: css`
       display: flex;
       flex-direction: row;
+      justify-content: space-between;
+      align-items: stretch;
       height: 100%;
-
-      ${theme.breakpoints.down('md')} {
-        flex-direction: column;
-      }
     `,
     leftColumn: css`
       display: flex;
       flex-direction: column;
       width: 50%;
       height: 100%;
-      padding-right: ${theme.spacing(4)};
+      padding-right: ${theme.spacing(1)};
       border-right: 1px solid ${theme.colors.border.weak};
-
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-        border-right: 0;
-        padding-right: 0;
-        flex: 1;
-        overflow-y: auto;
-      }
     `,
     rightColumn: css`
       display: flex;
       flex-direction: column;
       width: 50%;
       height: 100%;
+      padding: ${theme.spacing(1)};
       justify-items: space-evenly;
       align-items: stretch;
-      padding-left: ${theme.spacing(4)};
-
-      ${theme.breakpoints.down('md')} {
-        width: 100%;
-        padding-left: 0;
-        flex: 0;
-      }
+      padding-left: ${theme.spacing(1)};
     `,
     builtInDataSources: css`
-      flex: 1 1;
-      margin-bottom: ${theme.spacing(4)};
-
-      ${theme.breakpoints.down('md')} {
-        flex: 0;
-      }
-    `,
-    builtInDataSourcesList: css`
-      ${theme.breakpoints.down('md')} {
-        display: none;
-        margin-bottom: 0;
-      }
-
+      flex: 1;
       margin-bottom: ${theme.spacing(4)};
     `,
-    appendBuiltInDataSourcesList: css`
-      ${theme.breakpoints.up('md')} {
-        display: none;
-      }
+    builtInDataSourceList: css`
+      margin-bottom: ${theme.spacing(4)};
     `,
-    newDSSection: css`
+    dsCTAs: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: space-between;
-      align-items: center;
-    `,
-    newDSDescription: css`
-      flex: 1 0;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      color: ${theme.colors.text.secondary};
+      justify-content: flex-end;
     `,
     searchInput: css`
       width: 100%;

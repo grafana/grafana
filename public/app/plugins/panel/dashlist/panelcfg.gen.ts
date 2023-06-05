@@ -10,7 +10,7 @@
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface Options {
+export interface PanelOptions {
   folderId?: number;
   includeVars: boolean;
   keepTime: boolean;
@@ -23,7 +23,7 @@ export interface Options {
   tags: Array<string>;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   includeVars: false,
   keepTime: false,
   maxItems: 10,

@@ -26,9 +26,9 @@ export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~'];
 export const stringOperators = ['=', '!=', '=~'];
 export const numberOperators = ['=', '!=', '>', '<', '>=', '<='];
 
-export const intrinsics = ['duration', 'kind', 'name', 'status'];
+const intrinsics = ['duration', 'name', 'status', 'parent'];
 
-export const scopes: string[] = ['resource', 'span'];
+const scopes: string[] = ['resource', 'span'];
 
 const keywords = intrinsics.concat(scopes);
 

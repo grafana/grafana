@@ -90,6 +90,7 @@ const AdminEditOrgPage = ({ match }: Props) => {
   const pageNav: NavModelItem = {
     text: orgState?.value?.name ?? '',
     icon: 'shield',
+    breadcrumbs: [{ title: 'Orgs', url: 'admin/orgs' }],
     subTitle: 'Manage settings and user roles for an organization.',
   };
 

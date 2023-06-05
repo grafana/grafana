@@ -14,7 +14,6 @@ export { Tooltip } from './Tooltip/Tooltip';
 export type { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
-export { Toggletip } from './Toggletip/Toggletip';
 export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, type ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContainer';
@@ -249,8 +248,7 @@ export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDis
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
-export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
-export { type UserView } from './UsersIndicator/types';
+
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type store interface {
@@ -19,8 +18,7 @@ type store interface {
 }
 
 type xormStore struct {
-	db  db.DB
-	cfg *setting.Cfg
+	db db.DB
 }
 
 func (ss *xormStore) UpdateTempUserStatus(ctx context.Context, cmd *tempuser.UpdateTempUserStatusCommand) error {
@@ -104,11 +102,7 @@ func (ss *xormStore) GetTempUsersQuery(ctx context.Context, query *tempuser.GetT
 		}
 
 		if query.Email != "" {
-			if ss.cfg.CaseInsensitiveLogin {
-				rawSQL += ` AND LOWER(tu.email)=LOWER(?)`
-			} else {
-				rawSQL += ` AND tu.email=?`
-			}
+			rawSQL += ` AND tu.email=?`
 			params = append(params, query.Email)
 		}
 

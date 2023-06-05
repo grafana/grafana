@@ -2,7 +2,6 @@ import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
 
 import { createPluginExtensionRegistry } from './createPluginExtensionRegistry';
 import { getPluginExtensions } from './getPluginExtensions';
-import { isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 describe('getPluginExtensions()', () => {
@@ -37,52 +36,6 @@ describe('getPluginExtensions()', () => {
     const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
 
     expect(extensions).toHaveLength(1);
-    expect(extensions[0]).toEqual(
-      expect.objectContaining({
-        pluginId,
-        type: PluginExtensionTypes.link,
-        title: link1.title,
-        description: link1.description,
-        path: link1.path,
-      })
-    );
-  });
-
-  test('should not limit the number of extensions per plugin by default', () => {
-    // Registering 3 extensions for the same plugin for the same placement
-    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
-    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
-
-    expect(extensions).toHaveLength(3);
-    expect(extensions[0]).toEqual(
-      expect.objectContaining({
-        pluginId,
-        type: PluginExtensionTypes.link,
-        title: link1.title,
-        description: link1.description,
-        path: link1.path,
-      })
-    );
-  });
-
-  test('should be possible to limit the number of extensions per plugin for a given placement', () => {
-    const registry = createPluginExtensionRegistry([
-      { pluginId, extensionConfigs: [link1, link1, link1, link2] },
-      {
-        pluginId: 'my-plugin',
-        extensionConfigs: [
-          { ...link1, path: '/a/my-plugin/declare-incident' },
-          { ...link1, path: '/a/my-plugin/declare-incident' },
-          { ...link1, path: '/a/my-plugin/declare-incident' },
-          { ...link2, path: '/a/my-plugin/declare-incident' },
-        ],
-      },
-    ]);
-
-    // Limit to 1 extension per plugin
-    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1, limitPerPlugin: 1 });
-
-    expect(extensions).toHaveLength(2);
     expect(extensions[0]).toEqual(
       expect.objectContaining({
         pluginId,
@@ -143,19 +96,19 @@ describe('getPluginExtensions()', () => {
     expect(link2.configure).toHaveBeenCalledTimes(1);
     expect(extensions).toHaveLength(0);
   });
-  test('should pass a read only context to the configure() function', () => {
+  test('should pass a frozen copy of the context to the configure() function', () => {
     const context = { title: 'New title from the context!' };
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link2] }]);
     const { extensions } = getPluginExtensions({ registry, context, extensionPointId: extensionPoint2 });
     const [extension] = extensions;
-    const readOnlyContext = (link2.configure as jest.Mock).mock.calls[0][0];
+    const frozenContext = (link2.configure as jest.Mock).mock.calls[0][0];
 
     assertPluginExtensionLink(extension);
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(isReadOnlyProxy(readOnlyContext)).toBe(true);
+    expect(Object.isFrozen(frozenContext)).toBe(true);
     expect(() => {
-      readOnlyContext.title = 'New title';
+      frozenContext.title = 'New title';
     }).toThrow();
     expect(context.title).toBe('New title from the context!');
   });
@@ -294,7 +247,7 @@ describe('getPluginExtensions()', () => {
     expect(global.console.warn).toHaveBeenCalledWith('[Plugin Extensions] Something went wrong!');
   });
 
-  test('should pass a read only context to the onClick() function', () => {
+  test('should pass a frozen copy of the context to the onClick() function', () => {
     const context = { title: 'New title from the context!' };
 
     link2.path = undefined;
@@ -310,13 +263,13 @@ describe('getPluginExtensions()', () => {
     const helpers = (link2.onClick as jest.Mock).mock.calls[0][1];
 
     expect(link2.configure).toHaveBeenCalledTimes(1);
-    expect(isReadOnlyProxy(helpers.context)).toBe(true);
+    expect(Object.isFrozen(helpers.context)).toBe(true);
     expect(() => {
       helpers.context.title = 'New title';
     }).toThrow();
   });
 
-  test('should should not make original context read only', () => {
+  test('should should not freeze the original context', () => {
     const context = {
       title: 'New title from the context!',
       nested: { title: 'title' },

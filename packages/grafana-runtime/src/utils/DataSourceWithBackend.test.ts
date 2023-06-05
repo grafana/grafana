@@ -8,7 +8,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceRef,
-  createDataFrame,
+  MutableDataFrame,
 } from '@grafana/data';
 
 import {
@@ -240,12 +240,10 @@ describe('DataSourceWithBackend', () => {
     let obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
 
-    let frame = createDataFrame({
-      meta: {
-        channel: 'a/b/c',
-      },
-      fields: [],
-    });
+    let frame = new MutableDataFrame();
+    frame.meta = {
+      channel: 'a/b/c',
+    };
     rsp.data = [frame];
     obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();

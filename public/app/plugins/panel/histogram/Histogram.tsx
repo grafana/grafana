@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultFieldConfig, FieldConfig, Options } from './panelcfg.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;
@@ -34,7 +34,7 @@ function incrRoundUp(num: number, incr: number) {
 }
 
 export interface HistogramProps extends Themeable2 {
-  options: Options; // used for diff
+  options: PanelOptions; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
   bucketSize: number;
   width: number;
@@ -53,10 +53,6 @@ export function getBucketSize(frame: DataFrame) {
 const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
   // todo: scan all values in BucketMin and BucketMax fields to assert if uniform bucketSize
 
-  // since this is x axis range, this should ideally come from xMin or xMax fields, not a count field
-  // though both methods are probably hacks, and we should just accept explicit opts into this prepConfig
-  let { min: xScaleMin, max: xScaleMax } = frame.fields[2].config;
-
   let builder = new UPlotConfigBuilder();
 
   // assumes BucketMin is fields[0] and BucktMax is fields[1]
@@ -68,8 +64,8 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     let minSpace = u.axes[axisIdx]._space;
     let bucketWidth = u.valToPos(u.data[0][0] + bucketSize, 'x') - u.valToPos(u.data[0][0], 'x');
 
-    let firstSplit = incrRoundDn(xScaleMin ?? u.data[0][0], bucketSize);
-    let lastSplit = incrRoundUp(xScaleMax ?? u.data[0][u.data[0].length - 1] + bucketSize, bucketSize);
+    let firstSplit = u.data[0][0];
+    let lastSplit = u.data[0][u.data[0].length - 1] + bucketSize;
 
     let splits = [];
     let skip = Math.ceil(minSpace / bucketWidth);
@@ -88,14 +84,6 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
     range: (u, wantedMin, wantedMax) => {
-      // these settings will prevent zooming, probably okay?
-      if (xScaleMin != null) {
-        wantedMin = xScaleMin;
-      }
-      if (xScaleMax != null) {
-        wantedMax = xScaleMax;
-      }
-
       let fullRangeMin = u.data[0][0];
       let fullRangeMax = u.data[0][u.data[0].length - 1];
 
@@ -194,7 +182,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     field.state = field.state ?? {};
     field.state.seriesIndex = seriesIndex++;
 
-    const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
+    const customConfig: PanelFieldConfig = { ...defaultPanelFieldConfig, ...field.config.custom };
 
     const scaleKey = 'y';
     const colorMode = getFieldColorModeForField(field);

@@ -52,55 +52,24 @@ export interface DataQuery {
 }
 
 export interface BaseDimensionConfig {
-  /**
-   * fixed: T -- will be added by each element
-   */
   field?: string;
-}
-
-export enum ScaleDimensionMode {
-  Linear = 'linear',
-  Quad = 'quad',
+  fixed: (string | number);
 }
 
 export interface ScaleDimensionConfig extends BaseDimensionConfig {
-  fixed?: number;
   max: number;
   min: number;
-  mode?: ScaleDimensionMode; // | *"linear"
 }
 
-export interface ColorDimensionConfig extends BaseDimensionConfig {
-  fixed?: string; // color value
-}
-
-export enum ScalarDimensionMode {
-  Clamped = 'clamped',
-  Mod = 'mod',
-}
-
-export interface ScalarDimensionConfig extends BaseDimensionConfig {
-  fixed?: number;
-  max: number;
-  min: number;
-  mode?: ScalarDimensionMode;
-}
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
 
 export enum TextDimensionMode {
   Field = 'field',
   Fixed = 'fixed',
   Template = 'template',
-}
-
-export interface TextDimensionConfig extends BaseDimensionConfig {
-  fixed?: string;
-  mode: TextDimensionMode;
-}
-
-export enum ResourceDimensionMode {
-  Field = 'field',
-  Fixed = 'fixed',
-  Mapping = 'mapping',
 }
 
 export interface MapLayerOptions {
@@ -816,12 +785,8 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-/**
- * Links to a resource (image/svg path)
- */
-export interface ResourceDimensionConfig extends BaseDimensionConfig {
-  fixed?: string;
-  mode: ResourceDimensionMode;
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
 }
 
 export interface FrameGeometrySource {

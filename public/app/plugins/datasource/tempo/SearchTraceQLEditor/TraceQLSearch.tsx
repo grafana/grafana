@@ -13,6 +13,7 @@ import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
+import { CompletionProvider } from '../traceql/autocomplete';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
@@ -33,6 +34,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const styles = useStyles2(getStyles);
   const [error, setError] = useState<Error | FetchError | null>(null);
 
+  const [tags, setTags] = useState<string[]>([]);
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
 
@@ -66,7 +68,17 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
-        setIsTagsLoading(false);
+        const tags = datasource.languageProvider.getTags();
+
+        if (tags) {
+          // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+          // so Tempo doesn't send anything and we inject it here for the autocomplete
+          if (!tags.find((t) => t === 'status')) {
+            tags.push('status');
+          }
+          setTags(tags);
+          setIsTagsLoading(false);
+        }
       } catch (error) {
         if (error instanceof Error) {
           dispatch(notifyApp(createErrorNotification('Error', error)));
@@ -90,6 +102,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   // filter out tags that already exist in the static fields
   const staticTags = datasource.search?.filters?.map((f) => f.tag) || [];
   staticTags.push('duration');
+  const filteredTags = [...CompletionProvider.intrinsics, ...tags].filter((t) => !staticTags.includes(t));
 
   // Dynamic filters are all filters that don't match the ID of a filter in the datasource configuration
   // The duration tag is a special case since its selector is hard-coded
@@ -158,7 +171,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               setError={setError}
               updateFilter={updateFilter}
               deleteFilter={deleteFilter}
-              staticTags={staticTags}
+              tags={filteredTags}
               isTagsLoading={isTagsLoading}
             />
           </InlineSearchField>

@@ -9,10 +9,10 @@ import {
 } from '@grafana/schema';
 
 import { colorSchemes } from './palettes';
-import { Options, defaultOptions, HeatmapColorMode } from './types';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './types';
 
 /** Called when the version number changes */
-export const heatmapMigrationHandler = (panel: PanelModel): Partial<Options> => {
+export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
   // Migrating from angular
   if (Object.keys(panel.options).length === 0) {
     return heatmapChangedHandler(panel, 'heatmap', { angular: panel }, panel.fieldConfig);
@@ -43,7 +43,7 @@ export const heatmapChangedHandler: PanelTypeChangedHandler = (panel, prevPlugin
   return {};
 };
 
-export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
+export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigSource; options: PanelOptions } {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],
@@ -51,7 +51,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
 
   const calculate = angular.dataFormat === 'tsbuckets' ? false : true;
   const calculation: HeatmapCalculationOptions = {
-    ...defaultOptions.calculation,
+    ...defaultPanelOptions.calculation,
   };
 
   const oldYAxis = { logBase: 1, ...angular.yAxis };
@@ -82,11 +82,11 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
   }
 
   const cellGap = asNumber(angular.cards?.cardPadding, 2);
-  const options: Options = {
+  const options: PanelOptions = {
     calculate,
     calculation,
     color: {
-      ...defaultOptions.color,
+      ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
     cellGap: cellGap ? cellGap : 1, // default to size 1
@@ -115,12 +115,12 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       yHistogram: Boolean(angular.tooltip?.showHistogram),
     },
     exemplars: {
-      ...defaultOptions.exemplars,
+      ...defaultPanelOptions.exemplars,
     },
   };
 
   if (angular.hideZeroBuckets) {
-    options.filterValues = { ...defaultOptions.filterValues }; // min: 1e-9
+    options.filterValues = { ...defaultPanelOptions.filterValues }; // min: 1e-9
   }
 
   // Migrate color options
@@ -134,7 +134,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       if (!scheme) {
         scheme = colorSchemes.find((v) => current.indexOf(v.name) >= 0);
       }
-      options.color.scheme = scheme ? scheme.name : defaultOptions.color.scheme;
+      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color.scheme;
       break;
     }
     case 'opacity': {

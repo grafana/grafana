@@ -150,7 +150,6 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
  */
 export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps<ScaleDistributionConfig>) => {
   const type = value?.type ?? ScaleDistribution.Linear;
-  const log = value?.log ?? 2;
   return (
     <>
       <div style={{ marginBottom: 16 }}>
@@ -161,7 +160,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
             onChange({
               ...value,
               type: v!,
-              log: v === ScaleDistribution.Linear ? undefined : log,
+              log: v === ScaleDistribution.Linear ? undefined : value.log ?? 2,
             });
           }}
         />
@@ -170,7 +169,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         <Field label="Log base">
           <Select
             options={LOG_DISTRIBUTION_OPTIONS}
-            value={log}
+            value={value.log ?? 2}
             onChange={(v) => {
               onChange({
                 ...value,
@@ -184,7 +183,7 @@ export const ScaleDistributionEditor = ({ value, onChange }: StandardEditorProps
         <Field label="Linear threshold">
           <Input
             placeholder="1"
-            value={value?.linearThreshold}
+            value={value.linearThreshold}
             onChange={(v) => {
               onChange({
                 ...value,

@@ -4,13 +4,16 @@ export const ROUTE_BASE_ID = 'connections';
 export const ROUTES = {
   Base: `/${ROUTE_BASE_ID}`,
 
-  // Data sources
-  DataSources: `/${ROUTE_BASE_ID}/datasources`,
-  DataSourcesNew: `/${ROUTE_BASE_ID}/datasources/new`,
-  DataSourcesEdit: `/${ROUTE_BASE_ID}/datasources/edit/:uid`,
-  DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
+  // Your Connections
+  YourConnections: `/${ROUTE_BASE_ID}/your-connections`,
 
-  // Add new connection
-  AddNewConnection: `/${ROUTE_BASE_ID}/add-new-connection`,
+  // Your Connections / Datasources
+  DataSources: `/${ROUTE_BASE_ID}/your-connections/datasources`,
+  DataSourcesNew: `/${ROUTE_BASE_ID}/your-connections/datasources/new`,
+  DataSourcesEdit: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid`,
+  DataSourcesDashboards: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid/dashboards`,
+
+  // Connect Data
+  ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
   DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
 } as const;

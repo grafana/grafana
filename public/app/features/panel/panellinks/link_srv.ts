@@ -305,7 +305,7 @@ export class LinkSrv implements LinkService {
     };
 
     if (replaceVariables) {
-      info.href = replaceVariables(info.href, undefined, VariableFormatID.UriEncode);
+      info.href = replaceVariables(info.href, undefined, VariableFormatID.PercentEncode);
       info.title = replaceVariables(link.title);
     }
 

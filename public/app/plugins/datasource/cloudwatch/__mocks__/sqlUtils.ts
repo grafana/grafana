@@ -14,12 +14,12 @@ export function createArray(
   expressions: QueryEditorExpression[],
   type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or = QueryEditorExpressionType.And
 ) {
-  const array: QueryEditorArrayExpression = {
+  const array = {
     type,
     expressions,
   };
 
-  return array;
+  return array as QueryEditorArrayExpression;
 }
 
 export function createOperator(property: string, operator: string, value?: string): QueryEditorOperatorExpression {

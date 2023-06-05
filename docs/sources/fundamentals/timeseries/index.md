@@ -8,7 +8,7 @@ keywords:
   - guide
   - concepts
   - timeseries
-title: Introduction to time series
+title: Intro to time series
 weight: 400
 ---
 

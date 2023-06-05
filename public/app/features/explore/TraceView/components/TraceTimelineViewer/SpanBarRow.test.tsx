@@ -17,7 +17,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { NONE, DURATION, TAG } from '../settings/SpanBarSettings';
-import { SpanLinkDef, TraceSpan } from '../types';
+import { TraceSpan } from '../types';
+import { SpanLinks } from '../types/links';
 
 import SpanBarRow, { SpanBarRowProps } from './SpanBarRow';
 
@@ -110,7 +111,11 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ href: 'href' }, { href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);
@@ -137,7 +142,11 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ content: 'This span is referenced by another span', href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ content: 'This span is referenced by another span', href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getByRole('link', { name: 'This span is referenced by another span' })).toBeInTheDocument();
@@ -172,7 +181,11 @@ describe('<SpanBarRow>', () => {
       <SpanBarRow
         {...(props as unknown as SpanBarRowProps)}
         span={span}
-        createSpanLink={() => [{ href: 'href' }, { href: 'href' }] as SpanLinkDef[]}
+        createSpanLink={() =>
+          ({
+            traceLinks: [{ href: 'href' }, { href: 'href' }],
+          } as SpanLinks)
+        }
       />
     );
     expect(screen.getAllByTestId('SpanLinksMenu')).toHaveLength(1);

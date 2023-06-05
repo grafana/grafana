@@ -69,7 +69,6 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
   return (
     <div className={styles.cardContainer}>
       <SearchCheckbox
-        className={styles.checkbox}
         aria-label="Select dashboard"
         editable={editable}
         checked={isSelected}
@@ -125,9 +124,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
       margin-bottom: 0;
     `,
-    checkbox: css({
-      marginRight: theme.spacing(1),
-    }),
     metaContainer: css`
       display: flex;
       align-items: center;

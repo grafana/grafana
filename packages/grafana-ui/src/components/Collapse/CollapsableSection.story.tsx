@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -8,7 +8,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { CollapsableSection, Props } from './CollapsableSection';
 import mdx from './CollapsableSection.mdx';
 
-const meta: Meta<typeof CollapsableSection> = {
+const meta: ComponentMeta<typeof CollapsableSection> = {
   title: 'Layout/CollapsableSection',
   component: CollapsableSection,
   decorators: [withCenteredStory],
@@ -31,7 +31,7 @@ const meta: Meta<typeof CollapsableSection> = {
   },
 };
 
-export const Basic: StoryFn<typeof CollapsableSection> = ({ children, ...args }: Props) => {
+export const Basic: ComponentStory<typeof CollapsableSection> = ({ children, ...args }: Props) => {
   const [, updateArgs] = useArgs();
 
   const onToggle = (isOpen: boolean) => {

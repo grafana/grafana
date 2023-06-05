@@ -21,14 +21,6 @@ jest.mock('app/features/plugins/importPanelPlugin', () => {
   };
 });
 
-jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
-  getDashboardSrv: () => {
-    return {
-      getCurrent: () => undefined,
-    };
-  },
-}));
-
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
 

@@ -90,8 +90,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     }
 
     const observables: Array<Observable<DataQueryResponse>> = Array.from(byType.entries()).map(([queryType, req]) => {
-      const mappedQueryType = queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : queryType;
-      const ds = this.pseudoDatasource[mappedQueryType];
+      const ds = this.pseudoDatasource[queryType];
       if (!ds) {
         throw new Error('Data source not created for query type ' + queryType);
       }
@@ -139,6 +138,10 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     return !!subQuery && this.templateSrv.containsTemplate(subQuery);
   }
 
+  async annotationQuery(options: any) {
+    return this.azureLogAnalyticsDatasource.annotationQuery(options);
+  }
+
   /* Azure Monitor REST API methods */
   getResourceGroups(subscriptionId: string) {
     return this.azureMonitorDatasource.getResourceGroups(this.templateSrv.replace(subscriptionId));
@@ -180,8 +183,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
         return query;
       }
 
-      const queryType = query.queryType === AzureQueryType.AzureTraces ? AzureQueryType.LogAnalytics : query.queryType;
-      const ds = this.pseudoDatasource[queryType];
+      const ds = this.pseudoDatasource[query.queryType];
       return {
         datasource: ds?.getRef(),
         ...(ds?.applyTemplateVariables(query, scopedVars) ?? query),
@@ -210,9 +212,6 @@ function hasQueryForType(query: AzureMonitorQuery): boolean {
 
     case AzureQueryType.AzureResourceGraph:
       return !!query.azureResourceGraph;
-
-    case AzureQueryType.AzureTraces:
-      return !!query.azureTraces;
 
     case AzureQueryType.GrafanaTemplateVariableFn:
       return !!query.grafanaTemplateVariableFn;

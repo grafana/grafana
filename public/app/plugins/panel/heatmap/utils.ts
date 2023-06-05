@@ -23,7 +23,7 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { FieldConfig, YAxisConfig } from './types';
+import { PanelFieldConfig, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -289,7 +289,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     return builder; // early abort (avoids error)
   }
 
-  const yFieldConfig: FieldConfig | undefined = yField.config?.custom;
+  // eslint-ignore @typescript-eslint/no-explicit-any
+  const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
@@ -966,7 +967,7 @@ export const boundedMinMax = (
 };
 
 export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
-  let range = maxValue - minValue || 1;
+  let range = Math.max(maxValue - minValue, 1);
 
   let paletteSize = palette.length;
 

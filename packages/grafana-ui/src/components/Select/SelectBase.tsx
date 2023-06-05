@@ -93,7 +93,6 @@ export function SelectBase<T>({
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
-  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -214,7 +213,6 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
-    blurInputOnSelect,
     captureMenuScroll: false,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
@@ -357,7 +355,7 @@ export function SelectBase<T>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
+          MultiValueRemove: MultiValueRemove,
           ...components,
         }}
         styles={selectStyles}

@@ -2,7 +2,6 @@ package clients
 
 import (
 	"context"
-	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,20 +40,13 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 		return nil, err
 	}
 
-	httpReqCopy := &http.Request{}
-	if r.HTTPRequest != nil && r.HTTPRequest.Header != nil {
-		// avoid r.HTTPRequest.Clone(context.Background()) as we do not require a full clone
-		httpReqCopy.Header = r.HTTPRequest.Header.Clone()
-		httpReqCopy.RemoteAddr = r.HTTPRequest.RemoteAddr
-	}
-
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				a.log.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := a.anonSessionService.TagSession(context.Background(), httpReqCopy); err != nil {
+		if err := a.anonSessionService.TagSession(context.Background(), r.HTTPRequest); err != nil {
 			a.log.Warn("failed to tag anonymous session", "error", err)
 		}
 	}()

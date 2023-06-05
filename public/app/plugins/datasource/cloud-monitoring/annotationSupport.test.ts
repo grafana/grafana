@@ -5,10 +5,10 @@ import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import {
   AlignmentTypes,
   CloudMonitoringQuery,
-  QueryType,
-  MetricKind,
   LegacyCloudMonitoringAnnotationQuery,
-} from './types/query';
+  MetricKind,
+  QueryType,
+} from './types';
 
 const query: CloudMonitoringQuery = {
   refId: 'query',

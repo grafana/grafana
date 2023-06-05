@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/expr"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -76,8 +75,7 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 	if expStatusCode != resp.StatusCode {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		t.Log(string(b))
-		require.Equal(t, expStatusCode, resp.StatusCode)
+		t.Fatal(string(b))
 	}
 	return resp
 }

@@ -240,7 +240,6 @@ export class AsyncSelect<T> extends PureComponent<AsyncProps<T>> {
               value={value}
               //@ts-expect-error
               getOptionLabel={getOptionLabel}
-              //@ts-expect-error
               getOptionValue={getOptionValue}
               menuShouldScrollIntoView={false}
               onChange={onChange}

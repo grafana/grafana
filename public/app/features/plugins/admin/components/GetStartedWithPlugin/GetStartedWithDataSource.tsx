@@ -30,7 +30,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
   return (
     <Button variant="primary" onClick={onAddDataSource}>
-      Add new data source
+      Create a {plugin.name} data source
     </Button>
   );
 }

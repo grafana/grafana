@@ -58,7 +58,8 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
   }
 
   if (!hasPermission && !isExternallyManaged) {
-    return <div className={styles.message}>{statusToMessage(pluginStatus)}</div>;
+    const message = `You do not have permission to ${pluginStatus} this plugin.`;
+    return <div className={styles.message}>{message}</div>;
   }
 
   if (!plugin.isPublished) {
@@ -100,17 +101,3 @@ export const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
-
-function statusToMessage(status: PluginStatus): string {
-  switch (status) {
-    case PluginStatus.INSTALL:
-    case PluginStatus.REINSTALL:
-      return `You do not have permission to install this plugin.`;
-    case PluginStatus.UNINSTALL:
-      return `You do not have permission to uninstall this plugin.`;
-    case PluginStatus.UPDATE:
-      return `You do not have permission to update this plugin.`;
-    default:
-      return `You do not have permission to manage this plugin.`;
-  }
-}

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { orderBy } from 'lodash';
+import { isEqual, orderBy, uniqWith } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useDebounce } from 'react-use';
 
@@ -15,7 +15,7 @@ import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
 import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
-import { combineMatcherStrings, labelsMatchMatchers, parseMatchers } from './utils/alertmanager';
+import { labelsMatchMatchers, matchersToString, parseMatcher, parseMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { createViewLink } from './utils/misc';
 
@@ -38,7 +38,10 @@ export const AlertsFolderView = ({ folder }: Props) => {
   const dispatch = useDispatch();
 
   const onTagClick = (tagName: string) => {
-    const matchersString = combineMatcherStrings(labelFilter, tagName);
+    const matchers = parseMatchers(labelFilter);
+    const tagMatcherField = parseMatcher(tagName);
+    const uniqueMatchers = uniqWith([...matchers, tagMatcherField], isEqual);
+    const matchersString = matchersToString(uniqueMatchers);
     setLabelFilter(matchersString);
   };
 

@@ -1,7 +1,7 @@
 import intersect from 'fast_array_intersect';
 
 import { getTimeField, sortDataFrame } from '../../dataframe';
-import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
+import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -42,7 +42,7 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * The field to join -- frames that do not have this field will be dropped
+   * The field to join -- frames that do not have this field will be droppped
    */
   joinBy?: FieldMatcher;
 
@@ -180,18 +180,12 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
         nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
-        let name = field.name;
         if (frame.name) {
-          if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
-            name = frame.name;
-          } else {
-            labels = { ...labels, name: frame.name };
-          }
+          labels = { ...labels, name: frame.name };
         }
 
         fields.push({
           ...field,
-          name,
           labels, // add the name label from frame
         });
       }
@@ -357,7 +351,7 @@ export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMo
 
 // Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: any[], samples = 50) {
+export function isLikelyAscendingVector(data: Vector | [], samples = 50) {
   const len = data.length;
 
   // empty or single value

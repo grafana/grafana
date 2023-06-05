@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { Segment, Icon, SegmentSection } from '@grafana/ui';
@@ -44,7 +44,7 @@ export const ArrayOptions = () => {
   );
 };
 
-const meta: Meta<typeof Segment> = {
+const meta: ComponentMeta<typeof Segment> = {
   title: 'Data Source/Segment/SegmentSync',
   component: Segment,
 };
@@ -151,7 +151,9 @@ export const HtmlAttributes = () => {
   );
 };
 
-export const Basic: StoryFn<React.ComponentType<SegmentSyncProps<string>>> = (args: SegmentSyncProps<string>) => {
+export const Basic: ComponentStory<React.ComponentType<SegmentSyncProps<string>>> = (
+  args: SegmentSyncProps<string>
+) => {
   const [value, setValue] = useState(args.value);
 
   const props: SegmentSyncProps<string> = {

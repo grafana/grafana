@@ -15,8 +15,8 @@ title: PieChartPanelCfg kind
 
 | Property                | Type                                        | Required | Default | Description                                                                                                                                                                                                                   |
 |-------------------------|---------------------------------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `FieldConfig`           | [HideableFieldConfig](#hideablefieldconfig) | **Yes**  |         | TODO docs                                                                                                                                                                                                                     |
-| `Options`               | [object](#options)                          | **Yes**  |         |                                                                                                                                                                                                                               |
+| `PanelFieldConfig`      | [HideableFieldConfig](#hideablefieldconfig) | **Yes**  |         | TODO docs                                                                                                                                                                                                                     |
+| `PanelOptions`          | [object](#paneloptions)                     | **Yes**  |         |                                                                                                                                                                                                                               |
 | `PieChartLabels`        | string                                      | **Yes**  |         | Select labels to display on the pie chart.<br/> - Name - The series or field name.<br/> - Percent - The percentage of the whole.<br/> - Value - The raw numerical value.<br/>Possible values are: `name`, `value`, `percent`. |
 | `PieChartLegendOptions` | [object](#piechartlegendoptions)            | **Yes**  |         |                                                                                                                                                                                                                               |
 | `PieChartLegendValues`  | string                                      | **Yes**  |         | Select values to display in the legend.<br/> - Percent: The percentage of the whole.<br/> - Value: The raw numerical value.<br/>Possible values are: `value`, `percent`.                                                      |
@@ -40,7 +40,7 @@ TODO docs
 | `tooltip` | boolean | **Yes**  |         |             |
 | `viz`     | boolean | **Yes**  |         |             |
 
-### Options
+### PanelOptions
 
 It extends [OptionsWithTooltip](#optionswithtooltip) and [SingleStatBaseOptions](#singlestatbaseoptions).
 

@@ -4,16 +4,14 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
-import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat } from '../../types';
-import FormatAsField from '../FormatAsField';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
+import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
-import { setFormatAs } from './setQueryValue';
 import useMigrations from './useMigrations';
 
 interface LogsQueryEditorProps {
@@ -51,7 +49,7 @@ const LogsQueryEditor = ({
   };
 
   return (
-    <span data-testid={selectors.components.queryEditor.logsQueryEditor.container.input}>
+    <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
       <EditorRows>
         <EditorRow>
           <EditorFieldGroup>
@@ -101,14 +99,6 @@ const LogsQueryEditor = ({
                 variableOptionGroup={variableOptionGroup}
                 onQueryChange={onChange}
                 setError={setError}
-                inputId={'azure-monitor-logs'}
-                options={[
-                  { label: 'Time series', value: ResultFormat.TimeSeries },
-                  { label: 'Table', value: ResultFormat.Table },
-                ]}
-                defaultValue={ResultFormat.Table}
-                setFormatAs={setFormatAs}
-                resultFormat={query.azureLogAnalytics?.resultFormat}
               />
             )}
 

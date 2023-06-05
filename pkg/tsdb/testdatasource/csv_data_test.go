@@ -17,10 +17,12 @@ func TestCSVFileScenario(t *testing.T) {
 	cfg.DataPath = t.TempDir()
 	cfg.StaticRootPath = "../../../public"
 
-	s := &Service{}
+	s := &Service{
+		cfg: cfg,
+	}
 
 	t.Run("loadCsvFile", func(t *testing.T) {
-		files := []string{"simple", "mixed", "labels"}
+		files := []string{"simple", "mixed"}
 		for _, name := range files {
 			t.Run("Should load CSV Text: "+name, func(t *testing.T) {
 				filePath := filepath.Join("testdata", name+".csv")

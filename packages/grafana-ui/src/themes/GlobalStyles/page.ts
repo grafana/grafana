@@ -88,7 +88,12 @@ export function getPageStyles(theme: GrafanaTheme2) {
       margin-bottom: ${theme.spacing(2)};
       display: flex;
       align-items: flex-start;
-      gap: ${theme.spacing(2)};
+
+      > a,
+      > button,
+      > div:nth-child(2) {
+        margin-left: ${theme.spacing(2)};
+      }
     }
 
     .page-action-bar--narrow {

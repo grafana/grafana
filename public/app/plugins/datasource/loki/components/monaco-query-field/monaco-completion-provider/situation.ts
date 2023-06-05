@@ -20,8 +20,6 @@ import {
   LiteralExpr,
   MetricExpr,
   UnwrapExpr,
-  DistinctFilter,
-  DistinctLabel,
 } from '@grafana/lezer-logql';
 
 import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
@@ -127,10 +125,6 @@ export type Situation =
   | {
       type: 'AFTER_UNWRAP';
       logQuery: string;
-    }
-  | {
-      type: 'AFTER_DISTINCT';
-      logQuery: string;
     };
 
 type Resolver = {
@@ -196,14 +190,6 @@ const RESOLVERS: Resolver[] = [
   {
     path: [UnwrapExpr],
     fun: resolveAfterUnwrap,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctFilter],
-    fun: resolveAfterDistinct,
-  },
-  {
-    path: [ERROR_NODE_ID, DistinctLabel],
-    fun: resolveAfterDistinct,
   },
 ];
 
@@ -506,29 +492,6 @@ function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation
   return {
     type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME',
     otherLabels,
-  };
-}
-
-function resolveAfterDistinct(node: SyntaxNode, text: string, pos: number): Situation | null {
-  let logQuery = getLogQueryFromMetricsQuery(text).trim();
-
-  let distinctFilterParent: SyntaxNode | null = null;
-  let parent = node.parent;
-  while (parent !== null) {
-    if (parent.type.id === PipelineStage) {
-      distinctFilterParent = parent;
-      break;
-    }
-    parent = parent.parent;
-  }
-
-  if (distinctFilterParent?.type.id === PipelineStage) {
-    logQuery = logQuery.slice(0, distinctFilterParent.from);
-  }
-
-  return {
-    type: 'AFTER_DISTINCT',
-    logQuery,
   };
 }
 

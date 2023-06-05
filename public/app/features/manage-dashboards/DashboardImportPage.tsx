@@ -192,6 +192,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
   pageNav: NavModelItem = {
     text: 'Import dashboard',
     subTitle: 'Import dashboard from file or Grafana.com',
+    breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
   };
 
   render() {

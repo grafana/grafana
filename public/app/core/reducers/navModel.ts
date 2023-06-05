@@ -92,20 +92,12 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     const newPages: NavIndex = {};
     const payload = action.payload;
 
-    function addNewPages(node: NavModelItem) {
-      if (node.children) {
-        for (const child of node.children) {
-          newPages[child.id!] = {
-            ...child,
-            parentItem: node,
-          };
-        }
-      }
-      if (node.parentItem) {
-        addNewPages(node.parentItem);
-      }
+    for (const node of payload.children!) {
+      newPages[node.id!] = {
+        ...node,
+        parentItem: payload,
+      };
     }
-    addNewPages(payload);
 
     return { ...state, ...newPages };
   } else if (updateConfigurationSubtitle.match(action)) {

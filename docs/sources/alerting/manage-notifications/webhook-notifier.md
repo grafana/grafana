@@ -2,7 +2,6 @@
 aliases:
   - ../contact-points/notifiers/webhook-notifier/
   - ../fundamentals/contact-points/webhook-notifier/
-description: Configure the webhook notifier for notifications
 keywords:
   - grafana
   - alerting
@@ -42,10 +41,7 @@ Example JSON body:
       "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT2%2Cteam%3Dblue%2Czone%3Dus-1",
       "dashboardURL": "",
       "panelURL": "",
-      "values": {
-        "B": 44.23943737541908,
-        "C": 1
-      }
+      "valueString": "[ metric='' labels={} value=14151.331895396988 ]"
     },
     {
       "status": "firing",
@@ -66,10 +62,7 @@ Example JSON body:
       "silenceURL": "https://play.grafana.org/alerting/silence/new?alertmanager=grafana&matchers=alertname%3DT1%2Cteam%3Dblue%2Czone%3Deu-1",
       "dashboardURL": "",
       "panelURL": "",
-      "values": {
-        "B": 44.23943737541908,
-        "C": 1
-      }
+      "valueString": "[ metric='' labels={} value=47043.702386305304 ]"
     }
   ],
   "groupLabels": {},
@@ -117,13 +110,12 @@ Example JSON body:
 | annotations  | object | Annotations that are part of this alert, map of string keys to string values       |
 | startsAt     | string | Start time of the alert                                                            |
 | endsAt       | string | End time of the alert, default value when not resolved is `0001-01-01T00:00:00Z`   |
-| values       | object | Values that triggered the current status                                           |
+| valueString  | string | Values that triggered the current status                                           |
 | generatorURL | string | URL of the alert rule in the Grafana UI                                            |
 | fingerprint  | string | The labels fingerprint, alarms with the same labels will have the same fingerprint |
 | silenceURL   | string | URL to silence the alert rule in the Grafana UI                                    |
 | dashboardURL | string | **Will be deprecated soon**                                                        |
 | panelURL     | string | **Will be deprecated soon**                                                        |
-| imageURL     | string | URL of a screenshot of a panel assigned to the rule that created this notification |
 
 ### Removed fields related to dashboards
 

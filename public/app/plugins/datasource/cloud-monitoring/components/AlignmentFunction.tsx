@@ -4,8 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
-import { PreprocessorType, SLOQuery, TimeSeriesList } from '../types/query';
-import { MetricDescriptor } from '../types/types';
+import { MetricDescriptor, PreprocessorType, SLOQuery, TimeSeriesList } from '../types';
 
 export interface Props {
   inputId: string;

@@ -1,99 +1,39 @@
 import { css } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
 import { DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
-import config from 'app/core/config';
-import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-
-import { useDatasource } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { applyMaxSize, maxSize } from './popperModifiers';
-import { PickerContentProps, DataSourceDropdownProps } from './types';
-import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
+import { PickerContentProps, DataSourceDrawerProps } from './types';
+import { dataSourceName as dataSourceLabel } from './utils';
 
-const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
-const INTERACTION_ITEM = {
-  OPEN_DROPDOWN: 'open_dspicker',
-  SELECT_DS: 'select_ds',
-  ADD_FILE: 'add_file',
-  OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
-  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
-};
-
-export function DataSourceDropdown(props: DataSourceDropdownProps) {
+export function DataSourceDropdown(props: DataSourceDrawerProps) {
   const { current, onChange, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
-  const [inputHasFocus, setInputHasFocus] = useState(false);
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
   const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
-  const [filterTerm, setFilterTerm] = useState<string>('');
-  const openDropdown = () => {
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_DROPDOWN });
-    setOpen(true);
-    markerElement?.focus();
-  };
-
-  const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
-
-  useEffect(() => {
-    const sub = keyboardEvents.subscribe({
-      next: (keyEvent) => {
-        switch (keyEvent?.code) {
-          case 'ArrowDown': {
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
-          }
-          case 'ArrowUp':
-            openDropdown();
-            keyEvent.preventDefault();
-            break;
-          case 'Escape':
-            onClose();
-            markerElement?.focus();
-            keyEvent.preventDefault();
-        }
-      },
-    });
-    return () => sub.unsubscribe();
-  });
-
-  const currentDataSourceInstanceSettings = useDatasource(current);
+  const [filterTerm, setFilterTerm] = useState<string>();
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
-    modifiers: [
-      {
-        name: 'offset',
-        options: {
-          offset: [0, 4],
-        },
-      },
-      maxSize,
-      applyMaxSize,
-    ],
   });
-
-  const onClose = useCallback(() => {
-    setFilterTerm('');
-    setOpen(false);
-  }, [setOpen]);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: onClose,
+      onClose: () => {
+        setFilterTerm(undefined);
+        setOpen(false);
+      },
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -107,68 +47,59 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2(getStylesDropdown);
 
   return (
-    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
-      {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div className={styles.trigger} onClick={openDropdown}>
-        <Input
-          className={inputHasFocus ? undefined : styles.input}
-          data-testid={selectors.components.DataSourcePicker.inputV2}
-          prefix={
-            filterTerm && isOpen ? (
-              <DataSourceLogoPlaceHolder />
-            ) : (
-              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-            )
-          }
-          suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
-          onClick={openDropdown}
-          onFocus={() => {
-            setInputHasFocus(true);
-          }}
-          onBlur={() => {
-            setInputHasFocus(false);
-            onClose();
-          }}
-          onKeyDown={onKeyDown}
-          value={filterTerm}
-          onChange={(e) => {
-            openDropdown();
-            setFilterTerm(e.currentTarget.value);
-          }}
-          ref={setMarkerElement}
-        ></Input>
-      </div>
+    <div className={styles.container}>
       {isOpen ? (
-        <Portal>
-          <div {...underlayProps} />
-          <div
-            ref={ref}
-            {...overlayProps}
-            {...dialogProps}
-            onMouseDown={(e) => {
-              e.preventDefault(); /** Need to prevent default here to stop onMouseDown to trigger onBlur of the input element */
+        <FocusScope contain autoFocus restoreFocus>
+          <Input
+            prefix={filterTerm ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={current} />}
+            suffix={<Icon name={filterTerm ? 'search' : 'angle-down'} />}
+            placeholder={dataSourceLabel(current)}
+            className={styles.input}
+            onChange={(e) => {
+              setFilterTerm(e.currentTarget.value);
             }}
-          >
-            <PickerContent
-              keyboardEvents={keyboardEvents}
-              filterTerm={filterTerm}
-              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
-                onClose();
-                onChange(ds);
-              }}
-              onClose={onClose}
-              current={currentDataSourceInstanceSettings}
-              style={popper.styles.popper}
-              ref={setSelectorElement}
-              {...restProps}
-              onDismiss={onClose}
-              {...popper.attributes.popper}
-            />
-          </div>
-        </Portal>
-      ) : null}
+            ref={setMarkerElement}
+          ></Input>
+          <Portal>
+            <div {...underlayProps} />
+            <div ref={ref} {...overlayProps} {...dialogProps}>
+              <PickerContent
+                filterTerm={filterTerm}
+                onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+                  setFilterTerm(undefined);
+                  setOpen(false);
+                  onChange(ds);
+                }}
+                onClose={() => {
+                  setOpen(false);
+                }}
+                current={current}
+                style={popper.styles.popper}
+                ref={setSelectorElement}
+                {...restProps}
+                onDismiss={() => {}}
+              ></PickerContent>
+            </div>
+          </Portal>
+        </FocusScope>
+      ) : (
+        <div
+          className={styles.trigger}
+          onClick={() => {
+            setOpen(true);
+          }}
+        >
+          <Input
+            className={styles.markerInput}
+            prefix={<DataSourceLogo dataSource={current} />}
+            suffix={<Icon name="angle-down" />}
+            value={dataSourceLabel(current)}
+            onFocus={() => {
+              setOpen(true);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -182,11 +113,13 @@ function getStylesDropdown(theme: GrafanaTheme2) {
       cursor: pointer;
     `,
     input: css`
+      input:focus {
+        box-shadow: none;
+      }
+    `,
+    markerInput: css`
       input {
         cursor: pointer;
-      }
-      input::placeholder {
-        color: ${theme.colors.text.primary};
       }
     `,
   };
@@ -197,7 +130,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
       onChange(ds);
-      reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.SELECT_DS, ds_type: ds.type });
     },
     [onChange]
   );
@@ -205,29 +137,30 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   const clickAddCSVCallback = useCallback(() => {
     onClickAddCSV?.();
     onClose();
-    reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
   const styles = useStyles2(getStylesPickerContent);
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <CustomScrollbar>
-        <DataSourceList
-          {...props}
-          enableKeyboardNavigation
-          className={styles.dataSourceList}
-          current={current}
-          onChange={changeCallback}
-          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
-          onClickEmptyStateCTA={() =>
-            reportInteraction(INTERACTION_EVENT_NAME, {
-              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-            })
-          }
-        ></DataSourceList>
-      </CustomScrollbar>
+      <div className={styles.dataSourceList}>
+        <CustomScrollbar>
+          <DataSourceList
+            mixed
+            dashboard
+            current={current}
+            onChange={changeCallback}
+            filter={(ds) => !ds.meta.builtIn && ds.name.includes(filterTerm ?? '')}
+          ></DataSourceList>
+        </CustomScrollbar>
+      </div>
+
       <div className={styles.footer}>
+        {onClickAddCSV && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
@@ -237,9 +170,10 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
+                  datasources: props.datasources,
+                  recentlyUsed: props.recentlyUsed,
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
-                  reportedInteractionFrom: 'ds_picker',
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
@@ -247,7 +181,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                     hideModal();
                   },
                 });
-                reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.OPEN_ADVANCED_DS_PICKER });
               }}
             >
               Open advanced data source picker
@@ -255,11 +188,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
-          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
-            Add csv or spreadsheet
-          </Button>
-        )}
       </div>
     </div>
   );
@@ -271,7 +199,9 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      max-width: 480px;
+      height: 480px;
+      box-shadow: ${theme.shadows.z3};
+      width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -279,16 +209,15 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       background: ${theme.colors.background.secondary};
     `,
     dataSourceList: css`
-      flex: 1;
+      height: 423px;
+      padding: 0 ${theme.spacing(2)};
     `,
     footer: css`
-      flex: 0;
       display: flex;
-      flex-direction: row-reverse;
       justify-content: space-between;
-      padding: ${theme.spacing(1.5)};
+      padding: ${theme.spacing(2)};
       border-top: 1px solid ${theme.colors.border.weak};
-      background-color: ${theme.colors.background.secondary};
+      height: 57px;
     `,
   };
 }

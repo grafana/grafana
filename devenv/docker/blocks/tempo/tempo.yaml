@@ -1,3 +1,5 @@
+metrics_generator_enabled: true
+
 server:
   http_listen_port: 3200
 

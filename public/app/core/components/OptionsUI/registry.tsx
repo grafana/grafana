@@ -87,21 +87,21 @@ export const getAllOptionEditors = () => {
     },
   };
 
-  const select: StandardEditorsRegistryItem = {
+  const select: StandardEditorsRegistryItem<any> = {
     id: 'select',
     name: 'Select',
     description: 'Allows option selection',
     editor: SelectValueEditor as any,
   };
 
-  const multiSelect: StandardEditorsRegistryItem = {
+  const multiSelect: StandardEditorsRegistryItem<any> = {
     id: 'multi-select',
     name: 'Multi select',
     description: 'Allows for multiple option selection',
     editor: MultiSelectValueEditor as any,
   };
 
-  const radio: StandardEditorsRegistryItem = {
+  const radio: StandardEditorsRegistryItem<any> = {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',

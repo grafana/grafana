@@ -14,10 +14,16 @@ export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement
 /**
  * @public
  */
-export const PluginSignatureBadge = ({ status, color, ...otherProps }: PluginSignatureBadgeProps) => {
+export const PluginSignatureBadge = ({ status, ...otherProps }: PluginSignatureBadgeProps) => {
   const display = getSignatureDisplayModel(status);
   return (
-    <Badge text={display.text} color={display.color} icon={display.icon} tooltip={display.tooltip} {...otherProps} />
+    <Badge
+      text={display.text}
+      color={display.color as any}
+      icon={display.icon}
+      tooltip={display.tooltip}
+      {...otherProps}
+    />
   );
 };
 

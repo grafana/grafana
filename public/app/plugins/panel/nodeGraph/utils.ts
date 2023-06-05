@@ -251,13 +251,13 @@ function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, e
 
       if (mainStatField) {
         newNode.mainStat = mainStatField;
-        mainStatValues.push(node.mainStatNumeric);
+        mainStatValues.add(node.mainStatNumeric);
         newNode.dataFrameRowIndex = index;
       }
 
       if (secondaryStatField) {
         newNode.secondaryStat = secondaryStatField;
-        secondaryStatValues.push(node.secondaryStatNumeric);
+        secondaryStatValues.add(node.secondaryStatNumeric);
         newNode.dataFrameRowIndex = index;
       }
       return newNode;

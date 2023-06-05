@@ -5,9 +5,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
@@ -73,7 +74,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 		}
 		return nil
 	})
-	return foldr.WithURL(), err
+	return foldr, err
 }
 
 func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
@@ -97,7 +98,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
-		sql.WriteString("UPDATE folder SET ")
+		sql.Write([]byte("UPDATE folder SET "))
 		columnsToUpdate := []string{"updated = ?"}
 		args := []interface{}{updated}
 		if cmd.NewDescription != nil {
@@ -129,8 +130,8 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 			return folder.ErrBadRequest.Errorf("no columns to update")
 		}
 
-		sql.WriteString(strings.Join(columnsToUpdate, ", "))
-		sql.WriteString(" WHERE uid = ? AND org_id = ?")
+		sql.Write([]byte(strings.Join(columnsToUpdate, ", ")))
+		sql.Write([]byte(" WHERE uid = ? AND org_id = ?"))
 		args = append(args, cmd.UID, cmd.OrgID)
 
 		args = append([]interface{}{sql.String()}, args...)
@@ -158,7 +159,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		return nil
 	})
 
-	return foldr.WithURL(), err
+	return foldr, err
 }
 
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
@@ -184,7 +185,8 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		}
 		return nil
 	})
-	return foldr.WithURL(), err
+	foldr.URL = dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title))
+	return foldr, err
 }
 
 func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
@@ -216,13 +218,6 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 		}); err != nil {
 			return nil, err
 		}
-
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
-			folders[idx].WithURL()
-			return nil
-		}); err != nil {
-			ss.log.Debug("failed to set URL to folders", "err", err)
-		}
 	default:
 		ss.log.Debug("recursive CTE subquery is not supported; it fallbacks to the iterative implementation")
 		return ss.getParentsMySQL(ctx, q)
@@ -244,10 +239,10 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 		sql := strings.Builder{}
 		args := make([]interface{}, 0, 2)
 		if q.UID == "" {
-			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=? ORDER BY title ASC")
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?"))
 			args = append(args, q.OrgID)
 		} else {
-			sql.WriteString("SELECT * FROM folder WHERE parent_uid=? AND org_id=? ORDER BY title ASC")
+			sql.Write([]byte("SELECT * FROM folder WHERE parent_uid=? AND org_id=?"))
 			args = append(args, q.UID, q.OrgID)
 		}
 
@@ -256,18 +251,11 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			if q.Page > 0 {
 				offset = q.Limit * (q.Page - 1)
 			}
-			sql.WriteString(ss.db.GetDialect().LimitOffset(q.Limit, offset))
+			sql.Write([]byte(ss.db.GetDialect().LimitOffset(q.Limit, offset)))
 		}
 		err := sess.SQL(sql.String(), args...).Find(&folders)
 		if err != nil {
 			return folder.ErrDatabaseError.Errorf("failed to get folder children: %w", err)
-		}
-
-		if err := concurrency.ForEachJob(ctx, len(folders), len(folders), func(ctx context.Context, idx int) error {
-			folders[idx].WithURL()
-			return nil
-		}); err != nil {
-			ss.log.Debug("failed to set URL to folders", "err", err)
 		}
 		return nil
 	})
@@ -293,11 +281,10 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, cmd folder.GetParentsQu
 			if !ok {
 				break
 			}
-
-			folders = append(folders, f.WithURL())
+			folders = append(folders, f)
 			uid = f.ParentUID
 			if len(folders) > folder.MaxNestedFolderDepth {
-				return folder.ErrMaximumDepthReached.Errorf("failed to get parent folders iteratively")
+				return folder.ErrFolderTooDeep
 			}
 		}
 		return nil

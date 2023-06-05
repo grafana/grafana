@@ -22,13 +22,11 @@ import { AddToDashboard } from '.';
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({
     explore: {
-      panes: {
-        left: {
-          queries,
-          queryResponse: createEmptyQueryResponse(),
-        },
+      left: {
+        queries,
+        queryResponse: createEmptyQueryResponse(),
       },
-    } as unknown as ExploreState,
+    } as ExploreState,
   });
 
   return render(<Provider store={store}>{children}</Provider>);

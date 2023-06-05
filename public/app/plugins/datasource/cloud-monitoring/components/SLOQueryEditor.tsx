@@ -6,8 +6,7 @@ import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental'
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { AlignmentTypes, SLOQuery } from '../types/query';
-import { CustomMetaData } from '../types/types';
+import { AlignmentTypes, CustomMetaData, SLOQuery } from '../types';
 
 import { AliasBy } from './AliasBy';
 import { LookbackPeriodSelect } from './LookbackPeriodSelect';

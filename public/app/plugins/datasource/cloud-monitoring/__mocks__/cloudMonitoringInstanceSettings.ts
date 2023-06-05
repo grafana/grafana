@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, DataSourcePluginMeta } from '@grafana/data';
 import { GoogleAuthType } from '@grafana/google-sdk';
 
-import { CloudMonitoringOptions } from '../types/types';
+import { CloudMonitoringOptions } from '../types';
 
 export const createMockInstanceSetttings = (
   overrides?: Partial<DataSourceInstanceSettings<CloudMonitoringOptions>>

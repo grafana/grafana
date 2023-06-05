@@ -2,7 +2,6 @@ import { lastValueFrom } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -46,7 +45,7 @@ export class DashboardSrv {
     appEvents.subscribe(RemovePanelEvent, (e) => this.onRemovePanel(e.payload));
   }
 
-  create(dashboard: Dashboard, meta: DashboardMeta) {
+  create(dashboard: any, meta: DashboardMeta) {
     return new DashboardModel(dashboard, meta);
   }
 

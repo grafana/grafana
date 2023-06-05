@@ -11,7 +11,6 @@ const (
 	azureMonitor       = "Azure Monitor"
 	azureLogAnalytics  = "Azure Log Analytics"
 	azureResourceGraph = "Azure Resource Graph"
-	azureTraces        = "Azure Traces"
 )
 
 var azManagement = types.AzRoute{
@@ -58,7 +57,6 @@ var (
 			azureMonitor:       azManagement,
 			azureLogAnalytics:  azLogAnalytics,
 			azureResourceGraph: azManagement,
-			azureTraces:        azLogAnalytics,
 		},
 		azsettings.AzureUSGovernment: {
 			azureMonitor:       azUSGovManagement,

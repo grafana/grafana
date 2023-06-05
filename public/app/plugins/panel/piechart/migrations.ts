@@ -1,17 +1,17 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
 
-import { Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
+import { PanelOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<PanelOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   if (prevPluginId === 'grafana-piechart-panel' && prevOptions.angular) {
     const angular = prevOptions.angular;
     const overrides = [];
-    let options: Options = panel.options;
+    let options: PanelOptions = panel.options;
 
     // Migrate color overrides for series
     if (angular.aliasColors) {

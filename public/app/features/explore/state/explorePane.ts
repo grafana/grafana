@@ -22,7 +22,7 @@ import {
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { createAsyncThunk, ThunkResult } from 'app/types';
+import { ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
@@ -67,7 +67,7 @@ export function changePanelState(
   panelState: ExplorePanelsState[PreferredVisualisationType]
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreItem = getState().explore.panes[exploreId];
+    const exploreItem = getState().explore[exploreId];
     if (exploreItem === undefined) {
       return;
     }
@@ -89,7 +89,7 @@ export function changePanelState(
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
  */
-interface InitializeExplorePayload {
+export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
   eventBridge: EventBusExtended;
@@ -99,7 +99,7 @@ interface InitializeExplorePayload {
   datasourceInstance?: DataSourceApi;
   isFromCompactUrl?: boolean;
 }
-const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
+export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
 
 export interface SetUrlReplacedPayload {
   exploreId: ExploreId;
@@ -117,16 +117,6 @@ export function changeSize(
   return changeSizeAction({ exploreId, height, width });
 }
 
-interface InitializeExploreOptions {
-  exploreId: ExploreId;
-  datasource: DataSourceRef | string;
-  queries: DataQuery[];
-  range: TimeRange;
-  containerWidth: number;
-  eventBridge: EventBusExtended;
-  panelsState?: ExplorePanelsState;
-  isFromCompactUrl?: boolean;
-}
 /**
  * Initialize Explore state with state from the URL and the React component.
  * Call this only on components for with the Explore state has not been initialized.
@@ -135,21 +125,17 @@ interface InitializeExploreOptions {
  * and can be either a string that is the name or uid, or a datasourceRef
  * This is to maximize compatability with how datasources are accessed from the URL param.
  */
-export const initializeExplore = createAsyncThunk(
-  'explore/initializeExplore',
-  async (
-    {
-      exploreId,
-      datasource,
-      queries,
-      range,
-      containerWidth,
-      eventBridge,
-      panelsState,
-      isFromCompactUrl,
-    }: InitializeExploreOptions,
-    { dispatch, getState }
-  ) => {
+export function initializeExplore(
+  exploreId: ExploreId,
+  datasource: DataSourceRef | string,
+  queries: DataQuery[],
+  range: TimeRange,
+  containerWidth: number,
+  eventBridge: EventBusExtended,
+  panelsState?: ExplorePanelsState,
+  isFromCompactUrl?: boolean
+): ThunkResult<void> {
+  return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
     let history: HistoryItem[] = [];
@@ -184,8 +170,8 @@ export const initializeExplore = createAsyncThunk(
       // user to go back to previous url.
       dispatch(runQueries(exploreId, { replaceUrl: true }));
     }
-  }
-);
+  };
+}
 
 /**
  * Reacts to changes in URL state that we need to sync back to our redux state. Computes diff of newUrlQuery vs current
@@ -193,8 +179,8 @@ export const initializeExplore = createAsyncThunk(
  */
 export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const itemState = getState().explore.panes[exploreId];
-    if (!itemState) {
+    const itemState = getState().explore[exploreId];
+    if (!itemState?.initialized) {
       return;
     }
 
@@ -222,15 +208,7 @@ export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): Thunk
     if (update.datasource) {
       const initialQueries = await ensureQueries(queries);
       await dispatch(
-        initializeExplore({
-          exploreId,
-          datasource,
-          queries: initialQueries,
-          range,
-          containerWidth,
-          eventBridge,
-          panelsState,
-        })
+        initializeExplore(exploreId, datasource, initialQueries, range, containerWidth, eventBridge, panelsState)
       );
       return;
     }

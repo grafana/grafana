@@ -10,50 +10,50 @@ import {
 } from '../../../core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
 
 import { DashList } from './DashList';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<Options>(DashList)
+export const plugin = new PanelPlugin<PanelOptions>(DashList)
   .setPanelOptions((builder) => {
     builder
       .addBooleanSwitch({
         path: 'keepTime',
         name: 'Include current time range',
-        defaultValue: defaultOptions.keepTime,
+        defaultValue: defaultPanelOptions.keepTime,
       })
       .addBooleanSwitch({
         path: 'includeVars',
         name: 'Include current template variable values',
-        defaultValue: defaultOptions.includeVars,
+        defaultValue: defaultPanelOptions.includeVars,
       })
       .addBooleanSwitch({
         path: 'showStarred',
         name: 'Starred',
-        defaultValue: defaultOptions.showStarred,
+        defaultValue: defaultPanelOptions.showStarred,
       })
       .addBooleanSwitch({
         path: 'showRecentlyViewed',
         name: 'Recently viewed',
-        defaultValue: defaultOptions.showRecentlyViewed,
+        defaultValue: defaultPanelOptions.showRecentlyViewed,
       })
       .addBooleanSwitch({
         path: 'showSearch',
         name: 'Search',
-        defaultValue: defaultOptions.showSearch,
+        defaultValue: defaultPanelOptions.showSearch,
       })
       .addBooleanSwitch({
         path: 'showHeadings',
         name: 'Show headings',
-        defaultValue: defaultOptions.showHeadings,
+        defaultValue: defaultPanelOptions.showHeadings,
       })
       .addNumberInput({
         path: 'maxItems',
         name: 'Max items',
-        defaultValue: defaultOptions.maxItems,
+        defaultValue: defaultPanelOptions.maxItems,
       })
       .addTextInput({
         path: 'query',
         name: 'Query',
-        defaultValue: defaultOptions.query,
+        defaultValue: defaultPanelOptions.query,
       })
       .addCustomEditor({
         path: 'folderId',
@@ -75,13 +75,13 @@ export const plugin = new PanelPlugin<Options>(DashList)
         path: 'tags',
         name: 'Tags',
         description: '',
-        defaultValue: defaultOptions.tags,
+        defaultValue: defaultPanelOptions.tags,
         editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });
   })
-  .setMigrationHandler((panel: PanelModel<Options> & Record<string, any>) => {
+  .setMigrationHandler((panel: PanelModel<PanelOptions> & Record<string, any>) => {
     const newOptions = {
       showStarred: panel.options.showStarred ?? panel.starred,
       showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,

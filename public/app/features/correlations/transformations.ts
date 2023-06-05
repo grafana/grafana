@@ -12,9 +12,7 @@ export const getTransformationVars = (
   let transformVal: { [key: string]: string | boolean | null | undefined } = {};
   if (transformation.type === SupportedTransformationType.Regex && transformation.expression) {
     const regexp = new RegExp(transformation.expression, 'gi');
-    const stringFieldVal = typeof fieldValue === 'string' ? fieldValue : safeStringifyValue(fieldValue);
-
-    const matches = stringFieldVal.matchAll(regexp);
+    const matches = fieldValue.matchAll(regexp);
     for (const match of matches) {
       if (match.groups) {
         transformVal = match.groups;

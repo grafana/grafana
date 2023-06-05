@@ -12,7 +12,7 @@ import * as ui from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
+export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
    * Controls the column width
    */
@@ -27,18 +27,18 @@ export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui
   showValue: ui.VisibilityMode;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   colWidth: 0.9,
   rowHeight: 0.9,
   showValue: ui.VisibilityMode.Auto,
 };
 
-export interface FieldConfig extends ui.HideableFieldConfig {
+export interface PanelFieldConfig extends ui.HideableFieldConfig {
   fillOpacity?: number;
   lineWidth?: number;
 }
 
-export const defaultFieldConfig: Partial<FieldConfig> = {
+export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
   fillOpacity: 70,
   lineWidth: 1,
 };

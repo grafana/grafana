@@ -1,5 +1,3 @@
-import { DataTransformerConfig } from '@grafana/schema';
-
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DataSourceRef } from './query';
 
@@ -39,9 +37,6 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
 
   /** The queries in a panel */
   targets?: DataQuery[];
-
-  /** Optionally process data after query */
-  transformations?: DataTransformerConfig[];
 
   /** alerting v1 object */
   alert?: any;

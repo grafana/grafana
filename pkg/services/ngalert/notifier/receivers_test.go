@@ -11,20 +11,19 @@ import (
 )
 
 func TestInvalidReceiverError_Error(t *testing.T) {
-	e := alertingNotify.IntegrationValidationError{
-		Integration: &alertingNotify.GrafanaIntegrationConfig{
+	e := alertingNotify.InvalidReceiverError{
+		Receiver: &alertingNotify.GrafanaReceiver{
 			Name: "test",
-			Type: "test-type",
 			UID:  "uid",
 		},
 		Err: errors.New("this is an error"),
 	}
-	require.Equal(t, `failed to validate integration "test" (UID uid) of type "test-type": this is an error`, e.Error())
+	require.Equal(t, "the receiver is invalid: this is an error", e.Error())
 }
 
 func TestReceiverTimeoutError_Error(t *testing.T) {
-	e := alertingNotify.IntegrationTimeoutError{
-		Integration: &alertingNotify.GrafanaIntegrationConfig{
+	e := alertingNotify.ReceiverTimeoutError{
+		Receiver: &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		},
@@ -45,18 +44,18 @@ func (e timeoutError) Timeout() bool {
 
 func TestProcessNotifierError(t *testing.T) {
 	t.Run("assert ReceiverTimeoutError is returned for context deadline exceeded", func(t *testing.T) {
-		r := &alertingNotify.GrafanaIntegrationConfig{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
-		require.Equal(t, alertingNotify.IntegrationTimeoutError{
-			Integration: r,
-			Err:         context.DeadlineExceeded,
-		}, alertingNotify.ProcessIntegrationError(r, context.DeadlineExceeded))
+		require.Equal(t, alertingNotify.ReceiverTimeoutError{
+			Receiver: r,
+			Err:      context.DeadlineExceeded,
+		}, alertingNotify.ProcessNotifierError(r, context.DeadlineExceeded))
 	})
 
 	t.Run("assert ReceiverTimeoutError is returned for *url.Error timeout", func(t *testing.T) {
-		r := &alertingNotify.GrafanaIntegrationConfig{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
@@ -65,18 +64,18 @@ func TestProcessNotifierError(t *testing.T) {
 			URL: "https://grafana.net",
 			Err: timeoutError{},
 		}
-		require.Equal(t, alertingNotify.IntegrationTimeoutError{
-			Integration: r,
-			Err:         urlError,
-		}, alertingNotify.ProcessIntegrationError(r, urlError))
+		require.Equal(t, alertingNotify.ReceiverTimeoutError{
+			Receiver: r,
+			Err:      urlError,
+		}, alertingNotify.ProcessNotifierError(r, urlError))
 	})
 
 	t.Run("assert unknown error is returned unmodified", func(t *testing.T) {
-		r := &alertingNotify.GrafanaIntegrationConfig{
+		r := &alertingNotify.GrafanaReceiver{
 			Name: "test",
 			UID:  "uid",
 		}
 		err := errors.New("this is an error")
-		require.Equal(t, err, alertingNotify.ProcessIntegrationError(r, err))
+		require.Equal(t, err, alertingNotify.ProcessNotifierError(r, err))
 	})
 }

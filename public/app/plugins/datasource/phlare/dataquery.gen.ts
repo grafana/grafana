@@ -16,7 +16,7 @@ export type PhlareQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPhlareQueryType: PhlareQueryType = 'both';
 
-export interface GrafanaPyroscope extends common.DataQuery {
+export interface Phlare extends common.DataQuery {
   /**
    * Allows to group the results.
    */
@@ -26,16 +26,12 @@ export interface GrafanaPyroscope extends common.DataQuery {
    */
   labelSelector: string;
   /**
-   * Sets the maximum number of nodes in the flamegraph.
-   */
-  maxNodes?: number;
-  /**
    * Specifies the type of profile to query.
    */
   profileTypeId: string;
 }
 
-export const defaultGrafanaPyroscope: Partial<GrafanaPyroscope> = {
+export const defaultPhlare: Partial<Phlare> = {
   groupBy: [],
   labelSelector: '{}',
 };

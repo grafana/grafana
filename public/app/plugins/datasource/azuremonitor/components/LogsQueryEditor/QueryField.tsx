@@ -1,4 +1,3 @@
-import { Uri } from 'monaco-editor';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { CodeEditor, Monaco, MonacoEditor } from '@grafana/ui';
@@ -16,7 +15,7 @@ interface MonacoPromise {
 interface MonacoLanguages {
   kusto: {
     getKustoWorker: () => Promise<
-      (url: Uri) => Promise<{
+      (url: any) => Promise<{
         setSchema: (schema: any, clusterUrl: string, name: string) => void;
       }>
     >;

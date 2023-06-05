@@ -35,9 +35,10 @@ import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { Options } from './panelcfg.gen';
+import { DataHoverView } from '../geomap/components/DataHoverView';
+
+import { PanelOptions } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;
@@ -46,7 +47,7 @@ const TOOLTIP_OFFSET = 10;
  * @alpha
  */
 export interface BarChartProps
-  extends Options,
+  extends PanelOptions,
     Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend' | 'theme'> {}
 
 const propsToDiff: Array<string | PropDiffFn> = [
@@ -65,7 +66,7 @@ const propsToDiff: Array<string | PropDiffFn> = [
   (prev: BarChartProps, next: BarChartProps) => next.text?.valueSize === prev.text?.valueSize,
 ];
 
-interface Props extends PanelProps<Options> {}
+interface Props extends PanelProps<PanelOptions> {}
 
 export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZone, id }: Props) => {
   const theme = useTheme2();
@@ -97,7 +98,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
   const frame0Ref = useRef<DataFrame>();
   const colorByFieldRef = useRef<Field>();
 
-  const info = useMemo(() => prepareBarChartDisplayValues(data.series, theme, options), [data.series, theme, options]);
+  const info = useMemo(() => prepareBarChartDisplayValues(data?.series, theme, options), [data, theme, options]);
   const chartDisplay = 'viz' in info ? info : null;
 
   colorByFieldRef.current = chartDisplay?.colorByField;
@@ -219,7 +220,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
-    return frame0Ref.current!.fields[seriesIdx].values[valueIdx];
+    return frame0Ref.current!.fields[seriesIdx].values.get(valueIdx);
   };
 
   // Color by value
@@ -232,7 +233,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
     const disp = colorByField.display!;
     fillOpacity = (colorByField.config.custom.fillOpacity ?? 100) / 100;
     // gradientMode? ignore?
-    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values[valueIdx]).color!;
+    getColor = (seriesIdx: number, valueIdx: number) => disp(colorByFieldRef.current?.values.get(valueIdx)).color!;
   } else {
     const hasPerBarColor = frame0Ref.current!.fields.some((f) => {
       const fromThresholds =
@@ -260,7 +261,7 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
 
       getColor = (seriesIdx: number, valueIdx: number) => {
         let field = frame0Ref.current!.fields[seriesIdx];
-        return field.display!(field.values[valueIdx]).color!;
+        return field.display!(field.values.get(valueIdx)).color!;
       };
     }
   }

@@ -69,8 +69,6 @@ func TestGetLibraryElement(t *testing.T) {
 				}
 			}
 
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
-
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})
 			resp := sc.service.getHandler(sc.reqContext)
@@ -165,8 +163,6 @@ func TestGetLibraryElement(t *testing.T) {
 					},
 				}
 			}
-
-			sc.reqContext.SignedInUser.Permissions[sc.reqContext.OrgID][dashboards.ActionFoldersRead] = []string{dashboards.ScopeFoldersAll}
 
 			// by uid
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": sc.initialResult.Result.UID})

@@ -1,14 +1,9 @@
-import { addons } from '@storybook/manager-api';
+import { addons } from '@storybook/addons';
 import { GrafanaDark } from './storybookTheme';
 
 addons.setConfig({
-  isFullscreen: false,
-  panelPosition: 'right',
-  showNav: true,
-  showPanel: true,
-  showToolbar: true,
   sidebar: {
-    showRoots: true,
+    showRoots: false,
   },
   theme: GrafanaDark,
 });

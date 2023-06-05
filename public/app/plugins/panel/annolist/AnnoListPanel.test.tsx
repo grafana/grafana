@@ -10,14 +10,14 @@ import { backendSrv } from '../../../core/services/backend_srv';
 import { setDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import { AnnoListPanel, Props } from './AnnoListPanel';
-import { Options } from './panelcfg.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
-const defaultOptions: Options = {
+const defaultOptions: PanelOptions = {
   limit: 10,
   navigateAfter: '10m',
   navigateBefore: '10m',
@@ -49,7 +49,7 @@ const defaultResult: any = {
 async function setupTestContext({
   options = defaultOptions,
   results = [defaultResult],
-}: { options?: Options; results?: AnnotationEvent[] } = {}) {
+}: { options?: PanelOptions; results?: AnnotationEvent[] } = {}) {
   jest.clearAllMocks();
 
   const getMock = jest.spyOn(backendSrv, 'get');

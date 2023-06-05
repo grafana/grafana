@@ -1,17 +1,16 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-
-import mdx from './Alert.mdx';
+import mdx from '../Alert/Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
-const meta: Meta<typeof Alert> = {
+const meta: ComponentMeta<typeof Alert> = {
   title: 'Overlays/Alert/Toast',
   component: Alert,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
@@ -31,7 +30,7 @@ const meta: Meta<typeof Alert> = {
   },
 };
 
-export const Basic: StoryFn<typeof Alert> = (args) => {
+export const Basic: ComponentStory<typeof Alert> = (args) => {
   return (
     <div className="page-alert-list">
       <Alert {...args} elevated>

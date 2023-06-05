@@ -5,8 +5,15 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { AGGREGATIONS, ALIGNMENTS, SYSTEM_LABELS } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { AlignmentTypes, PreprocessorType, TimeSeriesList, MetricKind, ValueTypes } from './types/query';
-import { CustomMetaData, MetricDescriptor } from './types/types';
+import {
+  AlignmentTypes,
+  CustomMetaData,
+  MetricDescriptor,
+  MetricKind,
+  PreprocessorType,
+  TimeSeriesList,
+  ValueTypes,
+} from './types';
 
 export const extractServicesFromMetricDescriptors = (metricDescriptors: MetricDescriptor[]) =>
   uniqBy(metricDescriptors, 'service');

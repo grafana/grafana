@@ -5,13 +5,6 @@ import { Observable, of } from 'rxjs';
 
 import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import {
-  ScaleDimensionConfig,
-  ResourceDimensionConfig,
-  ColorDimensionConfig,
-  TextDimensionConfig,
-  ScalarDimensionConfig,
-} from '@grafana/schema';
-import {
   ColorPicker,
   Field,
   HorizontalGroup,
@@ -29,7 +22,15 @@ import {
   ScalarDimensionEditor,
   TextDimensionEditor,
 } from 'app/features/dimensions/editors';
-import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
+import {
+  ScaleDimensionConfig,
+  ResourceDimensionConfig,
+  ColorDimensionConfig,
+  ResourceFolderName,
+  TextDimensionConfig,
+  defaultTextConfig,
+  ScalarDimensionConfig,
+} from 'app/features/dimensions/types';
 
 import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
 import { styleUsesText } from '../style/utils';
@@ -196,7 +197,7 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
           item={
             {
               settings: {
-                resourceType: MediaType.Icon,
+                resourceType: 'icon',
                 folderName: ResourceFolderName.Marker,
                 placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                 placeholderValue: defaultStyleConfig.symbol.fixed,

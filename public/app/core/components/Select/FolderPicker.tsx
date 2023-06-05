@@ -5,14 +5,13 @@ import { useAsync } from 'react-use';
 
 import { AppEvents, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { useStyles2, ActionMeta, Input, InputActionMeta, AsyncVirtualizedSelect } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { createFolder, getFolderByUid, searchFolders } from 'app/features/manage-dashboards/state/actions';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { AccessControlAction, PermissionLevelString, SearchQueryType } from 'app/types';
+import { AccessControlAction, PermissionLevelString } from 'app/types';
 
 export type FolderPickerFilter = (hits: DashboardSearchHit[]) => DashboardSearchHit[];
 
@@ -41,7 +40,7 @@ export interface Props {
   allowEmpty?: boolean;
   showRoot?: boolean;
   onClear?: () => void;
-  searchQueryType?: SearchQueryType;
+  accessControlMetadata?: boolean;
   customAdd?: CustomAdd;
   folderWarning?: FolderWarning;
 
@@ -71,15 +70,13 @@ export function FolderPicker(props: Props) {
     initialFolderUid,
     initialTitle = '',
     permissionLevel = PermissionLevelString.Edit,
-    rootName: rootNameProp,
+    rootName = 'General',
     showRoot = true,
     skipInitialLoad,
-    searchQueryType,
+    accessControlMetadata,
     customAdd,
     folderWarning,
   } = props;
-
-  const rootName = rootNameProp ?? config.featureToggles.nestedFolders ? 'Dashboards' : 'General';
 
   const [folder, setFolder] = useState<SelectedFolder | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -92,7 +89,7 @@ export function FolderPicker(props: Props) {
 
   const getOptions = useCallback(
     async (query: string) => {
-      const searchHits = await searchFolders(query, permissionLevel, searchQueryType);
+      const searchHits = await searchFolders(query, permissionLevel, accessControlMetadata);
       const resultsAfterMapAndFilter = mapSearchHitsToOptions(searchHits, filter);
       const options: Array<SelectableValue<string>> = resultsAfterMapAndFilter;
 
@@ -125,7 +122,7 @@ export function FolderPicker(props: Props) {
       permissionLevel,
       rootName,
       showRoot,
-      searchQueryType,
+      accessControlMetadata,
       filter,
       enableCreateNew,
       customAdd,

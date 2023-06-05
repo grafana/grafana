@@ -115,7 +115,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     }
 
     return (
-      <div style={{ height: '100%', width: '100%' }}>
+      <div style={{ content: 'auto-sizer-wrapper', height: '100%', width: '100%' }}>
         <AutoSizer>
           {({ width, height }) => {
             const props: SearchResultsProps = {

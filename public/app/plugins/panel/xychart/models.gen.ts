@@ -6,12 +6,12 @@ import {
   HideableFieldConfig,
   AxisConfig,
   AxisPlacement,
-  ColorDimensionConfig,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
 } from '@grafana/schema';
 import {
+  ColorDimensionConfig,
   DimensionSupplier,
+  ScaleDimensionConfig,
+  TextDimensionConfig,
 } from 'app/features/dimensions';
 
 // export enum ScatterLineMode {

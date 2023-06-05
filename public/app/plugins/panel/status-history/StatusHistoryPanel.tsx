@@ -23,11 +23,11 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { Options } from './panelcfg.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<Options> {}
+interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 
 /**
  * @alpha
@@ -68,8 +68,8 @@ export const StatusHistoryPanel = ({
   };
 
   const { frames, warn } = useMemo(
-    () => prepareTimelineFields(data.series, false, timeRange, theme),
-    [data.series, timeRange, theme]
+    () => prepareTimelineFields(data?.series, false, timeRange, theme),
+    [data, timeRange, theme]
   );
 
   const legendItems = useMemo(

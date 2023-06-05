@@ -1,4 +1,4 @@
-import { DataFrame, FieldType, createDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, MutableDataFrame } from '@grafana/data';
 
 import { NodeDatum, NodeGraphOptions } from './types';
 import {
@@ -81,27 +81,27 @@ describe('processNodes', () => {
 
   it('detects dataframes correctly', () => {
     const validFrames = [
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'hasPreferredVisualisationType',
         fields: [],
         meta: {
           preferredVisualisationType: 'nodeGraph',
         },
       }),
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'hasName',
         fields: [],
         name: 'nodes',
       }),
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'nodes', // hasRefId
         fields: [],
       }),
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'hasValidNodesShape',
         fields: [{ name: 'id', type: FieldType.string }],
       }),
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'hasValidEdgesShape',
         fields: [
           { name: 'id', type: FieldType.string },
@@ -111,7 +111,7 @@ describe('processNodes', () => {
       }),
     ];
     const invalidFrames = [
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'invalidData',
         fields: [],
       }),
@@ -124,7 +124,7 @@ describe('processNodes', () => {
   });
 
   it('getting fields is case insensitive', () => {
-    const nodeFrame = createDataFrame({
+    const nodeFrame = new MutableDataFrame({
       refId: 'nodes',
       fields: [
         { name: 'id', type: FieldType.string, values: ['id'] },
@@ -142,7 +142,7 @@ describe('processNodes', () => {
     expect(nodeFields.mainStat).toBeDefined();
     expect(nodeFields.secondaryStat).toBeDefined();
 
-    const edgeFrame = createDataFrame({
+    const edgeFrame = new MutableDataFrame({
       refId: 'nodes',
       fields: [
         { name: 'id', type: FieldType.string, values: ['id'] },
@@ -162,7 +162,7 @@ describe('processNodes', () => {
 
   it('interpolates panel options correctly', () => {
     const frames = [
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'nodes',
         fields: [
           { name: 'id', type: FieldType.string },
@@ -173,7 +173,7 @@ describe('processNodes', () => {
           { name: 'arc__tertiary', type: FieldType.string },
         ],
       }),
-      createDataFrame({
+      new MutableDataFrame({
         refId: 'edges',
         fields: [
           { name: 'id', type: FieldType.string },

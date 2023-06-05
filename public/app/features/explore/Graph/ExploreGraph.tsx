@@ -15,18 +15,11 @@ import {
   LoadingState,
   SplitOpen,
   TimeZone,
-  ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
-import {
-  GraphDrawStyle,
-  LegendDisplayMode,
-  TooltipDisplayMode,
-  SortOrder,
-  GraphThresholdsStyleConfig,
-} from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
 import {
   Button,
   Icon,
@@ -36,14 +29,13 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
-import { Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
+import { PanelOptions as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { ExploreGraphStyle } from 'app/types';
 
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
-import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
+import { applyGraphStyle } from './exploreGraphStyleUtils';
 import { useStructureRev } from './useStructureRev';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
@@ -63,8 +55,6 @@ interface Props {
   graphStyle: ExploreGraphStyle;
   anchorToZero?: boolean;
   yAxisMaximum?: number;
-  thresholdsConfig?: ThresholdsConfig;
-  thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
 }
 
@@ -83,8 +73,6 @@ export function ExploreGraph({
   tooltipDisplayMode = TooltipDisplayMode.Single,
   anchorToZero = false,
   yAxisMaximum,
-  thresholdsConfig,
-  thresholdsStyle,
   eventBus,
 }: Props) {
   const theme = useTheme2();
@@ -105,7 +93,7 @@ export function ExploreGraph({
     []
   );
 
-  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource<GraphFieldConfig>>({
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
     defaults: {
       min: anchorToZero ? 0 : undefined,
       max: yAxisMaximum || undefined,
@@ -121,10 +109,10 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  const styledFieldConfig = useMemo(() => {
-    const withGraphStyle = applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum);
-    return applyThresholdsConfig(withGraphStyle, thresholdsStyle, thresholdsConfig);
-  }, [fieldConfig, graphStyle, yAxisMaximum, thresholdsConfig, thresholdsStyle]);
+  const styledFieldConfig = useMemo(
+    () => applyGraphStyle(fieldConfig, graphStyle, yAxisMaximum),
+    [fieldConfig, graphStyle, yAxisMaximum]
+  );
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({

@@ -12,9 +12,8 @@ import {
   escapeRegex,
 } from '@grafana/data';
 
-const valueFormats: ValueFormatterIndex = {};
 const kbn = {
-  valueFormats,
+  valueFormats: {} as ValueFormatterIndex,
   intervalRegex: /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/,
   intervalsInSeconds: {
     y: 31536000,
@@ -25,7 +24,7 @@ const kbn = {
     m: 60,
     s: 1,
     ms: 0.001,
-  } as const,
+  } as { [index: string]: number },
   /** @deprecated since 9.4, use grafana/data */
   regexEscape: (value: string): string => {
     deprecationWarning('kbn.ts', 'kbn.regexEscape()', 'escapeRegex from @grafana/data');

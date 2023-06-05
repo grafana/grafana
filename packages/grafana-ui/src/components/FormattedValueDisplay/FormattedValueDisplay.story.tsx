@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
@@ -6,7 +6,7 @@ import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredS
 import { FormattedValueDisplay } from './FormattedValueDisplay';
 import mdx from './FormattedValueDisplay.mdx';
 
-const meta: Meta<typeof FormattedValueDisplay> = {
+const meta: ComponentMeta<typeof FormattedValueDisplay> = {
   title: 'Visualizations/FormattedValueDisplay',
   component: FormattedValueDisplay,
   decorators: [withCenteredStory],

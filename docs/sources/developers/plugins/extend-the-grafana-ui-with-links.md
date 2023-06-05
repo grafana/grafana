@@ -1,58 +1,46 @@
 ---
-title: Use extensions to add links to app plugins
-description: Learn how to add links to the Grafana user interface from an app plugin
+title: Extend the Grafana UI with links
+description: Learn how to add links to the Grafana user interface from an App plugin
 ---
 
-# Use extensions to add links to app plugins
+# Extend the Grafana UI with links
 
-You can use the Plugin extensions API with your Grafana app plugins to add links to the Grafana UI. This feature lets you send users to your plugin's pages from other spots in the Grafana application.
+Use the Plugin extensions API with your Grafana App plugins to add links to the Grafana UI. Doing so allows you to direct users to your plugins pages from various "extension points" within the Grafana application.
 
-## Before you begin
+For a plugin to successfully register links it must:
 
-Be sure your plugin meets the following requirements before proceeding:
-
-- It must be an app plugin.
-- It must be preloaded (by setting the [preload property]({{< relref "./metadata" >}}) to `true` in the `plugin.json`
-- It must be installed and enabled.
+- Be an App plugin.
+- Be [preloaded]({{< relref "./metadata" >}}).
+- Be installed and enabled.
 
 ## Available extension points within Grafana
 
-An _extension point_ is a location within the Grafana UI where a plugin can insert links. The IDs of all extension points within Grafana start with `grafana/`. For example, you can use the following extension point ID:
+An extension point is a location within the Grafana application UI where a plugin can insert links. All extension points within Grafana start with `grafana/`. The following extension point ids are available:
 
-- `grafana/dashboard/panel/menu`: extension point for all panel dropdown menus in dashboards
+- `grafana/dashboard/panel/menu`: all panel menu dropdowns found in dashboards
 
-## Add a link extension within a Grafana dashboard panel menu
+## Add a link extension within Grafana
 
-To add a link extension within a Grafana dashboard panel menu, complete the following steps:
+Here's how you can add a link to the dashboard panel menus in Grafana via your plugin:
 
-1. Define the link extension in your plugin's `module.ts` file.
-
-1. Define a new instance of the `AppPlugin` class by using the `configureExtensionLink` method. This method requires:
-   - an object that describes your link extension, including a `title` property for the link text
-   - an `extensionPointId` method that tells Grafana where the link should appear
-   - a `path` for the user to go to your plugin
+Define the link extension in your plugin's `module.ts` file. First, define a new instance of the `AppPlugin` class by using the `configureExtensionLink` method. This method takes an object that describes your link extension, including a `title` property for the link text, a `extensionPointId` that tells Grafana where the link should appear, and a `path` for the user to navigate to your plugin.
 
 ```typescript
 new AppPlugin().configureExtensionLink({
   title: 'Go to basic app',
-  description: 'Will send the user to the basic app',
+  description: 'Will navigate the user to the basic app',
   extensionPointId: 'grafana/dashboard/panel/menu',
   path: '/a/myorg-basic-app/one', // Must start with "/a/<PLUGIN_ID>/"
 });
 ```
 
-Your link will now appear in dashboard panel menus. When the user clicks the link, they will be sent to the path you defined earlier.
+That's it! Your link will be displayed in dashboard panel menus. When the user clicks the link, they will be navigated to the path you defined earlier.
 
-{{% admonition type="note" %}} Each plugin is limited to a maximum of two links per extension point.{{%
-/admonition %}}
+_Note: Each plugin is limited to a maximum of two links per extension point._
 
 ## Add a link extension using context within Grafana
 
-The above example works for simple cases. However, you may want to act on information from the app's panel from which the user is navigating.
-
-To do this, use the `configure` property on the object that is passed to `configureExtensionLink()`. This property takes a function and returns an object that consists of a `title` property for the link text and a `path` to send the user to your plugin.
-
-Alternatively, if you need to hide the link for certain scenarios, define the function to return _undefined_:
+The above example works for simple cases however you may want to act on information from the panel the user is navigating from. This can be achieved by making use of the `configure` property which takes a function and returns an object that consists of a `title` property for the link text, a `path` to navigate the user to your plugin. Alternatively this function may return `undefined` if there's a need to hide the link for certain scenarios.
 
 ```typescript
 new AppPlugin().configureExtensionLink({
@@ -83,21 +71,20 @@ new AppPlugin().configureExtensionLink({
 });
 ```
 
-The above example demonstrates how to return a different `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a time series nor a pie chart panel, then the `configure()` function returns _undefined_. When this happens, Grafana doesn't render the link.
+The above example demonstrates how to return a different link `path` based on which plugin the dashboard panel is using. If the clicked-upon panel is neither a timeseries nor a piechart panel, then the configure function returns `undefined` and the link isn't rendered.
 
-{{% admonition type="note" %}} The context passed to the `configure()` function is bound by the `extensionPointId` into which you insert the link. Different extension points contain different contexts.{{%
-/admonition %}}
+_Note: The context passed to the `configure` function is bound by the `extensionPointId` the link is inserted into. Different extension points contain different contexts._
 
-## Add an event handler to a link
+## Add an onClick event handler to a link
 
-Link extensions give you the means to direct users to a plugin page via href links within the Grafana UI. You can also use them to trigger `onClick` events to perform dynamic actions when clicked.
+Link extensions provide the means to direct users to a plugin page via href links within the Grafana UI. They can also trigger onClick events to perform dynamic actions when clicked.
 
-To add an event handler to a link in a panel menu, complete the following steps:
+Here's how you can add an onClick handler to a link in the dashboard panel menus of Grafana via your plugin:
 
 1. Define the link extension in the plugin's `module.ts` file.
-1. Create a new instance of the `AppPlugin` class, again using the `configureExtensionLink` method. This time, add an `onClick` property which takes a function. This function receives the click event and an object consisting of the `context` and an `openModal` function.
+2. Create a new instance of the `AppPlugin` class, again using the `configureExtensionLink` method. This time we add an `onClick` property which takes a function. This function receives the click `event` plus, an object consisting of the `context` and an `openModal` function.
 
-In the following example, we open a dialog.
+In the following example, we open a modal.
 
 ```typescript
 new AppPlugin().configureExtensionLink({
@@ -108,7 +95,7 @@ new AppPlugin().configureExtensionLink({
   onClick: (event, { context, openModal }) => {
     event.preventDefault();
     openModal({
-      title: 'My plugin dialog',
+      title: 'My plugin modal',
       body: ({ onDismiss }) => <SampleModal onDismiss={onDismiss} pluginId={context?.pluginId} />,
     });
   },
@@ -122,11 +109,11 @@ type Props = {
 const SampleModal = ({ onDismiss, pluginId }: Props) => {
   return (
     <VerticalGroup spacing="sm">
-      <p>This dialog was opened via the plugin extensions API.</p>
+      <p>This modal was opened via the plugin extensions API.</p>
       <p>The panel is using a {pluginId} plugin to display data.</p>
     </VerticalGroup>
   );
 };
 ```
 
-As you can see, the plugin extensions API enables you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. The plugins extension API can also be used for [cross-plugin linking]({{< relref "./cross-plugin-linking" >}}).
+The plugin extensions API is a powerful feature for you to insert links into the UI of Grafana applications that send users to plugin features or trigger actions based on where the user clicked. This feature can also be used for [cross plugin linking]({{< relref "./cross-plugin-linking" >}}).

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"golang.org/x/oauth2"
 
@@ -68,7 +67,7 @@ func (s *SocialGithub) IsOrganizationMember(client *http.Client, organizationsUr
 
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
-			if strings.EqualFold(organization, allowedOrganization) {
+			if organization == allowedOrganization {
 				return true
 			}
 		}

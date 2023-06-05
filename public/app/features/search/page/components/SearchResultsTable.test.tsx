@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Subject } from 'rxjs';
 
-import { applyFieldOverrides, createTheme, DataFrame, DataFrameView, FieldType, toDataFrame } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  ArrayVector,
+  createTheme,
+  DataFrame,
+  DataFrameView,
+  FieldType,
+  toDataFrame,
+} from '@grafana/data';
 
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
@@ -53,7 +61,7 @@ describe('SearchResultsTable', () => {
       jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
     });
 
-    it('shows the table with the correct accessible label', async () => {
+    it('shows the table with the correct accessible label', () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -66,8 +74,7 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      const table = await screen.findByRole('table', { name: 'Search results table' });
-      expect(table).toBeInTheDocument();
+      expect(screen.getByRole('table', { name: 'Search results table' })).toBeInTheDocument();
     });
 
     it('has the correct row headers', async () => {
@@ -83,13 +90,12 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      await screen.findByRole('table');
       expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Type' })).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Tags' })).toBeInTheDocument();
     });
 
-    it('displays the data correctly in the table', async () => {
+    it('displays the data correctly in the table', () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -102,7 +108,6 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      await screen.findByRole('table');
 
       const rows = screen.getAllByRole('row');
 
@@ -116,12 +121,12 @@ describe('SearchResultsTable', () => {
   describe('when there is no data', () => {
     const emptySearchData: DataFrame = {
       fields: [
-        { name: 'kind', type: FieldType.string, config: {}, values: [] },
-        { name: 'name', type: FieldType.string, config: {}, values: [] },
-        { name: 'uid', type: FieldType.string, config: {}, values: [] },
-        { name: 'url', type: FieldType.string, config: {}, values: [] },
-        { name: 'tags', type: FieldType.other, config: {}, values: [] },
-        { name: 'location', type: FieldType.string, config: {}, values: [] },
+        { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+        { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
+        { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
       ],
       length: 0,
     };
@@ -137,7 +142,7 @@ describe('SearchResultsTable', () => {
       jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
     });
 
-    it('shows a "No data" message', async () => {
+    it('shows a "No data" message', () => {
       render(
         <SearchResultsTable
           keyboardEvents={mockKeyboardEvents}
@@ -150,9 +155,8 @@ describe('SearchResultsTable', () => {
           width={1000}
         />
       );
-      const noData = await screen.findByText('No data');
-      expect(noData).toBeInTheDocument();
       expect(screen.queryByRole('table', { name: 'Search results table' })).not.toBeInTheDocument();
+      expect(screen.getByText('No data')).toBeInTheDocument();
     });
   });
 });

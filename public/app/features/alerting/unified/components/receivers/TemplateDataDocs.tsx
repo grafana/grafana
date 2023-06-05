@@ -72,7 +72,7 @@ interface TemplateDataTableProps {
   typeRenderer?: (type: TemplateDataItem['type']) => React.ReactNode;
 }
 
-export function TemplateDataTable({ dataItems, caption, typeRenderer }: TemplateDataTableProps) {
+function TemplateDataTable({ dataItems, caption, typeRenderer }: TemplateDataTableProps) {
   const styles = useStyles2(getTemplateDataTableStyles);
 
   return (

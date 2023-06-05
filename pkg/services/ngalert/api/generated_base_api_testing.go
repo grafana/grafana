@@ -68,7 +68,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/backtest",
-				api.Hooks.Wrap(srv.BacktestConfig),
+				srv.BacktestConfig,
 				m,
 			),
 		)
@@ -78,7 +78,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/eval",
-				api.Hooks.Wrap(srv.RouteEvalQueries),
+				srv.RouteEvalQueries,
 				m,
 			),
 		)
@@ -88,7 +88,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/{DatasourceUID}",
-				api.Hooks.Wrap(srv.RouteTestRuleConfig),
+				srv.RouteTestRuleConfig,
 				m,
 			),
 		)
@@ -98,7 +98,7 @@ func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/rule/test/grafana",
-				api.Hooks.Wrap(srv.RouteTestRuleGrafanaConfig),
+				srv.RouteTestRuleGrafanaConfig,
 				m,
 			),
 		)

@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { PanelContainer } from './PanelContainer';
 import mdx from './PanelContainer.mdx';
 
-const meta: Meta<typeof PanelContainer> = {
+const meta: ComponentMeta<typeof PanelContainer> = {
   title: 'General/PanelContainer',
   component: PanelContainer,
   decorators: [withCenteredStory],
@@ -17,7 +17,7 @@ const meta: Meta<typeof PanelContainer> = {
   },
 };
 
-export const Basic: StoryFn<typeof PanelContainer> = () => {
+export const Basic: ComponentStory<typeof PanelContainer> = () => {
   return (
     <PanelContainer>
       <h1>Here could be your component</h1>

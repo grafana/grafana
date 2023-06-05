@@ -1,16 +1,10 @@
-import { css, cx } from '@emotion/css';
-import React, { useRef } from 'react';
-import { Observable } from 'rxjs';
+import React, { PureComponent } from 'react';
 
-import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { DataSourceInstanceSettings, DataSourceRef } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 
-import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
-
-import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
-import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
+import { isDataSourceMatch } from './utils';
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -20,8 +14,7 @@ import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 export interface DataSourceListProps {
   className?: string;
   onChange: (ds: DataSourceInstanceSettings) => void;
-  current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined;
-  /** Would be nicer if these parameters were part of a filtering object */
+  current: DataSourceRef | string | null; // uid
   tracing?: boolean;
   mixed?: boolean;
   dashboard?: boolean;
@@ -34,111 +27,93 @@ export interface DataSourceListProps {
   /** If true,we show only DSs with logs; and if true, pluginId shouldnt be passed in */
   logs?: boolean;
   width?: number;
-  keyboardEvents?: Observable<React.KeyboardEvent>;
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
-  onClickEmptyStateCTA?: () => void;
-  enableKeyboardNavigation?: boolean;
 }
 
-export function DataSourceList(props: DataSourceListProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+/**
+ * Component state description for the {@link DataSourceList}
+ *
+ * @internal
+ */
+export interface DataSourceListState {
+  error?: string;
+}
 
-  const [navigatableProps, selectedItemCssSelector] = useKeyboardNavigatableList({
-    keyboardEvents: props.keyboardEvents,
-    containerRef: containerRef,
-  });
+/**
+ * Component to be able to select a datasource from the list of installed and enabled
+ * datasources in the current Grafana instance.
+ *
+ * @internal
+ */
+export class DataSourceList extends PureComponent<DataSourceListProps, DataSourceListState> {
+  dataSourceSrv = getDataSourceSrv();
 
-  const theme = useTheme2();
-  const styles = getStyles(theme, selectedItemCssSelector);
+  static defaultProps: Partial<DataSourceListProps> = {
+    filter: () => true,
+  };
 
-  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
-  // QUESTION: Should we use data from the Redux store as admin DS view does?
-  const dataSources = useDatasources({
-    alerting: props.alerting,
-    annotations: props.annotations,
-    dashboard: props.dashboard,
-    logs: props.logs,
-    metrics: props.metrics,
-    mixed: props.mixed,
-    pluginId: props.pluginId,
-    tracing: props.tracing,
-    type: props.type,
-    variables: props.variables,
-  });
+  state: DataSourceListState = {};
 
-  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
+  constructor(props: DataSourceListProps) {
+    super(props);
+  }
 
-  return (
-    <div ref={containerRef} className={cx(className, styles.container)}>
-      {filteredDataSources.length === 0 && (
-        <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
-      )}
-      {filteredDataSources
-        .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
-        .map((ds) => (
+  componentDidMount() {
+    const { current } = this.props;
+    const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
+    if (!dsSettings) {
+      this.setState({ error: 'Could not find data source ' + current });
+    }
+  }
+
+  onChange = (item: DataSourceInstanceSettings) => {
+    const dsSettings = this.dataSourceSrv.getInstanceSettings(item);
+
+    if (dsSettings) {
+      this.props.onChange(dsSettings);
+      this.setState({ error: undefined });
+    }
+  };
+
+  getDataSourceOptions() {
+    const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
+      this.props;
+
+    const options = this.dataSourceSrv.getList({
+      alerting,
+      tracing,
+      metrics,
+      logs,
+      dashboard,
+      mixed,
+      variables,
+      annotations,
+      pluginId,
+      filter,
+      type,
+    });
+
+    return options;
+  }
+
+  render() {
+    const { className, current } = this.props;
+    // QUESTION: Should we use data from the Redux store as admin DS view does?
+    const options = this.getDataSourceOptions();
+
+    return (
+      <div className={className}>
+        {options.map((ds) => (
           <DataSourceCard
             key={ds.uid}
             ds={ds}
-            onClick={() => {
-              pushRecentlyUsedDataSource(ds);
-              onChange(ds);
-            }}
+            onClick={this.onChange.bind(this, ds)}
             selected={!!isDataSourceMatch(ds, current)}
-            {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
-    </div>
-  );
-}
-
-function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {
-  const styles = useStyles2(getEmptyStateStyles);
-  return (
-    <div className={cx(className, styles.container)}>
-      <p className={styles.message}>No data sources found</p>
-      <AddNewDataSourceButton onClick={onClickCTA} />
-    </div>
-  );
-}
-
-function getEmptyStateStyles(theme: GrafanaTheme2) {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    `,
-    message: css`
-      margin-bottom: ${theme.spacing(3)};
-    `,
-  };
-}
-
-function getDataSourceVariableIDs() {
-  const templateSrv = getTemplateSrv();
-  /** Unforunately there is no easy way to identify data sources that are variables. The uid of the data source will be the name of the variable in a templating syntax $([name]) **/
-  return templateSrv
-    .getVariables()
-    .filter((v) => v.type === 'datasource')
-    .map((v) => `\${${v.id}}`);
-}
-
-function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
-  return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      ${selectedItemCssSelector} {
-        background-color: ${theme.colors.background.secondary};
-      }
-    `,
-    emptyState: css`
-      height: 100%;
-      flex: 1;
-    `,
-  };
+      </div>
+    );
+  }
 }

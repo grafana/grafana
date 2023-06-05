@@ -15,19 +15,16 @@ export const QueryHeader = ({ query, onQueryChange }: QueryTypeFieldProps) => {
   const queryTypes: Array<{ value: AzureQueryType; label: string }> = [
     { value: AzureQueryType.AzureMonitor, label: 'Metrics' },
     { value: AzureQueryType.LogAnalytics, label: 'Logs' },
-    { value: AzureQueryType.AzureTraces, label: 'Traces' },
     { value: AzureQueryType.AzureResourceGraph, label: 'Azure Resource Graph' },
   ];
 
   const handleChange = useCallback(
     (change: SelectableValue<AzureQueryType>) => {
-      if (change.value && change.value !== query.queryType) {
+      change.value &&
         onQueryChange({
-          refId: query.refId,
-          datasource: query.datasource,
+          ...query,
           queryType: change.value,
         });
-      }
     },
     [onQueryChange, query]
   );

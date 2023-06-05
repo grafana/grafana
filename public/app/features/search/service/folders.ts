@@ -1,9 +1,10 @@
+import { getBackendSrv } from '@grafana/runtime';
 import config from 'app/core/config';
-import { listFolders } from 'app/features/browse-dashboards/api/services';
 
 import { DashboardViewItem } from '../types';
 
 import { getGrafanaSearcher } from './searcher';
+import { NestedFolderDTO } from './types';
 import { queryResultToViewItem } from './utils';
 
 export async function getFolderChildren(
@@ -19,7 +20,7 @@ export async function getFolderChildren(
   if (!dashboardsAtRoot && !parentUid) {
     // We don't show dashboards at root in folder view yet - they're shown under a dummy 'general'
     // folder that FolderView adds in
-    const folders = await listFolders();
+    const folders = await getChildFolders();
     return folders;
   }
 
@@ -27,7 +28,7 @@ export async function getFolderChildren(
   const dashboardsResults = await searcher.search({
     kind: ['dashboard'],
     query: '*',
-    location: parentUid || 'general',
+    location: parentUid ?? 'general',
     limit: 1000,
   });
 
@@ -35,7 +36,22 @@ export async function getFolderChildren(
     return queryResultToViewItem(item, dashboardsResults.view);
   });
 
-  const folders = await listFolders(parentUid, parentTitle);
+  const folders = await getChildFolders(parentUid, parentTitle);
 
   return [...folders, ...dashboardItems];
+}
+
+async function getChildFolders(parentUid?: string, parentTitle?: string): Promise<DashboardViewItem[]> {
+  const backendSrv = getBackendSrv();
+
+  const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', { parentUid });
+
+  return folders.map((item) => ({
+    kind: 'folder',
+    uid: item.uid,
+    title: item.title,
+    parentTitle,
+    parentUID: parentUid,
+    url: `/dashboards/f/${item.uid}/`,
+  }));
 }

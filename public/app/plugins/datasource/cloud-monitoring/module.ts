@@ -10,7 +10,7 @@ import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEd
 import CloudMonitoringDatasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackCloudMonitoringDashboardLoaded } from './tracking';
-import { CloudMonitoringQuery, QueryType } from './types/query';
+import { CloudMonitoringQuery, QueryType } from './types';
 
 export const plugin = new DataSourcePlugin<CloudMonitoringDatasource, CloudMonitoringQuery>(CloudMonitoringDatasource)
   .setQueryEditorHelp(CloudMonitoringCheatSheet)

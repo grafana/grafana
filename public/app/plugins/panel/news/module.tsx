@@ -2,9 +2,9 @@ import { PanelPlugin } from '@grafana/data';
 
 import { NewsPanel } from './NewsPanel';
 import { DEFAULT_FEED_URL } from './constants';
-import { Options, defaultOptions } from './panelcfg.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((builder) => {
+export const plugin = new PanelPlugin<PanelOptions>(NewsPanel).setPanelOptions((builder) => {
   builder
     .addTextInput({
       path: 'feedUrl',
@@ -13,12 +13,12 @@ export const plugin = new PanelPlugin<Options>(NewsPanel).setPanelOptions((build
       settings: {
         placeholder: DEFAULT_FEED_URL,
       },
-      defaultValue: defaultOptions.feedUrl,
+      defaultValue: defaultPanelOptions.feedUrl,
     })
     .addBooleanSwitch({
       path: 'showImage',
       name: 'Show image',
       description: 'Controls if the news item social (og:image) image is shown above text content',
-      defaultValue: defaultOptions.showImage,
+      defaultValue: defaultPanelOptions.showImage,
     });
 });

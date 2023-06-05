@@ -26,20 +26,21 @@ composableKinds: DataQuery: {
 	maturity: "experimental"
 
 	lineage: {
-		schemas: [{
-			version: [0, 0]
-			schema:
-			// v0.0
+		seqs: [
 			{
-				common.DataQuery
+				schemas: [
+					// v0.0
+					{
+						common.DataQuery
 
-				// Specifies the query label selectors.
-				labelSelector: string | *"{}"
-				// Specifies the type of profile to query.
-				profileTypeId:   string
-				#ParcaQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
-			}
-		}]
-		lenses: []
+						// Specifies the query label selectors.
+						labelSelector: string | *"{}"
+						// Specifies the type of profile to query.
+						profileTypeId:   string
+						#ParcaQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
+					},
+				]
+			},
+		]
 	}
 }

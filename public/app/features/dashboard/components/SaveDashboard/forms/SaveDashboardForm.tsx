@@ -60,7 +60,7 @@ export const SaveDashboardForm = ({
       {({ register, errors }) => {
         const messageProps = register('message');
         return (
-          <Stack gap={2}>
+          <Stack direction="column" gap={2}>
             {hasTimeChanged && (
               <Checkbox
                 checked={!!options.saveTimerange}
@@ -102,6 +102,7 @@ export const SaveDashboardForm = ({
               autoFocus
               rows={5}
             />
+
             <Stack alignItems="center">
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel

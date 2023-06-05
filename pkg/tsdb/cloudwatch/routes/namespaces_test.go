@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +15,7 @@ import (
 
 func Test_Namespaces_Route(t *testing.T) {
 	customNamespaces := ""
-	factoryFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
+	factoryFunc := func(pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
 		return models.RequestContext{
 			Settings: models.CloudWatchSettings{
 				Namespace: customNamespaces,

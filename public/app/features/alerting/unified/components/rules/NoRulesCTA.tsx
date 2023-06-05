@@ -15,8 +15,8 @@ export const NoRulesSplash = () => {
       <EmptyListCTA
         title="You haven`t created any alert rules yet"
         buttonIcon="bell"
-        buttonLink={'alerting/new/alerting'}
-        buttonTitle="New alert rule"
+        buttonLink={'alerting/new'}
+        buttonTitle="Create alert rule"
         proTip="you can also create alert rules from existing panels and queries."
         proTipLink="https://grafana.com/docs/"
         proTipLinkTitle="Learn more"

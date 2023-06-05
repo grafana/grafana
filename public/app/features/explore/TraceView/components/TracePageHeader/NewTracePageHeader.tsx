@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React, { memo, useEffect, useMemo } from 'react';
 
-import { CoreApp, DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -34,15 +34,12 @@ import { timestamp, getStyles } from './TracePageHeader';
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
-  data: DataFrame;
-  app?: CoreApp;
   timeZone: TimeZone;
   search: SearchProps;
   setSearch: React.Dispatch<React.SetStateAction<SearchProps>>;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  showSpanFilterMatchesOnly: boolean;
-  setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
+  focusedSpanIdForSearch: string;
   setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
@@ -52,15 +49,12 @@ export type TracePageHeaderProps = {
 export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   const {
     trace,
-    data,
-    app,
     timeZone,
     search,
     setSearch,
     showSpanFilters,
     setShowSpanFilters,
-    showSpanFilterMatchesOnly,
-    setShowSpanFilterMatchesOnly,
+    focusedSpanIdForSearch,
     setFocusedSpanIdForSearch,
     spanFilterMatches,
     datasourceType,
@@ -105,7 +99,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}
-        <TracePageActions traceId={trace.traceID} data={data} app={app} />
+        <TracePageActions traceId={trace.traceID} />
       </div>
 
       <div className={styles.subtitle}>
@@ -137,11 +131,10 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
         trace={trace}
         showSpanFilters={showSpanFilters}
         setShowSpanFilters={setShowSpanFilters}
-        showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
-        setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
         search={search}
         setSearch={setSearch}
         spanFilterMatches={spanFilterMatches}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
         datasourceType={datasourceType}
       />
@@ -162,7 +155,7 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       z-index: 5;
     `,
     titleRow: css`
-      align-items: flex-start;
+      align-items: center;
       display: flex;
       padding: 0 8px;
     `,
@@ -193,7 +186,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     url: css`
       margin: -2.5px 0.3em;
-      height: 15px;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;

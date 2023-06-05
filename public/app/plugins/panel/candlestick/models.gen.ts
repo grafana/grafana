@@ -58,7 +58,7 @@ export interface CandlestickOptions extends OptionsWithLegend {
   includeAllFields?: boolean;
 }
 
-export const defaultOptions: CandlestickOptions = {
+export const defaultPanelOptions: CandlestickOptions = {
   mode: VizDisplayMode.CandlesVolume,
   candleStyle: CandleStyle.Candles,
   colorStrategy: ColorStrategy.OpenClose,

@@ -56,16 +56,16 @@ func (m *CachingMiddleware) QueryData(ctx context.Context, req *backend.QueryDat
 	// First look in the query cache if enabled
 	hit, cr := m.caching.HandleQueryRequest(ctx, req)
 
-	// record request duration if caching was used
-	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
-		defer func() {
+	defer func() {
+		// record request duration if caching was used
+		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			QueryCachingRequestHistogram.With(prometheus.Labels{
 				"datasource_type": req.PluginContext.DataSourceInstanceSettings.Type,
 				"cache":           ch,
 				"query_type":      getQueryType(reqCtx),
 			}).Observe(time.Since(start).Seconds())
-		}()
-	}
+		}
+	}()
 
 	// Cache hit; return the response
 	if hit {
@@ -100,35 +100,27 @@ func (m *CachingMiddleware) CallResource(ctx context.Context, req *backend.CallR
 	start := time.Now()
 
 	// First look in the resource cache if enabled
-	hit, cr := m.caching.HandleResourceRequest(ctx, req)
+	hit, resp := m.caching.HandleResourceRequest(ctx, req)
 
-	// record request duration if caching was used
-	if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
-		defer func() {
+	defer func() {
+		// record request duration if caching was used
+		if ch := reqCtx.Resp.Header().Get(caching.XCacheHeader); ch != "" {
 			ResourceCachingRequestHistogram.With(prometheus.Labels{
 				"plugin_id": req.PluginContext.PluginID,
 				"cache":     ch,
 			}).Observe(time.Since(start).Seconds())
-		}()
-	}
+		}
+	}()
 
 	// Cache hit; send the response and return
 	if hit {
-		return sender.Send(cr.Response)
+		return sender.Send(resp)
 	}
 
 	// Cache miss; do the actual request
-	// If there is no update cache func, just pass in the original sender
-	if cr.UpdateCacheFn == nil {
-		return m.next.CallResource(ctx, req, sender)
-	}
-	// Otherwise, intercept the responses in a wrapped sender so we can cache them first
-	cacheSender := callResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
-		cr.UpdateCacheFn(ctx, res)
-		return sender.Send(res)
-	})
-
-	return m.next.CallResource(ctx, req, cacheSender)
+	// The call to update the cache happens in /pkg/api/plugin_resource.go in the flushStream() func
+	// TODO: Implement updating the cache from this method
+	return m.next.CallResource(ctx, req, sender)
 }
 
 func (m *CachingMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {

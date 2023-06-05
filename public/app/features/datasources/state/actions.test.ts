@@ -217,7 +217,7 @@ describe('testDataSource', () => {
           ({
             get: jest.fn().mockReturnValue({
               testDatasource: jest.fn().mockReturnValue({
-                status: 'success',
+                status: '',
                 message: '',
               }),
               type: 'cloudwatch',
@@ -228,9 +228,8 @@ describe('testDataSource', () => {
       };
       const state = {
         testingStatus: {
-          status: 'success',
+          status: '',
           message: '',
-          details: {},
         },
       };
       const dispatchedActions = await thunkTester(state)

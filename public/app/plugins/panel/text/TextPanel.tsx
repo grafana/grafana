@@ -7,13 +7,13 @@ import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, Interpola
 import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, Options, TextMode } from './panelcfg.gen';
+import { defaultCodeOptions, PanelOptions, TextMode } from './panelcfg.gen';
 
-export interface Props extends PanelProps<Options> {}
+export interface Props extends PanelProps<PanelOptions> {}
 
 export function TextPanel(props: Props) {
   const styles = useStyles2(getStyles);
-  const [processed, setProcessed] = useState<Options>({
+  const [processed, setProcessed] = useState<PanelOptions>({
     mode: props.options.mode,
     content: processContent(props.options, props.replaceVariables, config.disableSanitizeHtml),
   });
@@ -61,7 +61,7 @@ export function TextPanel(props: Props) {
   );
 }
 
-function processContent(options: Options, interpolate: InterpolateFunction, disableSanitizeHtml: boolean): string {
+function processContent(options: PanelOptions, interpolate: InterpolateFunction, disableSanitizeHtml: boolean): string {
   let { mode, content } = options;
   if (!content) {
     return '';

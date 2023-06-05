@@ -68,22 +68,22 @@ func (api *Api) RegisterAPIEndpoints() {
 
 	// Get public dashboard
 	api.RouteRegister.Get("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
+		auth(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, uidScope)),
 		routing.Wrap(api.GetPublicDashboard))
 
 	// Create Public Dashboard
 	api.RouteRegister.Post("/api/dashboards/uid/:dashboardUid/public-dashboards",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.CreatePublicDashboard))
 
 	// Update Public Dashboard
-	api.RouteRegister.Patch("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+	api.RouteRegister.Put("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.UpdatePublicDashboard))
 
 	// Delete Public dashboard
 	api.RouteRegister.Delete("/api/dashboards/uid/:dashboardUid/public-dashboards/:uid",
-		auth(accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
+		auth(middleware.ReqOrgAdmin, accesscontrol.EvalPermission(dashboards.ActionDashboardsPublicWrite, uidScope)),
 		routing.Wrap(api.DeletePublicDashboard))
 }
 
@@ -127,21 +127,22 @@ func (api *Api) CreatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("CreatePublicDashboard: invalid Uid %s", dashboardUid))
 	}
 
-	pdDTO := &PublicDashboardDTO{}
-	if err := web.Bind(c.Req, pdDTO); err != nil {
+	pd := &PublicDashboard{}
+	if err := web.Bind(c.Req, pd); err != nil {
 		return response.Err(ErrBadRequest.Errorf("CreatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
-	dto := &SavePublicDashboardDTO{
+	pd.OrgId = c.OrgID
+	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
+		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
-		PublicDashboard: pdDTO,
+		PublicDashboard: pd,
 	}
 
 	//Create the public dashboard
-	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, dto)
+	pd, err := api.PublicDashboardService.Create(c.Req.Context(), c.SignedInUser, &dto)
 	if err != nil {
 		return response.Err(err)
 	}
@@ -163,18 +164,19 @@ func (api *Api) UpdatePublicDashboard(c *contextmodel.ReqContext) response.Respo
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))
 	}
 
-	pdDTO := &PublicDashboardDTO{}
-	if err := web.Bind(c.Req, pdDTO); err != nil {
+	pd := &PublicDashboard{}
+	if err := web.Bind(c.Req, pd); err != nil {
 		return response.Err(ErrBadRequest.Errorf("UpdatePublicDashboard: bad request data %v", err))
 	}
 
 	// Always set the orgID and userID from the session
-	pdDTO.OrgId = c.OrgID
-	pdDTO.Uid = uid
+	pd.OrgId = c.OrgID
+	pd.Uid = uid
 	dto := SavePublicDashboardDTO{
 		UserId:          c.UserID,
+		OrgId:           c.OrgID,
 		DashboardUid:    dashboardUid,
-		PublicDashboard: pdDTO,
+		PublicDashboard: pd,
 	}
 
 	// Update the public dashboard

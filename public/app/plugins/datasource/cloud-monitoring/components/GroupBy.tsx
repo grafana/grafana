@@ -6,8 +6,7 @@ import { MultiSelect } from '@grafana/ui';
 
 import { SYSTEM_LABELS } from '../constants';
 import { labelsToGroupedOptions } from '../functions';
-import { TimeSeriesList } from '../types/query';
-import { MetricDescriptor } from '../types/types';
+import { MetricDescriptor, TimeSeriesList } from '../types';
 
 import { Aggregation } from './Aggregation';
 

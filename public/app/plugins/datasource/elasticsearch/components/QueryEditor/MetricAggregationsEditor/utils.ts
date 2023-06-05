@@ -9,7 +9,6 @@ import { isMetricAggregationWithField, isPipelineAggregationWithMultipleBucketPa
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
-    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -21,7 +20,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   avg: {
     label: 'Average',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -33,7 +31,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   sum: {
     label: 'Sum',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -45,7 +42,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   max: {
     label: 'Max',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -57,7 +53,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   min: {
     label: 'Min',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -69,7 +64,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   extended_stats: {
     label: 'Extended Stats',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -86,7 +80,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   percentiles: {
     label: 'Percentiles',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -102,7 +95,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cardinality: {
     label: 'Unique Count',
-    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     isPipelineAgg: false,
@@ -116,7 +108,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
     // deprecated in 6.4.0, removed in 8.0.0,
     // recommended replacement is moving_fn
     label: 'Moving Average',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     versionRange: '<8.0.0',
@@ -135,7 +126,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   moving_fn: {
     // TODO: Check this
     label: 'Moving Function',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     supportsMultipleBucketPaths: false,
@@ -147,7 +137,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   derivative: {
     label: 'Derivative',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -159,7 +148,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   serial_diff: {
     label: 'Serial Difference',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -175,7 +163,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -187,7 +174,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   bucket_script: {
     label: 'Bucket Script',
-    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: true,
     supportsMissing: false,
@@ -202,7 +188,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   raw_document: {
     label: 'Raw Document (deprecated)',
     requiresField: false,
-    impliedQueryType: 'raw_document',
+    isSingleMetric: true,
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
@@ -218,7 +204,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   raw_data: {
     label: 'Raw Data',
     requiresField: false,
-    impliedQueryType: 'raw_data',
+    isSingleMetric: true,
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
@@ -238,7 +224,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
-    impliedQueryType: 'logs',
+    isSingleMetric: true,
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
@@ -249,7 +235,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   top_metrics: {
     label: 'Top Metrics',
-    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -265,7 +250,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   rate: {
     label: 'Rate',
-    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,

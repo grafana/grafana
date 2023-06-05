@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -14,7 +14,7 @@ import mdx from '../Toggletip/Toggletip.mdx';
 
 import { Toggletip } from './Toggletip';
 
-const meta: Meta<typeof Toggletip> = {
+const meta: ComponentMeta<typeof Toggletip> = {
   title: 'Overlays/Toggletip',
   component: Toggletip,
   decorators: [withCenteredStory],
@@ -60,7 +60,7 @@ const meta: Meta<typeof Toggletip> = {
   },
 };
 
-export const Basic: StoryFn<typeof Toggletip> = ({
+export const Basic: ComponentStory<typeof Toggletip> = ({
   title,
   content,
   footer,
@@ -92,7 +92,7 @@ Basic.args = {
   theme: 'info',
 };
 
-export const HostingMultiElements: StoryFn<typeof Toggletip> = ({ theme, closeButton, placement }) => {
+export const HostingMultiElements: ComponentStory<typeof Toggletip> = ({ theme, closeButton, placement }) => {
   const selectOptions: Array<SelectableValue<number>> = [
     { label: 'Sharilyn Markowitz', value: 1 },
     { label: 'Naomi Striplin', value: 2 },

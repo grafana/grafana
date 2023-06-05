@@ -6,9 +6,8 @@ import {
   GrafanaTheme2,
   getFieldConfigWithMinMax,
 } from '@grafana/data';
-import { ColorDimensionConfig } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { ColorDimensionConfig, DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------

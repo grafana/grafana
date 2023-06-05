@@ -9,10 +9,9 @@ interface PanelHeaderMenuTriggerApi {
 
 interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   children: (props: PanelHeaderMenuTriggerApi) => ReactElement;
-  onOpenMenu?: () => void;
 }
 
-export function PanelHeaderMenuTrigger({ children, onOpenMenu, ...divProps }: Props) {
+export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
   const clickCoordinates = useRef<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
 
@@ -23,11 +22,8 @@ export function PanelHeaderMenuTrigger({ children, onOpenMenu, ...divProps }: Pr
       }
 
       setPanelMenuOpen(!panelMenuOpen);
-      if (panelMenuOpen) {
-        onOpenMenu?.();
-      }
     },
-    [panelMenuOpen, setPanelMenuOpen, onOpenMenu]
+    [panelMenuOpen, setPanelMenuOpen]
   );
 
   const onMouseDown = useCallback((event: MouseEvent<HTMLDivElement>) => {

@@ -1,15 +1,14 @@
 ---
 aliases:
   - unified-alerting/set-up/
-description: How to set up additional alerting features and integrations
-title: Additional setup
-weight: 600
+title: Set up Alerting
+weight: 107
 ---
 
-# Additional setup
+# Set up Alerting
 
-Alerting supports a plethora of configurations, from [configuring external Alertmanagers]({{< relref "./configure-alertmanager" >}}) to routing Grafana Managed Alerts outside of Grafana, to defining your alerting setup [as-code using Provisioning]({{< relref "./provision-alerting-resources" >}}).
+Configure the features and integrations that you need to create and manage your alerts.
 
-Setup Grafana Alerting high-availability mode by [following this guide]({{< relref "./configure-high-availability" >}}).
-
-Connect your alerting setup to Grafana OnCall by [following this guide](/docs/oncall/latest/integrations/available-integrations/add-grafana-alerting/).
+- [Configure Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)
+- [Provision Grafana Alerting resources](https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/)
+- [Connect Grafana Alerting to Grafana OnCall](https://grafana.com/docs/oncall/latest/integrations/available-integrations/add-grafana-alerting/)

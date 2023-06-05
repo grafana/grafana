@@ -7,12 +7,7 @@ import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data/src';
 import { PrometheusDatasource } from '../../datasource';
 import { PromOptions } from '../../types';
 
-import {
-  formatPrometheusLabelFilters,
-  formatPrometheusLabelFiltersToString,
-  MetricSelect,
-  Props,
-} from './MetricSelect';
+import { MetricSelect, Props } from './MetricSelect';
 
 const instanceSettings = {
   url: 'proxied',
@@ -134,43 +129,6 @@ describe('MetricSelect', () => {
     const input = screen.getByRole('combobox');
     await userEvent.type(input, 'new');
     await waitFor(() => expect(document.querySelector('mark')).not.toBeInTheDocument());
-  });
-
-  it('label filters properly join', () => {
-    const query = formatPrometheusLabelFilters([
-      {
-        value: 'value',
-        label: 'label',
-        op: '=',
-      },
-      {
-        value: 'value2',
-        label: 'label2',
-        op: '=',
-      },
-    ]);
-    query.forEach((label) => {
-      expect(label.includes(',', 0));
-    });
-  });
-  it('label filter creation', () => {
-    const labels = [
-      {
-        value: 'value',
-        label: 'label',
-        op: '=',
-      },
-      {
-        value: 'value2',
-        label: 'label2',
-        op: '=',
-      },
-    ];
-
-    const queryString = formatPrometheusLabelFiltersToString('query', labels);
-    queryString.split(',').forEach((queryChunk) => {
-      expect(queryChunk.length).toBeGreaterThan(1); // must be longer then ','
-    });
   });
 });
 

@@ -1,13 +1,13 @@
-import { Field, FieldType, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
-import { FieldConfig, Options } from './panelcfg.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 import { TrendSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     const category = ['X Axis'];
@@ -20,7 +20,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
       settings: {
         isClearable: true,
         placeholderText: 'First numeric value',
-        filter: (field: Field) => field.type === FieldType.number,
       },
     });
 

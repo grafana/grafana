@@ -589,13 +589,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			var cfgs []externalAMcfg
-			for _, url := range tt.amUrls {
-				cfgs = append(cfgs, externalAMcfg{
-					amURL: url,
-				})
-			}
-			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))
+			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, tt.amUrls, tt.orgId))
 			require.Equal(t, tt.errCalls, fakeLogger.ErrorLogs.Calls)
 			require.Equal(t, tt.errLog, fakeLogger.ErrorLogs.Message)
 		})

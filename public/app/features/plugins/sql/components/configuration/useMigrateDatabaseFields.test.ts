@@ -2,22 +2,10 @@ import { renderHook } from '@testing-library/react-hooks';
 
 import { DataSourceSettings } from '@grafana/data';
 
+import { SQLConnectionDefaults } from '../../constants';
 import { SQLOptions } from '../../types';
 
 import { useMigrateDatabaseFields } from './useMigrateDatabaseFields';
-
-jest.mock('@grafana/runtime', () => {
-  return {
-    config: {
-      sqlConnectionLimits: {
-        maxOpenConns: 10,
-        maxIdleConns: 11,
-        connMaxLifetime: 12,
-      },
-    },
-    logDebug: jest.fn(),
-  };
-});
 
 describe('Database Field Migration', () => {
   let defaultProps = {
@@ -69,9 +57,8 @@ describe('Database Field Migration', () => {
       ...defaultProps,
       onOptionsChange: (options: DataSourceSettings) => {
         const jsonData = options.jsonData as SQLOptions;
-        expect(jsonData.maxOpenConns).toBe(10);
-        expect(jsonData.maxIdleConns).toBe(11);
-        expect(jsonData.connMaxLifetime).toBe(12);
+        expect(jsonData.maxOpenConns).toBe(SQLConnectionDefaults.MAX_CONNS);
+        expect(jsonData.maxIdleConns).toBe(Math.ceil(SQLConnectionDefaults.MAX_CONNS));
         expect(jsonData.maxIdleConnsAuto).toBe(true);
       },
     };

@@ -13,17 +13,14 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, BackendType } from './types';
+import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
 
 export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
-  backendType: BackendType;
-
   constructor(
     instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.backendType = instanceSettings.jsonData.backendType ?? 'phlare';
   }
 
   query(request: DataQueryRequest<Query>): Observable<DataQueryResponse> {
@@ -52,17 +49,13 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('profileTypes');
   }
 
-  async getLabelNames(query: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelNames', { query, start, end });
+  async getSeries(): Promise<SeriesMessage> {
+    // For now, we send empty matcher to get all the series
+    return await super.getResource('series', { matchers: ['{}'] });
   }
 
-  async getLabelValues(query: string, label: string, start: number, end: number): Promise<string[]> {
-    return await super.getResource('labelValues', { label, query, start, end });
-  }
-
-  // We need the URL here because it may not be saved on the backend yet when used from config page.
-  async getBackendType(url: string): Promise<{ backendType: BackendType | 'unknown' }> {
-    return await super.getResource('backendType', { url });
+  async getLabelNames(): Promise<string[]> {
+    return await super.getResource('labelNames');
   }
 
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
@@ -82,7 +75,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       labelSelector: toPromLikeExpr(labelBasedQuery),
       queryType: 'both',
       profileTypeId: '',
-      groupBy: [],
+      groupBy: [''],
     };
   }
 

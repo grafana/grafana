@@ -6,6 +6,7 @@ import { IconName } from './icon';
 export interface NavLinkDTO {
   id?: string;
   text: string;
+  description?: string;
   subTitle?: string;
   icon?: IconName;
   img?: string;
@@ -20,7 +21,6 @@ export interface NavLinkDTO {
   isSection?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
-  highlightId?: string;
   emptyMessageId?: string;
   // The ID of the plugin that registered the page (in case it was registered by a plugin, otherwise left empty)
   pluginId?: string;
@@ -31,11 +31,21 @@ export interface NavLinkDTO {
 export interface NavModelItem extends NavLinkDTO {
   children?: NavModelItem[];
   active?: boolean;
+  breadcrumbs?: NavModelBreadcrumb[];
   parentItem?: NavModelItem;
+  showOrgSwitcher?: boolean;
   onClick?: () => void;
+  menuItemType?: NavMenuItemType;
+  highlightText?: string;
+  highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
+}
+
+export enum NavMenuItemType {
+  Section = 'section',
+  Item = 'item',
 }
 
 /**
@@ -50,6 +60,11 @@ export interface NavModel {
    *   This is the current active tab/navigation.
    */
   node: NavModelItem;
+}
+
+export interface NavModelBreadcrumb {
+  title: string;
+  url?: string;
 }
 
 export type NavIndex = { [s: string]: NavModelItem };

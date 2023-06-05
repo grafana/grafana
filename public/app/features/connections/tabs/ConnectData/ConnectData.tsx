@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { useGetAll } from 'app/features/plugins/admin/state/hooks';
+import { useGetAllWithFilters } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
 
 import { ROUTES } from '../../constants';
@@ -27,7 +27,7 @@ const getStyles = () => ({
   `,
 });
 
-export function AddNewConnection() {
+export function ConnectData() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
@@ -38,9 +38,10 @@ export function AddNewConnection() {
     setSearchTerm(e.currentTarget.value.toLowerCase());
   };
 
-  const { isLoading, error, plugins } = useGetAll({
-    keyword: searchTerm,
-    type: PluginType.datasource,
+  const { isLoading, error, plugins } = useGetAllWithFilters({
+    query: searchTerm,
+    filterBy: '',
+    filterByType: PluginType.datasource,
   });
 
   const cardGridItems = useMemo(

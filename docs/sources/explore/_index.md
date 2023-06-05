@@ -1,6 +1,12 @@
 ---
 aliases:
   - features/explore/
+cascade:
+  labels:
+    products:
+      - cloud
+      - enterprise
+      - oss
 keywords:
   - explore
   - loki
@@ -61,9 +67,7 @@ To close the newly created query, click on the Close Split button.
 
 ## Share shortened link
 
-{{% admonition type="note" %}}
-Available in Grafana 7.3 and later versions.
-{{% /admonition %}}
+> **Note:** Available in Grafana 7.3 and later versions.
 
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
 
@@ -71,6 +75,6 @@ The Share shortened link capability allows you to create smaller and simpler URL
 
 ### exploreMixedDatasource
 
-Enabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
+Disabled by default, allows users in Explore to have different data sources for different queries. If compatible, results will be combined.
 
 Learn more about how to use [Mixed data source]({{< relref "../datasources/#special-data-sources" >}}).

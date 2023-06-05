@@ -1,8 +1,8 @@
 import { PanelModel } from '@grafana/data';
 
-import { Options } from './models.gen';
+import { PanelOptions } from './models.gen';
 
-export const canvasMigrationHandler = (panel: PanelModel): Partial<Options> => {
+export const canvasMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   // Rename text-box to rectangle

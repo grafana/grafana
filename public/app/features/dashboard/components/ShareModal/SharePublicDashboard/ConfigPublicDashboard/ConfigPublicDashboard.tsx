@@ -97,7 +97,7 @@ const ConfigPublicDashboard = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
-      activeTab: 'public-dashboard',
+      activeTab: 'share',
     });
   };
 
@@ -120,7 +120,7 @@ const ConfigPublicDashboard = () => {
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
-          value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+          value={generatePublicDashboardUrl(publicDashboard!)}
           readOnly
           disabled={!publicDashboard?.isEnabled}
           data-testid={selectors.CopyUrlInput}
@@ -129,7 +129,7 @@ const ConfigPublicDashboard = () => {
               data-testid={selectors.CopyUrlButton}
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
-              getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+              getText={() => generatePublicDashboardUrl(publicDashboard!)}
             >
               Copy
             </ClipboardButton>

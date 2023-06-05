@@ -63,10 +63,6 @@ def pipeline(
             },
         }
 
-    docker_mount_path = "/var/run/docker.sock"
-    if platform == "windows":
-        docker_mount_path = "//./pipe/docker_engine/"
-
     pipeline = {
         "kind": "pipeline",
         "type": "docker",
@@ -81,7 +77,7 @@ def pipeline(
             {
                 "name": "docker",
                 "host": {
-                    "path": docker_mount_path,
+                    "path": "/var/run/docker.sock",
                 },
             },
         ],

@@ -154,15 +154,7 @@ export const RuleActionsButtons = ({ rule, rulesSource }: Props) => {
           <ConfirmModal
             isOpen={true}
             title="Delete rule"
-            body={
-              <div>
-                <p>
-                  Deleting &quot;<strong>{ruleToDelete.name}</strong>&quot; will permanently remove it from your alert
-                  rule list.
-                </p>
-                <p>Are you sure you want to delete this rule?</p>
-              </div>
-            }
+            body="Deleting this rule will permanently remove it from your alert rule list. Are you sure you want to delete this rule?"
             confirmText="Yes, delete"
             icon="exclamation-triangle"
             onConfirm={deleteRule}

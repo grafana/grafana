@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +16,7 @@ import (
 
 func TestLogGroupFieldsRoute(t *testing.T) {
 	mockFeatures := mocks.MockFeatures{}
-	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
+	reqCtxFunc := func(pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
 		return models.RequestContext{Features: &mockFeatures}, err
 	}
 	t.Run("returns 400 if an invalid LogGroupFieldsRequest is used", func(t *testing.T) {
@@ -32,7 +31,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 	t.Run("returns 500 if GetLogGroupFields method fails", func(t *testing.T) {
 		mockLogsService := mocks.LogsService{}
 		mockLogsService.On("GetLogGroupFields", mock.Anything).Return([]resources.ResourceResponse[resources.LogGroupField]{}, fmt.Errorf("error from api"))
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 
@@ -63,7 +62,7 @@ func TestLogGroupFieldsRoute(t *testing.T) {
 				},
 			},
 		}, nil)
-		newLogGroupsService = func(_ context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
+		newLogGroupsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.LogGroupsProvider, error) {
 			return &mockLogsService, nil
 		}
 

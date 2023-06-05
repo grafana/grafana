@@ -22,7 +22,7 @@ export interface ExploreTracePanelState {
   spanId?: string;
 }
 
-export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
+export interface SplitOpenOptions<T> {
   datasourceUid: string;
   /** @deprecated Will be removed in a future version. Use queries instead. */
   query?: T;
@@ -34,4 +34,4 @@ export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {
 /**
  * SplitOpen type is used in Explore and related components.
  */
-export type SplitOpen = (options?: SplitOpenOptions | undefined) => void;
+export type SplitOpen = <T extends DataQuery = any>(options?: SplitOpenOptions<T> | undefined) => void;

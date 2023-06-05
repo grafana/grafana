@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -60,15 +59,12 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
-	dashboardService, dashboardStore := testutil.SetupDashboardService(tb, sqlStore, folderStore, cfg)
-	folderService := testutil.SetupFolderService(tb, cfg, dashboardStore, folderStore, bus)
-	ruleStore, err := store.ProvideDBStore(cfg, featuremgmt.WithFeatures(), sqlStore, folderService,
-		ac, &dashboards.FakeDashboardService{})
-	require.NoError(tb, err)
+	dashboardService, dashboardStore := store.SetupDashboardService(tb, sqlStore, folderStore, cfg)
+	folderService := store.SetupFolderService(tb, cfg, dashboardStore, folderStore, bus)
+
 	ng, err := ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),
-		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac,
-		annotationstest.NewFakeAnnotationsRepo(), &plugins.FakePluginStore{}, tracer, ruleStore,
+		secretsService, nil, m, folderService, ac, &dashboards.FakeDashboardService{}, nil, bus, ac, annotationstest.NewFakeAnnotationsRepo(), &plugins.FakePluginStore{}, tracer,
 	)
 	require.NoError(tb, err)
 	return ng, &store.DBstore{

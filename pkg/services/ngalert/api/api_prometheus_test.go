@@ -10,25 +10,24 @@ import (
 	"testing"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	alertingModels "github.com/grafana/alerting/models"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -95,7 +94,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	orgID := int64(1)
 
 	t.Run("with no alerts", func(t *testing.T) {
-		_, _, api := setupAPI(t)
+		_, _, _, api := setupAPI(t)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
 		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID}}
@@ -113,7 +112,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with two alerts", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
@@ -155,7 +154,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with two firing alerts", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(1, util.GenerateShortUID(), 2, withAlertingState())
 		req, err := http.NewRequest("GET", "/api/v1/alerts", nil)
 		require.NoError(t, err)
@@ -197,7 +196,7 @@ func TestRouteGetAlertStatuses(t *testing.T) {
 	})
 
 	t.Run("with the inclusion of internal labels", func(t *testing.T) {
-		_, fakeAIM, api := setupAPI(t)
+		_, fakeAIM, _, api := setupAPI(t)
 		fakeAIM.GenerateAlertInstances(orgID, util.GenerateShortUID(), 2)
 		req, err := http.NewRequest("GET", "/api/v1/alerts?includeInternalLabels=true", nil)
 		require.NoError(t, err)
@@ -282,18 +281,15 @@ func withLabels(labels data.Labels) forEachState {
 }
 
 func TestRouteGetRuleStatuses(t *testing.T) {
-	t.Skip() // TODO: Flaky test: https://github.com/grafana/grafana/issues/69146
-
 	timeNow = func() time.Time { return time.Date(2022, 3, 10, 14, 0, 0, 0, time.UTC) }
 	orgID := int64(1)
-	queryPermissions := map[int64]map[string][]string{1: {datasources.ActionQuery: {datasources.ScopeAll}}}
 
 	req, err := http.NewRequest("GET", "/api/v1/rules", nil)
 	require.NoError(t, err)
-	c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+	c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 	t.Run("with no rules", func(t *testing.T) {
-		_, _, api := setupAPI(t)
+		_, _, _, api := setupAPI(t)
 		r := api.RouteGetRuleStatuses(c)
 
 		require.JSONEq(t, `
@@ -307,7 +303,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that only has one query", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
 		folder := fakeStore.Folders[orgID][0]
 
@@ -338,9 +334,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"totals": {
 					"normal": 1
 				},
-				"totalsFiltered": {
-					"normal": 1
-				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value"
 				},
@@ -366,13 +359,13 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withClassicConditionSingleQuery())
 		folder := fakeStore.Folders[orgID][0]
 
 		req, err := http.NewRequest("GET", "/api/v1/rules?includeInternalLabels=true", nil)
 		require.NoError(t, err)
-		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: queryPermissions}}
+		c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer}}
 
 		r := api.RouteGetRuleStatuses(c)
 		require.Equal(t, http.StatusOK, r.Status())
@@ -403,9 +396,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				"totals": {
 					"normal": 1
 				},
-				"totalsFiltered": {
-					"normal": 1
-				},
 				"labels": {
 					"__a_private_label_on_the_rule__": "a_value",
 					"__alert_rule_uid__": "RuleUID"
@@ -432,7 +422,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		generateRuleAndInstanceWithQuery(t, orgID, fakeAIM, fakeStore, withExpressionsMultiQuery())
 		folder := fakeStore.Folders[orgID][0]
 
@@ -461,9 +451,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 					"value": ""
 				}],
 				"totals": {
-					"normal": 1
-				},
-				"totalsFiltered": {
 					"normal": 1
 				},
 				"labels": {
@@ -542,16 +529,15 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			ruleStore.PutRule(context.Background(), rules...)
 			ruleStore.PutRule(context.Background(), ngmodels.GenerateAlertRules(rand.Intn(4)+2, ngmodels.AlertRuleGen(withOrgID(orgID)))...)
 
+			acMock := acmock.New().WithPermissions(createPermissionsForRules(rules))
+
 			api := PrometheusSrv{
 				log:     log.NewNopLogger(),
 				manager: fakeAIM,
 				store:   ruleStore,
-				ac:      acimpl.ProvideAccessControl(setting.NewCfg()),
+				ac:      acMock,
 			}
 
-			c := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: &user.SignedInUser{OrgID: orgID, Permissions: createPermissionsForRules(rules, orgID)}}
-
-			//c.SignedInUser.Permissions[1] = createPermissionsForRules(rules)
 			response := api.RouteGetRuleStatuses(c)
 			require.Equal(t, http.StatusOK, response.Status())
 			result := &apimodels.RuleResponse{}
@@ -573,7 +559,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test totals are expected", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		// Create rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
 			Title: "Folder-1",
@@ -598,8 +584,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		c := &contextmodel.ReqContext{
 			Context: &web.Context{Req: r},
 			SignedInUser: &user.SignedInUser{
-				OrgID:       orgID,
-				Permissions: queryPermissions,
+				OrgID:   orgID,
+				OrgRole: org.RoleViewer,
 			},
 		}
 		resp := api.RouteGetRuleStatuses(c)
@@ -618,22 +604,19 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		// The first rule should have an alerting and normal alert
 		r1 := rg.Rules[0]
 		require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, r1.Totals)
-		require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, r1.TotalsFiltered)
 		require.Len(t, r1.Alerts, 2)
 		// The second rule should have an alerting alert
 		r2 := rg.Rules[1]
 		require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, r2.Totals)
-		require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, r2.TotalsFiltered)
 		require.Len(t, r2.Alerts, 1)
 		// The last rule should have an error alert
 		r3 := rg.Rules[2]
 		require.Equal(t, map[string]int64{"error": 1}, r3.Totals)
-		require.Equal(t, map[string]int64{"error": 1}, r3.TotalsFiltered)
 		require.Len(t, r3.Alerts, 1)
 	})
 
 	t.Run("test time of first firing alert", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		// Create rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID)))
 		fakeStore.PutRule(context.Background(), rules...)
@@ -644,8 +627,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -689,7 +672,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with limit on Rule Groups", func(t *testing.T) {
-		fakeStore, _, api := setupAPI(t)
+		fakeStore, _, _, api := setupAPI(t)
 
 		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID)))
 		fakeStore.PutRule(context.Background(), rules...)
@@ -700,8 +683,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -725,8 +708,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -749,8 +732,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -762,7 +745,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with limit rules", func(t *testing.T) {
-		fakeStore, _, api := setupAPI(t)
+		fakeStore, _, _, api := setupAPI(t)
 		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1")))
 		fakeStore.PutRule(context.Background(), rules...)
 
@@ -772,8 +755,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -797,8 +780,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -821,8 +804,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -835,7 +818,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with limit alerts", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		rules := ngmodels.GenerateAlertRules(2, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1")))
 		fakeStore.PutRule(context.Background(), rules...)
 		// create a normal and firing alert for each rule
@@ -850,8 +833,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -868,7 +851,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 				require.Len(t, rg.Rules, 1)
 				// Each rule should have two alerts
 				require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
-				require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			}
 		})
 
@@ -878,8 +860,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -896,7 +878,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rule := rg.Rules[0]
 			// The rule should have two alerts, but just one should be returned
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rule.Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rule.TotalsFiltered)
 			require.Len(t, rule.Alerts, 1)
 			// Firing alerts should have precedence over normal alerts
 			require.Equal(t, "Alerting", rule.Alerts[0].State)
@@ -908,8 +889,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -923,7 +904,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 	})
 
 	t.Run("test with filters on state", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(3, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
 			Title: "Folder-1",
@@ -949,8 +930,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -966,8 +947,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -984,15 +965,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// The first two rules should be firing and the last should be inactive
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			require.Len(t, rg.Rules[0].Alerts, 2)
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 			require.Equal(t, "inactive", rg.Rules[2].State)
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
-			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].TotalsFiltered)
 			require.Len(t, rg.Rules[2].Alerts, 1)
 		})
 
@@ -1002,8 +980,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1022,16 +1000,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// Both firing rules should be returned with their totals unchanged
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
-
-			// After filtering the totals for normal are no longer included.
-			require.Equal(t, map[string]int64{"alerting": 1}, rg.Rules[0].TotalsFiltered)
 			// The first rule should have just 1 firing alert as the inactive alert
 			// has been removed by the filter for firing alerts
 			require.Len(t, rg.Rules[0].Alerts, 1)
 
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 		})
 
@@ -1041,8 +1015,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1061,26 +1035,21 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// The first two rules should be firing and the last should be inactive
 			require.Equal(t, "firing", rg.Rules[0].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "normal": 1}, rg.Rules[0].TotalsFiltered)
 			require.Len(t, rg.Rules[0].Alerts, 2)
 			require.Equal(t, "firing", rg.Rules[1].State)
 			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].Totals)
-			require.Equal(t, map[string]int64{"alerting": 1, "error": 1}, rg.Rules[1].TotalsFiltered)
 			require.Len(t, rg.Rules[1].Alerts, 1)
 
-			// The last rule should have 1 alert.
+			// The last rule should have 1 alert as the filter includes errors too
 			require.Equal(t, "inactive", rg.Rules[2].State)
 			require.Equal(t, map[string]int64{"error": 1}, rg.Rules[2].Totals)
-
-			// The TotalsFiltered for error will be 0 out as the state filter does not include error.
-			require.Empty(t, rg.Rules[2].TotalsFiltered)
 			// The error alert has been removed as the filters are inactive and firing
 			require.Len(t, rg.Rules[2].Alerts, 0)
 		})
 	})
 
 	t.Run("test with matcher on labels", func(t *testing.T) {
-		fakeStore, fakeAIM, api := setupAPI(t)
+		fakeStore, fakeAIM, _, api := setupAPI(t)
 		// create two rules in the same Rule Group to keep assertions simple
 		rules := ngmodels.GenerateAlertRules(1, ngmodels.AlertRuleGen(withOrgID(orgID), withGroup("Rule-Group-1"), withNamespace(&folder.Folder{
 			Title: "Folder-1",
@@ -1099,8 +1068,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1116,8 +1085,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1137,8 +1106,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1151,10 +1120,6 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			rg := res.Data.RuleGroups[0]
 			require.Len(t, rg.Rules, 1)
 			require.Len(t, rg.Rules[0].Alerts, 1)
-
-			require.Equal(t, map[string]int64{"normal": 1, "alerting": 1}, rg.Rules[0].Totals)
-			// There should be a totalFiltered of 1 though since the matcher matched a single instance.
-			require.Equal(t, map[string]int64{"normal": 1}, rg.Rules[0].TotalsFiltered)
 		})
 
 		t.Run("then with URL encoded regex matcher", func(t *testing.T) {
@@ -1163,8 +1128,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1185,8 +1150,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1207,8 +1172,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{Req: r},
 				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
+					OrgID:   orgID,
+					OrgRole: org.RoleViewer,
 				},
 			}
 			resp := api.RouteGetRuleStatuses(c)
@@ -1222,47 +1187,22 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			require.Len(t, rg.Rules, 1)
 			require.Len(t, rg.Rules[0].Alerts, 0)
 		})
-
-		t.Run("then with single matcher and limit_alerts", func(t *testing.T) {
-			r, err := http.NewRequest("GET", "/api/v1/rules?limit_alerts=0&matcher={\"name\":\"test\",\"isEqual\":true,\"value\":\"value1\"}", nil)
-			require.NoError(t, err)
-			c := &contextmodel.ReqContext{
-				Context: &web.Context{Req: r},
-				SignedInUser: &user.SignedInUser{
-					OrgID:       orgID,
-					Permissions: queryPermissions,
-				},
-			}
-			resp := api.RouteGetRuleStatuses(c)
-			require.Equal(t, http.StatusOK, resp.Status())
-			var res apimodels.RuleResponse
-			require.NoError(t, json.Unmarshal(resp.Body(), &res))
-
-			// There should be no alerts since we limited to 0.
-			require.Len(t, res.Data.RuleGroups, 1)
-			rg := res.Data.RuleGroups[0]
-			require.Len(t, rg.Rules, 1)
-			require.Len(t, rg.Rules[0].Alerts, 0)
-
-			require.Equal(t, map[string]int64{"normal": 1, "alerting": 1}, rg.Rules[0].Totals)
-			// There should be a totalFiltered of 1 though since the matcher matched a single instance.
-			require.Equal(t, map[string]int64{"normal": 1}, rg.Rules[0].TotalsFiltered)
-		})
 	})
 }
 
-func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, PrometheusSrv) {
+func setupAPI(t *testing.T) (*fakes.RuleStore, *fakeAlertInstanceManager, *acmock.Mock, PrometheusSrv) {
 	fakeStore := fakes.NewRuleStore(t)
 	fakeAIM := NewFakeAlertInstanceManager(t)
+	acMock := acmock.New().WithDisabled()
 
 	api := PrometheusSrv{
 		log:     log.NewNopLogger(),
 		manager: fakeAIM,
 		store:   fakeStore,
-		ac:      acimpl.ProvideAccessControl(setting.NewCfg()),
+		ac:      acMock,
 	}
 
-	return fakeStore, fakeAIM, api
+	return fakeStore, fakeAIM, acMock, api
 }
 
 func generateRuleAndInstanceWithQuery(t *testing.T, orgID int64, fakeAIM *fakeAlertInstanceManager, fakeStore *fakes.RuleStore, query func(r *ngmodels.AlertRule)) {

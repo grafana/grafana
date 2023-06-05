@@ -2,15 +2,15 @@ import { isArray } from 'lodash';
 
 import { FieldConfigSource, MappingType, PanelModel, ValueMap } from '@grafana/data';
 
-import { FieldConfig, Options } from './panelcfg.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const timelinePanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
+  panel: PanelModel<Partial<PanelOptions>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
-  let options = (panel.options ?? {}) as Options;
+  let options = (panel.options ?? {}) as PanelOptions;
 
   // Changing from angular singlestat
   if (prevPluginId === 'natel-discrete-panel' && prevOptions.angular) {
@@ -21,7 +21,7 @@ export const timelinePanelChangedHandler = (
       fieldConfig.defaults.unit = oldOptions.units;
     }
 
-    const custom: FieldConfig = {
+    const custom: PanelFieldConfig = {
       fillOpacity: 100,
       lineWidth: 0,
     };

@@ -1,8 +1,9 @@
-import React, { SyntheticEvent, useId } from 'react';
+import React, { SyntheticEvent } from 'react';
 
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 
+import { useUniqueId } from '../../influxdb/components/useUniqueId';
 import { OpenTsdbOptions } from '../types';
 
 const { Select, Input } = LegacyForms;
@@ -26,7 +27,7 @@ interface Props {
 export const OpenTsdbDetails = (props: Props) => {
   const { onChange, value } = props;
 
-  const idSuffix = useId();
+  const idSuffix = useUniqueId();
 
   return (
     <>

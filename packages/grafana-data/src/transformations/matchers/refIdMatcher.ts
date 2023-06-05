@@ -5,7 +5,7 @@ import { FrameMatcherInfo } from '../../types/transformations';
 import { FrameMatcherID } from './ids';
 
 // General Field matcher
-const refIdMatcher: FrameMatcherInfo<string> = {
+const refIdMacher: FrameMatcherInfo<string> = {
   id: FrameMatcherID.byRefId,
   name: 'Query refId',
   description: 'match the refId',
@@ -24,5 +24,5 @@ const refIdMatcher: FrameMatcherInfo<string> = {
 };
 
 export function getRefIdMatchers(): FrameMatcherInfo[] {
-  return [refIdMatcher];
+  return [refIdMacher];
 }

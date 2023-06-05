@@ -26,7 +26,7 @@ export const DeletePublicDashboardModal = ({
   onDismiss: () => void;
 }) => (
   <ConfirmModal
-    isOpen
+    isOpen={true}
     body={<Body title={dashboardTitle} />}
     onConfirm={onConfirm}
     onDismiss={onDismiss}

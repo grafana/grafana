@@ -1,6 +1,5 @@
-import { ResourceDimensionMode } from '@grafana/schema';
-
 import { getResourceDimension } from './resource';
+import { ResourceDimensionMode } from './types';
 
 describe('getResourceDimension', () => {
   const publicPath = '/public/';

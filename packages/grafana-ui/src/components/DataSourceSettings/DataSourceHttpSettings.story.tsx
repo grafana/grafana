@@ -1,13 +1,14 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
+
+import { DataSourceSettings } from '@grafana/data';
 
 import { DataSourceHttpSettings } from './DataSourceHttpSettings';
 import mdx from './DataSourceHttpSettings.mdx';
-import { HttpSettingsProps } from './types';
 
-const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
+const settingsMock: DataSourceSettings<any, any> = {
   id: 4,
   orgId: 1,
   uid: 'x',
@@ -36,7 +37,7 @@ const settingsMock: HttpSettingsProps['dataSourceConfig'] = {
   readOnly: true,
 };
 
-const meta: Meta<typeof DataSourceHttpSettings> = {
+const meta: ComponentMeta<typeof DataSourceHttpSettings> = {
   title: 'Data Source/DataSourceHttpSettings',
   component: DataSourceHttpSettings,
   parameters: {
@@ -53,7 +54,7 @@ const meta: Meta<typeof DataSourceHttpSettings> = {
   },
 };
 
-export const Basic: StoryFn<typeof DataSourceHttpSettings> = (args) => {
+export const Basic: ComponentStory<typeof DataSourceHttpSettings> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <DataSourceHttpSettings

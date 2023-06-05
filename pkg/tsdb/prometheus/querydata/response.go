@@ -14,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
@@ -24,9 +23,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
 		}
 	}()
-
-	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse", []utils.Attribute{})
-	defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
@@ -50,15 +46,13 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	if r.Error == nil {
-		r = s.processExemplars(ctx, q, r)
+		r = s.processExemplars(q, r)
 	}
 
 	return r
 }
 
-func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr backend.DataResponse) backend.DataResponse {
-	_, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.processExemplars", []utils.Attribute{})
-	defer endSpan()
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
 	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
 

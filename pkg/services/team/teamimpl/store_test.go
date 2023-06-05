@@ -319,6 +319,26 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(permQueryResult), 0)
 			})
 
+			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
+				sqlStore = db.InitTestDB(t)
+				setup()
+				groupId := team2.ID
+				err := teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
+				require.NoError(t, err)
+				err = teamSvc.AddTeamMember(userIds[1], testOrgID, groupId, false, dashboards.PERMISSION_ADMIN)
+				require.NoError(t, err)
+
+				query := &team.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[0]}}
+				queryResult, err := teamSvc.IsAdminOfTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.False(t, queryResult)
+
+				query = &team.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[1]}}
+				queryResult, err = teamSvc.IsAdminOfTeams(context.Background(), query)
+				require.NoError(t, err)
+				require.True(t, queryResult)
+			})
+
 			t.Run("Should not return hidden users in team member count", func(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				setup()
@@ -347,6 +367,13 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, len(searchQueryResult.Teams), 2)
 				team1 := searchQueryResult.Teams[0]
+				require.EqualValues(t, team1.MemberCount, 2)
+
+				searchQueryFilteredByUser := &team.SearchTeamsQuery{OrgID: testOrgID, Page: 1, Limit: 10, UserIDFilter: userIds[0], SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
+				searchQueryFilteredByUserResult, err := teamSvc.SearchTeams(context.Background(), searchQueryFilteredByUser)
+				require.NoError(t, err)
+				require.Equal(t, len(searchQueryFilteredByUserResult.Teams), 1)
+				team1 = searchQueryResult.Teams[0]
 				require.EqualValues(t, team1.MemberCount, 2)
 
 				getTeamQuery := &team.GetTeamByIDQuery{OrgID: testOrgID, ID: teamId, SignedInUser: signedInUser, HiddenUsers: hiddenUsers}
@@ -400,9 +427,9 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	type searchTeamsTestCase struct {
-		desc              string
-		query             *team.SearchTeamsQuery
-		expectedTeamCount int
+		desc             string
+		query            *team.SearchTeamsQuery
+		expectedNumUsers int
 	}
 
 	tests := []searchTeamsTestCase{
@@ -415,7 +442,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {ac.ScopeTeamsAll}}},
 				},
 			},
-			expectedTeamCount: 10,
+			expectedNumUsers: 10,
 		},
 		{
 			desc: "should return no teams",
@@ -426,7 +453,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {ac.ActionTeamsRead: {""}}},
 				},
 			},
-			expectedTeamCount: 0,
+			expectedNumUsers: 0,
 		},
 		{
 			desc: "should return some teams",
@@ -441,7 +468,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 					}}},
 				},
 			},
-			expectedTeamCount: 3,
+			expectedNumUsers: 3,
 		},
 	}
 
@@ -458,8 +485,8 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			queryResult, err := teamSvc.SearchTeams(context.Background(), tt.query)
 			require.NoError(t, err)
-			assert.Len(t, queryResult.Teams, tt.expectedTeamCount)
-			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedTeamCount))
+			assert.Len(t, queryResult.Teams, tt.expectedNumUsers)
+			assert.Equal(t, queryResult.TotalCount, int64(tt.expectedNumUsers))
 
 			if !hasWildcardScope(tt.query.SignedInUser, ac.ActionTeamsRead) {
 				for _, team := range queryResult.Teams {

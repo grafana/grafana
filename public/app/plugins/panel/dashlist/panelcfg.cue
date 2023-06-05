@@ -18,23 +18,25 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		schemas: [{
-			version: [0, 0]
-			schema: {
-				Options: {
-					keepTime:           bool | *false
-					includeVars:        bool | *false
-					showStarred:        bool | *true
-					showRecentlyViewed: bool | *false
-					showSearch:         bool | *false
-					showHeadings:       bool | *true
-					maxItems:           int | *10
-					query:              string | *""
-					folderId?:          int
-					tags:               [...string] | *[]
-				} @cuetsy(kind="interface")
-			}
-		}]
-		lenses: []
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							keepTime:           bool | *false
+							includeVars:        bool | *false
+							showStarred:        bool | *true
+							showRecentlyViewed: bool | *false
+							showSearch:         bool | *false
+							showHeadings:       bool | *true
+							maxItems:           int | *10
+							query:              string | *""
+							folderId?:          int
+							tags:               [...string] | *[]
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
 	}
 }

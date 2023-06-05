@@ -6,7 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
-import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
+import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 

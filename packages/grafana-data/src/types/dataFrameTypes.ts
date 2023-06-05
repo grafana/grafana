@@ -13,11 +13,6 @@ export enum DataFrameType {
 
   TimeSeriesMulti = 'timeseries-multi',
 
-  /** Numeric types: https://grafana.github.io/dataplane/contract/numeric */
-  NumericWide = 'numeric-wide',
-  NumericMulti = 'numeric-multi',
-  NumericLong = 'numeric-long',
-
   /** Directory listing */
   DirectoryListing = 'directory-listing',
 

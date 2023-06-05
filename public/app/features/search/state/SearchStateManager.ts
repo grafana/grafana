@@ -40,9 +40,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   doSearchWithDebounce = debounce(() => this.doSearch(), 300);
   lastQuery?: SearchQuery;
 
-  lastSearchTimestamp = 0;
-
-  initStateFromUrl(folderUid?: string, doInitialSearch = true) {
+  initStateFromUrl(folderUid?: string) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
     // Force list view when conditions are specified from the URL
@@ -51,25 +49,19 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     }
 
     stateManager.setState({
-      ...initialState,
       ...stateFromUrl,
       folderUid: folderUid,
       eventTrackingNamespace: folderUid ? 'manage_dashboards' : 'dashboard_search',
     });
 
-    if (doInitialSearch) {
-      this.doSearch();
-    }
+    this.doSearch();
   }
-
   /**
    * Updates internal and url state, then triggers a new search
    */
   setStateAndDoSearch(state: Partial<SearchState>) {
-    const sort = state.sort || this.state.sort || localStorage.getItem(SEARCH_SELECTED_SORT) || undefined;
-
     // Set internal state
-    this.setState({ sort, ...state });
+    this.setState(state);
 
     // Update url state
     this.updateLocation({
@@ -100,7 +92,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tag: [],
       panel_type: undefined,
       starred: undefined,
-      sort: undefined,
     });
   };
 
@@ -171,7 +162,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type || this.state.sort;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
   }
 
   getSearchQuery() {
@@ -226,42 +217,45 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     this.setState({ loading: true });
 
-    const searcher = getGrafanaSearcher();
-
-    const searchTimestamp = Date.now();
-    const searchPromise = this.state.starred ? searcher.starred(this.lastQuery) : searcher.search(this.lastQuery);
-
-    searchPromise
-      .then((result) => {
-        // Only keep the results if it's was issued after the most recently resolved search.
-        // This prevents results showing out of order if first request is slower than later ones
-        if (searchTimestamp > this.lastSearchTimestamp) {
-          this.setState({ result, loading: false });
-          this.lastSearchTimestamp = searchTimestamp;
-        }
-      })
-      .catch((error) => {
-        reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
-          ...trackingInfo,
-          error: error?.message,
+    if (this.state.starred) {
+      getGrafanaSearcher()
+        .starred(this.lastQuery)
+        .then((result) => this.setState({ result, loading: false }))
+        .catch((error) => {
+          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+            ...trackingInfo,
+            error: error?.message,
+          });
+          this.setState({ loading: false });
         });
-        this.setState({ loading: false });
-      });
+    } else {
+      getGrafanaSearcher()
+        .search(this.lastQuery)
+        .then((result) => this.setState({ result, loading: false }))
+        .catch((error) => {
+          reportSearchFailedQueryInteraction(this.state.eventTrackingNamespace, {
+            ...trackingInfo,
+            error: error?.message,
+          });
+          this.setState({ loading: false });
+        });
+    }
   }
 
   // This gets the possible tags from within the query results
   getTagOptions = (): Promise<TermCount[]> => {
-    const query = this.lastQuery ?? {
-      kind: ['dashboard', 'folder'],
-      query: '*',
-    };
-    return getGrafanaSearcher().tags(query);
+    return getGrafanaSearcher().tags(this.lastQuery!);
   };
 
   /**
    * When item is selected clear some filters and report interaction
    */
   onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
+    // Clear some filters only if we're not opening a search item in a new tab
+    if (!e.altKey && !e.ctrlKey && !e.metaKey) {
+      this.setState({ tag: [], starred: false, sort: undefined, query: '', folderUid: undefined });
+    }
+
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -293,21 +287,15 @@ export function getSearchStateManager() {
   if (!stateManager) {
     const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
     const layout = selectedLayout ?? initialState.layout;
+    const sort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
       includePanels = false;
     }
 
-    stateManager = new SearchStateManager({ ...initialState, layout, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout, sort, includePanels });
   }
 
   return stateManager;
-}
-
-export function useSearchStateManager() {
-  const stateManager = getSearchStateManager();
-  const state = stateManager.useState();
-
-  return [state, stateManager] as const;
 }

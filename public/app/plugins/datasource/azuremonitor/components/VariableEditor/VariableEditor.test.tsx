@@ -100,7 +100,7 @@ describe('VariableEditor:', () => {
     it('should render', async () => {
       render(<VariableEditor {...ARGqueryProps} />);
       await waitFor(() => screen.queryByTestId('mockeditor'));
-      await waitFor(() => screen.queryByLabelText('Subscriptions'));
+      expect(screen.queryByLabelText('Subscriptions')).toBeInTheDocument();
       expect(screen.queryByText('Resource Graph')).toBeInTheDocument();
       expect(screen.queryByLabelText('Select subscription')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Select query type')).not.toBeInTheDocument();

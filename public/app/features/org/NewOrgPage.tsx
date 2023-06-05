@@ -24,6 +24,7 @@ const pageNav: NavModelItem = {
   icon: 'building',
   id: 'org-new',
   text: 'New organization',
+  breadcrumbs: [{ title: 'Server admin', url: 'admin/orgs' }],
 };
 
 export const NewOrgPage = ({ createOrganization }: Props) => {

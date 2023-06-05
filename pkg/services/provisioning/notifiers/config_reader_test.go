@@ -3,6 +3,7 @@ package notifiers
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Can read correct properties", func(t *testing.T) {
 			setup()
-			t.Setenv("TEST_VAR", "default")
+			_ = os.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
 				orgService:        orgService,
 				encryptionService: encryptionService,
@@ -77,6 +78,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			}
 
 			cfg, err := cfgProvider.readConfig(context.Background(), correctProperties)
+			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}

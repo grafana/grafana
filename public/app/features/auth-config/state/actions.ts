@@ -48,7 +48,7 @@ export function loadProviderStatuses(): ThunkResult<void> {
 
 export function saveSettings(data: UpdateSettingsQuery): ThunkResult<Promise<boolean>> {
   return async (dispatch) => {
-    if (contextSrv.hasPermission(AccessControlAction.SettingsWrite)) {
+    if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       try {
         await lastValueFrom(
           getBackendSrv().fetch({

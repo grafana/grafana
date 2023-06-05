@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"os"
 	"testing"
@@ -111,11 +112,11 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			expSnippets: []string{
 				"2 firing instances",
 				"<strong>severity</strong>",
-				"warning",
-				"critical",
+				"warning\n",
+				"critical\n",
 				"<strong>alertname</strong>",
-				"FiringTwo",
-				"FiringOne",
+				"FiringTwo\n",
+				"FiringOne\n",
 				"<a href=\"http://fix.me\"",
 				"<a href=\"http://localhost/base/d/abc",
 				"<a href=\"http://localhost/base/d/abc?viewPanel=5",
@@ -187,20 +188,40 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns receivers.EmailSender) *alertingEmail.Notifier {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns receivers.NotificationSender) *alertingEmail.Notifier {
 	t.Helper()
-	if subjectTmpl == "" {
-		subjectTmpl = alertingTemplates.DefaultMessageTitleEmbed
+
+	jsonData := map[string]interface{}{
+		"addresses":   "someops@example.com;somedev@example.com",
+		"singleEmail": true,
 	}
-	return alertingEmail.New(alertingEmail.Config{
-		SingleEmail: true,
-		Addresses: []string{
-			"someops@example.com",
-			"somedev@example.com",
+	if messageTmpl != "" {
+		jsonData["message"] = messageTmpl
+	}
+
+	if subjectTmpl != "" {
+		jsonData["subject"] = subjectTmpl
+	}
+	bytes, err := json.Marshal(jsonData)
+	require.NoError(t, err)
+
+	fc := receivers.FactoryConfig{
+		Config: &receivers.NotificationChannelConfig{
+			Name:     "ops",
+			Type:     "alertingEmail",
+			Settings: json.RawMessage(bytes),
 		},
-		Message: messageTmpl,
-		Subject: subjectTmpl,
-	}, receivers.Metadata{}, emailTmpl, ns, &images.UnavailableImageStore{}, &alertingLogging.FakeLogger{})
+		NotificationService: ns,
+		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
+			return fallback
+		},
+		ImageStore: &images.UnavailableImageStore{},
+		Template:   emailTmpl,
+		Logger:     &alertingLogging.FakeLogger{},
+	}
+	emailNotifier, err := alertingEmail.New(fc)
+	require.NoError(t, err)
+	return emailNotifier
 }
 
 func getSingleSentMessage(t *testing.T, ns *emailSender) *notifications.Message {

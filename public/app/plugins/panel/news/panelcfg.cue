@@ -18,16 +18,18 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		schemas: [{
-			version: [0, 0]
-			schema: {
-				Options: {
-					// empty/missing will default to grafana blog
-					feedUrl?:   string
-					showImage?: bool | *true
-				} @cuetsy(kind="interface")
-			}
-		}]
-		lenses: []
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							// empty/missing will default to grafana blog
+							feedUrl?:   string
+							showImage?: bool | *true
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
 	}
 }

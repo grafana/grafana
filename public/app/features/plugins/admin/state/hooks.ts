@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 
 import { PluginError } from '@grafana/data';
 import { useDispatch, useSelector } from 'app/types';
@@ -9,29 +9,46 @@ import { CatalogPlugin, PluginListDisplayMode } from '../types';
 import { fetchAll, fetchDetails, fetchRemotePlugins, install, uninstall, fetchAllLocal, unsetInstall } from './actions';
 import { setDisplayMode } from './reducer';
 import {
-  selectPlugins,
+  find,
+  selectAll,
   selectById,
   selectIsRequestPending,
   selectRequestError,
   selectIsRequestNotFetched,
   selectDisplayMode,
   selectPluginErrors,
-  type PluginFilters,
 } from './selectors';
 
-export const useGetAll = (filters: PluginFilters, sortBy: Sorters = Sorters.nameAsc) => {
+type Filters = {
+  query?: string; // Note: this will be an escaped regex string as it comes from `FilterInput`
+  filterBy?: string;
+  filterByType?: string;
+  sortBy?: Sorters;
+};
+
+export const useGetAllWithFilters = ({
+  query = '',
+  filterBy = 'installed',
+  filterByType = 'all',
+  sortBy = Sorters.nameAsc,
+}: Filters) => {
   useFetchAll();
 
-  const selector = useMemo(() => selectPlugins(filters), [filters]);
-  const plugins = useSelector(selector);
+  const filtered = useSelector(find(query, filterBy, filterByType));
   const { isLoading, error } = useFetchStatus();
-  const sortedPlugins = sortPlugins(plugins, sortBy);
+  const sortedAndFiltered = sortPlugins(filtered, sortBy);
 
   return {
     isLoading,
     error,
-    plugins: sortedPlugins,
+    plugins: sortedAndFiltered,
   };
+};
+
+export const useGetAll = (): CatalogPlugin[] => {
+  useFetchAll();
+
+  return useSelector(selectAll);
 };
 
 export const useGetSingle = (id: string): CatalogPlugin | undefined => {

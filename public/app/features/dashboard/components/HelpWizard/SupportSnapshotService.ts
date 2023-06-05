@@ -80,7 +80,7 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
 
     let scene: SceneObject | undefined = undefined;
 
-    if (!panel.isAngularPlugin()) {
+    if (config.featureToggles.scenes && !panel.isAngularPlugin()) {
       try {
         const oldModel = new DashboardModel(snapshot);
         const dash = createDashboardSceneFromDashboardModel(oldModel);

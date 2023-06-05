@@ -8,7 +8,6 @@ import (
 
 type SecureSocksDSProxySettings struct {
 	Enabled      bool
-	ShowUI       bool
 	ClientCert   string
 	ClientKey    string
 	RootCA       string
@@ -25,7 +24,6 @@ func readSecureSocksDSProxySettings(iniFile *ini.File) (SecureSocksDSProxySettin
 	s.RootCA = secureSocksProxySection.Key("root_ca_cert").MustString("")
 	s.ProxyAddress = secureSocksProxySection.Key("proxy_address").MustString("")
 	s.ServerName = secureSocksProxySection.Key("server_name").MustString("")
-	s.ShowUI = secureSocksProxySection.Key("show_ui").MustBool(true)
 
 	if !s.Enabled {
 		return s, nil

@@ -25,7 +25,6 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -41,7 +40,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'view' });
+    reportInteraction('dashboards_panelheader_view_clicked');
   };
 
   const onEditPanel = (event: React.MouseEvent<any>) => {
@@ -49,26 +48,25 @@ export function getPanelMenu(
     locationService.partial({
       editPanel: panel.id,
     });
-
-    reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
+    reportInteraction('dashboards_panelheader_edit_clicked');
   };
 
   const onSharePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+    reportInteraction('dashboards_panelheader_share_clicked');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+    reportInteraction('dashboards_panelheader_createlibrarypanel_clicked');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
+    reportInteraction('dashboards_panelheader_unlinklibrarypanel_clicked');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -76,7 +74,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
+    reportInteraction('dashboards_panelheader_inspect_clicked', { tab: tab ?? InspectTab.Data });
   };
 
   const onMore = (event: React.MouseEvent<any>) => {
@@ -86,19 +84,19 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
+    reportInteraction('dashboards_panelheader_duplicate_clicked');
   };
 
   const onCopyPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     copyPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
+    reportInteraction('dashboards_panelheader_copy_clicked');
   };
 
   const onRemovePanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
+    reportInteraction('dashboards_panelheader_remove_clicked');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
@@ -106,13 +104,13 @@ export function getPanelMenu(
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
-    reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
+    reportInteraction('dashboards_panelheader_explore_clicked');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'toggleLegend' });
+    reportInteraction('dashboards_panelheader_togglelegend_clicked');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -142,11 +140,7 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  if (
-    contextSrv.hasAccessToExplore() &&
-    !(panel.plugin && panel.plugin.meta.skipDataQuery) &&
-    panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
-  ) {
+  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
@@ -274,10 +268,19 @@ export function getPanelMenu(
     });
   }
 
+  if (subMenu.length) {
+    menu.push({
+      type: 'submenu',
+      text: t('panel.header-menu.more', `More...`),
+      iconClassName: 'cube',
+      subMenu,
+      onClick: onMore,
+    });
+  }
+
   const { extensions } = getPluginExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 2,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
@@ -299,16 +302,6 @@ export function getPanelMenu(
       iconClassName: 'plug',
       type: 'submenu',
       subMenu: extensionsMenu,
-    });
-  }
-
-  if (subMenu.length) {
-    menu.push({
-      type: 'submenu',
-      text: t('panel.header-menu.more', `More...`),
-      iconClassName: 'cube',
-      subMenu,
-      onClick: onMore,
     });
   }
 
@@ -347,7 +340,5 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
       tags: Array.from<string>(dashboard.tags),
     },
     targets: panel.targets,
-    scopedVars: panel.scopedVars,
-    data: panel.getQueryRunner().getLastResult(),
   };
 }

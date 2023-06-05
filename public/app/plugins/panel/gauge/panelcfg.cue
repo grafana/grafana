@@ -22,16 +22,18 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		schemas: [{
-			version: [0, 0]
-			schema: {
-				Options: {
-					common.SingleStatBaseOptions
-					showThresholdLabels:  bool | *false
-					showThresholdMarkers: bool | *true
-				} @cuetsy(kind="interface")
-			}
-		}]
-		lenses: []
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							common.SingleStatBaseOptions
+							showThresholdLabels:  bool | *false
+							showThresholdMarkers: bool | *true
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
 	}
 }

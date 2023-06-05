@@ -2,7 +2,7 @@
 
 const browserslist = require('browserslist');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { EsbuildPlugin } = require('esbuild-loader');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -13,13 +13,6 @@ const { merge } = require('webpack-merge');
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
-
-// esbuild-loader 3.0.0+ requires format to be set to prevent it
-// from defaulting to 'iife' which breaks monaco/loader once minified.
-const esbuildOptions = {
-  target: esbuildTargets,
-  format: undefined,
-};
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -39,7 +32,10 @@ module.exports = (env = {}) =>
           exclude: /node_modules/,
           use: {
             loader: 'esbuild-loader',
-            options: esbuildOptions,
+            options: {
+              loader: 'tsx',
+              target: esbuildTargets,
+            },
           },
         },
         require('./sass.rule.js')({
@@ -51,7 +47,12 @@ module.exports = (env = {}) =>
     optimization: {
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
-      minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
+      minimizer: [
+        new ESBuildMinifyPlugin({
+          target: esbuildTargets,
+        }),
+        new CssMinimizerPlugin(),
+      ],
     },
 
     // enable persistent cache for faster builds

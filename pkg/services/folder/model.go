@@ -1,12 +1,9 @@
 package folder
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -14,6 +11,7 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
+var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
 var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 var ErrTargetRegistrySrvConflict = errutil.NewBase(errutil.StatusInternal, "folder.target-registry-srv-conflict")
 
@@ -51,14 +49,10 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
-func (f *Folder) WithURL() *Folder {
-	if f == nil || f.URL != "" {
-		return f
-	}
+type FolderDTO struct {
+	Folder
 
-	// copy of dashboards.GetFolderURL()
-	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
-	return f
+	Children []FolderDTO
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -90,8 +84,6 @@ type UpdateFolderCommand struct {
 	UID   string `json:"-"`
 	OrgID int64  `json:"-"`
 	// NewUID it's an optional parameter used for overriding the existing folder UID
-	// Starting with 10.0, this is deprecated. It will be removed in a future release.
-	// Please avoid using it because it can result in folder loosing its permissions.
 	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
 	// NewTitle it's an optional parameter used for overriding the existing folder title
 	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
@@ -169,14 +161,3 @@ type HasEditPermissionInFoldersQuery struct {
 type HasAdminPermissionInDashboardsOrFoldersQuery struct {
 	SignedInUser *user.SignedInUser
 }
-
-// GetDescendantCountsQuery captures the information required by the folder service
-// to return the count of descendants (direct and indirect) in a folder.
-type GetDescendantCountsQuery struct {
-	UID   *string
-	OrgID int64
-
-	SignedInUser *user.SignedInUser `json:"-"`
-}
-
-type DescendantCounts map[string]int64

@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/notifier"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -34,38 +35,10 @@ type ExternalAlertmanager struct {
 	logger log.Logger
 	wg     sync.WaitGroup
 
-	manager *Manager
+	manager *notifier.Manager
 
 	sdCancel  context.CancelFunc
 	sdManager *discovery.Manager
-}
-
-type externalAMcfg struct {
-	amURL   string
-	headers map[string]string
-}
-
-func (cfg *externalAMcfg) SHA256() string {
-	return asSHA256([]string{cfg.headerString(), cfg.amURL})
-}
-
-// headersString transforms all the headers in a sorted way as a
-// single string so it can be used for hashing and comparing.
-func (cfg *externalAMcfg) headerString() string {
-	var result strings.Builder
-
-	headerKeys := make([]string, 0, len(cfg.headers))
-	for key := range cfg.headers {
-		headerKeys = append(headerKeys, key)
-	}
-
-	sort.Strings(headerKeys)
-
-	for _, key := range headerKeys {
-		result.WriteString(fmt.Sprintf("%s:%s", key, cfg.headers[key]))
-	}
-
-	return result.String()
 }
 
 func NewExternalAlertmanagerSender() *ExternalAlertmanager {
@@ -76,10 +49,10 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 		sdCancel: sdCancel,
 	}
 
-	s.manager = NewManager(
+	s.manager = notifier.NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
 		s.logger,
 	)
 
@@ -89,8 +62,8 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []externalAMcfg) error {
-	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []string) error {
+	notifierCfg, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
 	}
@@ -98,7 +71,7 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []exte
 	s.logger = s.logger.New("org", orgId, "cfg", id)
 
 	s.logger.Info("Synchronizing config with external Alertmanager group")
-	if err := s.manager.ApplyConfig(notifierCfg, headers); err != nil {
+	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
 		return err
 	}
 
@@ -133,7 +106,7 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 	if len(alerts.PostableAlerts) == 0 {
 		return
 	}
-	as := make([]*Alert, 0, len(alerts.PostableAlerts))
+	as := make([]*notifier.Alert, 0, len(alerts.PostableAlerts))
 	for _, a := range alerts.PostableAlerts {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
@@ -160,13 +133,12 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[string]map[string]string, error) {
+func buildNotifierConfig(alertmanagers []string) (*config.Config, error) {
 	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
-	headers := map[string]map[string]string{}
-	for i, am := range alertmanagers {
-		u, err := url.Parse(am.amURL)
+	for _, amURL := range alertmanagers {
+		u, err := url.Parse(amURL)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		sdConfig := discovery.Configs{
@@ -183,12 +155,6 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[str
 			PathPrefix:              u.Path,
 			Timeout:                 model.Duration(defaultTimeout),
 			ServiceDiscoveryConfigs: sdConfig,
-		}
-
-		if am.headers != nil {
-			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
-			// so we can use it later on when working with the alertmanager config map.
-			headers[fmt.Sprintf("config-%d", i)] = am.headers
 		}
 
 		// Check the URL for basic authentication information first
@@ -210,12 +176,12 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[str
 		},
 	}
 
-	return notifierConfig, headers, nil
+	return notifierConfig, nil
 }
 
-func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
+func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *notifier.Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
-	return &Alert{
+	return &notifier.Alert{
 		Labels:       s.sanitizeLabelSet(alert.Alert.Labels),
 		Annotations:  s.sanitizeLabelSet(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),

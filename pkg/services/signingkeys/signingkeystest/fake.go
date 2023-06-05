@@ -11,7 +11,6 @@ type FakeSigningKeysService struct {
 	ExpectedJSONWebKey       jose.JSONWebKey
 	ExpectedKeys             map[string]crypto.Signer
 	ExpectedServerPrivateKey crypto.PrivateKey
-	ExpectedServerPublicKey  crypto.PublicKey
 	ExpectedError            error
 }
 
@@ -35,13 +34,8 @@ func (s *FakeSigningKeysService) GetPrivateKey(keyID string) (crypto.PrivateKey,
 }
 
 // GetServerPrivateKey returns the private key used to sign tokens
-func (s *FakeSigningKeysService) GetServerPrivateKey() crypto.PrivateKey {
-	return s.ExpectedServerPrivateKey
-}
-
-// GetServerPublicKey returns the public key used to verify tokens
-func (s *FakeSigningKeysService) GetServerPublicKey() crypto.PublicKey {
-	return s.ExpectedServerPublicKey
+func (s *FakeSigningKeysService) GetServerPrivateKey() (crypto.PrivateKey, error) {
+	return s.ExpectedServerPrivateKey, s.ExpectedError
 }
 
 // AddPrivateKey adds a private key to the service

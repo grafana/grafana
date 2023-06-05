@@ -25,8 +25,9 @@ import {
   GraphSeriesValue,
 } from '../types/index';
 
-import { arrayToDataFrame } from './ArrayDataFrame';
+import { ArrayDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
+import { MutableDataFrame } from './MutableDataFrame';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
@@ -35,7 +36,7 @@ function convertTableToDataFrame(table: TableData): DataFrame {
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as unknown[],
+      values: [] as any[],
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -314,7 +315,7 @@ export function toDataFrame(data: any): DataFrame {
     }
 
     // This will convert the array values into Vectors
-    return createDataFrame(data as DataFrameDTO);
+    return new MutableDataFrame(data as DataFrameDTO);
   }
 
   // Handle legacy docs/json type
@@ -338,7 +339,7 @@ export function toDataFrame(data: any): DataFrame {
   }
 
   if (Array.isArray(data)) {
-    return arrayToDataFrame(data);
+    return new ArrayDataFrame(data);
   }
 
   console.warn('Can not convert', data);
@@ -349,7 +350,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   const { fields } = frame;
 
   const rowCount = frame.length;
-  const rows: unknown[][] = [];
+  const rows: any[][] = [];
 
   if (fields.length === 2) {
     const { timeField, timeIndex } = getTimeField(frame);
@@ -378,7 +379,7 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
   }
 
   for (let i = 0; i < rowCount; i++) {
-    const row: unknown[] = [];
+    const row: any[] = [];
     for (let j = 0; j < fields.length; j++) {
       row.push(fields[j].values[i]);
     }
@@ -459,8 +460,8 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
 /**
  * Wrapper to get an array from each field value
  */
-export function getDataFrameRow(data: DataFrame, row: number): unknown[] {
-  const values: unknown[] = [];
+export function getDataFrameRow(data: DataFrame, row: number): any[] {
+  const values: any[] = [];
   for (const field of data.fields) {
     values.push(field.values[row]);
   }
@@ -564,37 +565,5 @@ export function preProcessPanelData(data: PanelData, lastResult?: PanelData): Pa
     series: processedDataFrames,
     annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
-  };
-}
-
-export interface PartialDataFrame extends Omit<DataFrame, 'fields' | 'length'> {
-  fields: Array<Partial<Field>>;
-}
-
-export function createDataFrame(input: PartialDataFrame): DataFrame {
-  let length = 0;
-  const fields = input.fields.map((p, idx) => {
-    const { state, ...field } = p;
-    if (!field.name) {
-      field.name = `Field ${idx + 1}`;
-    }
-    if (!field.config) {
-      field.config = {};
-    }
-    if (!field.values) {
-      field.values = new Array(length);
-    } else if (field.values.length > length) {
-      length = field.values.length;
-    }
-    if (!field.type) {
-      field.type = guessFieldTypeForField(field as Field) ?? FieldType.other;
-    }
-    return field as Field;
-  });
-
-  return {
-    ...input,
-    fields,
-    length,
   };
 }

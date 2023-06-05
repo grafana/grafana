@@ -32,6 +32,11 @@ export class PerformanceBackend implements EchoBackend<PerformanceEvent, Perform
       return;
     }
 
+    // Currently we don't have an API for sending the metrics hence logging to console in dev environment
+    if (process.env.NODE_ENV === 'development') {
+      console.log('PerformanceBackend flushing:', this.buffer);
+    }
+
     backendSrv.post('/api/frontend-metrics', {
       events: this.buffer,
     });

@@ -12,7 +12,7 @@ const meta: Meta = {
       page: mdx,
     },
     controls: {
-      exclude: ['className', 'options', 'value', 'onChange', 'onClick', 'id'],
+      exclude: ['className', 'options', 'value', 'onChange'],
     },
   },
   argTypes: {
@@ -52,7 +52,6 @@ export const RadioButtons: Story = (args) => {
           onChange={(v) => setSelected(v!)}
           size={args.size}
           fullWidth={args.fullWidth}
-          invalid={args.invalid}
         />
       </div>
       <div style={{ marginBottom: '32px' }}>
@@ -64,7 +63,6 @@ export const RadioButtons: Story = (args) => {
           value={selected}
           onChange={(v) => setSelected(v!)}
           size={args.size}
-          invalid={args.invalid}
         />
       </div>
       <div style={{ marginBottom: '32px' }}>
@@ -74,7 +72,6 @@ export const RadioButtons: Story = (args) => {
           value={selected}
           onChange={(v) => setSelected(v!)}
           size={args.size}
-          invalid={args.invalid}
         />
       </div>
     </div>
@@ -85,7 +82,6 @@ RadioButtons.args = {
   disabledOptions: '',
   size: 'md',
   fullWidth: true,
-  invalid: false,
 };
 
 export default meta;

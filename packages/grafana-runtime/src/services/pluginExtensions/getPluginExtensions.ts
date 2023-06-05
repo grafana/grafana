@@ -1,17 +1,13 @@
-import type { PluginExtension, PluginExtensionLink, PluginExtensionComponent } from '@grafana/data';
+import { PluginExtension } from '@grafana/data';
 
-import { isPluginExtensionComponent, isPluginExtensionLink } from './utils';
-
-export type GetPluginExtensions<T = PluginExtension> = ({
+export type GetPluginExtensions = ({
   extensionPointId,
   context,
-  limitPerPlugin,
 }: {
   extensionPointId: string;
   context?: object | Record<string | symbol, unknown>;
-  limitPerPlugin?: number;
 }) => {
-  extensions: T[];
+  extensions: PluginExtension[];
 };
 
 let singleton: GetPluginExtensions | undefined;
@@ -32,19 +28,3 @@ function getPluginExtensionGetter(): GetPluginExtensions {
 }
 
 export const getPluginExtensions: GetPluginExtensions = (options) => getPluginExtensionGetter()(options);
-
-export const getPluginLinkExtensions: GetPluginExtensions<PluginExtensionLink> = (options) => {
-  const { extensions } = getPluginExtensions(options);
-
-  return {
-    extensions: extensions.filter(isPluginExtensionLink),
-  };
-};
-
-export const getPluginComponentExtensions: GetPluginExtensions<PluginExtensionComponent> = (options) => {
-  const { extensions } = getPluginExtensions(options);
-
-  return {
-    extensions: extensions.filter(isPluginExtensionComponent),
-  };
-};

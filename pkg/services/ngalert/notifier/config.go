@@ -8,13 +8,14 @@ import (
 	"path/filepath"
 
 	alertingNotify "github.com/grafana/alerting/notify"
-	alertingTemplates "github.com/grafana/alerting/templates"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
+var cfglogger = log.New("notifier.config")
+
+func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
 		return nil, false, nil
 	}
@@ -32,7 +33,7 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 		}
 
 		file := filepath.Join(path, name)
-		pathSet[name] = struct{}{}
+		pathSet[file] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
@@ -56,16 +57,16 @@ func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path strin
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		logger.Error("Unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
+		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
-		_, ok := pathSet[existingFile.Name()]
+		_, ok := pathSet[p]
 		if !ok {
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				logger.Error("Unable to delete template", "error", err, "file", p)
+				cfglogger.Error("unable to delete template", "error", err, "file", p)
 			}
 		}
 	}
@@ -90,16 +91,18 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 // AlertingConfiguration provides configuration for an Alertmanager.
 // It implements the notify.Configuration interface.
 type AlertingConfiguration struct {
-	alertmanagerConfig    api.PostableApiAlertingConfig
-	rawAlertmanagerConfig []byte
+	AlertmanagerConfig    api.PostableApiAlertingConfig
+	RawAlertmanagerConfig []byte
 
-	receivers                []*alertingNotify.APIReceiver
-	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
+	AlertmanagerTemplates *alertingNotify.Template
+
+	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
+	ReceiverIntegrationsFunc func(r *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
-		return a.receiverIntegrationsFunc(next, tmpl)
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+		return a.ReceiverIntegrationsFunc(next, tmpl)
 	}
 }
 
@@ -108,29 +111,29 @@ func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimit
 }
 
 func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
-	return a.alertmanagerConfig.InhibitRules
+	return a.AlertmanagerConfig.InhibitRules
 }
 
 func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
-	return a.alertmanagerConfig.MuteTimeIntervals
+	return a.AlertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) Receivers() []*alertingNotify.APIReceiver {
-	return a.receivers
+func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
+	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
-	return a.alertmanagerConfig.Route.AsAMRoute()
+	return a.AlertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() []string {
-	return a.alertmanagerConfig.Templates
+func (a AlertingConfiguration) Templates() *alertingNotify.Template {
+	return a.AlertmanagerTemplates
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {
-	return md5.Sum(a.rawAlertmanagerConfig)
+	return md5.Sum(a.RawAlertmanagerConfig)
 }
 
 func (a AlertingConfiguration) Raw() []byte {
-	return a.rawAlertmanagerConfig
+	return a.RawAlertmanagerConfig
 }

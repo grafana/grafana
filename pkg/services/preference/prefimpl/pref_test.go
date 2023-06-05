@@ -45,9 +45,7 @@ func TestGetDefaults(t *testing.T) {
 			Theme:           "light",
 			Timezone:        "UTC",
 			HomeDashboardID: 0,
-			JSONData: &pref.PreferenceJSONData{
-				Language: "en-US",
-			},
+			JSONData:        &pref.PreferenceJSONData{},
 		}
 		if diff := cmp.Diff(expected, preference); diff != "" {
 			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
@@ -58,6 +56,32 @@ func TestGetDefaults(t *testing.T) {
 		query := &pref.GetPreferenceWithDefaultsQuery{OrgID: 1}
 		preference, err := prefService.GetWithDefaults(context.Background(), query)
 		require.NoError(t, err)
+		expected := &pref.Preference{
+			WeekStart:       &weekStart,
+			Theme:           "light",
+			Timezone:        "UTC",
+			HomeDashboardID: 0,
+			JSONData:        &pref.PreferenceJSONData{},
+		}
+		if diff := cmp.Diff(expected, preference); diff != "" {
+			t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+}
+
+func TestGetDefaultsWithI18nFeatureFlag(t *testing.T) {
+	prefService := &Service{
+		store:    newFake(),
+		cfg:      setting.NewCfg(),
+		features: featuremgmt.WithFeatures(featuremgmt.FlagInternationalization),
+	}
+	weekStart := ""
+	prefService.cfg.DefaultLanguage = "en-US"
+	prefService.cfg.DefaultTheme = "light"
+	prefService.cfg.DateFormats.DefaultTimezone = "UTC"
+
+	t.Run("GetDefaults", func(t *testing.T) {
+		preference := prefService.GetDefaults()
 		expected := &pref.Preference{
 			WeekStart:       &weekStart,
 			Theme:           "light",

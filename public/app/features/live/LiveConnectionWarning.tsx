@@ -72,8 +72,10 @@ const getStyle = stylesFactory((theme: GrafanaTheme2) => {
       margin: 16px;
     `,
     warn: css`
+      border: 2px solid ${theme.colors.warning.main};
       max-width: 400px;
       margin: auto;
+      height: 3em;
     `,
   };
 });

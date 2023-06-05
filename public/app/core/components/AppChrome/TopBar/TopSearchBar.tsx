@@ -26,8 +26,7 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
 
-  const helpNode = cloneDeep(navIndex['help']);
-  const enrichedHelpNode = helpNode ? enrichHelpItem(helpNode) : undefined;
+  const helpNode = enrichHelpItem(cloneDeep(navIndex['help']));
   const profileNode = navIndex['profile'];
 
   let homeUrl = config.appSubUrl || '/';
@@ -50,12 +49,12 @@ export const TopSearchBar = React.memo(function TopSearchBar() {
 
       <TopSearchBarSection align="right">
         <QuickAdd />
-        {enrichedHelpNode && (
-          <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+        {helpNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
             <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
         )}
-        {config.newsFeedEnabled && <NewsContainer />}
+        <NewsContainer className={styles.newsButton} />
         {!contextSrv.user.isSignedIn && <SignInLink />}
         {profileNode && (
           <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
@@ -103,6 +102,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: '24px',
       marginRight: 0,
       width: '24px',
+    },
+  }),
+  newsButton: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
     },
   }),
 });

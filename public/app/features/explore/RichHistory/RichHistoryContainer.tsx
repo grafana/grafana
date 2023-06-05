@@ -26,7 +26,8 @@ import { RichHistory, Tabs } from './RichHistory';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const item: ExploreItemState = explore.panes[exploreId]!;
+  // @ts-ignore
+  const item: ExploreItemState = explore[exploreId];
   const richHistorySearchFilters = item.richHistorySearchFilters;
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;

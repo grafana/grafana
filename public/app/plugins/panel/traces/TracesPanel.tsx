@@ -39,7 +39,7 @@ export const TracesPanel = ({ data }: PanelProps) => {
   return (
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
-      {!config.featureToggles.newTraceViewHeader ? (
+      {!config.featureToggles.newTraceView ? (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}

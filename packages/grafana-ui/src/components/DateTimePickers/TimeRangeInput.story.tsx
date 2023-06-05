@@ -1,6 +1,6 @@
 import { action } from '@storybook/addon-actions';
 import { useArgs } from '@storybook/client-api';
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { dateTime, DefaultTimeZone, isDateTime, TimeRange } from '@grafana/data';
@@ -32,7 +32,7 @@ const nullRange = {
   },
 };
 
-const meta: Meta<typeof TimeRangeInput> = {
+const meta: ComponentMeta<typeof TimeRangeInput> = {
   title: 'Pickers and Editors/TimePickers/TimeRangeInput',
   component: TimeRangeInput,
   decorators: [withCenteredStory],
@@ -57,7 +57,7 @@ const meta: Meta<typeof TimeRangeInput> = {
   },
 };
 
-export const Basic: StoryFn<typeof TimeRangeInput> = (args) => {
+export const Basic: ComponentStory<typeof TimeRangeInput> = (args) => {
   const [, updateArgs] = useArgs();
   return (
     <TimeRangeInput

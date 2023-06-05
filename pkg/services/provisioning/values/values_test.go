@@ -16,10 +16,25 @@ import (
 
 func TestValues(t *testing.T) {
 	t.Run("Values", func(t *testing.T) {
-		t.Setenv("INT", "1")
-		t.Setenv("STRING", "test")
-		t.Setenv("EMPTYSTRING", "")
-		t.Setenv("BOOL", "true")
+		err := os.Setenv("INT", "1")
+		require.NoError(t, err)
+		err = os.Setenv("STRING", "test")
+		require.NoError(t, err)
+		err = os.Setenv("EMPTYSTRING", "")
+		require.NoError(t, err)
+		err = os.Setenv("BOOL", "true")
+		require.NoError(t, err)
+
+		defer func() {
+			err := os.Unsetenv("INT")
+			require.NoError(t, err)
+			err = os.Unsetenv("STRING")
+			require.NoError(t, err)
+			err = os.Unsetenv("EMPTYSTRING")
+			require.NoError(t, err)
+			err = os.Unsetenv("BOOL")
+			require.NoError(t, err)
+		}()
 
 		t.Run("IntValue", func(t *testing.T) {
 			type Data struct {

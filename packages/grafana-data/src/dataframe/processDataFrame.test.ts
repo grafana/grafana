@@ -2,8 +2,8 @@ import { dateTime } from '../datetime/moment_wrapper';
 import { DataFrameDTO, FieldType, TableData, TimeSeries } from '../types/index';
 
 import { ArrayDataFrame } from './ArrayDataFrame';
+import { MutableDataFrame } from './MutableDataFrame';
 import {
-  createDataFrame,
   guessFieldTypeFromValue,
   guessFieldTypes,
   isDataFrame,
@@ -83,9 +83,10 @@ describe('toDataFrame', () => {
       { a: 1, b: 2 },
       { a: 3, b: 4 },
     ];
-    const array = new ArrayDataFrame(orig); // will return a simple DataFrame
+    const array = new ArrayDataFrame(orig);
     const frame = toDataFrame(array);
     expect(frame).toEqual(array);
+    expect(frame instanceof ArrayDataFrame).toEqual(true);
     expect(frame.length).toEqual(orig.length);
     expect(frame.fields.map((f) => f.name)).toEqual(['a', 'b']);
   });
@@ -130,7 +131,7 @@ describe('toDataFrame', () => {
   });
 
   it('Guess Column Types from series', () => {
-    const series = createDataFrame({
+    const series = new MutableDataFrame({
       fields: [
         { name: 'A (number)', values: [123, null] },
         { name: 'B (strings)', values: [null, 'Hello'] },

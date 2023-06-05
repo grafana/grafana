@@ -39,9 +39,7 @@ Use the time range option to specify whether the list should be limited to the c
 
 Use the tags option to filter the annotations by tags. You can add multiple tags in order to refine the list.
 
-{{% admonition type="note" %}}
-Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
-{{% /admonition %}}
+> **Note:** Optionally, leave the tag list empty and filter on the fly by selecting tags that are listed as part of the results on the panel itself.
 
 ### Limit
 

@@ -13,39 +13,22 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 )
 
-const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
-// GetRandomString generates a random alphanumeric string of the specified length,
-// optionally using only specified characters
+// GetRandomString generate random string by specify chars.
+// source: https://github.com/gogits/gogs/blob/9ee80e3e5426821f03a4e99fad34418f5c736413/modules/base/tool.go#L58
 func GetRandomString(n int, alphabets ...byte) (string, error) {
-	chars := alphanum
-	if len(alphabets) > 0 {
-		chars = string(alphabets)
-	}
-	cnt := len(chars)
-	max := 255 / cnt * cnt
-
-	bytes := make([]byte, n)
-
-	randread := n * 5 / 4
-	randbytes := make([]byte, randread)
-
-	for i := 0; i < n; {
-		if _, err := rand.Read(randbytes); err != nil {
-			return "", err
-		}
-
-		for j := 0; i < n && j < randread; j++ {
-			b := int(randbytes[j])
-			if b >= max {
-				continue
-			}
-
-			bytes[i] = chars[b%cnt]
-			i++
-		}
+	const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	var bytes = make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
 	}
 
+	for i, b := range bytes {
+		if len(alphabets) == 0 {
+			bytes[i] = alphanum[b%byte(len(alphanum))]
+		} else {
+			bytes[i] = alphabets[b%byte(len(alphabets))]
+		}
+	}
 	return string(bytes), nil
 }
 

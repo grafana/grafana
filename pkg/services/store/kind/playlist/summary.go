@@ -22,7 +22,7 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 }
 
 func summaryBuilder(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
-	obj := &playlist.Spec{}
+	obj := &playlist.Playlist{}
 	err := json.Unmarshal(body, obj)
 	if err != nil {
 		return nil, nil, err // unable to read object

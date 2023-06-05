@@ -3,19 +3,18 @@ package phlare
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"net/url"
-	"strconv"
+	"strings"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
-	"github.com/grafana/grafana/pkg/services/datasources"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
+	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -27,18 +26,11 @@ var (
 
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
-	httpClient *http.Client
-	client     ProfilingClient
-	settings   backend.DataSourceInstanceSettings
-	ac         accesscontrol.AccessControl
-}
-
-type JsonData struct {
-	BackendType string `json:"backendType"`
+	client querierv1connect.QuerierServiceClient
 }
 
 // NewPhlareDatasource creates a new datasource instance.
-func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings, ac accesscontrol.AccessControl) (instancemgmt.Instance, error) {
+func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	opt, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, err
@@ -48,188 +40,98 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, err
 	}
 
-	var jsonData *JsonData
-	err = json.Unmarshal(settings.JSONData, &jsonData)
-	if err != nil {
-		return nil, err
-	}
-
 	return &PhlareDatasource{
-		httpClient: httpClient,
-		client:     getClient(jsonData.BackendType, httpClient, settings.URL),
-		settings:   settings,
-		ac:         ac,
+		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
 	}, nil
 }
 
 func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	logger.Debug("CallResource", "Path", req.Path, "Method", req.Method, "Body", req.Body)
 	if req.Path == "profileTypes" {
-		return d.profileTypes(ctx, req, sender)
+		return d.callProfileTypes(ctx, req, sender)
 	}
 	if req.Path == "labelNames" {
-		return d.labelNames(ctx, req, sender)
+		return d.callLabelNames(ctx, req, sender)
 	}
-	if req.Path == "labelValues" {
-		return d.labelValues(ctx, req, sender)
-	}
-	if req.Path == "backendType" {
-		return d.backendType(ctx, req, sender)
+	if req.Path == "series" {
+		return d.callSeries(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
 	})
 }
 
-func (d *PhlareDatasource) profileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	types, err := d.client.ProfileTypes(ctx)
+func (d *PhlareDatasource) callProfileTypes(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	res, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{}))
 	if err != nil {
 		return err
 	}
-	bodyData, err := json.Marshal(types)
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: bodyData, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (d *PhlareDatasource) labelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-
-	res, err := d.client.LabelNames(ctx, query["query"][0], start, end)
-	if err != nil {
-		return fmt.Errorf("error calling LabelNames: %v", err)
-	}
-	data, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type LabelValuesPayload struct {
-	Query string
-	Label string
-	Start int64
-	End   int64
-}
-
-func (d *PhlareDatasource) labelValues(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	start, err := strconv.ParseInt(query["start"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-	end, err := strconv.ParseInt(query["end"][0], 10, 64)
-	if err != nil {
-		return err
-	}
-
-	res, err := d.client.LabelValues(ctx, query["query"][0], query["label"][0], start, end)
-	if err != nil {
-		return fmt.Errorf("error calling LabelValues: %v", err)
-	}
-	data, err := json.Marshal(res)
-	if err != nil {
-		return err
-	}
-	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-type BackendTypeRespBody struct {
-	BackendType string `json:"backendType"` // "phlare" or "pyroscope"
-}
-
-// backendType is a simplistic test to figure out if we are speaking to phlare or pyroscope backend
-func (d *PhlareDatasource) backendType(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	// To prevent any user sending arbitrary URL for us to test with we allow this only for users who can edit the datasource
-	// as config page is where this is meant to be used.
-	ok, err := d.isUserAllowedToEditDatasource(ctx)
-	if err != nil {
-		return err
-	}
-
-	if !ok {
-		return sender.Send(&backend.CallResourceResponse{Headers: req.Headers, Status: 401})
-	}
-
-	u, err := url.Parse(req.URL)
-	if err != nil {
-		return err
-	}
-	query := u.Query()
-	body := &BackendTypeRespBody{BackendType: "unknown"}
-
-	// We take the url from the request query because the data source may not yet be saved in DB with the URL we want
-	// to test with (like when filling in the confgi page for the first time)
-	url := query["url"][0]
-
-	pyroClient := getClient("pyroscope", d.httpClient, url)
-	_, err = pyroClient.ProfileTypes(ctx)
-
-	if err == nil {
-		body.BackendType = "pyroscope"
+	var data []byte
+	if res.Msg.ProfileTypes == nil {
+		// Let's make sure we send at least empty array if we don't have any types
+		data, err = json.Marshal([]*typesv1.ProfileType{})
 	} else {
-		phlareClient := getClient("phlare", d.httpClient, url)
-		_, err := phlareClient.ProfileTypes(ctx)
-		if err == nil {
-			body.BackendType = "phlare"
-		}
+		data, err = json.Marshal(res.Msg.ProfileTypes)
+	}
+	if err != nil {
+		return err
+	}
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+type SeriesRequestJson struct {
+	Matchers []string `json:"matchers"`
+}
+
+func (d *PhlareDatasource) callSeries(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	parsedUrl, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+	matchers, ok := parsedUrl.Query()["matchers"]
+	if !ok {
+		matchers = []string{"{}"}
 	}
 
-	data, err := json.Marshal(body)
+	res, err := d.client.Series(ctx, connect.NewRequest(&querierv1.SeriesRequest{Matchers: matchers}))
 	if err != nil {
 		return err
 	}
 
-	return sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	for _, val := range res.Msg.LabelsSet {
+		withoutPrivate := withoutPrivateLabels(val.Labels)
+		val.Labels = withoutPrivate
+	}
+
+	data, err := json.Marshal(res.Msg.LabelsSet)
+	if err != nil {
+		return err
+	}
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (d *PhlareDatasource) isUserAllowedToEditDatasource(ctx context.Context) (bool, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	uidScope := datasources.ScopeProvider.GetResourceScopeUID(accesscontrol.Parameter(":uid"))
-
-	if reqCtx == nil || reqCtx.SignedInUser == nil {
-		return false, nil
-	}
-
-	ok, err := d.ac.Evaluate(ctx, reqCtx.SignedInUser, accesscontrol.EvalPermission(datasources.ActionWrite, uidScope))
+func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	res, err := d.client.LabelNames(ctx, connect.NewRequest(&querierv1.LabelNamesRequest{}))
 	if err != nil {
-		return false, err
+		return err
 	}
-	if !ok {
-		return false, nil
+	data, err := json.Marshal(res.Msg.Names)
+	if err != nil {
+		return err
 	}
-
-	return true, nil
+	err = sender.Send(&backend.CallResourceResponse{Body: data, Headers: req.Headers, Status: 200})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -264,7 +166,7 @@ func (d *PhlareDatasource) CheckHealth(ctx context.Context, _ *backend.CheckHeal
 	status := backend.HealthStatusOk
 	message := "Data source is working"
 
-	if _, err := d.client.ProfileTypes(ctx); err != nil {
+	if _, err := d.client.ProfileTypes(ctx, connect.NewRequest(&querierv1.ProfileTypesRequest{})); err != nil {
 		status = backend.HealthStatusError
 		message = err.Error()
 	}
@@ -336,4 +238,14 @@ func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishSt
 	return &backend.PublishStreamResponse{
 		Status: backend.PublishStreamStatusPermissionDenied,
 	}, nil
+}
+
+func withoutPrivateLabels(labels []*typesv1.LabelPair) []*typesv1.LabelPair {
+	res := make([]*typesv1.LabelPair, 0, len(labels))
+	for _, l := range labels {
+		if !strings.HasPrefix(l.Name, "__") {
+			res = append(res, l)
+		}
+	}
+	return res
 }

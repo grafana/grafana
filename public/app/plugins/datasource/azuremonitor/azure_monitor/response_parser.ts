@@ -1,7 +1,5 @@
 import { find, get } from 'lodash';
 
-import { FetchResponse } from '@grafana/runtime';
-
 import TimeGrainConverter from '../time_grain_converter';
 import {
   AzureMonitorLocalizedValue,
@@ -9,14 +7,11 @@ import {
   AzureMonitorMetricAvailabilityMetadata,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorOption,
-  AzureAPIResponse,
-  Location,
-  Subscription,
-  Resource,
+  AzureMonitorLocationsResponse,
 } from '../types';
 export default class ResponseParser {
-  static parseResponseValues<T>(
-    result: AzureAPIResponse<T>,
+  static parseResponseValues(
+    result: any,
     textFieldName: string,
     valueFieldName: string
   ): Array<{ text: string; value: string }> {
@@ -40,10 +35,7 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseResourceNames(
-    result: AzureAPIResponse<Resource>,
-    metricNamespace?: string
-  ): Array<{ text: string; value: string }> {
+  static parseResourceNames(result: any, metricNamespace?: string): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {
@@ -118,7 +110,7 @@ export default class ResponseParser {
     });
   }
 
-  static parseSubscriptions(result: AzureAPIResponse<Subscription>): Array<{ text: string; value: string }> {
+  static parseSubscriptions(result: any): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
     if (!result) {
@@ -139,9 +131,7 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseSubscriptionsForSelect(
-    result?: FetchResponse<AzureAPIResponse<Subscription>>
-  ): Array<{ label: string; value: string }> {
+  static parseSubscriptionsForSelect(result: any): Array<{ label: string; value: string }> {
     const list: Array<{ label: string; value: string }> = [];
 
     if (!result) {
@@ -162,7 +152,28 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseLocations(result: AzureAPIResponse<Location>) {
+  static parseWorkspacesForSelect(result: any): Array<{ label: string; value: string }> {
+    const list: Array<{ label: string; value: string }> = [];
+
+    if (!result) {
+      return list;
+    }
+
+    const valueFieldName = 'customerId';
+    const textFieldName = 'name';
+    for (let i = 0; i < result.data.value.length; i++) {
+      if (!find(list, ['value', get(result.data.value[i].properties, valueFieldName)])) {
+        list.push({
+          label: get(result.data.value[i], textFieldName),
+          value: get(result.data.value[i].properties, valueFieldName),
+        });
+      }
+    }
+
+    return list;
+  }
+
+  static parseLocations(result: AzureMonitorLocationsResponse) {
     const locations: AzureMonitorLocations[] = [];
 
     if (!result) {

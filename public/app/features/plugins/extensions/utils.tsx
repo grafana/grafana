@@ -1,9 +1,7 @@
-import { isArray, isObject } from 'lodash';
 import React from 'react';
 
 import {
   type PluginExtensionLinkConfig,
-  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -20,12 +18,6 @@ export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
-
-export function isPluginExtensionComponentConfig(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionComponentConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
@@ -117,52 +109,4 @@ export function generateExtensionId(pluginId: string, extensionConfig: PluginExt
   return Array.from(str)
     .reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
     .toString();
-}
-
-const _isProxy = Symbol('isReadOnlyProxy');
-
-/**
- * Returns a proxy that wraps the given object in a way that makes it read only.
- * If you try to modify the object a TypeError exception will be thrown.
- *
- * @param obj The object to make read only
- * @returns A new read only object, does not modify the original object
- */
-export function getReadOnlyProxy<T extends object>(obj: T): T {
-  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
-    return obj;
-  }
-
-  const cache = new WeakMap();
-
-  return new Proxy(obj, {
-    defineProperty: () => false,
-    deleteProperty: () => false,
-    isExtensible: () => false,
-    set: () => false,
-    get(target, prop, receiver) {
-      if (prop === _isProxy) {
-        return true;
-      }
-
-      const value = Reflect.get(target, prop, receiver);
-
-      if (isObject(value) || isArray(value)) {
-        if (!cache.has(value)) {
-          cache.set(value, getReadOnlyProxy(value));
-        }
-        return cache.get(value);
-      }
-
-      return value;
-    },
-  });
-}
-
-function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-export function isReadOnlyProxy(value: unknown): boolean {
-  return isRecord(value) && value[_isProxy] === true;
 }

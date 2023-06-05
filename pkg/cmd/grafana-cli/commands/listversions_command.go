@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
@@ -17,14 +16,14 @@ func validateVersionInput(c utils.CommandLine) error {
 	return nil
 }
 
-func listVersionsCommand(c utils.CommandLine) error {
+func (cmd Command) listVersionsCommand(c utils.CommandLine) error {
 	if err := validateVersionInput(c); err != nil {
 		return err
 	}
 
 	pluginToList := c.Args().First()
 
-	plugin, err := services.GetPluginInfoFromRepo(pluginToList, c.String("repo"))
+	plugin, err := cmd.Client.GetPlugin(pluginToList, c.String("repo"))
 	if err != nil {
 		return err
 	}

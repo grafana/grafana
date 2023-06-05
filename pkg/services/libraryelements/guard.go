@@ -32,7 +32,6 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 }
 
 func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user *user.SignedInUser, folderID int64) error {
-	// TODO remove these special cases and handle General folder case in access control guardian
 	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
 		return nil
 	}

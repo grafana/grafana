@@ -1,6 +1,7 @@
 import { difference } from 'lodash';
 
-import { createDataFrame, guessFieldTypeFromValue } from '../dataframe/processDataFrame';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
+import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { Field, FieldType } from '../types/index';
 
 import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
@@ -23,7 +24,7 @@ function createField<T>(name: string, values?: T[], type?: FieldType): Field<T> 
 }
 
 describe('Stats Calculators', () => {
-  const basicTable = createDataFrame({
+  const basicTable = new MutableDataFrame({
     fields: [
       { name: 'a', values: [10, 20] },
       { name: 'b', values: [20, 30] },

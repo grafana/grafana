@@ -2,6 +2,7 @@ import { lastValueFrom, Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
+  ArrayVector,
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
@@ -9,9 +10,8 @@ import {
   FieldType,
   getDefaultTimeRange,
   LoadingState,
-  createDataFrame,
+  MutableDataFrame,
   PluginType,
-  CoreApp,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -31,7 +31,6 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
-  getEscapedSpanNames,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -123,7 +122,7 @@ describe('Tempo data source', () => {
 
   it('parses json fields from backend', async () => {
     setupBackendSrv(
-      createDataFrame({
+      new MutableDataFrame({
         fields: [
           { name: 'traceID', values: ['04450900759028499335'] },
           { name: 'spanID', values: ['4322526419282105830'] },
@@ -145,7 +144,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values,
+        values: f.values.toArray(),
       }))
     ).toMatchObject([
       { name: 'traceID', values: ['04450900759028499335'] },
@@ -163,7 +162,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[1] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values,
+        values: f.values.toArray(),
       }))
     ).toMatchObject([
       { name: 'id', values: ['4322526419282105830'] },
@@ -177,7 +176,7 @@ describe('Tempo data source', () => {
     expect(
       (response.data[2] as DataFrame).fields.map((f) => ({
         name: f.name,
-        values: f.values,
+        values: f.values.toArray(),
       }))
     ).toMatchObject([
       { name: 'id', values: [] },
@@ -197,7 +196,7 @@ describe('Tempo data source', () => {
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
     expect(field.type).toBe(FieldType.string);
-    expect(field.values[0]).toBe('60ba2abb44f13eae');
+    expect(field.values.get(0)).toBe('60ba2abb44f13eae');
     expect(field.values.length).toBe(6);
   });
 
@@ -450,7 +449,7 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
     );
 
     expect(response.data).toHaveLength(3);
@@ -458,14 +457,14 @@ describe('Tempo service graph view', () => {
 
     // Service Graph view
     expect(response.data[0].fields[0].name).toBe('Name');
-    expect(response.data[0].fields[0].values.length).toBe(2);
-    expect(response.data[0].fields[0].values[0]).toBe('HTTP Client');
-    expect(response.data[0].fields[0].values[1]).toBe('HTTP GET - root');
+    expect(response.data[0].fields[0].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[0].values.toArray()[0]).toBe('HTTP Client');
+    expect(response.data[0].fields[0].values.toArray()[1]).toBe('HTTP GET - root');
 
     expect(response.data[0].fields[1].name).toBe('Rate');
-    expect(response.data[0].fields[1].values.length).toBe(2);
-    expect(response.data[0].fields[1].values[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[1].values[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[1].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[1].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[1].values.toArray()[1]).toBe(12.121331111401608);
     expect(response.data[0].fields[1].config.decimals).toBe(2);
     expect(response.data[0].fields[1].config.links[0].title).toBe('Rate');
     expect(response.data[0].fields[1].config.links[0].internal.query.expr).toBe(
@@ -475,9 +474,9 @@ describe('Tempo service graph view', () => {
     expect(response.data[0].fields[1].config.links[0].internal.query.exemplar).toBe(true);
     expect(response.data[0].fields[1].config.links[0].internal.query.instant).toBe(false);
 
-    expect(response.data[0].fields[2].values.length).toBe(2);
-    expect(response.data[0].fields[2].values[0]).toBe(12.75164671814457);
-    expect(response.data[0].fields[2].values[1]).toBe(12.121331111401608);
+    expect(response.data[0].fields[2].values.toArray().length).toBe(2);
+    expect(response.data[0].fields[2].values.toArray()[0]).toBe(12.75164671814457);
+    expect(response.data[0].fields[2].values.toArray()[1]).toBe(12.121331111401608);
     expect(response.data[0].fields[2].config.color.mode).toBe('continuous-BlPu');
     expect(response.data[0].fields[2].config.custom.cellOptions.mode).toBe(BarGaugeDisplayMode.Lcd);
     expect(response.data[0].fields[2].config.custom.cellOptions.type).toBe(TableCellDisplayMode.Gauge);
@@ -591,20 +590,6 @@ describe('Tempo service graph view', () => {
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
   });
 
-  it('should escape span names correctly', () => {
-    const spanNames = [
-      '/actuator/health/**',
-      '$type + [test]|HTTP POST - post',
-      'server.cluster.local:9090^/sample.test(.*)?',
-    ];
-    let escaped = getEscapedSpanNames(spanNames);
-    expect(escaped).toEqual([
-      '/actuator/health/\\\\*\\\\*',
-      '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
-      'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
-    ]);
-  });
-
   it('should get field config correctly', () => {
     let datasourceUid = 's4Jvz8Qnk';
     let tempoDatasourceUid = 'EbPO1fYnz';
@@ -693,7 +678,7 @@ describe('Tempo service graph view', () => {
               filterable: true,
             },
             type: 'string',
-            values: ['HTTP Client', 'HTTP GET', 'HTTP GET - root', 'HTTP POST', 'HTTP POST - post'],
+            values: new ArrayVector(['HTTP Client', 'HTTP GET', 'HTTP GET - root', 'HTTP POST', 'HTTP POST - post']),
           },
         ],
       },
@@ -812,7 +797,7 @@ const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
   readOnly: false,
 };
 
-const rateMetric = createDataFrame({
+const rateMetric = new MutableDataFrame({
   refId: 'topk(5, sum(rate(traces_spanmetrics_calls_total{span_kind="SPAN_KIND_SERVER"}[$__range])) by (span_name))',
   fields: [
     { name: 'Time', values: [1653725618609, 1653725618609] },
@@ -824,7 +809,7 @@ const rateMetric = createDataFrame({
   ],
 });
 
-const errorRateMetric = createDataFrame({
+const errorRateMetric = new MutableDataFrame({
   refId:
     'topk(5, sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name=~"HTTP Client|HTTP GET - root"}[$__range])) by (span_name))',
   fields: [
@@ -837,7 +822,7 @@ const errorRateMetric = createDataFrame({
   ],
 });
 
-const durationMetric = createDataFrame({
+const durationMetric = new MutableDataFrame({
   refId:
     'histogram_quantile(.9, sum(rate(traces_spanmetrics_latency_bucket{span_name=~"HTTP GET - root"}[$__range])) by (le))',
   fields: [
@@ -849,7 +834,7 @@ const durationMetric = createDataFrame({
   ],
 });
 
-const totalsPromMetric = createDataFrame({
+const totalsPromMetric = new MutableDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -862,7 +847,7 @@ const totalsPromMetric = createDataFrame({
   ],
 });
 
-const secondsPromMetric = createDataFrame({
+const secondsPromMetric = new MutableDataFrame({
   refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -875,7 +860,7 @@ const secondsPromMetric = createDataFrame({
   ],
 });
 
-const failedPromMetric = createDataFrame({
+const failedPromMetric = new MutableDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },

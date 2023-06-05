@@ -186,7 +186,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         >
           <Select
             options={encryptOptions}
-            value={jsonData.encrypt || MSSQLEncryptOptions.false}
+            value={jsonData.encrypt || MSSQLEncryptOptions.disable}
             inputId="encrypt"
             onChange={onEncryptChanged}
           ></Select>

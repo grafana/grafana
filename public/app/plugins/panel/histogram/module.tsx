@@ -3,10 +3,10 @@ import { histogramFieldInfo } from '@grafana/data/src/transformations/transforme
 import { commonOptionsBuilder, graphFieldOptions } from '@grafana/ui';
 
 import { HistogramPanel } from './HistogramPanel';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './panelcfg.gen';
 import { originalDataHasHistogram } from './utils';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(HistogramPanel)
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
@@ -25,7 +25,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
           placeholder: 'Auto',
           min: 0,
         },
-        defaultValue: defaultOptions.bucketSize,
+        defaultValue: defaultPanelOptions.bucketSize,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addNumberInput({
@@ -36,14 +36,14 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
           placeholder: '0',
           min: 0,
         },
-        defaultValue: defaultOptions.bucketOffset,
+        defaultValue: defaultPanelOptions.bucketOffset,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       })
       .addBooleanSwitch({
         path: 'combine',
         name: histogramFieldInfo.combine.name,
         description: histogramFieldInfo.combine.description,
-        defaultValue: defaultOptions.combine,
+        defaultValue: defaultPanelOptions.combine,
         showIf: (opts, data) => !originalDataHasHistogram(data),
       });
 
@@ -62,7 +62,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({

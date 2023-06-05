@@ -42,30 +42,9 @@ type File struct {
 }
 
 type CompatOpts struct {
-	grafanaVersion string
-
-	os   string
-	arch string
-}
-
-func (co CompatOpts) GrafanaVersion() string {
-	return co.grafanaVersion
-}
-
-func (co CompatOpts) OS() string {
-	return co.os
-}
-
-func (co CompatOpts) Arch() string {
-	return co.arch
-}
-
-func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
-	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
-}
-
-func NewSystemCompatOpts(os, arch string) CompatOpts {
-	return CompatOpts{arch: arch, os: os}
+	GrafanaVersion string
+	OS             string
+	Arch           string
 }
 
 type UpdateInfo struct {
@@ -76,11 +55,7 @@ type FS interface {
 	fs.FS
 
 	Base() string
-	Files() ([]string, error)
-}
-
-type FSRemover interface {
-	Remove() error
+	Files() []string
 }
 
 type FoundBundle struct {
@@ -168,17 +143,4 @@ type FeatureToggles interface {
 
 type SignatureCalculator interface {
 	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
-}
-
-type KeyStore interface {
-	Get(ctx context.Context, key string) (string, bool, error)
-	Set(ctx context.Context, key string, value string) error
-	Del(ctx context.Context, key string) error
-	ListKeys(ctx context.Context) ([]string, error)
-	GetLastUpdated(ctx context.Context) (*time.Time, error)
-	SetLastUpdated(ctx context.Context) error
-}
-
-type KeyRetriever interface {
-	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }

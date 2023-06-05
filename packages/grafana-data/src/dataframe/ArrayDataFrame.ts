@@ -1,69 +1,116 @@
 import { QueryResultMeta } from '../types';
-import { Field, FieldType, DataFrame, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
+import { Field, FieldType, DataFrame } from '../types/dataFrame';
+import { FunctionalVector } from '../vector/FunctionalVector';
+import { vectorToArray } from '../vector/vectorToArray';
 
-import { guessFieldTypeForField } from './processDataFrame';
+import { guessFieldTypeFromNameAndValue, toDataFrameDTO } from './processDataFrame';
+
+/** @public */
+export type ValueConverter<T = any> = (val: unknown) => T;
+
+const NOOP: ValueConverter = (v) => v;
+
+class ArrayPropertyVector<T = any> extends FunctionalVector<T> {
+  converter = NOOP;
+
+  constructor(private source: any[], private prop: string) {
+    super();
+  }
+
+  get length(): number {
+    return this.source.length;
+  }
+
+  get(index: number): T {
+    return this.converter(this.source[index][this.prop]);
+  }
+
+  toArray(): T[] {
+    return vectorToArray(this);
+  }
+
+  toJSON(): T[] {
+    return vectorToArray(this);
+  }
+}
 
 /**
  * The ArrayDataFrame takes an array of objects and presents it as a DataFrame
  *
- * @deprecated use arrayToDataFrame
+ * @alpha
  */
-export class ArrayDataFrame<T = any> implements DataFrame {
-  fields: Field[] = [];
-  length = 0;
+export class ArrayDataFrame<T = any> extends FunctionalVector<T> implements DataFrame {
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
 
-  constructor(source: T[], names?: string[]) {
-    return arrayToDataFrame(source, names) as ArrayDataFrame<T>; // returns a standard DataFrame
-  }
-}
+  fields: Field[] = [];
+  length = 0;
 
-/**
- * arrayToDataFrame will convert any array into a DataFrame
- *
- * @public
- */
-export function arrayToDataFrame(source: any[], names?: string[]): DataFrame {
-  const df: DataFrame = {
-    fields: [],
-    length: source.length,
-  };
-  if (!source?.length) {
-    return df;
-  }
+  constructor(private source: T[], names?: string[]) {
+    super();
 
-  if (names) {
-    for (const name of names) {
-      df.fields.push(
-        makeFieldFromValues(
+    this.length = source.length;
+    const first: any = source.length ? source[0] : {};
+    if (names) {
+      this.fields = names.map((name) => {
+        return {
           name,
-          source.map((v) => v[name])
-        )
-      );
-    }
-    return df;
-  }
-
-  const first = source.find((v) => v != null); // first not null|undefined
-  if (first != null) {
-    if (typeof first === 'object') {
-      df.fields = Object.keys(first).map((name) => {
-        return makeFieldFromValues(
-          name,
-          source.map((v) => v[name])
-        );
+          type: guessFieldTypeFromNameAndValue(name, first[name]),
+          config: {},
+          values: new ArrayPropertyVector(source, name),
+        };
       });
     } else {
-      df.fields.push(makeFieldFromValues(TIME_SERIES_VALUE_FIELD_NAME, source));
+      this.setFieldsFromObject(first);
     }
   }
-  return df;
-}
 
-function makeFieldFromValues(name: string, values: unknown[]): Field {
-  const f = { name, config: {}, values, type: FieldType.other };
-  f.type = guessFieldTypeForField(f) ?? FieldType.other;
-  return f;
+  /**
+   * Add a field for each property in the object.  This will guess the type
+   */
+  setFieldsFromObject(obj: Record<string, unknown>) {
+    this.fields = Object.keys(obj).map((name) => {
+      return {
+        name,
+        type: guessFieldTypeFromNameAndValue(name, obj[name]),
+        config: {},
+        values: new ArrayPropertyVector(this.source, name),
+      };
+    });
+  }
+
+  /**
+   * Configure how the object property is passed to the data frame
+   */
+  setFieldType(name: string, type: FieldType, converter?: ValueConverter): Field {
+    let field = this.fields.find((f) => f.name === name);
+    if (field) {
+      field.type = type;
+    } else {
+      field = {
+        name,
+        type,
+        config: {},
+        values: new ArrayPropertyVector(this.source, name),
+      };
+      this.fields.push(field);
+    }
+    (field.values as any).converter = converter ?? NOOP;
+    return field;
+  }
+
+  /**
+   * Get an object with a property for each field in the DataFrame
+   */
+  get(idx: number): T {
+    return this.source[idx];
+  }
+
+  /**
+   * The simplified JSON values used in JSON.stringify()
+   */
+  toJSON() {
+    return toDataFrameDTO(this);
+  }
 }

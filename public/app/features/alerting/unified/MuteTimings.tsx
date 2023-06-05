@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { Route, Redirect, Switch } from 'react-router-dom';
 
-import { Alert } from '@grafana/ui';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -56,7 +56,8 @@ const MuteTimings = () => {
 
   return (
     <>
-      {error && !loading && !result && (
+      {loading && <LoadingPlaceholder text="Loading mute timing" />}
+      {error && !loading && (
         <Alert severity="error" title={`Error loading Alertmanager config for ${alertManagerSourceName}`}>
           {error.message || 'Unknown error.'}
         </Alert>
@@ -64,7 +65,7 @@ const MuteTimings = () => {
       {result && !error && (
         <Switch>
           <Route exact path="/alerting/routes/mute-timing/new">
-            <MuteTimingForm loading={loading} />
+            <MuteTimingForm />
           </Route>
           <Route exact path="/alerting/routes/mute-timing/edit">
             {() => {
@@ -72,14 +73,7 @@ const MuteTimings = () => {
                 const muteTiming = getMuteTimingByName(String(queryParams['muteName']));
                 const provenance = muteTiming?.provenance;
 
-                return (
-                  <MuteTimingForm
-                    loading={loading}
-                    muteTiming={muteTiming}
-                    showError={!muteTiming && !loading}
-                    provenance={provenance}
-                  />
-                );
+                return <MuteTimingForm muteTiming={muteTiming} showError={!muteTiming} provenance={provenance} />;
               }
               return <Redirect to="/alerting/routes" />;
             }}

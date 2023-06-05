@@ -7,6 +7,7 @@ import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
+import { LokiDatasource } from '../../datasource';
 import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
 
@@ -16,12 +17,13 @@ export interface Props {
   onRunQuery: () => void;
   maxLines: number;
   app?: CoreApp;
+  datasource: LokiDatasource;
   queryStats: QueryStats | null;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, queryStats }) => {
-    const [splitDurationValid, setSplitDurationValid] = useState(true);
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
+    const [splitDurationValid, setsplitDurationValid] = useState(true);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -40,10 +42,10 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const onChunkRangeChange = (evt: React.FormEvent<HTMLInputElement>) => {
       const value = evt.currentTarget.value;
       if (!isValidDuration(value)) {
-        setSplitDurationValid(false);
+        setsplitDurationValid(false);
         return;
       }
-      setSplitDurationValid(true);
+      setsplitDurationValid(true);
       onChange({ ...query, splitDuration: value });
       onRunQuery();
     };

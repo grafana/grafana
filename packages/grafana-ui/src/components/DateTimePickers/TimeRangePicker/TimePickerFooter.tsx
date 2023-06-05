@@ -103,7 +103,6 @@ export const TimePickerFooter = (props: Props) => {
                   }
                 }}
                 onBlur={onToggleChangeTimeSettings}
-                menuShouldPortal={false}
               />
             </section>
           ) : (

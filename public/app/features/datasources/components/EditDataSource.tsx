@@ -1,18 +1,12 @@
 import { AnyAction } from '@reduxjs/toolkit';
-import { omit } from 'lodash';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import {
   DataSourcePluginContextProvider,
   DataSourcePluginMeta,
   DataSourceSettings as DataSourceSettingsType,
-  PluginExtensionPoints,
-  PluginExtensionDataSourceConfigContext,
-  DataSourceJsonData,
-  DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { getDataSourceSrv, getPluginComponentExtensions } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
+import { getDataSourceSrv } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { DataSourceSettingsState, useDispatch } from 'app/types';
 
@@ -30,7 +24,6 @@ import {
   useTestDataSource,
   useUpdateDatasource,
 } from '../state';
-import { trackDsConfigClicked, trackDsConfigUpdated } from '../tracking';
 import { DataSourceRights } from '../types';
 
 import { BasicSettings } from './BasicSettings';
@@ -126,38 +119,13 @@ export function EditDataSourceView({
 
   const onSubmit = async (e: React.MouseEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    trackDsConfigClicked('save_and_test');
-
-    try {
-      await onUpdate({ ...dataSource });
-      trackDsConfigUpdated('success');
-      appEvents.publish(new DataSourceUpdatedSuccessfully());
-    } catch (err) {
-      trackDsConfigUpdated('fail');
-      return;
-    }
+    await onUpdate({ ...dataSource });
 
     onTest();
   };
 
-  const extensions = useMemo(() => {
-    const allowedPluginIds = ['grafana-pdc-app', 'grafana-auth-app'];
-    const extensionPointId = PluginExtensionPoints.DataSourceConfig;
-    const { extensions } = getPluginComponentExtensions({ extensionPointId });
-
-    return extensions.filter((e) => allowedPluginIds.includes(e.pluginId));
-  }, []);
-
   if (loadError) {
-    return (
-      <DataSourceLoadError
-        dataSourceRights={dataSourceRights}
-        onDelete={() => {
-          trackDsConfigClicked('delete');
-          onDelete();
-        }}
-      />
-    );
+    return <DataSourceLoadError dataSourceRights={dataSourceRights} onDelete={onDelete} />;
   }
 
   if (loading) {
@@ -205,43 +173,15 @@ export function EditDataSourceView({
         </DataSourcePluginContextProvider>
       )}
 
-      {/* Extension point */}
-      {extensions.map((extension) => {
-        const Component = extension.component as React.ComponentType<{
-          context: PluginExtensionDataSourceConfigContext<DataSourceJsonData>;
-        }>;
-
-        return (
-          <div key={extension.id}>
-            <Component
-              context={{
-                dataSource: omit(dataSource, ['secureJsonData']),
-                dataSourceMeta: dataSourceMeta,
-                setJsonData: (jsonData) =>
-                  onOptionsChange({
-                    ...dataSource,
-                    jsonData: { ...dataSource.jsonData, ...jsonData },
-                  }),
-              }}
-            />
-          </div>
-        );
-      })}
-
-      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
+      <DataSourceTestingStatus testingStatus={testingStatus} />
 
       <ButtonRow
         onSubmit={onSubmit}
-        onDelete={() => {
-          trackDsConfigClicked('delete');
-          onDelete();
-        }}
-        onTest={() => {
-          trackDsConfigClicked('test');
-          onTest();
-        }}
-        canDelete={!readOnly && hasDeleteRights}
+        onDelete={onDelete}
+        onTest={onTest}
+        exploreUrl={exploreUrl}
         canSave={!readOnly && hasWriteRights}
+        canDelete={!readOnly && hasDeleteRights}
       />
     </form>
   );

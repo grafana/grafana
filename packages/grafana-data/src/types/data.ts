@@ -146,8 +146,6 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
-
-/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -155,7 +153,6 @@ export interface Column {
   custom?: Record<string, any>;
 }
 
-/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
@@ -163,13 +160,10 @@ export interface TableData extends QueryResultBase {
   type?: string;
 }
 
-/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesValue = number | null;
 
-/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
-/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TimeSeries extends QueryResultBase {
   target: string;
   /**

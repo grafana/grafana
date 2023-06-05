@@ -1,4 +1,4 @@
-import { ArgTypes } from '@storybook/blocks';
+import { Props } from '@storybook/addon-docs/blocks';
 import { Toggletip } from './Toggletip';
 
 # Toggletip
@@ -71,9 +71,11 @@ return (
     closeButton={true}
     onClose={onClose}
   >
-    <IconButton name="question-circle" tooltip="IconButton containing a Toggletip" />
+    <Button type="button">
+      <Icon name="question-circle" />
+    </Button>
   </Toogletip>
 );
 ```
 
-<ArgTypes of={Toggletip} />
+<Props of={Toggletip} />

@@ -40,9 +40,9 @@ func Test_CallResource(t *testing.T) {
 			context.Background(),
 			&backend.CallResourceRequest{
 				PluginContext: backend.PluginContext{},
-				Path:          "profileTypes",
+				Path:          "series",
 				Method:        "GET",
-				URL:           "profileTypes",
+				URL:           "series?matchers=%7B%7D",
 				Headers:       nil,
 				Body:          nil,
 			},
@@ -50,7 +50,7 @@ func Test_CallResource(t *testing.T) {
 		)
 		require.NoError(t, err)
 		require.Equal(t, 200, sender.Resp.Status)
-		require.Equal(t, `[{"id":"type:1","label":"cpu"},{"id":"type:2","label":"memory"}]`, string(sender.Resp.Body))
+		require.Equal(t, `[{"labels":[{"name":"instance","value":"127.0.0.1"},{"name":"job","value":"default"}]}]`, string(sender.Resp.Body))
 	})
 }
 

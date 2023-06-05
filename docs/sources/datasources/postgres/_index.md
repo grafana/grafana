@@ -149,9 +149,7 @@ datasources:
       timescaledb: false
 ```
 
-{{% admonition type="note" %}}
-In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
-{{% /admonition %}}
+> **Note:** In the above code, the `postgresVersion` value of `10` refers to version PostgreSQL 10 and above.
 
 #### Troubleshoot provisioning
 
@@ -237,7 +235,7 @@ To optionally customize the default series name formatting, refer to [Standard o
 
 ```sql
 SELECT
-  $__timeGroupAlias("time_date_time",'5m'),
+  $__timeGroup("time_date_time",'5m'),
   min("value_double"),
   'min' as metric
 FROM test_data
@@ -259,11 +257,11 @@ Data frame result:
 +---------------------+-----------------+
 ```
 
-**Example using the fill parameter in the $\_\_timeGroupAlias macro to convert null values to be zero instead:**
+**Example using the fill parameter in the $\_\_timeGroup macro to convert null values to be zero instead:**
 
 ```sql
 SELECT
-  $__timeGroupAlias("createdAt",'5m',0),
+  $__timeGroup("createdAt",'5m',0),
   sum(value) as value,
   hostname
 FROM test_data
@@ -292,7 +290,7 @@ Data frame result:
 
 ```sql
 SELECT
-  $__timeGroupAlias("time_date_time",'5m'),
+  $__timeGroup("time_date_time",'5m'),
   min("value_double") as "min_value",
   max("value_double") as "max_value"
 FROM test_data

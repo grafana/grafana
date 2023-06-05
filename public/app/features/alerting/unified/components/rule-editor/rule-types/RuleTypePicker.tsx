@@ -13,6 +13,8 @@ import { RuleFormType } from '../../../types/rule-form';
 
 import { GrafanaManagedRuleType } from './GrafanaManagedAlert';
 import { MimirFlavoredType } from './MimirOrLokiAlert';
+import { RecordingRuleType } from './MimirOrLokiRecordingRule';
+
 interface RuleTypePickerProps {
   onChange: (value: RuleFormType) => void;
   selected: RuleFormType;
@@ -29,20 +31,23 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
 
   const styles = useStyles2(getStyles);
 
-  const handleChange = (type: RuleFormType) => {
-    onChange(type);
-  };
-
   return (
     <>
       <Stack direction="row" gap={2}>
         {enabledTypes.includes(RuleFormType.grafana) && (
-          <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={handleChange} />
+          <GrafanaManagedRuleType selected={selected === RuleFormType.grafana} onClick={onChange} />
         )}
         {enabledTypes.includes(RuleFormType.cloudAlerting) && (
           <MimirFlavoredType
             selected={selected === RuleFormType.cloudAlerting}
-            onClick={handleChange}
+            onClick={onChange}
+            disabled={!hasLotexDatasources}
+          />
+        )}
+        {enabledTypes.includes(RuleFormType.cloudRecording) && (
+          <RecordingRuleType
+            selected={selected === RuleFormType.cloudRecording}
+            onClick={onChange}
             disabled={!hasLotexDatasources}
           />
         )}

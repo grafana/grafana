@@ -5,7 +5,6 @@ import { CellProps } from 'react-table';
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, Link, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
-import { Span, TextModifier } from '@grafana/ui/src/unstable';
 
 import { DashboardsTreeItem } from '../types';
 
@@ -19,14 +18,12 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
 
-  if (item.kind === 'ui') {
+  if (item.kind === 'ui-empty-folder') {
     return (
       <>
         <Indent level={level} />
         <span className={styles.folderButtonSpacer} />
-        <em>
-          <TextModifier color="secondary">{item.uiKind === 'empty-folder' ? 'No items' : 'Loading...'}</TextModifier>
-        </em>
+        <em>Empty folder</em>
       </>
     );
   }
@@ -48,15 +45,12 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
         <span className={styles.folderButtonSpacer} />
       )}
 
-      <Span variant="body" truncate>
-        {item.url ? (
-          <Link href={item.url} className={styles.link}>
-            {item.title}
-          </Link>
-        ) : (
-          item.title
-        )}
-      </Span>
+      <Link
+        href={item.kind === 'folder' ? `/nested-dashboards/f/${item.uid}` : `/d/${item.uid}`}
+        className={styles.link}
+      >
+        {item.title}
+      </Link>
     </>
   );
 }

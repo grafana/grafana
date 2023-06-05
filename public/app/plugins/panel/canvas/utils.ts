@@ -1,23 +1,22 @@
-import { isNumber, isString } from 'lodash';
-
 import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
-import appEvents from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
+
+import appEvents from '../../../core/app_events';
 import {
-  defaultElementItems,
   advancedElementItems,
   CanvasElementItem,
-  canvasElementRegistry,
   CanvasElementOptions,
+  canvasElementRegistry,
+  defaultElementItems,
   TextConfig,
-} from 'app/features/canvas';
-import { notFoundItem } from 'app/features/canvas/elements/notFound';
-import { ElementState } from 'app/features/canvas/runtime/element';
-import { FrameState } from 'app/features/canvas/runtime/frame';
-import { Scene, SelectionParams } from 'app/features/canvas/runtime/scene';
-import { DimensionContext } from 'app/features/dimensions';
+} from '../../../features/canvas';
+import { notFoundItem } from '../../../features/canvas/elements/notFound';
+import { ElementState } from '../../../features/canvas/runtime/element';
+import { FrameState } from '../../../features/canvas/runtime/frame';
+import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
+import { DimensionContext } from '../../../features/dimensions';
 
-import { AnchorPoint, ConnectionState } from './types';
+import { AnchorPoint, ConnectionInfo } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -81,11 +80,8 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
 
 export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
-  const newElementOptions: CanvasElementOptions = {
-    ...newItem.getNewOptions(),
-    type: newItem.id,
-    name: '',
-  };
+  const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
+  newElementOptions.type = newItem.id;
 
   if (anchorPoint) {
     newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
@@ -143,29 +139,19 @@ export function isConnectionTarget(element: ElementState, sceneByName: Map<strin
 }
 
 export function getConnections(sceneByName: Map<string, ElementState>) {
-  const connections: ConnectionState[] = [];
+  const connections: ConnectionInfo[] = [];
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
-      v.options.connections.forEach((c, index) => {
-        // @TODO Remove after v10.x
-        if (isString(c.color)) {
-          c.color = { fixed: c.color };
-        }
-
-        if (isNumber(c.size)) {
-          c.size = { fixed: 2, min: 1, max: 10 };
-        }
-
+      for (let c of v.options.connections) {
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({
-            index,
             source: v,
             target,
             info: c,
           });
         }
-      });
+      }
     }
   }
 
@@ -173,7 +159,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
 }
 
 export function getConnectionsByTarget(element: ElementState, scene: Scene) {
-  return scene.connections.state.filter((connection) => connection.target === element);
+  return getConnections(scene.byName).filter((connection) => connection.target === element);
 }
 
 export function updateConnectionsForSource(element: ElementState, scene: Scene) {

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -29,6 +30,10 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
+	accessControlEnabled := !hs.AccessControl.IsDisabled()
+	if !accessControlEnabled && c.OrgRole == org.RoleViewer {
+		return response.Error(403, "Not allowed to create team.", nil)
+	}
 
 	t, err := hs.teamService.CreateTeam(cmd.Name, cmd.Email, c.OrgID)
 	if err != nil {
@@ -40,17 +45,21 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 
 	// Clear permission cache for the user who's created the team, so that new permissions are fetched for their next call
 	// Required for cases when caller wants to immediately interact with the newly created object
-	hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	if !hs.AccessControl.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	}
 
-	// if the request is authenticated using API tokens
-	// the SignedInUser is an empty struct therefore
-	// an additional check whether it is an actual user is required
-	if c.SignedInUser.IsRealUser() {
-		if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
-			c.Logger.Error("Could not add creator to team", "error", err)
+	if accessControlEnabled || (c.OrgRole == org.RoleEditor && hs.Cfg.EditorsCanAdmin) {
+		// if the request is authenticated using API tokens
+		// the SignedInUser is an empty struct therefore
+		// an additional check whether it is an actual user is required
+		if c.SignedInUser.IsRealUser() {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
+				c.Logger.Error("Could not add creator to team", "error", err)
+			}
+		} else {
+			c.Logger.Warn("Could not add creator to team because is not a real user")
 		}
-	} else {
-		c.Logger.Warn("Could not add creator to team because is not a real user")
 	}
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  t.ID,
@@ -81,6 +90,12 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	if hs.AccessControl.IsDisabled() {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgID, cmd.ID, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team", err)
+		}
+	}
+
 	if err := hs.teamService.UpdateTeam(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, team.ErrTeamNameTaken) {
 			return response.Error(400, "Team name taken", err)
@@ -106,6 +121,13 @@ func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Respon
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
+	}
+	user := c.SignedInUser
+
+	if hs.AccessControl.IsDisabled() {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgID, teamID, user); err != nil {
+			return response.Error(403, "Not allowed to delete team", err)
+		}
 	}
 
 	if err := hs.teamService.DeleteTeam(c.Req.Context(), &team.DeleteTeamCommand{OrgID: orgID, ID: teamID}); err != nil {
@@ -136,10 +158,17 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 		page = 1
 	}
 
+	// Using accesscontrol the filtering is done based on user permissions
+	userIDFilter := team.FilterIgnoreUser
+	if hs.AccessControl.IsDisabled() {
+		userIDFilter = userFilter(c)
+	}
+
 	query := team.SearchTeamsQuery{
 		OrgID:        c.OrgID,
 		Query:        c.Query("query"),
 		Name:         c.Query("name"),
+		UserIDFilter: userIDFilter,
 		Page:         page,
 		Limit:        perPage,
 		SignedInUser: c.SignedInUser,
@@ -170,6 +199,17 @@ func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response 
 	return response.JSON(http.StatusOK, queryResult)
 }
 
+// UserFilter returns the user ID used in a filter when querying a team
+// 1. If the user is a viewer or editor, this will return the user's ID.
+// 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
+func userFilter(c *contextmodel.ReqContext) int64 {
+	userIdFilter := c.SignedInUser.UserID
+	if c.OrgRole == org.RoleAdmin {
+		userIdFilter = team.FilterIgnoreUser
+	}
+	return userIdFilter
+}
+
 // swagger:route GET /teams/{team_id} teams getTeamByID
 //
 // Get Team By ID.
@@ -186,11 +226,18 @@ func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
+	// Using accesscontrol the filtering has already been performed at middleware layer
+	userIdFilter := team.FilterIgnoreUser
+	if hs.AccessControl.IsDisabled() {
+		userIdFilter = userFilter(c)
+	}
+
 	query := team.GetTeamByIDQuery{
 		OrgID:        c.OrgID,
 		ID:           teamId,
 		SignedInUser: c.SignedInUser,
 		HiddenUsers:  hs.Cfg.HiddenUsers,
+		UserIdFilter: userIdFilter,
 	}
 
 	queryResult, err := hs.teamService.GetTeamByID(c.Req.Context(), &query)
@@ -223,7 +270,15 @@ func (hs *HTTPServer) GetTeamPreferences(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.getPreferencesFor(c.Req.Context(), c.OrgID, 0, teamId)
+	orgId := c.OrgID
+
+	if hs.AccessControl.IsDisabled() {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to view team preferences.", err)
+		}
+	}
+
+	return hs.getPreferencesFor(c.Req.Context(), orgId, 0, teamId)
 }
 
 // swagger:route PUT /teams/{team_id}/preferences teams updateTeamPreferences
@@ -246,7 +301,15 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, 0, teamId, &dtoCmd)
+	orgId := c.OrgID
+
+	if hs.AccessControl.IsDisabled() {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
+			return response.Error(403, "Not allowed to update team preferences.", err)
+		}
+	}
+
+	return hs.updatePreferencesFor(c.Req.Context(), orgId, 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences

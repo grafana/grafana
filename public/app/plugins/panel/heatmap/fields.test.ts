@@ -1,11 +1,11 @@
 import { createTheme } from '@grafana/data';
 
-import { Options } from './types';
+import { PanelOptions } from './types';
 
 const theme = createTheme();
 
 describe('Heatmap data', () => {
-  const options: Options = {} as Options;
+  const options: PanelOptions = {} as PanelOptions;
 
   it('simple test stub', () => {
     expect(theme).toBeDefined();

@@ -22,6 +22,7 @@ import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 import { autoColor } from '../Theme';
 import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
 import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil } from '../types';
+import { SpanLinks } from '../types/links';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -37,7 +38,7 @@ const nameWrapperMatchingFilterClassName = 'nameWrapperMatchingFilter';
 const viewClassName = 'jaegerView';
 const nameColumnClassName = 'nameColumn';
 
-const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   const animations = {
     label: 'flash',
     flash: keyframes`
@@ -49,7 +50,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }
   `,
   };
-  const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
 
   return {
     nameWrapper: css`
@@ -60,7 +60,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     nameWrapperMatchingFilter: css`
       label: nameWrapperMatchingFilter;
-      background-color: ${backgroundColor};
+      background-color: ${autoColor(theme, '#fffce4')};
     `,
     nameColumn: css`
       label: nameColumn;
@@ -164,7 +164,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     `,
     rowMatchingFilter: css`
       label: rowMatchingFilter;
-      // background-color: ${autoColor(theme, '#fffbde')};
+      background-color: ${autoColor(theme, '#fffbde')};
       &:hover .${nameWrapperClassName} {
         background: linear-gradient(
           90deg,
@@ -297,7 +297,6 @@ export type SpanBarRowProps = {
   isDetailExpanded: boolean;
   isMatchingFilter: boolean;
   isFocused: boolean;
-  showSpanFilterMatchesOnly: boolean;
   onDetailToggled: (spanID: string) => void;
   onChildrenToggled: (spanID: string) => void;
   numTicks: number;
@@ -361,7 +360,6 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       isChildrenExpanded,
       isDetailExpanded,
       isMatchingFilter,
-      showSpanFilterMatchesOnly,
       isFocused,
       numTicks,
       rpc,
@@ -390,7 +388,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
     const viewBounds = getViewedBounds(span.startTime, span.startTime + span.duration);
     const viewStart = viewBounds.start;
     const viewEnd = viewBounds.end;
-    const styles = getStyles(theme, showSpanFilterMatchesOnly);
+    const styles = getStyles(theme);
 
     const labelDetail = `${serviceName}::${operationName}`;
     let longLabel;
@@ -402,6 +400,14 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       longLabel = `${label} | ${labelDetail}`;
       hintClassName = styles.labelRight;
     }
+
+    const countLinks = (links?: SpanLinks): number => {
+      if (!links) {
+        return 0;
+      }
+
+      return Object.values(links).reduce((count, arr) => count + arr.length, 0);
+    };
 
     return (
       <TimelineRow
@@ -481,31 +487,32 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
             {createSpanLink &&
               (() => {
                 const links = createSpanLink(span);
-                const count = links?.length || 0;
+                const count = countLinks(links);
                 if (links && count === 1) {
-                  if (!links[0]) {
+                  const link = links.logLinks?.[0] ?? links.metricLinks?.[0] ?? links.traceLinks?.[0] ?? undefined;
+                  if (!link) {
                     return null;
                   }
 
                   return (
                     <a
-                      href={links[0].href}
+                      href={link.href}
                       // Needs to have target otherwise preventDefault would not work due to angularRouter.
                       target={'_blank'}
                       style={{ marginRight: '5px' }}
                       rel="noopener noreferrer"
                       onClick={
-                        links[0].onClick
+                        link.onClick
                           ? (event) => {
-                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && links[0].onClick) {
+                              if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
                                 event.preventDefault();
-                                links[0].onClick(event);
+                                link.onClick(event);
                               }
                             }
                           : undefined
                       }
                     >
-                      {links[0].content}
+                      {link.content}
                     </a>
                   );
                 } else if (links && count > 1) {

@@ -2,6 +2,7 @@ import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow, InlineSelect, Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { ConfirmModal, Input, RadioButtonGroup } from '@grafana/ui';
 
 import { MathExpressionQueryField, MetricStatEditor, SQLBuilderEditor } from '../';
@@ -17,6 +18,8 @@ import {
 } from '../../types';
 import { DynamicLabelsField } from '../DynamicLabelsField';
 import { SQLCodeEditor } from '../SQLCodeEditor';
+
+import { Alias } from './Alias';
 
 export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   query: CloudWatchMetricsQuery;
@@ -179,18 +182,28 @@ export const MetricsQueryEditor = (props: Props) => {
           />
         </EditorField>
 
-        <EditorField
-          label="Label"
-          width={26}
-          optional
-          tooltip="Change time series legend name using Dynamic labels. See documentation for details."
-        >
-          <DynamicLabelsField
-            width={52}
-            label={migratedQuery.label ?? ''}
-            onChange={(label) => props.onChange({ ...query, label })}
-          ></DynamicLabelsField>
-        </EditorField>
+        {config.featureToggles.cloudWatchDynamicLabels ? (
+          <EditorField
+            label="Label"
+            width={26}
+            optional
+            tooltip="Change time series legend name using Dynamic labels. See documentation for details."
+          >
+            <DynamicLabelsField
+              width={52}
+              label={migratedQuery.label ?? ''}
+              onChange={(label) => props.onChange({ ...query, label })}
+            ></DynamicLabelsField>
+          </EditorField>
+        ) : (
+          <EditorField label="Alias" width={26} optional tooltip="Change time series legend name using this field.">
+            <Alias
+              id={`${query.refId}-cloudwatch-metric-query-editor-alias`}
+              value={migratedQuery.alias ?? ''}
+              onChange={(value: string) => onChange({ ...migratedQuery, alias: value })}
+            />
+          </EditorField>
+        )}
       </EditorRow>
     </>
   );

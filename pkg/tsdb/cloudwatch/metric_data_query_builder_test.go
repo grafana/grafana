@@ -95,8 +95,8 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, `SUM([a,b])`, *mdq.Expression)
 		})
 
-		t.Run("should set label", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		t.Run("should set label when dynamic labels feature toggle is enabled", func(t *testing.T) {
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 			query := getBaseQuery()
 			query.Label = "some label"
 
@@ -107,19 +107,35 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			assert.Equal(t, "some label", *mdq.Label)
 		})
 
-		t.Run("should not set label for empty string query label", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-			query := getBaseQuery()
-			query.Label = ""
+		testCases := map[string]struct {
+			feature *featuremgmt.FeatureManager
+			label   string
+		}{
+			"should not set label when dynamic labels feature toggle is disabled": {
+				feature: featuremgmt.WithFeatures(),
+				label:   "some label",
+			},
+			"should not set label for empty string query label": {
+				feature: featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels),
+				label:   "",
+			},
+		}
 
-			mdq, err := executor.buildMetricDataQuery(logger, query)
+		for name, tc := range testCases {
+			t.Run(name, func(t *testing.T) {
+				executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, tc.feature)
+				query := getBaseQuery()
+				query.Label = tc.label
 
-			assert.NoError(t, err)
-			assert.Nil(t, mdq.Label)
-		})
+				mdq, err := executor.buildMetricDataQuery(logger, query)
+
+				assert.NoError(t, err)
+				assert.Nil(t, mdq.Label)
+			})
+		}
 
 		t.Run(`should not specify accountId when it is "all"`, func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",
@@ -137,7 +153,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 		})
 
 		t.Run("should set accountId when it is specified", func(t *testing.T) {
-			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+			executor := newExecutor(nil, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudWatchDynamicLabels))
 			query := &models.CloudWatchQuery{
 				Namespace:  "AWS/EC2",
 				MetricName: "CPUUtilization",

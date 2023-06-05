@@ -1,17 +1,16 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of, lastValueFrom } from 'rxjs';
-import { fromFetch } from 'rxjs/fetch';
 import { delay } from 'rxjs/operators';
 
 import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
-import { BackendSrvRequest, FetchError, config, FetchResponse } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, FetchResponse } from '@grafana/runtime';
 
 import { TokenRevokedModal } from '../../features/users/TokenRevokedModal';
 import { ShowModalReactEvent } from '../../types/events';
 import { BackendSrv, BackendSrvDependencies } from '../services/backend_srv';
 import { ContextSrv, User } from '../services/context_srv';
 
-const getTestContext = (overides?: object, mockFromFetch = true) => {
+const getTestContext = (overides?: object) => {
   const defaults = {
     data: { test: 'hello world' },
     ok: true,
@@ -56,7 +55,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
   const parseRequestOptionsMock = jest.fn().mockImplementation((options) => options);
 
   const backendSrv = new BackendSrv({
-    fromFetch: mockFromFetch ? fromFetchMock : fromFetch,
+    fromFetch: fromFetchMock,
     appEvents: appEventsMock,
     contextSrv: contextSrvMock,
     logout: logoutMock,
@@ -64,14 +63,14 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
 
   backendSrv['parseRequestOptions'] = parseRequestOptionsMock;
 
-  const expectCallChain = (calls = 1) => {
-    expect(fromFetchMock).toHaveBeenCalledTimes(calls);
+  const expectCallChain = () => {
+    expect(fromFetchMock).toHaveBeenCalledTimes(1);
   };
 
-  const expectRequestCallChain = (options: unknown, calls = 1) => {
+  const expectRequestCallChain = (options: unknown) => {
     expect(parseRequestOptionsMock).toHaveBeenCalledTimes(1);
     expect(parseRequestOptionsMock).toHaveBeenCalledWith(options);
-    expectCallChain(calls);
+    expectCallChain();
   };
 
   return {
@@ -126,18 +125,15 @@ describe('backendSrv', () => {
   });
 
   describe('request', () => {
-    const testMessage = 'Datasource updated';
-    const errorMessage = 'UnAuthorized';
-
     describe('when making a successful call and conditions for showSuccessAlert are not favorable', () => {
       it('then it should return correct result and not emit anything', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
-          data: { message: testMessage },
+          data: { message: 'A message' },
         });
         const url = '/api/dashboard/';
         const result = await backendSrv.request({ url, method: 'DELETE', showSuccessAlert: false });
 
-        expect(result).toEqual({ message: testMessage });
+        expect(result).toEqual({ message: 'A message' });
         expect(appEventsMock.emit).not.toHaveBeenCalled();
         expectRequestCallChain({ url, method: 'DELETE', showSuccessAlert: false });
       });
@@ -146,84 +142,51 @@ describe('backendSrv', () => {
     describe('when making a successful call and conditions for showSuccessAlert are favorable', () => {
       it('then it should emit correct message', async () => {
         const { backendSrv, appEventsMock, expectRequestCallChain } = getTestContext({
-          data: { message: testMessage },
+          data: { message: 'A message' },
         });
         const url = '/api/dashboard/';
         const result = await backendSrv.request({ url, method: 'DELETE', showSuccessAlert: true });
 
-        expect(result).toEqual({ message: testMessage });
+        expect(result).toEqual({ message: 'A message' });
         expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
-        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertSuccess, [testMessage]);
+        expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertSuccess, ['A message']);
         expectRequestCallChain({ url, method: 'DELETE', showSuccessAlert: true });
       });
     });
 
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
-      const url = '/api/dashboard/';
-      const okResponse = { ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } };
-      let fetchMock: jest.SpyInstance;
-
-      afterEach(() => {
-        fetchMock.mockClear();
-      });
-
-      afterAll(() => {
-        fetchMock.mockRestore();
-        config.featureToggles.clientTokenRotation = false;
-      });
-
-      it.each`
-        clientTokenRotation
-        ${true}
-        ${false}
-      `('then it should retry (clientTokenRotation = %s)', async ({ clientTokenRotation }) => {
-        config.featureToggles.clientTokenRotation = clientTokenRotation;
-
-        fetchMock = jest
-          .spyOn(global, 'fetch')
-          .mockRejectedValueOnce({
-            ok: false,
-            status: 401,
-            statusText: errorMessage,
-            headers: new Map(),
-            text: jest.fn().mockResolvedValue(JSON.stringify({ test: 'hello world' })),
-            data: { message: errorMessage },
-            url,
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            headers: new Map(),
-            text: jest.fn().mockResolvedValue(JSON.stringify({ test: 'hello world' })),
-            data: { message: 'OK' },
-            url,
-          } as unknown as Response);
-
-        const { backendSrv, appEventsMock, logoutMock } = getTestContext(
-          {
-            ok: false,
-            status: 401,
-            statusText: errorMessage,
-            data: { message: errorMessage },
-            url,
-          },
-          false
-        );
-
-        backendSrv.loginPing = jest.fn().mockResolvedValue(okResponse);
-
-        backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
-
-        await backendSrv.request({ url, method: 'GET', retry: 0 }).finally(() => {
-          expect(appEventsMock.emit).not.toHaveBeenCalled();
-          expect(logoutMock).not.toHaveBeenCalled();
-          if (config.featureToggles.clientTokenRotation) {
-            expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
-          } else {
-            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          }
-          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the loginPing/tokenRotation is mocked
+      it('then it should retry', async () => {
+        jest.useFakeTimers();
+        const url = '/api/dashboard/';
+        const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'UnAuthorized' },
+          url,
         });
+
+        backendSrv.loginPing = jest
+          .fn()
+          .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
+
+        await backendSrv
+          .request({ url, method: 'GET', retry: 0 })
+          .catch((error) => {
+            expect(error.status).toBe(401);
+            expect(error.statusText).toBe('UnAuthorized');
+            expect(error.data).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).not.toHaveBeenCalled();
+            expect(logoutMock).not.toHaveBeenCalled();
+            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+            expectRequestCallChain({ url, method: 'GET', retry: 0 });
+            jest.advanceTimersByTime(50);
+          })
+          .catch((error) => {
+            expect(error).toEqual({ message: 'UnAuthorized' });
+            expect(appEventsMock.emit).toHaveBeenCalledTimes(1);
+            expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertWarning, ['UnAuthorized', '']);
+          });
       });
     });
 
@@ -233,7 +196,7 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
-          statusText: errorMessage,
+          statusText: 'UnAuthorized',
           data: { message: 'Token revoked', error: { id: 'ERR_TOKEN_REVOKED', maxConcurrentSessions: 3 } },
           url,
         });
@@ -263,8 +226,8 @@ describe('backendSrv', () => {
         const { backendSrv, appEventsMock, logoutMock, expectRequestCallChain } = getTestContext({
           ok: false,
           status: 401,
-          statusText: errorMessage,
-          data: { message: errorMessage },
+          statusText: 'UnAuthorized',
+          data: { message: 'UnAuthorized' },
         });
 
         backendSrv.loginPing = jest
@@ -520,68 +483,32 @@ describe('backendSrv', () => {
     });
 
     describe('when making an unsuccessful call and conditions for retry are favorable and loginPing does not throw', () => {
-      const url = '/api/dashboard/';
-      const okResponse = { ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } };
-      let fetchMock: jest.SpyInstance;
+      it('then it should retry', async () => {
+        const { backendSrv, logoutMock, expectRequestCallChain } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: 'UnAuthorized',
+          data: { message: 'UnAuthorized' },
+        });
 
-      afterEach(() => {
-        fetchMock.mockClear();
-      });
+        backendSrv.loginPing = jest
+          .fn()
+          .mockResolvedValue({ ok: true, status: 200, statusText: 'OK', data: { message: 'Ok' } });
+        const url = '/api/dashboard/';
 
-      afterAll(() => {
-        fetchMock.mockRestore();
-        config.featureToggles.clientTokenRotation = false;
-      });
+        let inspectorPacket: FetchResponse | FetchError;
+        backendSrv.getInspectorStream().subscribe({
+          next: (rsp) => (inspectorPacket = rsp),
+        });
 
-      it.each`
-        clientTokenRotation
-        ${true}
-        ${false}
-      `('then it should retry (clientTokenRotation = %s)', async ({ clientTokenRotation }) => {
-        config.featureToggles.clientTokenRotation = clientTokenRotation;
-
-        fetchMock = jest
-          .spyOn(global, 'fetch')
-          .mockRejectedValueOnce({
-            ok: false,
-            status: 401,
-            statusText: 'UnAuthorized',
-            headers: new Map(),
-            text: jest.fn().mockResolvedValue(JSON.stringify({ test: 'hello world' })),
-            data: { message: 'UnAuthorized' },
-            url,
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            status: 200,
-            headers: new Map(),
-            text: jest.fn().mockResolvedValue(JSON.stringify({ test: 'hello world' })),
-            data: { message: 'OK' },
-            url,
-          } as unknown as Response);
-
-        const { backendSrv, logoutMock } = getTestContext(
-          {
-            ok: false,
-            status: 401,
-            statusText: 'UnAuthorized',
-            data: { message: 'UnAuthorized' },
-          },
-          false
-        );
-
-        backendSrv.loginPing = jest.fn().mockResolvedValue(okResponse);
-
-        backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
-
-        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).finally(() => {
+        await backendSrv.datasourceRequest({ url, method: 'GET', retry: 0 }).catch((error) => {
+          expect(error.status).toBe(401);
+          expect(error.statusText).toBe('UnAuthorized');
+          expect(error.data).toEqual({ message: 'UnAuthorized' });
+          expect(inspectorPacket).toBe(error);
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
           expect(logoutMock).not.toHaveBeenCalled();
-          if (config.featureToggles.clientTokenRotation) {
-            expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
-          } else {
-            expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
-          }
-          expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the loginPing/tokenRotation is mocked
+          expectRequestCallChain({ url, method: 'GET', retry: 0 });
         });
       });
     });

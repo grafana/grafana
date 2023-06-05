@@ -9,7 +9,7 @@ import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
-import { AddNewConnection } from './ConnectData';
+import { ConnectData } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
 
@@ -19,7 +19,7 @@ const renderPage = (plugins: CatalogPlugin[] = []): RenderResult => {
 
   return render(
     <Provider store={store}>
-      <AddNewConnection />
+      <ConnectData />
     </Provider>
   );
 };
@@ -32,7 +32,7 @@ const mockCatalogDataSourcePlugin = getCatalogPluginMock({
 
 const originalHasPermission = contextSrv.hasPermission;
 
-describe('Add new connection', () => {
+describe('Connect Data', () => {
   beforeEach(() => {
     contextSrv.hasPermission = originalHasPermission;
   });

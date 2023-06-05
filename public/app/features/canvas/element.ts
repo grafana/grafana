@@ -2,10 +2,9 @@ import { ComponentType } from 'react';
 
 import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { ColorDimensionConfig, ScaleDimensionConfig } from '@grafana/schema';
 import { config } from 'app/core/config';
 
-import { DimensionContext } from '../dimensions';
+import { DimensionContext } from '../dimensions/context';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
@@ -47,8 +46,6 @@ export interface CanvasConnection {
   target: ConnectionCoordinates;
   targetName?: string;
   path: ConnectionPath;
-  color?: ColorDimensionConfig;
-  size?: ScaleDimensionConfig;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 

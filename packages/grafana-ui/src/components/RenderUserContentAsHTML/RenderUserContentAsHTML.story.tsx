@@ -1,10 +1,10 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { RenderUserContentAsHTML } from './RenderUserContentAsHTML';
 import mdx from './RenderUserContentAsHTML.mdx';
 
-const meta: Meta<typeof RenderUserContentAsHTML> = {
+const meta: ComponentMeta<typeof RenderUserContentAsHTML> = {
   title: 'General/RenderUserContentAsHTML',
   component: RenderUserContentAsHTML,
   parameters: {
@@ -22,7 +22,7 @@ const meta: Meta<typeof RenderUserContentAsHTML> = {
   },
 };
 
-export const Basic: StoryFn<typeof RenderUserContentAsHTML> = (props) => {
+export const Basic: ComponentStory<typeof RenderUserContentAsHTML> = (props) => {
   return <RenderUserContentAsHTML {...props} />;
 };
 

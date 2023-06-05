@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,7 +41,7 @@ func TestMetrics(t *testing.T) {
 	const metricName = "stats.test_metric.count"
 
 	sqlStore := dbtest.NewFakeDB()
-	uss := createService(t, sqlStore, false)
+	uss := createService(t, setting.Cfg{}, sqlStore, false)
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
 		return map[string]interface{}{metricName: 1}, nil
@@ -151,7 +150,7 @@ func TestMetrics(t *testing.T) {
 
 func TestGetUsageReport_IncludesMetrics(t *testing.T) {
 	sqlStore := dbtest.NewFakeDB()
-	uss := createService(t, sqlStore, true)
+	uss := createService(t, setting.Cfg{}, sqlStore, true)
 	metricName := "stats.test_metric.count"
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
@@ -169,7 +168,7 @@ func TestRegisterMetrics(t *testing.T) {
 	const goodMetricName = "stats.test_external_metric.count"
 
 	sqlStore := dbtest.NewFakeDB()
-	uss := createService(t, sqlStore, false)
+	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
 
 	uss.RegisterMetricsFunc(func(context.Context) (map[string]interface{}, error) {
@@ -210,19 +209,18 @@ type httpResp struct {
 	err            error
 }
 
-func createService(t *testing.T, sqlStore db.DB, withDB bool) *UsageStats {
+func createService(t *testing.T, cfg setting.Cfg, sqlStore db.DB, withDB bool) *UsageStats {
 	t.Helper()
 	if withDB {
 		sqlStore = db.InitTestDB(t)
 	}
 
-	cfg := setting.NewCfg()
 	service, _ := ProvideService(
-		cfg,
+		&cfg,
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
 		tracing.InitializeTracerForTest(),
-		acimpl.ProvideAccessControl(cfg),
+		actest.FakeAccessControl{ExpectedDisabled: true},
 		actest.FakeService{},
 		supportbundlestest.NewFakeBundleService(),
 	)

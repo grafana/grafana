@@ -14,7 +14,7 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						Options: {
+						PanelOptions: {
 							foo: string
 						} @cuetsy(kind="interface")
 					},

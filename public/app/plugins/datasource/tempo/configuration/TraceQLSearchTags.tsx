@@ -8,6 +8,7 @@ import TagsInput from '../SearchTraceQLEditor/TagsInput';
 import { replaceAt } from '../SearchTraceQLEditor/utils';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { CompletionProvider } from '../traceql/autocomplete';
 import { TempoJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {
@@ -22,13 +23,24 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
 
     try {
       await datasource.languageProvider.start();
+      const tags = datasource.languageProvider.getTags();
+
+      if (tags) {
+        // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+        // so Tempo doesn't send anything and we inject it here for the autocomplete
+        if (!tags.find((t) => t === 'status')) {
+          tags.push('status');
+        }
+        return tags;
+      }
     } catch (e) {
       // @ts-ignore
       throw new Error(`${e.statusText}: ${e.data.error}`);
     }
+    return [];
   };
 
-  const { error, loading } = useAsync(fetchTags, [datasource, options]);
+  const { error, loading, value: tags } = useAsync(fetchTags, [datasource, options]);
 
   const updateFilter = useCallback(
     (s: TraceqlFilter) => {
@@ -73,9 +85,6 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
     }
   }, [onOptionsChange, options]);
 
-  // filter out tags that already exist in TraceQLSearch editor
-  const staticTags = ['duration'];
-
   return (
     <>
       {datasource ? (
@@ -85,7 +94,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           filters={options.jsonData.search?.filters || []}
           datasource={datasource}
           setError={() => {}}
-          staticTags={staticTags}
+          tags={[...CompletionProvider.intrinsics, ...(tags || [])]}
           isTagsLoading={loading}
           hideValues={true}
         />

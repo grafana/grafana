@@ -21,10 +21,11 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
+import { CoreApp } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { SelectedView, ClickedItemData, TextAlign } from '../types';
+import { SelectedView, ContextMenuData } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -34,31 +35,35 @@ import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
 
 type Props = {
   data: FlameGraphDataContainer;
+  app: CoreApp;
   levels: LevelItem[][];
+  topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
+  setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
-  onItemFocused: (itemIndex: number) => void;
-  focusedItemIndex?: number;
-  textAlign: TextAlign;
 };
 
 const FlameGraph = ({
   data,
+  app,
   levels,
+  topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
+  setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
-  onItemFocused,
-  focusedItemIndex,
-  textAlign,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const totalTicks = data.getValue(0);
@@ -67,8 +72,7 @@ const FlameGraph = ({
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipItem, setTooltipItem] = useState<LevelItem>();
-
-  const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
+  const [contextMenuData, setContextMenuData] = useState<ContextMenuData>();
 
   const [ufuzzy] = useState(() => {
     return new uFuzzy();
@@ -114,12 +118,11 @@ const FlameGraph = ({
       // sometimes we collapse multiple bars into single rect.
       const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
       for (const rect of dimensions) {
-        const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
         // Render each rectangle based on the computed dimensions
-        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, focusedLevel, foundLabels, textAlign);
+        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
       }
     }
-  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+  }, [data, levels, wrapperWidth, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]);
 
   useEffect(() => {
     if (graphRef.current) {
@@ -137,22 +140,15 @@ const FlameGraph = ({
 
         // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          const item = levels[levelIndex][barIndex];
-          setClickedItemData({
-            posY: e.clientY,
-            posX: e.clientX,
-            itemIndex: item.itemIndex,
-            label: data.getLabel(item.itemIndex),
-            start: item.start,
-          });
+          setContextMenuData({ e, levelIndex, barIndex });
         } else {
           // if clicking on the canvas but there is no block beneath the cursor
-          setClickedItemData(undefined);
+          setContextMenuData(undefined);
         }
       };
 
       graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current && clickedItemData === undefined) {
+        if (tooltipRef.current && contextMenuData === undefined) {
           setTooltipItem(undefined);
           const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
           const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
@@ -165,15 +161,8 @@ const FlameGraph = ({
           );
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+            tooltipRef.current.style.left = e.clientX + 10 + 'px';
             tooltipRef.current.style.top = e.clientY + 'px';
-            if (document.documentElement.clientWidth - e.clientX < 400) {
-              tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-              tooltipRef.current.style.left = 'auto';
-            } else {
-              tooltipRef.current.style.left = e.clientX + 15 + 'px';
-              tooltipRef.current.style.right = 'auto';
-            }
-
             setTooltipItem(levels[levelIndex][barIndex]);
           }
         }
@@ -188,13 +177,16 @@ const FlameGraph = ({
     levels,
     rangeMin,
     rangeMax,
+    topLevelIndex,
     totalTicks,
     wrapperWidth,
+    setTopLevelIndex,
     setRangeMin,
     setRangeMax,
     selectedView,
-    setClickedItemData,
-    clickedItemData,
+    setSelectedBarIndex,
+    setContextMenuData,
+    contextMenuData,
   ]);
 
   // hide context menu if outside the flame graph canvas is clicked
@@ -202,31 +194,38 @@ const FlameGraph = ({
     const handleOnClick = (e: MouseEvent) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
-        setClickedItemData(undefined);
+        setContextMenuData(undefined);
       }
     };
     window.addEventListener('click', handleOnClick);
     return () => window.removeEventListener('click', handleOnClick);
-  }, [setClickedItemData]);
+  }, [setContextMenuData]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
-      <FlameGraphMetadata data={data} focusedItemIndex={focusedItemIndex} totalTicks={totalTicks} />
+      <FlameGraphMetadata
+        data={data}
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        totalTicks={totalTicks}
+      />
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
         <canvas ref={graphRef} data-testid="flameGraph" />
       </div>
       <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
-      {clickedItemData && (
+      {contextMenuData && (
         <FlameGraphContextMenu
-          itemData={clickedItemData}
-          onMenuItemClick={() => {
-            setClickedItemData(undefined);
-          }}
-          onItemFocus={(itemIndex) => {
-            setRangeMin(clickedItemData.start / totalTicks);
-            setRangeMax((clickedItemData.start + data.getValue(clickedItemData.itemIndex)) / totalTicks);
-            onItemFocused(itemIndex);
-          }}
+          data={data}
+          contextMenuData={contextMenuData!}
+          levels={levels}
+          totalTicks={totalTicks}
+          graphRef={graphRef}
+          setContextMenuData={setContextMenuData}
+          setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
+          setRangeMin={setRangeMin}
+          setRangeMax={setRangeMax}
         />
       )}
     </div>

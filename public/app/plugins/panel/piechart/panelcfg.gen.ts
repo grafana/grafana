@@ -50,14 +50,14 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
   values: [],
 };
 
-export interface Options extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
+export interface PanelOptions extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   displayLabels: [],
 };
 
-export interface FieldConfig extends common.HideableFieldConfig {}
+export interface PanelFieldConfig extends common.HideableFieldConfig {}

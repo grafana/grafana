@@ -144,6 +144,14 @@ describe('SharePublic', () => {
     await renderSharePublicDashboard();
     expect(screen.getByText('Last 6 hours')).toBeInTheDocument();
   });
+  it('renders default absolute time in input 2', async () => {
+    mockDashboard.time = { from: '2022-08-30T03:00:00.000Z', to: '2022-09-04T02:59:59.000Z' };
+    //@ts-ignore
+    mockDashboard.originalTime = { from: '2022-08-30T06:00:00.000Z', to: '2022-09-04T06:59:59.000Z' };
+
+    await renderSharePublicDashboard();
+    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 00:59:59')).toBeInTheDocument();
+  });
   it('when modal is opened, then checkboxes are enabled but create button is disabled', async () => {
     server.use(getNonExistentPublicDashboardResponse());
     await renderSharePublicDashboard();
@@ -175,7 +183,7 @@ describe('SharePublic - New config setup', () => {
   it('renders when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard();
 
-    await screen.findByText('Welcome to public dashboards public preview!');
+    await screen.findByText('Welcome to public dashboards alpha!');
     expect(screen.getByText('Generate public URL')).toBeInTheDocument();
 
     expect(screen.queryByTestId(selectors.WillBePublicCheckbox)).toBeInTheDocument();
@@ -306,7 +314,7 @@ describe('SharePublic - Report interactions', () => {
     jest.clearAllMocks();
     server.use(getExistentPublicDashboardResponse());
     server.use(
-      rest.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
+      rest.put('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
         res(
           ctx.status(200),
           ctx.json({

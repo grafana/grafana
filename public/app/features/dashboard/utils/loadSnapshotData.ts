@@ -1,6 +1,6 @@
 import {
   applyFieldOverrides,
-  arrayToDataFrame,
+  ArrayDataFrame,
   getDefaultTimeRange,
   getProcessedDataFrames,
   LoadingState,
@@ -19,7 +19,7 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
   const worker = new SnapshotWorker();
   const options = { dashboard, range: getDefaultTimeRange() };
   const annotationEvents = worker.canWork(options) ? worker.getAnnotationsInSnapshot(dashboard, panel.id) : [];
-  const annotations = [arrayToDataFrame(annotationEvents)];
+  const annotations = [new ArrayDataFrame(annotationEvents)];
   const timeData = applyPanelTimeOverrides(panel, getTimeSrv().timeRange());
 
   return {

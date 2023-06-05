@@ -18,7 +18,6 @@ export interface EchoMeta {
   windowSize: SizeMeta;
   userAgent: string;
   url?: string;
-  path?: string;
   /**
    * A unique browser session
    */
@@ -79,6 +78,7 @@ export interface EchoEvent<T extends EchoEventType = any, P = any> {
 export enum EchoEventType {
   Performance = 'performance',
   MetaAnalytics = 'meta-analytics',
+  Sentry = 'sentry',
   Pageview = 'pageview',
   Interaction = 'interaction',
   ExperimentView = 'experimentview',
@@ -120,13 +120,6 @@ let singletonInstance: EchoSrv;
  * @internal
  */
 export function setEchoSrv(instance: EchoSrv) {
-  // Check if there were any events reported to the FakeEchoSrv (before the main EchoSrv was initialized), and track them
-  if (singletonInstance instanceof FakeEchoSrv) {
-    for (const item of singletonInstance.buffer) {
-      instance.addEvent(item.event, item.meta);
-    }
-  }
-
   singletonInstance = instance;
 }
 
@@ -155,15 +148,15 @@ export const registerEchoBackend = (backend: EchoBackend) => {
 };
 
 export class FakeEchoSrv implements EchoSrv {
-  buffer: Array<{ event: Omit<EchoEvent, 'meta'>; meta?: {} | undefined }> = [];
+  events: Array<Omit<EchoEvent, 'meta'>> = [];
 
   flush(): void {
-    this.buffer = [];
+    this.events = [];
   }
 
   addBackend(backend: EchoBackend): void {}
 
   addEvent<T extends EchoEvent>(event: Omit<T, 'meta'>, meta?: {} | undefined): void {
-    this.buffer.push({ event, meta });
+    this.events.push(event);
   }
 }

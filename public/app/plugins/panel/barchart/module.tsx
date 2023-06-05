@@ -16,11 +16,11 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { FieldConfig, Options, defaultFieldConfig, defaultOptions } from './panelcfg.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -34,7 +34,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       },
     },
     useCustomConfig: (builder) => {
-      const cfg = defaultFieldConfig;
+      const cfg = defaultPanelFieldConfig;
 
       builder
         .addSliderInput({
@@ -108,7 +108,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     },
   })
   .setPanelOptions((builder, context) => {
-    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as Options));
+    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as PanelOptions));
     let xaxisPlaceholder = 'First string or time field';
     const viz = 'viz' in disp ? disp.viz[0] : undefined;
     if (viz?.fields?.length) {
@@ -134,12 +134,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             { value: VizOrientation.Vertical, label: 'Vertical' },
           ],
         },
-        defaultValue: defaultOptions.orientation,
+        defaultValue: defaultPanelOptions.orientation,
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
         name: 'Rotate x-axis tick labels',
-        defaultValue: defaultOptions.xTickLabelRotation,
+        defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
           max: 90,
@@ -162,7 +162,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         id: 'xTickLabelSpacing',
         path: 'xTickLabelSpacing',
         name: 'X-axis labels minimum spacing',
-        defaultValue: defaultOptions.xTickLabelSpacing,
+        defaultValue: defaultPanelOptions.xTickLabelSpacing,
         editor: TickSpacingEditor,
       })
       .addRadio({
@@ -175,7 +175,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
             { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: defaultOptions.showValue,
+        defaultValue: defaultPanelOptions.showValue,
       })
       .addRadio({
         path: 'stacking',
@@ -183,12 +183,12 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         settings: {
           options: graphFieldOptions.stacking,
         },
-        defaultValue: defaultOptions.stacking,
+        defaultValue: defaultPanelOptions.stacking,
       })
       .addSliderInput({
         path: 'groupWidth',
         name: 'Group width',
-        defaultValue: defaultOptions.groupWidth,
+        defaultValue: defaultPanelOptions.groupWidth,
         settings: {
           min: 0,
           max: 1,
@@ -204,7 +204,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       .addSliderInput({
         path: 'barWidth',
         name: 'Bar width',
-        defaultValue: defaultOptions.barWidth,
+        defaultValue: defaultPanelOptions.barWidth,
         settings: {
           min: 0,
           max: 1,
@@ -214,7 +214,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       .addSliderInput({
         path: 'barRadius',
         name: 'Bar radius',
-        defaultValue: defaultOptions.barRadius,
+        defaultValue: defaultPanelOptions.barRadius,
         settings: {
           min: 0,
           max: 0.5,
@@ -224,7 +224,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
       .addBooleanSwitch({
         path: 'fullHighlight',
         name: 'Highlight full area on hover',
-        defaultValue: defaultOptions.fullHighlight,
+        defaultValue: defaultPanelOptions.fullHighlight,
       });
 
     builder.addFieldNamePicker({

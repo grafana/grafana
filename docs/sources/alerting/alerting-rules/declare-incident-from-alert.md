@@ -1,10 +1,11 @@
 ---
+aliases:
 description: Declare an incident from a firing alert
 keywords:
   - grafana
   - alert rules
   - incident
-title: Declare incidents from firing alerts
+title: Declare an incident from a firing alert
 weight: 430
 ---
 
@@ -45,4 +46,4 @@ To declare an incident from a firing alert, complete the following steps.
 
 View and track the incident in the Grafana Incident application.
 
-For more information, refer to [Grafana Incident documentation.](/docs/grafana-cloud/incident/configure-settings/)
+For more information, refer to [Grafana Incident documentation.](https://grafana.com/docs/grafana-cloud/incident/configure-settings/)

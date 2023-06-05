@@ -10,7 +10,6 @@ import (
 
 type InMemory struct {
 	store map[string]*plugins.Plugin
-	alias map[string]*plugins.Plugin
 	mu    sync.RWMutex
 }
 
@@ -21,7 +20,6 @@ func ProvideService() *InMemory {
 func NewInMemory() *InMemory {
 	return &InMemory{
 		store: make(map[string]*plugins.Plugin),
-		alias: make(map[string]*plugins.Plugin),
 	}
 }
 
@@ -48,25 +46,18 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 
 	i.mu.Lock()
 	i.store[p.ID] = p
-	if p.Alias != "" {
-		i.alias[p.Alias] = p
-	}
 	i.mu.Unlock()
 
 	return nil
 }
 
 func (i *InMemory) Remove(_ context.Context, pluginID string) error {
-	p, ok := i.plugin(pluginID)
-	if !ok {
+	if !i.isRegistered(pluginID) {
 		return fmt.Errorf("plugin %s is not registered", pluginID)
 	}
 
 	i.mu.Lock()
 	delete(i.store, pluginID)
-	if p != nil && p.Alias != "" {
-		delete(i.alias, p.Alias)
-	}
 	i.mu.Unlock()
 
 	return nil
@@ -78,18 +69,13 @@ func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {
 	p, exists := i.store[pluginID]
 
 	if !exists {
-		p, exists = i.alias[pluginID]
-		if !exists {
-			return nil, false
-		}
+		return nil, false
 	}
 
 	return p, true
 }
 
 func (i *InMemory) isRegistered(pluginID string) bool {
-	p, exists := i.plugin(pluginID)
-
-	// This may have matched based on an alias
-	return exists && p.ID == pluginID
+	_, exists := i.plugin(pluginID)
+	return exists
 }

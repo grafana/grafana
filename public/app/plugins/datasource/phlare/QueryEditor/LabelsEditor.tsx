@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useRef } from 'react';
-import { useAsync, useLatest } from 'react-use';
+import { useLatest } from 'react-use';
 
 import { CodeEditor, Monaco, useStyles2, monacoTypes } from '@grafana/ui';
 
 import { languageDefinition } from '../phlareql';
+import { SeriesMessage } from '../types';
 
 import { CompletionProvider } from './autocomplete';
 
@@ -12,12 +13,11 @@ interface Props {
   value: string;
   onChange: (val: string) => void;
   onRunQuery: (value: string) => void;
-  labels?: string[];
-  getLabelValues: (label: string) => Promise<string[]>;
+  series?: SeriesMessage;
 }
 
 export function LabelsEditor(props: Props) {
-  const setupAutocompleteFn = useAutocomplete(props.getLabelValues, props.labels);
+  const setupAutocompleteFn = useAutocomplete(props.series);
   const styles = useStyles2(getStyles);
 
   const onRunQueryRef = useLatest(props.onRunQuery);
@@ -92,17 +92,15 @@ const EDITOR_HEIGHT_OFFSET = 2;
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  */
-function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, labels?: string[]) {
-  const providerRef = useRef<CompletionProvider>();
-  if (providerRef.current === undefined) {
-    providerRef.current = new CompletionProvider();
-  }
+function useAutocomplete(series?: SeriesMessage) {
+  const providerRef = useRef<CompletionProvider>(new CompletionProvider());
 
-  useAsync(async () => {
-    if (providerRef.current) {
-      providerRef.current.init(labels || [], getLabelValues);
+  useEffect(() => {
+    if (series) {
+      // When we have the value we will pass it to the CompletionProvider
+      providerRef.current.setSeries(series);
     }
-  }, [labels, getLabelValues]);
+  }, [series]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -114,13 +112,11 @@ function useAutocomplete(getLabelValues: (label: string) => Promise<string[]>, l
 
   // This should be run in monaco onEditorDidMount
   return (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
-    if (providerRef.current) {
-      providerRef.current.editor = editor;
-      providerRef.current.monaco = monaco;
+    providerRef.current.editor = editor;
+    providerRef.current.monaco = monaco;
 
-      const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
-      autocompleteDisposeFun.current = dispose;
-    }
+    const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
+    autocompleteDisposeFun.current = dispose;
   };
 }
 
@@ -142,7 +138,7 @@ const getStyles = () => {
   return {
     queryField: css`
       flex: 1;
-      // Not exactly sure but without this the editor does not shrink after resizing (so you can make it bigger but not
+      // Not exactly sure but without this the editor doe not shrink after resizing (so you can make it bigger but not
       // smaller). At the same time this does not actually make the editor 100px because it has flex 1 so I assume
       // this should sort of act as a flex-basis (but flex-basis does not work for this). So yeah CSS magic.
       width: 100px;

@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
@@ -9,7 +9,7 @@ import { HorizontalGroup } from '../Layout/Layout';
 import { FilterPill } from './FilterPill';
 import mdx from './FilterPill.mdx';
 
-const meta: Meta<typeof FilterPill> = {
+const meta: ComponentMeta<typeof FilterPill> = {
   title: 'General/FilterPill',
   component: FilterPill,
   decorators: [withCenteredStory],
@@ -24,7 +24,7 @@ const meta: Meta<typeof FilterPill> = {
   },
 };
 
-export const Basic: StoryFn<typeof FilterPill> = (args) => {
+export const Basic: ComponentStory<typeof FilterPill> = (args) => {
   return <FilterPill {...args} />;
 };
 

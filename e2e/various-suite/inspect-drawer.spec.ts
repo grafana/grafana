@@ -41,6 +41,8 @@ e2e.scenario({
 
     expectDrawerTabsAndContent();
 
+    expectDrawerExpandAndContract(viewPortWidth);
+
     expectDrawerClose();
 
     expectSubMenuScenario('Data');
@@ -103,6 +105,30 @@ const expectDrawerClose = () => {
   // close using close button
   e2e.components.Drawer.General.close().click();
   e2e.components.Drawer.General.title(`Inspect: ${PANEL_UNDER_TEST}`).should('not.exist');
+};
+
+const expectDrawerExpandAndContract = (viewPortWidth: number) => {
+  // try expand button
+  // drawer should take up half the screen
+  e2e.components.Drawer.General.rcContentWrapper()
+    .should('be.visible')
+    .should('have.css', 'width', `${viewPortWidth / 2}px`);
+
+  e2e.components.Drawer.General.expand().click();
+  e2e.components.Drawer.General.contract().should('be.visible');
+
+  // drawer should take up the whole screen
+  e2e.components.Drawer.General.rcContentWrapper()
+    .should('be.visible')
+    .should('have.css', 'width', `${viewPortWidth}px`);
+
+  // try contract button
+  e2e.components.Drawer.General.contract().click();
+  e2e.components.Drawer.General.expand().should('be.visible');
+
+  e2e.components.Drawer.General.rcContentWrapper()
+    .should('be.visible')
+    .should('have.css', 'width', `${viewPortWidth / 2}px`);
 };
 
 const expectSubMenuScenario = (subMenu: string, tabTitle?: string) => {

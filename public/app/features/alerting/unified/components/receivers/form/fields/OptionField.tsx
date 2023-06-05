@@ -115,7 +115,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           {...register(name, {
             required: determineRequired(option, getValues, pathIndex),
             validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
-            setValueAs: option.setValueAs,
           })}
           placeholder={option.placeholder}
         />
@@ -128,7 +127,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
             <Select
               disabled={readOnly}
               {...field}
-              defaultValue={option.defaultValue}
               options={option.selectOptions ?? undefined}
               invalid={invalid}
               onChange={(value) => onChange(value.value)}

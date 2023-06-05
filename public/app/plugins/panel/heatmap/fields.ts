@@ -8,6 +8,7 @@ import {
   GrafanaTheme2,
   LinkModel,
   outerJoinDataFrames,
+  PanelData,
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
@@ -20,7 +21,7 @@ import {
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { parseSampleValue, sortSeriesByLabel } from 'app/plugins/datasource/prometheus/result_transformer';
 
-import { CellValues, Options } from './types';
+import { CellValues, PanelOptions } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {
@@ -55,17 +56,17 @@ export interface HeatmapData {
 }
 
 export function prepareHeatmapData(
-  frames: DataFrame[],
-  annotations: DataFrame[] | undefined,
-  options: Options,
+  data: PanelData,
+  options: PanelOptions,
   theme: GrafanaTheme2,
   getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
 ): HeatmapData {
+  let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
-  const exemplars = annotations?.find((f) => f.name === 'exemplar');
+  const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
 
   if (getFieldLinks) {
     exemplars?.fields.forEach((field, index) => {
@@ -128,7 +129,7 @@ export function prepareHeatmapData(
 const getSparseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: Options,
+  options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells || isHeatmapCellsDense(frame)) {
@@ -164,7 +165,7 @@ const getSparseHeatmapData = (
 const getDenseHeatmapData = (
   frame: DataFrame,
   exemplars: DataFrame | undefined,
-  options: Options,
+  options: PanelOptions,
   theme: GrafanaTheme2
 ): HeatmapData => {
   if (frame.meta?.type !== DataFrameType.HeatmapCells) {

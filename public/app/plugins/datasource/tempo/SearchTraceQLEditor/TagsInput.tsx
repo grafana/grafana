@@ -10,7 +10,6 @@ import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
-import { getFilteredTags } from './utils';
 
 const getStyles = () => ({
   vertical: css`
@@ -31,7 +30,7 @@ interface Props {
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError) => void;
-  staticTags: Array<string | undefined>;
+  tags: string[];
   isTagsLoading: boolean;
   hideValues?: boolean;
 }
@@ -41,7 +40,7 @@ const TagsInput = ({
   filters,
   datasource,
   setError,
-  staticTags,
+  tags,
   isTagsLoading,
   hideValues,
 }: Props) => {
@@ -58,11 +57,6 @@ const TagsInput = ({
     }
   }, [filters, handleOnAdd]);
 
-  const getTags = (f: TraceqlFilter) => {
-    const tags = datasource.languageProvider.getTags(f.scope);
-    return getFilteredTags(tags, staticTags);
-  };
-
   return (
     <div className={styles.vertical}>
       {filters?.map((f, i) => (
@@ -72,7 +66,7 @@ const TagsInput = ({
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
-            tags={getTags(f)}
+            tags={tags}
             isTagsLoading={isTagsLoading}
             deleteFilter={deleteFilter}
             allowDelete={true}

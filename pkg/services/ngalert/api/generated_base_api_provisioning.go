@@ -212,7 +212,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/alert-rules/{UID}",
-				api.Hooks.Wrap(srv.RouteDeleteAlertRule),
+				srv.RouteDeleteAlertRule,
 				m,
 			),
 		)
@@ -222,7 +222,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/contact-points/{UID}",
-				api.Hooks.Wrap(srv.RouteDeleteContactpoints),
+				srv.RouteDeleteContactpoints,
 				m,
 			),
 		)
@@ -232,7 +232,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/mute-timings/{name}",
-				api.Hooks.Wrap(srv.RouteDeleteMuteTiming),
+				srv.RouteDeleteMuteTiming,
 				m,
 			),
 		)
@@ -242,7 +242,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/templates/{name}",
-				api.Hooks.Wrap(srv.RouteDeleteTemplate),
+				srv.RouteDeleteTemplate,
 				m,
 			),
 		)
@@ -252,7 +252,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/{UID}",
-				api.Hooks.Wrap(srv.RouteGetAlertRule),
+				srv.RouteGetAlertRule,
 				m,
 			),
 		)
@@ -262,7 +262,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/{UID}/export",
-				api.Hooks.Wrap(srv.RouteGetAlertRuleExport),
+				srv.RouteGetAlertRuleExport,
 				m,
 			),
 		)
@@ -272,7 +272,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
-				api.Hooks.Wrap(srv.RouteGetAlertRuleGroup),
+				srv.RouteGetAlertRuleGroup,
 				m,
 			),
 		)
@@ -282,7 +282,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export",
-				api.Hooks.Wrap(srv.RouteGetAlertRuleGroupExport),
+				srv.RouteGetAlertRuleGroupExport,
 				m,
 			),
 		)
@@ -292,7 +292,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules",
-				api.Hooks.Wrap(srv.RouteGetAlertRules),
+				srv.RouteGetAlertRules,
 				m,
 			),
 		)
@@ -302,7 +302,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/alert-rules/export",
-				api.Hooks.Wrap(srv.RouteGetAlertRulesExport),
+				srv.RouteGetAlertRulesExport,
 				m,
 			),
 		)
@@ -312,7 +312,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/contact-points",
-				api.Hooks.Wrap(srv.RouteGetContactpoints),
+				srv.RouteGetContactpoints,
 				m,
 			),
 		)
@@ -322,7 +322,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings/{name}",
-				api.Hooks.Wrap(srv.RouteGetMuteTiming),
+				srv.RouteGetMuteTiming,
 				m,
 			),
 		)
@@ -332,7 +332,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/mute-timings",
-				api.Hooks.Wrap(srv.RouteGetMuteTimings),
+				srv.RouteGetMuteTimings,
 				m,
 			),
 		)
@@ -342,7 +342,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/policies",
-				api.Hooks.Wrap(srv.RouteGetPolicyTree),
+				srv.RouteGetPolicyTree,
 				m,
 			),
 		)
@@ -352,7 +352,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/templates/{name}",
-				api.Hooks.Wrap(srv.RouteGetTemplate),
+				srv.RouteGetTemplate,
 				m,
 			),
 		)
@@ -362,7 +362,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/provisioning/templates",
-				api.Hooks.Wrap(srv.RouteGetTemplates),
+				srv.RouteGetTemplates,
 				m,
 			),
 		)
@@ -372,7 +372,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/alert-rules",
-				api.Hooks.Wrap(srv.RoutePostAlertRule),
+				srv.RoutePostAlertRule,
 				m,
 			),
 		)
@@ -382,7 +382,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/contact-points",
-				api.Hooks.Wrap(srv.RoutePostContactpoints),
+				srv.RoutePostContactpoints,
 				m,
 			),
 		)
@@ -392,7 +392,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/provisioning/mute-timings",
-				api.Hooks.Wrap(srv.RoutePostMuteTiming),
+				srv.RoutePostMuteTiming,
 				m,
 			),
 		)
@@ -402,7 +402,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/alert-rules/{UID}",
-				api.Hooks.Wrap(srv.RoutePutAlertRule),
+				srv.RoutePutAlertRule,
 				m,
 			),
 		)
@@ -412,7 +412,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
-				api.Hooks.Wrap(srv.RoutePutAlertRuleGroup),
+				srv.RoutePutAlertRuleGroup,
 				m,
 			),
 		)
@@ -422,7 +422,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/contact-points/{UID}",
-				api.Hooks.Wrap(srv.RoutePutContactpoint),
+				srv.RoutePutContactpoint,
 				m,
 			),
 		)
@@ -432,7 +432,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/mute-timings/{name}",
-				api.Hooks.Wrap(srv.RoutePutMuteTiming),
+				srv.RoutePutMuteTiming,
 				m,
 			),
 		)
@@ -442,7 +442,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/policies",
-				api.Hooks.Wrap(srv.RoutePutPolicyTree),
+				srv.RoutePutPolicyTree,
 				m,
 			),
 		)
@@ -452,7 +452,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodPut,
 				"/api/v1/provisioning/templates/{name}",
-				api.Hooks.Wrap(srv.RoutePutTemplate),
+				srv.RoutePutTemplate,
 				m,
 			),
 		)
@@ -462,7 +462,7 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/provisioning/policies",
-				api.Hooks.Wrap(srv.RouteResetPolicyTree),
+				srv.RouteResetPolicyTree,
 				m,
 			),
 		)

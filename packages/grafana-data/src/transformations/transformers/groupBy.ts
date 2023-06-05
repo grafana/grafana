@@ -1,5 +1,6 @@
 import { map } from 'rxjs/operators';
 
+import { MutableField } from '../../dataframe/MutableDataFrame';
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -31,7 +32,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
   },
 
   /**
-   * Return a modified copy of the series. If the transform is not or should not
+   * Return a modified copy of the series.  If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>
@@ -62,7 +63,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
-          const valuesByGroupKey = new Map<string, Record<string, Field>>();
+          const valuesByGroupKey = new Map<string, Record<string, MutableField>>();
           for (let rowIndex = 0; rowIndex < frame.length; rowIndex++) {
             const groupKey = String(groupByFields.map((field) => field.values[rowIndex]));
             const valuesByField = valuesByGroupKey.get(groupKey) ?? {};

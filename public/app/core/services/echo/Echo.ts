@@ -79,7 +79,6 @@ export class Echo implements EchoSrv {
       userAgent: window.navigator.userAgent,
       ts: new Date().getTime(),
       timeSinceNavigationStart: performance.now(),
-      path: window.location.pathname,
       url: window.location.href,
     };
   };

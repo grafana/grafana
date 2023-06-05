@@ -1,17 +1,8 @@
 {
-  "extends": "@grafana/tsconfig",
+  "extends": "../../../packages/grafana-toolkit/src/config/tsconfig.plugin.json",
   "include": ["src", "types"],
   "compilerOptions": {
-    "declaration": false,
     "rootDir": "./src",
     "baseUrl": "./src"
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs",
-      "target": "es5",
-      "esModuleInterop": true
-    },
-    "transpileOnly": true
   }
 }

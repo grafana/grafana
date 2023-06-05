@@ -12,7 +12,7 @@ import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
+export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
   /**
    * Controls the radius of each bar.
    */
@@ -65,7 +65,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
   xTickLabelSpacing?: number;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   barRadius: 0,
   barWidth: 0.97,
   fullHighlight: false,
@@ -77,7 +77,7 @@ export const defaultOptions: Partial<Options> = {
   xTickLabelSpacing: 0,
 };
 
-export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface PanelFieldConfig extends common.AxisConfig, common.HideableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -97,7 +97,7 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
 }
 
-export const defaultFieldConfig: Partial<FieldConfig> = {
+export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,

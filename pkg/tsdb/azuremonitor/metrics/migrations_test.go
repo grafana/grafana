@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
@@ -53,7 +54,7 @@ func TestDimensionFiltersMigration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			filters := MigrateDimensionFilters(tt.dimensionFilters)
 
-			if diff := cmp.Diff(tt.expectedDimensionFilters, filters, cmpopts.IgnoreUnexported(struct{}{})); diff != "" {
+			if diff := cmp.Diff(tt.expectedDimensionFilters, filters, cmpopts.IgnoreUnexported(simplejson.Json{})); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})

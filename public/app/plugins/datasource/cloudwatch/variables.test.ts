@@ -213,7 +213,6 @@ describe('variables', () => {
       { text: 'Minimum', value: 'Minimum', expandable: true },
       { text: 'Sum', value: 'Sum', expandable: true },
       { text: 'SampleCount', value: 'SampleCount', expandable: true },
-      { text: 'IQM', value: 'IQM', expandable: true },
     ]);
   });
 

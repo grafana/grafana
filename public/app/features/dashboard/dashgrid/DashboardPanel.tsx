@@ -17,7 +17,6 @@ export interface OwnProps {
   dashboard: DashboardModel;
   isEditing: boolean;
   isViewing: boolean;
-  isDraggable?: boolean;
   width: number;
   height: number;
   lazy?: boolean;
@@ -73,18 +72,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = ({ isInView }: { isInView: boolean }) => {
-    const {
-      dashboard,
-      panel,
-      isViewing,
-      isEditing,
-      width,
-      height,
-      plugin,
-      timezone,
-      hideMenu,
-      isDraggable = true,
-    } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin, timezone, hideMenu } = this.props;
 
     if (!plugin) {
       return null;
@@ -99,7 +87,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           isViewing={isViewing}
           isEditing={isEditing}
           isInView={isInView}
-          isDraggable={isDraggable}
           width={width}
           height={height}
         />
@@ -114,7 +101,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
         isViewing={isViewing}
         isEditing={isEditing}
         isInView={isInView}
-        isDraggable={isDraggable}
         width={width}
         height={height}
         onInstanceStateChange={this.onInstanceStateChange}

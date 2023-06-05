@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,13 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func AccountsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
+func AccountsHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, parameters url.Values) ([]byte, *models.HttpError) {
 	region := parameters.Get("region")
 	if region == "" {
 		return nil, models.NewHttpError("error in AccountsHandler", http.StatusBadRequest, fmt.Errorf("region is required"))
 	}
 
-	service, err := newAccountsService(ctx, pluginCtx, reqCtxFactory, region)
+	service, err := newAccountsService(pluginCtx, reqCtxFactory, region)
 	if err != nil {
 		return nil, models.NewHttpError("error in AccountsHandler", http.StatusInternalServerError, err)
 	}
@@ -46,8 +45,8 @@ func AccountsHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCt
 // newAccountService is an account service factory.
 //
 // Stubbable by tests.
-var newAccountsService = func(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
-	oamClient, err := reqCtxFactory(ctx, pluginCtx, region)
+var newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.AccountsProvider, error) {
+	oamClient, err := reqCtxFactory(pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}

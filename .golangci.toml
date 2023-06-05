@@ -47,6 +47,7 @@ enable = [
   "ineffassign",
   "misspell",
   "nakedret",
+  "rowserrcheck",
   "exportloopref",
   "staticcheck",
   "stylecheck",
@@ -64,7 +65,6 @@ enable = [
 
 # Disabled linters (might want them later)
 # "unparam"
-# "rowserrcheck" # The linter doesn't detect that both Scan and Close also returns the error message returned by Err.
 
 [issues]
 exclude-use-default = false

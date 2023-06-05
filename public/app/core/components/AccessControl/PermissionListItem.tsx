@@ -14,16 +14,19 @@ interface Props {
 
 export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, onChange }: Props) => (
   <tr>
-    <td>{getAvatar(item)}</td>
-    <td>{getDescription(item)}</td>
+    <td style={{ width: '1%' }}>{getAvatar(item)}</td>
+    <td style={{ width: '90%' }}>{getDescription(item)}</td>
     <td>{item.isInherited && <em className="muted no-wrap">Inherited from folder</em>}</td>
     <td>
-      <Select
-        disabled={!canSet || !item.isManaged}
-        onChange={(p) => onChange(item, p.value!)}
-        value={permissionLevels.find((p) => p === item.permission)}
-        options={permissionLevels.map((p) => ({ value: p, label: p }))}
-      />
+      <div className="gf-form">
+        <Select
+          className="width-20"
+          disabled={!canSet || !item.isManaged}
+          onChange={(p) => onChange(item, p.value!)}
+          value={permissionLevels.find((p) => p === item.permission)}
+          options={permissionLevels.map((p) => ({ value: p, label: p }))}
+        />
+      </div>
     </td>
     <td>
       <Tooltip content={getPermissionInfo(item)}>

@@ -10,7 +10,8 @@ import {
   BusEventBase,
 } from '@grafana/data';
 import { CustomScrollbar } from '@grafana/ui';
-import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
+
+import { DataHoverView } from '../geomap/components/DataHoverView';
 
 interface Props {
   eventBus: EventBus;

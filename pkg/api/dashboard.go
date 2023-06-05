@@ -840,10 +840,7 @@ func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Res
 	// work), or if schemaVersion is absent (which will happen once the Thema
 	// schema becomes canonical).
 	if err != nil || schemaVersion >= dashboard.HandoffSchemaVersion {
-		// Schemas expect the dashboard to live in the spec field
-		k8sResource := `{"spec": ` + cmd.Dashboard + "}"
-
-		_, _, validationErr := dk.JSONValueMux([]byte(k8sResource))
+		_, _, validationErr := dk.JSONValueMux(dashboardBytes)
 
 		if validationErr == nil {
 			isValid = true

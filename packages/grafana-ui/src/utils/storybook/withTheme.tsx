@@ -16,7 +16,7 @@ const ThemeableStory = ({
 
   handleSassThemeChange(theme);
 
-  const css = `#storybook-root {
+  const css = `#root {
     width: 100%;
     padding: 20px;
     display: flex;

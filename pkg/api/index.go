@@ -1,28 +1,40 @@
 package api
 
 import (
-	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/folder"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	// Themes
+	lightName  = "light"
+	darkName   = "dark"
+	systemName = "system"
+)
+
+func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
+	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
+	if err != nil {
+		return false
+	}
+	return hasEditPermissionInFoldersQueryResult
+}
+
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
+	hasAccess := ac.HasAccess(hs.AccessControl, c)
+	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
+
 	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
@@ -49,7 +61,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	locale := "en-US"
 	language := "" // frontend will set the default language
 
-	if prefs.JSONData.Language != "" {
+	if hs.Features.IsEnabled(featuremgmt.FlagInternationalization) && prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
 
@@ -68,7 +80,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		settings.AppSubUrl = ""
 	}
 
-	navTree, err := hs.navTreeService.GetNavTree(c, prefs)
+	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
 	}
@@ -78,17 +90,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
-
-	hasAccess := ac.HasAccess(hs.AccessControl, c)
-	hasEditPerm := hasAccess(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
-
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserID,
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.Email,
+			ExternalUserId:             c.SignedInUser.ExternalAuthID,
 			Name:                       c.Name,
 			OrgCount:                   c.OrgCount,
 			OrgId:                      c.OrgID,
@@ -96,21 +104,23 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			Theme:                      theme.ID,
-			LightTheme:                 theme.Type == "light",
+			Theme:                      prefs.Theme,
+			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
 			Locale:                     locale,
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
-			Analytics:                  hs.buildUserAnalyticsSettings(c.Req.Context(), c.SignedInUser),
+			Analytics: dtos.AnalyticsSettings{
+				Identifier:         c.SignedInUser.Analytics.Identifier,
+				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
+			},
 		},
 		Settings:                            settings,
-		ThemeType:                           theme.Type,
+		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		NewsFeedEnabled:                     setting.NewsFeedEnabled,
 		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
 		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
@@ -125,23 +135,20 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		AppleTouchIcon:                      "public/img/apple-touch-icon.png",
 		AppTitle:                            "Grafana",
 		NavTree:                             navTree,
+		Sentry:                              &hs.Cfg.Sentry,
 		Nonce:                               c.RequestNonce,
 		ContentDeliveryURL:                  hs.Cfg.GetContentDeliveryURL(hs.License.ContentDeliveryPrefix()),
 		LoadingLogo:                         "public/img/grafana_icon.svg",
-		IsDevelopmentEnv:                    hs.Cfg.Env == setting.Dev,
 	}
 
-	if hs.Cfg.CSPEnabled {
-		data.CSPEnabled = true
-		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)
-	}
+	if !hs.AccessControl.IsDisabled() {
+		userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
+		if err != nil {
+			return nil, err
+		}
 
-	userPermissions, err := hs.accesscontrolService.GetUserPermissions(c.Req.Context(), c.SignedInUser, ac.Options{ReloadCache: false})
-	if err != nil {
-		return nil, err
+		data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 	}
-
-	data.User.Permissions = ac.BuildPermissionsMap(userPermissions)
 
 	if setting.DisableGravatar {
 		data.User.GravatarUrl = hs.Cfg.AppSubURL + "/public/img/user_profile.png"
@@ -151,41 +158,19 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
+	themeURLParam := c.Query("theme")
+	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
+		data.User.Theme = themeURLParam
+		data.Theme = themeURLParam
+	}
+
 	hs.HooksService.RunIndexDataHooks(&data, c)
 
-	data.NavTree.ApplyAdminIA()
+	// This will remove empty cfg or admin sections and move sections around
+	data.NavTree.RemoveEmptySectionsAndApplyNewInformationArchitecture()
 	data.NavTree.Sort()
 
 	return &data, nil
-}
-
-func (hs *HTTPServer) buildUserAnalyticsSettings(ctx context.Context, signedInUser *user.SignedInUser) dtos.AnalyticsSettings {
-	identifier := signedInUser.Email + "@" + setting.AppUrl
-
-	authInfo, err := hs.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: signedInUser.UserID})
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		hs.log.Error("Failed to get auth info for analytics", "error", err)
-	}
-
-	if authInfo != nil && authInfo.AuthModule == login.GrafanaComAuthModule {
-		identifier = authInfo.AuthId
-	}
-
-	return dtos.AnalyticsSettings{
-		Identifier:         identifier,
-		IntercomIdentifier: hashUserIdentifier(identifier, hs.Cfg.IntercomSecret),
-	}
-}
-
-func hashUserIdentifier(identifier string, secret string) string {
-	if secret == "" {
-		return ""
-	}
-
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(identifier))
-	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
@@ -210,19 +195,4 @@ func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	}
 
 	c.HTML(404, "index", data)
-}
-
-func (hs *HTTPServer) getThemeForIndexData(themePrefId string, themeURLParam string) *pref.ThemeDTO {
-	if themeURLParam != "" && pref.IsValidThemeID(themeURLParam) {
-		return pref.GetThemeByID(themeURLParam)
-	}
-
-	if pref.IsValidThemeID(themePrefId) {
-		theme := pref.GetThemeByID(themePrefId)
-		if !theme.IsExtra || hs.Features.IsEnabled(featuremgmt.FlagExtraThemes) {
-			return theme
-		}
-	}
-
-	return pref.GetThemeByID(hs.Cfg.DefaultTheme)
 }

@@ -51,11 +51,10 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:            cfg.SqlDatasourceMaxOpenConnsDefault,
-			MaxIdleConns:            cfg.SqlDatasourceMaxIdleConnsDefault,
-			ConnMaxLifetime:         cfg.SqlDatasourceMaxConnLifetimeDefault,
-			SecureDSProxy:           false,
-			AllowCleartextPasswords: false,
+			MaxOpenConns:    cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:    cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime: cfg.SqlDatasourceMaxConnLifetimeDefault,
+			SecureDSProxy:   false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -102,10 +101,6 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			characterEscape(dsInfo.Database, "?"),
 		)
 
-		if dsInfo.JsonData.AllowCleartextPasswords {
-			cnnstr += "&allowCleartextPasswords=true"
-		}
-
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
 			return nil, err
@@ -147,8 +142,8 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 	}
 }
 
-func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(ctx, pluginCtx)
+func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +153,7 @@ func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.Pl
 
 // CheckHealth pings the connected SQL database
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +171,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
 	if err != nil {
 		return nil, err
 	}

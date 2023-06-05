@@ -77,8 +77,10 @@ func ProvideService(
 		return s, nil
 	}
 
-	if err := s.declareFixedRoles(accesscontrolService); err != nil {
-		return nil, err
+	if !accessControl.IsDisabled() {
+		if err := s.declareFixedRoles(accesscontrolService); err != nil {
+			return nil, err
+		}
 	}
 
 	s.registerAPIEndpoints(httpServer, routeRegister)

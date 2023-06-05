@@ -14,5 +14,3 @@ export type DataSourcesRoutes = {
   List: string;
   Dashboards: string;
 };
-
-export type DataSourceTestStatus = 'success' | 'warning' | 'error';

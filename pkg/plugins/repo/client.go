@@ -26,7 +26,7 @@ type Client struct {
 	log log.PrettyLogger
 }
 
-func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
+func newClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
@@ -34,7 +34,7 @@ func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	}
 }
 
-func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
+func (c *Client) download(_ context.Context, pluginZipURL, checksum string, compatOpts CompatOpts) (*PluginArchive, error) {
 	// Create temp file for downloading zip file
 	tmpFile, err := os.CreateTemp("", "*.zip")
 	if err != nil {
@@ -53,7 +53,7 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 		if err := tmpFile.Close(); err != nil {
 			c.log.Warn("Failed to close file", "err", err)
 		}
-		return nil, fmt.Errorf("failed to download plugin archive: %w", err)
+		return nil, fmt.Errorf("%v: %w", "failed to download plugin archive", err)
 	}
 
 	rc, err := zip.OpenReader(tmpFile.Name())
@@ -61,29 +61,9 @@ func (c *Client) Download(_ context.Context, pluginZipURL, checksum string, comp
 		return nil, err
 	}
 
-	return &PluginArchive{File: rc}, nil
-}
-
-func (c *Client) SendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
-	req, err := c.createReq(url, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader, err := c.handleResp(res, compatOpts)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err = bodyReader.Close(); err != nil {
-			c.log.Warn("Failed to close stream", "err", err)
-		}
-	}()
-	return io.ReadAll(bodyReader)
+	return &PluginArchive{
+		File: rc,
+	}, nil
 }
 
 func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, compatOpts CompatOpts) (err error) {
@@ -142,8 +122,8 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return err
 	}
 
-	// Using no timeout as some plugin archives make take longer to fetch due to size, network performance, etc.
-	// Note: This is also used as part of the grafana plugin install CLI operation
+	// Using no timeout here as some plugins can be bigger and smaller timeout would prevent to download a plugin on
+	// slow network. As this is CLI operation hanging is not a big of an issue as user can just abort.
 	bodyReader, err := c.sendReqNoTimeout(u, compatOpts)
 	if err != nil {
 		return err
@@ -159,13 +139,35 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
 		return fmt.Errorf("%v: %w", "failed to compute SHA256 checksum", err)
 	}
-	if err = w.Flush(); err != nil {
+	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return ErrChecksumMismatch{archiveURL: pluginURL}
+		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
+}
+
+func (c *Client) sendReq(url *url.URL, compatOpts CompatOpts) ([]byte, error) {
+	req, err := c.createReq(url, compatOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader, err := c.handleResp(res, compatOpts)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err := bodyReader.Close(); err != nil {
+			c.log.Warn("Failed to close stream", "err", err)
+		}
+	}()
+	return io.ReadAll(bodyReader)
 }
 
 func (c *Client) sendReqNoTimeout(url *url.URL, compatOpts CompatOpts) (io.ReadCloser, error) {
@@ -187,18 +189,10 @@ func (c *Client) createReq(url *url.URL, compatOpts CompatOpts) (*http.Request, 
 		return nil, err
 	}
 
-	if gVer, exists := compatOpts.GrafanaVersion(); exists {
-		req.Header.Set("grafana-version", gVer)
-		req.Header.Set("User-Agent", "grafana "+gVer)
-	}
-
-	if sysOS, exists := compatOpts.system.OS(); exists {
-		req.Header.Set("grafana-os", sysOS)
-	}
-
-	if sysArch, exists := compatOpts.system.Arch(); exists {
-		req.Header.Set("grafana-arch", sysArch)
-	}
+	req.Header.Set("grafana-version", compatOpts.GrafanaVersion)
+	req.Header.Set("grafana-os", compatOpts.OS)
+	req.Header.Set("grafana-arch", compatOpts.Arch)
+	req.Header.Set("User-Agent", "grafana "+compatOpts.GrafanaVersion)
 
 	return req, err
 }
@@ -212,7 +206,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 			}
 		}()
 		if err != nil || len(body) == 0 {
-			return nil, newErrResponse4xx(res.StatusCode)
+			return nil, Response4xxError{StatusCode: res.StatusCode}
 		}
 		var message string
 		var jsonBody map[string]string
@@ -222,8 +216,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 		} else {
 			message = jsonBody["message"]
 		}
-
-		return nil, newErrResponse4xx(res.StatusCode).withMessage(message).withCompatibilityInfo(compatOpts)
+		return nil, Response4xxError{StatusCode: res.StatusCode, Message: message, SystemInfo: compatOpts.String()}
 	}
 
 	if res.StatusCode/100 != 2 {
@@ -234,21 +227,23 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 }
 
 func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
-	return http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
-			}).DialContext,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       90 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: skipTLSVerify,
-			},
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLSVerify,
 		},
+	}
+
+	return http.Client{
+		Timeout:   timeout,
+		Transport: tr,
 	}
 }

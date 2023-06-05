@@ -5,10 +5,8 @@ export {
   AzureMetricQuery,
   AzureLogsQuery,
   AzureResourceGraphQuery,
-  AzureTracesQuery,
   AzureMonitorResource,
   AzureMetricDimension,
-  AzureTracesFilter,
   ResultFormat,
 } from '../dataquery.gen';
 

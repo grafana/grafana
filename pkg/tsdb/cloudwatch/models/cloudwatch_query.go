@@ -27,13 +27,13 @@ type (
 )
 
 const (
-	MetricEditorModeBuilder = dataquery.MetricEditorModeN0
-	MetricEditorModeRaw     = dataquery.MetricEditorModeN1
+	MetricEditorModeBuilder = dataquery.CloudWatchMetricsQueryMetricEditorModeN0
+	MetricEditorModeRaw     = dataquery.CloudWatchMetricsQueryMetricEditorModeN1
 )
 
 const (
-	MetricQueryTypeSearch = dataquery.MetricQueryTypeN0
-	MetricQueryTypeQuery  = dataquery.MetricQueryTypeN1
+	MetricQueryTypeSearch = dataquery.CloudWatchMetricsQueryMetricQueryTypeN0
+	MetricQueryTypeQuery  = dataquery.CloudWatchMetricsQueryMetricQueryTypeN1
 )
 
 const (
@@ -63,12 +63,13 @@ type CloudWatchQuery struct {
 	ReturnData        bool
 	Dimensions        map[string][]string
 	Period            int
+	Alias             string
 	Label             string
 	MatchExact        bool
 	UsedExpression    string
 	TimezoneUTCOffset string
-	MetricQueryType   dataquery.MetricQueryType
-	MetricEditorMode  dataquery.MetricEditorMode
+	MetricQueryType   dataquery.CloudWatchMetricsQueryMetricQueryType
+	MetricEditorMode  dataquery.CloudWatchMetricsQueryMetricEditorMode
 	AccountId         *string
 }
 
@@ -149,7 +150,7 @@ func (q *CloudWatchQuery) IsMultiValuedDimensionExpression() bool {
 	return false
 }
 
-func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) (string, error) {
+func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time, dynamicLabelEnabled bool) (string, error) {
 	if q.IsMathExpression() || q.MetricQueryType == MetricQueryTypeQuery {
 		return "", nil
 	}
@@ -165,7 +166,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 
 	if q.isSearchExpression() {
 		metricExpressions := &metricExpression{Expression: q.UsedExpression}
-		metricExpressions.Label = q.Label
+		if dynamicLabelEnabled {
+			metricExpressions.Label = q.Label
+		}
 		link.Metrics = []interface{}{metricExpressions}
 	} else {
 		metricStat := []interface{}{q.Namespace, q.MetricName}
@@ -176,7 +179,9 @@ func (q *CloudWatchQuery) BuildDeepLink(startTime time.Time, endTime time.Time) 
 			Stat:   q.Statistic,
 			Period: q.Period,
 		}
-		metricStatMeta.Label = q.Label
+		if dynamicLabelEnabled {
+			metricStatMeta.Label = q.Label
+		}
 		if q.AccountId != nil {
 			metricStatMeta.AccountId = *q.AccountId
 		}
@@ -216,7 +221,7 @@ type metricsDataQuery struct {
 
 // ParseMetricDataQueries decodes the metric data queries json, validates, sets default values and returns an array of CloudWatchQueries.
 // The CloudWatchQuery has a 1 to 1 mapping to a query editor row
-func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger,
+func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time, endTime time.Time, defaultRegion string, logger log.Logger, dynamicLabelsEnabled,
 	crossAccountQueryingEnabled bool) ([]*CloudWatchQuery, error) {
 	var metricDataQueries = make(map[string]metricsDataQuery)
 	for _, query := range dataQueries {
@@ -246,6 +251,10 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			TimezoneUTCOffset: mdq.TimezoneUTCOffset,
 		}
 
+		if mdq.Alias != nil {
+			cwQuery.Alias = *mdq.Alias
+		}
+
 		if mdq.MetricName != nil {
 			cwQuery.MetricName = *mdq.MetricName
 		}
@@ -262,17 +271,13 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 			cwQuery.Expression = *mdq.Expression
 		}
 
-		if mdq.Label != nil {
-			cwQuery.Label = *mdq.Label
-		}
-
 		if err := cwQuery.validateAndSetDefaults(refId, mdq, startTime, endTime, defaultRegion, crossAccountQueryingEnabled); err != nil {
 			return nil, &QueryError{Err: err, RefID: refId}
 		}
 
 		cwQuery.applyMacros(startTime, endTime)
 
-		cwQuery.migrateLegacyQuery(mdq)
+		cwQuery.migrateLegacyQuery(mdq, dynamicLabelsEnabled)
 
 		result = append(result, cwQuery)
 	}
@@ -286,9 +291,9 @@ func (q *CloudWatchQuery) applyMacros(startTime, endTime time.Time) {
 	}
 }
 
-func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery) {
+func (q *CloudWatchQuery) migrateLegacyQuery(query metricsDataQuery, dynamicLabelsEnabled bool) {
 	q.Statistic = getStatistic(query)
-	q.Label = getLabel(query)
+	q.Label = getLabel(query, dynamicLabelsEnabled)
 }
 
 func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery metricsDataQuery, startTime, endTime time.Time,
@@ -303,12 +308,9 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		return err
 	}
 
-	q.Dimensions = map[string][]string{}
-	if metricsDataQuery.Dimensions != nil {
-		q.Dimensions, err = parseDimensions(*metricsDataQuery.Dimensions)
-		if err != nil {
-			return fmt.Errorf("failed to parse dimensions: %v", err)
-		}
+	q.Dimensions, err = parseDimensions(metricsDataQuery.Dimensions)
+	if err != nil {
+		return fmt.Errorf("failed to parse dimensions: %v", err)
 	}
 
 	if crossAccountQueryingEnabled {
@@ -384,33 +386,33 @@ var aliasPatterns = map[string]string{
 
 var legacyAliasRegexp = regexp.MustCompile(`{{\s*(.+?)\s*}}`)
 
-func getLabel(query metricsDataQuery) string {
-	deprecatedAlias := query.Alias //nolint:staticcheck
-
+func getLabel(query metricsDataQuery, dynamicLabelsEnabled bool) string {
 	if query.Label != nil {
 		return *query.Label
 	}
-	if deprecatedAlias != nil && *deprecatedAlias == "" {
+	if query.Alias != nil && *query.Alias == "" {
 		return ""
 	}
 
 	var result string
-	fullAliasField := ""
-	if deprecatedAlias != nil {
-		fullAliasField = *deprecatedAlias
-	}
-	matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
-
-	for _, groups := range matches {
-		fullMatch := groups[0]
-		subgroup := groups[1]
-		if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
-			fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
-		} else {
-			fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
+	if dynamicLabelsEnabled {
+		fullAliasField := ""
+		if query.Alias != nil {
+			fullAliasField = *query.Alias
 		}
+		matches := legacyAliasRegexp.FindAllStringSubmatch(fullAliasField, -1)
+
+		for _, groups := range matches {
+			fullMatch := groups[0]
+			subgroup := groups[1]
+			if dynamicLabel, ok := aliasPatterns[subgroup]; ok {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, dynamicLabel)
+			} else {
+				fullAliasField = strings.ReplaceAll(fullAliasField, fullMatch, fmt.Sprintf(`${PROP('Dim.%s')}`, subgroup))
+			}
+		}
+		result = fullAliasField
 	}
-	result = fullAliasField
 	return result
 }
 

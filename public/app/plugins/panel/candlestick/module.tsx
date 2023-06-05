@@ -19,7 +19,7 @@ import {
   CandlestickOptions,
   VizDisplayMode,
   ColorStrategy,
-  defaultOptions,
+  defaultPanelOptions,
   CandleStyle,
 } from './models.gen';
 import { CandlestickSuggestionsSupplier } from './suggestions';
@@ -77,7 +77,7 @@ function addFieldPicker(
 export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
-    const opts = context.options ?? defaultOptions;
+    const opts = context.options ?? defaultPanelOptions;
     const info = prepareCandlestickFields(context.data, opts, config.theme2);
 
     builder
@@ -85,7 +85,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
         path: 'mode',
         name: 'Mode',
         description: '',
-        defaultValue: defaultOptions.mode,
+        defaultValue: defaultPanelOptions.mode,
         settings: {
           options: modeOptions,
         },
@@ -94,7 +94,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
         path: 'candleStyle',
         name: 'Candle style',
         description: '',
-        defaultValue: defaultOptions.candleStyle,
+        defaultValue: defaultPanelOptions.candleStyle,
         settings: {
           options: candleStyles,
         },
@@ -104,7 +104,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
         path: 'colorStrategy',
         name: 'Color strategy',
         description: '',
-        defaultValue: defaultOptions.colorStrategy,
+        defaultValue: defaultPanelOptions.colorStrategy,
         settings: {
           options: colorStrategies,
         },
@@ -135,7 +135,7 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
       path: 'includeAllFields',
       name: 'Additional fields',
       description: 'Use standard timeseries options to configure any fields not mapped above',
-      defaultValue: defaultOptions.includeAllFields,
+      defaultValue: defaultPanelOptions.includeAllFields,
       settings: {
         options: [
           { label: 'Ignore', value: false },

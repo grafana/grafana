@@ -12,7 +12,7 @@ import {
 } from './datasource';
 import pluginJson from './plugin.json';
 import { getNormalizedLokiQuery, isLogsQuery, obfuscate, parseToNodeNamesArray } from './queryUtils';
-import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 type LokiOnDashboardLoadedTrackingEvent = {
   grafana_version?: string;
@@ -132,23 +132,10 @@ const shouldNotReportBasedOnRefId = (refId: string): boolean => {
   return false;
 };
 
-const calculateTotalBytes = (response: DataQueryResponse): number => {
-  let totalBytes = 0;
-  for (const frame of response.data) {
-    const byteKey = frame.meta?.custom?.lokiQueryStatKey;
-    if (byteKey) {
-      totalBytes +=
-        frame.meta?.stats?.find((stat: { displayName: string }) => stat.displayName === byteKey)?.value ?? 0;
-    }
-  }
-  return totalBytes;
-};
-
 export function trackQuery(
   response: DataQueryResponse,
-  request: DataQueryRequest<LokiQuery>,
-  startTime: Date,
-  extraPayload: Record<string, unknown> = {}
+  request: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] },
+  startTime: Date
 ): void {
   // We only want to track usage for these specific apps
   const { app, targets: queries } = request;
@@ -157,7 +144,14 @@ export function trackQuery(
     return;
   }
 
-  let totalBytes = calculateTotalBytes(response);
+  let totalBytes = 0;
+  for (const frame of response.data) {
+    const byteKey = frame.meta?.custom?.lokiQueryStatKey;
+    if (byteKey) {
+      totalBytes +=
+        frame.meta?.stats?.find((stat: { displayName: string }) => stat.displayName === byteKey)?.value ?? 0;
+    }
+  }
 
   for (const query of queries) {
     if (shouldNotReportBasedOnRefId(query.refId)) {
@@ -177,38 +171,11 @@ export function trackQuery(
       query_type: isLogsQuery(query.expr) ? 'logs' : 'metric',
       query_vector_type: query.queryType,
       resolution: query.resolution,
-      simultaneously_executed_query_count: queries.filter((query) => !query.hide).length,
-      simultaneously_hidden_query_count: queries.filter((query) => query.hide).length,
+      simultaneously_sent_query_count: queries.length,
       time_range_from: request?.range?.from?.toISOString(),
       time_range_to: request?.range?.to?.toISOString(),
       time_taken: Date.now() - startTime.getTime(),
       bytes_processed: totalBytes,
-      is_split: false,
-      ...extraPayload,
-    });
-  }
-}
-
-export function trackGroupedQueries(
-  response: DataQueryResponse,
-  groupedRequests: LokiGroupedRequest[],
-  originalRequest: DataQueryRequest<LokiQuery>,
-  startTime: Date
-): void {
-  const splittingPayload = {
-    split_query_group_count: groupedRequests.length,
-    split_query_largest_partition_size: Math.max(...groupedRequests.map(({ partition }) => partition.length)),
-    split_query_total_request_count: groupedRequests.reduce((total, { partition }) => total + partition.length, 0),
-    is_split: true,
-    simultaneously_executed_query_count: originalRequest.targets.filter((query) => !query.hide).length,
-    simultaneously_hidden_query_count: originalRequest.targets.filter((query) => query.hide).length,
-  };
-
-  for (const group of groupedRequests) {
-    const split_query_partition_size = group.partition.length;
-    trackQuery(response, group.request, startTime, {
-      ...splittingPayload,
-      split_query_partition_size,
     });
   }
 }

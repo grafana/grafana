@@ -6,9 +6,4 @@ export declare global {
     public_cdn_path: string;
     nonce: string | undefined;
   }
-
-  // Augment DOMParser to accept TrustedType sanitised content
-  interface DOMParser {
-    parseFromString(string: string | TrustedType, type: DOMParserSupportedType): Document;
-  }
 }

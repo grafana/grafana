@@ -1,4 +1,4 @@
-export { AddNewConnectionPage } from './AddNewConnectionPage';
+export { ConnectDataPage } from './ConnectDataPage';
 export { DataSourceDetailsPage } from './DataSourceDetailsPage';
 export { DataSourcesListPage } from './DataSourcesListPage';
 export { DataSourceDashboardsPage } from './DataSourceDashboardsPage';

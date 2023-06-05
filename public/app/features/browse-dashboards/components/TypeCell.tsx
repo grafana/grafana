@@ -1,35 +1,45 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { CellProps } from 'react-table';
 
-import { Icon } from '@grafana/ui';
-import { TextModifier } from '@grafana/ui/src/unstable';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { DashboardsTreeItem } from '../types';
 
 export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
+  const styles = useStyles2(getStyles);
   const iconName = getIconForKind(data.item.kind);
 
   switch (data.item.kind) {
     case 'dashboard':
       return (
-        <TextModifier color="secondary">
+        <span className={styles.text}>
           <Icon name={iconName} /> Dashboard
-        </TextModifier>
+        </span>
       );
     case 'folder':
       return (
-        <TextModifier color="secondary">
+        <span className={styles.text}>
           <Icon name={iconName} /> Folder
-        </TextModifier>
+        </span>
       );
     case 'panel':
       return (
-        <TextModifier color="secondary">
+        <span className={styles.text}>
           <Icon name={iconName} /> Panel
-        </TextModifier>
+        </span>
       );
     default:
       return null;
   }
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    text: css({
+      color: theme.colors.text.secondary,
+    }),
+  };
 }

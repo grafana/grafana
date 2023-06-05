@@ -1,7 +1,8 @@
 import { map } from 'rxjs/operators';
 
+import { MutableDataFrame } from '../../dataframe';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue } from '../../types';
+import { DataFrame, DataTransformerInfo, Field, FieldType, SpecialValue, Vector } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -74,14 +75,13 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           matrixValues[columnName][rowName] = value;
         }
 
-        const fields: Field[] = [
-          {
-            name: rowColumnField,
-            values: rowValues,
-            type: FieldType.string,
-            config: {},
-          },
-        ];
+        const resultFrame = new MutableDataFrame();
+
+        resultFrame.addField({
+          name: rowColumnField,
+          values: rowValues,
+          type: FieldType.string,
+        });
 
         for (const columnName of columnValues) {
           let values = [];
@@ -98,7 +98,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
             valueField.config = { ...valueField.config, displayNameFromDS: undefined };
           }
 
-          fields.push({
+          resultFrame.addField({
             name: columnName.toString(),
             values: values,
             config: valueField.config,
@@ -106,18 +106,13 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
           });
         }
 
-        return [
-          {
-            fields,
-            length: rowValues.length,
-          },
-        ];
+        return [resultFrame];
       })
     ),
 };
 
-function uniqueValues<T>(values: T[]): T[] {
-  const unique = new Set<T>();
+function uniqueValues(values: Vector): any[] {
+  const unique = new Set();
 
   for (let index = 0; index < values.length; index++) {
     unique.add(values[index]);

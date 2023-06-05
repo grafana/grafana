@@ -1,36 +1,36 @@
 import { css, cx } from '@emotion/css';
-import { isEqual, pickBy } from 'lodash';
+import { pickBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { useDebounce } from 'react-use';
 
 import {
+  DefaultTimeZone,
+  parseDuration,
+  intervalToAbbreviatedDurationString,
   addDurationToDate,
   dateTime,
-  DefaultTimeZone,
-  GrafanaTheme2,
-  intervalToAbbreviatedDurationString,
   isValidDate,
-  parseDuration,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, TextArea, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
-import { Matcher, MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
+import { MatcherOperator, Silence, SilenceCreatePayload } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { createOrUpdateSilenceAction } from '../../state/actions';
 import { SilenceFormFields } from '../../types/silence-form';
-import { matcherFieldToMatcher, matcherToMatcherField } from '../../utils/alertmanager';
+import { matcherToMatcherField, matcherFieldToMatcher } from '../../utils/alertmanager';
 import { parseQueryParamMatchers } from '../../utils/matchers';
 import { makeAMLink } from '../../utils/misc';
 import { initialAsyncRequestState } from '../../utils/redux';
 
+import { MatchedSilencedRules } from './MatchedSilencedRules';
 import MatchersField from './MatchersField';
 import { SilencePeriod } from './SilencePeriod';
-import { SilencedInstancesPreview } from './SilencedInstancesPreview';
 
 interface Props {
   silence?: Silence;
@@ -104,9 +104,6 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
   const formAPI = useForm({ defaultValues });
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  const [matchersForPreview, setMatchersForPreview] = useState<Matcher[]>(
-    defaultValues.matchers.map(matcherFieldToMatcher)
-  );
 
   const { loading } = useUnifiedAlertingSelector((state) => state.updateSilence);
 
@@ -141,7 +138,6 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
   const duration = watch('duration');
   const startsAt = watch('startsAt');
   const endsAt = watch('endsAt');
-  const matcherFields = watch('matchers');
 
   // Keep duration and endsAt in sync
   const [prevDuration, setPrevDuration] = useState(duration);
@@ -168,19 +164,6 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
-
-  useDebounce(
-    () => {
-      // React-hook-form watch does not return referentialy equal values so this trick is needed
-      const newMatchers = matcherFields.filter((m) => m.name && m.value).map(matcherFieldToMatcher);
-      if (!isEqual(matchersForPreview, newMatchers)) {
-        setMatchersForPreview(newMatchers);
-      }
-    },
-    700,
-    [matcherFields]
-  );
-
   const userLogged = Boolean(config.bootData.user.isSignedIn && config.bootData.user.name);
 
   return (
@@ -238,7 +221,7 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
               />
             </Field>
           )}
-          <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchersForPreview} />
+          <MatchedSilencedRules />
         </FieldSet>
         <div className={styles.flexRow}>
           {loading && (
@@ -246,8 +229,12 @@ export const SilencesEditor = ({ silence, alertManagerSourceName }: Props) => {
               Saving...
             </Button>
           )}
-          {!loading && <Button type="submit">Save silence</Button>}
-          <LinkButton href={makeAMLink('alerting/silences', alertManagerSourceName)} variant={'secondary'}>
+          {!loading && <Button type="submit">Submit</Button>}
+          <LinkButton
+            href={makeAMLink('alerting/silences', alertManagerSourceName)}
+            variant={'secondary'}
+            fill="outline"
+          >
             Cancel
           </LinkButton>
         </div>

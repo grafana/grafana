@@ -2,7 +2,7 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime, LoadingState } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreItemState } from 'app/types';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 

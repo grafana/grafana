@@ -1,16 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { KBarProvider } from 'kbar';
 import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
+import { ArrayVector, DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
 
-import { Page } from '../Page/Page';
+import { Page } from '../PageNew/Page';
 
 import { AppChrome } from './AppChrome';
 
@@ -24,12 +23,12 @@ const pageNav: NavModelItem = {
 
 const searchData: DataFrame = {
   fields: [
-    { name: 'kind', type: FieldType.string, config: {}, values: [] },
-    { name: 'name', type: FieldType.string, config: {}, values: [] },
-    { name: 'uid', type: FieldType.string, config: {}, values: [] },
-    { name: 'url', type: FieldType.string, config: {}, values: [] },
-    { name: 'tags', type: FieldType.other, config: {}, values: [] },
-    { name: 'location', type: FieldType.string, config: {}, values: [] },
+    { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+    { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+    { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+    { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector([]) },
+    { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([]) },
+    { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector([]) },
   ],
   length: 0,
 };
@@ -109,29 +108,5 @@ describe('AppChrome', () => {
     expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
-  });
-
-  it('should create a skip link to skip to main content', async () => {
-    setup(<Page navId="child1">Children</Page>);
-    expect(await screen.findByRole('link', { name: 'Skip to main content' })).toBeInTheDocument();
-  });
-
-  it('should focus the skip link on initial tab before carrying on with normal tab order', async () => {
-    setup(<Page navId="child1">Children</Page>);
-    await userEvent.keyboard('{tab}');
-    const skipLink = await screen.findByRole('link', { name: 'Skip to main content' });
-    expect(skipLink).toHaveFocus();
-    await userEvent.keyboard('{tab}');
-    expect(await screen.findByRole('link', { name: 'Go to home' })).toHaveFocus();
-  });
-
-  it('should not render a skip link if the page is chromeless', async () => {
-    const { context } = setup(<Page navId="child1">Children</Page>);
-    context.chrome.update({
-      chromeless: true,
-    });
-    waitFor(() => {
-      expect(screen.queryByRole('link', { name: 'Skip to main content' })).not.toBeInTheDocument();
-    });
   });
 });

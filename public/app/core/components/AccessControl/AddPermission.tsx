@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Button, Form, Select } from '@grafana/ui';
+import { Button, Form, HorizontalGroup, Select } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
@@ -17,7 +16,7 @@ export interface Props {
   onAdd: (state: SetPermission) => void;
 }
 
-export const AddPermission = ({ title = 'Add permission for', permissions, assignments, onAdd, onCancel }: Props) => {
+export const AddPermission = ({ title = 'Add Permission For', permissions, assignments, onAdd, onCancel }: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.None);
   const [teamId, setTeamId] = useState(0);
   const [userId, setUserId] = useState(0);
@@ -60,32 +59,35 @@ export const AddPermission = ({ title = 'Add permission for', permissions, assig
         onSubmit={() => onAdd({ userId, teamId, builtInRole, permission, target })}
       >
         {() => (
-          <Stack gap={1} direction="row">
+          <HorizontalGroup>
             <Select
               aria-label="Role to add new permission to"
               value={target}
               options={targetOptions}
               onChange={(v) => setPermissionTarget(v.value!)}
               disabled={targetOptions.length === 0}
-              width="auto"
             />
 
-            {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserId(u?.value || 0)} />}
+            {target === PermissionTarget.User && (
+              <UserPicker onSelected={(u) => setUserId(u.value || 0)} className={'width-20'} />
+            )}
 
-            {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} />}
+            {target === PermissionTarget.Team && (
+              <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} className={'width-20'} />
+            )}
 
             {target === PermissionTarget.BuiltInRole && (
               <Select
                 aria-label={'Built-in role picker'}
                 options={Object.values(OrgRole).map((r) => ({ value: r, label: r }))}
                 onChange={(r) => setBuiltinRole(r.value || '')}
-                width="auto"
+                width={40}
               />
             )}
 
             <Select
               aria-label="Permission Level"
-              width="auto"
+              width={25}
               value={permissions.find((p) => p === permission)}
               options={permissions.map((p) => ({ label: p, value: p }))}
               onChange={(v) => setPermission(v.value || '')}
@@ -93,7 +95,7 @@ export const AddPermission = ({ title = 'Add permission for', permissions, assig
             <Button type="submit" disabled={!isValid()}>
               Save
             </Button>
-          </Stack>
+          </HorizontalGroup>
         )}
       </Form>
     </div>

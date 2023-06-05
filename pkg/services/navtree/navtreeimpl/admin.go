@@ -7,18 +7,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
+func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
-	hasAccess := ac.HasAccess(s.accessControl, c)
-	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
-	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
 
-	if hasAccess(datasources.ConfigurationPageAccess) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Data sources",
 			Icon:     "database",
@@ -28,8 +26,28 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	if s.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(ac.ReqOrgAdmin, correlations.ConfigurationPageAccess) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text:     "Correlations",
+			Icon:     "gf-glue",
+			SubTitle: "Add and configure correlations",
+			Id:       "correlations",
+			Url:      s.cfg.AppSubURL + "/datasources/correlations",
+		})
+	}
+
+	if hasAccess(s.ReqCanAdminTeams, ac.TeamsAccessEvaluator) {
+		configNodes = append(configNodes, &navtree.NavLink{
+			Text:     "Teams",
+			Id:       "teams",
+			SubTitle: "Groups of users that have common dashboard and permission needs",
+			Icon:     "users-alt",
+			Url:      s.cfg.AppSubURL + "/org/teams",
+		})
+	}
+
 	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.AdminAccessEvaluator) {
+	if pluginaccesscontrol.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(pluginaccesscontrol.ReqCanAdminPlugins(s.cfg), pluginaccesscontrol.AdminAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Plugins",
 			Id:       "plugins",
@@ -39,19 +57,27 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+	if hasAccess(ac.ReqOrgAdmin, ac.OrgPreferencesAccessEvaluator) {
 		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
+			Text:     "Preferences",
+			Id:       "org-settings",
+			SubTitle: "Manage preferences across an organization",
+			Icon:     "sliders-v-alt",
+			Url:      s.cfg.AppSubURL + "/org",
 		})
 	}
 
-	if hasAccess(ac.TeamsAccessEvaluator) {
+	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return nil, err
+	}
+	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !disabled {
 		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Teams",
-			Id:       "teams",
-			SubTitle: "Groups of users that have common dashboard and permission needs",
-			Icon:     "users-alt",
-			Url:      s.cfg.AppSubURL + "/org/teams",
+			Text:     "API keys",
+			Id:       "apikeys",
+			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
+			Icon:     "key-skeleton-alt",
+			Url:      s.cfg.AppSubURL + "/org/apikeys",
 		})
 	}
 
@@ -65,32 +91,33 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.OrgID)
-	if err != nil {
-		return nil, err
+	configNode := &navtree.NavLink{
+		Id:         navtree.NavIDCfg,
+		Text:       "Configuration",
+		SubTitle:   "Organization: " + c.OrgName,
+		Icon:       "cog",
+		SortWeight: navtree.WeightConfig,
+		Children:   configNodes,
 	}
-	if hasAccess(ac.ApiKeyAccessEvaluator) && !disabled {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "API keys",
-			Id:       "apikeys",
-			SubTitle: "Manage and create API keys that are used to interact with Grafana HTTP APIs",
-			Icon:     "key-skeleton-alt",
-			Url:      s.cfg.AppSubURL + "/org/apikeys",
+
+	return configNode, nil
+}
+
+func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
+	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
+	adminNavLinks := []*navtree.NavLink{}
+
+	if hasAccess(ac.ReqSignedIn, ac.EvalAny(ac.EvalPermission(ac.ActionOrgUsersRead), ac.EvalPermission(ac.ActionUsersRead, ac.ScopeGlobalUsersAll))) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Users", SubTitle: "Manage users in Grafana", Id: "global-users", Url: s.cfg.AppSubURL + "/admin/users", Icon: "user",
 		})
 	}
 
-	if hasAccess(ac.OrgPreferencesAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Default preferences",
-			Id:       "org-settings",
-			SubTitle: "Manage preferences across an organization",
-			Icon:     "sliders-v-alt",
-			Url:      s.cfg.AppSubURL + "/org",
-		})
-	}
-
-	if authConfigUIAvailable && hasAccess(evalAuthenticationSettings()) {
-		configNodes = append(configNodes, &navtree.NavLink{
+	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
+	if authConfigUIAvailable && hasAccess(ac.ReqGrafanaAdmin, evalAuthenticationSettings()) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text:     "Authentication",
 			Id:       "authentication",
 			SubTitle: "Manage your auth settings and configure single sign-on",
@@ -99,35 +126,19 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "Settings", SubTitle: "View the settings defined in your Grafana config", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
-		})
-	}
-
-	if hasGlobalAccess(orgsAccessEvaluator) {
-		configNodes = append(configNodes, &navtree.NavLink{
+	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
 		})
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagCorrelations) && hasAccess(correlations.ConfigurationPageAccess) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text:     "Correlations",
-			Icon:     "gf-glue",
-			SubTitle: "Add and configure correlations",
-			Id:       "correlations",
-			Url:      s.cfg.AppSubURL + "/datasources/correlations",
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "Settings", SubTitle: "View the settings defined in your Grafana config", Id: "server-settings", Url: s.cfg.AppSubURL + "/admin/settings", Icon: "sliders-v-alt",
 		})
 	}
 
-	if s.cfg.LDAPAuthEnabled && hasAccess(ac.EvalPermission(ac.ActionLDAPStatusRead)) {
-		configNodes = append(configNodes, &navtree.NavLink{
-			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
-		})
-	}
-
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
+	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
 		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
@@ -135,30 +146,44 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Icon:     "cube",
 			Url:      s.cfg.AppSubURL + "/admin/storage",
 		}
-		configNodes = append(configNodes, storage)
+		adminNavLinks = append(adminNavLinks, storage)
 	}
 
-	configNode := &navtree.NavLink{
-		Id:         navtree.NavIDCfg,
-		Text:       "Administration",
-		SubTitle:   "Organization: " + c.OrgName,
-		Icon:       "cog",
-		SortWeight: navtree.WeightConfig,
-		Children:   configNodes,
-		Url:        "/admin",
+	if s.cfg.LDAPAuthEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text: "LDAP", Id: "ldap", Url: s.cfg.AppSubURL + "/admin/ldap", Icon: "book",
+		})
 	}
 
-	return configNode, nil
+	adminNode := &navtree.NavLink{
+		Text:       "Server admin",
+		Id:         navtree.NavIDAdmin,
+		Icon:       "shield",
+		SortWeight: navtree.WeightAdmin,
+		Children:   adminNavLinks,
+	}
+
+	if len(adminNavLinks) > 0 {
+		adminNode.Url = adminNavLinks[0].Url
+	}
+
+	return adminNode
+}
+
+func (s *ServiceImpl) ReqCanAdminTeams(c *contextmodel.ReqContext) bool {
+	return c.OrgRole == org.RoleAdmin || (s.cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
 func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
-	return hasAccess(serviceaccounts.AccessEvaluator)
+	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
 }
 
 func evalAuthenticationSettings() ac.Evaluator {
 	return ac.EvalAll(
+		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAuth),
 		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
+		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAuth),
 		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
 	)
 }

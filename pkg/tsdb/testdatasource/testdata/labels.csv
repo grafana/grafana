@@ -1,3 +1,0 @@
-"a{foo=bar,x=y}",b{foo=baz},"{foo=x, no=name, idx=$seriesIndex}"
-1,2,3
-4,5,6

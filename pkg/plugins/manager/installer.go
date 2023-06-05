@@ -2,7 +2,6 @@ package manager
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -19,7 +18,7 @@ var _ plugins.Installer = (*PluginInstaller)(nil)
 
 type PluginInstaller struct {
 	pluginRepo     repo.Service
-	pluginStorage  storage.ZipExtractor
+	pluginStorage  storage.Manager
 	pluginRegistry registry.Service
 	pluginLoader   loader.Service
 	log            log.Logger
@@ -27,12 +26,11 @@ type PluginInstaller struct {
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo,
-		storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
+	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
-	pluginStorage storage.ZipExtractor) *PluginInstaller {
+	pluginStorage storage.Manager) *PluginInstaller {
 	return &PluginInstaller{
 		pluginLoader:   pluginLoader,
 		pluginRegistry: pluginRegistry,
@@ -43,14 +41,11 @@ func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRep
 }
 
 func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	compatOpts, err := repoCompatOpts(opts)
-	if err != nil {
-		return err
-	}
+	compatOpts := repo.NewCompatOpts(opts.GrafanaVersion, opts.OS, opts.Arch)
 
 	var pluginArchive *repo.PluginArchive
 	if plugin, exists := m.plugin(ctx, pluginID); exists {
-		if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
+		if !plugin.IsExternalPlugin() {
 			return plugins.ErrInstallCorePlugin
 		}
 
@@ -61,19 +56,19 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 
 		// get plugin update information to confirm if target update is possible
-		pluginArchiveInfo, err := m.pluginRepo.GetPluginArchiveInfo(ctx, pluginID, version, compatOpts)
+		dlOpts, err := m.pluginRepo.GetPluginDownloadOptions(ctx, pluginID, version, compatOpts)
 		if err != nil {
 			return err
 		}
 
 		// if existing plugin version is the same as the target update version
-		if pluginArchiveInfo.Version == plugin.Info.Version {
+		if dlOpts.Version == plugin.Info.Version {
 			return plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
 
-		if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
+		if dlOpts.PluginZipURL == "" && dlOpts.Version == "" {
 			return fmt.Errorf("could not determine update options for %s", pluginID)
 		}
 
@@ -83,13 +78,13 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return err
 		}
 
-		if pluginArchiveInfo.URL != "" {
-			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, pluginArchiveInfo.URL, compatOpts)
+		if dlOpts.PluginZipURL != "" {
+			pluginArchive, err = m.pluginRepo.GetPluginArchiveByURL(ctx, dlOpts.PluginZipURL, compatOpts)
 			if err != nil {
 				return err
 			}
 		} else {
-			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, pluginArchiveInfo.Version, compatOpts)
+			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, dlOpts.Version, compatOpts)
 			if err != nil {
 				return err
 			}
@@ -102,7 +97,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Add(ctx, pluginID, pluginArchive.File)
 	if err != nil {
 		return err
 	}
@@ -116,7 +111,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		depArchive, err := m.pluginStorage.Extract(ctx, dep.ID, d.File)
+		depArchive, err := m.pluginStorage.Add(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
@@ -139,7 +134,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID string) error {
 		return plugins.ErrPluginNotInstalled
 	}
 
-	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
+	if !plugin.IsExternalPlugin() {
 		return plugins.ErrUninstallCorePlugin
 	}
 
@@ -157,19 +152,4 @@ func (m *PluginInstaller) plugin(ctx context.Context, pluginID string) (*plugins
 	}
 
 	return p, true
-}
-
-func repoCompatOpts(opts plugins.CompatOpts) (repo.CompatOpts, error) {
-	os := opts.OS()
-	arch := opts.Arch()
-	if len(os) == 0 || len(arch) == 0 {
-		return repo.CompatOpts{}, errors.New("invalid system compatibility options provided")
-	}
-
-	grafanaVersion := opts.GrafanaVersion()
-	if len(grafanaVersion) == 0 {
-		return repo.NewSystemCompatOpts(os, arch), nil
-	}
-
-	return repo.NewCompatOpts(grafanaVersion, os, arch), nil
 }

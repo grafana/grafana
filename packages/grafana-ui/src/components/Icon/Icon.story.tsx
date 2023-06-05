@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Meta } from '@storybook/react';
+import { ComponentMeta } from '@storybook/react';
 import React, { ChangeEvent, useState } from 'react';
 
 import { toIconName, IconName } from '@grafana/data';
@@ -11,7 +11,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Icon.mdx';
 
-const meta: Meta<typeof Icon> = {
+const meta: ComponentMeta<typeof Icon> = {
   title: 'Docs overview/Icon',
   component: Icon,
   decorators: [withCenteredStory],

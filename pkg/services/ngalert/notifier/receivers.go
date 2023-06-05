@@ -35,9 +35,9 @@ type TestReceiverConfigResult struct {
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		integrations := make([]*alertingNotify.GrafanaIntegrationConfig, 0, len(r.GrafanaManagedReceivers))
+		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			integrations = append(integrations, &alertingNotify.GrafanaIntegrationConfig{
+			greceivers = append(greceivers, &alertingNotify.GrafanaReceiver{
 				UID:                   gr.UID,
 				Name:                  gr.Name,
 				Type:                  gr.Type,
@@ -48,8 +48,8 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 		}
 		receivers = append(receivers, &alertingNotify.APIReceiver{
 			ConfigReceiver: r.Receiver,
-			GrafanaIntegrations: alertingNotify.GrafanaIntegrations{
-				Integrations: integrations,
+			GrafanaReceivers: alertingNotify.GrafanaReceivers{
+				Receivers: greceivers,
 			},
 		})
 	}

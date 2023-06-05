@@ -1,6 +1,6 @@
 import { groupBy } from 'lodash';
 
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import { DataFrame, Field, FieldType, ArrayVector } from '@grafana/data';
 
 export function makeTableFrames(instantMetricFrames: DataFrame[]): DataFrame[] {
   // first we remove frames that have no refId
@@ -12,15 +12,15 @@ export function makeTableFrames(instantMetricFrames: DataFrame[]): DataFrame[] {
   return Object.entries(framesByRefId).map(([refId, frames]) => makeTableFrame(frames, refId));
 }
 
-type NumberField = Field<number, number[]>;
-type StringField = Field<string, string[]>;
+type NumberField = Field<number, ArrayVector<number>>;
+type StringField = Field<string, ArrayVector<string>>;
 
 function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFrame {
-  const tableTimeField: NumberField = { name: 'Time', config: {}, values: [], type: FieldType.time };
+  const tableTimeField: NumberField = { name: 'Time', config: {}, values: new ArrayVector(), type: FieldType.time };
   const tableValueField: NumberField = {
     name: `Value #${refId}`,
     config: {},
-    values: [],
+    values: new ArrayVector(),
     type: FieldType.number,
   };
 
@@ -34,7 +34,7 @@ function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFr
   const labelFields: StringField[] = sortedLabelNames.map((labelName) => ({
     name: labelName,
     config: { filterable: true },
-    values: [],
+    values: new ArrayVector(),
     type: FieldType.string,
   }));
 
@@ -45,15 +45,15 @@ function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFr
       return;
     }
 
-    const timeArray = timeField.values;
-    const valueArray = valueField.values;
+    const timeArray = timeField.values.toArray();
+    const valueArray = valueField.values.toArray();
 
     for (let x of timeArray) {
-      tableTimeField.values.push(x);
+      tableTimeField.values.add(x);
     }
 
     for (let x of valueArray) {
-      tableValueField.values.push(x);
+      tableValueField.values.add(x);
     }
 
     const labels = valueField.labels ?? {};
@@ -62,7 +62,7 @@ function makeTableFrame(instantMetricFrames: DataFrame[], refId: string): DataFr
       const text = labels[f.name] ?? '';
       // we insert the labels as many times as we have values
       for (let i = 0; i < valueArray.length; i++) {
-        f.values.push(text);
+        f.values.add(text);
       }
     }
   });

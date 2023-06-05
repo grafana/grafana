@@ -12,11 +12,13 @@ import (
 // TimeGrain handles conversions between
 // the ISO 8601 Duration format (PT1H), Kbn units (1h) and Time Grains (1 hour)
 // Also handles using the automatic Grafana interval to calculate a ISO 8601 Duration.
+type TimeGrain struct{}
+
 var (
 	smallTimeUnits = []string{"hour", "minute", "h", "m"}
 )
 
-func CreateISO8601DurationFromIntervalMS(it int64) (string, error) {
+func (tg *TimeGrain) createISO8601DurationFromIntervalMS(it int64) (string, error) {
 	formatted := intervalv2.FormatDuration(time.Duration(it) * time.Millisecond)
 
 	if strings.Contains(formatted, "ms") {
@@ -36,10 +38,10 @@ func CreateISO8601DurationFromIntervalMS(it int64) (string, error) {
 		return "PT1M", nil
 	}
 
-	return createISO8601Duration(timeValue, unit), nil
+	return tg.createISO8601Duration(timeValue, unit), nil
 }
 
-func createISO8601Duration(timeValue int, timeUnit string) string {
+func (tg *TimeGrain) createISO8601Duration(timeValue int, timeUnit string) string {
 	for _, smallTimeUnit := range smallTimeUnits {
 		if timeUnit == smallTimeUnit {
 			return fmt.Sprintf("PT%v%v", timeValue, strings.ToUpper(timeUnit[0:1]))

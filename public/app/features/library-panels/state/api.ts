@@ -64,7 +64,7 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
     schemaVersion: 35, // should be saved in the library panel
     panels: [result.model],
   });
-  const { scopedVars, ...model } = dash.panels[0].getSaveModel(); // migrated panel
+  const model = dash.panels[0].getSaveModel(); // migrated panel
   dash.destroy(); // kill event listeners
   return {
     ...result,

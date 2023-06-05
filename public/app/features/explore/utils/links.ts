@@ -71,7 +71,7 @@ export const getFieldLinksForExplore = (options: {
   const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
-      raw: field.values[rowIndex],
+      raw: field.values.get(rowIndex),
     },
     text: 'Raw value',
   };
@@ -130,9 +130,9 @@ export const getFieldLinksForExplore = (options: {
             let fieldValue;
             if (transformation.field) {
               const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
-              fieldValue = transformField?.values[rowIndex];
+              fieldValue = transformField?.values.get(rowIndex);
             } else {
-              fieldValue = field.values[rowIndex];
+              fieldValue = field.values.get(rowIndex);
             }
 
             internalLinkSpecificVars = {

@@ -5,12 +5,12 @@ class LayoutMockWorker {
   constructor() {}
   postMessage(data: any) {
     const { nodes, edges, config } = data;
-    this.timeout = window.setTimeout(() => {
+    this.timeout = setTimeout(() => {
       this.timeout = undefined;
       layout(nodes, edges, config);
       // @ts-ignore
       this.onmessage({ data: { nodes, edges } });
-    }, 1);
+    }, 1) as any;
   }
   terminate() {
     if (this.timeout) {

@@ -1,12 +1,12 @@
 declare global {
   interface Array<T> {
-    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
+    /** @deprecated this only exists to help migrate Vector to Array */
     get(idx: number): T;
-    /** @deprecated Use [idx]. This only exists to help migrate Vector to Array */
+    /** @deprecated this only exists to help migrate Vector to Array */
     set(idx: number, value: T): void;
-    /** @deprecated Use .push(value). This only exists to help migrate Vector to Array */
+    /** @deprecated this only exists to help migrate Vector to Array */
     add(value: T): void;
-    /** @deprecated this is not necessary.  This only exists to help migrate Vector to Array */
+    /** @deprecated this only exists to help migrate Vector to Array */
     toArray(): T[];
   }
 }
@@ -108,21 +108,17 @@ export interface MutableVector<T = any> extends ReadWriteVector<T> {}
 export function makeArrayIndexableVector<T extends Vector>(v: T): T {
   return new Proxy(v, {
     get(target: Vector, property: string, receiver: Vector) {
-      if (typeof property !== 'symbol') {
-        const idx = +property;
-        if (String(idx) === property) {
-          return target.get(idx);
-        }
+      const idx = +property;
+      if (String(idx) === property) {
+        return target.get(idx);
       }
       return Reflect.get(target, property, receiver);
     },
     set(target: Vector, property: string, value: any, receiver: Vector) {
-      if (typeof property !== 'symbol') {
-        const idx = +property;
-        if (String(idx) === property) {
-          target.set(idx, value);
-          return true;
-        }
+      const idx = +property;
+      if (String(idx) === property) {
+        target.set(idx, value);
+        return true;
       }
       return Reflect.set(target, property, value, receiver);
     },

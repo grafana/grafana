@@ -9,16 +9,10 @@ export function getRouteComponentProps<T extends {} = {}, Q extends Record<strin
   const defaults: GrafanaRouteComponentProps<T, Q> = {
     history: createMemoryHistory(),
     location: {
-      hash: '',
-      pathname: '',
-      state: {},
       search: '',
-    },
+    } as any,
     match: { params: {} } as any,
-    route: {
-      path: '',
-      component: () => null,
-    },
+    route: {} as any,
     queryParams: {} as any,
   };
 

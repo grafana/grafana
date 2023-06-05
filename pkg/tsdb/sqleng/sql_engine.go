@@ -54,24 +54,23 @@ var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engi
 }
 
 type JsonData struct {
-	MaxOpenConns            int    `json:"maxOpenConns"`
-	MaxIdleConns            int    `json:"maxIdleConns"`
-	ConnMaxLifetime         int    `json:"connMaxLifetime"`
-	ConnectionTimeout       int    `json:"connectionTimeout"`
-	Timescaledb             bool   `json:"timescaledb"`
-	Mode                    string `json:"sslmode"`
-	ConfigurationMethod     string `json:"tlsConfigurationMethod"`
-	TlsSkipVerify           bool   `json:"tlsSkipVerify"`
-	RootCertFile            string `json:"sslRootCertFile"`
-	CertFile                string `json:"sslCertFile"`
-	CertKeyFile             string `json:"sslKeyFile"`
-	Timezone                string `json:"timezone"`
-	Encrypt                 string `json:"encrypt"`
-	Servername              string `json:"servername"`
-	TimeInterval            string `json:"timeInterval"`
-	Database                string `json:"database"`
-	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
-	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	MaxOpenConns        int    `json:"maxOpenConns"`
+	MaxIdleConns        int    `json:"maxIdleConns"`
+	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	ConnectionTimeout   int    `json:"connectionTimeout"`
+	Timescaledb         bool   `json:"timescaledb"`
+	Mode                string `json:"sslmode"`
+	ConfigurationMethod string `json:"tlsConfigurationMethod"`
+	TlsSkipVerify       bool   `json:"tlsSkipVerify"`
+	RootCertFile        string `json:"sslRootCertFile"`
+	CertFile            string `json:"sslCertFile"`
+	CertKeyFile         string `json:"sslKeyFile"`
+	Timezone            string `json:"timezone"`
+	Encrypt             string `json:"encrypt"`
+	Servername          string `json:"servername"`
+	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
+	SecureDSProxy       bool   `json:"enableSecureSocksProxy"`
 }
 
 type DataSourceInfo struct {
@@ -313,13 +312,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	frame.Meta.ExecutedQueryString = interpolatedQuery
 
-	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
-	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
-	// This assures 1) our visualization doesn't display unwanted empty fields, and also that 2)
-	// additionally-needed frame data stays intact and is correctly passed to our visulization.
+	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		frame.Fields = []*data.Field{}
-		queryResult.dataResponse.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{}
 		ch <- queryResult
 		return
 	}
@@ -1020,7 +1015,7 @@ func (m *SQLMacroEngineBase) ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str
 	result := ""
 	lastIndex := 0
 
-	for _, v := range re.FindAllStringSubmatchIndex(str, -1) {
+	for _, v := range re.FindAllSubmatchIndex([]byte(str), -1) {
 		groups := []string{}
 		for i := 0; i < len(v); i += 2 {
 			groups = append(groups, str[v[i]:v[i+1]])

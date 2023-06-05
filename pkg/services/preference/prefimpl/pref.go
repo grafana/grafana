@@ -224,7 +224,10 @@ func (s *Service) GetDefaults() *pref.Preference {
 		HomeDashboardID: 0,
 		JSONData:        &pref.PreferenceJSONData{},
 	}
-	defaults.JSONData.Language = s.cfg.DefaultLanguage
+
+	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
+		defaults.JSONData.Language = s.cfg.DefaultLanguage
+	}
 
 	return defaults
 }

@@ -1,4 +1,3 @@
-import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
@@ -9,8 +8,11 @@ import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
 import {
   AzureDataSourceJsonData,
+  AzureMonitorMetricNamespacesResponse,
+  AzureMonitorMetricNamesResponse,
   AzureMonitorMetricsMetadataResponse,
   AzureMonitorQuery,
+  AzureMonitorResourceGroupsResponse,
   AzureQueryType,
   DatasourceValidationResult,
   GetMetricNamespacesQuery,
@@ -19,12 +21,8 @@ import {
   AzureMetricQuery,
   AzureMonitorLocations,
   AzureMonitorProvidersResponse,
-  AzureAPIResponse,
+  AzureMonitorLocationsResponse,
   AzureGetResourceNamesQuery,
-  Subscription,
-  Location,
-  ResourceGroup,
-  Metric,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -86,46 +84,29 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   }
 
   applyTemplateVariables(target: AzureMonitorQuery, scopedVars: ScopedVars): AzureMonitorQuery {
-    const preMigrationQuery = target.azureMonitor;
+    const item = target.azureMonitor;
 
-    if (!preMigrationQuery) {
+    if (!item) {
+      // return target;
       throw new Error('Query is not a valid Azure Monitor Metrics query');
+    }
+
+    // fix for timeGrainUnit which is a deprecated/removed field name
+    if (item.timeGrain && item.timeGrainUnit && item.timeGrain !== 'auto') {
+      item.timeGrain = TimegrainConverter.createISO8601Duration(item.timeGrain, item.timeGrainUnit);
     }
 
     const templateSrv = getTemplateSrv();
 
-    // These properties need to be replaced pre-migration to ensure values are correctly interpolated
-    if (preMigrationQuery.resourceUri) {
-      preMigrationQuery.resourceUri = templateSrv.replace(preMigrationQuery.resourceUri, scopedVars);
-    }
-    if (preMigrationQuery.metricDefinition) {
-      preMigrationQuery.metricDefinition = templateSrv.replace(preMigrationQuery.metricDefinition, scopedVars);
-    }
+    const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
+    const resources = item.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
+    const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
+    const customNamespace = templateSrv.replace(item.customNamespace, scopedVars);
+    const timeGrain = templateSrv.replace((item.timeGrain || '').toString(), scopedVars);
+    const aggregation = templateSrv.replace(item.aggregation, scopedVars);
+    const top = templateSrv.replace(item.top || '', scopedVars);
 
-    // fix for timeGrainUnit which is a deprecated/removed field name
-    if (preMigrationQuery.timeGrain && preMigrationQuery.timeGrainUnit && preMigrationQuery.timeGrain !== 'auto') {
-      preMigrationQuery.timeGrain = TimegrainConverter.createISO8601Duration(
-        preMigrationQuery.timeGrain,
-        preMigrationQuery.timeGrainUnit
-      );
-    }
-
-    const migratedTarget = migrateQuery(target);
-    const migratedQuery = migratedTarget.azureMonitor;
-    // This should never be triggered because the above error would've been thrown
-    if (!migratedQuery) {
-      throw new Error('Query is not a valid Azure Monitor Metrics query');
-    }
-
-    const subscriptionId = templateSrv.replace(migratedTarget.subscription || this.defaultSubscriptionId, scopedVars);
-    const resources = migratedQuery.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
-    const metricNamespace = templateSrv.replace(migratedQuery.metricNamespace, scopedVars);
-    const customNamespace = templateSrv.replace(migratedQuery.customNamespace, scopedVars);
-    const timeGrain = templateSrv.replace((migratedQuery.timeGrain || '').toString(), scopedVars);
-    const aggregation = templateSrv.replace(migratedQuery.aggregation, scopedVars);
-    const top = templateSrv.replace(migratedQuery.top || '', scopedVars);
-
-    const dimensionFilters = (migratedQuery.dimensionFilters ?? [])
+    const dimensionFilters = (item.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
         const filters = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
@@ -137,26 +118,32 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
 
     const azMonitorQuery: AzureMetricQuery = {
-      ...migratedQuery,
+      ...item,
       resources,
       metricNamespace,
       customNamespace,
       timeGrain,
-      allowedTimeGrainsMs: migratedQuery.allowedTimeGrainsMs,
-      metricName: templateSrv.replace(migratedQuery.metricName, scopedVars),
-      region: templateSrv.replace(migratedQuery.region, scopedVars),
+      allowedTimeGrainsMs: item.allowedTimeGrainsMs,
+      metricName: templateSrv.replace(item.metricName, scopedVars),
+      region: templateSrv.replace(item.region, scopedVars),
       aggregation: aggregation,
       dimensionFilters,
       top: top || '10',
-      alias: migratedQuery.alias,
+      alias: item.alias,
     };
+    if (item.metricDefinition) {
+      azMonitorQuery.metricDefinition = templateSrv.replace(item.metricDefinition, scopedVars);
+    }
+    if (item.resourceUri) {
+      azMonitorQuery.resourceUri = templateSrv.replace(item.resourceUri, scopedVars);
+    }
 
-    return {
+    return migrateQuery({
       ...target,
       subscription: subscriptionId,
       queryType: AzureQueryType.AzureMonitor,
       azureMonitor: azMonitorQuery,
-    };
+    });
   }
 
   async getSubscriptions(): Promise<Array<{ text: string; value: string }>> {
@@ -164,9 +151,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       return [];
     }
 
-    return this.getResource<AzureAPIResponse<Subscription>>(
-      `${this.resourcePath}/subscriptions?api-version=2019-03-01`
-    ).then((result) => {
+    return this.getResource(`${this.resourcePath}/subscriptions?api-version=2019-03-01`).then((result: any) => {
       return ResponseParser.parseSubscriptions(result);
     });
   }
@@ -174,8 +159,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   getResourceGroups(subscriptionId: string) {
     return this.getResource(
       `${this.resourcePath}/subscriptions/${subscriptionId}/resourceGroups?api-version=${this.listByResourceGroupApiVersion}`
-    ).then((result: AzureAPIResponse<ResourceGroup>) => {
-      return ResponseParser.parseResponseValues<ResourceGroup>(result, 'name', 'name');
+    ).then((result: AzureMonitorResourceGroupsResponse) => {
+      return ResponseParser.parseResponseValues(result, 'name', 'name');
     });
   }
 
@@ -203,7 +188,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
         if (skipToken) {
           url += `&$skiptoken=${skipToken}`;
         }
-        return this.getResource(url).then(async (result) => {
+        return this.getResource(url).then(async (result: any) => {
           let list: Array<{ text: string; value: string }> = [];
           if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
             list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
@@ -243,7 +228,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.templateSrv
     );
     return this.getResource(url)
-      .then((result: AzureAPIResponse<Namespace>) => {
+      .then((result: AzureMonitorMetricNamespacesResponse) => {
         return ResponseParser.parseResponseValues(
           result,
           'properties.metricNamespaceName',
@@ -277,7 +262,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.replaceSingleTemplateVariables(query),
       this.templateSrv
     );
-    return this.getResource(url).then((result: AzureAPIResponse<Metric>) => {
+    return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
       return ResponseParser.parseResponseValues(result, 'name.localizedValue', 'name.value');
     });
   }
@@ -370,7 +355,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const locationMap = new Map<string, AzureMonitorLocations>();
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
-        await this.getResource<AzureAPIResponse<Location>>(
+        await this.getResource<AzureMonitorLocationsResponse>(
           `${routeNames.azureMonitor}/subscriptions/${this.templateSrv.replace(subscription)}/locations?api-version=${
             this.locationsApiVersion
           }`

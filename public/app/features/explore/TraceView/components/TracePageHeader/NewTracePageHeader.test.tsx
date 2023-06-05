@@ -15,7 +15,6 @@
 import { getByText, render } from '@testing-library/react';
 import React from 'react';
 
-import { MutableDataFrame } from '@grafana/data';
 import config from 'app/core/config';
 
 import { defaultFilters } from '../../useSearch';
@@ -31,13 +30,11 @@ const setup = () => {
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    showSpanFilterMatchesOnly: false,
-    setShowSpanFilterMatchesOnly: jest.fn(),
     spanFilterMatches: undefined,
+    focusedSpanIdForSearch: '',
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
-    data: new MutableDataFrame(),
   };
 
   return render(<NewTracePageHeader {...defaultProps} />);
@@ -45,7 +42,7 @@ const setup = () => {
 
 describe('NewTracePageHeader test', () => {
   it('should render the new trace header', () => {
-    config.featureToggles.newTraceViewHeader = true;
+    config.featureToggles.newTraceView = true;
     setup();
 
     const header = document.querySelector('header');

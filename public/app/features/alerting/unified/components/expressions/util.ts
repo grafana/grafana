@@ -9,26 +9,21 @@ import { DataFrame, Labels, roundDecimals } from '@grafana/data';
  * see https://github.com/Microsoft/TypeScript/issues/13778
  */
 
-const getSeriesName = (frame: DataFrame): string | undefined => {
+const getSeriesName = (frame: DataFrame): string => {
   const firstField = frame.fields[0];
 
   const displayNameFromDS = firstField?.config?.displayNameFromDS;
-  return displayNameFromDS ?? frame.name ?? firstField?.labels?.__name__;
+  return displayNameFromDS ?? frame.name ?? formatLabels(firstField?.labels ?? {});
 };
 
 const getSeriesValue = (frame: DataFrame) => {
-  const value = frame.fields[0]?.values[0];
+  const value = frame.fields[0]?.values.get(0);
 
   if (Number.isFinite(value)) {
     return roundDecimals(value, 5);
   }
 
   return value;
-};
-
-const getSeriesLabels = (frame: DataFrame): Record<string, string> => {
-  const firstField = frame.fields[0];
-  return firstField?.labels ?? {};
 };
 
 const formatLabels = (labels: Labels): string => {
@@ -38,9 +33,11 @@ const formatLabels = (labels: Labels): string => {
 };
 
 const isEmptySeries = (series: DataFrame[]): boolean => {
-  const isEmpty = series.every((serie) => serie.fields.every((field) => field.values.every((value) => value == null)));
+  const isEmpty = series.every((serie) =>
+    serie.fields.every((field) => field.values.toArray().every((value) => value == null))
+  );
 
   return isEmpty;
 };
 
-export { getSeriesName, getSeriesValue, getSeriesLabels, formatLabels, isEmptySeries };
+export { getSeriesName, getSeriesValue, formatLabels, isEmptySeries };

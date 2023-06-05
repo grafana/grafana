@@ -20,6 +20,7 @@ const pageNav: NavModelItem = {
   id: 'user-new',
   text: 'New user',
   subTitle: 'Create a new Grafana user.',
+  breadcrumbs: [{ title: 'Server admin', url: 'admin/users' }],
 };
 
 const UserCreatePage = () => {

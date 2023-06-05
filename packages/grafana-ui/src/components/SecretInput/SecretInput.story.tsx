@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React, { useState, ChangeEvent } from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -6,7 +6,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SecretInput } from './SecretInput';
 import mdx from './SecretInput.mdx';
 
-const meta: Meta<typeof SecretInput> = {
+const meta: ComponentMeta<typeof SecretInput> = {
   title: 'Forms/SecretInput',
   component: SecretInput,
   decorators: [withCenteredStory],
@@ -40,7 +40,7 @@ const meta: Meta<typeof SecretInput> = {
 
 export default meta;
 
-const Template: StoryFn<typeof SecretInput> = (args) => {
+const Template: ComponentStory<typeof SecretInput> = (args) => {
   const [secret, setSecret] = useState('');
 
   return (

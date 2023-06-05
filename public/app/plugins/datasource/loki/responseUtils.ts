@@ -1,4 +1,5 @@
 import {
+  ArrayVector,
   DataFrame,
   DataFrameType,
   DataQueryResponse,
@@ -15,12 +16,12 @@ import { isBytesString } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
 
 export function dataFrameHasLokiError(frame: DataFrame): boolean {
-  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
+  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
   return labelSets.some((labels) => labels.__error__ !== undefined);
 }
 
 export function dataFrameHasLevelLabel(frame: DataFrame): boolean {
-  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values ?? [];
+  const labelSets: Labels[] = frame.fields.find((f) => f.name === 'labels')?.values.toArray() ?? [];
   return labelSets.some((labels) => labels.level !== undefined);
 }
 
@@ -34,7 +35,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
     return { hasJSON: false, hasLogfmt: false, hasPack: false };
   }
 
-  const logLines: string[] = lineField.values;
+  const logLines: string[] = lineField.values.toArray();
 
   let hasJSON = false;
   let hasLogfmt = false;
@@ -56,7 +57,7 @@ export function extractLogParserFromDataFrame(frame: DataFrame): {
 
 export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
-    frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
+    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
 
   if (!labelsArray?.length) {
     return [];
@@ -67,7 +68,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame): string[] {
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
   const labelsArray: Array<{ [key: string]: string }> | undefined =
-    frame?.fields?.find((field) => field.name === 'labels')?.values ?? [];
+    frame?.fields?.find((field) => field.name === 'labels')?.values.toArray() ?? [];
 
   if (!labelsArray?.length) {
     return [];
@@ -93,7 +94,7 @@ export function extractHasErrorLabelFromDataFrame(frame: DataFrame): boolean {
     return false;
   }
 
-  const labels: Array<{ [key: string]: string }> = labelField.values;
+  const labels: Array<{ [key: string]: string }> = labelField.values.toArray();
   return labels.some((label) => label['__error__']);
 }
 
@@ -105,7 +106,7 @@ export function extractLevelLikeLabelFromDataFrame(frame: DataFrame): string | n
 
   // Depending on number of labels, this can be pretty heavy operation.
   // Let's just look at first 2 lines If needed, we can introduce more later.
-  const labelsArray: Array<{ [key: string]: string }> = labelField.values.slice(0, 2);
+  const labelsArray: Array<{ [key: string]: string }> = labelField.values.toArray().slice(0, 2);
   let levelLikeLabel: string | null = null;
 
   // Find first level-like label
@@ -202,7 +203,9 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values = [].concat.apply(source.fields[i].values, dest.fields[i].values);
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
   }
   dest.length += source.length;
   dest.meta = {
@@ -248,9 +251,9 @@ export function cloneQueryResponse(response: DataQueryResponse): DataQueryRespon
 function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
   return {
     ...frame,
-    fields: frame.fields.map((field: Field) => ({
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
       ...field,
-      values: field.values,
+      values: new ArrayVector(field.values.toArray()),
     })),
   };
 }

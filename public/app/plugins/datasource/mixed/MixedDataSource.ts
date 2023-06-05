@@ -6,7 +6,6 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
@@ -95,8 +94,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 
-  testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({ message: '', status: '' });
+  testDatasource() {
+    return Promise.resolve({});
   }
 
   private isQueryable(query: BatchedQueries): boolean {

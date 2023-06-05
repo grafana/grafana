@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -9,12 +8,11 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
-import { Dashboard, DashboardCursorSync, FieldConfigSource, ThresholdsMode, Panel } from '@grafana/schema/src';
-import config from 'app/core/config';
+import { Dashboard, DashboardCursorSync } from '@grafana/schema/src';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-import * as appTypes from 'app/types';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
+import * as appTypes from 'app/types';
 
 import { SafeDynamicImport } from '../../../core/components/DynamicImports/SafeDynamicImport';
 import { configureStore } from '../../../store/configureStore';
@@ -127,9 +125,6 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
 
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
-    config.featureToggles.publicDashboards = true;
-    config.featureToggles.newPanelChromeUI = true;
-
     jest.clearAllMocks();
   });
 
@@ -178,68 +173,6 @@ describe('PublicDashboardPage', () => {
       setup(undefined, newState);
       await waitFor(() => {
         expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
-      });
-    });
-
-    it('Should render panel with hover widget but without drag icon when panel title is undefined', async () => {
-      const fieldConfig: FieldConfigSource = {
-        defaults: {
-          thresholds: {
-            mode: ThresholdsMode.Absolute,
-            steps: [
-              {
-                color: 'green',
-                value: 1,
-              },
-              {
-                color: 'red',
-                value: 80,
-              },
-            ],
-          },
-        },
-        overrides: [],
-      };
-      const panels: Panel[] = [
-        {
-          id: 1,
-          fieldConfig,
-          gridPos: {
-            h: 8,
-            w: 12,
-            x: 0,
-            y: 0,
-          },
-          options: {},
-          title: undefined,
-          type: 'timeseries',
-          repeatDirection: 'h',
-          transformations: [],
-          transparent: false,
-        },
-      ];
-
-      const newState = {
-        dashboard: {
-          getModel: () => getTestDashboard({ panels }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
-        },
-      };
-      setup(undefined, newState);
-
-      await waitFor(() => {
-        expect(screen.getByTestId(selectors.Panels.Panel.HoverWidget.container)).toBeInTheDocument();
-      });
-      await userEvent.hover(screen.getByTestId(selectors.Panels.Panel.HoverWidget.container));
-      expect(screen.queryByTestId(selectors.Panels.Panel.HoverWidget.dragIcon)).not.toBeInTheDocument();
-    });
-
-    it('Should render panel without hover widget when panel title is not undefined', async () => {
-      setup(undefined, newState);
-      await waitFor(() => {
-        expect(screen.queryByTestId(selectors.Panels.Panel.HoverWidget.container)).not.toBeInTheDocument();
       });
     });
   });

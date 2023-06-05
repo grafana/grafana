@@ -49,7 +49,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{DatasourceUID}/api/v1/alerts",
-				api.Hooks.Wrap(srv.RouteGetAlertStatuses),
+				srv.RouteGetAlertStatuses,
 				m,
 			),
 		)
@@ -59,7 +59,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/grafana/api/v1/alerts",
-				api.Hooks.Wrap(srv.RouteGetGrafanaAlertStatuses),
+				srv.RouteGetGrafanaAlertStatuses,
 				m,
 			),
 		)
@@ -69,7 +69,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/grafana/api/v1/rules",
-				api.Hooks.Wrap(srv.RouteGetGrafanaRuleStatuses),
+				srv.RouteGetGrafanaRuleStatuses,
 				m,
 			),
 		)
@@ -79,7 +79,7 @@ func (api *API) RegisterPrometheusApiEndpoints(srv PrometheusApi, m *metrics.API
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/prometheus/{DatasourceUID}/api/v1/rules",
-				api.Hooks.Wrap(srv.RouteGetRuleStatuses),
+				srv.RouteGetRuleStatuses,
 				m,
 			),
 		)

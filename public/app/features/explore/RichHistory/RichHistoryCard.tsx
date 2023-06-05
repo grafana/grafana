@@ -23,7 +23,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance } = explore.panes[exploreId]!;
+  const { datasourceInstance } = explore[exploreId]!;
   return {
     exploreId,
     datasourceInstance,

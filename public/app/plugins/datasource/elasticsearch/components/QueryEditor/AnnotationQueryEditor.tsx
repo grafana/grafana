@@ -23,15 +23,9 @@ export function ElasticsearchAnnotationsQueryEditor(props: Props) {
         <ElasticSearchQueryField
           value={annotation.target?.query}
           onChange={(query) => {
-            const currentTarget = annotation.target ?? { refId: 'annotation_query' };
-            const newTarget = {
-              ...currentTarget,
-              query,
-            };
-
             onAnnotationChange({
               ...annotation,
-              target: newTarget,
+              query,
             });
           }}
         />

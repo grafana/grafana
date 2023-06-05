@@ -43,7 +43,6 @@ ARG GF_INSTALL_PLUGINS=""
 RUN if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then \
       OLDIFS=$IFS; \
       IFS=','; \
-      set -e ; \
       for plugin in ${GF_INSTALL_PLUGINS}; do \
         IFS=$OLDIFS; \
         if expr match "$plugin" '.*\;.*'; then \

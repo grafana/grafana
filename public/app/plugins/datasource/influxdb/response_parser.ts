@@ -171,7 +171,7 @@ export default class ResponseParser {
 function colContainsTag(colText: string, tagsColumn: string): boolean {
   const tags = (tagsColumn || '').replace(' ', '').split(',');
   for (const tag of tags) {
-    if (tag !== '' && colText.includes(tag)) {
+    if (colText.includes(tag)) {
       return true;
     }
   }
@@ -234,12 +234,12 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
 }
 
 function getTableRows(dfs: DataFrame[], table: TableModel, labels: string[]): TableModel {
-  const values = dfs[0].fields[0].values;
+  const values = dfs[0].fields[0].values.toArray();
 
   for (let i = 0; i < values.length; i++) {
     const time = values[i];
     const metrics = dfs.map((df: DataFrame) => {
-      return df.fields[1] ? df.fields[1].values[i] : null;
+      return df.fields[1] ? df.fields[1].values.toArray()[i] : null;
     });
     if (metrics.indexOf(null) < 0) {
       table.rows.push([time, ...labels, ...metrics]);

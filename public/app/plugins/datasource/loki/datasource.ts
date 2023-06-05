@@ -70,7 +70,6 @@ import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
-  getLokiQueryFromDataQuery,
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
@@ -134,7 +133,6 @@ export class LokiDatasource
   languageProvider: LanguageProvider;
   logContextProvider: LogContextProvider;
   maxLines: number;
-  predefinedOperations: string;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -146,7 +144,6 @@ export class LokiDatasource
     this.languageProvider = new LanguageProvider(this);
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
-    this.predefinedOperations = settingsData.predefinedOperations ?? '';
     this.annotations = {
       QueryEditor: LokiAnnotationsQueryEditor,
     };
@@ -195,7 +192,7 @@ export class LokiDatasource
         return {
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
-          queryType: LokiQueryType.Range,
+          instant: false,
           supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
@@ -208,7 +205,6 @@ export class LokiDatasource
         }
         return {
           ...normalizedQuery,
-          queryType: LokiQueryType.Range,
           refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
           expr: getLogQueryFromMetricsQuery(expr),
           maxLines: Number.isNaN(Number(options.limit)) ? this.maxLines : Number(options.limit),
@@ -289,18 +285,17 @@ export class LokiDatasource
       return runSplitQuery(this, fixedRequest);
     }
 
-    const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
+    return this.runQuery(fixedRequest);
   }
 
-  runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {
-    return super
-      .query(fixedRequest)
-      .pipe(
-        map((response) =>
-          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-        )
-      );
+  runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
+    const startTime = new Date();
+    return super.query(fixedRequest).pipe(
+      map((response) =>
+        transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+      ),
+      tap((response) => trackQuery(response, fixedRequest, startTime))
+    );
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
@@ -422,21 +417,7 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params, options);
-    return res.data || [];
-  }
-
-  // We need a specific metadata method for stats endpoint as it does not return res.data,
-  // but it returns stats directly in res object.
-  async statsMetadataRequest(
-    url: string,
-    params?: Record<string, string | number>,
-    options?: Partial<BackendSrvRequest>
-  ): Promise<QueryStats> {
-    if (url.startsWith('/')) {
-      throw new Error(`invalid metadata request url: ${url}`);
-    }
-
-    return await this.getResource(url, params, options);
+    return res.data ?? (res || []);
   }
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
@@ -452,7 +433,7 @@ export class LokiDatasource
 
     for (const labelMatcher of labelMatchers) {
       try {
-        const data = await this.statsMetadataRequest(
+        const data = await this.metadataRequest(
           'index/stats',
           { query: labelMatcher, start, end },
           { showErrorAlert: false }
@@ -673,19 +654,11 @@ export class LokiDatasource
     options?: LogRowContextOptions,
     origQuery?: DataQuery
   ): Promise<{ data: DataFrame[] }> => {
-    return await this.logContextProvider.getLogRowContext(row, options, getLokiQueryFromDataQuery(origQuery));
-  };
-
-  getLogRowContextQuery = async (
-    row: LogRowModel,
-    options?: LogRowContextOptions,
-    origQuery?: DataQuery
-  ): Promise<DataQuery> => {
-    return await this.logContextProvider.getLogRowContextQuery(row, options, getLokiQueryFromDataQuery(origQuery));
+    return await this.logContextProvider.getLogRowContext(row, options, origQuery);
   };
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void, origQuery: DataQuery): React.ReactNode {
-    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, getLokiQueryFromDataQuery(origQuery));
+    return this.logContextProvider.getLogRowContextUi(row, runContextQuery, origQuery);
   }
 
   testDatasource(): Promise<{ status: string; message: string }> {
@@ -829,9 +802,8 @@ export class LokiDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
-    // We want to interpolate these variables on backend because we support using them in
-    // alerting/ML queries and we want to have consistent interpolation for all queries
-    const { __interval, __interval_ms, __range, __range_s, __range_ms, ...rest } = scopedVars || {};
+    // We want to interpolate these variables on backend
+    const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 
@@ -852,22 +824,6 @@ export class LokiDatasource
 
   getQueryHints(query: LokiQuery, result: DataFrame[]): QueryHint[] {
     return getQueryHints(query.expr, result);
-  }
-
-  getDefaultQuery(app: CoreApp): LokiQuery {
-    const defaults = { refId: 'A', expr: '' };
-
-    if (app === CoreApp.UnifiedAlerting) {
-      return {
-        ...defaults,
-        queryType: LokiQueryType.Instant,
-      };
-    }
-
-    return {
-      ...defaults,
-      queryType: LokiQueryType.Range,
-    };
   }
 }
 

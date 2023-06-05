@@ -4,16 +4,16 @@ import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
 
 import { AnnoListPanel } from './AnnoListPanel';
-import { defaultOptions, Options } from './panelcfg.gen';
+import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<Options>(AnnoListPanel)
+export const plugin = new PanelPlugin<PanelOptions>(AnnoListPanel)
   .setPanelOptions((builder) => {
     builder
       .addRadio({
         category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
         name: 'Query filter',
-        defaultValue: defaultOptions.onlyFromThisDashboard,
+        defaultValue: defaultPanelOptions.onlyFromThisDashboard,
         settings: {
           options: [
             { value: false, label: 'All dashboards' },
@@ -25,7 +25,7 @@ export const plugin = new PanelPlugin<Options>(AnnoListPanel)
         category: ['Annotation query'],
         path: 'onlyInTimeRange',
         name: 'Time range',
-        defaultValue: defaultOptions.onlyInTimeRange,
+        defaultValue: defaultPanelOptions.onlyInTimeRange,
         settings: {
           options: [
             { value: false, label: 'None' },
@@ -47,31 +47,31 @@ export const plugin = new PanelPlugin<Options>(AnnoListPanel)
         category: ['Annotation query'],
         path: 'limit',
         name: 'Limit',
-        defaultValue: defaultOptions.limit,
+        defaultValue: defaultPanelOptions.limit,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showUser',
         name: 'Show user',
-        defaultValue: defaultOptions.showUser,
+        defaultValue: defaultPanelOptions.showUser,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showTime',
         name: 'Show time',
-        defaultValue: defaultOptions.showTime,
+        defaultValue: defaultPanelOptions.showTime,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showTags',
         name: 'Show tags',
-        defaultValue: defaultOptions.showTags,
+        defaultValue: defaultPanelOptions.showTags,
       })
       .addRadio({
         category: ['Link behavior'],
         path: 'navigateToPanel',
         name: 'Link target',
-        defaultValue: defaultOptions.navigateToPanel,
+        defaultValue: defaultPanelOptions.navigateToPanel,
         settings: {
           options: [
             { value: true, label: 'Panel' },
@@ -83,21 +83,21 @@ export const plugin = new PanelPlugin<Options>(AnnoListPanel)
         category: ['Link behavior'],
         path: 'navigateBefore',
         name: 'Time before',
-        defaultValue: defaultOptions.navigateBefore,
+        defaultValue: defaultPanelOptions.navigateBefore,
         description: '',
       })
       .addTextInput({
         category: ['Link behavior'],
         path: 'navigateAfter',
         name: 'Time after',
-        defaultValue: defaultOptions.navigateAfter,
+        defaultValue: defaultPanelOptions.navigateAfter,
         description: '',
       });
   })
   // TODO, we should support this directly in the plugin infrastructure
-  .setPanelChangeHandler((panel: PanelModel<Options>, prevPluginId: string, prevOptions: unknown) => {
+  .setPanelChangeHandler((panel: PanelModel<PanelOptions>, prevPluginId: string, prevOptions: unknown) => {
     if (prevPluginId === 'ryantxu-annolist-panel') {
-      return prevOptions as Options;
+      return prevOptions as PanelOptions;
     }
 
     return panel.options;

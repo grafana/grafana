@@ -7,9 +7,9 @@ import { AddLayerButton } from 'app/core/components/Layers/AddLayerButton';
 import { LayerDragDropList } from 'app/core/components/Layers/LayerDragDropList';
 
 import { getLayersOptions } from '../layers/registry';
-import { Options, MapLayerState, GeomapInstanceState } from '../types';
+import { PanelOptions, MapLayerState, GeomapInstanceState } from '../types';
 
-type LayersEditorProps = StandardEditorProps<unknown, unknown, Options, GeomapInstanceState>;
+type LayersEditorProps = StandardEditorProps<unknown, unknown, PanelOptions, GeomapInstanceState>;
 
 export const LayersEditor = (props: LayersEditorProps) => {
   const { layers, selected, actions } = props.context.instanceState ?? {};

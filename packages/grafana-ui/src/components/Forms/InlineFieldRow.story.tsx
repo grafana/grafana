@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/react';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { Input } from '../Input/Input';
@@ -7,7 +7,7 @@ import { InlineField } from './InlineField';
 import { InlineFieldRow } from './InlineFieldRow';
 import mdx from './InlineFieldRow.mdx';
 
-const meta: Meta<typeof InlineFieldRow> = {
+const meta: ComponentMeta<typeof InlineFieldRow> = {
   title: 'Forms/InlineFieldRow',
   component: InlineFieldRow,
   parameters: {

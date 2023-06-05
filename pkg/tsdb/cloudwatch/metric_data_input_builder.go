@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -18,7 +19,7 @@ func (e *cloudWatchExecutor) buildMetricDataInput(logger log.Logger, startTime t
 		ScanBy:    aws.String("TimestampAscending"),
 	}
 
-	shouldSetLabelOptions := len(queries) > 0 && len(queries[0].TimezoneUTCOffset) > 0
+	shouldSetLabelOptions := e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels) && len(queries) > 0 && len(queries[0].TimezoneUTCOffset) > 0
 
 	if shouldSetLabelOptions {
 		metricDataInput.LabelOptions = &cloudwatch.LabelOptions{

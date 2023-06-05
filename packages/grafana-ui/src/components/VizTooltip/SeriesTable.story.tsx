@@ -1,10 +1,10 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { SeriesTable } from './SeriesTable';
 
-const meta: Meta<typeof SeriesTable> = {
-  title: 'Visualizations/VizTooltip/SeriesTable',
+const meta: ComponentMeta<typeof SeriesTable> = {
+  title: 'VizTooltip/SeriesTable',
   component: SeriesTable,
   argTypes: {
     timestamp: {
@@ -13,7 +13,7 @@ const meta: Meta<typeof SeriesTable> = {
   },
 };
 
-const Template: StoryFn<typeof SeriesTable> = (args) => {
+const Template: ComponentStory<typeof SeriesTable> = (args) => {
   const date = new Date(args.timestamp!).toLocaleString();
   return (
     <div>

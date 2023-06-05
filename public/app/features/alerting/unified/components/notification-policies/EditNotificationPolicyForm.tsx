@@ -32,7 +32,6 @@ import {
   commonGroupByOptions,
   amRouteToFormAmRoute,
   promDurationValidator,
-  repeatIntervalValidator,
 } from '../../utils/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
@@ -75,7 +74,7 @@ export const AmRoutesExpandedForm = ({
 
   return (
     <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
-      {({ control, register, errors, setValue, watch, getValues }) => (
+      {({ control, register, errors, setValue, watch }) => (
         <>
           <input type="hidden" {...register('id')} />
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -248,12 +247,7 @@ export const AmRoutesExpandedForm = ({
                 error={errors.repeatIntervalValue?.message}
               >
                 <PromDurationInput
-                  {...register('repeatIntervalValue', {
-                    validate: (value: string) => {
-                      const groupInterval = getValues('groupIntervalValue');
-                      return repeatIntervalValidator(value, groupInterval);
-                    },
-                  })}
+                  {...register('repeatIntervalValue', { validate: promDurationValidator })}
                   aria-label="Repeat interval value"
                   className={formStyles.promDurationInput}
                 />

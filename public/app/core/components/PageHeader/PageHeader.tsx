@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React from 'react';
 
-import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import { NavModelItem, NavModelBreadcrumb, GrafanaTheme2 } from '@grafana/data';
 import { Tab, TabsBar, Icon, useStyles2, toIconName } from '@grafana/ui';
 import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
@@ -106,7 +106,9 @@ export const PageHeader = ({ navItem: model, renderTitle, actions, info, subTitl
         </span>
 
         <div className={cx('page-header__info-block', styles.headerText)}>
-          {renderTitle ? renderTitle(main.text) : renderHeaderTitle(main.text, main.highlightText)}
+          {renderTitle
+            ? renderTitle(main.text)
+            : renderHeaderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
           {info && <PageInfo info={info} />}
           {sub && <div className="page-header__sub-title">{sub}</div>}
           {actions && <div className={styles.actions}>{actions}</div>}
@@ -127,24 +129,46 @@ export const PageHeader = ({ navItem: model, renderTitle, actions, info, subTitl
   );
 };
 
-function renderHeaderTitle(title: string, highlightText: NavModelItem['highlightText']) {
-  if (!title) {
+function renderHeaderTitle(
+  title: string,
+  breadcrumbs: NavModelBreadcrumb[],
+  highlightText: NavModelItem['highlightText']
+) {
+  if (!title && (!breadcrumbs || breadcrumbs.length === 0)) {
     return null;
   }
 
-  return (
-    <h1 className="page-header__title">
-      {title}
-      {highlightText && (
-        <ProBadge
-          text={highlightText}
-          className={css`
-            vertical-align: middle;
-          `}
-        />
-      )}
-    </h1>
-  );
+  if (!breadcrumbs || breadcrumbs.length === 0) {
+    return (
+      <h1 className="page-header__title">
+        {title}
+        {highlightText && (
+          <ProBadge
+            text={highlightText}
+            className={css`
+              vertical-align: middle;
+            `}
+          />
+        )}
+      </h1>
+    );
+  }
+
+  const breadcrumbsResult = [];
+  for (const bc of breadcrumbs) {
+    if (bc.url) {
+      breadcrumbsResult.push(
+        <a className="page-header__link" key={breadcrumbsResult.length} href={bc.url}>
+          {bc.title}
+        </a>
+      );
+    } else {
+      breadcrumbsResult.push(<span key={breadcrumbsResult.length}> / {bc.title}</span>);
+    }
+  }
+  breadcrumbsResult.push(<span key={breadcrumbs.length + 1}> / {title}</span>);
+
+  return <h1 className="page-header__title">{breadcrumbsResult}</h1>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

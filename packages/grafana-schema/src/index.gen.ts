@@ -7,17 +7,6 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-// Raw generated types from AccessPolicy kind.
-export type {
-  AccessPolicy,
-  RoleRef,
-  ResourceRef,
-  AccessRule
-} from './raw/accesspolicy/x/accesspolicy_types.gen';
-
-// Raw generated enums and default consts from accesspolicy kind.
-export { defaultAccessPolicy } from './raw/accesspolicy/x/accesspolicy_types.gen';
-
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,
@@ -102,9 +91,6 @@ export {
   defaultFieldConfig
 } from './veneer/dashboard.types';
 
-// Raw generated types from Folder kind.
-export type { Folder } from './raw/folder/x/folder_types.gen';
-
 // Raw generated types from LibraryPanel kind.
 export type {
   LibraryElementDTOMetaUser,
@@ -140,16 +126,17 @@ export type {
 // Raw generated types from PublicDashboard kind.
 export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
 
-// Raw generated types from Role kind.
-export type { Role } from './raw/role/x/role_types.gen';
-
-// Raw generated types from RoleBinding kind.
+// Raw generated types from ServiceAccount kind.
 export type {
-  RoleBinding,
-  CustomRoleRef,
-  BuiltinRoleRef,
-  RoleBindingSubject
-} from './raw/rolebinding/x/rolebinding_types.gen';
+  ServiceAccount,
+  OrgRole
+} from './raw/serviceaccount/x/serviceaccount_types.gen';
+
+// Raw generated enums and default consts from serviceaccount kind.
+export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
+
+// Raw generated enums and default consts from team kind.
+export { Permission } from './raw/team/x/team_types.gen';

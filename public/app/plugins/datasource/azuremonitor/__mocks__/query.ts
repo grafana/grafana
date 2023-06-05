@@ -27,16 +27,6 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       ...overrides?.azureResourceGraph,
     },
 
-    azureTraces: {
-      query: 'example traces query',
-      resultFormat: ResultFormat.Trace,
-      resources: ['test-resource'],
-      operationId: 'operationId',
-      traceTypes: ['traces'],
-      filters: [{ filters: ['filter'], operation: 'eq', property: 'property' }],
-      ...overrides?.azureTraces,
-    },
-
     azureMonitor: {
       // aggOptions: [],
       aggregation: 'Average',

@@ -1,14 +1,13 @@
-import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { Value } from 'slate';
 
-import { getAllTags, getTagsByScope, getUnscopedTags } from './SearchTraceQLEditor/utils';
-import { TraceqlSearchScope } from './dataquery.gen';
+import { LanguageProvider, SelectableValue } from '@grafana/data';
+import { CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+
 import { TempoDatasource } from './datasource';
-import { Scope } from './types';
 
 export default class TempoLanguageProvider extends LanguageProvider {
   datasource: TempoDatasource;
-  tagsV1?: string[];
-  tagsV2?: Scope[];
+  tags?: string[];
   constructor(datasource: TempoDatasource, initialValues?: any) {
     super();
 
@@ -32,78 +31,61 @@ export default class TempoLanguageProvider extends LanguageProvider {
   };
 
   async fetchTags() {
-    let v1Resp, v2Resp;
-    try {
-      v2Resp = await this.request('/api/v2/search/tags', []);
-    } catch (error) {
-      v1Resp = await this.request('/api/search/tags', []);
-    }
-
-    if (v2Resp && v2Resp.scopes) {
-      this.setV2Tags(v2Resp.scopes);
-    } else if (v1Resp) {
-      this.setV1Tags(v1Resp.tagNames);
-    }
+    const response = await this.request('/api/search/tags', []);
+    this.tags = response.tagNames;
   }
 
-  setV1Tags = (tags: string[]) => {
-    this.tagsV1 = tags;
+  getTags = () => {
+    return this.tags;
   };
 
-  setV2Tags = (tags: Scope[]) => {
-    this.tagsV2 = tags;
-  };
+  provideCompletionItems = async ({ text, value }: TypeaheadInput): Promise<TypeaheadOutput> => {
+    const emptyResult: TypeaheadOutput = { suggestions: [] };
 
-  getTags = (scope?: TraceqlSearchScope) => {
-    if (this.tagsV2 && scope) {
-      if (scope === TraceqlSearchScope.Unscoped) {
-        return getUnscopedTags(this.tagsV2);
-      }
-      return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status')) {
-        this.tagsV1.push('status');
-      }
-      return this.tagsV1;
+    if (!value) {
+      return emptyResult;
     }
-    return [];
+
+    const query = value.endText.getText();
+    const isValue = query[query.indexOf(text) - 1] === '=';
+    if (isValue || text === '=') {
+      return this.getTagValueCompletionItems(value);
+    }
+    return this.getTagsCompletionItems();
   };
 
-  getTraceqlAutocompleteTags = (scope?: string) => {
-    if (this.tagsV2) {
-      if (!scope) {
-        // have not typed a scope yet || unscoped (.) typed
-        return getUnscopedTags(this.tagsV2);
-      } else if (scope === TraceqlSearchScope.Unscoped) {
-        return getUnscopedTags(this.tagsV2);
-      }
-      return getTagsByScope(this.tagsV2, scope);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status')) {
-        this.tagsV1.push('status');
-      }
-      return this.tagsV1;
+  getTagsCompletionItems = (): TypeaheadOutput => {
+    const { tags } = this;
+    const suggestions: CompletionItemGroup[] = [];
+
+    if (tags?.length) {
+      suggestions.push({
+        label: `Tag`,
+        items: tags.map((tag) => ({ label: tag })),
+      });
     }
-    return [];
+
+    return { suggestions };
   };
 
-  getAutocompleteTags = () => {
-    if (this.tagsV2) {
-      return getAllTags(this.tagsV2);
-    } else if (this.tagsV1) {
-      // This is needed because the /api/search/tag/${tag}/values API expects "status.code" and the v2 API expects "status"
-      // so Tempo doesn't send anything and we inject it here for the autocomplete
-      if (!this.tagsV1.find((t) => t === 'status.code')) {
-        this.tagsV1.push('status.code');
-      }
-      return this.tagsV1;
+  async getTagValueCompletionItems(value: Value) {
+    const tags = value.endText.getText().split(' ');
+
+    let tagName = tags[tags.length - 1] ?? '';
+    tagName = tagName.split('=')[0];
+
+    const response = await this.request(`/api/v2/search/tag/${tagName}/values`, []);
+
+    const suggestions: CompletionItemGroup[] = [];
+
+    if (response && response.tagValues) {
+      suggestions.push({
+        label: `Tag Values`,
+        items: response.tagValues.map((tagValue: string) => ({ label: tagValue, insertText: `"${tagValue}"` })),
+      });
     }
-    return [];
-  };
+    return { suggestions };
+  }
 
   async getOptionsV1(tag: string): Promise<Array<SelectableValue<string>>> {
     const response = await this.request(`/api/search/tag/${tag}/values`);

@@ -21,10 +21,6 @@ export type Props = {
   onChange: (value: MetricStat) => void;
 };
 
-const percentileSyntaxRE = /^(p|tm|tc|ts|wm)\d{2}(?:\.\d{1,2})?$/;
-const boundariesInnerParenthesesSyntax = `\\d*(\\.\\d+)?%?:\\d*(\\.\\d+)?%?`;
-const boundariesSyntaxRE = new RegExp(`^(PR|TM|TC|TS|WM)\\((${boundariesInnerParenthesesSyntax})\\)$`);
-
 export function MetricStatEditor({
   refId,
   metricStat,
@@ -120,8 +116,8 @@ export function MetricStatEditor({
                 if (
                   !statistic ||
                   (!standardStatistics.includes(statistic) &&
-                    !(percentileSyntaxRE.test(statistic) || boundariesSyntaxRE.test(statistic)) &&
-                    !datasource.templateSrv.containsTemplate(statistic))
+                    !/^p\d{2}(?:\.\d{1,2})?$/.test(statistic) &&
+                    !statistic.startsWith('$'))
                 ) {
                   return;
                 }

@@ -29,7 +29,8 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
 };
 
 export const SparklineCell = (props: TableCellProps) => {
-  const { field, innerWidth, tableStyles, cell, cellProps, timeRange } = props;
+  const { field, innerWidth, tableStyles, cell, cellProps } = props;
+
   const sparkline = getSparkline(cell.value);
 
   if (!sparkline) {
@@ -44,7 +45,6 @@ export const SparklineCell = (props: TableCellProps) => {
   sparkline.y.config.min = range.min;
   sparkline.y.config.max = range.max;
   sparkline.y.state = { range };
-  sparkline.timeRange = timeRange;
 
   const cellOptions = getTableSparklineCellOptions(field);
 

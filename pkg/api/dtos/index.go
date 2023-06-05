@@ -4,6 +4,7 @@ import (
 	"html/template"
 
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type IndexViewData struct {
@@ -18,7 +19,7 @@ type IndexViewData struct {
 	NavTree                             *navtree.NavTreeRoot
 	BuildVersion                        string
 	BuildCommit                         string
-	ThemeType                           string
+	Theme                               string
 	NewGrafanaVersionExists             bool
 	NewGrafanaVersion                   string
 	AppName                             string
@@ -26,12 +27,9 @@ type IndexViewData struct {
 	FavIcon                             template.URL
 	AppleTouchIcon                      template.URL
 	AppTitle                            string
+	Sentry                              *setting.Sentry
 	ContentDeliveryURL                  string
 	LoadingLogo                         template.URL
-	CSPContent                          string
-	CSPEnabled                          bool
-	IsDevelopmentEnv                    bool
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
-	Nonce           string
-	NewsFeedEnabled bool
+	Nonce string
 }

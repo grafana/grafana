@@ -22,7 +22,6 @@ func setupAMTest(t *testing.T) *Alertmanager {
 	dir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath: dir,
-		AppURL:   "http://localhost:9093",
 	}
 
 	m := metrics.NewAlertmanagerMetrics(prometheus.NewRegistry())

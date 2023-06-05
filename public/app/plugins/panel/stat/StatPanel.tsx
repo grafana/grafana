@@ -16,9 +16,9 @@ import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { Options } from './panelcfg.gen';
+import { PanelOptions } from './panelcfg.gen';
 
-export class StatPanel extends PureComponent<PanelProps<Options>> {
+export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi

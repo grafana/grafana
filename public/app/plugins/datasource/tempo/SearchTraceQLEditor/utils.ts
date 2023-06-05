@@ -1,10 +1,9 @@
-import { startCase, uniq } from 'lodash';
+import { startCase } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
-import { intrinsics } from '../traceql/traceql';
-import { Scope } from '../types';
+import { CompletionProvider } from '../traceql/autocomplete';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
@@ -17,14 +16,14 @@ const valueHelper = (f: TraceqlFilter) => {
   if (Array.isArray(f.value) && f.value.length > 1) {
     return `"${f.value.join('|')}"`;
   }
-  if (f.valueType === 'string') {
+  if (!f.valueType || f.valueType === 'string') {
     return `"${f.value}"`;
   }
   return f.value;
 };
 const scopeHelper = (f: TraceqlFilter) => {
   // Intrinsic fields don't have a scope
-  if (intrinsics.find((t) => t === f.tag)) {
+  if (CompletionProvider.intrinsics.find((t) => t === f.tag)) {
     return '';
   }
   return (
@@ -42,24 +41,6 @@ export const filterTitle = (f: TraceqlFilter) => {
     return 'Span Name';
   }
   return startCase(filterScopedTag(f));
-};
-
-export const getFilteredTags = (tags: string[], staticTags: Array<string | undefined>) => {
-  return [...intrinsics, ...tags].filter((t) => !staticTags.includes(t));
-};
-
-export const getUnscopedTags = (scopes: Scope[]) => {
-  return uniq(
-    scopes.map((scope: Scope) => (scope.name && scope.name !== 'intrinsic' && scope.tags ? scope.tags : [])).flat()
-  );
-};
-
-export const getAllTags = (scopes: Scope[]) => {
-  return uniq(scopes.map((scope: Scope) => (scope.tags ? scope.tags : [])).flat());
-};
-
-export const getTagsByScope = (scopes: Scope[], scope: TraceqlSearchScope | string) => {
-  return uniq(scopes.map((s: Scope) => (s.name && s.name === scope && s.tags ? s.tags : [])).flat());
 };
 
 export function replaceAt<T>(array: T[], index: number, value: T) {

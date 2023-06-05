@@ -135,7 +135,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   renderTooltip = () => {
     const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
-    let tooltipElement: React.ReactElement<VizTooltipProps> | undefined;
+    let tooltipElement: React.ReactElement<VizTooltipProps> | null = null;
 
     if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
@@ -147,17 +147,18 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       if (tooltipElement) {
         return;
       }
+      // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
       if (childType === VizTooltip.displayName) {
-        tooltipElement = c;
+        tooltipElement = c as React.ReactElement<VizTooltipProps>;
       }
     });
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
-    const tooltipElementProps = tooltipElement.props;
+    const tooltipElementProps = (tooltipElement as React.ReactElement<VizTooltipProps>).props;
 
     const tooltipMode = tooltipElementProps.mode || 'single';
 
@@ -202,7 +203,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
 
-    return React.cloneElement(tooltipElement, {
+    return React.cloneElement<VizTooltipProps>(tooltipElement as React.ReactElement<VizTooltipProps>, {
       content: tooltipContent,
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
-import { Link, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { logInfo, config } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -13,7 +13,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages, trackNewAlerRuleFormError } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -28,7 +28,6 @@ import { NotificationsStep } from './NotificationsStep';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleInspector } from './RuleInspector';
 import { QueryAndExpressionsStep } from './query-and-alert-condition/QueryAndExpressionsStep';
-import { translateRouteParamToRuleType } from './util';
 
 const recordingRuleNameValidationPattern = {
   message:
@@ -82,9 +81,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
-  const routeParams = useParams<{ type: string }>();
-  const ruleType = translateRouteParamToRuleType(routeParams.type);
-
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -105,10 +101,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
       queries: getDefaultQueries(),
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
-      type: ruleType || RuleFormType.grafana,
+      type: RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, prefill, queryParams, evaluateEvery, ruleType]);
+  }, [existing, prefill, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -187,6 +183,13 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const cancelRuleCreation = () => {
     logInfo(LogMessages.cancelSavingAlertRule);
+    if (!existing) {
+      trackNewAlerRuleFormCancelled({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+      });
+    }
   };
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
@@ -195,26 +198,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <HorizontalGroup height="auto" justify="flex-end">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule
-          </Button>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule and exit
-          </Button>
           <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
+            <Button
+              variant="secondary"
+              disabled={submitState.loading}
+              type="button"
+              fill="outline"
+              onClick={cancelRuleCreation}
+            >
               Cancel
             </Button>
           </Link>
@@ -230,9 +221,27 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
               onClick={() => setShowEditYaml(true)}
               disabled={submitState.loading}
             >
-              Edit YAML
+              Edit yaml
             </Button>
           )}
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save
+          </Button>
+          <Button
+            variant="primary"
+            type="button"
+            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+            disabled={submitState.loading}
+          >
+            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+            Save and exit
+          </Button>
         </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>

@@ -14,17 +14,23 @@
 
 package grafanaplugin
 
-composableKinds: PanelCfg: lineage: {
-	schemas: [{
-		version: [0, 0]
-		schema: {
-			Options: {
-				...
-			} @cuetsy(kind="interface")
-			FieldConfig: {
-				...
-			} @cuetsy(kind="interface")
-		}
-	}]
-	lenses: []
+composableKinds: PanelCfg: {
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
+							// anything for now
+							...
+						} @cuetsy(kind="interface")
+						PanelFieldConfig: {
+							// anything for now
+							...
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }

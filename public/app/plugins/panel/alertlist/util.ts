@@ -1,21 +1,20 @@
 import { isEmpty } from 'lodash';
 
-import { Labels } from '@grafana/data';
+import { Labels, PanelProps } from '@grafana/data';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
+import { replaceVariables } from 'app/plugins/datasource/prometheus/querybuilder/shared/parsingUtils';
 import { Alert, hasAlertState } from 'app/types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { UnifiedAlertListOptions } from './types';
 
 function hasLabelFilter(alertInstanceLabelFilter: string, labels: Labels) {
-  const matchers = parseMatchers(alertInstanceLabelFilter);
+  const replacedLabelFilter = replaceVariables(alertInstanceLabelFilter);
+  const matchers = parseMatchers(replacedLabelFilter);
   return labelsMatchMatchers(labels, matchers);
 }
 
-export function filterAlerts(
-  options: Pick<UnifiedAlertListOptions, 'stateFilter' | 'alertInstanceLabelFilter'>,
-  alerts: Alert[]
-): Alert[] {
+export function filterAlerts(options: PanelProps<UnifiedAlertListOptions>['options'], alerts: Alert[]): Alert[] {
   const { stateFilter, alertInstanceLabelFilter } = options;
 
   if (isEmpty(stateFilter)) {
@@ -32,7 +31,8 @@ export function filterAlerts(
         (stateFilter.normal && hasAlertState(alert, GrafanaAlertState.Normal)) ||
         (stateFilter.error && hasAlertState(alert, GrafanaAlertState.Error)) ||
         (stateFilter.inactive && hasAlertState(alert, PromAlertingRuleState.Inactive))) &&
-      (alertInstanceLabelFilter ? hasLabelFilter(options.alertInstanceLabelFilter, alert.labels) : true)
+      ((alertInstanceLabelFilter && hasLabelFilter(options.alertInstanceLabelFilter, alert.labels)) ||
+        !alertInstanceLabelFilter)
     );
   });
 }

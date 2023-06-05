@@ -25,7 +25,7 @@ export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuer
     workingQuery = migrateToDefaultNamespace(workingQuery);
     workingQuery = migrateDimensionToDimensionFilter(workingQuery);
     workingQuery = migrateDimensionFilterToArray(workingQuery);
-    workingQuery = migrateResourceUriToResourceObj(workingQuery);
+    workingQuery = migrateDimensionToResourceObj(workingQuery);
   }
 
   if (workingQuery.azureMonitor?.resourceGroup || workingQuery.azureMonitor?.resourceName) {
@@ -154,7 +154,7 @@ function migrateDimensionFilterToArray(query: AzureMonitorQuery): AzureMonitorQu
   return query;
 }
 
-function migrateResourceUriToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
+function migrateDimensionToResourceObj(query: AzureMonitorQuery): AzureMonitorQuery {
   if (query.azureMonitor?.resourceUri && !query.azureMonitor.resourceUri.startsWith('$')) {
     const details = parseResourceDetails(query.azureMonitor.resourceUri);
     const isWellFormedUri = details?.subscription && details?.resourceGroup && details?.resourceName;
@@ -176,22 +176,13 @@ function migrateResourceUriToResourceObj(query: AzureMonitorQuery): AzureMonitor
 function migrateResourceGroupAndName(query: AzureMonitorQuery): AzureMonitorQuery {
   let workingQuery = query;
 
-  if (workingQuery.azureMonitor?.resourceGroup && workingQuery.azureMonitor?.resourceName) {
-    workingQuery = {
-      ...workingQuery,
-      azureMonitor: {
-        ...workingQuery.azureMonitor,
-        resources: [
-          {
-            resourceGroup: workingQuery.azureMonitor.resourceGroup,
-            resourceName: workingQuery.azureMonitor.resourceName,
-          },
-        ],
-      },
-    };
+  if (workingQuery.azureMonitor) {
+    workingQuery.azureMonitor.resources = [
+      { resourceGroup: workingQuery.azureMonitor.resourceGroup, resourceName: workingQuery.azureMonitor.resourceName },
+    ];
 
-    delete workingQuery.azureMonitor?.resourceGroup;
-    delete workingQuery.azureMonitor?.resourceName;
+    delete workingQuery.azureMonitor.resourceGroup;
+    delete workingQuery.azureMonitor.resourceName;
   }
 
   return workingQuery;

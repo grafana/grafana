@@ -10,12 +10,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/testdatasource/sims"
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
+		features:  features,
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
 		frame: data.NewFrame("testdata",
@@ -53,6 +55,7 @@ type Service struct {
 	labelFrame      *data.Frame
 	queryMux        *datasource.QueryTypeMux
 	resourceHandler backend.CallResourceHandler
+	features        featuremgmt.FeatureToggles
 	sims            *sims.SimulationEngine
 }
 

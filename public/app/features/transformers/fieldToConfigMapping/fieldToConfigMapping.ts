@@ -53,7 +53,7 @@ export function getFieldConfigFromFrame(
       continue;
     }
 
-    const configValue = field.values[rowIndex];
+    const configValue = field.values.get(rowIndex);
 
     if (configValue === null || configValue === undefined) {
       continue;

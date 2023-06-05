@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { FileDropzone } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './FileDropzone.mdx';
 
-const meta: Meta<typeof FileDropzone> = {
+const meta: ComponentMeta<typeof FileDropzone> = {
   title: 'Forms/FileDropzone',
   component: FileDropzone,
   decorators: [withCenteredStory],
@@ -18,7 +18,7 @@ const meta: Meta<typeof FileDropzone> = {
   },
 };
 
-const Template: StoryFn<typeof FileDropzone> = (args) => <FileDropzone {...args} />;
+const Template: ComponentStory<typeof FileDropzone> = (args) => <FileDropzone {...args} />;
 
 export const Basic = Template.bind({});
 

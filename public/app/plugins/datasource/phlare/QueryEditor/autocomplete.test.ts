@@ -1,62 +1,56 @@
 import { monacoTypes, Monaco } from '@grafana/ui';
 
+import { SeriesMessage } from '../types';
+
 import { CompletionProvider } from './autocomplete';
 
 describe('CompletionProvider', () => {
-  it('suggests labels', async () => {
+  it('suggests labels', () => {
     const { provider, model } = setup('{}', 1, defaultLabels);
-    const result = await provider.provideCompletionItems(model, {} as monacoTypes.Position);
+    const result = provider.provideCompletionItems(model, {} as monacoTypes.Position);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foo', insertText: 'foo' }),
     ]);
   });
 
-  it('suggests label names with quotes', async () => {
+  it('suggests label names with quotes', () => {
     const { provider, model } = setup('{foo=}', 6, defaultLabels);
-    const result = await provider.provideCompletionItems(model, {} as monacoTypes.Position);
+    const result = provider.provideCompletionItems(model, {} as monacoTypes.Position);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'bar', insertText: '"bar"' }),
     ]);
   });
 
-  it('suggests label names without quotes', async () => {
+  it('suggests label names without quotes', () => {
     const { provider, model } = setup('{foo="}', 7, defaultLabels);
-    const result = await provider.provideCompletionItems(model, {} as monacoTypes.Position);
+    const result = provider.provideCompletionItems(model, {} as monacoTypes.Position);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'bar', insertText: 'bar' }),
     ]);
   });
 
-  it('suggests nothing without labels', async () => {
+  it('suggests nothing without labels', () => {
     const { provider, model } = setup('{foo="}', 7, []);
-    const result = await provider.provideCompletionItems(model, {} as monacoTypes.Position);
+    const result = provider.provideCompletionItems(model, {} as monacoTypes.Position);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([]);
   });
 
-  it('suggests labels on empty input', async () => {
+  it('suggests labels on empty input', () => {
     const { provider, model } = setup('', 0, defaultLabels);
-    const result = await provider.provideCompletionItems(model, {} as monacoTypes.Position);
+    const result = provider.provideCompletionItems(model, {} as monacoTypes.Position);
     expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
       expect.objectContaining({ label: 'foo', insertText: '{foo="' }),
     ]);
   });
 });
 
-const defaultLabels = ['foo'];
+const defaultLabels = [{ labels: [{ name: 'foo', value: 'bar' }] }];
 
-function setup(value: string, offset: number, labels: string[] = []) {
+function setup(value: string, offset: number, series?: SeriesMessage) {
   const provider = new CompletionProvider();
-  provider.init(labels, (label) => {
-    if (labels.length === 0) {
-      return Promise.resolve([]);
-    }
-    const val = { foo: 'bar' }[label];
-    const result = [];
-    if (val) {
-      result.push(val);
-    }
-    return Promise.resolve(result);
-  });
+  if (series) {
+    provider.setSeries(series);
+  }
   const model = makeModel(value, offset);
   provider.monaco = {
     Range: {

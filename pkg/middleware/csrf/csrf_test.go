@@ -106,7 +106,6 @@ func TestCSRF_Check(t *testing.T) {
 	tests := []struct {
 		name           string
 		request        *http.Request
-		getCfg         func() *setting.Cfg
 		addtHeader     map[string]struct{}
 		trustedOrigins map[string]struct{}
 		safeEndpoints  map[string]struct{}
@@ -114,101 +113,54 @@ func TestCSRF_Check(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name: "base case",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:    postRequest(t, "", nil, true),
+			name:       "base case",
+			request:    postRequest(t, "", nil),
 			expectedOK: true,
 		},
 		{
-			name: "base with null origin header",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:        postRequest(t, "", map[string]string{"Origin": "null"}, true),
+			name:           "base with null origin header",
+			request:        postRequest(t, "", map[string]string{"Origin": "null"}),
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "grafana.org",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:    postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.org"}, true),
+			name:       "grafana.org",
+			request:    postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.org"}),
 			expectedOK: true,
 		},
 		{
-			name: "grafana.org with X-Forwarded-Host",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}, true),
+			name:           "grafana.org with X-Forwarded-Host",
+			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}),
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "grafana.org with X-Forwarded-Host and header trusted",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:    postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}, true),
+			name:       "grafana.org with X-Forwarded-Host and header trusted",
+			request:    postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}),
 			addtHeader: map[string]struct{}{"X-Forwarded-Host": {}},
 			expectedOK: true,
 		},
 		{
-			name: "grafana.org from grafana.com",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}, true),
+			name:           "grafana.org from grafana.com",
+			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}),
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "grafana.org from grafana.com explicit trust for grafana.com",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}, true),
+			name:           "grafana.org from grafana.com explicit trust for grafana.com",
+			request:        postRequest(t, "grafana.org", map[string]string{"Origin": "https://grafana.com"}),
 			trustedOrigins: map[string]struct{}{"grafana.com": {}},
 			expectedOK:     true,
 		},
 		{
-			name: "grafana.org from grafana.com with X-Forwarded-Host and header trusted",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.com"}, true),
+			name:           "grafana.org from grafana.com with X-Forwarded-Host and header trusted",
+			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.com"}),
 			addtHeader:     map[string]struct{}{"X-Forwarded-Host": {}},
 			trustedOrigins: map[string]struct{}{"grafana.com": {}},
 			expectedOK:     true,
 		},
 		{
-			name: "safe endpoint",
-			getCfg: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			request:       postRequest(t, "example.org/foo/bar", map[string]string{"Origin": "null"}, true),
+			name:          "safe endpoint",
+			request:       postRequest(t, "example.org/foo/bar", map[string]string{"Origin": "null"}),
 			safeEndpoints: map[string]struct{}{"foo/bar": {}},
 			expectedOK:    true,
-		},
-		{
-			name: "grafana.org with X-Forwarded-Host; will skip csrf check if login cookie is not present; without login cookie, should return nil because login cookie is not present",
-			getCfg: func() *setting.Cfg {
-				cfg := setting.NewCfg()
-				cfg.SectionWithEnvOverrides("security").Key("csrf_always_check").SetValue("false")
-				return cfg
-			},
-			request:    postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}, false),
-			expectedOK: true,
-		},
-		{
-			name: "grafana.org with X-Forwarded-Host; will perform csrf check even if login cookie is not present, should return error because host name does not match origin",
-			getCfg: func() *setting.Cfg {
-				cfg := setting.NewCfg()
-				cfg.SectionWithEnvOverrides("security").Key("csrf_always_check").SetValue("true")
-				return cfg
-			},
-			request:        postRequest(t, "grafana.localhost", map[string]string{"X-Forwarded-Host": "grafana.org", "Origin": "https://grafana.org"}, false),
-			expectedStatus: http.StatusForbidden,
 		},
 	}
 
@@ -216,14 +168,15 @@ func TestCSRF_Check(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
-			csrf := ProvideCSRFFilter(tc.getCfg())
-			csrf.trustedOrigins = tc.trustedOrigins
-			csrf.headers = tc.addtHeader
-			csrf.safeEndpoints = tc.safeEndpoints
-			csrf.cfg.LoginCookieName = "LoginCookie"
+			c := CSRF{
+				cfg:            setting.NewCfg(),
+				trustedOrigins: tc.trustedOrigins,
+				headers:        tc.addtHeader,
+				safeEndpoints:  tc.safeEndpoints,
+			}
+			c.cfg.LoginCookieName = "LoginCookie"
 
-			err := csrf.check(tc.request)
-
+			err := c.check(tc.request)
 			if tc.expectedOK {
 				require.NoError(t, err)
 			} else {
@@ -236,7 +189,7 @@ func TestCSRF_Check(t *testing.T) {
 	}
 }
 
-func postRequest(t testing.TB, hostname string, headers map[string]string, withLoginCookie bool) *http.Request {
+func postRequest(t testing.TB, hostname string, headers map[string]string) *http.Request {
 	t.Helper()
 	urlParts := strings.SplitN(hostname, "/", 2)
 
@@ -249,12 +202,10 @@ func postRequest(t testing.TB, hostname string, headers map[string]string, withL
 
 	r.Host = urlParts[0]
 
-	if withLoginCookie {
-		r.AddCookie(&http.Cookie{
-			Name:  "LoginCookie",
-			Value: "this should not be important",
-		})
-	}
+	r.AddCookie(&http.Cookie{
+		Name:  "LoginCookie",
+		Value: "this should not be important",
+	})
 
 	for k, v := range headers {
 		r.Header.Set(k, v)
@@ -288,44 +239,4 @@ func csrfScenario(t *testing.T, cookieName, method, origin, host string) *httpte
 	handler := service.Middleware()(testHandler)
 	handler.ServeHTTP(rr, req)
 	return rr
-}
-
-func TestProvideCSRFFilter(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		getInput            func() *setting.Cfg
-		expectedAlwaysCheck bool
-	}{
-		{
-			getInput: func() *setting.Cfg {
-				return setting.NewCfg()
-			},
-			// Should default to false when config value is not set.
-			expectedAlwaysCheck: false,
-		},
-		{
-			getInput: func() *setting.Cfg {
-				cfg := setting.NewCfg()
-				cfg.SectionWithEnvOverrides("security").Key("csrf_always_check").SetValue("false")
-				return cfg
-			},
-			// Should be false when config value is set to false.
-			expectedAlwaysCheck: false,
-		},
-		{
-			getInput: func() *setting.Cfg {
-				cfg := setting.NewCfg()
-				cfg.SectionWithEnvOverrides("security").Key("csrf_always_check").SetValue("true")
-				return cfg
-			},
-			// Should be true when config value is set to true.
-			expectedAlwaysCheck: true,
-		},
-	}
-
-	for _, tc := range tests {
-		csrf := ProvideCSRFFilter(tc.getInput())
-		assert.Equal(t, tc.expectedAlwaysCheck, csrf.alwaysCheck)
-	}
 }

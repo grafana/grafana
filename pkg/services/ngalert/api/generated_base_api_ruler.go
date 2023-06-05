@@ -119,7 +119,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
-				api.Hooks.Wrap(srv.RouteDeleteGrafanaRuleGroupConfig),
+				srv.RouteDeleteGrafanaRuleGroupConfig,
 				m,
 			),
 		)
@@ -129,7 +129,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RouteDeleteNamespaceGrafanaRulesConfig),
+				srv.RouteDeleteNamespaceGrafanaRulesConfig,
 				m,
 			),
 		)
@@ -139,7 +139,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RouteDeleteNamespaceRulesConfig),
+				srv.RouteDeleteNamespaceRulesConfig,
 				m,
 			),
 		)
@@ -149,7 +149,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
-				api.Hooks.Wrap(srv.RouteDeleteRuleGroupConfig),
+				srv.RouteDeleteRuleGroupConfig,
 				m,
 			),
 		)
@@ -159,7 +159,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname}",
-				api.Hooks.Wrap(srv.RouteGetGrafanaRuleGroupConfig),
+				srv.RouteGetGrafanaRuleGroupConfig,
 				m,
 			),
 		)
@@ -169,7 +169,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules",
-				api.Hooks.Wrap(srv.RouteGetGrafanaRulesConfig),
+				srv.RouteGetGrafanaRulesConfig,
 				m,
 			),
 		)
@@ -179,7 +179,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RouteGetNamespaceGrafanaRulesConfig),
+				srv.RouteGetNamespaceGrafanaRulesConfig,
 				m,
 			),
 		)
@@ -189,7 +189,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RouteGetNamespaceRulesConfig),
+				srv.RouteGetNamespaceRulesConfig,
 				m,
 			),
 		)
@@ -199,7 +199,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname}",
-				api.Hooks.Wrap(srv.RouteGetRulegGroupConfig),
+				srv.RouteGetRulegGroupConfig,
 				m,
 			),
 		)
@@ -209,7 +209,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/ruler/{DatasourceUID}/api/v1/rules",
-				api.Hooks.Wrap(srv.RouteGetRulesConfig),
+				srv.RouteGetRulesConfig,
 				m,
 			),
 		)
@@ -219,7 +219,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/grafana/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RoutePostNameGrafanaRulesConfig),
+				srv.RoutePostNameGrafanaRulesConfig,
 				m,
 			),
 		)
@@ -229,7 +229,7 @@ func (api *API) RegisterRulerApiEndpoints(srv RulerApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}",
-				api.Hooks.Wrap(srv.RoutePostNameRulesConfig),
+				srv.RoutePostNameRulesConfig,
 				m,
 			),
 		)

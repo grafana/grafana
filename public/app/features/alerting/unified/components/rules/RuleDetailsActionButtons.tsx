@@ -37,7 +37,8 @@ interface Props {
 export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Props) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
-  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
+  const alertId = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.id ?? '' : '';
+  const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal(alertId);
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
@@ -158,14 +159,10 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     );
   }
 
-  if (isGrafanaRulerRule(rule.rulerRule)) {
+  if (alertId) {
     buttons.push(
       <Fragment key="history">
-        <Button
-          size="sm"
-          icon="history"
-          onClick={() => isGrafanaRulerRule(rule.rulerRule) && showStateHistoryModal(rule.rulerRule)}
-        >
+        <Button size="sm" icon="history" onClick={() => showStateHistoryModal()}>
           Show state history
         </Button>
         {StateHistoryModal}

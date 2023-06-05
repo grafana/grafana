@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useId } from 'react';
+import React, { useCallback } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, toIconName } from '@grafana/data';
@@ -8,6 +8,7 @@ import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
@@ -90,7 +91,7 @@ export const FolderSection = ({
     }
   };
 
-  const id = useId();
+  const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
   let icon = toIconName(section.icon ?? '');
@@ -148,7 +149,6 @@ export const FolderSection = ({
           {selectionToggle && selection && (
             <div onClick={onToggleFolder}>
               <Checkbox
-                className={styles.checkbox}
                 value={selection(section.kind, section.uid)}
                 aria-label={t('search.folder-view.select-folder', 'Select folder')}
               />
@@ -232,8 +232,5 @@ const getSectionHeaderStyles = (theme: GrafanaTheme2, editable: boolean) => {
       place-content: center;
       padding-bottom: 1rem;
     `,
-    checkbox: css({
-      marginRight: theme.spacing(1),
-    }),
   };
 };

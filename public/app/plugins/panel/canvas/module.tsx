@@ -2,13 +2,12 @@ import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@gr
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
-import { getConnectionEditor } from './editor/connectionEditor';
-import { getElementEditor } from './editor/element/elementEditor';
-import { getLayerEditor } from './editor/layer/layerEditor';
+import { getElementEditor } from './editor/elementEditor';
+import { getLayerEditor } from './editor/layerEditor';
 import { canvasMigrationHandler } from './migrations';
-import { Options } from './models.gen';
+import { PanelOptions } from './models.gen';
 
-export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<Options>) => {
+export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilder<PanelOptions>) => {
   builder.addBooleanSwitch({
     path: 'inlineEditing',
     name: 'Inline editing',
@@ -18,13 +17,13 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 
   builder.addBooleanSwitch({
     path: 'showAdvancedTypes',
-    name: 'Experimental element types',
-    description: 'Enable selection of experimental element types',
-    defaultValue: true,
+    name: 'Show advanced element types',
+    description: '',
+    defaultValue: false,
   });
 };
 
-export const plugin = new PanelPlugin<Options>(CanvasPanel)
+export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
   .useFieldConfig({
     standardOptions: {
@@ -45,8 +44,6 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;
-      const connectionSelection = state.selectedConnection;
-
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {
@@ -58,16 +55,6 @@ export const plugin = new PanelPlugin<Options>(CanvasPanel)
             })
           );
         }
-      }
-
-      if (connectionSelection) {
-        builder.addNestedOptions(
-          getConnectionEditor({
-            category: ['Selected connection'],
-            connection: connectionSelection,
-            scene: state.scene,
-          })
-        );
       }
     }
   });

@@ -5,7 +5,7 @@ import { DataFrame, TimeRange } from '@grafana/data';
 import { withTheme2 } from '../../themes/ThemeContext';
 import { GraphNG, GraphNGProps, PropDiffFn } from '../GraphNG/GraphNG';
 import { PanelContext, PanelContextRoot } from '../PanelChrome/PanelContext';
-import { hasVisibleLegendSeries, PlotLegend } from '../uPlot/PlotLegend';
+import { PlotLegend } from '../uPlot/PlotLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { preparePlotConfigBuilder } from './utils';
@@ -39,7 +39,8 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
   renderLegend = (config: UPlotConfigBuilder) => {
     const { legend, frames } = this.props;
 
-    if (!config || (legend && !legend.showLegend) || !hasVisibleLegendSeries(config, frames)) {
+    //hides and shows the legend ON the uPlot graph
+    if (!config || (legend && !legend.showLegend)) {
       return null;
     }
 

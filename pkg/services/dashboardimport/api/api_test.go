@@ -11,10 +11,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -30,7 +29,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -107,7 +106,7 @@ func TestImportDashboardAPI(t *testing.T) {
 			},
 		}
 
-		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaNotReached), nil, acmock.New().WithDisabled())
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)
 		s := webtest.NewServer(t, routeRegister)
@@ -121,9 +120,6 @@ func TestImportDashboardAPI(t *testing.T) {
 			req := s.NewPostRequest("/api/dashboards/import?trimdefaults=true", bytes.NewReader(jsonBytes))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{
 				UserID: 1,
-				Permissions: map[int64]map[string][]string{
-					1: {dashboards.ActionDashboardsCreate: {}},
-				},
 			})
 			resp, err := s.SendJSON(req)
 			require.NoError(t, err)
@@ -135,7 +131,7 @@ func TestImportDashboardAPI(t *testing.T) {
 
 	t.Run("Quota reached", func(t *testing.T) {
 		service := &serviceMock{}
-		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, actest.FakeAccessControl{ExpectedEvaluate: true})
+		importDashboardAPI := New(service, quotaServiceFunc(quotaReached), nil, acmock.New().WithDisabled())
 
 		routeRegister := routing.NewRouteRegister()
 		importDashboardAPI.RegisterAPIEndpoints(routeRegister)

@@ -31,7 +31,7 @@ export const AlertType = ({ editingExistingRule }: Props) => {
 
   return (
     <>
-      {!editingExistingRule && ruleFormType !== RuleFormType.cloudRecording && (
+      {!editingExistingRule && (
         <Field error={errors.type?.message} invalid={!!errors.type?.message} data-testid="alert-type-picker">
           <InputControl
             render={({ field: { onChange } }) => (

@@ -5,6 +5,7 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import {
   AbstractLabelOperator,
   AnnotationQueryRequest,
+  ArrayVector,
   CoreApp,
   DataFrame,
   dataFrameToJSON,
@@ -32,7 +33,7 @@ import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, QueryStats, SupportingQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
@@ -56,19 +57,19 @@ const testFrame: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: [1, 2],
+      values: new ArrayVector([1, 2]),
     },
     {
       name: 'Line',
       type: FieldType.string,
       config: {},
-      values: ['line1', 'line2'],
+      values: new ArrayVector(['line1', 'line2']),
     },
     {
       name: 'labels',
       type: FieldType.other,
       config: {},
-      values: [
+      values: new ArrayVector([
         {
           label: 'value',
           label2: 'value ',
@@ -78,19 +79,19 @@ const testFrame: DataFrame = {
           label2: 'value2',
           label3: ' ',
         },
-      ],
+      ]),
     },
     {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: ['1000000', '2000000'],
+      values: new ArrayVector(['1000000', '2000000']),
     },
     {
       name: 'id',
       type: FieldType.string,
       config: {},
-      values: ['id1', 'id2'],
+      values: new ArrayVector(['id1', 'id2']),
     },
   ],
   length: 2,
@@ -399,19 +400,19 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: [1, 2],
+            values: new ArrayVector([1, 2]),
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: ['hello', 'hello 2'],
+            values: new ArrayVector(['hello', 'hello 2']),
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: [
+            values: new ArrayVector([
               {
                 label: 'value',
                 label2: 'value ',
@@ -421,19 +422,19 @@ describe('LokiDatasource', () => {
                 label2: 'value2',
                 label3: ' ',
               },
-            ],
+            ]),
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: ['1000000', '2000000'],
+            values: new ArrayVector(['1000000', '2000000']),
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: ['id1', 'id2'],
+            values: new ArrayVector(['id1', 'id2']),
           },
         ],
         length: 2,
@@ -456,37 +457,37 @@ describe('LokiDatasource', () => {
             name: 'Time',
             type: FieldType.time,
             config: {},
-            values: [1],
+            values: new ArrayVector([1]),
           },
           {
             name: 'Line',
             type: FieldType.string,
             config: {},
-            values: ['hello'],
+            values: new ArrayVector(['hello']),
           },
           {
             name: 'labels',
             type: FieldType.other,
             config: {},
-            values: [
+            values: new ArrayVector([
               {
                 label: 'value',
                 label2: 'value2',
                 label3: 'value3',
               },
-            ],
+            ]),
           },
           {
             name: 'tsNs',
             type: FieldType.string,
             config: {},
-            values: ['1000000'],
+            values: new ArrayVector(['1000000']),
           },
           {
             name: 'id',
             type: FieldType.string,
             config: {},
-            values: ['id1'],
+            values: new ArrayVector(['id1']),
           },
         ],
         length: 1,
@@ -932,7 +933,8 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
-          queryType: LokiQueryType.Range,
+          instant: false,
+          queryType: 'range',
           refId: 'log-volume-A',
           supportingQueryType: SupportingQueryType.LogsVolume,
         });
@@ -996,7 +998,7 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: '{label=value}',
-          queryType: LokiQueryType.Range,
+          queryType: 'instant',
           refId: 'log-sample-A',
           maxLines: 20,
         });
@@ -1014,7 +1016,7 @@ describe('LokiDatasource', () => {
           )
         ).toEqual({
           expr: '{label=value}',
-          queryType: LokiQueryType.Range,
+          queryType: 'instant',
           refId: 'log-sample-A',
           maxLines: 5,
         });
@@ -1139,24 +1141,6 @@ describe('LokiDatasource', () => {
       });
     });
   });
-
-  describe('getQueryStats', () => {
-    it('uses statsMetadataRequest', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      const spy = jest.spyOn(ds, 'statsMetadataRequest').mockResolvedValue({} as QueryStats);
-      ds.getQueryStats('{foo="bar"}');
-      expect(spy).toHaveBeenCalled();
-    });
-  });
-
-  describe('statsMetadataRequest', () => {
-    it('throws error if url starts with /', () => {
-      const ds = createLokiDatasource();
-      expect(async () => {
-        await ds.statsMetadataRequest('/index');
-      }).rejects.toThrow('invalid metadata request url: /index');
-    });
-  });
 });
 
 describe('applyTemplateVariables', () => {
@@ -1165,86 +1149,6 @@ describe('applyTemplateVariables', () => {
     const spy = jest.spyOn(ds, 'addAdHocFilters');
     ds.applyTemplateVariables({ expr: '{test}', refId: 'A' }, {});
     expect(spy).toHaveBeenCalledWith('{test}');
-  });
-
-  describe('with template and built-in variables', () => {
-    const scopedVars = {
-      __interval: { text: '1m', value: '1m' },
-      __interval_ms: { text: '1000', value: '1000' },
-      __range: { text: '1m', value: '1m' },
-      __range_ms: { text: '1000', value: '1000' },
-      __range_s: { text: '60', value: '60' },
-      testVariable: { text: 'foo', value: 'foo' },
-    };
-
-    it('should not interpolate __interval variables', () => {
-      const templateSrvMock = {
-        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
-        replace: jest.fn((a: string, ...rest: unknown[]) => a),
-      } as unknown as TemplateSrv;
-
-      const ds = createLokiDatasource(templateSrvMock);
-      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
-      ds.applyTemplateVariables(
-        { expr: 'rate({job="grafana"}[$__interval]) + rate({job="grafana"}[$__interval_ms])', refId: 'A' },
-        scopedVars
-      );
-      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
-      // Interpolated legend
-      expect(templateSrvMock.replace).toHaveBeenCalledWith(
-        undefined,
-        expect.not.objectContaining({
-          __interval: { text: '1m', value: '1m' },
-          __interval_ms: { text: '1000', value: '1000' },
-        })
-      );
-      // Interpolated expr
-      expect(templateSrvMock.replace).toHaveBeenCalledWith(
-        'rate({job="grafana"}[$__interval]) + rate({job="grafana"}[$__interval_ms])',
-        expect.not.objectContaining({
-          __interval: { text: '1m', value: '1m' },
-          __interval_ms: { text: '1000', value: '1000' },
-        }),
-        expect.any(Function)
-      );
-    });
-
-    it('should not interpolate __range variables', () => {
-      const templateSrvMock = {
-        getAdhocFilters: jest.fn().mockImplementation((query: string) => query),
-        replace: jest.fn((a: string, ...rest: unknown[]) => a),
-      } as unknown as TemplateSrv;
-
-      const ds = createLokiDatasource(templateSrvMock);
-      ds.addAdHocFilters = jest.fn().mockImplementation((query: string) => query);
-      ds.applyTemplateVariables(
-        {
-          expr: 'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
-          refId: 'A',
-        },
-        scopedVars
-      );
-      expect(templateSrvMock.replace).toHaveBeenCalledTimes(2);
-      // Interpolated legend
-      expect(templateSrvMock.replace).toHaveBeenCalledWith(
-        undefined,
-        expect.not.objectContaining({
-          __range: { text: '1m', value: '1m' },
-          __range_ms: { text: '1000', value: '1000' },
-          __range_s: { text: '60', value: '60' },
-        })
-      );
-      // Interpolated expr
-      expect(templateSrvMock.replace).toHaveBeenCalledWith(
-        'rate({job="grafana"}[$__range]) + rate({job="grafana"}[$__range_ms]) + rate({job="grafana"}[$__range_s])',
-        expect.not.objectContaining({
-          __range: { text: '1m', value: '1m' },
-          __range_ms: { text: '1000', value: '1000' },
-          __range_s: { text: '60', value: '60' },
-        }),
-        expect.any(Function)
-      );
-    });
   });
 });
 

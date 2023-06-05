@@ -231,9 +231,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
                 <br />
                 key=value, key2=value
                 <br />
-                Value can contain templates:
-                <br />
-                $seriesIndex - replaced with index of the series
               </>
             }
           >

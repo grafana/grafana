@@ -33,8 +33,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Alertmanager",
@@ -75,8 +74,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Annotations list",
@@ -112,8 +110,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Azure Monitor",
@@ -171,8 +168,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Bar chart",
@@ -208,8 +204,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Bar gauge",
@@ -245,8 +240,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Candlestick",
@@ -282,8 +276,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Canvas",
@@ -316,11 +309,10 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/canvas/",
     "category": "",
-    "state": "",
+    "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "CloudWatch",
@@ -356,8 +348,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Dashboard list",
@@ -393,45 +384,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Datagrid",
-    "type": "panel",
-    "id": "datagrid",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
-        "large": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/datagrid/",
-    "category": "",
-    "state": "beta",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Elasticsearch",
@@ -472,8 +425,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Flame Graph",
@@ -509,8 +461,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Gauge",
@@ -546,8 +497,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Geomap",
@@ -583,8 +533,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Getting Started",
@@ -620,8 +569,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Google Cloud Monitoring",
@@ -657,50 +605,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Grafana Pyroscope",
-    "type": "datasource",
-    "id": "phlare",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://www.grafana.com"
-      },
-      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
-      "links": [
-        {
-          "name": "GitHub Project",
-          "url": "https://github.com/grafana/phlare"
-        }
-      ],
-      "logos": {
-        "small": "public/app/plugins/datasource/phlare/img/grafana_pyroscope_icon.svg",
-        "large": "public/app/plugins/datasource/phlare/img/grafana_pyroscope_icon.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/phlare/",
-    "category": "profiling",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Graph (old)",
@@ -736,8 +641,7 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Graphite",
@@ -782,8 +686,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Heatmap",
@@ -819,8 +722,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Histogram",
@@ -856,8 +758,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "InfluxDB",
@@ -893,8 +794,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Jaeger",
@@ -939,8 +839,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Logs",
@@ -976,8 +875,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Loki",
@@ -1022,8 +920,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Microsoft SQL Server",
@@ -1059,8 +956,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "MySQL",
@@ -1096,8 +992,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "News",
@@ -1133,8 +1028,7 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Node Graph",
@@ -1170,8 +1064,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "OpenTSDB",
@@ -1207,10 +1100,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
+    "signatureOrg": ""
+  },{
     "name": "Parca",
     "type": "datasource",
     "id": "parca",
@@ -1222,12 +1113,10 @@
         "url": "https://www.grafana.com"
       },
       "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
-      "links": [
-        {
-          "name": "GitHub Project",
-          "url": "https://github.com/parca-dev/parca"
-        }
-      ],
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/parca-dev/parca"
+      }],
       "logos": {
         "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
         "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
@@ -1249,8 +1138,46 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
+  },
+  {
+    "name": "Phlare",
+    "type": "datasource",
+    "id": "phlare",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.",
+      "links": [{
+        "name": "GitHub Project",
+        "url": "https://github.com/grafana/phlare"
+      }],
+      "logos": {
+        "small": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg",
+        "large": "public/app/plugins/datasource/phlare/img/phlare_icon_color.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/phlare/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": ""
   },
   {
     "name": "Pie chart",
@@ -1286,8 +1213,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "PostgreSQL",
@@ -1323,8 +1249,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Prometheus",
@@ -1365,8 +1290,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Stat",
@@ -1402,8 +1326,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "State timeline",
@@ -1439,8 +1362,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Status history",
@@ -1476,8 +1398,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Table",
@@ -1513,8 +1434,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Table (old)",
@@ -1550,8 +1470,7 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Tempo",
@@ -1592,8 +1511,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "TestData",
@@ -1629,8 +1547,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Text",
@@ -1666,8 +1583,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Time series",
@@ -1703,8 +1619,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Traces",
@@ -1740,45 +1655,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
-  },
-  {
-    "name": "Trend",
-    "type": "panel",
-    "id": "trend",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Like timeseries, but when x != time",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/trend/img/trend.svg",
-        "large": "public/app/plugins/panel/trend/img/trend.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/trend/",
-    "category": "",
-    "state": "beta",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Welcome",
@@ -1814,8 +1691,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "XY Chart",
@@ -1851,8 +1727,7 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   },
   {
     "name": "Zipkin",
@@ -1893,7 +1768,6 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": "",
-    "angularDetected": false
+    "signatureOrg": ""
   }
 ]

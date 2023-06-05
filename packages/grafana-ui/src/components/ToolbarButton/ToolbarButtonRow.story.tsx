@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
@@ -8,7 +8,7 @@ import { ToolbarButton } from './ToolbarButton';
 import { ToolbarButtonRow } from './ToolbarButtonRow';
 import mdx from './ToolbarButtonRow.mdx';
 
-const meta: Meta<typeof ToolbarButtonRow> = {
+const meta: ComponentMeta<typeof ToolbarButtonRow> = {
   title: 'Buttons/ToolbarButton/ToolbarButtonRow',
   component: ToolbarButtonRow,
   decorators: [withCenteredStory],
@@ -22,7 +22,7 @@ const meta: Meta<typeof ToolbarButtonRow> = {
   },
 };
 
-export const Basic: StoryFn<typeof ToolbarButtonRow> = (args) => {
+export const Basic: ComponentStory<typeof ToolbarButtonRow> = (args) => {
   return (
     <DashboardStoryCanvas>
       <ToolbarButtonRow {...args}>

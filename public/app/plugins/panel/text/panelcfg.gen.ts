@@ -45,13 +45,13 @@ export const defaultCodeOptions: Partial<CodeOptions> = {
   showMiniMap: false,
 };
 
-export interface Options {
+export interface PanelOptions {
   code?: CodeOptions;
   content: string;
   mode: TextMode;
 }
 
-export const defaultOptions: Partial<Options> = {
+export const defaultPanelOptions: Partial<PanelOptions> = {
   content: `# Title
 
 For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`,

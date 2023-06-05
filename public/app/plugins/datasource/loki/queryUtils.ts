@@ -17,7 +17,6 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  Distinct,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -219,7 +218,6 @@ export function isQueryWithLabelFormat(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LabelFormatExpr) {
         queryWithLabelFormat = true;
-        return false;
       }
     },
   });
@@ -262,10 +260,10 @@ export function isQueryWithLabelFilter(query: string): boolean {
   let hasLabelFilter = false;
 
   tree.iterate({
-    enter: ({ type }): false | void => {
+    enter: ({ type, node }): false | void => {
       if (type.id === LabelFilter) {
         hasLabelFilter = true;
-        return false;
+        return;
       }
     },
   });
@@ -281,26 +279,12 @@ export function isQueryWithLineFilter(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LineFilter) {
         queryWithLineFilter = true;
-        return false;
+        return;
       }
     },
   });
 
   return queryWithLineFilter;
-}
-
-export function isQueryWithDistinct(query: string): boolean {
-  let hasDistinct = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === Distinct) {
-        hasDistinct = true;
-        return false;
-      }
-    },
-  });
-  return hasDistinct;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
@@ -329,12 +313,4 @@ export const isLokiQuery = (query: DataQuery): query is LokiQuery => {
 
   const lokiQuery = query as LokiQuery;
   return lokiQuery.expr !== undefined;
-};
-
-export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefined => {
-  if (!query || !isLokiQuery(query)) {
-    return undefined;
-  }
-
-  return query;
 };

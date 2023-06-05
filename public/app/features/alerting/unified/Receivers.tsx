@@ -38,11 +38,13 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.error} data-testid="receivers-notification-error">
-      <Stack alignItems="flex-end" direction="column" gap={0}>
-        <Stack alignItems="center" gap={1}>
-          <Icon name="exclamation-circle" />
-          <div>{`${errorCount} ${pluralize('error', errorCount)} with contact points`}</div>
+    <div className={styles.warning} data-testid="receivers-notification-error">
+      <Stack alignItems="flex-end" direction="column">
+        <Stack alignItems="center">
+          <Icon name="exclamation-triangle" />
+          <div className={styles.countMessage}>
+            {`${errorCount} ${pluralize('error', errorCount)} with contact points`}
+          </div>
         </Stack>
         <div>{'Some alert notifications might not be delivered'}</div>
       </Stack>
@@ -212,8 +214,11 @@ function getPageNavigationModel(type: PageType | undefined, id: string | undefin
 export default withErrorBoundary(Receivers, { style: 'page' });
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  error: css`
-    color: ${theme.colors.error.text};
+  warning: css`
+    color: ${theme.colors.warning.text};
+  `,
+  countMessage: css`
+    padding-left: 10px;
   `,
   headingContainer: css`
     display: flex;

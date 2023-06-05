@@ -199,15 +199,7 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
           >
             Flux language syntax
           </LinkButton>
-          <Segment
-            options={samples}
-            value="Sample query"
-            onChange={this.onSampleChange}
-            className={css`
-              margin-top: -${theme.spacing(0.5)};
-              margin-left: ${theme.spacing(0.5)};
-            `}
-          />
+          <Segment options={samples} value="Sample Query" onChange={this.onSampleChange} />
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow"></div>
           </div>

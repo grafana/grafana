@@ -1,4 +1,4 @@
-import { Meta, StoryFn } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React, { useState } from 'react';
 
 import { Button, Drawer, Tab, TabsBar } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Drawer.mdx';
 
-const meta: Meta<typeof Drawer> = {
+const meta: ComponentMeta<typeof Drawer> = {
   title: 'Overlays/Drawer',
   component: Drawer,
   decorators: [withCenteredStory],
@@ -22,6 +22,7 @@ const meta: Meta<typeof Drawer> = {
   args: {
     closeOnMaskClick: true,
     scrollableContent: false,
+    width: '40%',
     expandable: false,
     subtitle: 'This is a subtitle.',
   },
@@ -32,7 +33,7 @@ const meta: Meta<typeof Drawer> = {
   },
 };
 
-export const Global: StoryFn<typeof Drawer> = (args) => {
+export const Global: ComponentStory<typeof Drawer> = (args) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
@@ -60,7 +61,7 @@ Global.args = {
   title: 'Drawer title',
 };
 
-export const LongContent: StoryFn<typeof Drawer> = (args) => {
+export const LongContent: ComponentStory<typeof Drawer> = (args) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>
@@ -141,7 +142,43 @@ LongContent.args = {
   title: 'Drawer title with long content',
 };
 
-export const WithTabs: StoryFn<typeof Drawer> = (args) => {
+export const InLine: ComponentStory<typeof Drawer> = (args) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <div
+        style={{
+          height: '300px',
+          width: '500px',
+          border: '1px solid white',
+          position: 'relative',
+          overflow: 'hidden',
+        }}
+      >
+        <Button onClick={() => setIsOpen(true)}>Open drawer</Button>
+        {isOpen && (
+          <Drawer {...args} onClose={() => setIsOpen(false)}>
+            <ul>
+              <li>this</li>
+              <li>is</li>
+              <li>a</li>
+              <li>list</li>
+              <li>of</li>
+              <li>menu</li>
+              <li>items</li>
+            </ul>
+          </Drawer>
+        )}
+      </div>
+    </>
+  );
+};
+InLine.args = {
+  title: 'Drawer title inline',
+  inline: true,
+};
+
+export const WithTabs: ComponentStory<typeof Drawer> = (args) => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('options');
 
@@ -169,7 +206,6 @@ export const WithTabs: StoryFn<typeof Drawer> = (args) => {
     </>
   );
 };
-
 WithTabs.args = {
   title: 'Drawer title with tabs',
 };

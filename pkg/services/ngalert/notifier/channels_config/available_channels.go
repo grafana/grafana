@@ -255,7 +255,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				},
 				{
 					Label:        "Addresses",
-					Description:  "You can enter multiple email addresses using a \";\", \"\\n\" or  \",\" separator",
+					Description:  "You can enter multiple email addresses using a \";\" separator",
 					Element:      ElementTypeTextArea,
 					PropertyName: "addresses",
 					Required:     true,

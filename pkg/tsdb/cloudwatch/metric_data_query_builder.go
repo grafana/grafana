@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -19,7 +20,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *mode
 		ReturnData: aws.Bool(query.ReturnData),
 	}
 
-	if len(query.Label) > 0 {
+	if e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels) && len(query.Label) > 0 {
 		mdq.Label = &query.Label
 	}
 

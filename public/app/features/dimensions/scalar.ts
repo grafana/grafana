@@ -1,7 +1,6 @@
 import { DataFrame, Field } from '@grafana/data';
-import { ScalarDimensionConfig, ScalarDimensionMode } from '@grafana/schema';
 
-import { DimensionSupplier } from './types';
+import { DimensionSupplier, ScalarDimensionConfig, ScalarDimensionMode } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------

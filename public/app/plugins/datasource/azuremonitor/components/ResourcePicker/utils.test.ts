@@ -198,21 +198,9 @@ describe('AzureMonitor ResourcePicker utils', () => {
       });
     });
 
-    it('updates a resource with a resource URI for Traces', () => {
-      expect(setResources(createMockQuery(), 'traces', ['/subscription/sub'])).toMatchObject({
-        azureTraces: { resources: ['/subscription/sub'] },
-      });
-    });
-
-    it('ignores an empty logs resource URI', () => {
+    it('ignores an empty resource URI', () => {
       expect(setResources(createMockQuery(), 'logs', ['/subscription/sub', ''])).toMatchObject({
         azureLogAnalytics: { resources: ['/subscription/sub'] },
-      });
-    });
-
-    it('ignores an empty traces resource URI', () => {
-      expect(setResources(createMockQuery(), 'traces', ['/subscription/sub', ''])).toMatchObject({
-        azureTraces: { resources: ['/subscription/sub'] },
       });
     });
 

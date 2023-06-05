@@ -1,14 +1,15 @@
 package grafanaplugin
 
 composableKinds: PanelCfg: lineage: {
-	schemas: [
+	seqs: [
 		{
-			version: [0, 0]
-			schema: {
-				Options: {
-					foo: string
-				} @cuetsy(kind="interface")
-			}
+			schemas: [
+				{
+					PanelOptions: {
+						foo: string
+					} @cuetsy(kind="interface")
+				},
+			]
 		},
 	]
 }

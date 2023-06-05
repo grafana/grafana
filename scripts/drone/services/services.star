@@ -5,8 +5,7 @@ This module has functions for Drone services to be used in pipelines.
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
-        {"name": "mysql57", "temp": {"medium": "memory"}},
-        {"name": "mysql80", "temp": {"medium": "memory"}},
+        {"name": "mysql", "temp": {"medium": "memory"}},
     ]
 
 def integration_test_services():
@@ -25,7 +24,7 @@ def integration_test_services():
             ],
         },
         {
-            "name": "mysql57",
+            "name": "mysql",
             "image": "mysql:5.7.39",
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
@@ -33,19 +32,7 @@ def integration_test_services():
                 "MYSQL_USER": "grafana",
                 "MYSQL_PASSWORD": "password",
             },
-            "volumes": [{"name": "mysql57", "path": "/var/lib/mysql"}],
-        },
-        {
-            "name": "mysql80",
-            "image": "mysql:8.0.32",
-            "environment": {
-                "MYSQL_ROOT_PASSWORD": "rootpass",
-                "MYSQL_DATABASE": "grafana_tests",
-                "MYSQL_USER": "grafana",
-                "MYSQL_PASSWORD": "password",
-            },
-            "volumes": [{"name": "mysql80", "path": "/var/lib/mysql"}],
-            "commands": ["docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"],
+            "volumes": [{"name": "mysql", "path": "/var/lib/mysql"}],
         },
         {
             "name": "redis",

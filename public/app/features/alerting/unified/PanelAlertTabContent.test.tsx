@@ -319,16 +319,10 @@ describe('PanelAlertTabContent', () => {
         panelId: panel.id,
       }
     );
-    expect(mocks.api.fetchRules).toHaveBeenCalledWith(
-      GRAFANA_RULES_SOURCE_NAME,
-      {
-        dashboardUID: dashboard.uid,
-        panelId: panel.id,
-      },
-      undefined,
-      undefined,
-      undefined
-    );
+    expect(mocks.api.fetchRules).toHaveBeenCalledWith(GRAFANA_RULES_SOURCE_NAME, {
+      dashboardUID: dashboard.uid,
+      panelId: panel.id,
+    });
   });
 
   it('Update NewRuleFromPanel button url when template changes', async () => {

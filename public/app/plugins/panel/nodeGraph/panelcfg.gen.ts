@@ -21,7 +21,7 @@ export interface ArcOption {
   field?: string;
 }
 
-export interface Options {
+export interface PanelOptions {
   edges?: {
     /**
      * Unit for the main stat to override what ever is set in the data frame.

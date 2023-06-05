@@ -1,13 +1,12 @@
 import { action } from '@storybook/addon-actions';
-import { StoryFn, Meta } from '@storybook/react';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-
-import mdx from './Alert.mdx';
+import mdx from '../Alert/Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
@@ -28,7 +27,7 @@ const meta: Meta = {
   },
 };
 
-export const Basic: StoryFn<typeof Alert> = (args) => {
+export const Basic: ComponentStory<typeof Alert> = (args) => {
   return (
     <div>
       <Alert {...args}>
@@ -45,7 +44,7 @@ Basic.args = {
   title: 'Basic',
 };
 
-export const WithActions: StoryFn<typeof Alert> = (args) => {
+export const WithActions: ComponentStory<typeof Alert> = (args) => {
   return (
     <Alert {...args}>
       <VerticalGroup>
@@ -62,7 +61,7 @@ WithActions.args = {
   buttonContent: 'Close',
 };
 
-export const Examples: StoryFn<typeof Alert> = () => {
+export const Examples: ComponentStory<typeof Alert> = () => {
   return (
     <VerticalGroup>
       <StoryExample name="With buttonContent and children">
@@ -81,7 +80,12 @@ export const Examples: StoryFn<typeof Alert> = () => {
       <StoryExample name="Severities">
         <VerticalGroup>
           {severities.map((severity) => (
-            <Alert title={`Severity: ${severity}`} severity={severity} key={severity}>
+            <Alert
+              title={`Severity: ${severity}`}
+              severity={severity}
+              key={severity}
+              onRemove={action('Remove button clicked')}
+            >
               Child content
             </Alert>
           ))}

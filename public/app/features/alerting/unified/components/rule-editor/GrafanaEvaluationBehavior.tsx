@@ -162,7 +162,7 @@ function FolderGroupAndEvaluationInterval({
     rulesSource: GRAFANA_RULES_SOURCE_NAME,
     groups: [],
   };
-  const emptyGroup: CombinedRuleGroup = { name: groupName, interval: evaluateEvery, rules: [], totals: {} };
+  const emptyGroup: CombinedRuleGroup = { name: groupName, interval: evaluateEvery, rules: [] };
 
   return (
     <div>

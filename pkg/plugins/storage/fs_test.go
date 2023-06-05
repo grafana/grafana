@@ -10,8 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 func TestAdd(t *testing.T) {
@@ -26,8 +24,8 @@ func TestAdd(t *testing.T) {
 
 	pluginID := "test-app"
 
-	fs := FileSystem(log.NewTestPrettyLogger(), testDir)
-	archive, err := fs.Extract(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
+	fs := FileSystem(&fakeLogger{}, testDir)
+	archive, err := fs.Add(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
 
@@ -50,10 +48,93 @@ func TestAdd(t *testing.T) {
 	require.Equal(t, files[5].Name(), "text.txt")
 }
 
+func TestRemove(t *testing.T) {
+	pluginDir := t.TempDir()
+	pluginJSON := filepath.Join(pluginDir, "plugin.json")
+	//nolint:gosec
+	_, err := os.Create(pluginJSON)
+	require.NoError(t, err)
+
+	pluginID := "test-datasource"
+	i := &FS{
+		pluginsDir: filepath.Dir(pluginDir),
+		store: map[string]string{
+			pluginID: pluginDir,
+		},
+		log: &fakeLogger{},
+	}
+
+	err = i.Remove(context.Background(), pluginID)
+	require.NoError(t, err)
+
+	_, err = os.Stat(pluginDir)
+	require.True(t, os.IsNotExist(err))
+
+	t.Run("Uninstall will search in nested dir folder for plugin.json", func(t *testing.T) {
+		pluginDistDir := filepath.Join(t.TempDir(), "dist")
+		err = os.Mkdir(pluginDistDir, os.ModePerm)
+		require.NoError(t, err)
+		pluginJSON = filepath.Join(pluginDistDir, "plugin.json")
+		//nolint:gosec
+		_, err = os.Create(pluginJSON)
+		require.NoError(t, err)
+
+		pluginDir = filepath.Dir(pluginDistDir)
+
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.NoError(t, err)
+
+		_, err = os.Stat(pluginDir)
+		require.True(t, os.IsNotExist(err))
+	})
+
+	t.Run("Uninstall will not delete folder if cannot recognize plugin structure", func(t *testing.T) {
+		pluginDir = t.TempDir()
+		i = &FS{
+			pluginsDir: filepath.Dir(pluginDir),
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot recognize as plugin folder")
+
+		_, err = os.Stat(pluginDir)
+		require.False(t, os.IsNotExist(err))
+	})
+
+	t.Run("Uninstall will not delete folder if plugin's directory is not a subdirectory of specified plugins directory", func(t *testing.T) {
+		pluginDir = t.TempDir()
+		i = &FS{
+			pluginsDir: "/some/other/path",
+			store: map[string]string{
+				pluginID: pluginDir,
+			},
+			log: &fakeLogger{},
+		}
+
+		err = i.Remove(context.Background(), pluginID)
+		require.EqualError(t, err, "cannot uninstall a plugin outside of the plugins directory")
+
+		_, err = os.Stat(pluginDir)
+		require.False(t, os.IsNotExist(err))
+	})
+}
+
 func TestExtractFiles(t *testing.T) {
 	pluginsDir := setupFakePluginsDir(t)
 
-	i := &FS{log: log.NewTestPrettyLogger(), pluginsDir: pluginsDir}
+	i := &FS{log: &fakeLogger{}, pluginsDir: pluginsDir}
 
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
 		skipWindows(t)
@@ -284,3 +365,16 @@ func skipWindows(t *testing.T) {
 		t.Skip("Skipping test on Windows")
 	}
 }
+
+type fakeLogger struct{}
+
+func (f *fakeLogger) Successf(_ string, _ ...interface{}) {}
+func (f *fakeLogger) Failuref(_ string, _ ...interface{}) {}
+func (f *fakeLogger) Info(_ ...interface{})               {}
+func (f *fakeLogger) Infof(_ string, _ ...interface{})    {}
+func (f *fakeLogger) Debug(_ ...interface{})              {}
+func (f *fakeLogger) Debugf(_ string, _ ...interface{})   {}
+func (f *fakeLogger) Warn(_ ...interface{})               {}
+func (f *fakeLogger) Warnf(_ string, _ ...interface{})    {}
+func (f *fakeLogger) Error(_ ...interface{})              {}
+func (f *fakeLogger) Errorf(_ string, _ ...interface{})   {}

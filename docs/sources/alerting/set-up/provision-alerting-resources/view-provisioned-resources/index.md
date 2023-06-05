@@ -7,8 +7,7 @@ keywords:
   - alerting
   - alerting resources
   - provisioning
-title: View provisioned alerting resources in Grafana
-menuTitle: View provisioned resources in Grafana
+title: View provisioned resources in Grafana
 weight: 300
 ---
 

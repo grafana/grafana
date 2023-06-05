@@ -15,14 +15,12 @@ import (
 	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	InvalidJWT         = "Invalid JWT"
-	InvalidRole        = "Invalid Role"
-	UserNotFound       = "User not found"
-	authQueryParamName = "auth_token"
+	InvalidJWT   = "Invalid JWT"
+	InvalidRole  = "Invalid Role"
+	UserNotFound = "User not found"
 )
 
 func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId int64) bool {
@@ -32,14 +30,12 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 
 	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
 	if jwtToken == "" && h.Cfg.JWTAuthURLLogin {
-		jwtToken = ctx.Req.URL.Query().Get(authQueryParamName)
+		jwtToken = ctx.Req.URL.Query().Get("auth_token")
 	}
 
 	if jwtToken == "" {
 		return false
 	}
-
-	stripSensitiveParam(h.Cfg, ctx.Req)
 
 	// Strip the 'Bearer' prefix if it exists.
 	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
@@ -207,16 +203,4 @@ func searchClaimsForStringAttr(attributePath string, claims map[string]interface
 	}
 
 	return "", nil
-}
-
-// remove sensitive query params
-// avoid JWT URL login passing auth_token in URL
-func stripSensitiveParam(cfg *setting.Cfg, httpRequest *http.Request) {
-	if cfg.JWTAuthURLLogin {
-		params := httpRequest.URL.Query()
-		if params.Has(authQueryParamName) {
-			params.Del(authQueryParamName)
-			httpRequest.URL.RawQuery = params.Encode()
-		}
-	}
 }

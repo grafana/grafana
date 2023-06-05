@@ -1,5 +1,6 @@
-import { Meta, ArgTypes } from '@storybook/blocks';
+import { Meta, Props } from '@storybook/addon-docs/blocks';
 import { ColorPicker } from './ColorPicker';
+import { ColorPickerInput } from './ColorPickerInput';
 
 <Meta title="Pickers and Editors/ColorPicker/ColorPicker" />
 
@@ -17,4 +18,4 @@ Color picker component, modified to be used inside forms. Supports all usual inp
 
 The format in which the color is returned to the `onChange` callback can be customised via `returnColorAs` prop.
 
-<ArgTypes of={ColorPicker} />
+<Props of={ColorPicker} />

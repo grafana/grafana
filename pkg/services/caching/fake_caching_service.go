@@ -11,8 +11,12 @@ import (
 type FakeOSSCachingService struct {
 	calls                  map[string]int
 	ReturnHit              bool
-	ReturnResourceResponse CachedResourceDataResponse
+	ReturnResourceResponse *backend.CallResourceResponse
 	ReturnQueryResponse    CachedQueryDataResponse
+}
+
+func (f *FakeOSSCachingService) CacheResourceResponse(ctx context.Context, req *backend.CallResourceRequest, resp *backend.CallResourceResponse) {
+	f.calls["CacheResourceResponse"]++
 }
 
 func (f *FakeOSSCachingService) HandleQueryRequest(ctx context.Context, req *backend.QueryDataRequest) (bool, CachedQueryDataResponse) {
@@ -20,7 +24,7 @@ func (f *FakeOSSCachingService) HandleQueryRequest(ctx context.Context, req *bac
 	return f.ReturnHit, f.ReturnQueryResponse
 }
 
-func (f *FakeOSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, CachedResourceDataResponse) {
+func (f *FakeOSSCachingService) HandleResourceRequest(ctx context.Context, req *backend.CallResourceRequest) (bool, *backend.CallResourceResponse) {
 	f.calls["HandleResourceRequest"]++
 	return f.ReturnHit, f.ReturnResourceResponse
 }

@@ -32,7 +32,7 @@ func (api *API) RegisterHistoryApiEndpoints(srv HistoryApi, m *metrics.API) {
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/rules/history",
-				api.Hooks.Wrap(srv.RouteGetStateHistory),
+				srv.RouteGetStateHistory,
 				m,
 			),
 		)

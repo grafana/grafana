@@ -56,7 +56,7 @@ func verifyArchive(archive string) error {
 
 // BuildImage builds a Docker image.
 // The image tag is returned.
-func BuildImage(version string, arch config.Architecture, grafanaDir string, useUbuntu, shouldSave bool, edition config.Edition, mode config.VersionMode) ([]string, error) {
+func BuildImage(version string, arch config.Architecture, grafanaDir string, useUbuntu, shouldSave bool, edition config.Edition) ([]string, error) {
 	var baseArch string
 
 	switch arch {
@@ -127,7 +127,6 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		"--no-cache",
 		"--file", "../../Dockerfile",
 		".",
-		"--label", fmt.Sprintf("mode=%s", string(mode)),
 	}
 
 	//nolint:gosec

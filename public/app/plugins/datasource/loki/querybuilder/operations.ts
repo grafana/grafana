@@ -1,4 +1,3 @@
-import { LabelParamEditor } from '../../prometheus/querybuilder/components/LabelParamEditor';
 import {
   createAggregationOperation,
   createAggregationOperationWithParam,
@@ -92,7 +91,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Parsers,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | json ${model.params.join(', ')}`.trim(),
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -105,7 +104,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Parsers,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -127,7 +126,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Parsers,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | regexp \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -149,7 +148,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Parsers,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | pattern \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -162,7 +161,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Parsers,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: pipelineRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -184,7 +183,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       defaultParams: [''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.PipeOperations,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | line_format \`${model.params[0]}\``,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -205,7 +204,7 @@ Example: \`{{.status_code}} - {{.message}}\`
       defaultParams: ['', ''],
       alternativesKey: 'format',
       category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.PipeOperations,
+      orderRank: LokiOperationOrder.LineFormats,
       renderer: (model, def, innerExpr) => `${innerExpr} | label_format ${model.params[1]}=${model.params[0]}`,
       addOperationHandler: addLokiOperation,
       explainHandler: () =>
@@ -400,7 +399,7 @@ Example: \`\`error_level=\`level\` \`\`
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
       category: LokiVisualQueryOperationCategory.LabelFilters,
-      orderRank: LokiOperationOrder.PipeOperations,
+      orderRank: LokiOperationOrder.LabelFilters,
       renderer: labelFilterRenderer,
       addOperationHandler: addLokiOperation,
       explainHandler: () => `Label expression filter allows filtering using original and extracted labels.`,
@@ -421,7 +420,7 @@ Example: \`\`error_level=\`level\` \`\`
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
       category: LokiVisualQueryOperationCategory.LabelFilters,
-      orderRank: LokiOperationOrder.PipeOperations,
+      orderRank: LokiOperationOrder.LabelFilters,
       renderer: (model, def, innerExpr) =>
         `${innerExpr} | ${model.params[0]} ${model.params[1]} ip(\`${model.params[2]}\`)`,
       addOperationHandler: addLokiOperation,
@@ -474,39 +473,6 @@ Example: \`\`error_level=\`level\` \`\`
             : ''
         }`;
       },
-    },
-    {
-      id: LokiOperationId.Decolorize,
-      name: 'Decolorize',
-      params: [],
-      defaultParams: [],
-      alternativesKey: 'format',
-      category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.PipeOperations,
-      renderer: (op, def, innerExpr) => `${innerExpr} | decolorize`,
-      addOperationHandler: addLokiOperation,
-      explainHandler: () => `This will remove ANSI color codes from log lines.`,
-    },
-    {
-      id: LokiOperationId.Distinct,
-      name: 'Distinct',
-      params: [
-        {
-          name: 'Label',
-          type: 'string',
-          restParam: true,
-          optional: true,
-          editor: LabelParamEditor,
-        },
-      ],
-      defaultParams: [''],
-      alternativesKey: 'format',
-      category: LokiVisualQueryOperationCategory.Formats,
-      orderRank: LokiOperationOrder.Unwrap,
-      renderer: (op, def, innerExpr) => `${innerExpr} | distinct ${op.params.join(',')}`,
-      addOperationHandler: addLokiOperation,
-      explainHandler: () =>
-        'Allows filtering log lines using their original and extracted labels to filter out duplicate label values. The first line occurrence of a distinct value is returned, and the others are dropped.',
     },
     ...binaryScalarOperations,
     {

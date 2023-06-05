@@ -3,7 +3,7 @@ import { includes, filter } from 'lodash';
 import { rangeUtil } from '@grafana/data';
 
 export default class TimeGrainConverter {
-  static createISO8601Duration(timeGrain: string | number, timeGrainUnit: string) {
+  static createISO8601Duration(timeGrain: string | number, timeGrainUnit: any) {
     const timeIntervals = ['hour', 'minute', 'h', 'm'];
     if (includes(timeIntervals, timeGrainUnit)) {
       return `PT${timeGrain}${timeGrainUnit[0].toUpperCase()}`;
@@ -33,7 +33,7 @@ export default class TimeGrainConverter {
     return TimeGrainConverter.createISO8601Duration(timeGrain, unit);
   }
 
-  static findClosestTimeGrain(interval: string, allowedTimeGrains: string[]) {
+  static findClosestTimeGrain(interval: any, allowedTimeGrains: string[]) {
     const timeGrains = filter(allowedTimeGrains, (o) => o !== 'auto');
 
     let closest = timeGrains[0];

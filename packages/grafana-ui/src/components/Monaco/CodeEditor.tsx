@@ -99,14 +99,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
     this.getEditorValue = () => editor.getValue();
 
-    // Save when pressing Ctrl+S or Cmd+S
-    editor.onKeyDown((e: monacoType.IKeyboardEvent) => {
-      if (e.keyCode === monaco.KeyCode.KeyS && (e.ctrlKey || e.metaKey)) {
-        e.preventDefault();
-        this.onSave();
-      }
-    });
-
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, this.onSave);
     const languagePromise = this.loadCustomLanguage();
 
     if (onEditorDidMount) {

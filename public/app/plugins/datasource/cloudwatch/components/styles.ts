@@ -26,7 +26,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     svg: {
       marginRight: theme.spacing(0.5),
     },
-    fontSize: 12,
   }),
 
   logGroupCountLabel: css({
@@ -94,6 +93,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   removeButton: css({
     verticalAlign: 'middle',
     marginLeft: theme.spacing(0.5),
+  }),
+
+  addBtn: css({
+    marginRight: '10px',
   }),
 });
 

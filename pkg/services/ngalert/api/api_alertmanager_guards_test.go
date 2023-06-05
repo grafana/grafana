@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
@@ -278,7 +277,7 @@ func TestCheckContactPoints(t *testing.T) {
 			},
 		},
 		{
-			name:      "editing secure settings of a provisioned object should fail",
+			name:      "editing a provisioned object should fail",
 			shouldErr: true,
 			currentConfig: []*definitions.GettableApiReceiver{
 				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
@@ -293,24 +292,10 @@ func TestCheckContactPoints(t *testing.T) {
 				}(),
 			},
 		},
-		{
-			name:      "editing settings of a provisioned object should fail",
-			shouldErr: true,
-			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
-			},
-			newConfig: []*definitions.PostableApiReceiver{
-				func() *definitions.PostableApiReceiver {
-					receiver := defaultPostableReceiver(t, "test-1")
-					receiver.GrafanaManagedReceivers[0].Settings = definitions.RawMessage(`{ "hello": "data", "data": { "test": "test"}}`)
-					return receiver
-				}(),
-			},
-		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := checkContactPoints(&logtest.Fake{}, test.currentConfig, test.newConfig)
+			err := checkContactPoints(test.currentConfig, test.newConfig)
 			if test.shouldErr {
 				require.Error(t, err)
 			} else {
@@ -335,8 +320,7 @@ func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provena
 						"url": true,
 					},
 					Settings: definitions.RawMessage(`{
-						"hello": "world",
-						"data": {}
+						"hello": "world"
 					}`),
 				},
 			},
@@ -355,8 +339,7 @@ func defaultPostableReceiver(t *testing.T, uid string) *definitions.PostableApiR
 					Type:                  "slack",
 					DisableResolveMessage: true,
 					Settings: definitions.RawMessage(`{
-						"hello": "world",
-						"data" : {}
+						"hello": "world"
 					}`),
 				},
 			},

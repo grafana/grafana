@@ -7,7 +7,7 @@ import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 import { LokiOptions } from '../types';
 
 import { DerivedFields } from './DerivedFields';
-import { QuerySettings } from './QuerySettings';
+import { MaxLinesField } from './MaxLinesField';
 
 export type Props = DataSourcePluginOptionsEditorProps<LokiOptions>;
 
@@ -24,7 +24,6 @@ const makeJsonUpdater =
   };
 
 const setMaxLines = makeJsonUpdater('maxLines');
-const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
@@ -42,15 +41,13 @@ export const ConfigEditor = (props: Props) => {
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
-      <QuerySettings
-        maxLines={options.jsonData.maxLines || ''}
-        onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
-        predefinedOperations={options.jsonData.predefinedOperations || ''}
-        onPredefinedOperationsChange={(value) => onOptionsChange(setPredefinedOperations(options, value))}
+      <MaxLinesField
+        value={options.jsonData.maxLines || ''}
+        onChange={(value) => onOptionsChange(setMaxLines(options, value))}
       />
 
       <DerivedFields
-        fields={options.jsonData.derivedFields}
+        value={options.jsonData.derivedFields}
         onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
       />
     </>

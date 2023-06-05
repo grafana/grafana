@@ -1,7 +1,6 @@
 // Libraries
 import React, { useEffect, useState } from 'react';
 
-import { getUrlSyncManager } from '@grafana/scenes';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { getSceneByTitle } from './scenes';
@@ -14,7 +13,7 @@ export const ScenePage = (props: Props) => {
 
   useEffect(() => {
     if (scene && !isInitialized) {
-      getUrlSyncManager().initSync(scene);
+      scene.initUrlSync();
       setInitialized(true);
     }
   }, [isInitialized, scene]);

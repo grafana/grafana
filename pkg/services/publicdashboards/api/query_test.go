@@ -310,12 +310,11 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// Create public dashboard
-	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
-		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled: &isEnabled,
-			OrgId:     dashboard.OrgID,
+		OrgId:        dashboard.OrgID,
+		PublicDashboard: &PublicDashboard{
+			IsEnabled: true,
 		},
 	}
 

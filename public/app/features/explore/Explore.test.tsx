@@ -4,8 +4,7 @@ import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
-import { ExploreId } from 'app/types';
+import { ExploreId } from 'app/types/explore';
 
 import { Explore, Props } from './Explore';
 import { scanStopAction } from './state/query';
@@ -87,7 +86,7 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   showFlameGraph: true,
-  splitOpen: jest.fn(),
+  splitOpen: () => {},
   splitted: false,
   isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
@@ -133,7 +132,7 @@ describe('Explore', () => {
     setup();
 
     // Wait for the Explore component to render
-    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.queryByTestId('explore-no-data')).not.toBeInTheDocument();
   });
@@ -143,7 +142,7 @@ describe('Explore', () => {
     setup({ queryResponse: queryResp });
 
     // Wait for the Explore component to render
-    await screen.findByTestId(selectors.components.DataSourcePicker.container);
+    await screen.findByLabelText('Data source picker select container');
 
     expect(screen.getByTestId('explore-no-data')).toBeInTheDocument();
   });
@@ -163,7 +162,7 @@ describe('Explore', () => {
     it('should render data source picker', async () => {
       setup();
 
-      const dataSourcePicker = await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      const dataSourcePicker = await screen.findByLabelText('Data source picker select container');
 
       expect(dataSourcePicker).toBeInTheDocument();
     });

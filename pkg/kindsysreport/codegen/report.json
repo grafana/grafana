@@ -1,36 +1,5 @@
 {
   "kinds": {
-    "accesspolicy": {
-      "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
-      "crd": {
-        "dummySchema": false,
-        "group": "accesspolicy.core.grafana.com",
-        "scope": "Namespaced"
-      },
-      "currentVersion": [
-        0,
-        0
-      ],
-      "description": "Access rules for a scope+role.  NOTE there is a unique constraint on role+scope",
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": false,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/accesspolicy/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/accesspolicy",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/accesspolicy/accesspolicy_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/accesspolicy/x/accesspolicy_types.gen.ts"
-      },
-      "machineName": "accesspolicy",
-      "maturity": "merged",
-      "name": "AccessPolicy",
-      "pluralMachineName": "accesspolicies",
-      "pluralName": "AccessPolicies"
-    },
     "alertgroupspanelcfg": {
       "category": "composable",
       "codeowners": [
@@ -124,7 +93,7 @@
     "annotationslistpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-frontend-platform"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -266,7 +235,7 @@
     "cloudwatchdataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/aws-datasources"
+        "grafana/aws-plugins"
       ],
       "currentVersion": [
         0,
@@ -281,7 +250,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.gen.ts"
       },
       "machineName": "cloudwatchdataquery",
-      "maturity": "experimental",
+      "maturity": "merged",
       "name": "CloudWatchDataQuery",
       "pluralMachineName": "cloudwatchdataquerys",
       "pluralName": "CloudWatchDataQuerys",
@@ -312,9 +281,10 @@
     "dashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": true,
@@ -326,7 +296,7 @@
         0
       ],
       "description": "A Grafana dashboard.",
-      "grafanaMaturityCount": 260,
+      "grafanaMaturityCount": 140,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -387,7 +357,7 @@
     "dashboardlistpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-frontend-platform"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -406,30 +376,6 @@
       "name": "DashboardListPanelCfg",
       "pluralMachineName": "dashboardlistpanelcfgs",
       "pluralName": "DashboardListPanelCfgs",
-      "schemaInterface": "PanelCfg"
-    },
-    "datagridpanelcfg": {
-      "category": "composable",
-      "codeowners": [
-        "grafana/grafana-bi-squad"
-      ],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": true,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/datagridpanelcfg/schema-reference",
-        "go": "n/a",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/datagrid/panelcfg.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/datagrid/panelcfg.gen.ts"
-      },
-      "machineName": "datagridpanelcfg",
-      "maturity": "experimental",
-      "name": "DatagridPanelCfg",
-      "pluralMachineName": "datagridpanelcfgs",
-      "pluralName": "DatagridPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "datasource": {
@@ -552,31 +498,26 @@
     },
     "folder": {
       "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
+      "codeowners": [],
       "crd": {
         "dummySchema": false,
-        "group": "folder.core.grafana.com",
-        "scope": "Namespaced"
+        "group": "",
+        "scope": ""
       },
       "currentVersion": [
         0,
         0
       ],
-      "description": "A folder is a collection of resources that are grouped together and can share permissions.",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/folder/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/folder",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/folder/folder_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/folder/x/folder_types.gen.ts"
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
       },
       "machineName": "folder",
-      "maturity": "merged",
+      "maturity": "planned",
       "name": "Folder",
       "pluralMachineName": "folders",
       "pluralName": "Folders"
@@ -653,9 +594,7 @@
     },
     "googlecloudmonitoringdataquery": {
       "category": "composable",
-      "codeowners": [
-        "grafana/partner-datasources"
-      ],
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -663,13 +602,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/googlecloudmonitoringdataquery/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/cloud-monitoring/kinds/dataquery/types_dataquery_gen.go",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloud-monitoring/dataquery.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloud-monitoring/dataquery.gen.ts"
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
       },
       "machineName": "googlecloudmonitoringdataquery",
-      "maturity": "merged",
+      "maturity": "planned",
       "name": "GoogleCloudMonitoringDataQuery",
       "pluralMachineName": "googlecloudmonitoringdataquerys",
       "pluralName": "GoogleCloudMonitoringDataQuerys",
@@ -739,50 +678,6 @@
       "name": "GrafanaDataSourceCfg",
       "pluralMachineName": "grafanadatasourcecfgs",
       "pluralName": "GrafanaDataSourceCfgs",
-      "schemaInterface": "DataSourceCfg"
-    },
-    "grafanapyroscopedataquery": {
-      "category": "composable",
-      "codeowners": [],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": false,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/grafanapyroscopedataquery/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/grafanapyroscope/kinds/dataquery/types_dataquery_gen.go",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafanapyroscope/dataquery.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafanapyroscope/dataquery.gen.ts"
-      },
-      "machineName": "grafanapyroscopedataquery",
-      "maturity": "experimental",
-      "name": "GrafanaPyroscopeDataQuery",
-      "pluralMachineName": "grafanapyroscopedataquerys",
-      "pluralName": "GrafanaPyroscopeDataQuerys",
-      "schemaInterface": "DataQuery"
-    },
-    "grafanapyroscopedatasourcecfg": {
-      "category": "composable",
-      "codeowners": [],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": true,
-      "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
-      },
-      "machineName": "grafanapyroscopedatasourcecfg",
-      "maturity": "planned",
-      "name": "GrafanaPyroscopeDataSourceCfg",
-      "pluralMachineName": "grafanapyroscopedatasourcecfgs",
-      "pluralName": "GrafanaPyroscopeDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
     "graphitedataquery": {
@@ -899,6 +794,28 @@
       "pluralName": "HistogramPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
+    "iconpanelcfg": {
+      "category": "composable",
+      "codeowners": [],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "iconpanelcfg",
+      "maturity": "planned",
+      "name": "IconPanelCfg",
+      "pluralMachineName": "iconpanelcfgs",
+      "pluralName": "IconPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "jaegerdataquery": {
       "category": "composable",
       "codeowners": [],
@@ -946,9 +863,10 @@
     "librarypanel": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": false,
@@ -960,7 +878,7 @@
         0
       ],
       "description": "A standalone panel",
-      "grafanaMaturityCount": 19,
+      "grafanaMaturityCount": 8,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/librarypanel/schema-reference",
@@ -1157,7 +1075,7 @@
     "newspanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-frontend-platform"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -1248,6 +1166,52 @@
       "pluralName": "ParcaDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "phlaredataquery": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/phlaredataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/phlare/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.gen.ts"
+      },
+      "machineName": "phlaredataquery",
+      "maturity": "experimental",
+      "name": "PhlareDataQuery",
+      "pluralMachineName": "phlaredataquerys",
+      "pluralName": "PhlareDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "phlaredatasourcecfg": {
+      "category": "composable",
+      "codeowners": [],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "phlaredatasourcecfg",
+      "maturity": "planned",
+      "name": "PhlareDataSourceCfg",
+      "pluralMachineName": "phlaredatasourcecfgs",
+      "pluralName": "PhlareDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
@@ -1275,9 +1239,10 @@
     "playlist": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": false,
@@ -1350,9 +1315,10 @@
     "preferences": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": false,
@@ -1375,8 +1341,8 @@
       "machineName": "preferences",
       "maturity": "merged",
       "name": "Preferences",
-      "pluralMachineName": "preferences",
-      "pluralName": "Preferences"
+      "pluralMachineName": "preferencess",
+      "pluralName": "Preferencess"
     },
     "prometheusdataquery": {
       "category": "composable",
@@ -1427,9 +1393,10 @@
     "publicdashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": false,
@@ -1507,90 +1474,34 @@
       "pluralMachineName": "queryhistorys",
       "pluralName": "QueryHistorys"
     },
-    "role": {
-      "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
-      "crd": {
-        "dummySchema": false,
-        "group": "role.core.grafana.com",
-        "scope": "Namespaced"
-      },
-      "currentVersion": [
-        0,
-        0
-      ],
-      "description": "Roles represent a set of users+teams that should share similar access",
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": false,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/role/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/role",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/role/role_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/role/x/role_types.gen.ts"
-      },
-      "machineName": "role",
-      "maturity": "merged",
-      "name": "Role",
-      "pluralMachineName": "roles",
-      "pluralName": "Roles"
-    },
-    "rolebinding": {
-      "category": "core",
-      "codeowners": [
-        "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
-      ],
-      "crd": {
-        "dummySchema": false,
-        "group": "rolebinding.core.grafana.com",
-        "scope": "Namespaced"
-      },
-      "currentVersion": [
-        0,
-        0
-      ],
-      "description": "Role bindings links a user|team to a configured role",
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": false,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/rolebinding/schema-reference",
-        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/rolebinding",
-        "schema": "https://github.com/grafana/grafana/tree/main/kinds/rolebinding/rolebinding_kind.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/rolebinding/x/rolebinding_types.gen.ts"
-      },
-      "machineName": "rolebinding",
-      "maturity": "merged",
-      "name": "RoleBinding",
-      "pluralMachineName": "rolebindings",
-      "pluralName": "RoleBindings"
-    },
     "serviceaccount": {
       "category": "core",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/dataviz-squad",
+        "grafana/grafana-as-code",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "crd": {
         "dummySchema": false,
-        "group": "",
-        "scope": ""
+        "group": "serviceaccount.core.grafana.com",
+        "scope": "Namespaced"
       },
       "currentVersion": [
         0,
         0
       ],
-      "grafanaMaturityCount": 0,
+      "description": "system account",
+      "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/serviceaccount/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/serviceaccount",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/serviceaccount/serviceaccount_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/serviceaccount/x/serviceaccount_types.gen.ts"
       },
       "machineName": "serviceaccount",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "ServiceAccount",
       "pluralMachineName": "serviceaccounts",
       "pluralName": "ServiceAccounts"
@@ -1716,9 +1627,10 @@
     "team": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-frontend-platform",
-        "grafana/plugins-platform-frontend"
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "crd": {
         "dummySchema": false,
@@ -1730,7 +1642,7 @@
         0
       ],
       "description": "A team is a named grouping of Grafana users to which access control rules may be assigned.",
-      "grafanaMaturityCount": 0,
+      "grafanaMaturityCount": 5,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
@@ -1839,7 +1751,7 @@
     "textpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-frontend-platform"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -1886,30 +1798,6 @@
       "pluralMachineName": "thumbs",
       "pluralName": "Thumbs"
     },
-    "timeseriespanelcfg": {
-      "category": "composable",
-      "codeowners": [
-        "grafana/dataviz-squad"
-      ],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": true,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/timeseriespanelcfg/schema-reference",
-        "go": "n/a",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/timeseries/panelcfg.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/timeseries/panelcfg.gen.ts"
-      },
-      "machineName": "timeseriespanelcfg",
-      "maturity": "merged",
-      "name": "TimeSeriesPanelCfg",
-      "pluralMachineName": "timeseriespanelcfgs",
-      "pluralName": "TimeSeriesPanelCfgs",
-      "schemaInterface": "PanelCfg"
-    },
     "tracespanelcfg": {
       "category": "composable",
       "codeowners": [],
@@ -1930,30 +1818,6 @@
       "name": "TracesPanelCfg",
       "pluralMachineName": "tracespanelcfgs",
       "pluralName": "TracesPanelCfgs",
-      "schemaInterface": "PanelCfg"
-    },
-    "trendpanelcfg": {
-      "category": "composable",
-      "codeowners": [
-        "grafana/dataviz-squad"
-      ],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": true,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/trendpanelcfg/schema-reference",
-        "go": "n/a",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/trend/panelcfg.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/trend/panelcfg.gen.ts"
-      },
-      "machineName": "trendpanelcfg",
-      "maturity": "merged",
-      "name": "TrendPanelCfg",
-      "pluralMachineName": "trendpanelcfgs",
-      "pluralName": "TrendPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "user": {
@@ -2092,7 +1956,6 @@
           "dashboarddataquery",
           "dashboarddatasourcecfg",
           "dashboardlistpanelcfg",
-          "datagridpanelcfg",
           "debugpanelcfg",
           "elasticsearchdataquery",
           "elasticsearchdatasourcecfg",
@@ -2104,13 +1967,12 @@
           "googlecloudmonitoringdatasourcecfg",
           "grafanadataquery",
           "grafanadatasourcecfg",
-          "grafanapyroscopedataquery",
-          "grafanapyroscopedatasourcecfg",
           "graphitedataquery",
           "graphitedatasourcecfg",
           "grapholdpanelcfg",
           "heatmappanelcfg",
           "histogrampanelcfg",
+          "iconpanelcfg",
           "jaegerdataquery",
           "jaegerdatasourcecfg",
           "livepanelcfg",
@@ -2125,6 +1987,8 @@
           "nodegraphpanelcfg",
           "parcadataquery",
           "parcadatasourcecfg",
+          "phlaredataquery",
+          "phlaredatasourcecfg",
           "piechartpanelcfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
@@ -2140,20 +2004,17 @@
           "testdatadataquery",
           "testdatadatasourcecfg",
           "textpanelcfg",
-          "timeseriespanelcfg",
           "tracespanelcfg",
-          "trendpanelcfg",
           "welcomepanelcfg",
           "xychartpanelcfg",
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 69
+        "count": 67
       },
       "core": {
         "name": "core",
         "items": [
-          "accesspolicy",
           "apikey",
           "dashboard",
           "datasource",
@@ -2164,14 +2025,12 @@
           "publicdashboard",
           "query",
           "queryhistory",
-          "role",
-          "rolebinding",
           "serviceaccount",
           "team",
           "thumb",
           "user"
         ],
-        "count": 17
+        "count": 14
       }
     },
     "maturity": {
@@ -2181,15 +2040,12 @@
           "annotationslistpanelcfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
-          "cloudwatchdataquery",
           "dashboard",
           "dashboardlistpanelcfg",
-          "datagridpanelcfg",
           "debugpanelcfg",
           "elasticsearchdataquery",
           "gaugepanelcfg",
           "geomappanelcfg",
-          "grafanapyroscopedataquery",
           "histogrampanelcfg",
           "librarypanel",
           "logspanelcfg",
@@ -2197,6 +2053,7 @@
           "newspanelcfg",
           "nodegraphpanelcfg",
           "parcadataquery",
+          "phlaredataquery",
           "piechartpanelcfg",
           "prometheusdataquery",
           "statetimelinepanelcfg",
@@ -2208,7 +2065,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 29
+        "count": 27
       },
       "mature": {
         "name": "mature",
@@ -2218,22 +2075,17 @@
       "merged": {
         "name": "merged",
         "items": [
-          "accesspolicy",
           "alertgroupspanelcfg",
           "azuremonitordataquery",
-          "folder",
-          "googlecloudmonitoringdataquery",
+          "cloudwatchdataquery",
           "heatmappanelcfg",
           "playlist",
           "preferences",
           "publicdashboard",
-          "role",
-          "rolebinding",
-          "team",
-          "timeseriespanelcfg",
-          "trendpanelcfg"
+          "serviceaccount",
+          "team"
         ],
-        "count": 14
+        "count": 9
       },
       "planned": {
         "name": "planned",
@@ -2249,14 +2101,16 @@
           "datasource",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
+          "folder",
           "gettingstartedpanelcfg",
+          "googlecloudmonitoringdataquery",
           "googlecloudmonitoringdatasourcecfg",
           "grafanadataquery",
           "grafanadatasourcecfg",
-          "grafanapyroscopedatasourcecfg",
           "graphitedataquery",
           "graphitedatasourcecfg",
           "grapholdpanelcfg",
+          "iconpanelcfg",
           "jaegerdataquery",
           "jaegerdatasourcecfg",
           "livepanelcfg",
@@ -2266,12 +2120,12 @@
           "mysqldataquery",
           "mysqldatasourcecfg",
           "parcadatasourcecfg",
+          "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
-          "serviceaccount",
           "tableoldpanelcfg",
           "tempodatasourcecfg",
           "testdatadatasourcecfg",
@@ -2282,7 +2136,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 43
+        "count": 45
       },
       "stable": {
         "name": "stable",

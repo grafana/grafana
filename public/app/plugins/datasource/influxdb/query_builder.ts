@@ -64,18 +64,13 @@ export class InfluxQueryBuilder {
       measurement = this.target.measurement;
       policy = this.target.policy;
 
-      // If there is a measurement and it is not empty string
-      if (!measurement.match(/^\/.*\/|^$/)) {
+      if (!measurement.match('^/.*/')) {
         measurement = '"' + measurement + '"';
 
         if (policy && policy !== 'default') {
           policy = '"' + policy + '"';
           measurement = policy + '.' + measurement;
         }
-      }
-
-      if (measurement === '') {
-        return 'SHOW FIELD KEYS';
       }
 
       return 'SHOW FIELD KEYS FROM ' + measurement;
@@ -94,9 +89,7 @@ export class InfluxQueryBuilder {
         measurement = policy + '.' + measurement;
       }
 
-      if (measurement !== '') {
-        query += ' FROM ' + measurement;
-      }
+      query += ' FROM ' + measurement;
     }
 
     if (withKey) {

@@ -112,7 +112,7 @@ export const LogGroupsSelector = ({
 
   return (
     <>
-      <Modal className={styles.modal} title="Select log groups" isOpen={isModalOpen} onDismiss={toggleModal}>
+      <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
           <div className={styles.searchField}>
             <EditorField label="Log group name prefix">
@@ -139,22 +139,11 @@ export const LogGroupsSelector = ({
         <div>
           {!isLoading && selectableLogGroups.length >= 25 && (
             <>
-              <div className={styles.limitLabel}>
+              <Label className={styles.limitLabel}>
                 <Icon name="info-circle"></Icon>
                 Only the first 50 results can be shown. If you do not see an expected log group, try narrowing down your
                 search.
-                <p>
-                  A{' '}
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/cloudwatch_limits_cwl.html"
-                  >
-                    maximum{' '}
-                  </a>{' '}
-                  of 50 Cloudwatch log groups can be queried at one time.
-                </p>
-              </div>
+              </Label>
               <Space layout="block" v={1} />
             </>
           )}
@@ -229,15 +218,15 @@ export const LogGroupsSelector = ({
             }}
           />
         </EditorField>
-
-        <Modal.ButtonRow>
-          <Button onClick={handleCancel} variant="secondary" type="button" fill="outline">
-            Cancel
-          </Button>
-          <Button onClick={handleApply} type="button">
+        <Space layout="block" v={2} />
+        <div>
+          <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups
           </Button>
-        </Modal.ButtonRow>
+          <Button onClick={handleCancel} variant="secondary" type="button">
+            Cancel
+          </Button>
+        </div>
       </Modal>
 
       <div>
@@ -251,7 +240,7 @@ export const LogGroupsSelector = ({
           }}
           type="button"
         >
-          Select log groups
+          Select Log Groups
         </Button>
       </div>
     </>

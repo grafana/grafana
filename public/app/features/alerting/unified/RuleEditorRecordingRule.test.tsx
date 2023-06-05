@@ -127,9 +127,10 @@ describe('RuleEditor recording rules', () => {
       },
     });
 
-    renderRuleEditor(undefined, true);
+    renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
     await userEvent.type(await ui.inputs.name.find(), 'my great new recording rule');
+    await userEvent.click(await ui.buttons.lotexRecordingRule.get());
 
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));

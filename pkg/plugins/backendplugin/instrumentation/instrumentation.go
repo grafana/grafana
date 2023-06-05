@@ -39,7 +39,7 @@ var (
 		}, []string{"source", "plugin_id", "endpoint", "target"},
 	)
 
-	PluginRequestDurationSeconds = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	PluginRequestDurationSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",

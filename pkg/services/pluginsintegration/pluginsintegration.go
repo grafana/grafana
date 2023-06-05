@@ -26,9 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -71,11 +68,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.FileStore), new(*filestore.Service)),
 	wire.Bind(new(plugins.SignatureCalculator), new(*signature.Signature)),
 	signature.ProvideService,
-	wire.Bind(new(plugins.KeyStore), new(*keystore.Service)),
-	keystore.ProvideService,
-	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
-	keyretriever.ProvideService,
-	dynamic.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -86,7 +78,7 @@ var WireExtensionSet = wire.NewSet(
 	signature.ProvideOSSAuthorizer,
 	wire.Bind(new(plugins.PluginLoaderAuthorizer), new(*signature.UnsignedPluginAuthorizer)),
 	wire.Bind(new(finder.Finder), new(*finder.Local)),
-	finder.ProvideLocalFinder,
+	finder.NewLocalFinder,
 )
 
 func ProvideClientDecorator(
@@ -119,7 +111,6 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
 		clientmiddleware.NewCookiesMiddleware(skipCookiesNames),
-		clientmiddleware.NewResourceResponseMiddleware(),
 	}
 
 	// Placing the new service implementation behind a feature flag until it is known to be stable

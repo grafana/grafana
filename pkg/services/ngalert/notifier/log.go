@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-var LoggerFactory alertingLogging.LoggerFactory = func(logger string, ctx ...interface{}) alertingLogging.Logger {
-	return &logWrapper{log.New(append([]interface{}{logger}, ctx...)...)}
+var LoggerFactory alertingLogging.LoggerFactory = func(ctx ...interface{}) alertingLogging.Logger {
+	return &logWrapper{log.New(ctx...)}
 }
 
 type logWrapper struct {

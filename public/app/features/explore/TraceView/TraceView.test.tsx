@@ -91,14 +91,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Span Attributes/));
-    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Attributes/));
+    expect(screen.queryByText(/Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {

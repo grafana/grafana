@@ -1,7 +1,7 @@
-import { StoryFn } from '@storybook/react';
+import { ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { ComponentSize } from '../../types';
+import { ComponentSize } from '../../types/size';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from '../Card/Card';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
@@ -36,7 +36,7 @@ export default {
   },
 };
 
-export const Examples: StoryFn<typeof Button> = () => {
+export const Examples: ComponentStory<typeof Button> = () => {
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -69,6 +69,12 @@ export const Examples: StoryFn<typeof Button> = () => {
         </Button>
       </HorizontalGroup>
       <div />
+      <HorizontalGroup spacing="lg">
+        <div>With icon only</div>
+        <Button icon="cloud" size="sm" />
+        <Button icon="cloud" size="md" />
+        <Button icon="cloud" size="lg" />
+      </HorizontalGroup>
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
@@ -98,7 +104,7 @@ export const Examples: StoryFn<typeof Button> = () => {
   );
 };
 
-export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+export const Basic: ComponentStory<typeof Button> = (args: ButtonProps) => <Button {...args} />;
 
 Basic.args = {
   children: 'Example button',

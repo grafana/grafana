@@ -9,55 +9,59 @@ name:        "LibraryPanel"
 maturity:    "experimental"
 description: "A standalone panel"
 
-lineage: schemas: [{
-	version: [0, 0]
-	schema: {
-		spec: {
-			// Folder UID
-			folderUid?: string @grafanamaturity(ToMetadata="sys")
+lineage: seqs: [
+	{
+		schemas: [
+			// 0.0
+			{
+				@grafana(TSVeneer="type")
 
-			// Library element UID
-			uid: string
+				// Folder UID
+				folderUid?: string @grafanamaturity(ToMetadata="sys")
 
-			// Panel name (also saved in the model)
-			name: string & strings.MinRunes(1)
+				// Library element UID
+				uid: string
 
-			// Panel description
-			description?: string
+				// Panel name (also saved in the model)
+				name: string & strings.MinRunes(1)
 
-			// The panel type (from inside the model)
-			type: string & strings.MinRunes(1)
+				// Panel description
+				description?: string
 
-			// Dashboard version when this was saved (zero if unknown)
-			schemaVersion?: uint16
+				// The panel type (from inside the model)
+				type: string & strings.MinRunes(1)
 
-			// panel version, incremented each time the dashboard is updated.
-			version: int64 @grafanamaturity(NeedsExpertReview)
+				// Dashboard version when this was saved (zero if unknown)
+				schemaVersion?: uint16
 
-			// TODO: should be the same panel schema defined in dashboard
-			// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-			model: {...}
+				// panel version, incremented each time the dashboard is updated.
+				version: int64 @grafanamaturity(NeedsExpertReview)
 
-			// Object storage metadata
-			meta?: #LibraryElementDTOMeta @grafanamaturity(ToMetadata="sys")
-		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+				// TODO: should be the same panel schema defined in dashboard
+				// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+				model: {...}
 
-		#LibraryElementDTOMetaUser: {
-			id:        int64
-			name:      string
-			avatarUrl: string
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				// Object storage metadata
+				meta?: #LibraryElementDTOMeta @grafanamaturity(ToMetadata="sys")
 
-		#LibraryElementDTOMeta: {
-			folderName:          string
-			folderUid:           string @grafanamaturity(ToMetadata="sys")
-			connectedDashboards: int64
+				#LibraryElementDTOMetaUser: {
+					id:        int64
+					name:      string
+					avatarUrl: string
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
-			created: string & time.Time
-			updated: string & time.Time
+				#LibraryElementDTOMeta: {
+					folderName:          string
+					folderUid:           string @grafanamaturity(ToMetadata="sys")
+					connectedDashboards: int64
 
-			createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
-			updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
-		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
-	}
-}]
+					created: string & time.Time
+					updated: string & time.Time
+
+					createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
+					updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
+				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+			},
+		]
+	},
+]

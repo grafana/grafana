@@ -122,15 +122,6 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			}
 		}
 
-		if hit["fields"] != nil {
-			source, ok := hit["fields"].(map[string]interface{})
-			if ok {
-				for k, v := range source {
-					doc[k] = v
-				}
-			}
-		}
-
 		for key := range doc {
 			propNames[key] = true
 		}
@@ -160,7 +151,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
+	setSearchWords(frame, searchWords)
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -267,27 +258,15 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	size := len(docs)
 	isFilterable := true
 	allFields := make([]*data.Field, len(propNames))
-	timeString := ""
-	timeStringOk := false
 
 	for propNameIdx, propName := range propNames {
 		// Special handling for time field
 		if propName == configuredFields.TimeField {
 			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
-				// Check if time field is a string
-				timeString, timeStringOk = doc[configuredFields.TimeField].(string)
-				// If not, it might be an array with one time string
-				if !timeStringOk {
-					timeList, ok := doc[configuredFields.TimeField].([]interface{})
-					if !ok || len(timeList) != 1 {
-						continue
-					}
-					// Check if the first element is a string
-					timeString, timeStringOk = timeList[0].(string)
-					if !timeStringOk {
-						continue
-					}
+				timeString, ok := doc[configuredFields.TimeField].(string)
+				if !ok {
+					continue
 				}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
@@ -1137,7 +1116,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
+func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1156,7 +1135,6 @@ func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int
 
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
-		"limit":       limit,
 	}
 }
 
@@ -1277,24 +1255,13 @@ func addOtherMetricsToFields(fields *[]*data.Field, bucket *simplejson.Json, met
 	otherMetrics := make([]*MetricAgg, 0)
 
 	for _, m := range target.Metrics {
-		// To other metrics we add metric of the same type that are not the current metric
-		if m.ID != metric.ID && m.Type == metric.Type {
+		if m.Type == metric.Type {
 			otherMetrics = append(otherMetrics, m)
 		}
 	}
 
-	if len(otherMetrics) > 0 {
+	if len(otherMetrics) > 1 {
 		metricName += " " + metric.Field
-
-		// We check if we have metric with the same type and same field name
-		// If so, append metric.ID to the metric name
-		for _, m := range otherMetrics {
-			if m.Field == metric.Field {
-				metricName += " " + metric.ID
-				break
-			}
-		}
-
 		if metric.Type == "bucket_script" {
 			// Use the formula in the column name
 			metricName = metric.Settings.Get("script").MustString("")

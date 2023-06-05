@@ -42,7 +42,7 @@ export interface AlertListOptions {
   folderId: number;
 }
 
-export interface StateFilter {
+interface StateFilter {
   firing: boolean;
   pending: boolean;
   inactive?: boolean; // backwards compat

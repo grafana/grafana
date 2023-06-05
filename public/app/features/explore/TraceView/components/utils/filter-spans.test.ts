@@ -15,7 +15,7 @@
 import { defaultFilters, defaultTagFilter } from '../../useSearch';
 import { TraceSpan } from '../types';
 
-import { filterSpans, filterSpansNewTraceViewHeader } from './filter-spans';
+import { filterSpans, filterSpansNewTraceView } from './filter-spans';
 
 describe('filterSpans', () => {
   // span0 contains strings that end in 0 or 1
@@ -110,51 +110,46 @@ describe('filterSpans', () => {
   const spans = [span0, span2] as TraceSpan[];
 
   it('should return `undefined` if spans is falsy', () => {
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, spanName: 'operationName' }, null)).toBe(undefined);
+    expect(filterSpansNewTraceView({ ...defaultFilters, spanName: 'operationName' }, null)).toBe(undefined);
   });
 
   // Service / span name
   it('should return spans whose serviceName match a filter', () => {
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, serviceName: 'serviceName0' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, serviceName: 'serviceName0' }, spans)).toEqual(
       new Set([spanID0])
     );
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, serviceName: 'serviceName2' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, serviceName: 'serviceName2' }, spans)).toEqual(
       new Set([spanID2])
     );
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, serviceName: 'serviceName2', serviceNameOperator: '!=' },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, serviceName: 'serviceName2', serviceNameOperator: '!=' }, spans)
     ).toEqual(new Set([spanID0]));
   });
 
   it('should return spans whose operationName match a filter', () => {
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, spanName: 'operationName0' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, spanName: 'operationName0' }, spans)).toEqual(
       new Set([spanID0])
     );
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, spanName: 'operationName2' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, spanName: 'operationName2' }, spans)).toEqual(
       new Set([spanID2])
     );
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, spanName: 'operationName2', spanNameOperator: '!=' }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, spanName: 'operationName2', spanNameOperator: '!=' }, spans)
     ).toEqual(new Set([spanID0]));
   });
 
   // Durations
   it('should return spans whose duration match a filter', () => {
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '2ms' }, spans)).toEqual(
-      new Set([spanID0, spanID2])
-    );
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '3.05ms' }, spans)).toEqual(new Set([spanID2]));
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, from: '3.05ms', fromOperator: '>=' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, from: '2ms' }, spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpansNewTraceView({ ...defaultFilters, from: '3.05ms' }, spans)).toEqual(new Set([spanID2]));
+    expect(filterSpansNewTraceView({ ...defaultFilters, from: '3.05ms', fromOperator: '>=' }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, from: '3.05ms', fromOperator: '>=', to: '4ms' }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, from: '3.05ms', fromOperator: '>=', to: '4ms' }, spans)
     ).toEqual(new Set([spanID0]));
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, to: '4ms' }, spans)).toEqual(new Set([spanID0]));
-    expect(filterSpansNewTraceViewHeader({ ...defaultFilters, to: '5ms', toOperator: '<=' }, spans)).toEqual(
+    expect(filterSpansNewTraceView({ ...defaultFilters, to: '4ms' }, spans)).toEqual(new Set([spanID0]));
+    expect(filterSpansNewTraceView({ ...defaultFilters, to: '5ms', toOperator: '<=' }, spans)).toEqual(
       new Set([spanID0, spanID2])
     );
   });
@@ -162,16 +157,16 @@ describe('filterSpans', () => {
   // Tags
   it('should return spans whose tags kv.key match a filter', () => {
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1' }] }, spans)
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey0' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey0' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2' }] }, spans)
     ).toEqual(new Set([spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }] },
         spans
       )
@@ -180,25 +175,16 @@ describe('filterSpans', () => {
 
   it('should return spans whose process.tags kv.key match a filter', () => {
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey1' }] },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey1' }] }, spans)
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey0' }] },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey0' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey2' }] },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey2' }] }, spans)
     ).toEqual(new Set([spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'processTagKey2', operator: '!=' }] },
         spans
       )
@@ -207,16 +193,16 @@ describe('filterSpans', () => {
 
   it('should return spans whose logs have a field whose kv.key match a filter', () => {
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, spans)
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey0' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey0' }] }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2' }] }, spans)
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2' }] }, spans)
     ).toEqual(new Set([spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey2', operator: '!=' }] },
         spans
       )
@@ -226,7 +212,7 @@ describe('filterSpans', () => {
   it('should return no spans when logs is null', () => {
     const nullSpan = { ...span0, logs: null };
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, [
+      filterSpansNewTraceView({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'logFieldKey1' }] }, [
         nullSpan,
       ] as unknown as TraceSpan[])
     ).toEqual(new Set([]));
@@ -234,13 +220,13 @@ describe('filterSpans', () => {
 
   it("should return spans whose tags' kv.key and kv.value match a filter", () => {
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
         spans
       )
@@ -249,19 +235,19 @@ describe('filterSpans', () => {
 
   it("should not return spans whose tags' kv.key match a filter but kv.value/operator does not match", () => {
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set());
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey2', operator: '!=' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'tagKey1', value: 'tagValue1', operator: '!=' }] },
         spans
       )
@@ -271,7 +257,7 @@ describe('filterSpans', () => {
   it('should return spans with multiple tag filters', () => {
     // tags in same span
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -283,7 +269,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -295,7 +281,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -309,7 +295,7 @@ describe('filterSpans', () => {
 
     // tags in different spans
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -321,7 +307,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set());
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -335,7 +321,7 @@ describe('filterSpans', () => {
 
     // values in different spans
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -347,7 +333,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set());
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -359,7 +345,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set());
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -371,7 +357,7 @@ describe('filterSpans', () => {
       )
     ).toEqual(new Set());
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           tags: [
@@ -388,19 +374,13 @@ describe('filterSpans', () => {
   it('should return spans with multiple filters', () => {
     // service name + span name
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0' },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0' }, spans)
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
-        { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName2' },
-        spans
-      )
+      filterSpansNewTraceView({ ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName2' }, spans)
     ).toEqual(new Set([]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName2', spanNameOperator: '!=' },
         spans
       )
@@ -408,19 +388,19 @@ describe('filterSpans', () => {
 
     // service name + span name + duration
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0', from: '2ms' },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName0', spanName: 'operationName0', to: '2ms' },
         spans
       )
     ).toEqual(new Set([]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName2', spanName: 'operationName2', to: '6ms' },
         spans
       )
@@ -428,31 +408,31 @@ describe('filterSpans', () => {
 
     // service name + tag key
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName0', tags: [{ ...defaultTagFilter, key: 'tagKey0' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName0', tags: [{ ...defaultTagFilter, key: 'tagKey1' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName2', tags: [{ ...defaultTagFilter, key: 'tagKey1' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, serviceName: 'serviceName2', tags: [{ ...defaultTagFilter, key: 'tagKey2' }] },
         spans
       )
     ).toEqual(new Set([spanID2]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           serviceName: 'serviceName0',
@@ -464,13 +444,13 @@ describe('filterSpans', () => {
 
     // duration + tag
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, from: '2ms', tags: [{ ...defaultTagFilter, key: 'tagKey0' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         { ...defaultFilters, to: '5ms', toOperator: '<=', tags: [{ ...defaultTagFilter, key: 'tagKey2' }] },
         spans
       )
@@ -478,7 +458,7 @@ describe('filterSpans', () => {
 
     // all
     expect(
-      filterSpansNewTraceViewHeader(
+      filterSpansNewTraceView(
         {
           ...defaultFilters,
           serviceName: 'serviceName0',

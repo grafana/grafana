@@ -45,7 +45,7 @@ const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
 
   return (
     <div>
-      <p className={styles.title}>Welcome to public dashboards public preview!</p>
+      <p className={styles.title}>Welcome to public dashboards alpha!</p>
       <Description />
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
       {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
