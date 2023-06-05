@@ -1,4 +1,4 @@
-import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData, TimeRange } from '@grafana/data';
 
 import {
   BucketAggregationType,
@@ -14,6 +14,7 @@ import {
   MovingAverage as SchemaMovingAverage,
   BucketAggregation,
   Logs as SchemaLogs,
+  Elasticsearch,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
@@ -121,3 +122,21 @@ export type DataLinkConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
 };
+
+export interface ElasticsearchAnnotationQuery {
+  target: Elasticsearch;
+  timeField?: string;
+  titleField?: string;
+  timeEndField?: string;
+  query?: string;
+  tagsField?: string;
+  textField?: string;
+  index?: string;
+}
+
+export interface ElasticsearchAnnotationQueryOptions {
+  annotation: ElasticsearchAnnotationQuery;
+  range: TimeRange;
+}
+
+export type RangeMap = Record<string, { from: number; to: number; format: string }>;
