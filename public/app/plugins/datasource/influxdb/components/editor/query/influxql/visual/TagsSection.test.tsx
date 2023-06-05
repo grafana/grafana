@@ -74,7 +74,7 @@ const tags: InfluxQueryTag[] = [
   },
 ];
 
-describe('InfluxDB InfluxQL VisualInfluxQLEditor tags section', () => {
+describe('InfluxDB InfluxQL Editor tags section', () => {
   it('should display correct data', () => {
     assertText(tags, 't1=t1_v1ANDt2!=t2_v2ORt3<>t3_v3+');
   });
