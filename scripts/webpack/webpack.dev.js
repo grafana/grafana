@@ -20,9 +20,9 @@ const esbuildOptions = {
   format: undefined,
 };
 
-module.exports = (env = {}) =>
-  merge(common, {
-    devtool: 'inline-source-map',
+module.exports = (env = {}) => {
+  return merge(common, {
+    devtool: 'eval-source-map',
     mode: 'development',
 
     entry: {
@@ -121,3 +121,4 @@ module.exports = (env = {}) =>
       }),
     ],
   });
+};
