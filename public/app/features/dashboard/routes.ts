@@ -38,7 +38,7 @@ export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
   // TODO add feature toggle
   return [
     {
-      path: '/d-embed/:uid',
+      path: '/d-embed',
       pageClass: 'dashboard-embed',
       routeName: DashboardRoutes.Embedded,
       component: SafeDynamicImport(

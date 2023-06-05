@@ -36,9 +36,13 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = new DashboardModel(JSON.parse(queryParams.json!));
+  const dashboard = dashboardState.getModel();
 
+  /**
+   * Create dashboard model and initialize the dashboard from JSON
+   */
   useEffect(() => {
+    const dashboardModel = new DashboardModel(JSON.parse(queryParams.json!));
     dispatch(
       initDashboard({
         routeName: route.routeName,
@@ -46,8 +50,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
         // TODO check auth
         accessToken: queryParams.accessToken,
         keybindingSrv: context.keybindings,
-        urlUid: match.params.uid,
-        dashboardDto: { dashboard, meta: {} },
+        dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,8 +93,7 @@ const Toolbar = ({ dashboard, callbackUrl }: ToolbarProps) => {
       return;
     }
 
-    const data = JSON.stringify(clone, null, 2);
-    return getBackendSrv().post(`http://localhost:3000/${callbackUrl}`, { dashboard: data });
+    return getBackendSrv().post(callbackUrl, { dashboard: clone });
   };
 
   return (
