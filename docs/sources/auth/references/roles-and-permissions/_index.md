@@ -7,7 +7,7 @@ aliases:
   - manage-users-and-permissions/about-users-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions
-weight: 300
+weight: 700
 ---
 
 # Roles and permissions

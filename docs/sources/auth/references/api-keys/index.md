@@ -2,13 +2,14 @@
 aliases:
   - about-api-keys/
   - create-api-key/
+  - create-api-key/
 description: This section contains information about API keys in Grafana
 keywords:
   - API keys
   - Service accounts
 menuTitle: API keys
 title: API keys
-weight: 700
+weight: 600
 ---
 
 # API keys

@@ -5,7 +5,7 @@ aliases:
 description: Learn how to use Team Sync to synchronize between your authentication
   provider teams and Grafana teams.
 title: Configure Team Sync
-weight: 1000
+weight: 500
 ---
 
 # Configure Team Sync

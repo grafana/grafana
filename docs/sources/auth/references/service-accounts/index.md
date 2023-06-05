@@ -10,7 +10,7 @@ keywords:
   - Service accounts
 menuTitle: Service accounts
 title: Service accounts
-weight: 800
+weight: 500
 ---
 
 # Service accounts
