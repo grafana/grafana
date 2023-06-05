@@ -1,4 +1,4 @@
-import { buildMetadataQuery } from './influx_query_builder_migrated';
+import { buildMetadataQuery } from './influxql_query_builder';
 import { templateSrvStub as templateService } from './specs/mocks';
 
 describe('influx-query-builder', () => {

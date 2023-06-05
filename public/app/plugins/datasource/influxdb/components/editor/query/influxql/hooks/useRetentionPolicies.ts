@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
-import { runMetadataQuery } from '../../../../../influxql_metadata_migrated';
+import { getAllPolicies } from '../../../../../influxql_metadata_query';
 
 export const useRetentionPolicies = (datasource: InfluxDatasource) => {
   const [retentionPolicies, setRetentionPolicies] = useState<string[]>([]);
   useEffect(() => {
-    runMetadataQuery({ type: 'RETENTION_POLICIES', datasource }).then((data) => {
-      const rps = data.map((item) => item.text);
-      setRetentionPolicies(rps);
+    getAllPolicies(datasource).then((data) => {
+      setRetentionPolicies(data);
     });
   }, [datasource]);
 

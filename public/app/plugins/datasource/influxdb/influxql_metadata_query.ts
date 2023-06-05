@@ -1,7 +1,7 @@
 import { ScopedVars } from '@grafana/data/src';
 
 import InfluxDatasource from './datasource';
-import { buildMetadataQuery } from './influx_query_builder_migrated';
+import { buildMetadataQuery } from './influxql_query_builder';
 import { replaceHardCodedRetentionPolicy } from './queryUtils';
 import { InfluxQuery, InfluxQueryTag, MetadataQueryType } from './types';
 
@@ -16,7 +16,7 @@ type MetadataQueryOptions = {
   withMeasurementFilter?: string;
 };
 
-export const runMetadataQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
+const runMetadataQuery = async (options: MetadataQueryOptions): Promise<Array<{ text: string }>> => {
   const { type, datasource, scopedVars, measurement, retentionPolicy, tags, withKey, withMeasurementFilter } = options;
   const query = buildMetadataQuery({
     type,

@@ -4,7 +4,7 @@ import { DataSourceInstanceSettings, PluginType } from '@grafana/data/src';
 import { FetchResponse, getBackendSrv, setBackendSrv } from '@grafana/runtime/src';
 
 import InfluxDatasource from './datasource';
-import { runMetadataQuery } from './influxql_metadata_migrated';
+import { getAllPolicies } from './influxql_metadata_query';
 import { templateSrvStub } from './specs/mocks';
 import { InfluxOptions, InfluxVersion } from './types';
 
@@ -12,7 +12,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
 }));
 
-describe('influxql-metadata-migrated', () => {
+describe('influxql-metadata-query', () => {
   const instanceSettings = getDSInstanceSettings();
   const datasource: InfluxDatasource = new InfluxDatasource(instanceSettings, templateSrvStub);
   const origBackendSrv = getBackendSrv();
@@ -45,7 +45,7 @@ describe('influxql-metadata-migrated', () => {
       ...origBackendSrv,
       fetch: fetchMock,
     });
-    const rp = await runMetadataQuery({ type: 'RETENTION_POLICIES', datasource });
+    const rp = await getAllPolicies(datasource);
     console.log(rp);
     expect(fetchMock).toBeCalled();
     expect(rp.length).toBeGreaterThan(0);

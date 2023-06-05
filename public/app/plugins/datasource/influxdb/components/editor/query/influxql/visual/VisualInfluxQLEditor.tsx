@@ -11,7 +11,7 @@ import {
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
-} from '../../../../../influxql_metadata_migrated';
+} from '../../../../../influxql_metadata_query';
 import {
   addNewGroupByPart,
   addNewSelectPart,

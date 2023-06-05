@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import InfluxDatasource from '../../../../../datasource';
-import * as mockedMeta from '../../../../../influxQLMetadataQuery';
+import * as mockedMeta from '../../../../../influxql_metadata_query';
 import { InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
-jest.mock('../../influxQLMetadataQuery', () => {
+jest.mock('../../../../../influxql_metadata_query', () => {
   return {
     __esModule: true,
     getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
@@ -139,7 +139,9 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
-    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
+    const aa = mockedMeta.getTagValues as jest.Mock;
+    console.log(aa);
+    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the FROM/cpudata button
     await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));
