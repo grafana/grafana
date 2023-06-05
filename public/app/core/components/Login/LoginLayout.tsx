@@ -6,7 +6,6 @@ import { useStyles2, styleMixins } from '@grafana/ui';
 
 import { Branding } from '../Branding/Branding';
 import { BrandingSettings } from '../Branding/types';
-import { Footer } from '../Footer/Footer';
 
 interface InnerBoxProps {
   enterAnimation?: boolean;
@@ -45,7 +44,6 @@ export const LoginLayout = ({ children, branding }: React.PropsWithChildren<Logi
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
       </div>
-      {branding?.hideFooter ? <></> : <Footer customLinks={branding?.footerLinks} />}
     </Branding.LoginBackground>
   );
 };
