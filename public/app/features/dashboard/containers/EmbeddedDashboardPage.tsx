@@ -6,6 +6,7 @@ import { TimeZone } from '@grafana/schema';
 import { Button, PageToolbar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -82,6 +83,7 @@ interface ToolbarProps {
 
 const Toolbar = ({ dashboard, callbackUrl }: ToolbarProps) => {
   const dispatch = useDispatch();
+  const notifyApp = useAppNotification();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
@@ -93,7 +95,14 @@ const Toolbar = ({ dashboard, callbackUrl }: ToolbarProps) => {
       return;
     }
 
-    return getBackendSrv().post(callbackUrl, { dashboard: clone });
+    return getBackendSrv()
+      .post(callbackUrl, { dashboard: clone })
+      .then(() => {
+        notifyApp.success('Dashboard saved');
+      })
+      .catch((error) => {
+        notifyApp.error(error.message || 'Error saving dashboard');
+      });
   };
 
   return (
