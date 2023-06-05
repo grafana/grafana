@@ -6,7 +6,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, InputControl, TextArea, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
@@ -67,7 +67,27 @@ const AnnotationsField = () => {
               <div>
                 <div>
                   <label>
-                    {annotationLabels[annotation]} {annotationLabels[annotation] ? '(optional)' : ''}
+                    {
+                      <InputControl
+                        name={`annotations.${index}.key`}
+                        defaultValue={annotationField.key}
+                        render={({ field: { ref, ...field } }) => (
+                          <div>
+                            {annotationLabels[annotation]}{' '}
+                            {annotationLabels[annotation] ? (
+                              '(optional)'
+                            ) : (
+                              <div>
+                                <div>Custom annotation name and content</div>
+                                <Input placeholder="Enter custom annotation name..." width={18} {...field} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        control={control}
+                        rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
+                      />
+                    }
                   </label>
                   <div>{annotationDescriptions[annotation]}</div>
                 </div>
