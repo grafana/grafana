@@ -1,10 +1,9 @@
 import React, { PureComponent } from 'react';
 
-import { InlineFormLabel, TextArea } from '@grafana/ui';
+import { InlineFormLabel, TextArea } from '@grafana/ui/src';
 
-import InfluxDatasource from '../datasource';
-
-import { FluxQueryEditor } from './FluxQueryEditor';
+import InfluxDatasource from '../../../datasource';
+import { FluxQueryEditor } from '../query/flux/FluxQueryEditor';
 
 interface Props {
   query: string; // before flux, it was always a string

@@ -1,13 +1,14 @@
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { MenuItem, WithContextMenu, MenuGroup, useTheme2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
+import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui/src';
+
+import { toSelectableValue } from '../utils/toSelectableValue';
+import { unwrap } from '../utils/unwrap';
 
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
-import { toSelectableValue } from './toSelectableValue';
-import { unwrap } from './unwrap';
 
 export type PartParams = Array<{
   value: string;

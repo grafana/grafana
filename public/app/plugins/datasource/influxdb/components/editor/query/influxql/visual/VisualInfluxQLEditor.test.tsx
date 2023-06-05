@@ -1,10 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import InfluxDatasource from '../../datasource';
-import { InfluxQuery } from '../../types';
+import InfluxDatasource from '../../../../../datasource';
+import { InfluxQuery } from '../../../../../types';
 
-import { Editor } from './Editor';
+import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
 // we mock the @grafana/ui components we use to make sure they just show their "value".
 // we mostly need this for `Input`, because that one is not visible with `.textContent`,
@@ -43,14 +43,14 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
     metricFindQuery: () => Promise.resolve([]),
   } as unknown as InfluxDatasource;
   const { container } = render(
-    <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+    <VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );
   await waitFor(() => {
     expect(container.textContent).toBe(textContent);
   });
 }
 
-describe('InfluxDB InfluxQL Visual Editor', () => {
+describe('InfluxDB InfluxQL Visual VisualInfluxQLEditor', () => {
   it('should handle minimal query', async () => {
     const query: InfluxQuery = {
       refId: 'A',

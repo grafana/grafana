@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal } from '@grafana/ui/src';
 
 type Props = {
   isRaw: boolean;

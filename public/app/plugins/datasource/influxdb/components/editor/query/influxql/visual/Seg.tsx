@@ -3,10 +3,10 @@ import debouncePromise from 'debounce-promise';
 import React, { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui';
+import { SelectableValue } from '@grafana/data/src';
+import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui/src';
 
-import { useShadowedState } from '../useShadowedState';
+import { useShadowedState } from '../../hooks/useShadowedState';
 
 // this file is a simpler version of `grafana-ui / SegmentAsync.tsx`
 // with some changes:

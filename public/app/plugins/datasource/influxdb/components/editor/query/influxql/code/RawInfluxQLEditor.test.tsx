@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import { InfluxQuery } from '../types';
+import { InfluxQuery } from '../../../../../types';
 
 import { RawInfluxQLEditor } from './RawInfluxQLEditor';
 
