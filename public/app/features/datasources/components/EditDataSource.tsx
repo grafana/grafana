@@ -228,7 +228,14 @@ export function EditDataSourceView({
         );
       })}
 
-      <DataSourceTestingStatus testingStatus={testingStatus} exploreUrl={exploreUrl} dataSource={dataSource} />
+      {plugin && (
+        <DataSourceTestingStatus
+          testingStatus={testingStatus}
+          exploreUrl={exploreUrl}
+          plugin={plugin}
+          dataSource={dataSource}
+        />
+      )}
 
       <ButtonRow
         onSubmit={onSubmit}

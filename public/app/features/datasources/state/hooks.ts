@@ -1,5 +1,4 @@
 import { useContext, useEffect } from 'react';
-import { useAsync } from 'react-use';
 
 import { DataSourcePluginMeta, DataSourceSettings, NavModel, NavModelItem } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -71,8 +70,6 @@ export const useLoadDataSource = (uid: string) => {
     dispatch(loadDataSource(uid));
   }, [dispatch, uid]);
 };
-
-export const useDataSourceInstance = (uid: string) => useAsync(async () => getDataSourceSrv().get(uid), [uid]);
 
 export const useLoadDataSourcePlugins = () => {
   const dispatch = useDispatch();

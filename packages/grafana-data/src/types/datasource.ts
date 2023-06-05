@@ -111,6 +111,11 @@ export class DataSourcePlugin<
     return this;
   }
 
+  setHealthCheckDetails(HealthCheckDetails: ComponentType<HealthCheckDetailsProps<any>>) {
+    this.components.HealthCheckDetails = HealthCheckDetails;
+    return this;
+  }
+
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
@@ -170,6 +175,7 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
+  HealthCheckDetails?: ComponentType<HealthCheckDetailsProps<any>>;
 }
 
 // Only exported for tests
@@ -370,12 +376,6 @@ abstract class DataSourceApi<
    * @alpha -- experimental
    */
   getDefaultQuery?(app: CoreApp): Partial<TQuery>;
-
-  /**
-   * Optionally, use this method to render details for the health check
-   * Don't forget to change the file extension to "tsx" to enable webpack's JSX transformer
-   */
-  renderHealthCheckDetails?(details: unknown): JSX.Element;
 }
 
 export interface MetadataInspectorProps<
@@ -410,6 +410,10 @@ export interface QueryEditorProps<
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
+}
+
+export interface HealthCheckDetailsProps<T> {
+  details: T;
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest

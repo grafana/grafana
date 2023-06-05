@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
 import React, { HTMLAttributes, ReactNode } from 'react';
 
-import { DataSourceApi, DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceSettings as DataSourceSettingsType, GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { TestingStatus, config, HealthCheckResultDetails, logError } from '@grafana/runtime';
-import { AlertVariant, Alert, useTheme2, Link } from '@grafana/ui';
+import { config, HealthCheckResultDetails, TestingStatus } from '@grafana/runtime';
+import { Alert, AlertVariant, ErrorBoundary, Link, useTheme2 } from '@grafana/ui';
 
 import { contextSrv } from '../../../core/core';
 import { AccessControlAction } from '../../../types';
-import { useDataSourceInstance } from '../state/hooks';
 import { trackCreateDashboardClicked } from '../tracking';
+import { GenericDataSourcePlugin } from '../types';
 
 export type Props = {
   testingStatus?: TestingStatus;
   exploreUrl: string;
   dataSource: DataSourceSettingsType;
+  plugin: GenericDataSourcePlugin;
 };
 
 interface AlertMessageProps extends HTMLAttributes<HTMLDivElement> {
@@ -84,7 +85,7 @@ const getAlertVariant = (status: string): AlertVariant => {
   return isAlertVariant(status) ? status : 'info';
 };
 
-export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource }: Props) {
+export function DataSourceTestingStatus({ testingStatus, exploreUrl, plugin, dataSource }: Props) {
   const severity = getAlertVariant(testingStatus?.status ?? 'error');
   const message = testingStatus?.message;
 
@@ -101,8 +102,6 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
     });
   };
 
-  const instanceState = useDataSourceInstance(dataSource.uid);
-
   if (message) {
     return (
       <div className="gf-form-group p-t-2">
@@ -110,7 +109,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
           {healthCheckDetails && (
             <>
               {detailsMessage}
-              {instanceState.value && renderDetailsForDataSource(instanceState.value, healthCheckDetails)}
+              {renderHealthCheckDetails(plugin, healthCheckDetails)}
               {severity === 'success' ? (
                 <AlertSuccessMessage
                   title={message}
@@ -132,18 +131,17 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
   return null;
 }
 
-export function renderDetailsForDataSource(dataSource: DataSourceApi, details: HealthCheckResultDetails): ReactNode {
-  const hasDetails = details && Object.entries(details).length > 0;
+export function renderHealthCheckDetails(plugin: GenericDataSourcePlugin, details: HealthCheckResultDetails): ReactNode {
+  const HealthCheckDetailsComponent = plugin.components.HealthCheckDetails
 
-  if (hasDetails && dataSource.renderHealthCheckDetails) {
-    try {
-      return dataSource.renderHealthCheckDetails(details);
-    } catch (err) {
-      if (err instanceof Error) {
-        logError(err);
-      }
-      return null;
-    }
+  if (HealthCheckDetailsComponent) {
+    return (
+      <ErrorBoundary>
+        {({ error }) => (
+          error ? null : <HealthCheckDetailsComponent details={details} />
+        )}
+      </ErrorBoundary>
+    )
   }
 
   return null;

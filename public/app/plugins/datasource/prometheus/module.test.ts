@@ -4,4 +4,8 @@ describe('module', () => {
   it('should have metrics query field in panels and Explore', () => {
     expect(PrometheusDatasourcePlugin.components.QueryEditor).toBeDefined();
   });
+
+  it('should have health check details', () => {
+    expect(PrometheusDatasourcePlugin.components.HealthCheckDetails).toBeDefined();
+  });
 });

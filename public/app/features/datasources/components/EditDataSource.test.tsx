@@ -1,4 +1,4 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { screen, render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
@@ -125,17 +125,15 @@ describe('<EditDataSource>', () => {
       expect(screen.queryByText('My Datasource')).not.toBeInTheDocument();
     });
 
-    it('should not render loading when data is already available', async () => {
+    it('should not render loading when data is already available', () => {
       setup();
 
-      await waitFor(() => {
-        expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
     });
   });
 
   describe('On editing', () => {
-    it('should render no messages if the user has write access and if the data-source is not read-only', async () => {
+    it('should render no messages if the user has write access and if the data-source is not read-only', () => {
       setup({
         dataSourceRights: {
           readOnly: false,
@@ -144,13 +142,11 @@ describe('<EditDataSource>', () => {
         },
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText(readOnlyMessage)).not.toBeInTheDocument();
-        expect(screen.queryByText(missingRightsMessage)).not.toBeInTheDocument();
-      });
+      expect(screen.queryByText(readOnlyMessage)).not.toBeInTheDocument();
+      expect(screen.queryByText(missingRightsMessage)).not.toBeInTheDocument();
     });
 
-    it('should render a message if the user has no write access', async () => {
+    it('should render a message if the user has no write access', () => {
       setup({
         dataSourceRights: {
           readOnly: false,
@@ -159,12 +155,10 @@ describe('<EditDataSource>', () => {
         },
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText(missingRightsMessage)).toBeVisible();
-      });
+      expect(screen.queryByText(missingRightsMessage)).toBeVisible();
     });
 
-    it('should render a message if the data-source is read-only', async () => {
+    it('should render a message if the data-source is read-only', () => {
       setup({
         dataSourceRights: {
           readOnly: true,
@@ -173,38 +167,32 @@ describe('<EditDataSource>', () => {
         },
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText(readOnlyMessage)).toBeVisible();
-      });
+      expect(screen.queryByText(readOnlyMessage)).toBeVisible();
     });
 
-    it('should render a beta info message if the plugin is still in Beta state', async () => {
+    it('should render a beta info message if the plugin is still in Beta state', () => {
       setup({
         dataSourceMeta: getMockDataSourceMeta({
           state: PluginState.beta,
         }),
       });
 
-      await waitFor(() => {
-        expect(screen.getByTitle('This feature is close to complete but not fully tested')).toBeVisible();
-      });
+      expect(screen.getByTitle('This feature is close to complete but not fully tested')).toBeVisible();
     });
 
-    it('should render an alpha info message if the plugin is still in Alpha state', async () => {
+    it('should render an alpha info message if the plugin is still in Alpha state', () => {
       setup({
         dataSourceMeta: getMockDataSourceMeta({
           state: PluginState.alpha,
         }),
       });
 
-      await waitFor(() => {
-        expect(
-          screen.getByTitle('This feature is experimental and future updates might not be backward compatible')
-        ).toBeVisible();
-      });
+      expect(
+        screen.getByTitle('This feature is experimental and future updates might not be backward compatible')
+      ).toBeVisible();
     });
 
-    it('should render testing errors with a detailed error message', async () => {
+    it('should render testing errors with a detailed error message', () => {
       const message = 'message';
       const detailsMessage = 'detailed message';
 
@@ -218,13 +206,11 @@ describe('<EditDataSource>', () => {
         }),
       });
 
-      await waitFor(() => {
-        expect(screen.getByText(message)).toBeVisible();
-        expect(screen.getByText(detailsMessage)).toBeVisible();
-      });
+      expect(screen.getByText(message)).toBeVisible();
+      expect(screen.getByText(detailsMessage)).toBeVisible();
     });
 
-    it('should render testing errors with empty details', async () => {
+    it('should render testing errors with empty details', () => {
       const message = 'message';
 
       setup({
@@ -237,12 +223,10 @@ describe('<EditDataSource>', () => {
         }),
       });
 
-      await waitFor(() => {
-        expect(screen.getByText(message)).toBeVisible();
-      });
+      expect(screen.getByText(message)).toBeVisible();
     });
 
-    it('should render testing errors with no details', async () => {
+    it('should render testing errors with no details', () => {
       const message = 'message';
 
       setup({
@@ -254,12 +238,10 @@ describe('<EditDataSource>', () => {
         }),
       });
 
-      await waitFor(() => {
-        expect(screen.getByText(message)).toBeVisible();
-      });
+      expect(screen.getByText(message)).toBeVisible();
     });
 
-    it('should use the verboseMessage property in the error details whenever it is available', async () => {
+    it('should use the verboseMessage property in the error details whenever it is available', () => {
       const message = 'message';
       const detailsMessage = 'detailed message';
       const detailsVerboseMessage = 'even more detailed...';
@@ -277,11 +259,9 @@ describe('<EditDataSource>', () => {
         }),
       });
 
-      await waitFor(() => {
-        expect(screen.queryByText(message)).toBeVisible();
-        expect(screen.queryByText(detailsMessage)).not.toBeInTheDocument();
-        expect(screen.queryByText(detailsVerboseMessage)).toBeInTheDocument();
-      });
+      expect(screen.queryByText(message)).toBeVisible();
+      expect(screen.queryByText(detailsMessage)).not.toBeInTheDocument();
+      expect(screen.queryByText(detailsVerboseMessage)).toBeInTheDocument();
     });
   });
 
