@@ -7,8 +7,8 @@ load(
     "enterprise_setup_step",
     "identify_runner_step",
     "lint_frontend_step",
-    "yarn_install_step",
     "verify_i18n_step",
+    "yarn_install_step",
 )
 load(
     "scripts/drone/utils/utils.star",
