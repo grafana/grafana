@@ -234,7 +234,7 @@ export function frameToMetricFindValue(frame: DataFrame): MetricFindValue[] {
   }
   if (field) {
     for (let i = 0; i < field.values.length; i++) {
-      values.push({ text: '' + field.values.get(i) });
+      values.push({ text: '' + field.values[i] });
     }
   }
   return values;

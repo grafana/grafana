@@ -143,7 +143,6 @@ export function getDefaultState(): State {
         name: 'gdev-testdata',
       },
       maxDataPoints: 100,
-      savedQueryUid: null,
     },
   };
 }

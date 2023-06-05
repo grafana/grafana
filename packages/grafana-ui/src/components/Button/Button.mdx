@@ -1,9 +1,16 @@
-import { Meta, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
 import { Button, LinkButton } from './Button';
+import { Alert } from '../Alert/Alert';
 
 <Meta title="MDX|Button" component={Button} />
 
 # Button
+
+<Alert severity="warning" title={'Please note:'}>
+  After reviewing this component we are asking you to use the IconButton when you require a button with only an icon.
+</Alert>
+
+When using a button please always follow a11y rules (e.g. W3C Recommendation [3.3.2 Labels or instructions](https://www.w3.org/TR/WCAG21/#labels-or-instructions)) and make sure the context in which the button is located is also communicated by screen readers.
 
 ## Primary
 
@@ -14,13 +21,13 @@ If there is no primary action, all `Button` components should be secondary.
 <Preview>
   <div>
     <Button variant="primary" size="sm" style={{ margin: '5px' }}>
-      Small
+      {'Small'}
     </Button>
     <Button variant="primary" size="md" style={{ margin: '5px' }}>
-      Medium
+      {'Medium'}
     </Button>
     <Button variant="primary" size="lg" style={{ margin: '5px' }}>
-      Large
+      {'Large'}
     </Button>
   </div>
 </Preview>
@@ -35,13 +42,13 @@ The secondary `Button` is the default button style and can trigger various actio
 <Preview>
   <div>
     <Button variant="secondary" size="sm" style={{ margin: '5px' }}>
-      Small
+      {'Small'}
     </Button>
     <Button variant="secondary" size="md" style={{ margin: '5px' }}>
-      Medium
+      {'Medium'}
     </Button>
     <Button variant="secondary" size="lg" style={{ margin: '5px' }}>
-      Large
+      {'Large'}
     </Button>
   </div>
 </Preview>
@@ -53,13 +60,13 @@ Used for triggering a removing or deleting action. Because of its dominant color
 <Preview>
   <div>
     <Button variant="destructive" size="sm" style={{ margin: '5px' }}>
-      Small
+      {'Small'}
     </Button>
     <Button variant="destructive" size="md" style={{ margin: '5px' }}>
-      Medium
+      {'Medium'}
     </Button>
     <Button variant="destructive" size="lg" style={{ margin: '5px' }}>
-      Large
+      {'Large'}
     </Button>
   </div>
 </Preview>
@@ -69,18 +76,18 @@ Used for triggering a removing or deleting action. Because of its dominant color
 <Preview>
   <div>
     <Button fill="text" size="sm" style={{ margin: '5px' }}>
-      Small
+      {'Small'}
     </Button>
     <Button fill="text" size="md" style={{ margin: '5px' }}>
-      Medium
+      {'Medium'}
     </Button>
     <Button fill="text" size="lg" style={{ margin: '5px' }}>
-      Large
+      {'Large'}
     </Button>
   </div>
 </Preview>
 
-<ArgsTable of={Button} />
+<ArgTypes of={Button} />
 
 ## Links
 
@@ -89,13 +96,13 @@ To add an anchor that looks like a button use the `<LinkButton>` component and p
 <Preview>
   <div>
     <LinkButton href="/" size="sm" style={{ margin: '5px' }}>
-      Small
+      {'Small'}
     </LinkButton>
     <LinkButton href="/" size="md" style={{ margin: '5px' }}>
-      Medium
+      {'Medium'}
     </LinkButton>
     <LinkButton href="/" size="lg" style={{ margin: '5px' }}>
-      Large
+      {'Large'}
     </LinkButton>
   </div>
 </Preview>

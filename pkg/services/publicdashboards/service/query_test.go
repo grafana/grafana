@@ -688,14 +688,14 @@ func TestGetQueryDataResponse(t *testing.T) {
 			}}
 
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
+		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
-			OrgId:        dashboard.OrgID,
 			UserId:       7,
-			PublicDashboard: &PublicDashboard{
-				IsEnabled:    true,
+			PublicDashboard: &PublicDashboardDTO{
+				IsEnabled:    &isEnabled,
 				DashboardUid: "NOTTHESAME",
-				OrgId:        9999999,
+				OrgId:        dashboard.OrgID,
 				TimeSettings: timeSettings,
 			},
 		}
@@ -1199,11 +1199,11 @@ func TestBuildMetricRequest(t *testing.T) {
 		MaxDataPoints: int64(200),
 	}
 
+	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
-		OrgId:        publicDashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled:    true,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
 			TimeSettings: timeSettings,
@@ -1213,11 +1213,11 @@ func TestBuildMetricRequest(t *testing.T) {
 	publicDashboardPD, err := service.Create(context.Background(), SignedInUser, dto)
 	require.NoError(t, err)
 
+	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
-		OrgId:        nonPublicDashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled:    false,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled:    &isEnabled,
 			DashboardUid: "NOTTHESAME",
 			OrgId:        9999999,
 			TimeSettings: defaultPubdashTimeSettings,
@@ -1564,7 +1564,7 @@ func TestGroupQueriesByDataSource(t *testing.T) {
 }
 
 func TestSanitizeMetadataFromQueryData(t *testing.T) {
-	t.Run("can remove metadata from query", func(t *testing.T) {
+	t.Run("can remove ExecutedQueryString from metadata", func(t *testing.T) {
 		fakeResponse := &backend.QueryDataResponse{
 			Responses: backend.Responses{
 				"A": backend.DataResponse{
@@ -1595,9 +1595,6 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 							Name: "3",
 							Meta: &data.FrameMeta{
 								ExecutedQueryString: "Test3",
-								Custom: map[string]string{
-									"test3": "test3",
-								},
 							},
 						},
 					},
@@ -1605,13 +1602,12 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 			},
 		}
 		sanitizeMetadataFromQueryData(fakeResponse)
-		for k := range fakeResponse.Responses {
-			frames := fakeResponse.Responses[k].Frames
-			for i := range frames {
-				require.Empty(t, frames[i].Meta.ExecutedQueryString)
-				require.Empty(t, frames[i].Meta.Custom)
-			}
-		}
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom, map[string]string{"test1": "test1"})
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.ExecutedQueryString, "")
+		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom, map[string]string{"test2": "test2"})
+		assert.Equal(t, fakeResponse.Responses["B"].Frames[0].Meta.ExecutedQueryString, "")
+		assert.Nil(t, fakeResponse.Responses["B"].Frames[0].Meta.Custom)
 	})
 }
 
