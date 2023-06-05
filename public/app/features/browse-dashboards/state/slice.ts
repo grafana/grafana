@@ -2,10 +2,10 @@ import { createSlice } from '@reduxjs/toolkit';
 
 import { BrowseDashboardsState } from '../types';
 
-import { fetchChildren } from './actions';
+import { fetchNextChildrenPage, refetchChildren } from './actions';
 import * as allReducers from './reducers';
 
-const { extraReducerFetchChildrenFulfilled, ...baseReducers } = allReducers;
+const { fetchNextChildrenPageFulfilled, refetchChildrenFulfilled, ...baseReducers } = allReducers;
 
 const initialState: BrowseDashboardsState = {
   rootItems: undefined,
@@ -25,7 +25,8 @@ const browseDashboardsSlice = createSlice({
   reducers: baseReducers,
 
   extraReducers: (builder) => {
-    builder.addCase(fetchChildren.fulfilled, extraReducerFetchChildrenFulfilled);
+    builder.addCase(fetchNextChildrenPage.fulfilled, fetchNextChildrenPageFulfilled);
+    builder.addCase(refetchChildren.fulfilled, refetchChildrenFulfilled);
   },
 });
 
