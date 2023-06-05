@@ -792,7 +792,7 @@ def verify_i18n_step():
             "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
             # Verify that translation extraction has been committed
             '''
-            file_diff=$(git diff -- locales --stat)
+            file_diff=$(git diff --dirstat public/locales)
             if [ -n "$file_diff" ]; then
                 echo $file_diff
                 echo "{}"

@@ -242,10 +242,11 @@ steps:
   - |-
     yarn run i18n:extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo \"\nTranslation
-    extraction has not been committed. Please run 'yarn i18n:extract', commit the
-    changes and push again.\"\n                exit 1\n            fi\n            "
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -1314,10 +1315,11 @@ steps:
   - |-
     yarn run i18n:extract || (echo "
     Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
-  - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo \"\nTranslation
-    extraction has not been committed. Please run 'yarn i18n:extract', commit the
-    changes and push again.\"\n                exit 1\n            fi\n            "
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
   - yarn run i18n:compile
   depends_on:
   - yarn-install
@@ -7240,6 +7242,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 10db3059ab9eb13b1d0be744ce58c7c78b62fe381943630c7053caf308640166
+hmac: caf02d8ce78dd5c2fd6d841d0661702e74571c07939c6af602ac11d1790b31b8
 
 ...
