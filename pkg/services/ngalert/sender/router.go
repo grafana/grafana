@@ -22,6 +22,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
+type multiOrgAlertmanager interface {
+	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+}
+
 // AlertsRouter handles alerts generated during alert rule evaluation.
 // Based on rule's orgID and the configuration for that organization,
 // it determines whether an alert needs to be sent to an external Alertmanager and\or internal notifier.Alertmanager
@@ -39,7 +43,7 @@ type AlertsRouter struct {
 	externalAlertmanagers        map[int64]*ExternalAlertmanager
 	externalAlertmanagersCfgHash map[int64]string
 
-	multiOrgNotifier *notifier.MultiOrgAlertmanager
+	multiOrgNotifier multiOrgAlertmanager
 
 	appURL                  *url.URL
 	disabledOrgs            map[int64]struct{}
@@ -49,7 +53,7 @@ type AlertsRouter struct {
 	secretService     secrets.Service
 }
 
-func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
+func NewAlertsRouter(multiOrgNotifier multiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
 	datasourceService datasources.DataSourceService, secretService secrets.Service) *AlertsRouter {
 	d := &AlertsRouter{
@@ -97,6 +101,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which externalAlertmanagers we need to keep.
 
+		// Note: keep track of external AMs.
 		existing, ok := d.externalAlertmanagers[cfg.OrgID]
 
 		//  We have no running sender and alerts are handled internally, no-op.
@@ -105,7 +110,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, err := d.AlertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -208,7 +213,8 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcfg, error) {
+// Note: looks for external AMs in data sources, builds URL and headers.
+func (d *AlertsRouter) AlertmanagersFromDatasources(orgID int64) ([]externalAMcfg, error) {
 	var (
 		alertmanagers []externalAMcfg
 	)

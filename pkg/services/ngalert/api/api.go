@@ -72,7 +72,8 @@ type API struct {
 	AlertingStore        AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	MultiOrgAlertmanager multiOrgAlertmanager
+	Crypto               notifier.Crypto
 	StateManager         *state.Manager
 	AccessControl        accesscontrol.AccessControl
 	Policies             *provisioning.NotificationPolicyService
@@ -103,7 +104,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
 		api.DatasourceCache,
 		NewLotexAM(proxy, logger),
-		&AlertmanagerSrv{crypto: api.MultiOrgAlertmanager.Crypto, log: logger, ac: api.AccessControl, mam: api.MultiOrgAlertmanager},
+		&AlertmanagerSrv{crypto: api.Crypto, log: logger, ac: api.AccessControl, moa: api.MultiOrgAlertmanager},
 	), m)
 	// Register endpoints for proxying to Prometheus-compatible backends.
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(

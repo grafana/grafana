@@ -28,10 +28,18 @@ const (
 	maxTestReceiversTimeout     = 30 * time.Second
 )
 
+type multiOrgAlertmanager interface {
+	GetAlertmanagerConfiguration(ctx context.Context, org int64) (apimodels.GettableUserConfig, error)
+	GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error)
+	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
+	ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error
+	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+}
+
 type AlertmanagerSrv struct {
 	log    log.Logger
 	ac     accesscontrol.AccessControl
-	mam    *notifier.MultiOrgAlertmanager
+	moa    multiOrgAlertmanager
 	crypto notifier.Crypto
 }
 
@@ -123,7 +131,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenc
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
+	config, err := srv.moa.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 			return ErrResp(http.StatusNotFound, err, "")
@@ -135,7 +143,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
 	limit := c.QueryInt("limit")
-	configs, err := srv.mam.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID, limit)
+	configs, err := srv.moa.GetAppliedAlertmanagerConfigurations(c.Req.Context(), c.OrgID, limit)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
@@ -234,7 +242,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 		return ErrResp(http.StatusBadRequest, err, "failed to parse config id")
 	}
 
-	err = srv.mam.ActivateHistoricalConfiguration(c.Req.Context(), c.OrgID, confId)
+	err = srv.moa.ActivateHistoricalConfiguration(c.Req.Context(), c.OrgID, confId)
 	if err != nil {
 		var unknownReceiverError notifier.UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {
@@ -261,7 +269,7 @@ func (srv AlertmanagerSrv) RoutePostGrafanaAlertingConfigHistoryActivate(c *cont
 }
 
 func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {
-	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
+	currentConfig, err := srv.moa.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	// If a config is present and valid we proceed with the guard, otherwise we
 	// just bypass the guard which is okay as we are anyway in an invalid state.
 	if err == nil {
@@ -269,7 +277,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 			return ErrResp(http.StatusBadRequest, err, "")
 		}
 	}
-	err = srv.mam.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgID, body)
+	err = srv.moa.ApplyAlertmanagerConfiguration(c.Req.Context(), c.OrgID, body)
 	if err == nil {
 		return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration created"})
 	}
@@ -466,7 +474,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 }
 
 func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
-	am, err := srv.mam.AlertmanagerFor(orgID)
+	am, err := srv.moa.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil
 	}

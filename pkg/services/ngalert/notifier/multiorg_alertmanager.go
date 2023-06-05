@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -376,3 +377,46 @@ func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster
 type NilChannel struct{}
 
 func (c *NilChannel) Broadcast([]byte) {}
+
+// TODO: move.
+type noopMultiOrgAlertmanager struct{}
+
+func NewNoopMultiOrgAlertmanager() *noopMultiOrgAlertmanager {
+	return &noopMultiOrgAlertmanager{}
+}
+
+func (*noopMultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
+	fmt.Println("noop.AlertmanagerFor() called")
+	return nil, ErrNoAlertmanagerForOrg
+}
+
+// Note: we could use this to sync internal and external AM config.
+func (*noopMultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
+	fmt.Println("noop.LoadAndSyncAlertmanagersForOrgs() called")
+	return nil
+}
+
+func (*noopMultiOrgAlertmanager) Run(ctx context.Context) error {
+	fmt.Println("noop.Run() called")
+	return nil
+}
+
+func (*noopMultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
+	fmt.Println("noop.ActivateHistoricalConfiguration() called")
+	return nil
+}
+
+func (*noopMultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (apimodels.GettableUserConfig, error) {
+	fmt.Println("noop.GetAlertmanagerConfiguration() called")
+	return apimodels.GettableUserConfig{}, nil
+}
+
+func (*noopMultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error) {
+	fmt.Println("noop.GetAppliedAlertmanagerConfigurations() called")
+	return []*apimodels.GettableHistoricUserConfig{}, nil
+}
+
+func (*noopMultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error {
+	fmt.Println("noop.ApplyAlertmanagerConfiguration() called")
+	return nil
+}

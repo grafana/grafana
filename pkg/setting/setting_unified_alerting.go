@@ -93,6 +93,10 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+
+	// Disable the internal Alertmanager and use an external one instead.
+	ExternalAlertmanagersOnly bool
+	MainAlertmanagerURL       string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -246,6 +250,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
 	}
+
+	uaCfg.ExternalAlertmanagersOnly = ua.Key("external_alertmanagers_only").MustBool(false)
+	uaCfg.MainAlertmanagerURL = ua.Key("main_alertmanager_url").MustString("")
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration

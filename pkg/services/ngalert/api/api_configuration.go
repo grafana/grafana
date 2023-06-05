@@ -113,8 +113,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 	return response.JSON(http.StatusOK, util.DynMap{"message": "admin configuration deleted"})
 }
 
-// externalAlertmanagers returns the URL of any external alertmanager that is
-// configured as datasource. The URL does not contain any auth.
+// externalAlertmanagers returns the UID of any external alertmanager that is configured as datasource.
 func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
 	var alertmanagers []string
 	query := &datasources.GetDataSourcesByTypeQuery{
@@ -127,8 +126,6 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 	}
 	for _, ds := range dataSources {
 		if ds.JsonData.Get(apimodels.HandleGrafanaManagedAlerts).MustBool(false) {
-			// we don't need to build the exact URL as we only need
-			// to know if any is set
 			alertmanagers = append(alertmanagers, ds.UID)
 		}
 	}

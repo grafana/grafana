@@ -3,11 +3,13 @@ package ngalert
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -107,6 +110,16 @@ func ProvideService(
 	return ng, nil
 }
 
+type multiOrgAlertmanager interface {
+	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error
+	Run(ctx context.Context) error
+	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
+	GetAlertmanagerConfiguration(ctx context.Context, org int64) (apimodels.GettableUserConfig, error)
+	GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error)
+	ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error
+}
+
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg                 *setting.Cfg
@@ -132,7 +145,7 @@ type AlertNG struct {
 	api                 *api.API
 
 	// Alerting notification services
-	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
+	MultiOrgAlertmanager multiOrgAlertmanager
 	AlertsRouter         *sender.AlertsRouter
 	accesscontrol        accesscontrol.AccessControl
 	accesscontrolService accesscontrol.Service
@@ -153,11 +166,16 @@ func (ng *AlertNG) init() error {
 
 	ng.store.Logger = ng.Log
 
-	decryptFn := ng.SecretsService.GetDecryptedValue
-	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
-	if err != nil {
-		return err
+	if ng.Cfg.UnifiedAlerting.ExternalAlertmanagersOnly {
+		ng.Log.Info("Starting Grafana with a no-op internal Alertmanager")
+		ng.MultiOrgAlertmanager = notifier.NewNoopMultiOrgAlertmanager()
+	} else {
+		decryptFn := ng.SecretsService.GetDecryptedValue
+		multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
+		ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService)
+		if err != nil {
+			return err
+		}
 	}
 
 	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
@@ -188,6 +206,56 @@ func (ng *AlertNG) init() error {
 	}
 
 	ng.AlertsRouter = alertsRouter
+
+	// TODO: pull, merge, post AM configs.
+	// TODO: move, no-op moa would be a better place for this.
+	if ng.Cfg.UnifiedAlerting.ExternalAlertmanagersOnly {
+		// Get orgs
+		orgs, err := ng.store.GetOrgs(initCtx)
+		if err != nil {
+			return err
+		}
+		fmt.Println("orgs:", orgs)
+
+		// Get the Alertmanager configuration for each org.
+		amConfigs, err := ng.store.GetAllLatestAlertmanagerConfiguration(initCtx)
+		if err != nil {
+			return err
+		}
+
+		orgToAmConfig := make(map[int64]*models.AlertConfiguration, len(orgs))
+		for _, amConfig := range amConfigs {
+			orgToAmConfig[amConfig.OrgID] = amConfig
+		}
+
+		fmt.Println("Configs for orgs:", orgToAmConfig)
+
+		// TODO: handle different orgs...
+		// TODO: get headers from ng.AlertsRouter.AlertmanagersFromDatasources() (if needed).
+		for _, org := range orgs {
+			ams, err := ng.AlertsRouter.AlertmanagersFromDatasources(org)
+			if err != nil {
+				return err
+			}
+			if len(ams) == 0 {
+				return fmt.Errorf("org %d has no external alertmanager configured", org)
+			}
+
+			// Get external Alertmanager config for org.
+			// TODO: use ams to add headers.
+			config, err := getExternalAmConfig(initCtx, ng.Cfg.UnifiedAlerting.MainAlertmanagerURL, nil)
+			if err != nil {
+				return err
+			}
+			fmt.Println("Config:", config)
+
+			// TODO: check if we need to update or if we already did.
+			// Update external AM configuration.
+			if err := postExternalAmConfig(initCtx, ng.Cfg.UnifiedAlerting.MainAlertmanagerURL, ""); err != nil {
+				return err
+			}
+		}
+	}
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
@@ -483,4 +551,36 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
+}
+
+func getExternalAmConfig(ctx context.Context, url string, headers map[string]string) (apimodels.GettableUserConfig, error) {
+	req, err := http.NewRequest("GET", url+"/api/v1/alerts", nil)
+	if err != nil {
+		return apimodels.GettableUserConfig{}, err
+	}
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	fmt.Println("Making request to", req.URL)
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return apimodels.GettableUserConfig{}, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode/100 != 2 {
+		return apimodels.GettableUserConfig{}, fmt.Errorf("bad response status %s", res.Status)
+	}
+
+	var gettableUserConfig apimodels.GettableUserConfig
+	if err := yaml.NewDecoder(res.Body).Decode(&gettableUserConfig); err != nil {
+		return apimodels.GettableUserConfig{}, err
+	}
+
+	return gettableUserConfig, nil
+}
+
+func postExternalAmConfig(ctx context.Context, url string, config string) error {
+	// TODO: implement.
+	return nil
 }

@@ -124,6 +124,7 @@ type Options struct {
 	QueueCapacity  int
 	ExternalLabels labels.Labels
 	RelabelConfigs []*relabel.Config
+	// Note: check
 	// Used for sending HTTP requests to the Alertmanager.
 	Do func(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error)
 
