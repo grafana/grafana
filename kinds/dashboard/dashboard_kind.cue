@@ -329,9 +329,9 @@ lineage: schemas: [{
 
 		// Position and dimensions of a panel in the grid
 		#GridPos: {
-			// Panel height. The height is the number of rows from the top edge of the grid
+			// Panel height. The height is the number of rows from the top edge of the panel.
 			h: uint32 & >0 | *9
-			// Panel width. The width is the number of columns from the left edge of the grid
+			// Panel width. The width is the number of columns from the left edge of the panel.
 			w: uint32 & >0 & <=24 | *12
 			// Panel x. The x coordinate is the number of columns from the left edge of the grid
 			x: uint32 & >=0 & <24 | *0
