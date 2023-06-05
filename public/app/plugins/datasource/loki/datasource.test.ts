@@ -32,7 +32,7 @@ import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, QueryStats, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
@@ -1137,6 +1137,15 @@ describe('LokiDatasource', () => {
       await expect(ds.query(query)).toEmitValuesWith(() => {
         expect(runSplitQuery).toHaveBeenCalled();
       });
+    });
+  });
+
+  describe('getQueryStats', () => {
+    it('uses statsMetadataRequest', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const spy = jest.spyOn(ds, 'statsMetadataRequest').mockResolvedValue({} as QueryStats);
+      ds.getQueryStats('{foo="bar"}');
+      expect(spy).toHaveBeenCalled();
     });
   });
 });
