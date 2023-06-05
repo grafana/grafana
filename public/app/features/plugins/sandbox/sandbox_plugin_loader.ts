@@ -2,6 +2,7 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -34,8 +35,6 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 }
 
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
-  // TODO remove this
-  console.log('Loading plugin in sandbox', meta.id);
   const generalDistortionMap = getGeneralSandboxDistortionMap();
 
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
