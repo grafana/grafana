@@ -11,10 +11,6 @@ keywords:
   - configuration
   - server
   - settings
-labels:
-  products:
-    - enterprise
-    - oss
 title: View server statistics and license
 weight: 400
 ---

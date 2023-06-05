@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 import { ScopedVars } from './ScopedVars';
+import { DataSourcePluginMeta, DataSourceSettings } from './datasource';
 import { IconName } from './icon';
 import { PanelData } from './panel';
 import { RawTimeRange, TimeZone } from './time';
@@ -117,6 +118,18 @@ export type PluginExtensionPanelContext = {
   targets: DataQuery[];
   scopedVars?: ScopedVars;
   data?: PanelData;
+};
+
+export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJsonData = DataSourceJsonData> = {
+  // The current datasource settings
+  dataSource: DataSourceSettings<JsonData>;
+
+  // Meta information about the datasource plugin
+  dataSourceMeta: DataSourcePluginMeta;
+
+  // Can be used to update the `jsonData` field on the datasource
+  // (Only updates the form, it still needs to be saved by the user)
+  setJsonData: (jsonData: JsonData) => void;
 };
 
 type Dashboard = {

@@ -135,9 +135,6 @@ func setEnv(t *testing.T, key, value string) string {
 	t.Helper()
 	os.Clearenv()
 
-	err := os.Setenv(key, value)
-	if err != nil {
-		require.NoError(t, err)
-	}
+	t.Setenv(key, value)
 	return key
 }
