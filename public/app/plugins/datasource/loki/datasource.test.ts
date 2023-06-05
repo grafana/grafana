@@ -1148,6 +1148,15 @@ describe('LokiDatasource', () => {
       expect(spy).toHaveBeenCalled();
     });
   });
+
+  describe('statsMetadataRequest', () => {
+    it('throws error if url starts with /', () => {
+      const ds = createLokiDatasource();
+      expect(async () => {
+        await ds.statsMetadataRequest('/index');
+      }).rejects.toThrow('invalid metadata request url: /index');
+    });
+  });
 });
 
 describe('applyTemplateVariables', () => {
