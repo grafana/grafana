@@ -8,7 +8,7 @@ import { InfluxQuery } from '../../../../../types';
 
 import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
-jest.mock('../../influxql_metadata_query', () => {
+jest.mock('../../../../../influxql_metadata_query', () => {
   return {
     __esModule: true,
     getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
