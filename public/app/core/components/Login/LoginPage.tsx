@@ -23,57 +23,50 @@ const forgottenPasswordStyles = css`
 export const LoginPage = () => {
   document.title = Branding.AppTitle;
   return (
-    <LoginLayout>
-      <LoginCtrl>
-        {({
-          loginHint,
-          passwordHint,
-          disableLoginForm,
-          disableUserSignUp,
-          login,
-          isLoggingIn,
-          changePassword,
-          skipPasswordChange,
-          isChangingPassword,
-          showDefaultPasswordWarning,
-        }) => (
-          <>
-            {!isChangingPassword && (
-              <InnerBox>
-                {!disableLoginForm && (
-                  <LoginForm
-                    onSubmit={login}
-                    loginHint={loginHint}
-                    passwordHint={passwordHint}
-                    isLoggingIn={isLoggingIn}
-                  >
-                    <HorizontalGroup justify="flex-end">
-                      <LinkButton
-                        className={forgottenPasswordStyles}
-                        fill="text"
-                        href={`${config.appSubUrl}/user/password/send-reset-email`}
-                      >
-                        Forgot your password?
-                      </LinkButton>
-                    </HorizontalGroup>
-                  </LoginForm>
-                )}
-                <LoginServiceButtons />
-                {!disableUserSignUp && <UserSignup />}
-              </InnerBox>
-            )}
-            {isChangingPassword && (
-              <InnerBox>
-                <ChangePassword
-                  showDefaultPasswordWarning={showDefaultPasswordWarning}
-                  onSubmit={changePassword}
-                  onSkip={() => skipPasswordChange()}
-                />
-              </InnerBox>
-            )}
-          </>
-        )}
-      </LoginCtrl>
-    </LoginLayout>
+    <LoginCtrl>
+      {({
+        loginHint,
+        passwordHint,
+        disableLoginForm,
+        disableUserSignUp,
+        login,
+        isLoggingIn,
+        changePassword,
+        skipPasswordChange,
+        isChangingPassword,
+        showDefaultPasswordWarning,
+      }) => (
+        <LoginLayout isChangingPassword={isChangingPassword}>
+          {!isChangingPassword && (
+            <InnerBox>
+              {!disableLoginForm && (
+                <LoginForm onSubmit={login} loginHint={loginHint} passwordHint={passwordHint} isLoggingIn={isLoggingIn}>
+                  <HorizontalGroup justify="flex-end">
+                    <LinkButton
+                      className={forgottenPasswordStyles}
+                      fill="text"
+                      href={`${config.appSubUrl}/user/password/send-reset-email`}
+                    >
+                      Forgot your password?
+                    </LinkButton>
+                  </HorizontalGroup>
+                </LoginForm>
+              )}
+              <LoginServiceButtons />
+              {!disableUserSignUp && <UserSignup />}
+            </InnerBox>
+          )}
+          {isChangingPassword && (
+            <InnerBox>
+              <ChangePassword
+                showDefaultPasswordWarning={showDefaultPasswordWarning}
+                onSubmit={changePassword}
+                onSkip={() => skipPasswordChange()}
+              />
+            </InnerBox>
+          )}
+        </LoginLayout>
+      )}
+    </LoginCtrl>
   );
 };

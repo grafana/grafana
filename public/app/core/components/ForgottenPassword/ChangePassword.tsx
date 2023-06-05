@@ -24,7 +24,6 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
     <Form onSubmit={submit}>
       {({ errors, register, getValues }) => (
         <>
-          <h2>Update your password</h2>
           {showDefaultPasswordWarning && (
             <Alert severity="info" title="Continuing to use the default password exposes you to security risks." />
           )}
