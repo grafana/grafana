@@ -100,16 +100,15 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span
-            className={cx('log-row-menu', styles.rowMenu, {
-              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-            })}
-            onClick={this.onLogRowClick}
-          >
+          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-              </Tooltip>
+              <IconButton
+                tooltip="Show context"
+                tooltipPlacement="top"
+                size="md"
+                name="gf-show-context"
+                onClick={this.onShowContextClick}
+              />
             )}
             <ClipboardButton
               className={styles.copyLogButton}
