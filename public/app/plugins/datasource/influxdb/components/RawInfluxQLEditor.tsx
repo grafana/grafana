@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
 
-import { useUniqueId } from '../../../../features/hooks/useUniqueId';
 import { InfluxQuery } from '../types';
 
 import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from './constants';
@@ -20,8 +19,8 @@ type Props = {
 export const RawInfluxQLEditor = ({ query, onChange, onRunQuery }: Props): JSX.Element => {
   const [currentQuery, setCurrentQuery] = useShadowedState(query.query);
   const [currentAlias, setCurrentAlias] = useShadowedState(query.alias);
-  const aliasElementId = useUniqueId();
-  const selectElementId = useUniqueId();
+  const aliasElementId = useId();
+  const selectElementId = useId();
 
   const resultFormat = query.resultFormat ?? DEFAULT_RESULT_FORMAT;
 

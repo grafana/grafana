@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
-import { useUniqueId } from '../../../../../features/hooks/useUniqueId';
 import InfluxDatasource from '../../datasource';
 import {
   getAllMeasurementsForTags,
@@ -80,7 +79,7 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
 }
 
 export const Editor = (props: Props): JSX.Element => {
-  const uniqueId = useUniqueId();
+  const uniqueId = useId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
 
