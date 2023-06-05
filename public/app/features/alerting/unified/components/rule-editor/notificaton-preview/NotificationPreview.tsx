@@ -1,83 +1,20 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import pluralize from 'pluralize';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useAsync, useToggle } from 'react-use';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, getTagColorIndexFromName, LoadingPlaceholder, TagList, useStyles2 } from '@grafana/ui';
-import { AlertmanagerChoice, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
-import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
-import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
-import { AlertInstanceMatch, normalizeRoute } from '../../../utils/notification-policies';
-import { CollapseToggle } from '../../CollapseToggle';
-import { MetaText } from '../../MetaText';
-import { Spacer } from '../../Spacer';
 
-import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
-import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
-import { getRoutesByIdMap, RouteWithPath } from './route';
-
-export const useGetPotentialInstancesByAlertManager = (
-  alertManagerSourceName: string,
-  potentialInstances: Labels[]
-) => {
-  const {
-    config: AMConfig,
-    loading: configLoading,
-    error: configError,
-  } = useAlertmanagerConfig(alertManagerSourceName);
-
-  const { matchInstancesToRoute } = useRouteGroupsMatcher();
-
-  // to create the list of matching contact points we need to first get the rootRoute
-  const { rootRoute, receivers } = useMemo((): { rootRoute?: RouteWithID; receivers: Receiver[] } => {
-    if (!AMConfig) {
-      return { receivers: [] };
-    }
-
-    return {
-      rootRoute: AMConfig.route ? normalizeRoute(addUniqueIdentifierToRoute(AMConfig.route)) : undefined,
-      receivers: AMConfig.receivers ?? [],
-    };
-  }, [AMConfig]);
-
-  // create maps for routes to be get by id, this map also contains the path to the route
-  const routesByIdMap: Map<string, RouteWithPath> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
-  // create map for receivers to be get by name
-  const receiversByName =
-    receivers.reduce((map, receiver) => {
-      return map.set(receiver.name, receiver);
-    }, new Map<string, Receiver>()) ?? new Map<string, Receiver>();
-
-  // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
-  const {
-    value: matchingMap = new Map<string, AlertInstanceMatch[]>(),
-    loading: matchingLoading,
-    error: matchingError,
-  } = useAsync(async () => {
-    if (!rootRoute) {
-      return;
-    }
-    return await matchInstancesToRoute(rootRoute, potentialInstances);
-  }, [rootRoute, potentialInstances]);
-
-  return {
-    routesByIdMap,
-    receiversByName,
-    matchingMap: matchingMap,
-    loading: configLoading || matchingLoading,
-    error: configError ?? matchingError,
-  };
-};
+import { NotificationRoute } from './NotificationRoute';
+import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
 
 interface AlertManagerNameWithImage {
   name: string;
@@ -191,7 +128,7 @@ export function NotificationPreviewByAlertManager({
 }) {
   const styles = useStyles2(getStyles);
 
-  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useGetPotentialInstancesByAlertManager(
+  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
     alertManagerSource.name,
     potentialInstances
   );
@@ -233,7 +170,6 @@ export function NotificationPreviewByAlertManager({
           }
           return (
             <NotificationRoute
-              // TODO Use the whole instance object to display matching labels
               instanceMatches={instanceMatches}
               route={route}
               receiver={receiver}
@@ -246,142 +182,6 @@ export function NotificationPreviewByAlertManager({
       </Stack>
     </div>
   ) : null;
-}
-
-function NotificationRouteHeader({
-  route,
-  receiver,
-  routesByIdMap,
-  instancesCount,
-  alertManagerSourceName,
-  expandRoute,
-  onExpandRouteClick,
-}: {
-  route: RouteWithPath;
-  receiver: Receiver;
-  routesByIdMap: Map<string, RouteWithPath>;
-  instancesCount: number;
-  alertManagerSourceName: string;
-  expandRoute: boolean;
-  onExpandRouteClick: (expand: boolean) => void;
-}) {
-  const styles = useStyles2(getStyles);
-  const [showDetails, setShowDetails] = useState(false);
-
-  const onClickDetails = () => {
-    setShowDetails(true);
-  };
-
-  return (
-    <div className={styles.routeHeader}>
-      <CollapseToggle isCollapsed={!expandRoute} onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)} />
-      <Stack flexGrow={1} gap={1}>
-        <Stack gap={1} direction="row" alignItems="center">
-          Notification policy
-          <NotificationPolicyMatchers route={route} />
-        </Stack>
-        <Spacer />
-        <Stack gap={2} direction="row" alignItems="center">
-          <MetaText icon="layers-alt" data-testid="matching-instances">
-            {instancesCount ?? '-'}
-            <span>{pluralize('instance', instancesCount)}</span>
-          </MetaText>
-          <Stack gap={1} direction="row" alignItems="center">
-            <div>
-              <span className={styles.textMuted}>@ Delivered to</span> {receiver.name}
-            </div>
-
-            <div className={styles.verticalBar} />
-
-            <Button type="button" onClick={onClickDetails} variant="secondary" fill="outline" size="sm">
-              See details
-            </Button>
-          </Stack>
-        </Stack>
-      </Stack>
-      {showDetails && (
-        <NotificationRouteDetailsModal
-          onClose={() => setShowDetails(false)}
-          route={route}
-          receiver={receiver}
-          routesByIdMap={routesByIdMap}
-          alertManagerSourceName={alertManagerSourceName}
-        />
-      )}
-    </div>
-  );
-}
-
-interface NotificationRouteProps {
-  route: RouteWithPath;
-  receiver: Receiver;
-  instanceMatches: AlertInstanceMatch[];
-  routesByIdMap: Map<string, RouteWithPath>;
-  alertManagerSourceName: string;
-}
-
-function NotificationRoute({
-  route,
-  instanceMatches,
-  receiver,
-  routesByIdMap,
-  alertManagerSourceName,
-}: NotificationRouteProps) {
-  const styles = useStyles2(getStyles);
-  const [expandRoute, setExpandRoute] = useToggle(false);
-
-  return (
-    <div>
-      <NotificationRouteHeader
-        route={route}
-        receiver={receiver}
-        routesByIdMap={routesByIdMap}
-        instancesCount={instanceMatches.length}
-        alertManagerSourceName={alertManagerSourceName}
-        expandRoute={expandRoute}
-        onExpandRouteClick={setExpandRoute}
-      />
-      {expandRoute && (
-        <Stack gap={1} direction="column">
-          <div className={styles.routeInstances}>
-            {instanceMatches.map((instanceMatch) => {
-              const matchArray = Array.from(instanceMatch.labelsMatch.entries());
-              let matchResult = matchArray.map(([label, matchResult]) => ({
-                label: `${label[0]}=${label[1]}`,
-                match: matchResult.match,
-                colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : 9, // 9 is the gray color
-              }));
-
-              const matchingLabels = matchResult.filter((mr) => mr.match);
-              const nonMatchingLabels = matchResult.filter((mr) => !mr.match);
-
-              return (
-                <div className={styles.tagListCard} key={JSON.stringify(instanceMatch.instance)}>
-                  {matchArray.length > 0 ? (
-                    <>
-                      <TagList
-                        tags={matchingLabels.map((mr) => mr.label)}
-                        className={styles.labelList}
-                        getColorIndex={(_, index) => matchingLabels[index].colorIndex}
-                      />
-                      <div className={styles.labelSeparator} />
-                      <TagList
-                        tags={nonMatchingLabels.map((mr) => mr.label)}
-                        className={styles.labelList}
-                        getColorIndex={(_, index) => nonMatchingLabels[index].colorIndex}
-                      />
-                    </>
-                  ) : (
-                    <div className={styles.textMuted}>No labels</div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </Stack>
-      )}
-    </div>
-  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -407,65 +207,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: space-between;
     align-items: center;
   `,
-  routeHeader: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(1)};
-    align-items: center;
-    border-bottom: solid 1px ${theme.colors.border.weak};
-    padding: ${theme.spacing(0.5, 0.5, 0.5, 0)};
-    background: ${theme.colors.background.secondary};
-  `,
   collapseLabel: css`
     flex: 1;
-  `,
-  labelList: css`
-    flex: 0 1 auto;
-    justify-content: flex-start;
-  `,
-  labelSeparator: css`
-    width: 1px;
-    background-color: ${theme.colors.border.weak};
-  `,
-  tagListCard: css`
-    display: flex;
-    flex-direction: row;
-    gap: ${theme.spacing(2)};
-
-    position: relative;
-    background: ${theme.colors.background.secondary};
-    padding: ${theme.spacing(1)};
-
-    border-radius: ${theme.shape.borderRadius(2)};
-    border: solid 1px ${theme.colors.border.weak};
-  `,
-  routeInstances: css`
-    padding: ${theme.spacing(1, 0, 1, 4)};
-    position: relative;
-
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-
-    &:before {
-      content: '';
-      position: absolute;
-      left: ${theme.spacing(2)};
-      height: calc(100% - ${theme.spacing(2)});
-      width: ${theme.spacing(4)};
-      border-left: solid 1px ${theme.colors.border.weak};
-    }
   `,
   button: css`
     justify-content: flex-end;
     display: flex;
-  `,
-  verticalBar: css`
-    width: 1px;
-    height: 20px;
-    background-color: ${theme.colors.secondary.main};
-    margin-left: ${theme.spacing(1)};
-    margin-right: ${theme.spacing(1)};
   `,
   alertManagerRow: css`
     margin-top: ${theme.spacing(2)};
