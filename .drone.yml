@@ -239,11 +239,11 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
-  - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
-    dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)'
-    and that no translation key is used twice." && false)
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo Translation extraction
+    ]; then\n                echo $file_diff\n                echo \nTranslation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
     push again.\n                exit 1\n            fi\n            "
   - yarn run i18n:compile
@@ -1311,11 +1311,11 @@ steps:
   image: grafana/build-container:1.7.4
   name: lint-frontend
 - commands:
-  - yarn run i18n:extract || (echo "Extraction failed. Make sure that you have no
-    dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)'
-    and that no translation key is used twice." && false)
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
   - "\n            file_diff=$(git diff -- locales --stat)\n            if [ -n \"$file_diff\"
-    ]; then\n                echo $file_diff\n                echo Translation extraction
+    ]; then\n                echo $file_diff\n                echo \nTranslation extraction
     has not been committed. Please run 'yarn i18n:extract', commit the changes and
     push again.\n                exit 1\n            fi\n            "
   - yarn run i18n:compile
@@ -7240,6 +7240,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: dfcadbdaf8dff9ceff4304ea6736ec457342c785bde8032c5e2a6d6428a61f5a
+hmac: 1fef8fac4b039725c13621bcedc2ed656241f905a5b1b657b65a4c06f72e6fc5
 
 ...
