@@ -26,8 +26,7 @@ scenes,experimental,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false,false
-internationalization,GA,@grafana/user-essentials,false,false,false,false
-topnav,GA,@grafana/user-essentials,false,false,false,false
+topnav,GA,@grafana/grafana-frontend-platform,false,false,false,false
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,experimental,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-plugins,false,false,false,false
@@ -78,4 +77,6 @@ advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true
 dataSourcePageHeader,preview,@grafana/enterprise-datasources,false,false,false,true
-extraThemes,experimental,@grafana/user-essentials,false,false,false,true
+extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,false,true
+lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,false,true
+pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true

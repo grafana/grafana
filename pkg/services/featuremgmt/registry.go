@@ -187,18 +187,11 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
-		},
-		{
 			Name:        "topnav",
 			Description: "Enables new top navigation and page layouts",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "grpcServer",
@@ -540,7 +533,21 @@ var (
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaUserEssentialsSquad,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "pluginsFrontendSandbox",
+			Description:  "Enables the plugins frontend sandbox",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
 		},
 	}
 )
