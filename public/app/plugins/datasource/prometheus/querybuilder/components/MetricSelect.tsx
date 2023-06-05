@@ -87,7 +87,8 @@ export function MetricSelect({
       if (option['__isNew__']) {
         return option.label;
       }
-
+      // only matches on input, does not match on regex
+      // look into matching for regex input
       return (
         <Highlighter
           searchWords={meta.inputValue.split(splitSeparator)}

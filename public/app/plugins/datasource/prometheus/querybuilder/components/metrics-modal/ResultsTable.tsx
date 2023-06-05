@@ -101,6 +101,21 @@ export function ResultsTable(props: ResultsTableProps) {
     );
   }
 
+  function textHighlight(state: MetricsModalState) {
+    if (state.useBackend) {
+      // highlight the input only for the backend search
+      // this highlight is equivalent to how the metric select highlights
+      // look into matching on regex input
+      return [state.fuzzySearchQuery];
+    } else if (state.fullMetaSearch) {
+      // highlight the matches in the ufuzzy metaHaystack
+      return state.metaHaystackMatches;
+    } else {
+      // highlight the ufuzzy name matches
+      return state.nameHaystackMatches;
+    }
+  }
+
   return (
     <table className={styles.table} ref={tableRef}>
       <thead className={styles.stickyHeader}>
@@ -134,7 +149,7 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
+                      searchWords={textHighlight(state)}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />
