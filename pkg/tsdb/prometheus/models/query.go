@@ -14,23 +14,25 @@ import (
 
 // Internal interval and range variables
 const (
-	varInterval     = "$__interval"
-	varIntervalMs   = "$__interval_ms"
-	varRange        = "$__range"
-	varRangeS       = "$__range_s"
-	varRangeMs      = "$__range_ms"
-	varRateInterval = "$__rate_interval"
+	varInterval       = "$__interval"
+	varIntervalMs     = "$__interval_ms"
+	varRange          = "$__range"
+	varRangeS         = "$__range_s"
+	varRangeMs        = "$__range_ms"
+	varRateInterval   = "$__rate_interval"
+	varRateIntervalMs = "$__rate_interval_ms"
 )
 
 // Internal interval and range variables with {} syntax
 // Repetitive code, we should have functionality to unify these
 const (
-	varIntervalAlt     = "${__interval}"
-	varIntervalMsAlt   = "${__interval_ms}"
-	varRangeAlt        = "${__range}"
-	varRangeSAlt       = "${__range_s}"
-	varRangeMsAlt      = "${__range_ms}"
-	varRateIntervalAlt = "${__rate_interval}"
+	varIntervalAlt       = "${__interval}"
+	varIntervalMsAlt     = "${__interval_ms}"
+	varRangeAlt          = "${__range}"
+	varRangeSAlt         = "${__range_s}"
+	varRangeMsAlt        = "${__range_ms}"
+	varRateIntervalAlt   = "${__rate_interval}"
+	varRateIntervalMsAlt = "${__rate_interval_ms}"
 )
 
 type TimeSeriesQueryType string
@@ -227,6 +229,7 @@ func interpolateVariables(expr, queryInterval string, interval time.Duration,
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateIntervalMs, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varRateInterval, rateInterval.String())
 
 	// Repetitive code, we should have functionality to unify these
@@ -235,16 +238,17 @@ func interpolateVariables(expr, queryInterval string, interval time.Duration,
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
+	expr = strings.ReplaceAll(expr, varRateIntervalMsAlt, strconv.FormatInt(int64(rateInterval/time.Millisecond), 10))
 	expr = strings.ReplaceAll(expr, varRateIntervalAlt, rateInterval.String())
 	return expr
 }
 
 func isVariableInterval(interval string) bool {
-	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
+	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval || interval == varRateIntervalMs {
 		return true
 	}
 	// Repetitive code, we should have functionality to unify these
-	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
+	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt || interval == varRateIntervalMsAlt {
 		return true
 	}
 	return false
