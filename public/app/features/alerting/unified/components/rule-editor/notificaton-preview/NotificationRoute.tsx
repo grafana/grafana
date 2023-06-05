@@ -43,7 +43,11 @@ function NotificationRouteHeader({
 
   return (
     <div className={styles.routeHeader}>
-      <CollapseToggle isCollapsed={!expandRoute} onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)} />
+      <CollapseToggle
+        isCollapsed={!expandRoute}
+        onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)}
+        aria-label="Expand policy route"
+      />
       <Stack flexGrow={1} gap={1}>
         <Stack gap={1} direction="row" alignItems="center">
           Notification policy
@@ -100,7 +104,7 @@ export function NotificationRoute({
   const [expandRoute, setExpandRoute] = useToggle(false);
 
   return (
-    <div>
+    <div data-testid="matching-policy-route">
       <NotificationRouteHeader
         route={route}
         receiver={receiver}
@@ -112,7 +116,7 @@ export function NotificationRoute({
       />
       {expandRoute && (
         <Stack gap={1} direction="column">
-          <div className={styles.routeInstances}>
+          <div className={styles.routeInstances} data-testid="route-matching-instance">
             {instanceMatches.map((instanceMatch) => {
               const matchArray = Array.from(instanceMatch.labelsMatch.entries());
               let matchResult = matchArray.map(([label, matchResult]) => ({

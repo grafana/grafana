@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { byRole, byText } from 'testing-library-selector';
+import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { FieldType } from '@grafana/data';
 
@@ -44,7 +44,9 @@ const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceName
 >;
 
 const ui = {
-  routeButton: byRole('button', { name: /Notification policy/ }),
+  route: byTestId('matching-policy-route'),
+  routeButton: byRole('button', { name: /Expand policy route/ }),
+  routeMatchingInstances: byTestId('route-matching-instance'),
   loadingIndicator: byText('Loading routing preview...'),
   previewButton: byRole('button', { name: /preview routing/i }),
   grafanaAlertManagerLabel: byText(/alert manager:grafana/i),
@@ -241,6 +243,8 @@ describe('NotificationPreviewByAlertmanager', () => {
         .addReceivers((b) => b.withName('opsgenie'))
     );
 
+    const user = userEvent.setup();
+
     render(
       <NotificationPreviewByAlertManager
         alertManagerSource={{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }}
@@ -254,10 +258,22 @@ describe('NotificationPreviewByAlertmanager', () => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
 
-    const matchingPoliciesElements = ui.routeButton.queryAll();
-    expect(matchingPoliciesElements).toHaveLength(2);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/severity = critical/);
-    expect(matchingPoliciesElements[0]).toHaveTextContent(/slack/);
-    expect(matchingPoliciesElements[1]).toHaveTextContent(/email/);
+    const routeElements = ui.route.getAll();
+
+    expect(routeElements).toHaveLength(2);
+    expect(routeElements[0]).toHaveTextContent(/slack/);
+    expect(routeElements[1]).toHaveTextContent(/email/);
+
+    await user.click(ui.routeButton.get(routeElements[0]));
+    await user.click(ui.routeButton.get(routeElements[1]));
+
+    const matchingInstances0 = ui.routeMatchingInstances.get(routeElements[0]);
+    const matchingInstances1 = ui.routeMatchingInstances.get(routeElements[1]);
+
+    expect(matchingInstances0).toHaveTextContent(/severity=critical/);
+    expect(matchingInstances0).toHaveTextContent(/foo=bar/);
+
+    expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
+    expect(matchingInstances1).toHaveTextContent(/severity=warning/);
   });
 });
