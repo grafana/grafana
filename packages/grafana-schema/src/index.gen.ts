@@ -151,14 +151,5 @@ export type {
   RoleBindingSubject
 } from './raw/rolebinding/x/rolebinding_types.gen';
 
-// Raw generated types from ServiceAccount kind.
-export type {
-  ServiceAccount,
-  OrgRole
-} from './raw/serviceaccount/x/serviceaccount_types.gen';
-
-// Raw generated enums and default consts from serviceaccount kind.
-export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
-
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';

@@ -1265,7 +1265,12 @@ export class PrometheusDatasource
   }
 
   getDefaultQuery(app: CoreApp): PromQuery {
-    const defaults = promDefaultBaseQuery();
+    const defaults = {
+      refId: 'A',
+      expr: '',
+      range: true,
+      instant: false,
+    };
 
     if (app === CoreApp.UnifiedAlerting) {
       return {
@@ -1334,13 +1339,4 @@ export function prometheusRegularEscape(value: any) {
 
 export function prometheusSpecialRegexEscape(value: any) {
   return typeof value === 'string' ? value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]\'+?.()|]/g, '\\\\$&') : value;
-}
-
-export function promDefaultBaseQuery(): PromQuery {
-  return {
-    refId: 'A',
-    expr: '',
-    range: true,
-    instant: false,
-  };
 }

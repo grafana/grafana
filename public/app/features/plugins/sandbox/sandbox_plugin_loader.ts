@@ -2,7 +2,6 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { GrafanaPlugin, PluginMeta } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
