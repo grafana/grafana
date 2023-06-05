@@ -41,6 +41,10 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
   const generalDistortionMap = getGeneralSandboxDistortionMap();
 
+  /*
+   * this function is executed every time a plugin calls any DOM API
+   * it must be kept as lean and performant as possible and sync
+   */
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
     if (isDomElement(originalValue)) {
       const element = getSafeSandboxDomElement(originalValue);
