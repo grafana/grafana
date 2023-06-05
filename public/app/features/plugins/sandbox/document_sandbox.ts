@@ -1,17 +1,5 @@
 import { forbiddenElements } from './constants';
 
-export function getSandboxDocument(pluginId: string): Document {
-  const newDoc = new DOMParser().parseFromString(
-    `<!DOCTYPE html>
-        <html>
-          <head id="grafana-plugin-sandbox-${pluginId}"></head>
-          <body id="grafana-plugin-sandbox-${pluginId}"></body></body>
-        </html>`,
-    'text/html'
-  );
-  return newDoc;
-}
-
 export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 
 export function getSafeSandboxDomElement(element: Element): Element {

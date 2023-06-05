@@ -1,5 +1,8 @@
 import React, { Attributes, ComponentType } from 'react';
 
+/**
+ * Wraps a component in a sandboxed wrapper
+ */
 export function withSandboxWrapper<P>(
   OriginalComponent: ComponentType<P> | null | undefined,
   pluginId = 'sandboxed-plugin'
