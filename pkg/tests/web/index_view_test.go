@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	databaseAuthInfo "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -119,7 +118,7 @@ func TestIntegrationIndexViewAnalytics(t *testing.T) {
 	}
 
 	// can be removed once ff is removed
-	testCaseFeatures := map[string][]string{"none": {}, "authnService": {featuremgmt.FlagAuthnService}}
+	testCaseFeatures := map[string][]string{"none": {}, "authnService": {}}
 
 	for k, tcFeatures := range testCaseFeatures {
 		for _, tc := range testCases {
