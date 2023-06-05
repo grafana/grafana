@@ -50,7 +50,7 @@ async function assertEditor(query: InfluxQuery, textContent: string) {
   });
 }
 
-describe('InfluxDB InfluxQL Visual VisualInfluxQLEditor', () => {
+describe('InfluxDB InfluxQL Visual Editor', () => {
   it('should handle minimal query', async () => {
     const query: InfluxQuery = {
       refId: 'A',

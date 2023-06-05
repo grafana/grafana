@@ -1,6 +1,6 @@
 import { adjustOperatorIfNeeded, getCondition, getOperator } from './tagUtils';
 
-describe('InfluxDB InfluxQL VisualInfluxQLEditor tag utils', () => {
+describe('InfluxDB InfluxQL Editor tag utils', () => {
   describe('getOperator', () => {
     it('should return an existing operator', () => {
       expect(

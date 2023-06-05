@@ -117,7 +117,7 @@ const query: InfluxQuery = {
   measurement: 'cpudata',
 };
 
-describe('InfluxDB InfluxQL Visual VisualInfluxQLEditor field-filtering', () => {
+describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
   it('should not send fields in tag-structures to metadata queries', async () => {
     const onChange = jest.fn();
     const onRunQuery = jest.fn();
