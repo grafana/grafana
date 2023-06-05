@@ -113,6 +113,11 @@ export function filterMetrics(state: MetricsModalState): MetricsData {
         if (m.type && t.value) {
           return m.type.includes(t.value);
         }
+
+        if (!m.type && t.value === 'no type') {
+          return true;
+        }
+
         return false;
       });
 
@@ -230,6 +235,14 @@ export const promTypes: PromFilterOption[] = [
     value: 'summary',
     description:
       'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
+  },
+  {
+    value: 'unknown',
+    description: 'These metrics have been given the type unknown in the metadata.',
+  },
+  {
+    value: 'no type',
+    description: 'These metrics have no defined type in the metadata.',
   },
 ];
 
