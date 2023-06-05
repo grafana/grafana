@@ -131,17 +131,16 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, plugin, dat
   return null;
 }
 
-export function renderHealthCheckDetails(plugin: GenericDataSourcePlugin, details: HealthCheckResultDetails): ReactNode {
-  const HealthCheckDetailsComponent = plugin.components.HealthCheckDetails
+export function renderHealthCheckDetails(
+  plugin: GenericDataSourcePlugin,
+  details: HealthCheckResultDetails
+): ReactNode {
+  const HealthCheckDetailsComponent = plugin.components.HealthCheckDetails;
 
   if (HealthCheckDetailsComponent) {
     return (
-      <ErrorBoundary>
-        {({ error }) => (
-          error ? null : <HealthCheckDetailsComponent details={details} />
-        )}
-      </ErrorBoundary>
-    )
+      <ErrorBoundary>{({ error }) => (error ? null : <HealthCheckDetailsComponent details={details} />)}</ErrorBoundary>
+    );
   }
 
   return null;

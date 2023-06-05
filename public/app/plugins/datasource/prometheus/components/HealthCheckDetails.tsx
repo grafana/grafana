@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 import { HealthCheckDetailsProps } from '@grafana/data';
 import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
@@ -47,9 +47,7 @@ function HealthCheckDetails({ details }: HealthCheckDetailsProps<PromApiFeatures
     <Badge
       text={
         <span>
-          {logo && (
-            <img style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }} src={logo} alt={application} />
-          )}{' '}
+          {logo && <img style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }} src={logo} alt={application} />}{' '}
           {application ? AppDisplayNames[application] : 'Unknown'}
         </span>
       }
@@ -81,4 +79,4 @@ function HealthCheckDetails({ details }: HealthCheckDetailsProps<PromApiFeatures
   );
 }
 
-export { HealthCheckDetails }
+export { HealthCheckDetails };

@@ -97,7 +97,7 @@ describe('<DataSourceTestingStatus />', () => {
   it('should render HealthCheckDetails', () => {
     const healthCheckComponent = jest.fn(({ details }) => {
       expect(details).toEqual({ foo: 'bar' });
-      return <div data-testid="HealthCheckDetails" />
+      return <div data-testid="HealthCheckDetails" />;
     });
 
     const props = getProps({
@@ -105,16 +105,16 @@ describe('<DataSourceTestingStatus />', () => {
         status: 'success',
         message: 'Successfully queried the Prometheus API.',
         details: {
-          foo: 'bar'
-        }
+          foo: 'bar',
+        },
       },
       // @ts-ignore
       plugin: {
         components: {
           HealthCheckDetails: healthCheckComponent,
-        }
-      }
-    })
+        },
+      },
+    });
 
     render(
       <Router history={locationService.getHistory()}>
@@ -124,5 +124,5 @@ describe('<DataSourceTestingStatus />', () => {
 
     expect(screen.getByTestId('HealthCheckDetails')).toBeInTheDocument();
     expect(healthCheckComponent).toHaveBeenCalled();
-  })
+  });
 });
