@@ -47,6 +47,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       const element = getSafeSandboxDomElement(originalValue);
       // the element.style attribute should be a live target to work in chrome
       markDomElementStyleAsALiveTarget(element, SANDBOX_LIVE_VALUE);
+      return element;
     }
     const distortion = generalDistortionMap.get(originalValue);
     if (distortion) {

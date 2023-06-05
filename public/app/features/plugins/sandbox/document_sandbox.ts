@@ -23,6 +23,17 @@ export function getSafeSandboxDomElement(element: Element): Element {
     return getSandboxMockBody();
   }
 
+  // allow acces to the head
+  // the condition redundancy is intentional
+  if (nodeName === 'head' || element === document.head) {
+    return element;
+  }
+
+  // allow access to the HTML element
+  if (element === document.documentElement) {
+    return element;
+  }
+
   if (forbiddenElements.includes(nodeName)) {
     throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
   }
@@ -74,7 +85,7 @@ export function markDomElementStyleAsALiveTarget(el: Element, mark: symbol) {
  *
  */
 export function isDomElementInsideSandbox(el: Element): boolean {
-  return document.contains(el) && el.closest(`[data-plugin-sandbox]`) !== null;
+  return !document.contains(el) || el.closest(`[data-plugin-sandbox]`) !== null;
 }
 
 let sandboxBody: HTMLDivElement;
