@@ -76,7 +76,7 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
-  it('parses query with line filters and escaped characters', () => {
+  it('parses query with line filter and escaped quote', () => {
     expect(buildVisualQueryFromString('{app="frontend"} |= "\\"line"')).toEqual(
       noErrors({
         labels: [
@@ -86,7 +86,22 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: LokiOperationId.LineContains, params: ['\\"line'] }],
+        operations: [{ id: LokiOperationId.LineContains, params: ['"line'] }],
+      })
+    );
+  });
+
+  it('parses query with label filter and escaped quote', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | bar="\\"baz"')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '=', '"baz'] }],
       })
     );
   });
