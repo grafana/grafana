@@ -44,11 +44,19 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
 
   // we change the icon to a spinner here instead of actually using the <Spinner /> component
   // conditionally rendering <Spinner /> here would lose focus on the button and break keyboard a11y
-  const getChevronIcon = () => {
+  const getIcon = () => {
     if (isOpen) {
       return !childrenByParentUID[item.uid] ? 'fa fa-spinner' : 'angle-down';
     } else {
       return 'angle-right';
+    }
+  };
+
+  const getTooltip = () => {
+    if (isOpen) {
+      return !childrenByParentUID[item.uid] ? 'Fetching folder contents...' : 'Collapse folder';
+    } else {
+      return 'Expand folder';
     }
   };
 
@@ -61,8 +69,8 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
           size={CHEVRON_SIZE}
           className={styles.button}
           onClick={isOpen && !childrenByParentUID[item.uid] ? undefined : () => onFolderClick(item.uid, !isOpen)}
-          name={getChevronIcon()}
-          ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+          name={getIcon()}
+          tooltip={getTooltip()}
         />
       ) : (
         <span className={styles.folderButtonSpacer} />
