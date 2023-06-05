@@ -2,6 +2,12 @@ import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 // CloudWatch Logs: https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
 
+interface CloudWatchLogsLanguage extends monacoType.languages.IMonarchLanguage {
+  commands: string[];
+  operators: string[];
+  builtinFunctions: string[];
+}
+
 export const DISPLAY = 'display';
 export const FIELDS = 'fields';
 export const FILTER = 'filter';
@@ -12,7 +18,7 @@ export const PARSE = 'parse';
 export const UNMASK = 'unmask'; //make sure we support this one
 export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, STATS, SORT, LIMIT, PARSE, UNMASK];
 
-export const LOGS_OPERATORS = [
+export const LOGS_MATH_OPERATORS = [
   // arithmetic
   '+',
   '-',
@@ -87,45 +93,81 @@ export const LOGS_FUNCTION_OPERATORS = [
   'strcontains',
 ];
 
-export const LOGS_KEYWORDS = ['as', 'like', 'by', 'in', 'desc', 'asc'];
+export const LOGS_KEYWORDS = ['like', 'by', 'in', 'desc', 'asc', 'as'];
 
-export const language: monacoType.languages.IMonarchLanguage = {
+const PERIODS = [
+  'millisecond',
+  'ms',
+  'msec',
+  'second',
+  's',
+  'sec',
+  'minute',
+  'm',
+  'min',
+  'hour',
+  'h',
+  'hr',
+  'day',
+  'd',
+  'week',
+  'w',
+  'month',
+  'mo',
+  'mon',
+  'quarter',
+  'q',
+  'qtr',
+  'year',
+  'y',
+  'yr',
+];
+
+export const language: CloudWatchLogsLanguage = {
   defaultToken: 'invalid',
   id: 'logs',
   ignoreCase: true,
   brackets: [
     { open: '{', close: '}', token: 'delimiter.curly' },
+    { open: '[', close: ']', token: 'delimiter.square' },
     { open: '(', close: ')', token: 'delimiter.parenthesis' },
   ],
+  commands: [...LOGS_COMMANDS, ...LOGS_KEYWORDS],
+  operators: LOGS_MATH_OPERATORS,
+  builtinFunctions: LOGS_FUNCTION_OPERATORS,
   tokenizer: {
     root: [
       { include: '@comments' },
+      { include: '@regexes' },
       { include: '@whitespace' },
       { include: '@fieldNames' },
-      { include: '@regexes' },
-      { include: '@commands' },
-      { include: '@keywords' },
-      { include: '@operators' },
-      { include: '@builtInFunctions' },
       { include: '@variables' },
       { include: '@strings' },
       { include: '@numbers' },
 
-      // { include: '@complexIdentifiers' },
-      [/[,.]/, 'delimiter'],
-      [/[(){}]/, '@brackets'],
-      [/\|/, 'operator'],
+      //{ include: '@complexIdentifiers' },
+      [/\|\|/, 'operator'],
+      [/[,.:\|]/, 'delimiter'],
+      [/[(){}\[\]]/, 'delimiter.parenthesis'],
+      [
+        /[\w@#$]+/,
+        {
+          cases: {
+            '@commands': 'keyword',
+            '@builtinFunctions': 'predefined',
+            '@operators': 'operator',
+            '@default': 'identifier',
+          },
+        },
+      ],
+      [/[+-*\/^%=!<>]/, 'operator'],
     ],
-    commands: [[LOGS_COMMANDS.map(escapeRegExp).join('|'), 'keyword']],
-    keywords: [[LOGS_KEYWORDS.map(escapeRegExp).join('|'), 'operator']],
-    operators: [[LOGS_OPERATORS.map(escapeRegExp).join('|'), 'operator']],
-    builtInFunctions: [[LOGS_FUNCTION_OPERATORS.map(escapeRegExp).join('|'), 'predefined']],
     variables: [
       [/\$[a-zA-Z0-9-_]+/, 'variable'], // $ followed by any letter/number we assume could be grafana template variable
     ],
-    fieldNames: [[/(@[_a-zA-Z]+[_.0-9a-zA-Z]*)|(`((\\`)|([^`]))*?`)/, 'identifier']],
+    fieldNames: [[/(@[_a-zA-Z]+[_.0-9a-zA-Z]*)|(`((\\`)|([^`]))*?`)/, 'type']],
     whitespace: [[/\s+/, 'white']],
-    comments: [[/#+.*/, 'comment']],
+    comments: [[/^#.*/, 'comment']],
     numbers: [
       [/0[xX][0-9a-fA-F]*/, 'number'],
       [/[$][+-]*\d*(\.\d*)?/, 'number'],
@@ -155,7 +197,7 @@ export const language: monacoType.languages.IMonarchLanguage = {
     ],
     bracketedIdentifier: [
       [/[^\]]+/, 'identifier'],
-      [/]]/, 'identifier'],
+      [/\[]]/, 'identifier'],
       [/]/, { token: 'identifier.quote', next: '@pop' }],
     ],
     quotedIdentifier: [
@@ -163,9 +205,9 @@ export const language: monacoType.languages.IMonarchLanguage = {
       [/""/, 'identifier'],
       [/"/, { token: 'identifier.quote', next: '@pop' }],
     ],
-    regexes: [[/\/.*?\/(?=\||\s*$|,)/, 'regexp']],
+    regexes: [[/\/.*?\/(?=\s*\||\s*$|,)/, 'regexp']],
     // TODO: handle number+unit
-    periods: [[/ /, 'number']],
+    periods: [[new RegExp(`\\b(?:[0-9]+)${PERIODS.map(escapeRegExp).join('|')}s?\\b`, 'i'), 'comment']],
   },
 };
 
