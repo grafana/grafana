@@ -6,6 +6,7 @@ import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
+import { useUniqueId } from '../../../../../features/hooks/useUniqueId';
 import InfluxDatasource from '../../datasource';
 import {
   getAllMeasurementsForTags,
@@ -25,7 +26,6 @@ import {
 } from '../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
-import { useUniqueId } from '../useUniqueId';
 
 import { FormatAsSection } from './FormatAsSection';
 import { FromSection } from './FromSection';

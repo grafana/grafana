@@ -7,8 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
+import { useUniqueId } from 'app/features/hooks/useUniqueId';
 import { getSectionStorageKey } from 'app/features/search/utils';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
