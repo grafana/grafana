@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createLokiDatasource } from '../../mocks';
 import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
@@ -48,7 +47,6 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     maxLines: 20,
-    datasource: createLokiDatasource(),
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
   };
 

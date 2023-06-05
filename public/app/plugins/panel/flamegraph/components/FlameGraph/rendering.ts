@@ -21,6 +21,7 @@ type RectData = {
   ticks: number;
   label: string;
   unitLabel: string;
+  itemIndex: number;
 };
 
 /**
@@ -67,6 +68,7 @@ export function getRectDimensionsForLevel(
       ticks: curBarTicks,
       label: data.getLabel(item.itemIndex),
       unitLabel: unit,
+      itemIndex: item.itemIndex,
     });
   }
   return coordinatesLevel;

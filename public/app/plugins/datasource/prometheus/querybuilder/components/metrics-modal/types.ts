@@ -2,8 +2,9 @@ export type MetricsData = MetricData[];
 
 export type MetricData = {
   value: string;
-  type?: string;
+  type?: string | null;
   description?: string;
+  inferred?: boolean;
 };
 
 export type PromFilterOption = {

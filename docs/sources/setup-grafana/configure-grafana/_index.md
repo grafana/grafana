@@ -371,7 +371,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
@@ -1176,7 +1176,7 @@ Enable this to allow Grafana to send email. Default is `false`.
 
 ### host
 
-Default is `localhost:25`.
+Default is `localhost:25`. Use port 465 for implicit TLS.
 
 ### user
 
@@ -1655,6 +1655,12 @@ Configures the Profile section.
 ### enabled
 
 Enable or disable the Profile section. Default is `enabled`.
+
+## [news]
+
+### news_feed_enabled
+
+Enables the news feed section. Default is `true`
 
 ## [query_history]
 

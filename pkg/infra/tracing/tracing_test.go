@@ -1,7 +1,6 @@
 package tracing
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -141,13 +140,8 @@ func TestTracingConfig(t *testing.T) {
 			// export envioronment variables
 			if test.Env != nil {
 				for k, v := range test.Env {
-					assert.NoError(t, os.Setenv(k, v))
+					t.Setenv(k, v)
 				}
-				defer func() {
-					for k := range test.Env {
-						assert.NoError(t, os.Unsetenv(k))
-					}
-				}()
 			}
 			// parse config sections
 			cfg := setting.NewCfg()

@@ -48,6 +48,22 @@ export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
       /* @ts-ignore */
       u.setSelect({ left: 0, width: 0 }, false);
     });
+
+    config.setCursor({
+      bind: {
+        dblclick: (u) => () => {
+          let xScale = u.scales.x;
+
+          const frTs = xScale.min!;
+          const toTs = xScale.max!;
+          const pad = (toTs - frTs) / 2;
+
+          onZoom({ from: frTs - pad, to: toTs + pad });
+
+          return null;
+        },
+      },
+    });
   }, [config]);
 
   return null;

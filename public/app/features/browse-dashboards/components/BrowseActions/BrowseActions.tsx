@@ -9,12 +9,13 @@ import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useMoveFolderMutation } from '../../api/browseDashboardsAPI';
+import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../../api/services';
 import {
   childrenByParentUIDSelector,
   deleteDashboard,
   deleteFolder,
-  fetchChildren,
   moveDashboard,
+  refetchChildren,
   rootItemsSelector,
   setAllSelection,
   useActionSelectionState,
@@ -39,18 +40,15 @@ export function BrowseActions() {
   const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = (parentsToRefresh: Set<string | undefined>) => {
-    dispatch(
-      setAllSelection({
-        isSelected: false,
-      })
-    );
+    dispatch(setAllSelection({ isSelected: false }));
+
     if (isSearching) {
       // Redo search query
       stateManager.doSearchWithDebounce();
     } else {
       // Refetch parents
       for (const parentUID of parentsToRefresh) {
-        dispatch(fetchChildren(parentUID));
+        dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
       }
     }
   };
@@ -63,7 +61,7 @@ export function BrowseActions() {
     for (const folderUID of selectedFolders) {
       await dispatch(deleteFolder(folderUID));
       // find the parent folder uid and add it to parentsToRefresh
-      const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+      const folder = findItem(rootItems?.items ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);
     }
 
@@ -72,7 +70,7 @@ export function BrowseActions() {
     for (const dashboardUID of selectedDashboards) {
       await dispatch(deleteDashboard(dashboardUID));
       // find the parent folder uid and add it to parentsToRefresh
-      const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+      const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
     onActionComplete(parentsToRefresh);
@@ -87,7 +85,7 @@ export function BrowseActions() {
     for (const folderUID of selectedFolders) {
       await moveFolder({ folderUID, destinationUID });
       // find the parent folder uid and add it to parentsToRefresh
-      const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+      const folder = findItem(rootItems?.items ?? [], childrenByParentUID, folderUID);
       parentsToRefresh.add(folder?.parentUID);
     }
 
@@ -96,7 +94,7 @@ export function BrowseActions() {
     for (const dashboardUID of selectedDashboards) {
       await dispatch(moveDashboard({ dashboardUID, destinationUID }));
       // find the parent folder uid and add it to parentsToRefresh
-      const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+      const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
     onActionComplete(parentsToRefresh);
