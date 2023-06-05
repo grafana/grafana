@@ -3,8 +3,10 @@ import { Observable, Subscriber, Subscription, tap } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  arrayToDataFrame,
   DataQueryRequest,
   DataQueryResponse,
+  DataTopic,
   dateTime,
   durationToMilliseconds,
   parseDuration,
@@ -171,7 +173,7 @@ function updateLoadingFrame(
     return response;
   }
 
-  const loadingFrame = new ArrayDataFrame([
+  const loadingFrame = arrayToDataFrame([
     {
       time: partition[0].from.valueOf(),
       timeEnd: partition[requestN - 2].to.valueOf(),
