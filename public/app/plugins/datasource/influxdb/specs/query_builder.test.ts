@@ -1,4 +1,4 @@
-import { InfluxQueryBuilder } from '../query_builder';
+import { InfluxQueryBuilder } from '../influxql_query_builder';
 
 describe('InfluxQueryBuilder', () => {
   describe('when building explore queries', () => {
