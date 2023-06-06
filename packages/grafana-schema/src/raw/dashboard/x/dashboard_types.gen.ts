@@ -118,7 +118,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 };
 
 /**
- * Generic variable model to be used for all variable types
+ * A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
  */
 export interface VariableModel {
   /**

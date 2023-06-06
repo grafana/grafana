@@ -911,7 +911,7 @@ type ValueMappingResult struct {
 // Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 type VariableHide int
 
-// Generic variable model to be used for all variable types
+// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 type VariableModel struct {
 	// Format to use while fetching all values from data source, eg: wildcard, glob, regex, pipe, etc.
 	AllFormat *string `json:"allFormat,omitempty"`
