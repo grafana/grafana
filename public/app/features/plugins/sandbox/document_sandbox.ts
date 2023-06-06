@@ -6,10 +6,9 @@ export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 export function getSafeSandboxDomElement(element: Element): Element {
   const nodeName = Reflect.get(element, 'nodeName');
 
-  // we don't allow plugins to get the document.body directly. They get a sandboxed version.
   // the condition redundancy is intentional
   if (nodeName === 'body' || element === document.body) {
-    return getSandboxMockBody();
+    return document.body;
   }
 
   // allow access to the head
@@ -29,6 +28,10 @@ export function getSafeSandboxDomElement(element: Element): Element {
 
   // allow elements inside the sandbox or the sandbox body
   if (isDomElementInsideSandbox(element)) {
+    return element;
+  }
+
+  if (element.parentNode === document.body || element.closest('#reactRoot') === null) {
     return element;
   }
 

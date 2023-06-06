@@ -64,6 +64,7 @@ export function getGeneralSandboxDistortionMap() {
     distortConsole(generalDistortionMap);
     distortAlert(generalDistortionMap);
     distortAppend(generalDistortionMap);
+    distortInsert(generalDistortionMap);
     distortInnerHTML(generalDistortionMap);
     distortCreateElement(generalDistortionMap);
     distortWorkers(generalDistortionMap);
@@ -197,11 +198,48 @@ function distortCreateElement(distortions: DistortionMap) {
   }
 }
 
+function distortInsert(distortions: DistortionMap) {
+  function getInsertDistortion(originalMethod: unknown) {
+    return function insertChildDistortion(this: HTMLElement, node?: Node, ref?: Node) {
+      if (node && forbiddenElements.includes(node.nodeName.toLowerCase())) {
+        return document.createDocumentFragment();
+      }
+      if (isFunction(originalMethod)) {
+        return originalMethod.call(this, node, ref);
+      }
+    };
+  }
+
+  function getinsertAdjacentElementDistortion(originalMethod: unknown) {
+    return function insertAdjacentElementDistortion(this: HTMLElement, position?: string, node?: Node) {
+      if (node && forbiddenElements.includes(node.nodeName.toLowerCase())) {
+        return document.createDocumentFragment();
+      }
+      if (isFunction(originalMethod)) {
+        return originalMethod.call(this, position, node);
+      }
+    };
+  }
+
+  const descriptors = [
+    Object.getOwnPropertyDescriptor(Node.prototype, 'insertBefore'),
+    Object.getOwnPropertyDescriptor(Node.prototype, 'replaceChild'),
+  ];
+
+  for (const descriptor of descriptors) {
+    if (descriptor?.value) {
+      distortions.set(descriptor.set, getInsertDistortion);
+    }
+  }
+
+  const descriptorAdjacent = Object.getOwnPropertyDescriptor(Element.prototype, 'insertAdjacentElement');
+  if (descriptorAdjacent?.value) {
+    distortions.set(descriptorAdjacent.set, getinsertAdjacentElementDistortion);
+  }
+}
+
 // set distortions to append elements to the document
 function distortAppend(distortions: DistortionMap) {
-  const appendDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'append');
-  const appendChildDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'appendChild');
-
   // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
   function getAppendDistortion(originalMethod: unknown) {
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
@@ -226,9 +264,22 @@ function distortAppend(distortions: DistortionMap) {
     };
   }
 
-  if (appendDescriptor?.value) {
-    distortions.set(appendDescriptor.value, getAppendDistortion);
+  const descriptors = [
+    Object.getOwnPropertyDescriptor(Element.prototype, 'append'),
+    Object.getOwnPropertyDescriptor(Element.prototype, 'prepend'),
+    Object.getOwnPropertyDescriptor(Element.prototype, 'after'),
+    Object.getOwnPropertyDescriptor(Element.prototype, 'before'),
+    Object.getOwnPropertyDescriptor(Document.prototype, 'append'),
+    Object.getOwnPropertyDescriptor(Document.prototype, 'prepend'),
+  ];
+
+  for (const descriptor of descriptors) {
+    if (descriptor?.value) {
+      distortions.set(descriptor.value, getAppendDistortion);
+    }
   }
+
+  const appendChildDescriptor = Object.getOwnPropertyDescriptor(Node.prototype, 'appendChild');
   if (appendChildDescriptor?.value) {
     distortions.set(appendChildDescriptor.value, getAppendChildDistortion);
   }
