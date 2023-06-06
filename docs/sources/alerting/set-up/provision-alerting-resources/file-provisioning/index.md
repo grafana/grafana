@@ -154,6 +154,8 @@ contactPoints:
       - uid: first_uid
         # <string, required> type of the receiver
         type: prometheus-alertmanager
+        # <bool, optional> Disable the additional [Incident Resolved] follow-up alert, default = false
+        disableResolveMessage: false
         # <object, required> settings for the specific receiver type
         settings:
           url: http://test:9000
@@ -631,6 +633,7 @@ muteTimes:
       - times:
           - start_time: '06:00'
             end_time: '23:59'
+            location: 'UTC'
         weekdays: ['monday:wednesday', 'saturday', 'sunday']
         months: ['1:3', 'may:august', 'december']
         years: ['2020:2022', '2030']

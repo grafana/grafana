@@ -8,6 +8,8 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { RuleFormType } from '../../types/rule-form';
+
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 
 export function queriesWithUpdatedReferences(
@@ -292,4 +294,12 @@ export function getStatusMessage(data: PanelData): string | undefined {
   }
 
   return data.error?.message ?? genericErrorMessage;
+}
+
+export function translateRouteParamToRuleType(param = ''): RuleFormType {
+  if (param === 'recording') {
+    return RuleFormType.cloudRecording;
+  }
+
+  return RuleFormType.grafana;
 }

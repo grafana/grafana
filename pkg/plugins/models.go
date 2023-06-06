@@ -244,6 +244,7 @@ type DataSourceDTO struct {
 type PanelDTO struct {
 	ID              string `json:"id"`
 	Name            string `json:"name"`
+	Alias           string `json:"alias,omitempty"`
 	Info            Info   `json:"info"`
 	HideFromList    bool   `json:"hideFromList"`
 	Sort            int    `json:"sort"`
