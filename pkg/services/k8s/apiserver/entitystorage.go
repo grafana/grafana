@@ -10,16 +10,6 @@ import (
 	"strings"
 	"time"
 
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
-
-	"github.com/grafana/kindsys"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
-	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
-	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -30,6 +20,15 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
+	grafanarequest "github.com/grafana/grafana-apiserver/pkg/endpoints/request"
+	grafanaruntime "github.com/grafana/grafana-apiserver/pkg/runtime"
+	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/kindsys"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 var _ storage.Interface = (*entityStorage)(nil)
@@ -145,23 +144,6 @@ func (s *entityStorage) write(ctx context.Context, grn *entity.GRN, uObj *unstru
 	return s.store.Write(ctx, req)
 }
 
-func getItems(listObj runtime.Object) ([]runtime.Object, error) {
-	out := make([]runtime.Object, 0)
-
-	switch list := listObj.DeepCopyObject().(type) {
-	case *kindsv1.GrafanaResourceDefinitionList:
-	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
-	case *unstructured.UnstructuredList:
-		for _, item := range list.Items {
-			out = append(out, item.DeepCopyObject())
-		}
-	default:
-		return nil, fmt.Errorf("unsupported type %T", listObj)
-	}
-
-	return out, nil
-}
-
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
@@ -175,7 +157,8 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		return err
 	}
 
-	uObj, ok := obj.DeepCopyObject().(*unstructured.Unstructured)
+	w := obj.(*grafanaruntime.ObjectWrapper)
+	uObj, ok := w.Unwrap().(*unstructured.Unstructured)
 	if !ok {
 		return fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
@@ -198,13 +181,16 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 	}
 
 	err = s.Get(ctx, key, storage.GetOptions{}, out)
-	if err == nil {
-		s.watchSet.notifyWatchers(watch.Event{
-			Object: out.DeepCopyObject(),
-			Type:   watch.Added,
-		})
+	if err != nil {
+		return err
 	}
-	return err
+
+	s.watchSet.notifyWatchers(watch.Event{
+		Object: out.DeepCopyObject(),
+		Type:   watch.Added,
+	})
+
+	return nil
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -272,29 +258,42 @@ func (s *entityStorage) Delete(
 func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
 	p := opts.Predicate
 	jw := s.watchSet.newWatch()
-
-	var listObj runtime.Object
-
-	switch s.gr.Group {
-	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
-	case grafanaApiServerKinds.GroupName:
-		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
-	default:
-		listObj = &unstructured.UnstructuredList{}
-	}
-
-	err := s.GetList(ctx, key, opts, listObj)
+	ctx, err := contextWithFakeGrafanaUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := getItems(listObj)
+	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
+		Kind:       []string{strings.TrimSuffix(s.gr.Resource, "s")}, // dashboards >> dashboard
+		WithBody:   true,
+		WithLabels: true,
+	})
 	if err != nil {
 		return nil, err
 	}
-
 	initEvents := make([]watch.Event, 0)
-	for _, obj := range items {
+	for _, r := range rsp.Results {
+		// uggg... not the same shape
+		eee := &entity.Entity{
+			GRN:    r.GRN,
+			Guid:   r.Guid,
+			Meta:   r.Meta,
+			Body:   r.Body,
+			Status: r.Status,
+		}
+
+		res, err := enityToResource(eee)
+		if err != nil {
+			return nil, err
+		}
+		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.Kind = s.kind.Name()
+
+		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
+		if err != nil {
+			return nil, err
+		}
+		obj := &unstructured.Unstructured{Object: out}
 		ok, err := p.Matches(obj)
 		if err != nil {
 			return nil, err
@@ -307,6 +306,7 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 			Object: obj.DeepCopyObject(),
 		})
 	}
+
 	jw.Start(p, initEvents)
 	return jw, nil
 }
@@ -384,20 +384,36 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return apierrors.NewNotFound(s.gr, grn.UID)
 	}
 
+	w := objPtr.(*grafanaruntime.ObjectWrapper)
+	outputMediaType, ok := grafanarequest.OutputMediaTypeFrom(ctx)
+	if ok && outputMediaType.Convert != nil && outputMediaType.Convert.Kind == "Table" {
+		table, err := getToTable(rsp)
+		if err != nil {
+			return err
+		}
+		w.Wrap(table)
+		return nil
+	}
+
 	res, err := enityToResource(rsp)
 	if err != nil {
 		return err
 	}
+	gvk := w.Unwrap().GetObjectKind().GroupVersionKind()
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
-	res.Kind = s.kind.Name()
+	res.APIVersion = gvk.Group + "/" + gvk.Version
+	//res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.Kind = gvk.Kind
 
 	jjj, _ := json.Marshal(res)
-	o := objPtr.(*apihelpers.ObjectWrapper)
-	_, _, err = s.codec.Decode(jjj, nil, o.Object)
+	decoded, _, err := s.codec.Decode(jjj, nil, w.Unwrap())
+	if err != nil {
+		return err
+	}
+	w.Wrap(decoded)
 
 	fmt.Printf("k8s GET/GOT:%s (rv:%s)\n", res.Metadata.Name, res.Metadata.ResourceVersion)
-	return err
+	return nil
 }
 
 // GetList unmarshalls objects found at key into a *List api object (an object
@@ -425,50 +441,16 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		return err
 	}
 
-	w := listObj.(*apihelpers.ObjectWrapper)
-	u := w.Object.(*unstructured.UnstructuredList)
+	w := listObj.(*grafanaruntime.ObjectWrapper)
+	u := w.Unwrap().(*unstructured.UnstructuredList)
 
-	outputMediaType, ok := apihelpers.OutputMediaTypeFrom(ctx)
+	outputMediaType, ok := grafanarequest.OutputMediaTypeFrom(ctx)
 	if ok && outputMediaType.Convert != nil && outputMediaType.Convert.Kind == "Table" {
-		table := metav1.Table{}
-		table.Kind = "Table"
-		table.APIVersion = "meta.k8s.io/v1"
-		table.ResourceVersion = "1" // the largest ???
-		table.ColumnDefinitions = []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name", Description: "The k8s object name"},
-			{Name: "Title", Type: "string", Description: "The object title"},
-			{Name: "Tags", Type: "tags", Description: "tags"},
-			{Name: "Folder", Type: "string", Description: "Folder UID"},
-			{Name: "Updated At", Type: "date", Description: "When the object was created"},
+		table, err := searchToTable(rsp)
+		if err != nil {
+			return err
 		}
-
-		for _, r := range rsp.Results {
-			rowmeta := &metav1.PartialObjectMetadata{}
-			err = json.Unmarshal(r.Meta, &rowmeta.ObjectMeta)
-			if err != nil {
-				return err
-			}
-
-			var tags []string
-			for k, v := range r.Labels {
-				if v == "" {
-					tags = append(tags, k)
-				}
-			}
-
-			table.Rows = append(table.Rows, metav1.TableRow{
-				Cells: []interface{}{
-					r.GRN.UID,
-					r.Name, // title
-					tags,
-					r.Folder,
-					time.UnixMilli(r.UpdatedAt).Format(time.RFC3339),
-				},
-				Object: runtime.RawExtension{Object: rowmeta},
-			})
-		}
-
-		w.SetObject(&table)
+		w.Wrap(table)
 		return nil
 	}
 
@@ -480,7 +462,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	u.SetResourceVersion(opts.ResourceVersion) // ???
 
 	for _, r := range rsp.Results {
-		// convert r to object pointer???
+		// convert r to object poiter???
 		//fmt.Printf("FOUND:" + r.Slug)
 
 		// uggg... not the same shape
@@ -496,6 +478,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
+
 		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
 		res.Kind = s.kind.Name()
 
@@ -511,14 +494,6 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		// u.SetContinue(rsp.NextPageToken)
 		fmt.Printf("CONTINUE: %s\n", rsp.NextPageToken)
 	}
-
-	//tableconvertor := rest.NewDefaultTableConvertor(s.gr)
-	//t, err := tableconvertor.ConvertToTable(ctx, u, &metav1.TableOptions{IncludeObject: metav1.IncludeObject})
-	//if err != nil {
-	//	return err
-	//}
-
-	//w.SetObject(t)
 
 	return nil
 }
@@ -580,8 +555,8 @@ func (s *entityStorage) GuaranteedUpdate(
 			}
 		}
 
-		w := updatedObj.(*apihelpers.ObjectWrapper)
-		uObj, ok := w.Object.(*unstructured.Unstructured)
+		w := updatedObj.(*grafanaruntime.ObjectWrapper)
+		uObj, ok := w.Unwrap().(*unstructured.Unstructured)
 		if !ok {
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
 		}
@@ -595,10 +570,10 @@ func (s *entityStorage) GuaranteedUpdate(
 			return nil // destination is already set
 		}
 
-		w = destination.(*apihelpers.ObjectWrapper)
+		w = destination.(*grafanaruntime.ObjectWrapper)
 
 		// get the thing we just wrote
-		err = s.Get(ctx, key, storage.GetOptions{}, w.Object)
+		err = s.Get(ctx, key, storage.GetOptions{}, w.Unwrap())
 		if err != nil {
 			return err
 		}
@@ -616,4 +591,65 @@ func (s *entityStorage) GuaranteedUpdate(
 func (s *entityStorage) Count(key string) (int64, error) {
 	fmt.Printf("Count [%s] %s (zero for now!)\n", s.gr.Resource, key)
 	return 0, nil
+}
+
+func searchToTable(resp *entity.EntitySearchResponse) (*metav1.Table, error) {
+	table := metav1.Table{}
+	table.Kind = "Table"
+	table.APIVersion = "meta.k8s.io/v1"
+	table.ResourceVersion = "1" // the largest ???
+	table.ColumnDefinitions = []metav1.TableColumnDefinition{
+		{Name: "Name", Type: "string", Format: "name", Description: "The k8s object name"},
+		{Name: "Title", Type: "string", Description: "The object title"},
+		{Name: "Folder", Type: "string", Description: "Folder UID"},
+		{Name: "Updated At", Type: "date", Description: "When the object was created"},
+	}
+
+	for _, r := range resp.Results {
+		rowmeta := &metav1.PartialObjectMetadata{}
+		err := json.Unmarshal(r.Meta, &rowmeta.ObjectMeta)
+		if err != nil {
+			return nil, err
+		}
+
+		table.Rows = append(table.Rows, metav1.TableRow{
+			Cells: []interface{}{
+				r.GRN.UID,
+				r.Name, // title
+				r.Folder,
+				time.UnixMilli(r.UpdatedAt).Format(time.RFC3339),
+			},
+			Object: runtime.RawExtension{Object: rowmeta},
+		})
+	}
+	return &table, nil
+}
+
+func getToTable(e *entity.Entity) (*metav1.Table, error) {
+	table := metav1.Table{}
+	table.Kind = "Table"
+	table.APIVersion = "meta.k8s.io/v1"
+	table.ResourceVersion = "1" // the largest ???
+	table.ColumnDefinitions = []metav1.TableColumnDefinition{
+		{Name: "Name", Type: "string", Format: "name", Description: "The k8s object name"},
+		{Name: "Title", Type: "string", Description: "The object title"},
+		{Name: "Folder", Type: "string", Description: "Folder UID"},
+		{Name: "Updated At", Type: "date", Description: "When the object was created"},
+	}
+	rowmeta := &metav1.PartialObjectMetadata{}
+	err := json.Unmarshal(e.Meta, &rowmeta.ObjectMeta)
+	if err != nil {
+		return nil, err
+	}
+	table.Rows = append(table.Rows, metav1.TableRow{
+		Cells: []interface{}{
+			e.GRN.UID,
+			"", // title?
+			e.Folder,
+			time.UnixMilli(e.UpdatedAt).Format(time.RFC3339),
+		},
+		Object: runtime.RawExtension{Object: rowmeta},
+	})
+
+	return &table, nil
 }
