@@ -88,6 +88,7 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
+  refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
