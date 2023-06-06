@@ -68,7 +68,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     const queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     const isLogQuery = isLogsQuery(query.expr);
-    console.log(query.step);
 
     return (
       <EditorRow>
