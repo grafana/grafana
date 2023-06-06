@@ -1,0 +1,22 @@
+  influxdb:
+    image: influxdb:2.6-alpine
+    volumes:
+      # Mount for influxdb data directory and configuration
+      - ./influxdbv2:/var/lib/influxdb2:rw
+    ports:
+      - "5586:8086"
+  telegraf:
+    image: telegraf:1.26-alpine
+    depends_on:
+      - influxdb
+    environment:
+      INFLUX_IOX_URL: "${INFLUX_IOX_URL}"
+      INFLUX_IOX_API_TOKEN: "${INFLUX_IOX_API_TOKEN}"
+      INFLUX_IOX_ORG: "${INFLUX_IOX_ORG}"
+      INFLUX_IOX_BUCKET: "${INFLUX_IOX_BUCKET}"
+    volumes:
+      # Mount for telegraf config
+      - ./docker/blocks/influxdb2/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+volumes:
+  influxdbv2:
