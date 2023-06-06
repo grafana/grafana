@@ -132,7 +132,7 @@ export class PanelPlugin<
     this._rawPanelComponent = panel;
   }
   get panel(): typeof this._rawPanelComponent {
-    return withSandboxWrapper(this._rawPanelComponent);
+    return withSandboxWrapper(this._rawPanelComponent, this.meta);
   }
 
   get defaults() {

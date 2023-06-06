@@ -10,7 +10,7 @@ import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
-import { GrafanaPlugin, PluginMeta } from './plugin';
+import { GrafanaPlugin, PluginMeta, PluginSignatureStatus } from './plugin';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
@@ -37,14 +37,24 @@ export class DataSourcePlugin<
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
   TSecureOptions = {}
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
-  components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
+  _components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
+
+  components = new Proxy(this._components, {
+    get: (target, prop: keyof typeof this._components) => {
+      const component = target[prop];
+      if (!component) {
+        return undefined;
+      }
+      return withSandboxWrapper(component, this.meta);
+    },
+  });
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {
-    this.components.ConfigEditor = withSandboxWrapper(editor);
+    this._components.ConfigEditor = editor;
     return this;
   }
 
@@ -54,41 +64,41 @@ export class DataSourcePlugin<
   }
 
   setQueryCtrl(QueryCtrl: any) {
-    this.components.QueryCtrl = QueryCtrl;
+    this._components.QueryCtrl = QueryCtrl;
     return this;
   }
 
   /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
-    this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
+    this._components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
   }
 
   setQueryEditor(QueryEditor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.QueryEditor = withSandboxWrapper(QueryEditor);
+    this._components.QueryEditor = QueryEditor;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreQueryField = withSandboxWrapper(ExploreQueryField);
+    this._components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreMetricsQueryField = withSandboxWrapper(ExploreQueryField);
+    this._components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreLogsQueryField = withSandboxWrapper(ExploreQueryField);
+    this._components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
   setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps<TQuery>>) {
-    this.components.QueryEditorHelp = withSandboxWrapper(QueryEditorHelp);
+    this._components.QueryEditorHelp = QueryEditorHelp;
     return this;
   }
 
@@ -103,32 +113,30 @@ export class DataSourcePlugin<
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
    */
   setVariableQueryEditor(VariableQueryEditor: any) {
-    this.components.VariableQueryEditor = withSandboxWrapper(VariableQueryEditor);
+    this._components.VariableQueryEditor = VariableQueryEditor;
     return this;
   }
 
   setMetadataInspector(MetadataInspector: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>) {
-    this.components.MetadataInspector = withSandboxWrapper(MetadataInspector);
+    this._components.MetadataInspector = MetadataInspector;
     return this;
   }
-
-  // NOTE Adding a new component? Make sure to wrap it with withSandboxWrapper
 
   // legacy exports for Angular
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
-    this.components.QueryCtrl = pluginExports.QueryCtrl;
-    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
-    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
-    this.components.QueryEditor = pluginExports.QueryEditor;
-    this.components.QueryEditorHelp = pluginExports.QueryEditorHelp;
-    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
+    this._components.QueryCtrl = pluginExports.QueryCtrl;
+    this._components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
+    this._components.ExploreQueryField = pluginExports.ExploreQueryField;
+    this._components.QueryEditor = pluginExports.QueryEditor;
+    this._components.QueryEditorHelp = pluginExports.QueryEditorHelp;
+    this._components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
 
 export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMeta<T> {
-  builtIn?: boolean; // Is this for all
+  tuiltIn?: boolean; // Is this for all
   metrics?: boolean;
   logs?: boolean;
   annotations?: boolean;
@@ -174,7 +182,6 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
-  // NOTE Adding a new component? Make sure to wrap it with withSandboxWrapper
 }
 
 // Only exported for tests

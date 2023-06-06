@@ -82,7 +82,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   get root(): typeof this._rootRawComponent {
-    return withSandboxWrapper(this._rootRawComponent);
+    return withSandboxWrapper(this._rootRawComponent, this.meta);
   }
 
   set root(root: typeof this._rootRawComponent) {
@@ -126,7 +126,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   ) {
     this._extensionConfigs.push({
       ...extension,
-      component: withSandboxWrapper(extension.component),
+      component: withSandboxWrapper(extension.component, this.meta),
       type: PluginExtensionTypes.component,
     } as PluginExtensionComponentConfig);
 
