@@ -801,6 +801,9 @@ export class ElasticDatasource
 
     if (target.bucketAggs) {
       for (const bucketAgg of target.bucketAggs) {
+        if (bucketAgg.type !== 'filters' && this.templateSrv.containsTemplate(bucketAgg.field)) {
+          return true;
+        }
         if (this.objectContainsTemplate(bucketAgg.settings)) {
           return true;
         }
