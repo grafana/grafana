@@ -246,12 +246,12 @@ describe('running queries', () => {
 });
 
 describe('changeQueries', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
   // Due to how spyOn works (it removes `type`, `match` and `toString` from the spied function, on which we rely on in the reducer),
   // we are repeating the following tests twice, once to chck the resulting state and once to check that the correct actions are dispatched.
   describe('calls the correct actions', () => {
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
     it('should import queries when datasource is changed', async () => {
       jest.spyOn(actions, 'importQueries');
       jest.spyOn(actions, 'changeQueriesAction');
@@ -374,6 +374,37 @@ describe('changeQueries', () => {
         queryType: 'someValue',
       });
     });
+  });
+
+  it('runs remaining queries when one query is removed', async () => {
+    jest.spyOn(actions, 'runQueries').mockImplementation(() => () => Promise.resolve());
+
+    const originalQueries = [
+      { refId: 'A', datasource: datasources[0].getRef() },
+      { refId: 'B', datasource: datasources[0].getRef() },
+    ];
+
+    const { dispatch } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            datasourceInstance: datasources[0],
+            queries: originalQueries,
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+
+    await dispatch(
+      changeQueries({
+        queries: [originalQueries[0]],
+        exploreId: ExploreId.left,
+      })
+    );
+
+    expect(actions.runQueries).toHaveBeenCalled();
   });
 });
 
