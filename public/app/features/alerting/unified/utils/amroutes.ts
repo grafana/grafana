@@ -183,16 +183,19 @@ export const formAmRouteToAmRoute = (
     receiver,
   } = formAmRoute;
 
-  const group_by = overrideGrouping ? (groupBy ? groupBy : []) : undefined;
+  // "undefined" means "inherit from the parent policy", currently supported by group_by, group_wait, group_interval, and repeat_interval
+  const INHERIT_FROM_PARENT = undefined;
+
+  const group_by = overrideGrouping ? (groupBy ? groupBy : []) : INHERIT_FROM_PARENT;
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
-  const group_wait = overrideGroupWait ? groupWaitValue : undefined;
+  const group_wait = overrideGroupWait ? groupWaitValue : INHERIT_FROM_PARENT;
 
   const overrideGroupInterval = overrideTimings && groupIntervalValue;
-  const group_interval = overrideGroupInterval ? groupIntervalValue : undefined;
+  const group_interval = overrideGroupInterval ? groupIntervalValue : INHERIT_FROM_PARENT;
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
-  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : undefined;
+  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
   const object_matchers = formAmRoute.object_matchers
     ?.filter((route) => route.name && route.value && route.operator)
     .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
