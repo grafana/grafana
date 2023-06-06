@@ -151,7 +151,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
     `,
     loginInnerBox: css`
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(0, 2, 2, 2)};
 
       display: flex;
       flex-direction: column;
