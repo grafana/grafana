@@ -234,7 +234,7 @@ const Policy: FC<PolicyComponentProps> = ({
                   {singleGroup && (
                     <MetaText icon="layer-group" data-testid="grouping">
                       <span>Grouped by</span>
-                      <Strong>Single group</Strong>
+                      <Strong>a single group</Strong>
                     </MetaText>
                   )}
                   {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
