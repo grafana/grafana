@@ -1,7 +1,8 @@
-import { ComponentType } from 'react';
+import { ComponentType, isValidElement } from 'react';
 import { Observable } from 'rxjs';
 
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
+import { withSandboxWrapper } from '../utils/sandbox';
 
 import { ScopedVars } from './ScopedVars';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
@@ -43,7 +44,7 @@ export class DataSourcePlugin<
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {
-    this.components.ConfigEditor = editor;
+    this.components.ConfigEditor = withSandboxWrapper(editor);
     return this;
   }
 
@@ -64,30 +65,30 @@ export class DataSourcePlugin<
   }
 
   setQueryEditor(QueryEditor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.QueryEditor = QueryEditor;
+    this.components.QueryEditor = withSandboxWrapper(QueryEditor);
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreQueryField = ExploreQueryField;
+    this.components.ExploreQueryField = withSandboxWrapper(ExploreQueryField);
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreMetricsQueryField = ExploreQueryField;
+    this.components.ExploreMetricsQueryField = withSandboxWrapper(ExploreQueryField);
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this.components.ExploreLogsQueryField = ExploreQueryField;
+    this.components.ExploreLogsQueryField = withSandboxWrapper(ExploreQueryField);
     return this;
   }
 
   setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps<TQuery>>) {
-    this.components.QueryEditorHelp = QueryEditorHelp;
+    this.components.QueryEditorHelp = withSandboxWrapper(QueryEditorHelp);
     return this;
   }
 
@@ -102,15 +103,18 @@ export class DataSourcePlugin<
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
    */
   setVariableQueryEditor(VariableQueryEditor: any) {
-    this.components.VariableQueryEditor = VariableQueryEditor;
+    this.components.VariableQueryEditor = withSandboxWrapper(VariableQueryEditor);
     return this;
   }
 
   setMetadataInspector(MetadataInspector: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>) {
-    this.components.MetadataInspector = MetadataInspector;
+    this.components.MetadataInspector = withSandboxWrapper(MetadataInspector);
     return this;
   }
 
+  // NOTE Adding a new component? Make sure to wrap it with withSandboxWrapper
+
+  // legacy exports for Angular
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
@@ -170,6 +174,7 @@ export interface DataSourcePluginComponents<
   QueryEditorHelp?: ComponentType<QueryEditorHelpProps<TQuery>>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
+  // NOTE Adding a new component? Make sure to wrap it with withSandboxWrapper
 }
 
 // Only exported for tests
