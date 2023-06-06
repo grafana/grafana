@@ -1382,6 +1382,10 @@ The following functions and classes related to logs are deprecated in the `grafa
 
 # 9.2.19 (2023-05-22)
 
+### Bug fixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
 <!-- 9.2.19 END -->
 <!-- 9.2.18 START -->
 
