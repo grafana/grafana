@@ -330,4 +330,8 @@ const (
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
+
+	// FlagDisableTraceQLStreaming
+	// Disables the option to stream the response of TraceQL queries of the Tempo data source
+	FlagDisableTraceQLStreaming = "disableTraceQLStreaming"
 )

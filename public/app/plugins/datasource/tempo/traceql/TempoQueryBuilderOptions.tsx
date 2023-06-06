@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { AutoSizeInput, Switch } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
@@ -25,13 +26,15 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
     onChange({ ...query, streaming: e.currentTarget.checked });
   };
 
+  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
+  if (!config.featureToggles.disableTraceQLStreaming) {
+    collapsedInfoList.push(`Streaming: ${query.streaming ? 'Yes' : 'No'}`);
+  }
+
   return (
     <>
       <EditorRow>
-        <QueryOptionGroup
-          title="Options"
-          collapsedInfo={[`Limit: ${query.limit || DEFAULT_LIMIT} | Streaming: ${query.streaming ? 'Yes' : 'No'}`]}
-        >
+        <QueryOptionGroup title="Options" collapsedInfo={collapsedInfoList}>
           <EditorField label="Limit" tooltip="Maximum number of traces to return.">
             <AutoSizeInput
               className="width-4"
@@ -43,9 +46,11 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               value={query.limit}
             />
           </EditorField>
-          <EditorField label="Stream response" tooltip="Stream the query response to receive partial results sooner">
-            <Switch value={query.streaming || false} onChange={onStreamingChange} />
-          </EditorField>
+          {!config.featureToggles.disableTraceQLStreaming && (
+            <EditorField label="Stream response" tooltip="Stream the query response to receive partial results sooner">
+              <Switch value={query.streaming || false} onChange={onStreamingChange} />
+            </EditorField>
+          )}
         </QueryOptionGroup>
       </EditorRow>
     </>

@@ -112,6 +112,7 @@ Alpha features might be changed or removed without prior notice.
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
+| `disableTraceQLStreaming`          | Disables the option to stream the response of TraceQL queries of the Tempo data source                       |
 
 ## Development feature toggles
 
