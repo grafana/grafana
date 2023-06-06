@@ -60,7 +60,6 @@ func TestLokiStep(t *testing.T) {
 			require.Error(t, err)
 			require.Equal(t, time.Duration(0), step)
 		})
-
 	})
 	t.Run("with no query step", func(t *testing.T) {
 		t.Run("base case", func(t *testing.T) {
