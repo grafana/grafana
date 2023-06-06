@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { QueryEditorHelpProps } from '@grafana/data/src';
+import { QueryEditorHelpProps } from '@grafana/data';
 
 import InfluxCheatSheet from './InfluxCheatSheet';
 

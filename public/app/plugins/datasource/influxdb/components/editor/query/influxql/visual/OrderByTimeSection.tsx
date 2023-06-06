@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React from 'react';
 
-import { SelectableValue } from '@grafana/data/src';
+import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui/src';
 
 import { unwrap } from '../utils/unwrap';

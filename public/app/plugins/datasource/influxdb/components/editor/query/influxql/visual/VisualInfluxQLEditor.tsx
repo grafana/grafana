@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useId, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, TypedVariableModel } from '@grafana/data/src';
+import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime/src';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui/src';
 
