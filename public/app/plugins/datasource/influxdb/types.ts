@@ -20,7 +20,7 @@ export interface InfluxOptions extends DataSourceJsonData {
   maxSeries?: number;
 
   // With SQL
-  metadata?: Array<{ key: string; value: string }>;
+  metadata?: Array<Record<string, string>>;
 }
 
 export interface InfluxSecureJsonData {
