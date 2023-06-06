@@ -73,7 +73,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
                 onFolderClick(item.uid, !isOpen);
               }}
               name={isOpen ? 'angle-down' : 'angle-right'}
-              tooltip={isOpen ? 'Collapse folder' : 'Expand folder'}
+              ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
             />
           )}
         </>
