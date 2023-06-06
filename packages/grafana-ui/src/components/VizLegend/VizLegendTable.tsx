@@ -86,7 +86,7 @@ export const VizLegendTable = <T extends unknown>({
               <th
                 title={displayValue.description}
                 key={columnTitle}
-                className={cx(styles.header, onToggleSort && styles.headerSortable, {
+                className={cx(styles.header, onToggleSort && styles.headerSortable, isSortable && styles.nameHeader, {
                   [styles.withIcon]: sortKey === columnTitle,
                 })}
                 onClick={() => {
@@ -123,6 +123,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     text-align: right;
     white-space: nowrap;
+  `,
+  nameHeader: css`
+    text-align: left;
+    padding-left: 30px;
   `,
   // This needs to be padding-right - icon size(xs==12) to avoid jumping
   withIcon: css`
