@@ -330,7 +330,7 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     }
 
     // if we are removing a query we want to run the remaining ones
-    if (queries.length < queries.length) {
+    if (queries.length < oldQueries.length) {
       dispatch(runQueries(exploreId));
     }
   }
