@@ -327,6 +327,10 @@ const (
 	// Adds predefined query operations to Loki query editor
 	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
 
+	// FlagPluginsFrontendSandbox
+	// Enables the plugins frontend sandbox
+	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
+
 	// FlagDashboardEmbed
 	// Allow embedding dashboard for external use in Code editors
 	FlagDashboardEmbed = "dashboardEmbed"
