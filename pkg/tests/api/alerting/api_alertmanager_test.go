@@ -78,7 +78,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		{
 			"alertmanager_config": {
 				"route": {
-					"group_by": null,
 					"receiver": "grafana-default-email"
 				},
 				"receivers": [{
@@ -148,7 +147,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			"template_files": null,
 			"alertmanager_config": {
 				"route": {
-					"group_by": null,
 					"receiver": "grafana-default-email"
 				},
 				"templates": null,

@@ -812,7 +812,7 @@ type Config struct {
 type Route struct {
 	Receiver string `yaml:"receiver,omitempty" json:"receiver,omitempty"`
 
-	GroupByStr []string          `yaml:"group_by" json:"group_by"`
+	GroupByStr []string          `yaml:"group_by,omitempty" json:"group_by,omitempty"`
 	GroupBy    []model.LabelName `yaml:"-" json:"-"`
 	GroupByAll bool              `yaml:"-" json:"-"`
 	// Deprecated. Remove before v1.0 release.
