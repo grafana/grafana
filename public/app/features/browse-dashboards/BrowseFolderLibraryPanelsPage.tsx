@@ -9,14 +9,15 @@ import { LibraryPanelsSearch } from '../library-panels/components/LibraryPanelsS
 import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryPanelModal/OpenLibraryPanelModal';
 import { LibraryElementDTO } from '../library-panels/types';
 
-import { useGetFolderQuery } from './api/browseDashboardsAPI';
+import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
   const { uid: folderUID } = match.params;
-  const { data: folderDTO, isLoading } = useGetFolderQuery(folderUID);
+  const { data: folderDTO } = useGetFolderQuery(folderUID);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
+  const [saveFolder] = useSaveFolderMutation();
 
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -33,13 +34,28 @@ export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
     return model;
   }, [folderDTO]);
 
+  const onEditTitle = folderUID
+    ? async (newValue: string) => {
+        if (folderDTO) {
+          const result = await saveFolder({
+            ...folderDTO,
+            title: newValue,
+          });
+          if ('error' in result) {
+            throw result.error;
+          }
+        }
+      }
+    : undefined;
+
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
+      onEditTitle={onEditTitle}
       actions={<>{folderDTO && <FolderActionsButton folder={folderDTO} />}</>}
     >
-      <Page.Contents isLoading={isLoading}>
+      <Page.Contents>
         <LibraryPanelsSearch
           onClick={setSelected}
           currentFolderUID={folderUID}

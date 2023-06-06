@@ -12,9 +12,9 @@ import {
 } from '@grafana/data';
 
 import {
-  getFieldConfigFromFrame,
-  FieldToConfigMapping,
   evaluteFieldMappings,
+  FieldToConfigMapping,
+  getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface ConfigFromQueryTransformOptions {
@@ -99,7 +99,7 @@ export const configFromDataTransformer: DataTransformerInfo<ConfigFromQueryTrans
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) => source.pipe(map((data) => extractConfigFromQuery(options, data))),

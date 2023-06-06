@@ -57,6 +57,9 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 type PluginDTO struct {
@@ -84,6 +87,9 @@ type PluginDTO struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -155,7 +161,9 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		return JSONData{}, err
 	}
 
-	if plugin.ID == "grafana-piechart-panel" {
+	// Hardcoded changes
+	switch plugin.ID {
+	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
 	}
 
