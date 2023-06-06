@@ -956,6 +956,15 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 <!-- 9.3.7 END -->
 <!-- 9.4.0-beta1 END -->
+<!-- 9.3.15 START -->
+
+# 9.3.15 (2023-06-06)
+
+### Bug fixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.3.15 END -->
 <!-- 9.3.14 START -->
 
 # 9.3.14 (2023-05-08)
