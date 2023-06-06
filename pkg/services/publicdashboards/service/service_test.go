@@ -915,66 +915,83 @@ func TestDashboardEnabledChanged(t *testing.T) {
 func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 	type args struct {
 		ctx   context.Context
-		u     *user.SignedInUser
-		orgId int64
+		query *PublicDashboardListQuery
 	}
 
 	testCases := []struct {
 		name         string
 		args         args
 		evaluateFunc func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error)
-		want         []PublicDashboardListResponse
+		want         *PublicDashboardListResponseWithPagination
 		wantErr      assert.ErrorAssertionFunc
 	}{
 		{
 			name: "should return empty list when user does not have permissions to read any dashboard",
 			args: args{
-				ctx:   context.Background(),
-				u:     &user.SignedInUser{OrgID: 1},
-				orgId: 1,
+				ctx: context.Background(),
+				query: &PublicDashboardListQuery{
+					User:  &user.SignedInUser{OrgID: 1},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
+				},
 			},
-			want:    []PublicDashboardListResponse{},
+			want: &PublicDashboardListResponseWithPagination{
+				Page:             1,
+				PerPage:          50,
+				TotalCount:       0,
+				PublicDashboards: []*PublicDashboardListResponse{},
+			},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "should return all dashboards when has permissions",
 			args: args{
 				ctx: context.Background(),
-				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"dashboards:read": {
-						"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z",
-					}}},
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {
+							"dashboards:uid:0S6TmO67z", "dashboards:uid:1S6TmO67z", "dashboards:uid:2S6TmO67z", "dashboards:uid:9S6TmO67z",
+						}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
 				},
-				orgId: 1,
 			},
-			want: []PublicDashboardListResponse{
-				{
-					Uid:          "0GwW7mgVk",
-					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
-					DashboardUid: "0S6TmO67z",
-					Title:        "my zero dashboard",
-					IsEnabled:    true,
-				},
-				{
-					Uid:          "1GwW7mgVk",
-					AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
-					DashboardUid: "1S6TmO67z",
-					Title:        "my first dashboard",
-					IsEnabled:    true,
-				},
-				{
-					Uid:          "2GwW7mgVk",
-					AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
-					DashboardUid: "2S6TmO67z",
-					Title:        "my second dashboard",
-					IsEnabled:    false,
-				},
-				{
-					Uid:          "9GwW7mgVk",
-					AccessToken:  "deletedashboardaccesstoken",
-					DashboardUid: "9S6TmO67z",
-					Title:        "",
-					IsEnabled:    true,
+			want: &PublicDashboardListResponseWithPagination{
+				Page:       1,
+				PerPage:    50,
+				TotalCount: 0,
+				PublicDashboards: []*PublicDashboardListResponse{
+					{
+						Uid:          "0GwW7mgVk",
+						AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
+						DashboardUid: "0S6TmO67z",
+						Title:        "my zero dashboard",
+						IsEnabled:    true,
+					},
+					{
+						Uid:          "1GwW7mgVk",
+						AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+						DashboardUid: "1S6TmO67z",
+						Title:        "my first dashboard",
+						IsEnabled:    true,
+					},
+					{
+						Uid:          "2GwW7mgVk",
+						AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+						DashboardUid: "2S6TmO67z",
+						Title:        "my second dashboard",
+						IsEnabled:    false,
+					},
+					{
+						Uid:          "9GwW7mgVk",
+						AccessToken:  "deletedashboardaccesstoken",
+						DashboardUid: "9S6TmO67z",
+						Title:        "",
+						IsEnabled:    true,
+					},
 				},
 			},
 			wantErr: assert.NoError,
@@ -983,19 +1000,26 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			name: "should return only dashboards with permissions",
 			args: args{
 				ctx: context.Background(),
-				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
 				},
-				orgId: 1,
 			},
-			want: []PublicDashboardListResponse{
-				{
+			want: &PublicDashboardListResponseWithPagination{
+				Page:       1,
+				PerPage:    50,
+				TotalCount: 0,
+				PublicDashboards: []*PublicDashboardListResponse{{
 					Uid:          "0GwW7mgVk",
 					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
 					DashboardUid: "0S6TmO67z",
 					Title:        "my zero dashboard",
 					IsEnabled:    true,
-				},
+				}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -1003,43 +1027,50 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			name: "should return orphaned public dashboards",
 			args: args{
 				ctx: context.Background(),
-				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
 				},
-				orgId: 1,
 			},
 			evaluateFunc: func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error) {
 				return false, dashboards.ErrDashboardNotFound
 			},
-			want: []PublicDashboardListResponse{
-				{
+			want: &PublicDashboardListResponseWithPagination{
+				Page:       1,
+				PerPage:    50,
+				TotalCount: 0,
+				PublicDashboards: []*PublicDashboardListResponse{{
 					Uid:          "0GwW7mgVk",
 					AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
 					DashboardUid: "0S6TmO67z",
 					Title:        "my zero dashboard",
 					IsEnabled:    true,
 				},
-				{
-					Uid:          "1GwW7mgVk",
-					AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
-					DashboardUid: "1S6TmO67z",
-					Title:        "my first dashboard",
-					IsEnabled:    true,
-				},
-				{
-					Uid:          "2GwW7mgVk",
-					AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
-					DashboardUid: "2S6TmO67z",
-					Title:        "my second dashboard",
-					IsEnabled:    false,
-				},
-				{
-					Uid:          "9GwW7mgVk",
-					AccessToken:  "deletedashboardaccesstoken",
-					DashboardUid: "9S6TmO67z",
-					Title:        "",
-					IsEnabled:    true,
-				},
+					{
+						Uid:          "1GwW7mgVk",
+						AccessToken:  "1b458cb7fe7f42c68712078bcacee6e3",
+						DashboardUid: "1S6TmO67z",
+						Title:        "my first dashboard",
+						IsEnabled:    true,
+					},
+					{
+						Uid:          "2GwW7mgVk",
+						AccessToken:  "2b458cb7fe7f42c68712078bcacee6e3",
+						DashboardUid: "2S6TmO67z",
+						Title:        "my second dashboard",
+						IsEnabled:    false,
+					},
+					{
+						Uid:          "9GwW7mgVk",
+						AccessToken:  "deletedashboardaccesstoken",
+						DashboardUid: "9S6TmO67z",
+						Title:        "",
+						IsEnabled:    true,
+					}},
 			},
 			wantErr: assert.NoError,
 		},
@@ -1047,10 +1078,14 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 			name: "errors different than not data found should be returned",
 			args: args{
 				ctx: context.Background(),
-				u: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-					1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+				query: &PublicDashboardListQuery{
+					User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+						1: {"dashboards:read": {"dashboards:uid:0S6TmO67z"}}},
+					},
+					OrgID: 1,
+					Page:  1,
+					Limit: 50,
 				},
-				orgId: 1,
 			},
 			evaluateFunc: func(c context.Context, u *user.SignedInUser, e accesscontrol.Evaluator) (bool, error) {
 				return false, dashboards.ErrDashboardCorrupt
@@ -1060,7 +1095,7 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		},
 	}
 
-	mockedDashboards := []PublicDashboardListResponse{
+	mockedDashboards := []*PublicDashboardListResponse{
 		{
 			Uid:          "0GwW7mgVk",
 			AccessToken:  "0b458cb7fe7f42c68712078bcacee6e3",
@@ -1091,9 +1126,14 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		},
 	}
 
+	mockedStoreResponse := &PublicDashboardListResponseWithPagination{
+		PublicDashboards: mockedDashboards,
+		TotalCount:       int64(len(mockedDashboards)),
+	}
+
 	store := NewFakePublicDashboardStore(t)
 	store.On("FindAllWithPagination", mock.Anything, mock.Anything).
-		Return(mockedDashboards, nil)
+		Return(mockedStoreResponse, nil)
 
 	ac := tests.SetupMockAccesscontrol(t,
 		func(c context.Context, siu *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
@@ -1112,11 +1152,11 @@ func TestPublicDashboardServiceImpl_ListPublicDashboards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ac.EvaluateFunc = tt.evaluateFunc
 
-			got, err := pd.FindAll(tt.args.ctx, tt.args.u, tt.args.orgId)
-			if !tt.wantErr(t, err, fmt.Sprintf("FindAllWithPagination(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)) {
+			got, err := pd.FindAllWithPagination(tt.args.ctx, tt.args.query)
+			if !tt.wantErr(t, err, fmt.Sprintf("FindAllWithPagination(%v, %v)", tt.args.ctx, tt.args.query)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "FindAllWithPagination(%v, %v, %v)", tt.args.ctx, tt.args.u, tt.args.orgId)
+			assert.Equalf(t, tt.want, got, "FindAllWithPagination(%v, %v)", tt.args.ctx, tt.args.query)
 		})
 	}
 }

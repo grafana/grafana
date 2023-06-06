@@ -89,19 +89,21 @@ func TestAPIFeatureFlag(t *testing.T) {
 }
 
 func TestAPIListPublicDashboard(t *testing.T) {
-	successResp := []PublicDashboardListResponse{
-		{
-			Uid:          "1234asdfasdf",
-			AccessToken:  "asdfasdf",
-			DashboardUid: "abc1234",
-			IsEnabled:    true,
+	successResp := &PublicDashboardListResponseWithPagination{
+		PublicDashboards: []*PublicDashboardListResponse{
+			{
+				Uid:          "1234asdfasdf",
+				AccessToken:  "asdfasdf",
+				DashboardUid: "abc1234",
+				IsEnabled:    true,
+			},
 		},
 	}
 
 	testCases := []struct {
 		Name                 string
 		User                 *user.SignedInUser
-		Response             []PublicDashboardListResponse
+		Response             *PublicDashboardListResponseWithPagination
 		ResponseErr          error
 		ExpectedHttpResponse int
 	}{
