@@ -291,6 +291,10 @@ const (
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
 
+	// FlagRefactorVariablesTimeRange
+	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
+	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
+
 	// FlagUseCachingService
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
 	FlagUseCachingService = "useCachingService"
