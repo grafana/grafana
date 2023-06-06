@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
@@ -36,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
+	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -101,13 +102,13 @@ func TestIntegrationPluginManager(t *testing.T) {
 	otsdb := opentsdb.ProvideService(hcp)
 	pr := prometheus.ProvideService(hcp, cfg, features, tracer)
 	tmpo := tempo.ProvideService(hcp)
-	td := testdatasource.ProvideService(cfg, features)
+	td := testdatasource.ProvideService(cfg)
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
-	phlare := phlare.ProvideService(hcp)
+	phlare := phlare.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
 	parca := parca.ProvideService(hcp)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
@@ -174,7 +175,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"graph":          {},
 		"heatmap":        {},
 		"histogram":      {},
-		"icon":           {},
 		"live":           {},
 		"logs":           {},
 		"candlestick":    {},

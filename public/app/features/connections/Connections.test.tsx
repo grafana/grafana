@@ -55,7 +55,7 @@ describe('Connections', () => {
     expect(await screen.findByText('Add new connection')).toBeVisible();
     expect(await screen.findByText('Browse and create new connections')).toBeVisible();
 
-    // Should not render the "Your datasources" page
+    // Should not render the "datasources" page
     expect(screen.queryByText('Manage your existing datasource connections')).not.toBeInTheDocument();
   });
 

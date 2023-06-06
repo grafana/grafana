@@ -88,7 +88,8 @@ describe('Azure Monitor QueryEditor', () => {
     await selectOptionInTest(metrics, 'Logs');
 
     expect(onChange).toHaveBeenCalledWith({
-      ...mockQuery,
+      refId: mockQuery.refId,
+      datasource: mockQuery.datasource,
       queryType: AzureQueryType.LogAnalytics,
     });
   });

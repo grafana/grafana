@@ -91,7 +91,7 @@ export function NoAccessModal({ item, isOpen, onDismiss }: NoAccessModalProps) {
           <div>
             <p>
               Editors cannot add new connections. You may check to see if it is already configured in{' '}
-              <a href="/connections/your-datasources">Your data sources</a>.
+              <a href="/connections/datasources">Data sources</a>.
             </p>
             <p>To add a new connection, contact your Grafana admin.</p>
           </div>

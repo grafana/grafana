@@ -43,7 +43,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 	queries := AlertQueriesFromApiAlertQueries(body.GrafanaManagedCondition.Data)
 
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
 	}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}
@@ -116,7 +116,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
 	}) {
 		return ErrResp(http.StatusUnauthorized, fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization), "")
 	}
@@ -174,7 +174,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 
 	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
+		return accesscontrol.HasAccess(srv.accessControl, c)(evaluator)
 	}) {
 		return errorToResponse(fmt.Errorf("%w to query one or many data sources used by the rule", ErrAuthorization))
 	}

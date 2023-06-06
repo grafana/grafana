@@ -3,18 +3,17 @@ import { AnyAction } from 'redux';
 
 import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
-import { ThunkResult } from '../../../types';
+import { createAsyncThunk, ThunkResult } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 
-import { paneReducer } from './explorePane';
+import { initializeExplore, paneReducer } from './explorePane';
 import { getUrlStateFromPaneState, makeExplorePaneState } from './utils';
 
 //
@@ -72,12 +71,12 @@ export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/s
  * Not all of the redux state is reflected in URL though.
  */
 export const stateSave = (options?: { replace?: boolean }): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const { left, right } = getState().explore;
+  return (_, getState) => {
+    const { left, right } = getState().explore.panes;
     const orgId = getState().user.orgId.toString();
     const urlStates: { [index: string]: string | null } = { orgId };
 
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left));
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left!));
 
     if (right) {
       urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right));
@@ -100,9 +99,10 @@ export const lastSavedUrl: UrlQueryMap = {};
  * or uses values from options arg. This does only navigation each pane is then responsible for initialization from
  * the URL.
  */
-export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOptions<T>): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+export const splitOpen = createAsyncThunk(
+  'explore/splitOpen',
+  async (options: SplitOpenOptions | undefined, { getState }) => {
+    const leftState: ExploreItemState = getState().explore.panes.left!;
     const leftUrlState = getUrlStateFromPaneState(leftState);
     let rightUrlState: ExploreUrlState = leftUrlState;
 
@@ -119,8 +119,8 @@ export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOp
 
     const urlState = serializeStateToUrlParam(rightUrlState);
     locationService.partial({ right: urlState }, true);
-  };
-};
+  }
+);
 
 /**
  * Close the split view and save URL state. We need to update the state here because when closing we cannot just
@@ -169,8 +169,9 @@ export const navigateToExplore = (
 const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
-  left: initialExploreItemState,
-  right: undefined,
+  panes: {
+    [ExploreId.left]: initialExploreItemState,
+  },
   correlations: undefined,
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
@@ -186,13 +187,12 @@ export const initialExploreState: ExploreState = {
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload;
-    const targetSplit = {
-      left: itemId === ExploreId.left ? state.right! : state.left,
-      right: undefined,
+    const panes = {
+      left: itemId === ExploreId.left ? state.panes.right : state.panes.left,
     };
     return {
       ...state,
-      ...targetSplit,
+      panes,
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
@@ -255,18 +255,18 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
   }
 
   if (resetExploreAction.match(action)) {
-    const leftState = state[ExploreId.left];
-    const rightState = state[ExploreId.right];
-    stopQueryState(leftState.querySubscription);
-    if (rightState) {
-      stopQueryState(rightState.querySubscription);
+    // FIXME: reducers should REALLY not have side effects.
+    for (const [, pane] of Object.entries(state.panes).filter(([exploreId]) => exploreId !== ExploreId.left)) {
+      stopQueryState(pane!.querySubscription);
     }
 
     return {
       ...initialExploreState,
-      left: {
-        ...initialExploreItemState,
-        queries: state.left.queries,
+      panes: {
+        left: {
+          ...initialExploreItemState,
+          queries: state.panes.left!.queries,
+        },
       },
     };
   }
@@ -279,12 +279,40 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
+  if (splitOpen.pending.match(action)) {
+    return {
+      ...state,
+      panes: {
+        ...state.panes,
+        right: initialExploreItemState,
+      },
+    };
+  }
+
+  if (initializeExplore.pending.match(action)) {
+    return {
+      ...state,
+      panes: {
+        ...state.panes,
+        [action.meta.arg.exploreId]: initialExploreItemState,
+      },
+    };
+  }
+
   if (action.payload) {
     const { exploreId } = action.payload;
     if (exploreId !== undefined) {
-      // @ts-ignore
-      const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
+      return {
+        ...state,
+        panes: Object.entries(state.panes).reduce<ExploreState['panes']>((acc, [id, pane]) => {
+          if (id === exploreId) {
+            acc[id as ExploreId] = paneReducer(pane, action);
+          } else {
+            acc[id as ExploreId] = pane;
+          }
+          return acc;
+        }, {}),
+      };
     }
   }
 

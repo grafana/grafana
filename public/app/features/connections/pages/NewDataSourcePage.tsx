@@ -6,7 +6,7 @@ import { NewDataSource } from 'app/features/datasources/components/NewDataSource
 export function NewDataSourcePage() {
   return (
     <Page
-      navId={'connections-your-datasources'}
+      navId={'connections-datasources'}
       pageNav={{ text: 'Add data source', subTitle: 'Choose a data source type', active: true }}
     >
       <Page.Contents>

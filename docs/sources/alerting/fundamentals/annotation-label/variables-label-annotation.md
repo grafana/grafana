@@ -122,6 +122,14 @@ If the rule uses Classic Conditions instead of Threshold, Reduce and Math expres
 The first condition is {{ $values.B0 }}, and the second condition is {{ $values.B1 }}
 ```
 
+With classic conditions, labels from the query are not available in `$labels` variable, because single alert instance are generated. Instead, you can retrieve the labels from the `$values` variable.
+
+```
+{{ range $k, $v := $values }}
+The value is {{ $v }} and the labels are {{ $v.Labels }}
+{{ end }}
+```
+
 ## Functions
 
 The following functions are also available when expanding labels and annotations:
@@ -156,7 +164,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+The `graphLink` function returns the path to the graphical view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
 
 #### Example
 
@@ -268,7 +276,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+The `tableLink` function returns the path to the tabular view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
 
 #### Example
 

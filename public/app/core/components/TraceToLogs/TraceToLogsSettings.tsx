@@ -1,16 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
-import {
-  DataSourceJsonData,
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
-
-import { DocsLinkButton } from '../DocsLinkButton';
+import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -71,13 +66,13 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles2(getStyles);
   const supportedDataSourceTypes = [
     'loki',
     'elasticsearch',
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
     'grafana-falconlogscale-datasource', // external
+    'googlecloud-logging-datasource', // external
   ];
 
   const traceToLogs = useMemo(
@@ -107,13 +102,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to logs</h3>
-
-      <div className={styles.infoText}>
-        Navigate from a trace span to the selected data source&apos;s logs
-        <DocsLinkButton hrefSuffix={`${options.type}/#trace-to-logs`} />
-      </div>
-
       <InlineFieldRow>
         <InlineField
           tooltip="The logs data source the trace is going to navigate to"
@@ -260,9 +248,21 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-});
+export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to logs"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's logs."
+          suffix={`${options.type}/#trace-to-logs`}
+          feature="trace to logs"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};

@@ -45,12 +45,7 @@ export const QueryEditor = (props: Props) => {
 
   // Use a known query type
   useEffect(() => {
-    if (
-      query.queryType !== QueryType.ANNOTATION &&
-      query.queryType !== QueryType.SLO &&
-      query.queryType !== QueryType.TIME_SERIES_LIST &&
-      query.queryType !== QueryType.TIME_SERIES_QUERY
-    ) {
+    if (!query.queryType || !Object.values(QueryType).includes(query.queryType)) {
       onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
     }
   });

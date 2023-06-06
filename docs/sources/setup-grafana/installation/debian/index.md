@@ -14,7 +14,9 @@ This topic explains how to install Grafana dependencies, install Grafana on Linu
 
 There are multiple ways to install Grafana: using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file. Choose only one of the methods below that best suits your needs.
 
-> **Note:** If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
+{{% admonition type="note" %}}
+If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
+{{% /admonition %}}
 
 ## Install from APT repository
 
@@ -27,7 +29,9 @@ If you install from the APT repository, Grafana automatically updates when you r
 | Grafana OSS               | grafana            | `https://apt.grafana.com stable main` |
 | Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
 
-> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+{{% admonition type="note" %}}
+Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+{{% /admonition %}}
 
 Complete the following steps to install Grafana from the APT repository:
 
@@ -70,7 +74,7 @@ If you choose not to install Grafana using APT, you can download and install Gra
 
 Complete the following steps to install Grafana using DEB or the standalone binaries:
 
-1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
+1. Navigate to the [Grafana download page](/grafana/download).
 1. Select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
@@ -82,4 +86,4 @@ Complete the following steps to install Grafana using DEB or the standalone bina
 
 ## Next steps
 
-- [Start the Grafana server]({{< relref "../../start-restart-grafana/" >}})
+- [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})

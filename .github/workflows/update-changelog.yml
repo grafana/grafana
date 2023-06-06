@@ -4,7 +4,7 @@ on:
     inputs:
       version:
         required: true
-        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
+        description: 'Needs to match, exactly, the name of a milestone. The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
       skip_pr:
         required: false
         default: "0"

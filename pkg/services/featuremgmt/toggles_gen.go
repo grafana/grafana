@@ -115,10 +115,6 @@ const (
 	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
-	// FlagInternationalization
-	// Enables internationalization
-	FlagInternationalization = "internationalization"
-
 	// FlagTopnav
 	// Enables new top navigation and page layouts
 	FlagTopnav = "topnav"
@@ -170,10 +166,6 @@ const (
 	// FlagShowTraceId
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
-
-	// FlagDatasourceOnboarding
-	// Enable data source onboarding page
-	FlagDatasourceOnboarding = "datasourceOnboarding"
 
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
@@ -267,6 +259,10 @@ const (
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
 
+	// FlagAlertingNotificationsPoliciesMatchingInstances
+	// Enables the preview of matching instances for notification policies
+	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
+
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
 	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
@@ -291,6 +287,10 @@ const (
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
 
+	// FlagRefactorVariablesTimeRange
+	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
+	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
+
 	// FlagUseCachingService
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
 	FlagUseCachingService = "useCachingService"
@@ -308,14 +308,30 @@ const (
 	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
 
 	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
-	// FlagOpensearchDetectVersion
-	// Enable version detection in OpenSearch
-	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
 
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagDataSourcePageHeader
+	// Apply new pageHeader UI in data source edit page
+	FlagDataSourcePageHeader = "dataSourcePageHeader"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
+
+	// FlagLokiPredefinedOperations
+	// Adds predefined query operations to Loki query editor
+	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
+
+	// FlagPluginsFrontendSandbox
+	// Enables the plugins frontend sandbox
+	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 )

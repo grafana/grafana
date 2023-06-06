@@ -20,7 +20,7 @@ import { AddColumn } from './components/AddColumn';
 import { DatagridContextMenu } from './components/DatagridContextMenu';
 import { RenameColumnCell } from './components/RenameColumnCell';
 import { isDatagridEnabled } from './featureFlagUtils';
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 import { DatagridActionType, datagridReducer, initialState } from './state';
 import {
   clearCellsFromRangeSelection,
@@ -37,7 +37,7 @@ import {
   updateSnapshot,
 } from './utils';
 
-export interface DataGridProps extends PanelProps<PanelOptions> {}
+export interface DataGridProps extends PanelProps<Options> {}
 
 export function DataGridPanel({ options, data, id, fieldConfig, width, height }: DataGridProps) {
   const [state, dispatch] = useReducer(datagridReducer, initialState);
@@ -76,7 +76,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
     return getGridCellKind(field, row, hasGridSelection(gridSelection));
   };
 
-  const onCellEdited = async (cell: Item, newValue: EditableGridCell) => {
+  const onCellEdited = (cell: Item, newValue: EditableGridCell) => {
     // if there are rows selected, return early, we don't want to edit any cell
     if (hasGridSelection(gridSelection)) {
       return;
@@ -154,8 +154,29 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
       return true;
     }
 
-    if (selection.rows) {
-      updateSnapshot(deleteRows(frame, selection.rows.toArray()), onUpdateData);
+    const rows = selection.rows.toArray();
+    const cols = selection.columns.toArray();
+
+    if (rows.length) {
+      updateSnapshot(deleteRows(frame, rows), onUpdateData);
+      return true;
+    }
+
+    if (cols.length) {
+      const copiedFrame = {
+        ...frame,
+        fields: frame.fields.map((field, index) => {
+          if (cols.includes(index)) {
+            return {
+              ...field,
+              values: new Array(frame.length).fill(null),
+            };
+          }
+
+          return field;
+        }),
+      };
+      updateSnapshot(copiedFrame, onUpdateData);
       return true;
     }
 
@@ -175,7 +196,7 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
   const onHeaderMenuClick = (col: number, screenPosition: Rectangle) => {
     dispatch({
       type: DatagridActionType.openHeaderDropdownMenu,
-      payload: { screenPosition, columnIndex: col, value: frame.fields[col].name },
+      payload: { screenPosition, columnIndex: col, value: state.columns[col].title },
     });
   };
 
@@ -263,7 +284,6 @@ export function DataGridPanel({ options, data, id, fieldConfig, width, height }:
         getCellsForSelection={isDatagridEnabled() ? true : undefined}
         showSearch={isDatagridEnabled() ? toggleSearch : false}
         onSearchClose={onSearchClose}
-        onPaste={isDatagridEnabled() ? true : undefined}
         gridSelection={gridSelection}
         onGridSelectionChange={isDatagridEnabled() ? onGridSelectionChange : undefined}
         onRowAppended={isDatagridEnabled() ? addNewRow : undefined}

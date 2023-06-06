@@ -188,6 +188,17 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     ) as Promise<MetricDescriptor[]>;
   }
 
+  async filterMetricsByType(projectName: string, filter: string): Promise<MetricDescriptor[]> {
+    if (!projectName) {
+      return [];
+    }
+
+    return this.getResource(
+      `metricDescriptors/v3/projects/${this.templateSrv.replace(projectName)}/metricDescriptors`,
+      { filter: `metric.type : "${filter}"` }
+    );
+  }
+
   async getSLOServices(projectName: string): Promise<Array<SelectableValue<string>>> {
     return this.getResource(`services/v3/projects/${this.templateSrv.replace(projectName)}/services?pageSize=1000`);
   }
@@ -308,7 +319,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return !!query.timeSeriesQuery && !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
     }
 
-    if ([QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType ?? QueryType.TIME_SERIES_LIST)) {
+    if (query.queryType && [QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 
