@@ -59,12 +59,22 @@ def rgm_build(script = "drone_publish_main.sh"):
         rgm_build_step,
     ]
 
+docs_paths = {
+    "exclude": [
+        "*.md",
+        "docs/**",
+        "packages/**/*.md",
+        "latest.json",
+    ],
+}
+
 def rgm_main():
     trigger = {
         "event": [
             "push",
         ],
         "branch": "main",
+        "paths": docs_paths,
     }
 
     return pipeline(

@@ -38,7 +38,7 @@
 /docs/sources/administration/             @Eve832 @GrafanaWriter
 /docs/sources/alerting/                   @brendamuir
 /docs/sources/dashboards/                 @imatwawana
-/docs/sources/datasources/                @Eve832 @GrafanaWriter
+/docs/sources/datasources/                @lwandz13
 /docs/sources/explore/                    @Eve832 @GrafanaWriter
 /docs/sources/fundamentals                @chri2547
 /docs/sources/getting-started/            @chri2547
@@ -61,6 +61,7 @@
 /.bra.toml @grafana/backend-platform
 /.golangci.toml @grafana/backend-platform
 /build.go @grafana/backend-platform
+/scripts/modowners/ @grafana/backend-platform
 
 /pkg/api/ @grafana/backend-platform
 /pkg/bus/ @grafana/backend-platform
@@ -103,7 +104,6 @@
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
-/pkg/services/featuremgmt/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
@@ -356,7 +356,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/admin/ @grafana/grafana-authnz-team
 /public/app/features/auth-config/ @grafana/grafana-authnz-team
 /public/app/features/annotations/ @grafana/grafana-frontend-platform
-/public/app/features/api-keys/ @grafana/grafana-frontend-platform
+/public/app/features/api-keys/ @grafana/grafana-authnz-team
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/visualization/data-hover/ @grafana/dataviz-squad
@@ -557,6 +557,7 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
+/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad

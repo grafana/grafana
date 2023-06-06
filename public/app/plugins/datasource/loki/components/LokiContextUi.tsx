@@ -5,13 +5,10 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
 import store from 'app/core/store';
-import { dispatch } from 'app/store/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { LogContextProvider } from '../LogContextProvider';
+import { LogContextProvider, LOKI_LOG_CONTEXT_PRESERVED_LABELS, PreservedLabels } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
@@ -80,12 +77,6 @@ function getStyles(theme: GrafanaTheme2) {
 }
 
 const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
-export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
-
-type PreservedLabels = {
-  removedLabels: string[];
-  selectedExtractedLabels: string[];
-};
 
 export function LokiContextUi(props: LokiContextUiProps) {
   const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
@@ -171,45 +162,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   useAsync(async () => {
     setLoading(true);
-    const initContextFilters = await logContextProvider.getInitContextFiltersFromLabels(row.labels, origQuery);
+    const initContextFilters = await logContextProvider.getInitContextFilters(row.labels, origQuery);
+    setContextFilters(initContextFilters);
 
-    let preservedLabels: undefined | PreservedLabels = undefined;
-    try {
-      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
-      // Do nothing when error occurs
-    } catch (e) {}
-
-    if (!preservedLabels) {
-      setContextFilters(initContextFilters);
-    } else {
-      // We need to update filters based on preserved labels
-      let arePreservedLabelsUsed = false;
-      const newContextFilters = initContextFilters.map((contextFilter) => {
-        // We checked for undefined above
-        if (preservedLabels!.removedLabels.includes(contextFilter.label)) {
-          arePreservedLabelsUsed = true;
-          return { ...contextFilter, enabled: false };
-        }
-        // We checked for undefined above
-        if (preservedLabels!.selectedExtractedLabels.includes(contextFilter.label)) {
-          arePreservedLabelsUsed = true;
-          return { ...contextFilter, enabled: true };
-        }
-        return { ...contextFilter };
-      });
-
-      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
-      if (!isAtLeastOneRealLabelEnabled) {
-        // If we end up with no real labels enabled, we need to reset the init filters
-        setContextFilters(initContextFilters);
-      } else {
-        // Otherwise use new filters
-        setContextFilters(newContextFilters);
-        if (arePreservedLabelsUsed) {
-          dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
-        }
-      }
-    }
     setInitialized(true);
     setLoading(false);
   });
