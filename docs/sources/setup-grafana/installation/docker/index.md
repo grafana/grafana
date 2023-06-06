@@ -104,7 +104,7 @@ mkdir data
 
 # start grafana with your user id and using the data folder
 docker run -d -p 3000:3000 --name=grafana \
-  --user "$(id -u)"
+  --user "$(id -u)" \
   --volume "$PWD/data:/var/lib/grafana" \
   grafana/grafana-enterprise
 ```
