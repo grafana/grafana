@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -138,6 +140,60 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			require.NotNil(t, resp)
 			require.NoError(t, resp.Body.Close())
 			require.Equal(t, http.StatusNotFound, resp.StatusCode)
+		})
+	})
+}
+
+func TestPluginMetricsScrapeTargetsEndpoint(t *testing.T) {
+	t.Run("Endpoint is enabled, basic auth disabled", func(t *testing.T) {
+		hs := &HTTPServer{
+			Cfg: &setting.Cfg{
+				MetricsEndpointEnabled:           true,
+				MetricsEndpointBasicAuthUsername: "",
+				MetricsEndpointBasicAuthPassword: "",
+			},
+			pluginStore: &fakes.FakePluginStore{},
+		}
+
+		s := webtest.NewServer(t, routing.NewRouteRegister())
+		s.Mux.Use(hs.pluginMetricsScrapeTargetsEndpoint)
+
+		t.Run("No scrape targets returned when no plugin store is empty", func(t *testing.T) {
+			req := s.NewGetRequest("/metrics/plugins")
+			resp, err := s.Send(req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			require.Equal(t, "[]", string(body))
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			require.Equal(t, "application/json", resp.Header.Get("Content-Type"))
+		})
+
+		t.Run("Only external plugin scrape targets are returned", func(t *testing.T) {
+			hs.pluginStore = &fakes.FakePluginStore{PluginList: []plugins.PluginDTO{
+				{Class: plugins.External, JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}},
+				{Class: plugins.Core, JSONData: plugins.JSONData{ID: "foo-datasource", Type: plugins.DataSource}},
+				{Class: plugins.External, JSONData: plugins.JSONData{ID: "grafana-app", Type: plugins.App}},
+				{Class: plugins.Bundled, JSONData: plugins.JSONData{ID: "bar-datasource", Type: plugins.App}},
+			}}
+
+			req := s.NewGetRequest("/metrics/plugins")
+			resp, err := s.Send(req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			body, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
+
+			expectedBody := fmt.Sprintf(`[[{"targets":["%s/metrics/plugins/test-datasource"],"labels":{"pluginId":"test-datasource"}}],[{"targets":["%s/metrics/plugins/grafana-app"],"labels":{"pluginId":"grafana-app"}}]]`, req.Host, req.Host)
+			require.Equal(t, expectedBody, string(body))
+			require.NoError(t, resp.Body.Close())
+			require.Equal(t, http.StatusOK, resp.StatusCode)
+			require.Equal(t, "application/json", resp.Header.Get("Content-Type"))
 		})
 	})
 }

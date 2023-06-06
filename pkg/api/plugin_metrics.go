@@ -2,11 +2,16 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/go-jose/go-jose/v3/json"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/discovery"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -40,7 +45,50 @@ func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
 	}
 
 	ctx.Resp.Header().Set("Content-Type", "text/plain")
-	if _, err := ctx.Resp.Write(resp.PrometheusMetrics); err != nil {
+	if _, err = ctx.Resp.Write(resp.PrometheusMetrics); err != nil {
 		hs.log.Error("Failed to write to response", "err", err)
 	}
+}
+
+func (hs *HTTPServer) pluginMetricsScrapeTargetsEndpoint(ctx *web.Context) {
+	if !hs.Cfg.MetricsEndpointEnabled {
+		return
+	}
+
+	if ctx.Req.Method != http.MethodGet || !strings.EqualFold(ctx.Req.URL.Path, "/metrics/plugins") {
+		return
+	}
+
+	if hs.metricsEndpointBasicAuthEnabled() && !BasicAuthenticatedRequest(ctx.Req, hs.Cfg.MetricsEndpointBasicAuthUsername, hs.Cfg.MetricsEndpointBasicAuthPassword) {
+		ctx.Resp.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	sdConfig := discovery.Configs{}
+	for _, p := range hs.pluginStore.Plugins(ctx.Req.Context()) {
+		if p.Class == plugins.External { // TODO and is configured to expose metrics
+			sdConfig = append(sdConfig, discovery.StaticConfig{{
+				Targets: []model.LabelSet{{model.AddressLabel: model.LabelValue(pluginMetricEndpoint(ctx.Req, p.ID))}},
+				Labels: model.LabelSet{
+					"pluginId": model.LabelValue(p.ID),
+				},
+				Source: "plugins",
+			}})
+		}
+	}
+
+	b, err := json.Marshal(sdConfig)
+	if err != nil {
+		ctx.Resp.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "application/json")
+	if _, err = ctx.Resp.Write(b); err != nil {
+		hs.log.Error("Failed to write to response", "err", err)
+	}
+}
+
+func pluginMetricEndpoint(req *http.Request, pluginID string) string {
+	return fmt.Sprintf("%s/metrics/plugins/%s", req.Host, pluginID)
 }

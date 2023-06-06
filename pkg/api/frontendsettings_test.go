@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -46,7 +47,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 
 	var pluginStore = pstore
 	if pluginStore == nil {
-		pluginStore = &plugins.FakePluginStore{}
+		pluginStore = &fakes.FakePluginStore{}
 	}
 
 	var pluginsSettings = psettings
@@ -217,7 +218,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		{
 			desc: "disabled app with preload",
 			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
+				return &fakes.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
@@ -250,7 +251,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		{
 			desc: "enalbed app with preload",
 			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
+				return &fakes.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
@@ -283,7 +284,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		{
 			desc: "angular app plugin",
 			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
+				return &fakes.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
