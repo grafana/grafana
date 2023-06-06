@@ -496,13 +496,16 @@ export class PrometheusDatasource
       const startTime = new Date();
       return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
         map((response) => {
-          const amendedResponse = {
-            ...response,
-            data: this.cache.procFrames(request, requestInfo, response.data),
-          };
-          return transformV2(amendedResponse, request, {
+          const transformed = transformV2(response, request, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
+
+          const amendedResponse = {
+            ...transformed,
+            data: this.cache.procFrames(request, requestInfo, transformed.data),
+          };
+
+          return amendedResponse;
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
