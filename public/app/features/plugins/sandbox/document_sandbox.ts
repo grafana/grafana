@@ -32,8 +32,9 @@ export function getSafeSandboxDomElement(element: Element): Element {
     return element;
   }
 
+  // any other element gets a mock
   const mockElement = document.createElement(nodeName);
-  mockElement.setAttribute('id', 'grafana-plugin-sandbox');
+  mockElement.dataset.grafanaPluginSandboxElement = 'true';
   return mockElement;
 }
 
