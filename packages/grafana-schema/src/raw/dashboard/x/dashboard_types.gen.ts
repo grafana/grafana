@@ -72,18 +72,15 @@ export const defaultAnnotationContainer: Partial<AnnotationContainer> = {
  */
 export interface AnnotationQuery {
   /**
-   * TODO: Should be DataSourceRef
+   * Datasource where the annotations data is
    */
-  datasource: {
-    type?: string;
-    uid?: string;
-  };
+  datasource: DataSourceRef;
   /**
    * When enabled the annotation query is issued with every dashboard refresh
    */
   enable: boolean;
   /**
-   * Optionally
+   * Filters to apply when fetching annotations
    */
   filter?: AnnotationPanelFilter;
   /**
@@ -176,19 +173,48 @@ export interface DataSourceRef {
 }
 
 /**
- * FROM public/app/features/dashboard/state/DashboardModels.ts - ish
- * TODO docs
+ * Links with references to other dashboards or external resources
  */
 export interface DashboardLink {
+  /**
+   * If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
+   */
   asDropdown: boolean;
+  /**
+   * Icon name to be displayed with the link
+   */
   icon: string;
+  /**
+   * If true, includes current template variables values in the link as query params
+   */
   includeVars: boolean;
+  /**
+   * If true, includes current time range in the link as query params
+   */
   keepTime: boolean;
+  /**
+   * List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
+   */
   tags: Array<string>;
+  /**
+   * If true, the link will be opened in a new tab
+   */
   targetBlank: boolean;
+  /**
+   * Title to display with the link
+   */
   title: string;
+  /**
+   * Tooltip to display when the user hovers their mouse over it
+   */
   tooltip: string;
+  /**
+   * Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
+   */
   type: DashboardLinkType;
+  /**
+   * Link URL. Only required/valid if the type is link
+   */
   url: string;
 }
 
@@ -201,7 +227,7 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
 };
 
 /**
- * TODO docs
+ * Dashboard Link type. Accepted values are dashboards (to refer to another dashboard) and link (to refer to an external resource)
  */
 export type DashboardLinkType = ('link' | 'dashboards');
 
@@ -252,7 +278,7 @@ export interface GridPos {
    */
   h: number;
   /**
-   * true if fixed
+   * Whether the panel is fixed within the grid
    */
   static?: boolean;
   /**
@@ -277,11 +303,12 @@ export const defaultGridPos: Partial<GridPos> = {
 };
 
 /**
- * TODO docs
+ * User-defined value for a metric that triggers visual changes in a panel when this value is met or exceeded
+ * They are used to conditionally style and color visualizations based on query results , and can be applied to most visualizations.
  */
 export interface Threshold {
   /**
-   * TODO docs
+   * Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
    */
   color: string;
   /**
@@ -295,12 +322,15 @@ export interface Threshold {
    */
   state?: string;
   /**
-   * TODO docs
+   * Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
    * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
    */
   value?: number;
 }
 
+/**
+ * Thresholds can either be absolute (specific number) or percentage (relative to min or max).
+ */
 export enum ThresholdsMode {
   Absolute = 'absolute',
   Percentage = 'percentage',
@@ -319,12 +349,12 @@ export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
 };
 
 /**
- * TODO docs
+ * Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
  */
 export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
 
 /**
- * TODO docs
+ * Supported value mapping types
  */
 export enum MappingType {
   RangeToText = 'range',
@@ -334,7 +364,7 @@ export enum MappingType {
 }
 
 /**
- * TODO docs
+ * Maps text values to a color or different display text
  */
 export interface ValueMap {
   options: Record<string, ValueMappingResult>;
@@ -342,7 +372,7 @@ export interface ValueMap {
 }
 
 /**
- * TODO docs
+ * Maps numeric ranges to a color or different display text
  */
 export interface RangeMap {
   options: {
@@ -357,7 +387,7 @@ export interface RangeMap {
 }
 
 /**
- * TODO docs
+ * Maps regular expressions to replacement text and a color
  */
 export interface RegexMap {
   options: {
@@ -368,7 +398,8 @@ export interface RegexMap {
 }
 
 /**
- * TODO docs
+ * Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text
+ * and color
  */
 export interface SpecialValueMap {
   options: {
@@ -380,7 +411,7 @@ export interface SpecialValueMap {
 }
 
 /**
- * TODO docs
+ * Special value types supported by the SpecialValueMap
  */
 export enum SpecialValueMatch {
   Empty = 'empty',
@@ -392,7 +423,7 @@ export enum SpecialValueMatch {
 }
 
 /**
- * TODO docs
+ * Result used as replacement text and color for RegexMap and SpecialValueMap
  */
 export interface ValueMappingResult {
   color?: string;
@@ -464,8 +495,10 @@ export interface Panel {
    */
   id?: number;
   /**
-   * TODO docs
-   * TODO tighter constraint
+   * The min time interval setting defines a lower limit for the $__interval and $__interval_ms variables.
+   * This value must be formatted as a number followed by a valid time
+   * identifier like: "40s", "3d", etc.
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   interval?: string;
   /**
@@ -478,7 +511,7 @@ export interface Panel {
    */
   links?: Array<DashboardLink>;
   /**
-   * TODO docs
+   * The maximum number of data points that the panel queries are retrieving.
    */
   maxDataPoints?: number;
   /**
@@ -517,8 +550,14 @@ export interface Panel {
    */
   thresholds?: Array<unknown>;
   /**
-   * TODO docs
-   * TODO tighter constraint
+   * Overrides the relative time range for individual panels,
+   * which causes them to be different than what is selected in
+   * the dashboard time picker in the top-right corner of the dashboard. You can use this to show metrics from different
+   * time periods or days on the same dashboard.
+   * The value is formatted as time operation like: `now-5m` (Last 5 minutes), `now/d` (the day so far),
+   * `now-5d/d`(Last 5 days), `now/w` (This week so far), `now-2y/y` (Last 2 years).
+   * Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   timeFrom?: string;
   /**
@@ -526,8 +565,10 @@ export interface Panel {
    */
   timeRegions?: Array<unknown>;
   /**
-   * TODO docs
-   * TODO tighter constraint
+   * Overrides the time range for individual panels by shifting its start and end relative to the time picker.
+   * For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker setting `2h`.
+   * Note: Panel time overrides have no effect when the dashboard’s time range is absolute.
+   * See: https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/#query-options
    */
   timeShift?: string;
   /**
@@ -722,11 +763,12 @@ export interface Dashboard {
    */
   fiscalYearStartMonth?: number;
   /**
-   * For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+   * ID of a dashboard imported from the https://grafana.com/grafana/dashboards/ portal
    */
   gnetId?: string;
   /**
    * Configuration of dashboard cursor sync behavior.
+   * Accepted values are 0 (sync turned off), 1 (shared crosshair), 2 (shared crosshair and tooltip).
    */
   graphTooltip: DashboardCursorSync;
   /**
@@ -735,7 +777,7 @@ export interface Dashboard {
    */
   id?: number;
   /**
-   * TODO docs
+   * Links with references to other dashboards or external websites.
    */
   links?: Array<DashboardLink>;
   /**
@@ -763,47 +805,47 @@ export interface Dashboard {
   schemaVersion: number;
   snapshot?: {
     /**
-     * TODO docs
+     * Time when the snapshot was created
      */
     created: string;
     /**
-     * TODO docs
+     * Time when the snapshot expires, default is never to expire
      */
     expires: string;
     /**
-     * TODO docs
+     * Is the snapshot saved in an external grafana instance
      */
     external: boolean;
     /**
-     * TODO docs
+     * external url, if snapshot was shared in external grafana instance
      */
     externalUrl: string;
     /**
-     * TODO docs
+     * Unique identifier of the snapshot
      */
     id: number;
     /**
-     * TODO docs
+     * Optional, defined the unique key of the snapshot, required if external is true
      */
     key: string;
     /**
-     * TODO docs
+     * Optional, name of the snapshot
      */
     name: string;
     /**
-     * TODO docs
+     * org id of the snapshot
      */
     orgId: number;
     /**
-     * TODO docs
+     * last time when the snapshot was updated
      */
     updated: string;
     /**
-     * TODO docs
+     * url of the snapshot, if snapshot was shared internally
      */
     url?: string;
     /**
-     * TODO docs
+     * user id of the snapshot creator
      */
     userId: number;
   };
@@ -816,46 +858,46 @@ export interface Dashboard {
    */
   tags?: Array<string>;
   /**
-   * TODO docs
+   * Contains the list of configured template variables with their saved values along with some other metadata
    */
   templating?: {
     list?: Array<VariableModel>;
   };
   /**
-   * Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+   * Time range for dashboard.
+   * Accepted values are relative time strings like {from: 'now-6h', to: 'now'} or absolute time strings like {from: '2020-07-10T08:00:00.000Z', to: '2020-07-10T14:00:00.000Z'}.
    */
   time?: {
     from: string;
     to: string;
   };
   /**
-   * TODO docs
-   * TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+   * Configuration of the time picker shown at the top of a dashboard.
    */
   timepicker?: {
-    /**
-     * Whether timepicker is collapsed or not.
-     */
-    collapse: boolean;
-    /**
-     * Whether timepicker is enabled or not.
-     */
-    enable: boolean;
     /**
      * Whether timepicker is visible or not.
      */
     hidden: boolean;
     /**
-     * Selectable intervals for auto-refresh.
+     * Interval options available in the refresh picker dropdown.
      */
     refresh_intervals: Array<string>;
     /**
-     * TODO docs
+     * Whether timepicker is collapsed or not. Has no effect on provisioned dashboard.
+     */
+    collapse: boolean;
+    /**
+     * Whether timepicker is enabled or not. Has no effect on provisioned dashboard.
+     */
+    enable: boolean;
+    /**
+     * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
      */
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+   * Timezone of dashboard. Accepted values are IANA TZDB zone ID or "browser" or "utc".
    */
   timezone?: string;
   /**
@@ -871,7 +913,7 @@ export interface Dashboard {
    */
   version?: number;
   /**
-   * TODO docs
+   * Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
    */
   weekStart?: string;
 }

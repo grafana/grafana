@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useId, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
@@ -13,7 +13,7 @@ import {
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
-} from '../../influxQLMetadataQuery';
+} from '../../influxql_metadata_query';
 import {
   addNewGroupByPart,
   addNewSelectPart,
@@ -25,7 +25,6 @@ import {
 } from '../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
-import { useUniqueId } from '../useUniqueId';
 
 import { FormatAsSection } from './FormatAsSection';
 import { FromSection } from './FromSection';
@@ -42,19 +41,31 @@ type Props = {
   datasource: InfluxDatasource;
 };
 
-function getTemplateVariableOptions() {
+function wrapRegex(v: TypedVariableModel): string {
+  return `/^$${v.name}$/`;
+}
+
+function wrapPure(v: TypedVariableModel): string {
+  return `$${v.name}`;
+}
+
+function getTemplateVariableOptions(wrapper: (v: TypedVariableModel) => string) {
   return (
     getTemplateSrv()
       .getVariables()
       // we make them regex-params, i'm not 100% sure why.
       // probably because this way multi-value variables work ok too.
-      .map((v) => `/^$${v.name}$/`)
+      .map(wrapper)
   );
 }
 
 // helper function to make it easy to call this from the widget-render-code
-function withTemplateVariableOptions(optionsPromise: Promise<string[]>, filter?: string): Promise<string[]> {
-  let templateVariableOptions = getTemplateVariableOptions();
+function withTemplateVariableOptions(
+  optionsPromise: Promise<string[]>,
+  wrapper: (v: TypedVariableModel) => string,
+  filter?: string
+): Promise<string[]> {
+  let templateVariableOptions = getTemplateVariableOptions(wrapper);
   if (filter) {
     templateVariableOptions = templateVariableOptions.filter((tvo) => tvo.indexOf(filter) > -1);
   }
@@ -68,7 +79,7 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
 }
 
 export const Editor = (props: Props): JSX.Element => {
-  const uniqueId = useUniqueId();
+  const uniqueId = useId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
 
@@ -149,7 +160,12 @@ export const Editor = (props: Props): JSX.Element => {
         <FromSection
           policy={policy ?? retentionPolicies[0]}
           measurement={measurement}
-          getPolicyOptions={() => getAllPolicies(datasource)}
+          getPolicyOptions={() =>
+            withTemplateVariableOptions(
+              allTagKeys.then((keys) => getAllPolicies(datasource)),
+              wrapPure
+            )
+          }
           getMeasurementOptions={(filter) =>
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
@@ -159,6 +175,7 @@ export const Editor = (props: Props): JSX.Element => {
                   datasource
                 )
               ),
+              wrapRegex,
               filter
             )
           }
@@ -175,7 +192,8 @@ export const Editor = (props: Props): JSX.Element => {
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
                 getTagValues(key, measurement, policy, filterTags(query.tags ?? [], keys), datasource)
-              )
+              ),
+              wrapRegex
             )
           }
         />
