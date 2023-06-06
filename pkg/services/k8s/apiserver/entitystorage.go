@@ -423,7 +423,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	fmt.Printf("LIST:" + key)
+	fmt.Printf("LIST: %s\n", key)
 	if key == "" {
 		return fmt.Errorf("list requires a namespace (for now)")
 	}
