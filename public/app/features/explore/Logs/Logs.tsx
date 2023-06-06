@@ -537,8 +537,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
                 dedupStrategy={dedupStrategy}
-                getRowContext={getRowContext}
-                getLogRowContextUi={getLogRowContextUi}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 showContextToggle={showContextToggle}

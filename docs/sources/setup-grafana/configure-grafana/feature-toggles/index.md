@@ -25,7 +25,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `featureHighlights`                              | Highlight Grafana Enterprise features                                                                                                                                                               |                    |
 | `exploreMixedDatasource`                         | Enable mixed datasource in Explore                                                                                                                                                                  | Yes                |
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
-| `internationalization`                           | Enables internationalization                                                                                                                                                                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
 | `newPanelChromeUI`                               | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 | Yes                |
@@ -49,7 +48,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
 | `publicDashboards`                   | Enables public access to dashboards                                                                                                                                                          |
-| `publicDashboardsEmailSharing`       | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                                     |
 | `migrationLocking`                   | Lock database during migrations                                                                                                                                                              |
 | `correlations`                       | Correlations page                                                                                                                                                                            |
 | `newDBLibrary`                       | Use jmoiron/sqlx rather than xorm for a few backend services                                                                                                                                 |
@@ -61,6 +59,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `nestedFolders`                      | Enable folder nesting                                                                                                                                                                        |
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
+| `refactorVariablesTimeRange`         | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
@@ -112,6 +111,8 @@ Alpha features might be changed or removed without prior notice.
 | `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
+| `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
+| `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 
 ## Development feature toggles
 

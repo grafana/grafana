@@ -230,7 +230,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -239,6 +238,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   event:
   - pull_request
@@ -427,6 +440,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -1286,7 +1304,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -1294,6 +1311,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   branch: main
   event:
@@ -1429,6 +1460,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -4536,6 +4572,12 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -7200,6 +7242,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: d518288df51a41148e1fb302b80d598add4104f35588fd05e0fc6a135b45dda1
+hmac: caf02d8ce78dd5c2fd6d841d0661702e74571c07939c6af602ac11d1790b31b8
 
 ...
