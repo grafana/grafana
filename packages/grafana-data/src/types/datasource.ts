@@ -136,7 +136,7 @@ export class DataSourcePlugin<
 }
 
 export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMeta<T> {
-  tuiltIn?: boolean; // Is this for all
+  builtIn?: boolean; // Is this for all
   metrics?: boolean;
   logs?: boolean;
   annotations?: boolean;
