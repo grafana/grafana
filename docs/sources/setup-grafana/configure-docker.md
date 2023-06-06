@@ -97,7 +97,7 @@ The following configurations are set by default when you start the Grafana Docke
 
 You can install publicly available plugins and plugins that are private or used internally in an organization. For plugin installation instructions, refer to [Install plugins in the Docker container]({{< relref "./installation/docker#install-plugins-in-the-docker-container" >}}).
 
-## Install plugins from other sources
+### Install plugins from other sources
 
 To install plugins from other sources, you must define the custom URL and specify it immediately before the plugin name in the `GF_INSTALL_PLUGINS` environment variable: `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin name>`.
 
@@ -106,14 +106,35 @@ Example:
 The following command runs Grafana Enterprise on **port 3000** in detached mode and installs the custom plugin, which is specified as a URL parameter in the `GF_INSTALL_PLUGINS` environment variable.
 
 ```bash
-docker run -d
-  -p 3000:3000
-  --name=grafana
-  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel"
+docker run -d -p 3000:3000 --name=grafana \
+  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin,grafana-clock-panel" \
   grafana/grafana-enterprise
 ```
 
-## Build Grafana with the Image Renderer plugin pre-installed
+## Build a custom Grafana Docker image
+
+In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
+
+The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` Docker image tag. By default, Grafana builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument.
+
+Example:
+
+The following example shows you how to build and run a custom Grafana Docker image based on the latest official Ubuntu-based Grafana Docker image:
+
+```bash
+# go to the custom directory
+cd packaging/docker/custom
+
+# run the docker build command to build the image
+docker build \
+  --build-arg "GRAFANA_VERSION=latest-ubuntu" \
+  -t grafana-custom .
+
+# run the custom grafana container using docker run command
+docker run -d -p 3000:3000 --name=grafana grafana-custom
+```
+
+### Build Grafana with the Image Renderer plugin pre-installed
 
 > **Note:** This feature is experimental.
 
@@ -128,44 +149,22 @@ The following example shows how to build a customized Grafana Docker image that 
 cd packaging/docker/custom
 
 #running the build command
-docker build
---build-arg "GRAFANA_VERSION=latest"
---build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true"
--t grafana-custom .
+docker build \
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
+  -t grafana-custom .
 
 # running the docker run command
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
-## Build and run Grafana Docker image with pre-installed plugins
 
-If you run multiple Grafana installations with the same plugins you can save time by building your own customized image that includes those plugins.
+### Build a Grafana Docker image with pre-installed plugins
 
-In the Grafana GitHub repository, the `packaging/docker/custom/` folder includes a `Dockerfile` that you can use to build a custom Grafana image. The `Dockerfile` accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
-
-The `GRAFANA_VERSION` build argument must be a valid `grafana/grafana` Docker image tag. By default, Grafana builds an Alpine-based image. To build an Ubuntu-based image, append `-ubuntu` to the `GRAFANA_VERSION` build argument.
-
-Example 1:
-
-The following example shows you how to build and run a custom Grafana Docker image based on the latest official Ubuntu-based Grafana Docker image:
-
-```bash
-# go to the custom directory
-cd packaging/docker/custom
-
-# run the docker build command to build the image
-docker build
-  --build-arg "GRAFANA_VERSION=latest-ubuntu"
-  -t grafana-custom .
-
-# run the custom grafana container using docker run command
-docker run -d -p 3000:3000 --name=grafana grafana-custom
-```
-
-Similarly, you can customize a Grafana image by including plugins available on the [Grafana Plugin download page](/grafana/plugins) so you won't have to manually install the plugins each time, making the process more efficient.
+If you run multiple Grafana installations with the same plugins you can save time by building your own customized image that includes plugins available on the [Grafana Plugin download page](/grafana/plugins) so that Grafans won't have to install the plugins each time it starts, making the process more efficient.
 
 > **Note:** To specify the version of a plugin, you can use the `GF_INSTALL_PLUGINS` build argument and add the version number. The latest version is used if you don't specify a version number. For example, you can use `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"` to specify the versions of two plugins.
 
-Example 2:
+Example:
 
 The following example shows how to build and run a custom Grafana Docker image with pre-installed plugins.
 
@@ -175,30 +174,30 @@ cd packaging/docker/custom
 
 # running the build command
 # include the plugins you want e.g. clock planel etc
-docker build
-  --build-arg "GRAFANA_VERSION=latest"
-  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource"
+docker build \
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
   -t grafana-custom .
 
 # running the custom Grafana container using the docker run command
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
 
-## Build a Grafana Docker image with pre-installed plugins from other sources
+### Build a Grafana Docker image with pre-installed plugins from other sources
 
 You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`
 
 The following example demonstrates creating a customized Grafana Docker image that includes a custom plugin from a URL link, the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable.
 
 ```bash
-#go to the folder
+# go to the folder
 cd packaging/docker/custom
 
-#running the build command
-docker build
---build-arg "GRAFANA_VERSION=latest"
---build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;my-custom-plugin,grafana-clock-panel,grafana-simple-json-datasource"
--t grafana-custom .
+# running the build command
+docker build \
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;my-custom-plugin,grafana-clock-panel,grafana-simple-json-datasource" \
+  -t grafana-custom .
 
 # running the docker run command
 docker run -d -p 3000:3000 --name=grafana grafana-custom
@@ -274,23 +273,24 @@ AWS_default_REGION=us-east-1
    uegit5plcwodp57fxbqbnke7h   aws_secret_access_key         3 minutes ago        3 minutes ago
    fxbqbnke7hplcwodp57fuegit   aws_region                    About a minute ago   About a minute ago
    ```
-    Where:
-    
-    ID = the secret unique ID which we will use in the docker run command
 
-    NAME = the we defined for each secret
+   Where:
+
+   ID = the secret unique ID which we will use in the docker run command
+
+   NAME = the we defined for each secret
 
 1. Add the secrets to the command line when you run Docker.
 
    ```bash
-   docker run -d --name grafana -p 9000:3000 \
-   -e "GF_DEFAULT_INSTANCE_NAME=my-grafana" \
-   -e "GF_AWS_PROFILES=default" \
-   -e "GF_AWS_default_ACCESS_KEY_ID__FILE=/run/secrets/aws_access_key_id" \
-   -e "GF_AWS_default_SECRET_ACCESS_KEY__FILE=/run/secrets/aws_secret_access_key"
-   -e "GF_AWS_default_REGION__FILE=/run/secrets/aws_region"
-   -v grafana-data:/var/lib/grafana \
-   grafana/grafana-enterprise
+   docker run -d -p 3000:3000 --name grafana \
+     -e "GF_DEFAULT_INSTANCE_NAME=my-grafana" \
+     -e "GF_AWS_PROFILES=default" \
+     -e "GF_AWS_default_ACCESS_KEY_ID__FILE=/run/secrets/aws_access_key_id" \
+     -e "GF_AWS_default_SECRET_ACCESS_KEY__FILE=/run/secrets/aws_secret_access_key" \
+     -e "GF_AWS_default_REGION__FILE=/run/secrets/aws_region" \
+     -v grafana-data:/var/lib/grafana \
+     grafana/grafana-enterprise
    ```
 
 You can also specify multiple profiles to `GF_AWS_PROFILES` (for example, `GF_AWS_PROFILES=default another`).
@@ -312,9 +312,9 @@ For more information about logging, refer to [logs]({{< relref "./configure-graf
 To increase the log level to `DEBUG` mode, add the environment variable `GF_LOG_LEVEL` to the command line.
 
 ```bash
-docker run -d -p 3000:3000 --name=grafana
--e "GF_LOG_LEVEL=debug"
-grafana/grafana-enterprise
+docker run -d -p 3000:3000 --name=grafana \
+  -e "GF_LOG_LEVEL=debug" \
+  grafana/grafana-enterprise
 ```
 
 ### Increase log level using the Docker Compose

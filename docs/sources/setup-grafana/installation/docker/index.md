@@ -86,9 +86,9 @@ To use persistent storage, complete the following steps:
 1. Start the Grafana container by running the following command:
    ```bash
    # start grafana
-   docker run -d -p 3000:3000 --name=grafana
-   --volume grafana-storage:/var/lib/grafana
-   grafana/grafana-enterprise
+   docker run -d -p 3000:3000 --name=grafana \
+     --volume grafana-storage:/var/lib/grafana \
+     grafana/grafana-enterprise
    ```
 
 #### Use bind mounts
@@ -102,9 +102,10 @@ To use bind mounts, run the following command:
 mkdir data
 
 # start grafana with your user id and using the data folder
-docker run -d -p 3000:3000 --name=grafana
---user "$(id -u)" --volume "$PWD/data:/var/lib/grafana"
-grafana/grafana-enterprise
+docker run -d -p 3000:3000 --name=grafana \
+  --user "$(id -u)"
+  --volume "$PWD/data:/var/lib/grafana" \
+  grafana/grafana-enterprise
 ```
 
 ### Use environment variables to configure Grafana
@@ -114,9 +115,9 @@ Grafana supports specifying custom configuration settings using [environment var
 ```bash
 # enabling public dashboard feature
 
-docker run -d -p 3000:3000 --name=grafana
--e "GF_FEATURE_TOGGLES_ENABLE=publicDashboards"
-grafana/grafana-enterprise
+docker run -d -p 3000:3000 --name=grafana \
+  -e "GF_FEATURE_TOGGLES_ENABLE=publicDashboards" \
+  grafana/grafana-enterprise
 ```
 
 ## Install plugins in the Docker container
@@ -143,9 +144,9 @@ To install plugins in the Docker container, complete the following steps:
    For example:
 
    ```bash
-   docker run -d -p 3000:3000 --name=grafana
-   -e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1"
-   grafana/grafana-enterprise
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1" \
+     grafana/grafana-enterprise
    ```
 
    > **Note:** If you do not specify a version number, the latest version is used.
@@ -155,9 +156,9 @@ To install plugins in the Docker container, complete the following steps:
    For example:
 
    ```bash
-   docker run -d -p 3000:3000 --name=grafana
-   -e "GF_INSTALL_PLUGINS=https://github.com/VolkovLabs/custom-plugin.zip;custom-plugin"
-   grafana/grafana-enterprise
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=https://github.com/VolkovLabs/custom-plugin.zip;custom-plugin" \
+     grafana/grafana-enterprise
    ```
 
 ## Example
@@ -171,11 +172,11 @@ docker volume create grafana-storage
 # start grafana by using the above persistent storage
 # and defining environment variables
 
-docker run -d -p 3000:3000 --name=grafana
---volume grafana-storage:/var/lib/grafana
--e "GF_SERVER_ROOT_URL=http://my.grafana.server/"
--e "GF_INSTALL_PLUGINS=grafana-clock-panel"
-grafana/grafana-enterprise
+docker run -d -p 3000:3000 --name=grafana \
+  --volume grafana-storage:/var/lib/grafana \
+  -e "GF_SERVER_ROOT_URL=http://my.grafana.server/" \
+  -e "GF_INSTALL_PLUGINS=grafana-clock-panel" \
+  grafana/grafana-enterprise
 ```
 
 ## Run Grafana via Docker Compose
@@ -205,14 +206,14 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    For example:
 
    ```bash
-    version: "3.8"
-    services:
-      grafana:
-         image: grafana/grafana-enterprise
-         container_name: grafana
-         restart: unless-stopped
-         ports:
-         - '3000:3000'
+   version: "3.8"
+   services:
+     grafana:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       ports:
+        - '3000:3000'
    ```
 
 1. To run `docker-compose.yaml`, run the following command:
@@ -260,15 +261,15 @@ Complete the following steps to use persistent storage.
    version: '3.8'
    services:
      grafana:
-      image: grafana/grafana-enterprise
-      container_name: grafana
-      restart: unless-stopped
-      ports:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       ports:
          - '3000:3000'
-      volumes:
+       volumes:
          - grafana_data:/var/lib/grafana
    volumes:
-      grafana_data: {}
+     grafana_data: {}
    ```
 
 1. Save the file and run the following command:
@@ -297,15 +298,15 @@ To use bind mounts, complete the following steps:
    version: '3.8'
    services:
      grafana:
-      image: grafana/grafana-enterprise
-      container_name: grafana
-      restart: unless-stopped
-      # if you are running as root then set it to 0
-      # else find the right id with the id -u command
-      user: '0'
-      ports:
+       image: grafana/grafana-enterprise
+       container_name: grafana
+       restart: unless-stopped
+       # if you are running as root then set it to 0
+       # else find the right id with the id -u command
+       user: '0'
+       ports:
          - '3000:3000'
-      volumes:
+       volumes:
          - '$PWD/data:/var/lib/grafana'
    ```
 
@@ -327,12 +328,12 @@ services:
     container_name: grafana
     restart: unless-stopped
     environment:
-      - GF_SERVER_ROOT_URL=http://my.grafana.server/
-      - GF_INSTALL_PLUGINS=grafana-clock-panel
+     - GF_SERVER_ROOT_URL=http://my.grafana.server/
+     - GF_INSTALL_PLUGINS=grafana-clock-panel
     ports:
-      - '3000:3000'
+     - '3000:3000'
     volumes:
-      - 'grafana_storage:/var/lib/grafana'
+     - 'grafana_storage:/var/lib/grafana'
 volumes:
   grafana_storage: {}
 ```
