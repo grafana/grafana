@@ -56,7 +56,10 @@ export const defaultAnnotationPanelFilter: Partial<AnnotationPanelFilter> = {
 };
 
 /**
- * TODO -- should not be a public interface on its own, but required for Veneer
+ * Contains the list of annotations that are associated with the dashboard.
+ * Annotations are used to overlay event markers and overlay event tags on graphs.
+ * Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+ * See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
  */
 export interface AnnotationContainer {
   /**
@@ -200,9 +203,9 @@ export interface VariableOption {
 
 /**
  * Options to config when to refresh a variable
- * 0: Never refresh the variable
- * 1: Queries the data source every time the dashboard loads.
- * 2: Queries the data source when the dashboard time range changes.
+ * `0`: Never refresh the variable
+ * `1`: Queries the data source every time the dashboard loads.
+ * `2`: Queries the data source when the dashboard time range changes.
  */
 export enum VariableRefresh {
   never = 0,
@@ -223,13 +226,13 @@ export enum VariableHide {
 /**
  * Sort variable options
  * Accepted values are:
- * 0: No sorting
- * 1: Alphabetical ASC
- * 2: Alphabetical DESC
- * 3: Numerical ASC
- * 4: Numerical DESC
- * 5: Alphabetical Case Insensitive ASC
- * 6: Alphabetical Case Insensitive DESC
+ * `0`: No sorting
+ * `1`: Alphabetical ASC
+ * `2`: Alphabetical DESC
+ * `3`: Numerical ASC
+ * `4`: Numerical DESC
+ * `5`: Alphabetical Case Insensitive ASC
+ * `6`: Alphabetical Case Insensitive DESC
  */
 export enum VariableSort {
   alphabeticalAsc = 1,
@@ -243,7 +246,7 @@ export enum VariableSort {
 
 /**
  * Loading status
- * Accepted values are "NotStarted" (the request is not started), "Loading" (waiting for response), "Streaming" (pulling continuous data), "Done" (response received successfully) or "Error" (failed request).
+ * Accepted values are `NotStarted` (the request is not started), `Loading` (waiting for response), `Streaming` (pulling continuous data), `Done` (response received successfully) or `Error` (failed request).
  */
 export enum LoadingState {
   Done = 'Done',
@@ -326,30 +329,27 @@ export const defaultDashboardLink: Partial<DashboardLink> = {
  */
 export type DashboardLinkType = ('link' | 'dashboards');
 
-/**
- * Dashboard variable type
- */
 export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
  * Continuous color interpolates a color using the percentage of a value relative to min and max.
  * Accepted values are:
- * thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
- * palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
- * palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
- * continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
- * continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
- * continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
- * continuous-YlRd: Continuous Yellow-Red palette mode
- * continuous-BlPu: Continuous Blue-Purple palette mode
- * continuous-YlBl: Continuous Yellow-Blue palette mode
- * continuous-blues: Continuous Blue palette mode
- * continuous-reds: Continuous Red palette mode
- * continuous-greens: Continuous Green palette mode
- * continuous-purples: Continuous Purple palette mode
- * shades: Shades of a single color. Specify a single color, useful in an override rule.
- * fixed: Fixed color mode. Specify a single color, useful in an override rule.
+ * `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+ * `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+ * `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+ * `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+ * `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+ * `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+ * `continuous-YlRd`: Continuous Yellow-Red palette mode
+ * `continuous-BlPu`: Continuous Blue-Purple palette mode
+ * `continuous-YlBl`: Continuous Yellow-Blue palette mode
+ * `continuous-blues`: Continuous Blue palette mode
+ * `continuous-reds`: Continuous Red palette mode
+ * `continuous-greens`: Continuous Green palette mode
+ * `continuous-purples`: Continuous Purple palette mode
+ * `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+ * `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
  */
 export enum FieldColorModeId {
   ContinuousBlPu = 'continuous-BlPu',
@@ -397,7 +397,7 @@ export interface FieldColor {
  */
 export interface GridPos {
   /**
-   * Panel height. The height is the number of rows from the top edge of the grid
+   * Panel height. The height is the number of rows from the top edge of the panel.
    */
   h: number;
   /**
@@ -405,7 +405,7 @@ export interface GridPos {
    */
   static?: boolean;
   /**
-   * Panel width. The width is the number of columns from the left edge of the grid
+   * Panel width. The width is the number of columns from the left edge of the panel.
    */
   w: number;
   /**
@@ -442,7 +442,7 @@ export interface Threshold {
 }
 
 /**
- * Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
+ * Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
  */
 export enum ThresholdsMode {
   Absolute = 'absolute',
@@ -474,10 +474,10 @@ export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
 
 /**
  * Supported value mapping types
- * ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
- * RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
- * RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
- * SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+ * `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+ * `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+ * `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+ * `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
  */
 export enum MappingType {
   RangeToText = 'range',
@@ -564,7 +564,7 @@ export interface SpecialValueMap {
 }
 
 /**
- * Special value types supported by the SpecialValueMap
+ * Special value types supported by the `SpecialValueMap`
  */
 export enum SpecialValueMatch {
   Empty = 'empty',
@@ -642,14 +642,14 @@ export interface Panel {
   /**
    * The datasource used in all targets.
    */
-  datasource?: {
-    type?: string;
-    uid?: string;
-  };
+  datasource?: DataSourceRef;
   /**
    * Panel description.
    */
   description?: string;
+  /**
+   * Field options allow you to change how the data is displayed in your visualizations.
+   */
   fieldConfig: FieldConfigSource;
   /**
    * Grid position.
@@ -679,8 +679,7 @@ export interface Panel {
    */
   maxDataPoints?: number;
   /**
-   * options is specified by the Options field in panel
-   * plugin schemas.
+   * It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
    */
   options: Record<string, unknown>;
   /**
@@ -693,10 +692,9 @@ export interface Panel {
   repeat?: string;
   /**
    * Direction to repeat in if 'repeat' is set.
-   * "h" for horizontal, "v" for vertical.
-   * TODO this is probably optional
+   * `h` for horizontal, `v` for vertical.
    */
-  repeatDirection: ('h' | 'v');
+  repeatDirection?: ('h' | 'v');
   /**
    * Id of the repeating panel.
    */
@@ -706,7 +704,7 @@ export interface Panel {
    */
   tags?: Array<string>;
   /**
-   * TODO docs
+   * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
   /**
@@ -789,7 +787,7 @@ export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
  */
 export interface LibraryPanelRef {
   /**
-   * Libary panel name
+   * Library panel name
    */
   name: string;
   /**
@@ -923,16 +921,7 @@ export interface RowPanel {
   /**
    * Name of default datasource for the row
    */
-  datasource?: {
-    /**
-     * Data source type
-     */
-    type?: string;
-    /**
-     * Data source unique identifier
-     */
-    uid?: string;
-  };
+  datasource?: DataSourceRef;
   /**
    * Row grid position
    */
@@ -1109,9 +1098,12 @@ export interface Dashboard {
    */
   tags?: Array<string>;
   /**
-   * Contains the list of configured template variables with their saved values along with some other metadata
+   * Configured template variables
    */
   templating?: {
+    /**
+     * List of configured template variables with their saved values along with some other metadata
+     */
     list?: Array<VariableModel>;
   };
   /**

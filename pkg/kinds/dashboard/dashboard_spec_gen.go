@@ -161,7 +161,10 @@ const (
 	VariableTypeTextbox    VariableType = "textbox"
 )
 
-// TODO -- should not be a public interface on its own, but required for Veneer
+// Contains the list of annotations that are associated with the dashboard.
+// Annotations are used to overlay event markers and overlay event tags on graphs.
+// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
 type AnnotationContainer struct {
 	// List of annotations
 	List []AnnotationQuery `json:"list,omitempty"`
@@ -307,21 +310,21 @@ type FieldColor struct {
 	// Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 	// Continuous color interpolates a color using the percentage of a value relative to min and max.
 	// Accepted values are:
-	// thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
-	// palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
-	// palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-	// continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
-	// continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
-	// continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
-	// continuous-YlRd: Continuous Yellow-Red palette mode
-	// continuous-BlPu: Continuous Blue-Purple palette mode
-	// continuous-YlBl: Continuous Yellow-Blue palette mode
-	// continuous-blues: Continuous Blue palette mode
-	// continuous-reds: Continuous Red palette mode
-	// continuous-greens: Continuous Green palette mode
-	// continuous-purples: Continuous Purple palette mode
-	// shades: Shades of a single color. Specify a single color, useful in an override rule.
-	// fixed: Fixed color mode. Specify a single color, useful in an override rule.
+	// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+	// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+	// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+	// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+	// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+	// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+	// `continuous-YlRd`: Continuous Yellow-Red palette mode
+	// `continuous-BlPu`: Continuous Blue-Purple palette mode
+	// `continuous-YlBl`: Continuous Yellow-Blue palette mode
+	// `continuous-blues`: Continuous Blue palette mode
+	// `continuous-reds`: Continuous Red palette mode
+	// `continuous-greens`: Continuous Green palette mode
+	// `continuous-purples`: Continuous Purple palette mode
+	// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+	// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
 	Mode FieldColorModeId `json:"mode"`
 
 	// Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
@@ -331,21 +334,21 @@ type FieldColor struct {
 // Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
 // Continuous color interpolates a color using the percentage of a value relative to min and max.
 // Accepted values are:
-// thresholds: From thresholds. Informs Grafana to take the color from the matching threshold
-// palette-classic: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
-// palette-classic-by-name: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
-// continuous-GrYlRd: ontinuous Green-Yellow-Red palette mode
-// continuous-RdYlGr: Continuous Red-Yellow-Green palette mode
-// continuous-BlYlRd: Continuous Blue-Yellow-Red palette mode
-// continuous-YlRd: Continuous Yellow-Red palette mode
-// continuous-BlPu: Continuous Blue-Purple palette mode
-// continuous-YlBl: Continuous Yellow-Blue palette mode
-// continuous-blues: Continuous Blue palette mode
-// continuous-reds: Continuous Red palette mode
-// continuous-greens: Continuous Green palette mode
-// continuous-purples: Continuous Purple palette mode
-// shades: Shades of a single color. Specify a single color, useful in an override rule.
-// fixed: Fixed color mode. Specify a single color, useful in an override rule.
+// `thresholds`: From thresholds. Informs Grafana to take the color from the matching threshold
+// `palette-classic`: Classic palette. Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations
+// `palette-classic-by-name`: Classic palette (by name). Grafana will assign color by looking up a color in a palette by series name. Useful for Graphs and pie charts and other categorical data visualizations
+// `continuous-GrYlRd`: ontinuous Green-Yellow-Red palette mode
+// `continuous-RdYlGr`: Continuous Red-Yellow-Green palette mode
+// `continuous-BlYlRd`: Continuous Blue-Yellow-Red palette mode
+// `continuous-YlRd`: Continuous Yellow-Red palette mode
+// `continuous-BlPu`: Continuous Blue-Purple palette mode
+// `continuous-YlBl`: Continuous Yellow-Blue palette mode
+// `continuous-blues`: Continuous Blue palette mode
+// `continuous-reds`: Continuous Red palette mode
+// `continuous-greens`: Continuous Green palette mode
+// `continuous-purples`: Continuous Purple palette mode
+// `shades`: Shades of a single color. Specify a single color, useful in an override rule.
+// `fixed`: Fixed color mode. Specify a single color, useful in an override rule.
 type FieldColorModeId string
 
 // Defines how to assign a series color from "by value" color schemes. For example for an aggregated data points like a timeseries, the color can be assigned by the min, max or last value.
@@ -457,13 +460,13 @@ type GraphPanelType string
 
 // Position and dimensions of a panel in the grid
 type GridPos struct {
-	// Panel height. The height is the number of rows from the top edge of the grid
+	// Panel height. The height is the number of rows from the top edge of the panel.
 	H int `json:"h"`
 
 	// Whether the panel is fixed within the grid. If true, the panel will not be affected by other panels' interactions
 	Static *bool `json:"static,omitempty"`
 
-	// Panel width. The width is the number of columns from the left edge of the grid
+	// Panel width. The width is the number of columns from the left edge of the panel.
 	W int `json:"w"`
 
 	// Panel x. The x coordinate is the number of columns from the left edge of the grid
@@ -486,7 +489,7 @@ type HeatmapPanelType string
 // When you make a change to a library panel, that change propagates to all instances of where the panel is used.
 // Library panels streamline reuse of panels across multiple dashboards.
 type LibraryPanelRef struct {
-	// Libary panel name
+	// Library panel name
 	Name string `json:"name"`
 
 	// Library panel uid
@@ -494,10 +497,10 @@ type LibraryPanelRef struct {
 }
 
 // Supported value mapping types
-// ValueToText: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
-// RangeToText: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
-// RegexToText: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
-// SpecialValue: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
+// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
+// `range`: Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.
+// `regex`: Maps regular expressions to replacement text and a color. For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
+// `special`: Maps special values like Null, NaN (not a number), and boolean values like true and false to a display text and color. See SpecialValueMatch to see the list of special values. For example, you can configure a special value mapping so that null values appear as N/A.
 type MappingType string
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
@@ -512,11 +515,8 @@ type MatcherConfig struct {
 
 // Dashboard panels are the basic visualization building blocks.
 type Panel struct {
-	// The datasource used in all targets.
-	Datasource *struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
-	} `json:"datasource,omitempty"`
+	// Ref to a DataSource instance
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
 	// Panel description.
 	Description *string `json:"description,omitempty"`
@@ -549,8 +549,7 @@ type Panel struct {
 	// The maximum number of data points that the panel queries are retrieving.
 	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
 
-	// options is specified by the Options field in panel
-	// plugin schemas.
+	// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
 	Options map[string]interface{} `json:"options"`
 
 	// The version of the plugin that is used for this panel. This is used to find the plugin to display the panel and to migrate old panel configs.
@@ -560,9 +559,8 @@ type Panel struct {
 	Repeat *string `json:"repeat,omitempty"`
 
 	// Direction to repeat in if 'repeat' is set.
-	// "h" for horizontal, "v" for vertical.
-	// TODO this is probably optional
-	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
+	// `h` for horizontal, `v` for vertical.
+	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
 
 	// Id of the repeating panel.
 	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
@@ -570,7 +568,7 @@ type Panel struct {
 	// Tags for the panel.
 	Tags []string `json:"tags,omitempty"`
 
-	// TODO docs
+	// Depends on the panel plugin. See the plugin documentation for details.
 	Targets []Target `json:"targets,omitempty"`
 
 	// Overrides the relative time range for individual panels,
@@ -605,8 +603,7 @@ type Panel struct {
 }
 
 // Direction to repeat in if 'repeat' is set.
-// "h" for horizontal, "v" for vertical.
-// TODO this is probably optional
+// `h` for horizontal, `v` for vertical.
 type PanelRepeatDirection string
 
 // Maps numerical ranges to a display text and color.
@@ -651,14 +648,8 @@ type RowPanel struct {
 	// Whether this row should be collapsed or not.
 	Collapsed bool `json:"collapsed"`
 
-	// Name of default datasource for the row
-	Datasource *struct {
-		// Data source type
-		Type *string `json:"type,omitempty"`
-
-		// Data source unique identifier
-		Uid *string `json:"uid,omitempty"`
-	} `json:"datasource,omitempty"`
+	// Ref to a DataSource instance
+	Datasource *DataSourceRef `json:"datasource,omitempty"`
 
 	// Position and dimensions of a panel in the grid
 	GridPos *GridPos `json:"gridPos,omitempty"`
@@ -724,7 +715,10 @@ type Snapshot struct {
 
 // Spec defines model for Spec.
 type Spec struct {
-	// TODO -- should not be a public interface on its own, but required for Veneer
+	// Contains the list of annotations that are associated with the dashboard.
+	// Annotations are used to overlay event markers and overlay event tags on graphs.
+	// Grafana comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the HTTP API.
+	// See https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/annotate-visualizations/
 	Annotations *AnnotationContainer `json:"annotations,omitempty"`
 
 	// Description of dashboard.
@@ -784,8 +778,9 @@ type Spec struct {
 	// Tags associated with dashboard.
 	Tags []string `json:"tags,omitempty"`
 
-	// Contains the list of configured template variables with their saved values along with some other metadata
+	// Configured template variables
 	Templating *struct {
+		// List of configured template variables with their saved values along with some other metadata
 		List []VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
@@ -839,7 +834,7 @@ type SpecStyle string
 // For example, you can configure a special value mapping so that null values appear as N/A.
 type SpecialValueMap struct {
 	Options struct {
-		// Special value types supported by the SpecialValueMap
+		// Special value types supported by the `SpecialValueMap`
 		Match SpecialValueMatch `json:"match"`
 
 		// Result used as replacement with text and color when the value matches
@@ -851,7 +846,7 @@ type SpecialValueMap struct {
 // SpecialValueMapType defines model for SpecialValueMap.Type.
 type SpecialValueMapType string
 
-// Special value types supported by the SpecialValueMap
+// Special value types supported by the `SpecialValueMap`
 type SpecialValueMatch string
 
 // Schema for panel targets is specified by datasource
@@ -876,14 +871,14 @@ type Threshold struct {
 
 // Thresholds configuration for the panel
 type ThresholdsConfig struct {
-	// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
+	// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 	Mode ThresholdsMode `json:"mode"`
 
 	// Must be sorted by 'value', first value is always -Infinity
 	Steps []Threshold `json:"steps"`
 }
 
-// Thresholds can either be absolute (specific number) or percentage (relative to min or max, it will be values between 0 and 1).
+// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 type ThresholdsMode string
 
 // Maps text values to a color or different display text and color.
@@ -953,16 +948,14 @@ type VariableModel struct {
 	Query *interface{} `json:"query,omitempty"`
 
 	// Options to config when to refresh a variable
-	// 0: Never refresh the variable
-	// 1: Queries the data source every time the dashboard loads.
-	// 2: Queries the data source when the dashboard time range changes.
+	// `0`: Never refresh the variable
+	// `1`: Queries the data source every time the dashboard loads.
+	// `2`: Queries the data source when the dashboard time range changes.
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
-	SkipUrlSync bool `json:"skipUrlSync"`
-
-	// Dashboard variable type
-	Type VariableType `json:"type"`
+	SkipUrlSync bool         `json:"skipUrlSync"`
+	Type        VariableType `json:"type"`
 }
 
 // Option to be selected in a variable.
@@ -978,10 +971,10 @@ type VariableOption struct {
 }
 
 // Options to config when to refresh a variable
-// 0: Never refresh the variable
-// 1: Queries the data source every time the dashboard loads.
-// 2: Queries the data source when the dashboard time range changes.
+// `0`: Never refresh the variable
+// `1`: Queries the data source every time the dashboard loads.
+// `2`: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
 
-// Dashboard variable type
+// VariableType defines model for VariableType.
 type VariableType string
