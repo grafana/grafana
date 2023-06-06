@@ -225,7 +225,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    cd /path/to/docker-compose-folder
 
    # then start the grafana container
-   docker compose up -d docker-compose.yaml
+   docker compose up -d
    ```
 
    Where:
