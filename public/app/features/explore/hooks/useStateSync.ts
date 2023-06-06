@@ -176,7 +176,7 @@ export function useStateSync(params: ExploreQueryParams) {
           return getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource).then(
             async (paneDatasource) => {
               return Promise.resolve(
-                // FIXME: In theory, given the Grafana datasosurce will always be present, this should always be defined.
+                // In theory, given the Grafana datasource will always be present, this should always be defined.
                 paneDatasource
                   ? queries.length
                     ? // if we have queries in the URL, we use them
