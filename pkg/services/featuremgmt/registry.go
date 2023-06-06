@@ -475,6 +475,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			State:       FeatureStateBeta,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
 			Name:            "useCachingService",
 			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
 			State:           FeatureStateStable,
@@ -548,6 +554,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )
