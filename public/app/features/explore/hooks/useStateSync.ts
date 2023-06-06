@@ -115,6 +115,7 @@ export function useStateSync(params: ExploreQueryParams) {
         const statePane = statePanes[exploreId];
 
         if (statePane !== undefined) {
+          // TODO: the diff contains panelState updates, but we are currently not handling them.
           const update = urlDiff(urlPane, getUrlStateFromPaneState(statePane));
 
           Promise.resolve()
@@ -162,7 +163,7 @@ export function useStateSync(params: ExploreQueryParams) {
     }
 
     // This happens when the user first navigates to explore.
-    // Here we want to initialize each pane initial data, whether it comes
+    // Here we want to initialize each pane initial data, wether it comes
     // from the url or as a result of migrations.
     if (!isURLOutOfSync && initState.current === 'notstarted') {
       initState.current = 'pending';
@@ -342,7 +343,6 @@ const isFulfilled = <T>(promise: PromiseSettledResult<T>): promise is PromiseFul
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
  * side effects needed.
- * TODO: this should also handle panelsState changes
  */
 const urlDiff = (
   oldUrlState: ExploreUrlState | undefined,
