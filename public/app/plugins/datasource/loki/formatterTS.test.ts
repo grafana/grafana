@@ -3,6 +3,8 @@ import { SyntaxNode } from '@lezer/common';
 import {
   BinOpExpr,
   BytesFilter,
+  DecolorizeExpr,
+  DistinctFilter,
   Grouping,
   JsonExpressionParser,
   LabelFilter,
@@ -44,6 +46,8 @@ import {
   formatBinOpExpr,
   formatLiteralExpr,
   formatVectorExpr,
+  formatDistinctFilter,
+  formatDecolorizeExpr,
 } from './formatterTS';
 
 describe('formats logql queries', () => {
@@ -256,6 +260,16 @@ describe('log expression syntaxnode functions', () => {
     expect(formatLabelFormatExpr(MOCK_NODE, `{}|label_format label="",label=""`)).toBe(
       `| label_format label="", label=""`
     );
+  });
+
+  it('formatDistinctFilter should return formatted label format expr', () => {
+    const MOCK_NODE = generateNode(DistinctFilter, `{}|distinct label,label,label`);
+    expect(formatDistinctFilter(MOCK_NODE, `{}|distinct label,label,label`)).toBe(`| distinct label, label, label`);
+  });
+
+  it('formatDecolorizeExpr should return formatted label format expr', () => {
+    const MOCK_NODE = generateNode(DecolorizeExpr, `{}|decolorize`);
+    expect(formatDecolorizeExpr(MOCK_NODE, `{}|decolorize`)).toBe(`| decolorize`);
   });
 });
 

@@ -50,6 +50,8 @@ import {
   VectorOp,
   Add,
   Sub,
+  DecolorizeExpr,
+  DistinctFilter,
 } from '@grafana/lezer-logql';
 import { getTemplateSrv } from '@grafana/runtime';
 
@@ -90,9 +92,6 @@ export const formatLokiQuery = (query: string): string => {
 
 // TODO:
 //   - fix (nested vector expr): count(sum(rate({compose_project="tns-custom"}[1s])))
-//   - support: LabelReplaceExpr
-//   - support: DistinctFilter
-//   - support: DecolorizeExpr
 //   - support: LabelReplaceExpr
 //   - support: LineComment
 //   - support: Variables in queries
@@ -450,7 +449,8 @@ export function formatPipelineExpr(node: SyntaxNode, query: string): string {
     JsonExpressionParser,
     LineFormatExpr,
     LabelFormatExpr,
-    LineComment,
+    DistinctFilter,
+    DecolorizeExpr,
   ];
   let lastPipelineType: number;
   let response = '';
@@ -485,6 +485,16 @@ export function formatPipelineExpr(node: SyntaxNode, query: string): string {
       case LabelFormatExpr:
         response += buildResponse(LabelFormatExpr, lastPipelineType, formatLabelFormatExpr(node, query));
         lastPipelineType = LabelFormatExpr;
+        break;
+
+      case DistinctFilter:
+        response += buildResponse(DistinctFilter, lastPipelineType, formatDistinctFilter(node, query));
+        lastPipelineType = DistinctFilter;
+        break;
+
+      case DecolorizeExpr:
+        response += buildResponse(DecolorizeExpr, lastPipelineType, formatDecolorizeExpr(node, query));
+        lastPipelineType = DecolorizeExpr;
         break;
     }
   });
@@ -607,6 +617,16 @@ export function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
   });
 
   return trimEnd(response, ', ');
+}
+
+export function formatDistinctFilter(node: SyntaxNode, query: string): string {
+  const identifierNodes = iterateNode(node, [Identifier]);
+  const identifiers = identifierNodes.map((identifierNode) => query.substring(identifierNode.from, identifierNode.to));
+  return `| distinct ${identifiers.join(', ')}`;
+}
+
+export function formatDecolorizeExpr(node: SyntaxNode, query: string): string {
+  return `| decolorize`;
 }
 
 /* 
