@@ -12,7 +12,7 @@ export default function CheckboxCell({
 }: DashboardsTreeCellProps) {
   const item = row.item;
 
-  if (item.kind === 'ui-empty-folder' || !isSelected) {
+  if (item.kind === 'ui' || !isSelected) {
     return null;
   }
 

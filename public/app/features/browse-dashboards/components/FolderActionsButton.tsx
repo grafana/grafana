@@ -8,7 +8,8 @@ import { AccessControlAction, FolderDTO, useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
-import { deleteFolder, fetchChildren } from '../state';
+import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
+import { deleteFolder, refetchChildren } from '../state';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -29,16 +30,21 @@ export function FolderActionsButton({ folder }: Props) {
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID });
-    dispatch(fetchChildren(destinationUID));
+    dispatch(refetchChildren({ parentUID: destinationUID, pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+
     if (folder.parentUid) {
-      dispatch(fetchChildren(folder.parentUid));
+      dispatch(
+        refetchChildren({ parentUID: folder.parentUid, pageSize: folder.parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE })
+      );
     }
   };
 
   const onDelete = async () => {
     await dispatch(deleteFolder(folder.uid));
     if (folder.parentUid) {
-      dispatch(fetchChildren(folder.parentUid));
+      dispatch(
+        refetchChildren({ parentUID: folder.parentUid, pageSize: folder.parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE })
+      );
     }
     locationService.push('/dashboards');
   };

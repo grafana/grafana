@@ -26,8 +26,8 @@ export enum ExploreId {
 }
 
 export type ExploreQueryParams = {
-  left: string;
-  right: string;
+  left?: string;
+  right?: string;
 };
 
 /**
@@ -91,10 +91,6 @@ export interface ExploreItemState {
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance?: DataSourceApi | null;
-  /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
@@ -209,8 +205,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 
   correlations?: CorrelationData[];
 }

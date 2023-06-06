@@ -26,7 +26,7 @@ scenes,alpha,@grafana/dashboards-squad,false,false,false,true
 disableSecretsCompatibility,alpha,@grafana/hosted-grafana-team,false,false,true,false
 logRequestsInstrumentedAsUnknown,alpha,@grafana/hosted-grafana-team,false,false,false,false
 dataConnectionsConsole,stable,@grafana/plugins-platform-backend,false,false,false,false
-topnav,stable,@grafana/user-essentials,false,false,false,false
+topnav,stable,@grafana/grafana-frontend-platform,false,false,false,false
 grpcServer,beta,@grafana/grafana-app-platform-squad,false,false,false,false
 entityStore,alpha,@grafana/grafana-app-platform-squad,true,false,false,false
 cloudWatchCrossAccountQuerying,stable,@grafana/aws-plugins,false,false,false,false
@@ -69,6 +69,7 @@ unifiedRequestLog,alpha,@grafana/backend-platform,false,false,false,false
 renderAuthJWT,beta,@grafana/grafana-as-code,false,false,false,false
 pyroscopeFlameGraph,alpha,@grafana/observability-traces-and-profiling,false,false,false,false
 externalServiceAuth,alpha,@grafana/grafana-authnz-team,true,false,false,false
+refactorVariablesTimeRange,beta,@grafana/dashboards-squad,false,false,false,false
 useCachingService,stable,@grafana/grafana-operator-experience-squad,false,false,true,false
 enableElasticsearchBackendQuerying,beta,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,alpha,@grafana/grafana-authnz-team,false,false,false,false
@@ -77,5 +78,7 @@ advancedDataSourcePicker,stable,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,beta,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,beta,@grafana/grafana-bi-squad,false,false,false,true
 dataSourcePageHeader,beta,@grafana/enterprise-datasources,false,false,false,true
-extraThemes,alpha,@grafana/user-essentials,false,false,false,true
+extraThemes,alpha,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,alpha,@grafana/observability-logs,false,false,false,true
+pluginsFrontendSandbox,alpha,@grafana/plugins-platform-backend,false,false,false,true
+sqlDatasourceDatabaseSelection,beta,@grafana/grafana-bi-squad,false,false,false,true

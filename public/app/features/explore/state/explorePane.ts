@@ -1,42 +1,27 @@
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
 import {
-  EventBusExtended,
-  ExploreUrlState,
   TimeRange,
   HistoryItem,
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
+  RawTimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import {
-  DEFAULT_RANGE,
-  getQueryKeys,
-  parseUrlState,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
+import { getQueryKeys } from 'app/core/utils/explore';
 import { CorrelationData } from 'app/features/correlations/useCorrelations';
-import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { getTimeZone } from 'app/features/profile/state/selectors';
 import { createAsyncThunk, ThunkResult } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { datasourceReducer } from './datasource';
 import { historyReducer } from './history';
-import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction, stateSave } from './main';
-import { queryReducer, runQueries, setQueriesAction } from './query';
+import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
+import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import {
-  makeExplorePaneState,
-  loadAndInitDatasource,
-  createEmptyQueryResponse,
-  getUrlStateFromPaneState,
-} from './utils';
+import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange } from './utils';
 // Types
 
 //
@@ -50,7 +35,6 @@ import {
 export interface ChangeSizePayload {
   exploreId: ExploreId;
   width: number;
-  height: number;
 }
 export const changeSizeAction = createAction<ChangeSizePayload>('explore/changeSize');
 
@@ -82,7 +66,6 @@ export function changePanelState(
         },
       })
     );
-    dispatch(stateSave());
   };
 }
 
@@ -92,13 +75,10 @@ export function changePanelState(
  */
 interface InitializeExplorePayload {
   exploreId: ExploreId;
-  containerWidth: number;
-  eventBridge: EventBusExtended;
   queries: DataQuery[];
   range: TimeRange;
   history: HistoryItem[];
   datasourceInstance?: DataSourceApi;
-  isFromCompactUrl?: boolean;
 }
 const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExploreAction');
 
@@ -117,22 +97,16 @@ export const saveCorrelationsAction = createAction<SaveCorrelationsPayload>('exp
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
-export function changeSize(
-  exploreId: ExploreId,
-  { height, width }: { height: number; width: number }
-): PayloadAction<ChangeSizePayload> {
-  return changeSizeAction({ exploreId, height, width });
+export function changeSize(exploreId: ExploreId, { width }: { width: number }): PayloadAction<ChangeSizePayload> {
+  return changeSizeAction({ exploreId, width });
 }
 
 interface InitializeExploreOptions {
   exploreId: ExploreId;
-  datasource: DataSourceRef | string;
+  datasource: DataSourceRef | string | undefined;
   queries: DataQuery[];
-  range: TimeRange;
-  containerWidth: number;
-  eventBridge: EventBusExtended;
+  range: RawTimeRange;
   panelsState?: ExplorePanelsState;
-  isFromCompactUrl?: boolean;
 }
 /**
  * Initialize Explore state with state from the URL and the React component.
@@ -145,23 +119,13 @@ interface InitializeExploreOptions {
 export const initializeExplore = createAsyncThunk(
   'explore/initializeExplore',
   async (
-    {
-      exploreId,
-      datasource,
-      queries,
-      range,
-      containerWidth,
-      eventBridge,
-      panelsState,
-      isFromCompactUrl,
-    }: InitializeExploreOptions,
-    { dispatch, getState }
+    { exploreId, datasource, queries, range, panelsState }: InitializeExploreOptions,
+    { dispatch, getState, fulfillWithValue }
   ) => {
-    const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
     let history: HistoryItem[] = [];
 
-    if (exploreDatasources.length >= 1) {
+    if (datasource) {
       const orgId = getState().user.orgId;
       const loadResult = await loadAndInitDatasource(orgId, datasource);
       instance = loadResult.instance;
@@ -171,13 +135,10 @@ export const initializeExplore = createAsyncThunk(
     dispatch(
       initializeExploreAction({
         exploreId,
-        containerWidth,
-        eventBridge,
         queries,
-        range,
+        range: getRange(range, getTimeZone(getState().user)),
         datasourceInstance: instance,
         history,
-        isFromCompactUrl,
       })
     );
     if (panelsState !== undefined) {
@@ -186,80 +147,12 @@ export const initializeExplore = createAsyncThunk(
     dispatch(updateTime({ exploreId }));
 
     if (instance) {
-      // We do not want to add the url to browser history on init because when the pane is initialised it's because
-      // we already have something in the url. Adding basically the same state as additional history item prevents
-      // user to go back to previous url.
-      dispatch(runQueries(exploreId, { replaceUrl: true }));
+      dispatch(runQueries({ exploreId }));
     }
+
+    return fulfillWithValue({ exploreId, state: getState().explore.panes[exploreId]! });
   }
 );
-
-/**
- * Reacts to changes in URL state that we need to sync back to our redux state. Computes diff of newUrlQuery vs current
- * state and runs update actions for relevant parts.
- */
-export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
-  return async (dispatch, getState) => {
-    const itemState = getState().explore.panes[exploreId];
-    if (!itemState) {
-      return;
-    }
-
-    // Get diff of what should be updated
-    const newUrlState = parseUrlState(newUrlQuery);
-    const update = urlDiff(newUrlState, getUrlStateFromPaneState(itemState));
-
-    const { containerWidth, eventBridge } = itemState;
-
-    // datasource will either be name or UID here
-    const { datasource, queries, range: urlRange, panelsState } = newUrlState;
-    const refreshQueries: DataQuery[] = [];
-
-    for (let index = 0; index < queries.length; index++) {
-      const query = queries[index];
-      refreshQueries.push(generateNewKeyAndAddRefIdIfMissing(query, refreshQueries, index));
-    }
-
-    const timeZone = getTimeZone(getState().user);
-    const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
-    const range = getTimeRangeFromUrl(urlRange, timeZone, fiscalYearStartMonth);
-
-    // commit changes based on the diff of new url vs old url
-
-    if (update.datasource) {
-      const initialQueries = await ensureQueries(queries);
-      await dispatch(
-        initializeExplore({
-          exploreId,
-          datasource,
-          queries: initialQueries,
-          range,
-          containerWidth,
-          eventBridge,
-          panelsState,
-        })
-      );
-      return;
-    }
-
-    if (update.range) {
-      dispatch(updateTime({ exploreId, rawRange: range.raw }));
-    }
-
-    if (update.queries) {
-      dispatch(setQueriesAction({ exploreId, queries: refreshQueries }));
-    }
-
-    if (update.panelsState && panelsState !== undefined) {
-      dispatch(changePanelsStateAction({ exploreId, panelsState }));
-    }
-
-    // always run queries when refresh is needed
-    if (update.queries || update.range) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
 
 /**
  * Reducer for an Explore area, to be used by the global Explore reducer.
@@ -310,52 +203,21 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, datasourceInstance, history, isFromCompactUrl } =
-      action.payload;
+    const { queries, range, datasourceInstance, history } = action.payload;
 
     return {
       ...state,
-      containerWidth,
-      eventBridge,
       range,
       queries,
       initialized: true,
       queryKeys: getQueryKeys(queries),
       datasourceInstance,
       history,
-      datasourceMissing: !datasourceInstance,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
-      isFromCompactUrl: isFromCompactUrl || false,
       correlations: [],
     };
   }
 
   return state;
-};
-
-/**
- * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
- * side effects needed.
- */
-export const urlDiff = (
-  oldUrlState: ExploreUrlState | undefined,
-  currentUrlState: ExploreUrlState | undefined
-): {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  panelsState: boolean;
-} => {
-  const datasource = !isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
-  const queries = !isEqual(currentUrlState?.queries, oldUrlState?.queries);
-  const range = !isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
-  const panelsState = !isEqual(currentUrlState?.panelsState, oldUrlState?.panelsState);
-
-  return {
-    datasource,
-    queries,
-    range,
-    panelsState,
-  };
 };

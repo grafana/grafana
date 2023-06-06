@@ -260,13 +260,13 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		cfg.TemplateFiles = map[string]string{}
 	}
 	cfg.TemplateFiles["__default__.tmpl"] = alertingTemplates.DefaultTemplateString
-	cfg.AlertmanagerConfig.Templates = append(cfg.AlertmanagerConfig.Templates, "__default__.tmpl")
 
 	// next, we need to make sure we persist the templates to disk.
-	_, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
+	paths, templatesChanged, err := PersistTemplates(am.logger, cfg, am.Base.WorkingDirectory())
 	if err != nil {
 		return false, err
 	}
+	cfg.AlertmanagerConfig.Templates = paths
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
 	if !amConfigChanged && !templatesChanged {

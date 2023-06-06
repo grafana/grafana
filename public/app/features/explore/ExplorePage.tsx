@@ -1,11 +1,9 @@
 import { css } from '@emotion/css';
 import { inRange } from 'lodash';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useWindowSize } from 'react-use';
 
-import { isTruthy } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { ErrorBoundaryAlert, usePanelContext } from '@grafana/ui';
+import { ErrorBoundaryAlert } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -13,11 +11,14 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId, ExploreQueryParams } from 'app/types/explore';
 
-import { Branding } from '../../core/components/Branding/Branding';
-
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
-import { lastSavedUrl, resetExploreAction, splitSizeUpdateAction } from './state/main';
+import { useExplorePageTitle } from './hooks/useExplorePageTitle';
+import { useStateSync } from './hooks/useStateSync';
+import { useStopQueries } from './hooks/useStopQueries';
+import { useTimeSrvFix } from './hooks/useTimeSrvFix';
+import { splitSizeUpdateAction } from './state/main';
+import { selectOrderedExplorePanes } from './state/selectors';
 
 const styles = {
   pageScrollbarWrapper: css`
@@ -30,17 +31,19 @@ const styles = {
 };
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  useStopQueries();
+  useTimeSrvFix();
+  useStateSync(props.queryParams);
   useExplorePageTitle();
   const dispatch = useDispatch();
-  const queryParams = props.queryParams;
   const { keybindings, chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const panelCtx = usePanelContext();
-  const eventBus = useRef(panelCtx.eventBus.newScopedBus('explore', { onlyLocal: false }));
   const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
   const { width: windowWidth } = useWindowSize();
   const minWidth = 200;
   const exploreState = useSelector((state) => state.explore);
+
+  const panes = useSelector(selectOrderedExplorePanes);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -51,31 +54,6 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
   }, [keybindings]);
-
-  useEffect(() => {
-    lastSavedUrl.left = undefined;
-    lastSavedUrl.right = undefined;
-
-    // timeSrv (which is used internally) on init reads `from` and `to` param from the URL and updates itself
-    // using those value regardless of what is passed to the init method.
-    // The updated value is then used by Explore to get the range for each pane.
-    // This means that if `from` and `to` parameters are present in the URL,
-    // it would be impossible to change the time range in Explore.
-    // We are only doing this on mount for 2 reasons:
-    // 1: Doing it on update means we'll enter a render loop.
-    // 2: when parsing time in Explore (before feeding it to timeSrv) we make sure `from` is before `to` inside
-    //    each pane state in order to not trigger un URL update from timeSrv.
-    const searchParams = locationService.getSearchObject();
-    if (searchParams.from || searchParams.to) {
-      locationService.partial({ from: undefined, to: undefined }, true);
-    }
-
-    return () => {
-      // Cleaning up Explore state so that when navigating back to Explore it starts from a blank state
-      dispatch(resetExploreAction());
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- dispatch is stable, doesn't need to be in the deps array
-  }, []);
 
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = windowWidth / 2;
@@ -93,7 +71,7 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     setRightPaneWidthRatio(size / windowWidth);
   };
 
-  const hasSplit = Boolean(queryParams.left) && Boolean(queryParams.right);
+  const hasSplit = Object.entries(panes).length > 1;
   let widthCalc = 0;
   if (hasSplit) {
     if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
@@ -123,30 +101,14 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
           }
         }}
       >
-        <ErrorBoundaryAlert style="page">
-          <ExplorePaneContainer exploreId={ExploreId.left} urlQuery={queryParams.left} eventBus={eventBus.current} />
-        </ErrorBoundaryAlert>
-        {hasSplit && (
-          <ErrorBoundaryAlert style="page">
-            <ExplorePaneContainer
-              exploreId={ExploreId.right}
-              urlQuery={queryParams.right}
-              eventBus={eventBus.current}
-            />
-          </ErrorBoundaryAlert>
-        )}
+        {Object.keys(panes).map((exploreId) => {
+          return (
+            <ErrorBoundaryAlert key={exploreId} style="page">
+              <ExplorePaneContainer exploreId={exploreId as ExploreId} />
+            </ErrorBoundaryAlert>
+          );
+        })}
       </SplitPaneWrapper>
     </div>
   );
 }
-
-const useExplorePageTitle = () => {
-  const navModel = useNavModel('explore');
-  const datasources = useSelector((state) =>
-    [state.explore.panes.left!.datasourceInstance?.name, state.explore.panes.right?.datasourceInstance?.name].filter(
-      isTruthy
-    )
-  );
-
-  document.title = `${navModel.main.text} - ${datasources.join(' | ')} - ${Branding.AppTitle}`;
-};
