@@ -1,4 +1,4 @@
-import { ComponentType, isValidElement } from 'react';
+import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
