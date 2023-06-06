@@ -1,3 +1,12 @@
+<!-- 9.3.15 START -->
+
+# 9.3.15 (2023-06-06)
+
+### Bug fixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.3.15 END -->
 <!-- 9.3.14 START -->
 
 # 9.3.14 (2023-05-08)
