@@ -28,19 +28,33 @@ best way to test things is usually to use test functions, and not the main func
 no diff b/n test func and main func
 */
 
+// input: module name, output: list of files that import it
+// how??
 func getFiles(moduleName string) ([]string, error) {
 	fmt.Println("I AM GET FILES")
-	// get list of modules
+
+	// for each module, return a list of files that import it
+	// DO NOW: determine how to get list of files that import a module based on module name
+
+	return []string{}, nil
+}
+
+func main() {
+	// parse go.mod to get list of modules
 	m, err := parseGoMod(os.DirFS("."), "go.mod")
 	if err != nil {
 		return nil, err
 	}
 
-	// for each module, return a list of files that import it
+	// for each direct module, get list of files that import it
 	for _, mod := range m {
 		if mod.Indirect == false {
+			files, err := getFiles(mod)
 			fmt.Println(mod)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	return []string{}, nil
+
 }
