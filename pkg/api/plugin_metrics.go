@@ -64,7 +64,7 @@ func (hs *HTTPServer) pluginMetricsScrapeTargetsEndpoint(ctx *web.Context) {
 		return
 	}
 
-	sdConfig := discovery.Configs{}
+	sdConfig := make(discovery.Configs, 0)
 	for _, p := range hs.pluginStore.Plugins(ctx.Req.Context()) {
 		if p.Class == plugins.External { // TODO and is configured to expose metrics
 			sdConfig = append(sdConfig, discovery.StaticConfig{{
