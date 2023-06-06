@@ -61,7 +61,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
-  root?: ComponentType<AppRootProps<T>>;
+  _rootRawComponent?: ComponentType<AppRootProps<T>>;
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -77,8 +77,16 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
    */
   setRootPage(root: ComponentType<AppRootProps<T>>) {
-    this.root = withSandboxWrapper(root);
+    this._rootRawComponent = root;
     return this;
+  }
+
+  get root(): typeof this._rootRawComponent {
+    return withSandboxWrapper(this._rootRawComponent);
+  }
+
+  set root(root: typeof this._rootRawComponent) {
+    this._rootRawComponent = root;
   }
 
   setComponentsFromLegacyExports(pluginExports: any) {
