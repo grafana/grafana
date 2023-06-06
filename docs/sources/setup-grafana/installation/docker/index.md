@@ -135,8 +135,9 @@ To install plugins in the Docker container, complete the following steps:
    For example:
 
    ```bash
-   docker run -d -p 3000:3000 --name=grafana
-   -e "GF_INSTALL_PLUGINS=grafana-clock-panel grafana-simple-json-datasource" grafana/grafana-enterprise
+   docker run -d -p 3000:3000 --name=grafana \
+     -e "GF_INSTALL_PLUGINS=grafana-clock-panel grafana-simple-json-datasource" \
+     grafana/grafana-enterprise
    ```
 
 1. To specify the version of a plugin, add the version number to the `GF_INSTALL_PLUGINS` environment variable.
