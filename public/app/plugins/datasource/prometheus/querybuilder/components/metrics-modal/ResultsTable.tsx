@@ -3,7 +3,7 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
@@ -124,9 +124,10 @@ export function ResultsTable(props: ResultsTableProps) {
           {state.hasMetadata && (
             <>
               <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>Type</th>
-              <th className={styles.tableHeaderPadding}>Description</th>
+              <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>Description</th>
             </>
           )}
+          <th className={styles.selectButtonWidth}> </th>
         </tr>
       </thead>
       <tbody>
@@ -137,8 +138,6 @@ export function ResultsTable(props: ResultsTableProps) {
                 <tr
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
-                  onClick={() => selectMetric(metric)}
-                  tabIndex={0}
                   onFocus={() => onFocusRow(idx)}
                   onKeyDown={(e) => {
                     if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
@@ -155,6 +154,11 @@ export function ResultsTable(props: ResultsTableProps) {
                     />
                   </td>
                   {state.hasMetadata && metaRows(metric)}
+                  <td>
+                    <Button size="sm" variant="secondary" onClick={() => selectMetric(metric)}>
+                      Select
+                    </Button>
+                  </td>
                 </tr>
               );
             })}
@@ -166,7 +170,7 @@ export function ResultsTable(props: ResultsTableProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.1);
+  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   return {
     table: css`
@@ -213,7 +217,13 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
     `,
     typeWidth: css`
-      ${disableTextWrap ? '' : 'width: 16%;'}
+      ${disableTextWrap ? '' : 'width: 15%;'}
+    `,
+    descriptionWidth: css`
+      ${disableTextWrap ? '' : 'width: 35%;'}
+    `,
+    selectButtonWidth: css`
+      ${disableTextWrap ? '' : 'width: 10%;'}
     `,
     stickyHeader: css`
       position: sticky;
