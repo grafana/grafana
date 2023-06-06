@@ -131,7 +131,7 @@ Hover your cursor over the field to see the exact time stamps in the range and t
 
 Click the current time range to change it. You can change the current time using a _relative time range_, such as the last 15 minutes, or an _absolute time range_, such as `2020-05-14 00:00:00 to 2020-05-15 23:59:59`.
 
-<img class="no-shadow" src="/media/docs/grafana/dashboards/screenshot-change-current-time-range.png" max-width="900px">
+<img class="no-shadow" src="/static/img/docs/time-range-controls/change-current-time-range-7-0.png" max-width="900px">
 
 #### Relative time range
 
