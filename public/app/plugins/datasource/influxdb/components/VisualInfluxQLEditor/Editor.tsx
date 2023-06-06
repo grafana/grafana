@@ -92,11 +92,11 @@ export const Editor = (props: Props): JSX.Element => {
   const retentionPolicies = !!policyData.error ? [] : policyData.value ?? [];
 
   const allTagKeys = useMemo(async () => {
-    const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
+    const tagKeys = (await getTagKeysForMeasurementAndTags(datasource, [], measurement, policy)).map(
       (tag) => `${tag}::tag`
     );
 
-    const fieldKeys = (await getFieldKeysForMeasurement(measurement || '', policy, datasource)).map(
+    const fieldKeys = (await getFieldKeysForMeasurement(datasource, measurement || '', policy)).map(
       (field) => `${field}::field`
     );
 
@@ -109,7 +109,7 @@ export const Editor = (props: Props): JSX.Element => {
         'field_0',
         () => {
           return measurement !== undefined
-            ? getFieldKeysForMeasurement(measurement, policy, datasource)
+            ? getFieldKeysForMeasurement(datasource, measurement, policy)
             : Promise.resolve([]);
         },
       ],
@@ -162,7 +162,7 @@ export const Editor = (props: Props): JSX.Element => {
           measurement={measurement}
           getPolicyOptions={() =>
             withTemplateVariableOptions(
-              allTagKeys.then((keys) => getAllPolicies(datasource)),
+              allTagKeys.then(() => getAllPolicies(datasource)),
               wrapPure
             )
           }
@@ -170,9 +170,9 @@ export const Editor = (props: Props): JSX.Element => {
             withTemplateVariableOptions(
               allTagKeys.then((keys) =>
                 getAllMeasurementsForTags(
-                  filter === '' ? undefined : filter,
+                  datasource,
                   filterTags(query.tags ?? [], keys),
-                  datasource
+                  filter === '' ? undefined : filter
                 )
               ),
               wrapRegex,
@@ -188,11 +188,9 @@ export const Editor = (props: Props): JSX.Element => {
           tags={query.tags ?? []}
           onChange={handleTagsSectionChange}
           getTagKeyOptions={getTagKeys}
-          getTagValueOptions={(key: string) =>
+          getTagValueOptions={(key) =>
             withTemplateVariableOptions(
-              allTagKeys.then((keys) =>
-                getTagValues(key, measurement, policy, filterTags(query.tags ?? [], keys), datasource)
-              ),
+              allTagKeys.then((keys) => getTagValues(datasource, filterTags(query.tags ?? [], keys), key)),
               wrapRegex
             )
           }
