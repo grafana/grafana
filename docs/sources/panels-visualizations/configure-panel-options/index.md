@@ -32,7 +32,7 @@ This topic describes how to:
 
 ## Edit a panel
 
-After you add a panel to a dashboard, you can open it at any time to change change or update queries, add data transformation, and change visualization settings.
+After you add a panel to a dashboard, you can open it at any time to change or update queries, add data transformation, and change visualization settings.
 
 1. Open the dashboard that contains the panel you want to edit.
 
