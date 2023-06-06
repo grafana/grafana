@@ -1,22 +1,22 @@
-import { cx, css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
+import { getTemplateSrv } from '@grafana/runtime/src';
 import {
-  InlineFormLabel,
-  LinkButton,
-  Segment,
   CodeEditor,
-  MonacoEditor,
   CodeEditorSuggestionItem,
   CodeEditorSuggestionItemKind,
-  withTheme2,
+  InlineFormLabel,
+  LinkButton,
+  MonacoEditor,
+  Segment,
   Themeable2,
-} from '@grafana/ui';
+  withTheme2,
+} from '@grafana/ui/src';
 
-import InfluxDatasource from '../datasource';
-import { InfluxQuery } from '../types';
+import InfluxDatasource from '../../../../datasource';
+import { InfluxQuery } from '../../../../types';
 
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;

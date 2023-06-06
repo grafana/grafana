@@ -6,14 +6,14 @@ import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
-import InfluxDatasource from '../../datasource';
+import InfluxDatasource from '../../../../../datasource';
 import {
   getAllMeasurementsForTags,
   getAllPolicies,
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
-} from '../../influxql_metadata_query';
+} from '../../../../../influxql_metadata_query';
 import {
   addNewGroupByPart,
   addNewSelectPart,
@@ -22,9 +22,10 @@ import {
   normalizeQuery,
   removeGroupByPart,
   removeSelectPart,
-} from '../../queryUtils';
-import { InfluxQuery, InfluxQueryTag } from '../../types';
-import { DEFAULT_RESULT_FORMAT } from '../constants';
+} from '../../../../../queryUtils';
+import { InfluxQuery, InfluxQueryTag } from '../../../../../types';
+import { DEFAULT_RESULT_FORMAT } from '../../../constants';
+import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from '../utils/partListUtils';
 
 import { FormatAsSection } from './FormatAsSection';
 import { FromSection } from './FromSection';
@@ -32,7 +33,6 @@ import { InputSection } from './InputSection';
 import { OrderByTimeSection } from './OrderByTimeSection';
 import { PartListSection } from './PartListSection';
 import { TagsSection } from './TagsSection';
-import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from './partListUtils';
 
 type Props = {
   query: InfluxQuery;
@@ -78,7 +78,7 @@ function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQue
   return parts.filter((t) => t.key.endsWith('::tag') || allTagKeys.has(t.key + '::tag'));
 }
 
-export const Editor = (props: Props): JSX.Element => {
+export const VisualInfluxQLEditor = (props: Props): JSX.Element => {
   const uniqueId = useId();
   const formatAsId = `influxdb-qe-format-as-${uniqueId}`;
   const orderByTimeId = `influxdb-qe-order-by${uniqueId}`;
