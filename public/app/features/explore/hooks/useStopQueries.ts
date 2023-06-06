@@ -7,7 +7,7 @@ import { selectPanes } from '../state/selectors';
 
 /**
  * Unsubscribe from queries when unmounting.
- * This avoids unnecessary state changs when navigating away from Explore.
+ * This avoids unnecessary state changes when navigating away from Explore.
  */
 export function useStopQueries() {
   const panesRef = useRef<ReturnType<typeof selectPanes>>({});
