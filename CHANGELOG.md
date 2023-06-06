@@ -267,6 +267,11 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.3 START -->
+
+# 9.5.3 (2023-05-26)
+
+<!-- 9.5.3 END -->
 <!-- 9.5.2 START -->
 
 # 9.5.2 (2023-05-03)
