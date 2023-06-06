@@ -1,142 +1,375 @@
-import { formatLokiQuery } from './formatterTS';
+import { SyntaxNode } from '@lezer/common';
 
-describe('formats a logql query', () => {
-  const query =
-    '{delta!~"",bravo!="",alpha="",charlie=~""}|=""!=""|~""!~""|json|logfmt|regexp""|unpack|pattern""|json alpha="",bravo=""|label=""|label!=ip("")|label>1s|label<=100GB|label==1|line_format""|label_format newLevel=level,newMessage="{{.msg}}"';
-  expect(formatLokiQuery(query)).toBe(
-    `{alpha="", bravo!="", charlie=~"", delta!~""}\n  |= "" != "" |~ "" !~ ""\n  | json | logfmt | regexp"" | unpack | pattern""\n  | json alpha="", bravo=""\n  | label="" | label!=ip("") | label>1s | label<=100GB | label==1\n  | line_format ""\n  | label_format newLevel=level, newMessage="{{.msg}}"`
-  );
-});
+import {
+  BinOpExpr,
+  BytesFilter,
+  Grouping,
+  JsonExpressionParser,
+  LabelFilter,
+  LabelFormatExpr,
+  LabelParser,
+  LineFilter,
+  LineFormatExpr,
+  LiteralExpr,
+  LogRangeExpr,
+  Matcher,
+  parser,
+  PipelineExpr,
+  RangeAggregationExpr,
+  Regexp,
+  Selector,
+  VectorAggregationExpr,
+  VectorExpr,
+} from '@grafana/lezer-logql';
 
-describe('formatSelector()', () => {
-  it('correctly spaces selectors with multiple matchers', () => {
-    const query = '{alpha = "",bravo != "",charlie =~ "",delta !~ ""}';
-    expect(formatLokiQuery(query)).toBe('{alpha="", bravo!="", charlie=~"", delta!~""}');
+import {
+  formatLokiQuery,
+  indent,
+  indentMultiline,
+  needsBrackets,
+  iterateNode,
+  buildResponse,
+  formatSelector,
+  formatLineFilter,
+  formatLabelParser,
+  formatJsonExpressionParser,
+  formatLabelFilter,
+  formatLineFormatExpr,
+  formatLabelFormatExpr,
+  formatPipelineExpr,
+  formatRangeAggregationExpr,
+  formatLogRangeExpr,
+  formatGrouping,
+  formatVectorAggregationExpr,
+  formatBinOpExpr,
+  formatLiteralExpr,
+  formatVectorExpr,
+} from './formatterTS';
+
+describe('formats logql queries', () => {
+  it('correctly formats a log query', () => {
+    // Selector
+    expect(formatLokiQuery(`{ labelA = "",labelC = "",labelB = "" }`)).toBe(`{labelA="", labelB="", labelC=""}`);
+
+    // Selector PipelineExpr
+    expect(formatLokiQuery(`{label=""}|=""!=""|logfmt|label=""`)).toBe(
+      `{label=""}\n  |= "" != ""\n  | logfmt\n  | label=""`
+    );
+
+    // ( LogExpr )
+    expect(formatLokiQuery(`({label="",label=""})`)).toBe(`({label="", label=""})`);
   });
 
-  it('orders all matchers in alphabetical order', () => {
-    const query = '{delta!~"", bravo!="", alpha="", charlie=~""}';
-    expect(formatLokiQuery(query)).toBe('{alpha="", bravo!="", charlie=~"", delta!~""}');
-  });
-});
+  it('correctly formats a range aggregation metric query', () => {
+    // RangeOp "(" LogRangeExpr ")"
+    expect(formatLokiQuery(`count_over_time ( {label=""} [5m])`)).toBe(`count_over_time(\n  {label=""}\n  [5m]\n)`);
 
-describe('formatPipelineExpr()', () => {
-  it('correctly formats a pipeline expression', () => {
-    const query = '{}|="line contains"!="line does not contain"|logfmt|label="value"';
-    expect(formatLokiQuery(query)).toBe(
-      '{}\n  |= "line contains" != "line does not contain"\n  | logfmt\n  | label="value"'
+    // RangeOp "(" Number "," LogRangeExpr ")"
+    expect(formatLokiQuery(`bytes_rate (1, {label=""} [5m])`)).toBe(`bytes_rate(\n  1,\n  {label=""}\n  [5m]\n)`);
+
+    // RangeOp "(" LogRangeExpr ")" Grouping
+    expect(formatLokiQuery(`rate ( {label=""} [5m])by(label)`)).toBe(`rate(\n  {label=""}\n  [5m]\n) by (label)`);
+
+    // RangeOp "(" Number "," LogRangeExpr ")" Grouping
+    expect(formatLokiQuery(`quantile_over_time (1, {label=""} [5m])by(label)`)).toBe(
+      `quantile_over_time(\n  1,\n  {label=""}\n  [5m]\n) by (label)`
+    );
+
+    // ( MetricExpr(RangeAggregationExpr) )
+    expect(formatLokiQuery(`(rate({label=""}[1s]))`)).toBe(`(rate(\n  {label=""}\n  [1s]\n))`);
+  });
+
+  // TODO: Nested Vector Operations are broken
+  it('correctly formats a vector aggregation metric query', () => {
+    // VectorOp "(" MetricExpr ")"
+    expect(formatLokiQuery(`sum(count_over_time({label=""}[5m]))`)).toBe(
+      `sum(\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n)`
+    );
+
+    // VectorOp Grouping "(" MetricExpr ")"
+    expect(formatLokiQuery(`sum by(label)(count_over_time({label=""}[5m]))`)).toBe(
+      `sum by (label) (\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n)`
+    );
+
+    // VectorOp "(" MetricExpr ")" Grouping
+    expect(formatLokiQuery(`sum(count_over_time({label=""}[5m]))by(label)`)).toBe(
+      `sum(\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n) by (label)`
+    );
+
+    // VectorOp "(" Number "," MetricExpr ")"
+    expect(formatLokiQuery(`sum(1, count_over_time({label=""}[5m]))`)).toBe(
+      `sum(\n  1,\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n)`
+    );
+
+    // VectorOp "(" Number "," MetricExpr ")" Grouping
+    expect(formatLokiQuery(`sum(1, count_over_time({label=""}[5m]))by(label)`)).toBe(
+      `sum(\n  1,\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n) by (label)`
+    );
+
+    // VectorOp Grouping "(" Number "," MetricExpr ")"
+    expect(formatLokiQuery(`sum by(label)(1, count_over_time({label=""}[5m]))`)).toBe(
+      `sum by (label) (\n  1,\n  count_over_time(\n    {label=""}\n    [5m]\n  )\n)`
+    );
+
+    // ( MetricExpr(VectorAggregationExpr) )
+    expect(formatLokiQuery(`(sum(rate({label=""}[1s])))`)).toBe(`(sum(\n  rate(\n    {label=""}\n    [1s]\n  )\n))`);
+
+    // VectorOp "(" MetricExpr(VectorAggregationExpr) ")"
+    // expect(formatLokiQuery(`count(sum(rate({compose_project="tns-custom"}[1s])))`)).toBe(
+    //   `count(\n  sum(\n    rate(\n      {compose_project="tns-custom"}\n      [1s]\n    )\n  )\n)`
+    // );
+  });
+
+  it('correctly formats a bin op metric query', () => {
+    // Expr(LogExpr) !add Add BinOpModifier Expr(LogExpr)
+    expect(formatLokiQuery(`{label=""} + {label=""}`)).toBe(`{label=""}\n+\n{label=""}`);
+
+    // Expr(MetricExpr) !add Add BinOpModifier Expr(MetricExpr)
+    expect(formatLokiQuery(`rate({label=""}[5m]) + rate({label=""}[5m])`)).toBe(
+      `rate(\n  {label=""}\n  [5m]\n)\n+\nrate(\n  {label=""}\n  [5m]\n)`
+    );
+
+    // Expr(LogExpr) !add Add BinOpModifier Expr(MetricExpr)
+    expect(formatLokiQuery(`{label=""} + rate({label=""}[5m])`)).toBe(`{label=""}\n+\nrate(\n  {label=""}\n  [5m]\n)`);
+
+    // Expr(MetricExpr) !mul Div BinOpModifier Expr(LogExpr)
+    expect(formatLokiQuery(`sum(rate({label=""}[1s])) / (count_over_time({label=""}[1s]) / 2)`)).toBe(
+      `sum(\n  rate(\n    {label=""}\n    [1s]\n  )\n)\n/\n(count_over_time(\n  {label=""}\n  [1s]\n)\n/\n2)`
+    );
+
+    // ( MetricExpr(BinOpExpr) )
+    expect(formatLokiQuery(`(rate({label=""}[1s]) + rate({label=""}[1s]))`)).toBe(
+      '(rate(\n  {label=""}\n  [1s]\n)\n+\nrate(\n  {label=""}\n  [1s]\n))'
+    );
+
+    // ( LogExpr(BinOpExpr) )
+    expect(formatLokiQuery(`({label=""} + {label=""})`)).toBe('({label=""}\n+\n{label=""})');
+  });
+
+  it('correctly formats a query with literal expressions', () => {
+    // Selector BinOpExpr LiteralExpr
+    expect(formatLokiQuery(`{label=""} + 1`)).toBe(`{label=""}\n+\n1`);
+
+    // Selector BinOpExpr LiteralExpr(Add)
+    expect(formatLokiQuery(`{label=""} + +1`)).toBe(`{label=""}\n+\n+1`);
+
+    // Selector BinOpExpr LiteralExpr(Sub)
+    expect(formatLokiQuery(`{label=""} + -1`)).toBe(`{label=""}\n+\n-1`);
+  });
+
+  // TODO: Not yet implemented
+  it('correctly formats a query with label replace expr', () => {
+    // LabelReplaceExpr
+    // expect(formatLokiQuery(`label_replace()`)).toBe(`...`);
+  });
+
+  it('correctly formats a query using a vector expression', () => {
+    // MetricExpr BinOpModifier VectorExpr
+    expect(formatLokiQuery(`sum(count_over_time({namespace="traefik"}[5m])) or vector(0)`)).toBe(
+      `sum(\n  count_over_time(\n    {namespace="traefik"}\n    [5m]\n  )\n)\nor\nvector(0)`
     );
   });
 });
 
-describe('formatLineFilter()', () => {
-  it('correctly formats a line filter', () => {
-    const query = '{}|="line contains"';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"');
+describe('metric expression syntaxnode functions', () => {
+  it('formatRangeAggregationExpr should return a formatted range aggregation expression', () => {
+    const MOCK_NODE = generateNode(RangeAggregationExpr, `rate({label=""}[5m])`);
+    expect(formatRangeAggregationExpr(MOCK_NODE, `rate({label=""}[5m])`)).toBe(`rate(\n  {label=""}\n  [5m]\n)`);
   });
 
-  it('correctly formats multiple line filters', () => {
-    const query =
-      '{}|="line contains"!="line does not contain"|~"line contains (regex)"!~"line does not contain (regex)"';
-    expect(formatLokiQuery(query)).toBe(
-      '{}\n  |= "line contains" != "line does not contain" |~ "line contains (regex)" !~ "line does not contain (regex)"'
+  it('formatLogRangeExpr should return a formatted log range expression', () => {
+    const MOCK_NODE = generateNode(LogRangeExpr, `rate({label=""}[5m])`);
+    expect(formatLogRangeExpr(MOCK_NODE, `rate({label=""}[5m])`)).toBe(`  {label=""}\n  [5m]\n)`);
+  });
+
+  it('formatGrouping should return a formatted grouping', () => {
+    const MOCK_NODE = generateNode(Grouping, `rate({label=""}[5m])by(abc)`);
+    expect(formatGrouping(MOCK_NODE, `rate({label=""}[5m])by(abc)`)).toBe(` by (abc) `);
+  });
+
+  it('formatVectorAggregationExpr should return a formatted vector expr', () => {
+    const MOCK_NODE = generateNode(VectorAggregationExpr, `sum(rate({label=""}[1s]))`);
+    expect(formatVectorAggregationExpr(MOCK_NODE, `sum(rate({label=""}[1s]))`)).toBe(
+      `sum(\n  rate(\n    {label=""}\n    [1s]\n  )\n)`
+    );
+  });
+
+  it('formatBinOpExpr should return a formatted binop', () => {
+    const MOCK_NODE = generateNode(BinOpExpr, `1 + 1`);
+    expect(formatBinOpExpr(MOCK_NODE, `1 + 1`)).toBe(`1\n+\n1`);
+  });
+
+  it('formatLiteralExpr should return a formatted literal expr', () => {
+    const MOCK_NODE_1 = generateNode(LiteralExpr, `+ 1`);
+    expect(formatLiteralExpr(MOCK_NODE_1, `+ 1`)).toBe(`+1`);
+
+    const MOCK_NODE_2 = generateNode(LiteralExpr, `- 1`);
+    expect(formatLiteralExpr(MOCK_NODE_2, `- 1`)).toBe(`-1`);
+  });
+
+  it('formatVectorExpr should return a formatted literal expr', () => {
+    const MOCK_NODE_1 = generateNode(VectorExpr, `{label=""} or vector ( 1 )`);
+    expect(formatVectorExpr(MOCK_NODE_1, `{label=""} or vector ( 1 )`)).toBe(`vector(1)`);
+  });
+});
+
+describe('log expression syntaxnode functions', () => {
+  it('formatSelector should return a formatted selector', () => {
+    const MOCK_NODE = generateNode(Selector, `{label="",label=""}`);
+    expect(formatSelector(MOCK_NODE, `{label="",label=""}`)).toBe(`{label="", label=""}`);
+  });
+
+  it('formatPipelineExpr should return a formatted selector', () => {
+    const MOCK_NODE = generateNode(PipelineExpr, `{}|=""!=""|logfmt|label=""`);
+    expect(formatPipelineExpr(MOCK_NODE, `{}|=""!=""|logfmt|label=""`)).toBe(
+      `\n  |= "" != ""\n  | logfmt\n  | label=""`
+    );
+  });
+
+  it('formatLineFilter should return a formatted line filter', () => {
+    const MOCK_NODE = generateNode(LineFilter, `{}|=""`);
+    expect(formatLineFilter(MOCK_NODE, `{}|=""`)).toBe(`|= ""`);
+  });
+
+  it('formatLabelParser should return a formatted label parser', () => {
+    const MOCK_NODE = generateNode(LabelParser, `{}|logfmt`);
+    expect(formatLabelParser(MOCK_NODE, `{}|logfmt`)).toBe(`| logfmt`);
+  });
+
+  it('formatJsonExpressionParser should return formatted json expr parser', () => {
+    const MOCK_NODE = generateNode(JsonExpressionParser, `{}|json label="",label=""`);
+    expect(formatJsonExpressionParser(MOCK_NODE, `{}|json label="",label=""`)).toBe(`| json label="", label=""`);
+  });
+
+  it('formatLabelFilter should return formatted label filter', () => {
+    const MOCK_NODE = generateNode(LabelFilter, `{}|label = ""`);
+    expect(formatLabelFilter(MOCK_NODE, `{}|label = ""`)).toBe(`| label=""`);
+  });
+
+  it('formatLineFormatExpr should return formatted line format expr', () => {
+    const MOCK_NODE = generateNode(LineFormatExpr, `{}|line_format""`);
+    expect(formatLineFormatExpr(MOCK_NODE, `{}|line_format""`)).toBe(`| line_format ""`);
+  });
+
+  it('formatLabelFormatExpr should return formatted label format expr', () => {
+    const MOCK_NODE = generateNode(LabelFormatExpr, `{}|label_format label="",label=""`);
+    expect(formatLabelFormatExpr(MOCK_NODE, `{}|label_format label="",label=""`)).toBe(
+      `| label_format label="", label=""`
     );
   });
 });
 
-describe('formatLabelParser()', () => {
-  it('correctly formats a label parser', () => {
-    const query = '{}|logfmt';
-    expect(formatLokiQuery(query)).toBe('{}\n  | logfmt');
+describe('utility functions', () => {
+  it('indent should return the correct number of spaces', () => {
+    expect(indent(1)).toBe('  ');
+    expect(indent(2)).toBe('    ');
   });
 
-  it('correctly formats a label parser with string', () => {
-    const query = '{}|regexp ""';
-    expect(formatLokiQuery(query)).toBe('{}\n  | regexp""');
-  });
-
-  it('correctly formats multiple label parsers', () => {
-    const query = '{}|json|logfmt|regexp""|unpack|pattern""';
-    expect(formatLokiQuery(query)).toBe('{}\n  | json | logfmt | regexp"" | unpack | pattern""');
-  });
-
-  it('correctly formats a label parser with other pipeline expressions', () => {
-    const query = '{} |= "line contains"|logfmt';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"\n  | logfmt');
-  });
-});
-
-describe('formatJsonExpressionParser()', () => {
-  it('correctly formats a json expression parser', () => {
-    const query = '{}|json label = "value"';
-    expect(formatLokiQuery(query)).toBe('{}\n  | json label="value"');
-  });
-
-  it('correctly formats a json expression parser with multiple expressions', () => {
-    const query = '{}|json label = "value",label2 = "value2"';
-    expect(formatLokiQuery(query)).toBe('{}\n  | json label="value", label2="value2"');
-  });
-
-  it('correctly formats a json expression parser with other pipeline expressions', () => {
-    const query = '{} |= "line contains" | logfmt |json label = "value",label2 = "value2"';
-    expect(formatLokiQuery(query)).toBe(
-      '{}\n  |= "line contains"\n  | logfmt\n  | json label="value", label2="value2"'
+  it('indentMultiline should return the correct number of spaces', () => {
+    expect(indentMultiline('level one', 1)).toBe('  level one');
+    expect(indentMultiline('level one\n  level two\n    level three', 1)).toBe(
+      '  level one\n    level two\n      level three'
     );
   });
+
+  it('needsBrackets should return true if the expression needs brackets', () => {
+    const MOCK_QUERY_TYPE_LOG = 35;
+    const MOCK_QUERY_TYPE_METRIC = 76;
+    const MOCK_NODE_LOG = {
+      firstChild: { type: { id: 35 } },
+    } as SyntaxNode;
+
+    expect(needsBrackets(MOCK_NODE_LOG, MOCK_QUERY_TYPE_LOG)).toEqual({
+      addBrackets: true,
+      newNode: { type: { id: 35 } },
+    });
+    expect(needsBrackets(MOCK_NODE_LOG, MOCK_QUERY_TYPE_METRIC)).toEqual({
+      addBrackets: false,
+      newNode: MOCK_NODE_LOG,
+    });
+  });
+
+  it('iterateNode returns all child nodes that are in the lookingFor array', () => {
+    expect(iterateNode(MOCK_NODE_ITERATOR, [LineFilter, BytesFilter]).length).toBe(2);
+    expect(iterateNode(MOCK_NODE_ITERATOR, [PipelineExpr, BinOpExpr])).toEqual([
+      {
+        type: { id: PipelineExpr },
+        firstChild: {
+          type: { id: LabelFilter },
+          firstChild: {
+            type: { id: LineFilter },
+            firstChild: {
+              type: { id: Regexp },
+              firstChild: {
+                type: { id: BytesFilter },
+                firstChild: {
+                  type: { id: RangeAggregationExpr },
+                  firstChild: {
+                    type: { id: BinOpExpr },
+                    firstChild: undefined,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        type: { id: BinOpExpr },
+        firstChild: undefined,
+      },
+    ]);
+  });
+
+  it('buildResponse should correcly return newlines based on lastPipelineType', () => {
+    const MOCK_PIPELINE_TYPE_1 = 35;
+    const MOCK_PIPELINE_TYPE_2 = 36;
+    expect(buildResponse(MOCK_PIPELINE_TYPE_1, MOCK_PIPELINE_TYPE_1, '|= ""')).toBe(' |= ""');
+    expect(buildResponse(MOCK_PIPELINE_TYPE_1, MOCK_PIPELINE_TYPE_2, '|= ""')).toBe('\n  |= ""');
+  });
 });
 
-describe('formatLabelFilter()', () => {
-  it('correctly formats a label filter', () => {
-    const query = '{}|label = "value"';
-    expect(formatLokiQuery(query)).toBe('{}\n  | label="value"');
+function generateNode(type: number, query: string): SyntaxNode {
+  const tree = parser.parse(query);
+  let lookingFor: SyntaxNode = {} as SyntaxNode;
+
+  tree.iterate({
+    enter: (ref): false | void => {
+      const node = ref.node;
+      if (node.type.id === type) {
+        lookingFor = node;
+        return false;
+      }
+    },
   });
 
-  it('correctly formats multiple label filters', () => {
-    const query = '{}|label = "value" | label2 != "value2" | label3 =~ "value3"';
-    expect(formatLokiQuery(query)).toBe('{}\n  | label="value" | label2!="value2" | label3=~"value3"');
-  });
+  return lookingFor;
+}
 
-  it('correctly formats a label filter with other pipeline expressions', () => {
-    const query = '{} |= "line contains" | logfmt | label = "value"';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"\n  | logfmt\n  | label="value"');
-  });
-});
-
-describe('formatLineFormatExpr()', () => {
-  it('correctly formats a line format expression', () => {
-    const query = '{}|line_format"{{.label}}"';
-    expect(formatLokiQuery(query)).toBe('{}\n  | line_format "{{.label}}"');
-  });
-
-  it('correctly formats a line format expression with other pipeline expressions', () => {
-    const query = '{} |= "line contains" | logfmt |line_format"{{.label}}"';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"\n  | logfmt\n  | line_format "{{.label}}"');
-  });
-});
-
-describe('formatLabelFormatExpr()', () => {
-  it('correctly formats a label format expression', () => {
-    const query1 = '{}|label_format newLabel = "value"';
-    expect(formatLokiQuery(query1)).toBe('{}\n  | label_format newLabel="value"');
-
-    const query2 = '{}|label_format newLabel = label';
-    expect(formatLokiQuery(query2)).toBe('{}\n  | label_format newLabel=label');
-  });
-
-  it('correctly formats a label format expression with multiple expressions', () => {
-    const query = '{}|label_format newLabel = "value",newLabel2 = label2';
-    expect(formatLokiQuery(query)).toBe('{}\n  | label_format newLabel="value", newLabel2=label2');
-  });
-
-  it('correctly formats a label format expression with other pipeline expressions', () => {
-    const query = '{} |= "line contains" | logfmt | label_format newLabel = "value"';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"\n  | logfmt\n  | label_format newLabel="value"');
-  });
-});
-
-describe('formatLineComment()', () => {
-  it('correctly formats a line comment in the middle of pipeline expressions', () => {
-    const query = '{}\n  |= "line contains"\n#   comment\n  | logfmt';
-    expect(formatLokiQuery(query)).toBe('{}\n  |= "line contains"\n  # comment\n  | logfmt');
-  });
-});
+const MOCK_NODE_ITERATOR = {
+  firstChild: {
+    type: { id: Matcher },
+    firstChild: {
+      type: { id: PipelineExpr },
+      firstChild: {
+        type: { id: LabelFilter },
+        firstChild: {
+          type: { id: LineFilter },
+          firstChild: {
+            type: { id: Regexp },
+            firstChild: {
+              type: { id: BytesFilter },
+              firstChild: {
+                type: { id: RangeAggregationExpr },
+                firstChild: {
+                  type: { id: BinOpExpr },
+                  firstChild: undefined,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} as unknown as SyntaxNode;

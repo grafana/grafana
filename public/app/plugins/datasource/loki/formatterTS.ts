@@ -66,7 +66,7 @@ export const formatLokiQuery = (query: string): string => {
   let formatted = '';
 
   tree.iterate({
-    enter: (ref): void => {
+    enter: (ref): false | void => {
       const node = ref.node;
 
       if (node.parent?.type.id !== Expr || node.parent?.parent?.type.id === BinOpExpr) {
@@ -76,11 +76,11 @@ export const formatLokiQuery = (query: string): string => {
       switch (node.type.id) {
         case MetricExpr:
           formatted = formatMetricExpr(node, transformedQuery);
-          break;
+          return false;
 
         case LogExpr:
           formatted = formatLogExpr(node, transformedQuery);
-          break;
+          return false;
       }
     },
   });
@@ -88,50 +88,51 @@ export const formatLokiQuery = (query: string): string => {
   return transformValuesToVariables(formatted, transformations).trim();
 };
 
+// TODO:
+//   - fix (nested vector expr): count(sum(rate({compose_project="tns-custom"}[1s])))
+//   - support: LabelReplaceExpr
+//   - support: DistinctFilter
+//   - support: DecolorizeExpr
+//   - support: LabelReplaceExpr
+//   - support: LineComment
+//   - support: Variables in queries
+
 /* 
 the functions below are used to format metric queries
 */
 
 const formatMetricExpr = (node: SyntaxNode, query: string): string => {
-  const tree = parser.parse(query.substring(node.from, node.to));
+  const { addBrackets, newNode } = needsBrackets(node, MetricExpr);
+  node = newNode;
   let formatted = '';
 
-  tree.iterate({
-    enter: (ref): false | void => {
-      const node = ref.node;
+  const childNode = node.firstChild;
+  switch (childNode && childNode.type.id) {
+    case RangeAggregationExpr:
+      formatted = formatRangeAggregationExpr(node, query);
+      break;
 
-      if (node.parent?.parent?.type.id !== Expr || node.parent?.parent?.type.id === BinOpExpr) {
-        return;
-      }
+    case VectorAggregationExpr:
+      formatted = formatVectorAggregationExpr(node, query);
+      break;
 
-      switch (node.type.id) {
-        case RangeAggregationExpr:
-          formatted = formatRangeAggregationExpr(node, query);
-          break;
+    case BinOpExpr:
+      formatted = formatBinOpExpr(node, query);
+      break;
 
-        case VectorAggregationExpr:
-          formatted = formatVectorAggregationExpr(node, query);
-          break;
+    case LiteralExpr:
+      formatted = formatLiteralExpr(node, query);
+      break;
 
-        case BinOpExpr:
-          formatted = formatBinOpExpr(node, query);
-          return false;
+    case VectorExpr:
+      formatted = formatVectorExpr(node, query);
+      break;
+  }
 
-        case LiteralExpr:
-          formatted = formatLiteralExpr(node, query);
-          break;
-
-        case VectorExpr:
-          formatted = formatVectorExpr(node, query);
-          break;
-      }
-    },
-  });
-
-  return formatted;
+  return addBrackets ? '(' + formatted + ')' : formatted;
 };
 
-function formatRangeAggregationExpr(node: SyntaxNode, query: string): string {
+export function formatRangeAggregationExpr(node: SyntaxNode, query: string): string {
   let response = '';
 
   iterateNode(node, [RangeOp, Number, LogRangeExpr, Grouping]).forEach((node) => {
@@ -145,7 +146,7 @@ function formatRangeAggregationExpr(node: SyntaxNode, query: string): string {
         break;
 
       case Number:
-        response += `${indent(0.5) + query.substring(node.from, node.to)},\n`;
+        response += `${indent(1) + query.substring(node.from, node.to)},\n`;
         break;
 
       case LogRangeExpr:
@@ -161,7 +162,7 @@ function formatRangeAggregationExpr(node: SyntaxNode, query: string): string {
   return response;
 }
 
-function formatLogRangeExpr(node: SyntaxNode, query: string): string {
+export function formatLogRangeExpr(node: SyntaxNode, query: string): string {
   const nodes: SyntaxNode[] = [];
   let selector = '';
   let pipeline = '';
@@ -251,7 +252,7 @@ function formatLogRangeExpr(node: SyntaxNode, query: string): string {
   return (response += '\n)');
 }
 
-function formatGrouping(node: SyntaxNode, query: string): string {
+export function formatGrouping(node: SyntaxNode, query: string): string {
   let response = '';
 
   const labels = iterateNode(node, [Identifier]).map((node) => {
@@ -277,7 +278,7 @@ function formatGrouping(node: SyntaxNode, query: string): string {
   return response;
 }
 
-function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
+export function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
   let response = '';
 
   iterateNode(node, [VectorOp, Number, MetricExpr, Grouping]).forEach((node, _, arr) => {
@@ -300,7 +301,7 @@ function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
         response += hasNumber ? '' : '(\n';
 
         const metricExpr = query.substring(node.from, node.to);
-        response += indentMultiline(formatMetricExpr({ from: 0, to: metricExpr.length } as SyntaxNode, metricExpr), 1);
+        response += indentMultiline(formatLokiQuery(metricExpr), 1);
         response += '\n)';
         break;
 
@@ -313,7 +314,7 @@ function formatVectorAggregationExpr(node: SyntaxNode, query: string): string {
   return response;
 }
 
-function formatBinOpExpr(node: SyntaxNode, query: string): string {
+export function formatBinOpExpr(node: SyntaxNode, query: string): string {
   let operator: string | undefined;
 
   const [leftExpr, rightExpr] = iterateNode(node, [Expr]).map((node, idx) => {
@@ -327,7 +328,8 @@ function formatBinOpExpr(node: SyntaxNode, query: string): string {
   return leftExpr + '\n' + operator + '\n' + rightExpr;
 }
 
-function formatLiteralExpr(node: SyntaxNode, query: string): string {
+export function formatLiteralExpr(node: SyntaxNode, query: string): string {
+  node = node.getChild(LiteralExpr) ?? node;
   const addNode = node.getChild(Add);
   const subNode = node.getChild(Sub);
   const numberNode = node.getChild(Number);
@@ -347,7 +349,8 @@ function formatLiteralExpr(node: SyntaxNode, query: string): string {
   return query.substring(numberNode.from, numberNode.to);
 }
 
-function formatVectorExpr(node: SyntaxNode, query: string): string {
+export function formatVectorExpr(node: SyntaxNode, query: string): string {
+  node = node.getChild(VectorExpr) ?? node;
   const numberNode = node.getChild(Number);
 
   if (!numberNode) {
@@ -362,6 +365,9 @@ the functions below are used to format log queries
 */
 
 const formatLogExpr = (node: SyntaxNode, query: string): string => {
+  const { addBrackets, newNode } = needsBrackets(node, LogExpr);
+  node = newNode;
+
   const tree = parser.parse(query.substring(node.from, node.to));
   let formatted = '';
 
@@ -381,10 +387,10 @@ const formatLogExpr = (node: SyntaxNode, query: string): string => {
     },
   });
 
-  return formatted;
+  return addBrackets ? '(' + formatted + ')' : formatted;
 };
 
-function formatSelector(node: SyntaxNode, query: string): string {
+export function formatSelector(node: SyntaxNode, query: string): string {
   const selector = query.substring(node.from, node.to);
   const subtree = parser.parse(selector);
   const labelNodes: SyntaxNode[] = [];
@@ -436,7 +442,7 @@ function formatSelector(node: SyntaxNode, query: string): string {
   return '{' + trimEnd(response, ', ') + '}';
 }
 
-function formatPipelineExpr(node: SyntaxNode, query: string): string {
+export function formatPipelineExpr(node: SyntaxNode, query: string): string {
   const pipelineExprNodes = [
     LineFilter,
     LabelParser,
@@ -480,18 +486,13 @@ function formatPipelineExpr(node: SyntaxNode, query: string): string {
         response += buildResponse(LabelFormatExpr, lastPipelineType, formatLabelFormatExpr(node, query));
         lastPipelineType = LabelFormatExpr;
         break;
-
-      case LineComment:
-        response += buildResponse(LineComment, lastPipelineType, formatLineComment(node, query));
-        lastPipelineType = LineComment;
-        break;
     }
   });
 
   return response;
 }
 
-function formatLineFilter(node: SyntaxNode, query: string): string {
+export function formatLineFilter(node: SyntaxNode, query: string): string {
   const filterNode = node.getChild(Filter);
   const filterOperationNode = node.getChild(FilterOp);
   const stringNode = node.getChild(String);
@@ -505,7 +506,7 @@ function formatLineFilter(node: SyntaxNode, query: string): string {
   return `${filter} ${string}`;
 }
 
-function formatLabelParser(node: SyntaxNode, query: string): string {
+export function formatLabelParser(node: SyntaxNode, query: string): string {
   const hasString = node.getChild(String);
 
   if (hasString) {
@@ -522,7 +523,7 @@ function formatLabelParser(node: SyntaxNode, query: string): string {
   return `| ${labelParser}`;
 }
 
-function formatJsonExpressionParser(node: SyntaxNode, query: string): string {
+export function formatJsonExpressionParser(node: SyntaxNode, query: string): string {
   const jsonExpressionNodes = iterateNode(node, [JsonExpression]);
   let response = '';
 
@@ -539,7 +540,7 @@ function formatJsonExpressionParser(node: SyntaxNode, query: string): string {
   return `| json ${trimEnd(response, ', ')}`;
 }
 
-function formatLabelFilter(node: SyntaxNode, query: string): string {
+export function formatLabelFilter(node: SyntaxNode, query: string): string {
   const selectedFilter =
     node.getChild(Matcher) ||
     node.getChild(IpLabelFilter) ||
@@ -578,13 +579,13 @@ function formatLabelFilter(node: SyntaxNode, query: string): string {
   return `| ${identifier}${operator}${value}`;
 }
 
-function formatLineFormatExpr(node: SyntaxNode, query: string): string {
+export function formatLineFormatExpr(node: SyntaxNode, query: string): string {
   const stringNode = node.getChild(String);
   const string = stringNode && query.substring(stringNode.from, stringNode.to);
   return `| line_format ${string}`;
 }
 
-function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
+export function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
   const labelFormatMatcherNodes = iterateNode(node, [LabelFormatMatcher]);
   let response = '| label_format ';
 
@@ -608,25 +609,32 @@ function formatLabelFormatExpr(node: SyntaxNode, query: string): string {
   return trimEnd(response, ', ');
 }
 
-function formatLineComment(node: SyntaxNode, query: string): string {
-  let comment = query.substring(node.from, node.to);
-  return comment.replace(/^# */, '# ').trim();
-}
-
 /* 
 the functions below are utilities for log and metric queries
 */
 
-function indent(level: number): string {
+export function indent(level: number): string {
   return '  '.repeat(level);
 }
 
-function indentMultiline(block: string, level: number): string {
+export function indentMultiline(block: string, level: number): string {
   const lines = block.split('\n');
   return lines.map((line) => indent(level) + line).join('\n');
 }
 
-function iterateNode(node: SyntaxNode, lookingFor: number[]): SyntaxNode[] {
+export function needsBrackets(node: SyntaxNode, queryType: number): { addBrackets: boolean; newNode: SyntaxNode } {
+  const childNodeIsSame = node.firstChild?.type.id === queryType;
+  let addBrackets = false;
+
+  if (node.firstChild && childNodeIsSame) {
+    addBrackets = true;
+    node = node.firstChild;
+  }
+
+  return { addBrackets, newNode: node };
+}
+
+export function iterateNode(node: SyntaxNode, lookingFor: number[]): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   let child = node.firstChild;
 
@@ -642,7 +650,7 @@ function iterateNode(node: SyntaxNode, lookingFor: number[]): SyntaxNode[] {
   return nodes;
 }
 
-function buildResponse(pipelineType: number, lastPipelineType: number, formattedNode: string): string {
+export function buildResponse(pipelineType: number, lastPipelineType: number, formattedNode: string): string {
   if (pipelineType === LineComment) {
     return `\n${indent(1)}${formattedNode}`;
   }
