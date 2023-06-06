@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy, isArray, isNil } from 'lodash';
+import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy, isArray } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode, useMemo } from 'react';
 import { useEnabled } from 'react-enable';
@@ -113,6 +113,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const inheritedGrouping = hasInheritedProperties && inheritedProperties.group_by;
   const noGrouping = isArray(groupBy) && groupBy[0] === '...';
 
+  // for now "single group" is only supported on the default policy
   const singleGroup = !noGrouping && isArray(groupBy) && groupBy.length === 0;
   const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
 
@@ -279,17 +280,16 @@ const Policy: FC<PolicyComponentProps> = ({
           ]);
 
           // TODO how to solve this TypeScript mystery
-          // ⚠️ since the BE will sometimes send `null` we have to make sure we accounts for both "undefined" and "null"
           const inherited = merge(
             reduce(
               inheritableProperties,
               (acc: Partial<Route> = {}, value, key) => {
                 // @ts-ignore
-                if (!isNil(value) && isNil(route[key])) {
+                if (value !== undefined && route[key] === undefined) {
                   // @ts-ignore
                   acc[key] = value;
                   // @ts-ignore
-                } else if (!isNil(value) && isArray(acc[key]) && isArray(value)) {
+                } else if (!value && isArray(acc[key]) && isArray(value)) {
                   // @ts-ignore
                   acc[key] = acc[key].concat(value);
                 }
