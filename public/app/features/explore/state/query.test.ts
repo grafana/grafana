@@ -368,19 +368,17 @@ describe('changeQueries', () => {
     jest.spyOn(actions, 'runQueries').mockImplementation(createAsyncThunk('@explore/runQueries', () => {}));
 
     const originalQueries = [
-      { refId: 'A', datasource: datasources[0].getRef() },
-      { refId: 'B', datasource: datasources[0].getRef() },
+      { refId: 'A', as: 1, datasource: datasources[0].getRef() },
+      { refId: 'B', as: 2, datasource: datasources[0].getRef() },
     ];
 
     const { dispatch } = configureStore({
       ...defaultInitialState,
       explore: {
-        panes: {
-          left: {
-            ...defaultInitialState.explore.panes.left,
-            datasourceInstance: datasources[0],
-            queries: originalQueries,
-          },
+        left: {
+          ...defaultInitialState.explore.left,
+          datasourceInstance: datasources[0],
+          queries: originalQueries,
         },
       },
     } as unknown as Partial<StoreState>);
