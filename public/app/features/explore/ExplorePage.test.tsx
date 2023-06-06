@@ -206,7 +206,7 @@ describe('ExplorePage', () => {
 
       const splitButton = await screen.findByText(/split/i);
       await userEvent.click(splitButton);
-      await waitForExplore(ExploreId.left, true);
+      await waitForExplore(ExploreId.left);
 
       expect(await screen.findAllByLabelText('Widen pane')).toHaveLength(2);
       expect(screen.queryByLabelText('Narrow pane')).not.toBeInTheDocument();
@@ -430,7 +430,7 @@ describe('ExplorePage', () => {
           mixedEnabled: true,
         });
 
-        await waitForExplore(undefined, true);
+        await waitForExplore();
 
         await waitFor(() => {
           const urlParams = decodeURIComponent(location.getSearch().toString());

@@ -232,7 +232,7 @@ function makeDatasourceSetup({
   };
 }
 
-export const waitForExplore = (exploreId: ExploreId = ExploreId.left, multi = false) => {
+export const waitForExplore = (exploreId: ExploreId = ExploreId.left) => {
   return waitFor(async () => {
     const container = screen.getAllByTestId('data-testid Explore');
     return within(container[exploreId === ExploreId.left ? 0 : 1]);
