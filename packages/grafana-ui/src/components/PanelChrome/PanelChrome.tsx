@@ -223,7 +223,7 @@ export function PanelChrome({
   );
 
   return collapsible ? (
-    <Collapse label={title} collapsible isOpen={open} onToggle={() => toggle()} colapseBodyClassName={styles.collapse}>
+    <Collapse label={title} collapsible isOpen={open} onToggle={() => toggle()} collapseBodyClassName={styles.collapse}>
       {chromeContent}
     </Collapse>
   ) : (
