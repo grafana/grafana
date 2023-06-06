@@ -68,6 +68,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     const queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     const isLogQuery = isLogsQuery(query.expr);
+    console.log(query.step);
 
     return (
       <EditorRow>
@@ -114,7 +115,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                   className="width-6"
                   placeholder={'auto'}
                   type="string"
-                  defaultValue={''}
+                  defaultValue={query.step ?? ''}
                   onCommitChange={onStepChange}
                 />
               </EditorField>
