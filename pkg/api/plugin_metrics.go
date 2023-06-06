@@ -64,7 +64,7 @@ func (hs *HTTPServer) pluginMetricsScrapeTargetsEndpoint(ctx *web.Context) {
 		return
 	}
 
-	sdConfig := make(discovery.Configs, 0)
+	var sdConfig discovery.Configs
 	for _, p := range hs.pluginStore.Plugins(ctx.Req.Context()) {
 		if p.Class == plugins.External { // TODO and is configured to expose metrics
 			sdConfig = append(sdConfig, discovery.StaticConfig{{
@@ -75,6 +75,14 @@ func (hs *HTTPServer) pluginMetricsScrapeTargetsEndpoint(ctx *web.Context) {
 				Source: "plugins",
 			}})
 		}
+	}
+
+	if sdConfig == nil {
+		ctx.Resp.Header().Set("Content-Type", "application/json")
+		if _, err := ctx.Resp.Write([]byte("[]")); err != nil {
+			hs.log.Error("Failed to write to response", "err", err)
+		}
+		return
 	}
 
 	b, err := json.Marshal(sdConfig)
