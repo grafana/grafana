@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  telegraf:
+    image: telegraf:1.26-alpine
+    volumes:
+     - ./telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    environment:
+      INFLUX_IOX_URL: "${INFLUX_IOX_URL}"
+      INFLUX_IOX_API_TOKEN:  "${INFLUX_IOX_API_TOKEN}"
+      INFLUX_IOX_ORG: "${INFLUX_IOX_ORG}"
+      INFLUX_IOX_BUCKET: "${INFLUX_IOX_BUCKET}"
+volumes:
+  influxdbv2:
