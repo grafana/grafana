@@ -1,4 +1,4 @@
-module modowners
+module github.com/grafana/grafana/scripts/modowners
 
 go 1.19
 

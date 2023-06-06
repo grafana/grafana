@@ -5,27 +5,16 @@ import (
 )
 
 /*
-load in the modules
-
-	for each module, call func that takes in module name and return list of files
-	with list of files, call func that takes in list of files, returns presumed owner (single team name)
-	modify modfile, write it back out (should be straightfwd) modfile.AddComment
-		need to write it back to my filesystem as go.mod.altered, compare to go.mod, raise the PR
-
-write new output to test_go.mod so i can compare and make sure it's valid
-
-	when i want to raise pr, copy test_go.mod and paste into go.mod
-
-dont worry about if things are in the right place
+question: how do i mock files that import the below 3 imports and use said imports?
 */
 func TestGetFiles(t *testing.T) {
 	for _, test := range []struct {
 		moduleName     string
 		expectedResult []string
 	}{
-		{"test1.mod", []string{"file1.go", "file2.go", "file3.go"}},
-		{"test2.mod", []string{"file4.go"}},
-		{"test3.mod", []string{"file5.go", "file6.go", "file7.go", "file8.go"}},
+		{"cloud.google.com/go/storage v1.28.1", []string{"file1.go", "file2.go", "file3.go"}},
+		{"cuelang.org/go v0.5.0", []string{"file4.go"}},
+		{"github.com/Azure/azure-sdk-for-go v65.0.0+incompatible", []string{"file2.go", "file4.go", "file5.go"}},
 	} {
 		result, err := getFiles(test.moduleName)
 		if err != nil {
