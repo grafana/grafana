@@ -2,13 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import InfluxDatasource from '../../datasource';
-import * as mockedMeta from '../../influxql_metadata_query';
-import { InfluxQuery } from '../../types';
+import InfluxDatasource from '../../../../../datasource';
+import * as mockedMeta from '../../../../../influxql_metadata_query';
+import { InfluxQuery } from '../../../../../types';
 
-import { Editor } from './Editor';
+import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
-jest.mock('../../influxql_metadata_query', () => {
+jest.mock('../../../../../influxql_metadata_query', () => {
   return {
     __esModule: true,
     getAllPolicies: jest.fn().mockReturnValueOnce(Promise.resolve(['default', 'autogen'])),
@@ -124,7 +124,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
     const datasource: InfluxDatasource = {
       metricFindQuery: () => Promise.resolve([]),
     } as unknown as InfluxDatasource;
-    render(<Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
+    render(<VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />);
 
     await waitFor(() => {});
 
@@ -139,7 +139,7 @@ describe('InfluxDB InfluxQL Visual Editor field-filtering', () => {
 
     // verify `getTagValues` was called once, and in the tags-param we did not receive `field1`
     expect(mockedMeta.getTagValues).toHaveBeenCalledTimes(1);
-    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][3]).toStrictEqual(ONLY_TAGS);
+    expect((mockedMeta.getTagValues as jest.Mock).mock.calls[0][1]).toStrictEqual(ONLY_TAGS);
 
     // now we click on the FROM/cpudata button
     await userEvent.click(screen.getByRole('button', { name: 'cpudata' }));

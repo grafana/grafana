@@ -1,10 +1,11 @@
 import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import InfluxDatasource from '../../datasource';
-import { InfluxQuery } from '../../types';
+import InfluxDatasource from '../../../../../datasource';
+import { getMockDS, getMockDSInstanceSettings } from '../../../../../specs/mocks';
+import { InfluxQuery } from '../../../../../types';
 
-import { Editor } from './Editor';
+import { VisualInfluxQLEditor } from './VisualInfluxQLEditor';
 
 // we mock the @grafana/ui components we use to make sure they just show their "value".
 // we mostly need this for `Input`, because that one is not visible with `.textContent`,
@@ -38,12 +39,10 @@ jest.mock('./Seg', () => {
 async function assertEditor(query: InfluxQuery, textContent: string) {
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
-  const datasource: InfluxDatasource = {
-    retentionPolicies: [],
-    metricFindQuery: () => Promise.resolve([]),
-  } as unknown as InfluxDatasource;
+  const datasource: InfluxDatasource = getMockDS(getMockDSInstanceSettings());
+  datasource.metricFindQuery = () => Promise.resolve([]);
   const { container } = render(
-    <Editor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
+    <VisualInfluxQLEditor query={query} datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} />
   );
   await waitFor(() => {
     expect(container.textContent).toBe(textContent);
