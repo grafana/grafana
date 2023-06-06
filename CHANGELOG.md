@@ -1,3 +1,12 @@
+<!-- 8.5.26 START -->
+
+# 8.5.26 (2023-05-22)
+
+### Bugfixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 8.5.26 END -->
 <!-- 8.5.22 START -->
 
 # 8.5.22 (2023-03-22)
