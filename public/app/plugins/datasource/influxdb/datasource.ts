@@ -32,12 +32,12 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { AnnotationEditor } from './components/AnnotationEditor';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
-import { getAllPolicies } from './influxQLMetadataQuery';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
+import { getAllPolicies } from './influxql_metadata_query';
+import { InfluxQueryBuilder } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
-import { InfluxQueryBuilder } from './query_builder';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 

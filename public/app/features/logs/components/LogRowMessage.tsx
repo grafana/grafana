@@ -3,8 +3,8 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
-import { ClipboardButton, IconButton, Tooltip } from '@grafana/ui';
+import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
+import { ClipboardButton, IconButton } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowStyles } from './getLogRowStyles';
@@ -100,16 +100,15 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span
-            className={cx('log-row-menu', styles.rowMenu, {
-              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-            })}
-            onClick={this.onLogRowClick}
-          >
+          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
-              <Tooltip placement="top" content={'Show context'}>
-                <IconButton size="md" name="gf-show-context" onClick={this.onShowContextClick} />
-              </Tooltip>
+              <IconButton
+                tooltip="Show context"
+                tooltipPlacement="top"
+                size="md"
+                name="gf-show-context"
+                onClick={this.onShowContextClick}
+              />
             )}
             <ClipboardButton
               className={styles.copyLogButton}
