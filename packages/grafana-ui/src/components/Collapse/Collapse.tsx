@@ -147,7 +147,7 @@ export const Collapse = ({
   const headerClass = collapsible ? cx([style.header]) : cx([style.headerCollapsed]);
 
   return (
-    <div className={panelClass}>
+    <div className={panelClass} data-testid="collapse-container">
       <button type="button" className={cx(buttonStyles, headerClass)} onClick={onClickToggle}>
         {collapsible && <Icon className={style.icon} name={isOpen ? 'angle-down' : 'angle-right'} />}
         <div className={cx([style.headerLabel])}>{label}</div>

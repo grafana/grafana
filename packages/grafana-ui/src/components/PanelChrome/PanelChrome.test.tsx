@@ -124,3 +124,9 @@ it('renders streaming indicator in the panel header if loadingState is streaming
 
   expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
+
+it('renders collapsed component if collapsible is true', () => {
+  setup({ collapsible: true });
+
+  expect(screen.getByTestId('collapse-container')).toBeInTheDocument();
+});
