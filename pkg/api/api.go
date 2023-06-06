@@ -142,12 +142,15 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
-	r.Get("/d-embed/:uid", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/script/*", reqSignedIn, hs.Index)
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
+
+	if hs.Features.IsEnabled(featuremgmt.FlagDashboardEmbed) {
+		r.Get("/d-embed", reqSignedIn, hs.Index)
+	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		// list public dashboards
