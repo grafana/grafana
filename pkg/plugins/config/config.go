@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,6 +25,9 @@ type Cfg struct {
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
 
+	// Proxy Settings
+	ProxySettings setting.SecureSocksDSProxySettings
+
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
@@ -31,11 +35,15 @@ type Cfg struct {
 	PluginsCDNURLTemplate string
 
 	Tracing Tracing
+
+	GrafanaComURL string
+
+	Features plugins.FeatureToggles
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, grafanaVersion string,
-	logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing) *Cfg {
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing, features plugins.FeatureToggles) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -46,8 +54,11 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		AWSAllowedAuthProviders: awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:    awsAssumeRoleEnabled,
 		Azure:                   azure,
+		ProxySettings:           secureSocksDSProxy,
 		LogDatasourceRequests:   logDatasourceRequests,
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
 		Tracing:                 tracing,
+		GrafanaComURL:           "https://grafana.com",
+		Features:                features,
 	}
 }

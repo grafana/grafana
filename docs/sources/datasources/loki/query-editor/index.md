@@ -14,7 +14,7 @@ weight: 300
 
 # Loki query editor
 
-The Loki data source's query editor helps you create [log]({{< relref "#create-a-logs-query" >}}) and [metric]({{< relref "#create-a-metrics-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
+The Loki data source's query editor helps you create [log]({{< relref "#create-a-log-query" >}}) and [metric]({{< relref "#create-a-metric-query" >}}) queries that use Loki's query language, [LogQL](/docs/loki/latest/logql/).
 
 This topic explains querying specific to the Loki data source.
 For general documentation on querying data sources in Grafana, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
@@ -30,7 +30,9 @@ To switch between the editor modes, select the corresponding **Builder** and **C
 
 To run a query, select **Run queries** located at the top of the editor.
 
-> **Note:** To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+{{% admonition type="note" %}}
+To run Loki queries in [Explore]({{< relref "../../../explore/" >}}), select **Run query**.
+{{% /admonition %}}
 
 Each mode is synchronized with the other modes, so you can switch between them without losing your work, although there are some limitations.
 
@@ -101,15 +103,22 @@ For more information about log queries and LogQL, refer to the [Loki log queries
 
 ### Show log context
 
-When using a search expression as detailed above, you can retrieve the context surrounding your filtered results.
-By clicking the `Show Context` link on the filtered rows, you'll be able to investigate the log messages that came before and after the
-log message you're interested in.
+In Explore, you can can retrieve the context surrounding your log results by clicking the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
+
+The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
+
+To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you seamlessly navigate through various log context windows without having to reapply your filters.
+
+To reset filters and use the initial log context query, click the `Revert to initial query` button next to the query preview.
 
 ### Tail live logs
 
-Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore#loki-specific-features" >}}).
+Loki supports live tailing of logs in real-time in [Explore]({{< relref "../../../explore" >}}).
 
 Live tailing relies on two Websocket connections: one between the browser and Grafana server, and another between the Grafana server and Loki server.
+
+To start tailing logs click the **Live** button in the top right corner of the Explore view.
+{{< figure src="/static/img/docs/v95/loki_tailing.png" class="docs-image--no-shadow" max-width="80px" >}}
 
 #### Proxying examples
 
@@ -158,7 +167,9 @@ In your `server` section, add the following configuration:
   }
 ```
 
-> **Note:** Available in Grafana v6.3 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v6.3 and higher.
+{{% /admonition %}}
 
 ## Create a metric query
 
@@ -187,8 +198,7 @@ You can use the Loki label browser to navigate through your labels and values, a
 
    The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
 
-1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
-   You can also validate the selector.
+1. Select the **Show logs** button to display log lines based on the selected labels, or select the **Show logs rate** button to show the rate based on metrics such as requests per second. Additionally, you can validate the selector by clicking the **Validate selector** button.
 
 {{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 

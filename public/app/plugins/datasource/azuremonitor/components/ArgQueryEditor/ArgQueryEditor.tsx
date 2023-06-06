@@ -6,9 +6,9 @@ import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
-import SubscriptionField from '../SubscriptionField';
 
 import QueryField from './QueryField';
+import SubscriptionField from './SubscriptionField';
 
 interface ArgQueryEditorProps {
   query: AzureMonitorQuery;
@@ -81,7 +81,6 @@ const ArgQueryEditor = ({
         <EditorRow>
           <EditorFieldGroup>
             <SubscriptionField
-              multiSelect
               subscriptions={subscriptions}
               query={query}
               datasource={datasource}

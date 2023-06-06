@@ -1,5 +1,5 @@
 import { ExploreId, StoreState } from 'app/types';
 
-export const isSplit = (state: StoreState) => Boolean(state.explore[ExploreId.left] && state.explore[ExploreId.right]);
+export const isSplit = (state: StoreState) => Object.keys(state.explore.panes).length > 1;
 
-export const getExploreItemSelector = (exploreId: ExploreId) => (state: StoreState) => state.explore[exploreId];
+export const getExploreItemSelector = (exploreId: ExploreId) => (state: StoreState) => state.explore.panes[exploreId];

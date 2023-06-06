@@ -41,6 +41,7 @@ jest.mock('./api/ruler');
 jest.mock('../../../core/hooks/useMediaQueryChange');
 jest.spyOn(ruleActionButtons, 'matchesWidth').mockReturnValue(false);
 jest.mock('app/core/core', () => ({
+  ...jest.requireActual('app/core/core'),
   appEvents: {
     subscribe: () => {
       return { unsubscribe: () => {} };
@@ -116,7 +117,8 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byRole('link', { name: 'Create alert rule' }),
+  newRuleButton: byRole('link', { name: 'New alert rule' }),
+  moreButton: byRole('button', { name: 'More' }),
   exportButton: byRole('link', { name: /export/i }),
   editGroupModal: {
     dialog: byRole('dialog'),
@@ -125,7 +127,7 @@ const ui = {
     intervalInput: byRole('textbox', {
       name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
     }),
-    saveButton: byRole('button', { name: /Save changes/ }),
+    saveButton: byRole('button', { name: /Save evaluation interval/ }),
   },
 };
 
@@ -696,10 +698,13 @@ describe('RuleList', () => {
 
         renderRuleList();
 
+        await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
       it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
         enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.FoldersRead]);
 
         mocks.getAllDataSourcesMock.mockReturnValue([]);
         setDataSourceSrv(new MockDataSourceSrv({}));
@@ -708,6 +713,7 @@ describe('RuleList', () => {
 
         renderRuleList();
 
+        await userEvent.click(ui.moreButton.get());
         expect(ui.exportButton.query()).not.toBeInTheDocument();
       });
     });
@@ -830,7 +836,7 @@ describe('RuleList', () => {
 
       await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
-      const button = screen.getByText('Create alert rule');
+      const button = screen.getByText('New alert rule');
 
       button.addEventListener('click', (event) => event.preventDefault(), false);
 

@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
@@ -13,12 +13,12 @@ describe('dashboardActions', () => {
 
   const searchData: DataFrame = {
     fields: [
-      { name: 'kind', type: FieldType.string, config: {}, values: new ArrayVector(['dashboard']) },
-      { name: 'name', type: FieldType.string, config: {}, values: new ArrayVector(['My dashboard 1']) },
-      { name: 'uid', type: FieldType.string, config: {}, values: new ArrayVector(['my-dashboard-1']) },
-      { name: 'url', type: FieldType.string, config: {}, values: new ArrayVector(['/my-dashboard-1']) },
-      { name: 'tags', type: FieldType.other, config: {}, values: new ArrayVector([['foo', 'bar']]) },
-      { name: 'location', type: FieldType.string, config: {}, values: new ArrayVector(['my-folder-1']) },
+      { name: 'kind', type: FieldType.string, config: {}, values: ['dashboard'] },
+      { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
+      { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
+      { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
+      { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
+      { name: 'location', type: FieldType.string, config: {}, values: ['my-folder-1'] },
     ],
     meta: {
       custom: {

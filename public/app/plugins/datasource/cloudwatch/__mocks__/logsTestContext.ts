@@ -4,7 +4,6 @@ import {
   DataFrame,
   dataFrameToJSON,
   MutableDataFrame,
-  ArrayVector,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourceRef,
@@ -13,10 +12,10 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
 } from '@grafana/data';
 import { GetDataSourceListFilters, setDataSourceSrv } from '@grafana/runtime';
 
-import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQueryStatus } from '../types';
 
 import { meta, setupMockedDataSource } from './CloudWatchDataSource';
@@ -35,15 +34,15 @@ export function setupForLogs() {
     fields: [
       {
         name: '@message',
-        values: new ArrayVector(['something']),
+        values: ['something'],
       },
       {
         name: '@timestamp',
-        values: new ArrayVector([1]),
+        values: [1],
       },
       {
         name: '@xrayTraceId',
-        values: new ArrayVector(['1-613f0d6b-3e7cb34375b60662359611bd']),
+        values: ['1-613f0d6b-3e7cb34375b60662359611bd'],
       },
     ],
     meta: { custom: { Status: CloudWatchLogsQueryStatus.Complete } },
@@ -63,7 +62,7 @@ export function setupForLogs() {
         ): Observable<DataQueryResponse> | Promise<DataQueryResponse> {
           throw new Error('Function not implemented.');
         },
-        testDatasource: function (): Promise<CloudWatchDatasource> {
+        testDatasource: function (): Promise<TestDataSourceResponse> {
           throw new Error('Function not implemented.');
         },
         meta: meta,

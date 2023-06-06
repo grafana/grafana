@@ -42,9 +42,30 @@ type File struct {
 }
 
 type CompatOpts struct {
-	GrafanaVersion string
-	OS             string
-	Arch           string
+	grafanaVersion string
+
+	os   string
+	arch string
+}
+
+func (co CompatOpts) GrafanaVersion() string {
+	return co.grafanaVersion
+}
+
+func (co CompatOpts) OS() string {
+	return co.os
+}
+
+func (co CompatOpts) Arch() string {
+	return co.arch
+}
+
+func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
+}
+
+func NewSystemCompatOpts(os, arch string) CompatOpts {
+	return CompatOpts{arch: arch, os: os}
 }
 
 type UpdateInfo struct {
@@ -55,7 +76,11 @@ type FS interface {
 	fs.FS
 
 	Base() string
-	Files() []string
+	Files() ([]string, error)
+}
+
+type FSRemover interface {
+	Remove() error
 }
 
 type FoundBundle struct {
@@ -135,4 +160,25 @@ type ClientMiddlewareFunc func(next Client) Client
 // CreateClientMiddleware implements the ClientMiddleware interface.
 func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
 	return fn(next)
+}
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+}
+
+type KeyStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key string, value string) error
+	Del(ctx context.Context, key string) error
+	ListKeys(ctx context.Context) ([]string, error)
+	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	SetLastUpdated(ctx context.Context) error
+}
+
+type KeyRetriever interface {
+	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }

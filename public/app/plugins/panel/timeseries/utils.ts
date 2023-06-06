@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   DataFrame,
   Field,
   FieldType,
@@ -47,7 +46,7 @@ export function prepareGraphableFields(
   // this mutates (once)
   for (let frame of series) {
     for (let field of frame.fields) {
-      if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+      if (field.type === FieldType.time && typeof field.values[0] !== 'number') {
         field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
       }
     }
@@ -85,14 +84,12 @@ export function prepareGraphableFields(
           hasValueField = useNumericX ? fieldIdx > 0 : true;
           copy = {
             ...field,
-            values: new ArrayVector(
-              field.values.toArray().map((v) => {
-                if (!(Number.isFinite(v) || v == null)) {
-                  return null;
-                }
-                return v;
-              })
-            ),
+            values: field.values.map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            }),
           };
 
           fields.push(copy);
@@ -100,7 +97,7 @@ export function prepareGraphableFields(
         case FieldType.string:
           copy = {
             ...field,
-            values: new ArrayVector(field.values.toArray()),
+            values: field.values,
           };
 
           fields.push(copy);
@@ -124,14 +121,12 @@ export function prepareGraphableFields(
             ...field,
             config,
             type: FieldType.number,
-            values: new ArrayVector(
-              field.values.toArray().map((v) => {
-                if (v == null) {
-                  return v;
-                }
-                return Boolean(v) ? 1 : 0;
-              })
-            ),
+            values: field.values.map((v) => {
+              if (v == null) {
+                return v;
+              }
+              return Boolean(v) ? 1 : 0;
+            }),
           };
 
           if (!isBooleanUnit(config.unit)) {

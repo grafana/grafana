@@ -61,14 +61,8 @@ To configure basic settings for the data source, complete the following steps:
     | `Version`                       | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                               |
     | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
     | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
-    | **Exemplars configuration**     |                                                                                                                                                                                                                                                                                                                 |
-    | `Internal link`                 | Enable this option is you have an internal link. When you enable this option, you will see a data source selector. Select the backend tracing data store for your exemplar data.                                                                                                                                |
-    | `Data source`                   | You will see this option only if you enable `Internal link` option. Select the backend tracing data store for your exemplar data.                                                                                                                                                                               |
-    | `URL`                           | You will see this option only if the `Internal link` option is disabled. Enter the full URL of the external link. You can interpolate the value from the field with `${__value.raw }` macro.                                                                                                                    |
-    | `URL Label`                     | (Optional) add a custom display label to override the value of the `Label name` field.                                                                                                                                                                                                                          |
-    | `Label name`                    | Add a name for the exemplar traceID property.                                                                                                                                                                                                                                                                   |
 
-        **Exemplars configuration:**
+    **Exemplars configuration:**
 
     | Name              | Description                                                                                                                                                                                                                                                    |
     | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,7 +93,11 @@ datasources:
       manageAlerts: true
       prometheusType: Prometheus
       prometheusVersion: 2.37.0
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       cacheLevel: 'High'
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
       exemplarTraceIdDestinations:
         # Field with internal link pointing to data source in Grafana.
         # datasourceUid value can be anything, but it should be unique across all defined data source uids.
@@ -110,12 +108,6 @@ datasources:
         - name: traceID
           url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
 ```
-
-## Query the data source
-
-The Prometheus query editor includes a code editor and visual query builder.
-
-For details, see the [query editor documentation]({{< relref "./query-editor" >}}).
 
 ## View Grafana metrics with Prometheus
 
@@ -143,7 +135,9 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3.5 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3.5 and higher.
+{{% /admonition %}}
 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
@@ -151,7 +145,9 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ### Configure exemplars
 
-> **Note:** Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% admonition type="note" %}}
+Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% /admonition %}}
 
 Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data.
@@ -175,3 +171,11 @@ Grafana lists these variables in dropdown select boxes at the top of the dashboa
 Grafana refers to such variables as template variables.
 
 For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+
+## Incremental Dashboard Queries (beta)
+
+As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
+This can be toggled on or off in the datasource configuration or provisioning file (under `incrementalQuerying` in jsonData).
+Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
+
+Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.

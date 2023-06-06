@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: Top Metrics float
+//  Name: 
 //  Dimensions: 2 Fields by 3 Rows
 //  +-----------------------------------+-------------------+
 //  | Name: Time                        | Name: Value       |
@@ -26,7 +26,6 @@
   "frames": [
     {
       "schema": {
-        "name": "Top Metrics float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -49,7 +48,10 @@
               "frame": "float64",
               "nullable": true
             },
-            "labels": {}
+            "labels": {},
+            "config": {
+              "displayNameFromDS": "Top Metrics float"
+            }
           }
         ]
       },

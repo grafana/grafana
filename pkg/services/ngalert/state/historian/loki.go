@@ -255,14 +255,17 @@ func statesToStream(rule history_model.RuleMeta, states []state.StateTransition,
 			continue
 		}
 
+		sanitizedLabels := removePrivateLabels(state.Labels)
 		entry := lokiEntry{
 			SchemaVersion:  1,
 			Previous:       state.PreviousFormatted(),
 			Current:        state.Formatted(),
 			Values:         valuesAsDataBlob(state.State),
+			Condition:      rule.Condition,
 			DashboardUID:   rule.DashboardUID,
 			PanelID:        rule.PanelID,
-			InstanceLabels: removePrivateLabels(state.Labels),
+			Fingerprint:    labelFingerprint(sanitizedLabels),
+			InstanceLabels: sanitizedLabels,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -302,8 +305,10 @@ type lokiEntry struct {
 	Current       string           `json:"current"`
 	Error         string           `json:"error,omitempty"`
 	Values        *simplejson.Json `json:"values"`
+	Condition     string           `json:"condition"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`
+	Fingerprint   string           `json:"fingerprint"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`

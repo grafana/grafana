@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { CoreApp, MutableDataFrame } from '@grafana/data';
+import { CoreApp, createDataFrame } from '@grafana/data';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
@@ -23,7 +23,7 @@ describe('FlameGraphContainer', () => {
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', { value: 500 });
 
   const FlameGraphContainerWithProps = () => {
-    const flameGraphData = new MutableDataFrame(data);
+    const flameGraphData = createDataFrame(data);
     flameGraphData.meta = {
       custom: {
         ProfileTypeID: 'cpu:foo:bar',
@@ -39,11 +39,11 @@ describe('FlameGraphContainer', () => {
 
   it('should update search when row selected in top table', async () => {
     render(<FlameGraphContainerWithProps />);
-    await userEvent.click((await screen.findAllByRole('row'))[1]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole('row')[2]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.getByDisplayValue('total')).toBeInTheDocument();
-    await userEvent.click(screen.getAllByRole('row')[2]);
+    await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[1]);
     expect(screen.queryByDisplayValue('total')).not.toBeInTheDocument();
   });
 

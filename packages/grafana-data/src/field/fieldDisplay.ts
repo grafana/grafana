@@ -140,7 +140,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           field.state = setIndexForPaletteColor(field, values.length);
 
           const scopedVars = getFieldScopedVarsWithDataContexAndRowIndex(field, j);
-          const displayValue = display(field.values.get(j));
+          const displayValue = display(field.values[j]);
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
@@ -254,7 +254,7 @@ function getSmartDisplayNameForRow(
     }
 
     if (otherField.type === FieldType.string) {
-      const value = otherField.values.get(rowIndex) ?? '';
+      const value = otherField.values[rowIndex] ?? '';
       const mappedValue = otherField.display ? otherField.display(value).text : value;
       if (mappedValue.length > 0) {
         parts.push(mappedValue);

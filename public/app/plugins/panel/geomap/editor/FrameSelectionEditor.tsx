@@ -21,6 +21,6 @@ export const FrameSelectionEditor = ({ value, context, onChange }: Props) => {
   );
 
   return (
-    <RefIDPicker value={value.options} onChange={onFilterChange} data={context.data} placeholder="Change filter" />
+    <RefIDPicker value={value?.options} onChange={onFilterChange} data={context.data} placeholder="Change filter" />
   );
 };

@@ -1,5 +1,4 @@
-import { screen } from '@testing-library/dom';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -77,20 +76,12 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
 
   ds.getProfileTypes = jest.fn().mockResolvedValue([
     {
-      name: 'process_cpu',
-      ID: 'process_cpu:cpu',
-      period_type: 'day',
-      period_unit: 's',
-      sample_unit: 'ms',
-      sample_type: 'cpu',
+      label: 'process_cpu - cpu',
+      id: 'process_cpu:cpu',
     },
     {
-      name: 'memory',
-      ID: 'memory:memory',
-      period_type: 'day',
-      period_unit: 's',
-      sample_unit: 'ms',
-      sample_type: 'memory',
+      label: 'memory',
+      id: 'memory:memory',
     },
   ] as ProfileTypeMessage[]);
 
@@ -101,6 +92,7 @@ function setup(options: { props: Partial<Props> } = { props: {} }) {
         labelSelector: '',
         profileTypeId: 'process_cpu:cpu',
         refId: 'A',
+        maxNodes: 1000,
         groupBy: [],
       }}
       datasource={ds}

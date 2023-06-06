@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/correlations"
+	"github.com/grafana/grafana/pkg/services/correlations/correlationstest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -38,6 +40,9 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), result.LibraryPanels)
 		assert.Equal(t, int64(0), result.LibraryVariables)
 		assert.Equal(t, int64(0), result.APIKeys)
+		assert.Equal(t, int64(2), result.Correlations)
+		assert.NotNil(t, result.DatabaseCreatedTime)
+		assert.Equal(t, db.Dialect.DriverName(), result.DatabaseDriver)
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
@@ -76,6 +81,25 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 
 	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
+
+	correlationsSvc := correlationstest.New(sqlStore)
+
+	c := make([]correlations.Correlation, 2)
+	for i := range c {
+		cmd := correlations.CreateCorrelationCommand{
+			Label:     fmt.Sprintf("correlation %v", i),
+			SourceUID: "graphite",
+			OrgId:     1,
+			Config: correlations.CorrelationConfig{
+				Field:  "field",
+				Target: map[string]interface{}{},
+				Type:   correlations.ConfigTypeQuery,
+			},
+		}
+		correlation, err := correlationsSvc.CreateCorrelation(context.Background(), cmd)
+		require.NoError(t, err)
+		c[i] = correlation
+	}
 
 	users := make([]user.User, 3)
 	for i := range users {

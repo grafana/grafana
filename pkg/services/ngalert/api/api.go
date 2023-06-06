@@ -52,6 +52,7 @@ type Alertmanager interface {
 	// Receivers
 	GetReceivers(ctx context.Context) []apimodels.Receiver
 	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
+	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
 }
 
 type AlertingStore interface {
@@ -85,6 +86,9 @@ type API struct {
 	Historian            Historian
 
 	AppUrl *url.URL
+
+	// Hooks can be used to replace API handlers for specific paths.
+	Hooks *Hooks
 }
 
 // RegisterAPIEndpoints registers API handlers

@@ -10,7 +10,7 @@ import { QueryStats } from 'app/plugins/datasource/loki/types';
 export interface Props {
   title: string;
   collapsedInfo: string[];
-  queryStats?: QueryStats;
+  queryStats?: QueryStats | null;
   children: React.ReactNode;
 }
 

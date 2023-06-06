@@ -1,5 +1,6 @@
 import { configureStore as reduxConfigureStore } from '@reduxjs/toolkit';
 
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { StoreState } from 'app/types/store';
 
@@ -22,7 +23,8 @@ export function configureStore(initialState?: Partial<StoreState>) {
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware({ thunk: true, serializableCheck: false, immutableCheck: false }).concat(
         alertingApi.middleware,
-        publicDashboardApi.middleware
+        publicDashboardApi.middleware,
+        browseDashboardsAPI.middleware
       ),
     devTools: process.env.NODE_ENV !== 'production',
     preloadedState: {

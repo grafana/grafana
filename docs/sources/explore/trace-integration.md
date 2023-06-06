@@ -40,6 +40,24 @@ This section explains the elements of the Trace View.
 
 Shows condensed view or the trace timeline. Drag your mouse over the minimap to zoom into smaller time range. Zooming will also update the main timeline, so it is easy to see shorter spans. Hovering over the minimap, when zoomed, will show Reset Selection button which resets the zoom.
 
+### Span Filters
+
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
+
 ### Timeline
 
 {{< figure src="/static/img/docs/v70/explore-trace-view-timeline.png" class="docs-image--no-shadow" max-width= "900px"  caption="Screenshot of the trace view timeline" >}}
@@ -65,7 +83,9 @@ Clicking anywhere on the span row shows span details.
 
 ### Trace to logs
 
-> **Note:** Available in Grafana 7.4 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana 7.4 and later versions.
+{{% /admonition %}}
 
 You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
@@ -75,7 +95,9 @@ Click the document icon to open a split view in Explore with the configured data
 
 ### Trace to metrics
 
-> **Note:** This feature is currently in beta & behind the `traceToMetrics` feature toggle.
+{{% admonition type="note" %}}
+This feature is currently in beta & behind the `traceToMetrics` feature toggle.
+{{% /admonition %}}
 
 You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
 

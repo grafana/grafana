@@ -4,7 +4,7 @@ import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardDTO, FolderInfo, PermissionLevelString, ThunkResult } from 'app/types';
+import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
 import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
@@ -316,13 +316,12 @@ export const SLICE_FOLDER_RESULTS_TO = 1000;
 export function searchFolders(
   query: any,
   permission?: PermissionLevelString,
-  withAccessControl = false
+  type: SearchQueryType = SearchQueryType.Folder
 ): Promise<DashboardSearchHit[]> {
   return getBackendSrv().get('/api/search', {
     query,
-    type: 'dash-folder',
+    type: type,
     permission,
-    accesscontrol: withAccessControl,
     limit: SLICE_FOLDER_RESULTS_TO,
   });
 }

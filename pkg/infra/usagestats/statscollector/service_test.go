@@ -177,6 +177,7 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 11, metrics["stats.data_keys.count"])
 	assert.EqualValues(t, 3, metrics["stats.active_data_keys.count"])
 	assert.EqualValues(t, 5, metrics["stats.public_dashboards.count"])
+	assert.EqualValues(t, 3, metrics["stats.correlations.count"])
 
 	assert.InDelta(t, int64(65), metrics["stats.uptime"], 6)
 }
@@ -336,6 +337,7 @@ func mockSystemStats(statsService *statstest.FakeService) {
 		DataKeys:                  11,
 		ActiveDataKeys:            3,
 		PublicDashboards:          5,
+		Correlations:              3,
 	}
 }
 

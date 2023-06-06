@@ -8,15 +8,17 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.30"
-build_image = "grafana/build-container:1.7.2"
+grabpl_version = "v3.0.38"
+cloudsdk_image = "google/cloud-sdk:431.0.0"
+build_image = "grafana/build-container:1.7.4"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
 alpine_image = "alpine:3.17.1"
 curl_image = "byrnedo/alpine-curl:0.1.8"
 windows_image = "mcr.microsoft.com/windows:1809"
 wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.20.1"
+go_image = "golang:1.20.4"
+windows_go_image = "grafana/grafana-ci-windows-test:0.1.0"
 
 trigger_oss = {
     "repo": [
@@ -54,6 +56,19 @@ def wire_install_step():
         ],
         "depends_on": [
             "verify-gen-cue",
+        ],
+    }
+
+def windows_wire_install_step(edition):
+    return {
+        "name": "wire-install",
+        "image": windows_go_image,
+        "commands": [
+            "go install github.com/google/wire/cmd/wire@v0.5.0",
+            "wire gen -tags {} ./pkg/server".format(edition),
+        ],
+        "depends_on": [
+            "windows-init",
         ],
     }
 
@@ -188,6 +203,61 @@ def init_enterprise_step(ver_mode):
         ],
     }
 
+def windows_init_enterprise_steps(ver_mode):
+    """Performs init-enterprise steps in a Windows environment
+
+    Args:
+        ver_mode: in what mode should this be run
+
+    Returns:
+        A list of steps setting up an enterprise folder
+    """
+    if ver_mode == "release":
+        source = "${DRONE_TAG}"
+    elif ver_mode == "release-branch":
+        source = "$$env:DRONE_BRANCH"
+    else:
+        source = "main"
+
+    clone_cmds = [
+        'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
+        "cd grafana-enterprise",
+        "git checkout {}".format(source),
+    ]
+
+    init_cmds = [
+        # Need to move grafana-enterprise out of the way, so directory is empty and can be cloned into
+        "cp -r grafana-enterprise C:\\App\\grafana-enterprise",
+        "rm -r -force grafana-enterprise",
+        "cp grabpl.exe C:\\App\\grabpl.exe",
+        "rm -force grabpl.exe",
+        "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}".format(source),
+        "cp C:\\App\\grabpl.exe grabpl.exe",
+    ]
+
+    steps = []
+    steps.extend(
+        [
+            download_grabpl_step(platform = "windows"),
+            {
+                "name": "clone",
+                "image": wix_image,
+                "environment": {
+                    "GITHUB_TOKEN": from_secret("github_token"),
+                },
+                "commands": clone_cmds,
+            },
+            {
+                "name": "windows-init",
+                "image": wix_image,
+                "commands": init_cmds,
+                "depends_on": ["clone"],
+                "environment": {"GITHUB_TOKEN": from_secret("github_token")},
+            },
+        ],
+    )
+    return steps
+
 def download_grabpl_step(platform = "linux"):
     if platform == "windows":
         return {
@@ -294,6 +364,16 @@ def lint_backend_step():
         ],
     }
 
+def validate_modfile_step():
+    return {
+        "name": "validate-modfile",
+        "image": go_image,
+        "failure": "ignore",
+        "commands": [
+            "go run scripts/modowners/modowners.go check go.mod",
+        ],
+    }
+
 def benchmark_ldap_step():
     return {
         "name": "benchmark-ldap",
@@ -384,7 +464,7 @@ def store_storybook_step(ver_mode, trigger = None):
 def e2e_tests_artifacts():
     return {
         "name": "e2e-tests-artifacts-upload",
-        "image": "google/cloud-sdk:406.0.0",
+        "image": cloudsdk_image,
         "depends_on": [
             "end-to-end-tests-dashboards-suite",
             "end-to-end-tests-panels-suite",
@@ -567,6 +647,8 @@ def build_frontend_package_step(edition, ver_mode):
         cmds = [
             "./bin/build build-frontend-packages --jobs 8 --edition {} ".format(edition) +
             "--build-id {}".format(build_no),
+            "yarn packages:pack",
+            "./scripts/validate-npm-packages.sh",
         ]
 
     return {
@@ -603,10 +685,10 @@ def build_plugins_step(edition, ver_mode):
         ],
     }
 
-def test_backend_step():
+def test_backend_step(image = build_image):
     return {
         "name": "test-backend",
-        "image": build_image,
+        "image": image,
         "depends_on": [
             "wire-install",
         ],
@@ -614,6 +696,10 @@ def test_backend_step():
             "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
+
+def windows_test_backend_step():
+    step = test_backend_step(image = windows_go_image)
+    return step
 
 def test_backend_integration_step():
     return {
@@ -623,7 +709,7 @@ def test_backend_integration_step():
             "wire-install",
         ],
         "commands": [
-            "go test -run Integration -covermode=atomic -timeout=5m ./pkg/...",
+            "go test -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
         ],
     }
 
@@ -689,8 +775,31 @@ def lint_frontend_step():
         "commands": [
             "yarn run prettier:check",
             "yarn run lint",
-            "yarn run i18n:compile",  # TODO: right place for this?
             "yarn run typecheck",
+        ],
+    }
+
+def verify_i18n_step():
+    extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    return {
+        "name": "verify-i18n",
+        "image": build_image,
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            # Verify that translation extraction has been committed
+            '''
+            file_diff=$(git diff --dirstat public/locales)
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+            "yarn run i18n:compile",
         ],
     }
 
@@ -998,7 +1107,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
 
     return {
         "name": "build-docker-images" + ubuntu_sfx,
-        "image": "google/cloud-sdk",
+        "image": cloudsdk_image,
         "depends_on": [
             "copy-packages-for-docker",
             "compile-build-cmd",
@@ -1011,7 +1120,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
 def fetch_images_step(edition):
     return {
         "name": "fetch-images-{}".format(edition),
-        "image": "google/cloud-sdk",
+        "image": cloudsdk_image,
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "DOCKER_USER": from_secret("docker_username"),
@@ -1051,6 +1160,9 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "GCP_KEY": from_secret("gcp_key"),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
+        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
+        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
     cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(
@@ -1076,9 +1188,18 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
             docker_repo,
         )
 
+    if ver_mode == "pr":
+        environment = {
+            "DOCKER_USER": from_secret("docker_username_pr"),
+            "DOCKER_PASSWORD": from_secret("docker_password_pr"),
+            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
+            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
+        }
+
     step = {
         "name": "publish-images-{}".format(name),
-        "image": "google/cloud-sdk",
+        "image": cloudsdk_image,
         "environment": environment,
         "commands": [cmd],
         "depends_on": deps,
@@ -1086,6 +1207,8 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     }
     if trigger and ver_mode in ("release-branch", "main"):
         step = dict(step, when = trigger)
+    if ver_mode == "pr":
+        step = dict(step, failure = "ignore")
 
     return step
 
@@ -1096,9 +1219,8 @@ def postgres_integration_tests_step():
         "dockerize -wait tcp://postgres:5432 -timeout 120s",
         "psql -p 5432 -h postgres -U grafanatest -d grafanatest -f " +
         "devenv/docker/blocks/postgres_tests/setup.sql",
-        # Make sure that we don't use cached results for another database
         "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
         "name": "postgres-integration-tests",
@@ -1112,23 +1234,22 @@ def postgres_integration_tests_step():
         "commands": cmds,
     }
 
-def mysql_integration_tests_step():
+def mysql_integration_tests_step(hostname, version):
     cmds = [
         "apt-get update",
         "apt-get install -yq default-mysql-client",
-        "dockerize -wait tcp://mysql:3306 -timeout 120s",
-        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h mysql -P 3306 -u root -prootpass",
-        # Make sure that we don't use cached results for another database
+        "dockerize -wait tcp://{}:3306 -timeout 120s".format(hostname),
+        "cat devenv/docker/blocks/mysql_tests/setup.sql | mysql -h {} -P 3306 -u root -prootpass".format(hostname),
         "go clean -testcache",
-        "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
+        "go test -p=1 -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\\(.*\\)/' | sort -u)",
     ]
     return {
-        "name": "mysql-integration-tests",
+        "name": "mysql-{}-integration-tests".format(version),
         "image": build_image,
         "depends_on": ["wire-install"],
         "environment": {
             "GRAFANA_TEST_DB": "mysql",
-            "MYSQL_HOST": "mysql",
+            "MYSQL_HOST": hostname,
         },
         "commands": cmds,
     }
@@ -1181,11 +1302,21 @@ def release_canary_npm_packages_step(trigger = None):
             "NPM_TOKEN": from_secret("npm_token"),
         },
         "commands": [
-            "./scripts/circle-release-canary-packages.sh",
+            "./scripts/publish-npm-packages.sh --dist-tag 'canary' --registry 'https://registry.npmjs.org'",
         ],
     }
     if trigger:
-        step = dict(step, when = trigger)
+        step = dict(
+            step,
+            when = dict(
+                trigger,
+                paths = {
+                    "include": [
+                        "packages/**",
+                    ],
+                },
+            ),
+        )
     return step
 
 def enterprise2_suffix(edition):
@@ -1287,6 +1418,19 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
         },
     }
 
+def windows_clone_step():
+    return {
+        "name": "clone",
+        "image": wix_image,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            'git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .',
+            "git checkout -f $$env:DRONE_COMMIT",
+        ],
+    }
+
 def get_windows_steps(edition, ver_mode):
     """Generate the list of Windows steps.
 
@@ -1329,7 +1473,7 @@ def get_windows_steps(edition, ver_mode):
             "rm -r -force grafana-enterprise",
             "cp grabpl.exe C:\\App\\grabpl.exe",
             "rm -force grabpl.exe",
-            "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise",
+            "C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}".format(source),
             "cp C:\\App\\grabpl.exe grabpl.exe",
         ]
 
@@ -1369,6 +1513,8 @@ def get_windows_steps(edition, ver_mode):
                 },
             ],
         )
+
+    # TODO: Run windows backend tests
 
     if (
         ver_mode == "main" and (edition not in ("enterprise", "enterprise2"))
@@ -1506,6 +1652,7 @@ def trigger_test_release():
             "repo": [
                 "grafana/grafana",
             ],
+            "branch": "main",
         },
     }
 

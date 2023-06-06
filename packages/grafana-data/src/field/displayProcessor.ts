@@ -53,8 +53,8 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     unit = `dateTimeAsSystem`;
     hasDateUnit = true;
     if (field.values && field.values.length > 1) {
-      let start = field.values.get(0);
-      let end = field.values.get(field.values.length - 1);
+      let start = field.values[0];
+      let end = field.values[field.values.length - 1];
       if (typeof start === 'string') {
         start = dateTimeParse(start).unix();
         end = dateTimeParse(end).unix();

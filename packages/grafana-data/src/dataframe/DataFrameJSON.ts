@@ -1,5 +1,4 @@
 import { DataFrame, FieldType, FieldConfig, Labels, QueryResultMeta, Field } from '../types';
-import { ArrayVector } from '../vector';
 
 import { guessFieldTypeFromNameAndValue } from './processDataFrame';
 
@@ -203,7 +202,7 @@ export function dataFrameFromJSON(dto: DataFrameJSON): DataFrame {
       ...f,
       type: type ?? guessFieldType(f.name, buffer),
       config: f.config ?? {},
-      values: new ArrayVector(buffer),
+      values: buffer,
       // the presence of this prop is an optimization signal & lookup for consumers
       entities: entities ?? {},
     };
@@ -242,7 +241,7 @@ export function dataFrameToJSON(frame: DataFrame): DataFrameJSON {
     fields: frame.fields.map((f) => {
       const { values, nanos, state, display, ...sfield } = f;
       delete (sfield as any).entities;
-      data.values.push(values.toArray());
+      data.values.push(values);
 
       if (nanos != null) {
         allNanos.push(nanos);

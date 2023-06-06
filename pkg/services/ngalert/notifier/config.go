@@ -8,14 +8,13 @@ import (
 	"path/filepath"
 
 	alertingNotify "github.com/grafana/alerting/notify"
+	alertingTemplates "github.com/grafana/alerting/templates"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
-var cfglogger = log.New("notifier.config")
-
-func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
+func PersistTemplates(logger log.Logger, cfg *api.PostableUserConfig, path string) ([]string, bool, error) {
 	if len(cfg.TemplateFiles) < 1 {
 		return nil, false, nil
 	}
@@ -33,7 +32,7 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 		}
 
 		file := filepath.Join(path, name)
-		pathSet[file] = struct{}{}
+		pathSet[name] = struct{}{}
 
 		// Check if the template file already exists and if it has changed
 		// We can safely ignore gosec here as we've previously checked the filename is clean
@@ -57,16 +56,16 @@ func PersistTemplates(cfg *api.PostableUserConfig, path string) ([]string, bool,
 	// Now that we have the list of _actual_ templates, let's remove the ones that we don't need.
 	existingFiles, err := os.ReadDir(path)
 	if err != nil {
-		cfglogger.Error("unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
+		logger.Error("Unable to read directory for deleting Alertmanager templates", "error", err, "path", path)
 	}
 	for _, existingFile := range existingFiles {
 		p := filepath.Join(path, existingFile.Name())
-		_, ok := pathSet[p]
+		_, ok := pathSet[existingFile.Name()]
 		if !ok {
 			templatesChanged = true
 			err := os.Remove(p)
 			if err != nil {
-				cfglogger.Error("unable to delete template", "error", err, "file", p)
+				logger.Error("Unable to delete template", "error", err, "file", p)
 			}
 		}
 	}
@@ -91,37 +90,16 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 // AlertingConfiguration provides configuration for an Alertmanager.
 // It implements the notify.Configuration interface.
 type AlertingConfiguration struct {
-	AlertmanagerConfig    api.PostableApiAlertingConfig
-	RawAlertmanagerConfig []byte
+	alertmanagerConfig    api.PostableApiAlertingConfig
+	rawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *alertingNotify.Template
-
-	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
-	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
+	receivers                []*alertingNotify.APIReceiver
+	receiverIntegrationsFunc func(r *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
-	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
-		// TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
-		var out api.RawMessage
-		settingsJSON, err := json.Marshal(next.Settings)
-		if err != nil {
-			return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
-		}
-
-		err = out.UnmarshalJSON(settingsJSON)
-		if err != nil {
-			return nil, fmt.Errorf("unable to marshal JSON to RawMessage: %v", err)
-		}
-		gr := &api.PostableGrafanaReceiver{
-			UID:                   next.UID,
-			Name:                  next.Name,
-			Type:                  next.Type,
-			DisableResolveMessage: next.DisableResolveMessage,
-			Settings:              out,
-			SecureSettings:        next.SecureSettings,
-		}
-		return a.ReceiverIntegrationsFunc(gr, tmpl)
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+	return func(next *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
+		return a.receiverIntegrationsFunc(next, tmpl)
 	}
 }
 
@@ -130,29 +108,29 @@ func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimit
 }
 
 func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
-	return a.AlertmanagerConfig.InhibitRules
+	return a.alertmanagerConfig.InhibitRules
 }
 
 func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
-	return a.AlertmanagerConfig.MuteTimeIntervals
+	return a.alertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
-	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
+func (a AlertingConfiguration) Receivers() []*alertingNotify.APIReceiver {
+	return a.receivers
 }
 
 func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
-	return a.AlertmanagerConfig.Route.AsAMRoute()
+	return a.alertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *alertingNotify.Template {
-	return a.AlertmanagerTemplates
+func (a AlertingConfiguration) Templates() []string {
+	return a.alertmanagerConfig.Templates
 }
 
 func (a AlertingConfiguration) Hash() [16]byte {
-	return md5.Sum(a.RawAlertmanagerConfig)
+	return md5.Sum(a.rawAlertmanagerConfig)
 }
 
 func (a AlertingConfiguration) Raw() []byte {
-	return a.RawAlertmanagerConfig
+	return a.rawAlertmanagerConfig
 }
