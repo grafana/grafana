@@ -162,7 +162,7 @@ export function useStateSync(params: ExploreQueryParams) {
     }
 
     // This happens when the user first navigates to explore.
-    // Here we want to initialize each pane initial data, wether it comes
+    // Here we want to initialize each pane initial data, whether it comes
     // from the url or as a result of migrations.
     if (!isURLOutOfSync && initState.current === 'notstarted') {
       initState.current = 'pending';
