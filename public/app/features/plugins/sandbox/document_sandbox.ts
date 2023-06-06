@@ -1,5 +1,6 @@
 import { forbiddenElements } from './constants';
 
+// IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 
 export function getSafeSandboxDomElement(element: Element): Element {
