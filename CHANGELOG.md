@@ -546,7 +546,12 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 <!-- 9.5.0 END -->
 <!-- 9.4.12 START -->
 
-# 9.4.12 (2023-05-22)
+# 9.4.12 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
 
 <!-- 9.4.12 END -->
 <!-- 9.4.10 START -->
