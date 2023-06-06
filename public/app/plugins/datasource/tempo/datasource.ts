@@ -263,7 +263,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         });
 
         if (targets.traceqlSearch[0].streaming) {
-          subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch));
+          subQueries.push(this.handleStreamingSearch(options, targets.traceqlSearch, queryValue));
         } else {
           subQueries.push(
             this._request('/api/search', {
@@ -424,8 +424,14 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     return request;
   }
 
-  handleStreamingSearch(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): Observable<DataQueryResponse> {
-    const validTargets = targets.filter((t) => t.query).map((t): TempoQuery => ({ ...t, query: t.query.trim() }));
+  handleStreamingSearch(
+    options: DataQueryRequest<TempoQuery>,
+    targets: TempoQuery[],
+    query?: string
+  ): Observable<DataQueryResponse> {
+    const validTargets = targets
+      .filter((t) => t.query)
+      .map((t): TempoQuery => ({ ...t, query: query || t.query.trim() }));
     if (!validTargets.length) {
       return EMPTY;
     }
