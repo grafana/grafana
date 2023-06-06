@@ -318,7 +318,8 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
-	OAuthCookieMaxAge int
+	OAuthCookieMaxAge             int
+	OAuthAllowInsecureEmailLookup bool
 
 	// JWT Auth
 	JWTAuthEnabled                 bool
@@ -1304,6 +1305,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if err != nil {
 		return err
 	}
+
+	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
 
 	const defaultMaxLifetime = "30d"
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)
