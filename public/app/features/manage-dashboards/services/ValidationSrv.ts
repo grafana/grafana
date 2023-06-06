@@ -1,9 +1,4 @@
-import { backendSrv } from 'app/core/services/backend_srv';
-
-const hitTypes = {
-  FOLDER: 'dash-folder',
-  DASHBOARD: 'dash-db',
-};
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 class ValidationError extends Error {
   type: string;
@@ -37,23 +32,16 @@ export class ValidationSrv {
       throw new ValidationError('EXISTING', 'This is a reserved name and cannot be used for a folder.');
     }
 
-    const promises = [];
-    promises.push(backendSrv.search({ type: hitTypes.FOLDER, folderIds: [folderId], query: name }));
-    promises.push(backendSrv.search({ type: hitTypes.DASHBOARD, folderIds: [folderId], query: name }));
+    const searcher = getGrafanaSearcher();
 
-    const res = await Promise.all(promises);
-    let hits: any[] = [];
+    const dashboardResults = await searcher.search({
+      kind: ['dashboard'],
+      query: name,
+      location: folderId || 'general',
+    });
 
-    if (res.length > 0 && res[0].length > 0) {
-      hits = res[0];
-    }
-
-    if (res.length > 1 && res[1].length > 0) {
-      hits = hits.concat(res[1]);
-    }
-
-    for (const hit of hits) {
-      if (nameLowerCased === hit.title.toLowerCase()) {
+    for (const result of dashboardResults.view) {
+      if (nameLowerCased === result.name.toLowerCase()) {
         throw new ValidationError('EXISTING', existingErrorMessage);
       }
     }
