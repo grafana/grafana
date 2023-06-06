@@ -344,7 +344,11 @@ volumes:
 The chance of syntax errors appearing in a YAML file increases as the file becomes more complex. You can use the following command to check for syntax errors.
 
 ```bash
-docker compose config docker-compose.yaml
+#go to your docker-compose.yaml directory
+cd /path-to/docker-compose/file
+
+#run the validation command
+docker compose config
 ```
 
 If there are errors in the YAML file, the command output highlights the lines that contain errors. If there are no errors in the YAML file, the output includes the content of the `docker-compose.yaml` file in detailed YAML format.
