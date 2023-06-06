@@ -44,7 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 ## Beta feature toggles
 
 | Feature toggle name                  | Description                                                                                                                                                                                  |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | `trimDefaults`                       | Use cue schema to remove values that will be applied automatically                                                                                                                           |
 | `panelTitleSearch`                   | Search for dashboards using panel title                                                                                                                                                      |
 | `prometheusAzureOverrideAudience`    | Experimental. Allow override default AAD audience for Azure Prometheus endpoint                                                                                                              |
@@ -64,8 +64,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
-| `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
-| `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
+| `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |     |
 
 ## Alpha feature toggles
 
