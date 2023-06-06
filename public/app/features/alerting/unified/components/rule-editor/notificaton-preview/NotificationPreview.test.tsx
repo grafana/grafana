@@ -8,11 +8,9 @@ import { FieldType } from '@grafana/data';
 import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
-import { useRouteGroupsMatcher } from '../../../__mocks__/useRouteGroupsMatcher';
 import { mockApi, setupMswServer } from '../../../mockApi';
 import { mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
-import * as routeMatcher from '../../../useRouteGroupsMatcher';
 import * as dataSource from '../../../utils/datasource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
@@ -25,8 +23,8 @@ import {
 
 import 'core-js/stable/structured-clone';
 
-jest.mock('../../../createRouteGroupsMatcherWorker');
-jest.spyOn(routeMatcher, 'useRouteGroupsMatcher').mockImplementation(useRouteGroupsMatcher);
+// jest.mock('../../../createRouteGroupsMatcherWorker');
+jest.mock('../../../useRouteGroupsMatcher');
 
 jest
   .spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage')

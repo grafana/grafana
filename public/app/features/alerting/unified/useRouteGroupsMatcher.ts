@@ -10,7 +10,7 @@ import { Labels } from '../../../types/unified-alerting-dto';
 import { logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
 import { AlertingFeature } from './features';
-import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
+import type { RouteGroupsMatcher } from './routeGroupsMatcher';
 
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
 
