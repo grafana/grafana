@@ -314,16 +314,17 @@ func (hs *HTTPServer) SyncUser(
 	connect social.SocialConnector,
 ) (*user.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
+	lookupParams := loginservice.UserLookupParams{}
+	if hs.Cfg.OAuthAllowInsecureEmailLookup {
+		lookupParams.Email = &extUser.Email
+	}
+
 	// add/update user in Grafana
 	cmd := &loginservice.UpsertUserCommand{
-		ReqContext:    ctx,
-		ExternalUser:  extUser,
-		SignupAllowed: connect.IsSignupAllowed(),
-		UserLookupParams: loginservice.UserLookupParams{
-			Email:  &extUser.Email,
-			UserID: nil,
-			Login:  nil,
-		},
+		ReqContext:       ctx,
+		ExternalUser:     extUser,
+		SignupAllowed:    connect.IsSignupAllowed(),
+		UserLookupParams: lookupParams,
 	}
 
 	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
