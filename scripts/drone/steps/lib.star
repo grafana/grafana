@@ -364,6 +364,16 @@ def lint_backend_step():
         ],
     }
 
+def validate_modfile_step():
+    return {
+        "name": "validate-modfile",
+        "image": go_image,
+        "failure": "ignore",
+        "commands": [
+            "go run scripts/modowners/modowners.go check go.mod",
+        ],
+    }
+
 def benchmark_ldap_step():
     return {
         "name": "benchmark-ldap",
@@ -765,8 +775,31 @@ def lint_frontend_step():
         "commands": [
             "yarn run prettier:check",
             "yarn run lint",
-            "yarn run i18n:compile",  # TODO: right place for this?
             "yarn run typecheck",
+        ],
+    }
+
+def verify_i18n_step():
+    extract_error_message = "\nExtraction failed. Make sure that you have no dynamic translation phrases, such as 't(\\`preferences.theme.\\$${themeID}\\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file."
+    uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
+    return {
+        "name": "verify-i18n",
+        "image": build_image,
+        "depends_on": [
+            "yarn-install",
+        ],
+        "commands": [
+            "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
+            # Verify that translation extraction has been committed
+            '''
+            file_diff=$(git diff --dirstat public/locales)
+            if [ -n "$file_diff" ]; then
+                echo $file_diff
+                echo "{}"
+                exit 1
+            fi
+            '''.format(uncommited_error_message),
+            "yarn run i18n:compile",
         ],
     }
 

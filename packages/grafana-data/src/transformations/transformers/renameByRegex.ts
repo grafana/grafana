@@ -33,7 +33,7 @@ export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransfor
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>

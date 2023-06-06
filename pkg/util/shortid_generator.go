@@ -3,6 +3,7 @@ package util
 import (
 	"math/rand"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,11 @@ import (
 var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var alphaRunes = []rune("abcdefghijklmnopqrstuvwxyz")
 var hexLetters = []rune("abcdef")
+
+// We want to protect our number generator as they are not thread safe. Not using
+// the mutex could result in panics in certain cases where UIDs would be generated
+// at the same time.
+var mtx sync.Mutex
 
 // Legacy UID pattern
 var validUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`).MatchString
@@ -30,6 +36,8 @@ func IsShortUIDTooLong(uid string) bool {
 // it is guaranteed to have a character as the first letter
 // This UID will be a valid k8s name
 func GenerateShortUID() string {
+	mtx.Lock()
+	defer mtx.Unlock()
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		// This should never happen... but this seems better than a panic

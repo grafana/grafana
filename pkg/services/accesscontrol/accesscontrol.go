@@ -104,12 +104,8 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
-		if ac.IsDisabled() {
-			return fallback(c)
-		}
-
+func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(evaluator Evaluator) bool {
+	return func(evaluator Evaluator) bool {
 		userCopy := *c.SignedInUser
 		userCopy.OrgID = GlobalOrgID
 		userCopy.OrgRole = ""

@@ -1,6 +1,6 @@
 import InfluxDatasource from './datasource';
+import { InfluxQueryBuilder } from './influxql_query_builder';
 import { replaceHardCodedRetentionPolicy } from './queryUtils';
-import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQueryTag } from './types';
 
 const runExploreQuery = (

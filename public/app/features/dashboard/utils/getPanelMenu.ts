@@ -277,6 +277,7 @@ export function getPanelMenu(
   const { extensions } = getPluginExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
+    limitPerPlugin: 2,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
