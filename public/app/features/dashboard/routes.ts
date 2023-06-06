@@ -35,18 +35,21 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
 };
 
 export const getEmbeddedDashboardRoutes = (): RouteDescriptor[] => {
-  // TODO add feature toggle
-  return [
-    {
-      path: '/d-embed',
-      pageClass: 'dashboard-embed',
-      routeName: DashboardRoutes.Embedded,
-      component: SafeDynamicImport(
-        () =>
-          import(
-            /* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/EmbeddedDashboardPage'
-          )
-      ),
-    },
-  ];
+  if (config.featureToggles.dashboardEmbed) {
+    return [
+      {
+        path: '/d-embed',
+        pageClass: 'dashboard-embed',
+        routeName: DashboardRoutes.Embedded,
+        component: SafeDynamicImport(
+          () =>
+            import(
+              /* webpackChunkName: "EmbeddedDashboardPage" */ '../../features/dashboard/containers/EmbeddedDashboardPage'
+            )
+        ),
+      },
+    ];
+  }
+
+  return [];
 };
