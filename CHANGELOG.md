@@ -3162,6 +3162,11 @@ For a data source query made via /api/ds/query :
 
 <!-- 8.5.4 END -->
 <!-- 9.0.0-beta1 END -->
+<!-- 8.5.26 START -->
+
+# 8.5.26 (2023-05-22)
+
+<!-- 8.5.26 END -->
 <!-- 8.5.3 START -->
 
 # 8.5.3
