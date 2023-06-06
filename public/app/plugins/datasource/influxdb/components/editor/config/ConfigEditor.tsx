@@ -10,12 +10,20 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
-} from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InfoBox, InlineField, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+} from '@grafana/data/src';
+import {
+  Alert,
+  DataSourceHttpSettings,
+  InfoBox,
+  InlineField,
+  InlineFormLabel,
+  LegacyForms,
+  Select,
+} from '@grafana/ui/src';
 import { config } from 'app/core/config';
 
-import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
-import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../types';
+import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
+import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../../../types';
 
 const { Input, SecretFormField } = LegacyForms;
 

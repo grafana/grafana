@@ -2,12 +2,12 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 
-import { InfluxQueryTag } from '../../types';
+import { InfluxQueryTag } from '../../../../../types';
+import { adjustOperatorIfNeeded, getCondition, getOperator } from '../utils/tagUtils';
+import { toSelectableValue } from '../utils/toSelectableValue';
 
 import { AddButton } from './AddButton';
 import { Seg } from './Seg';
-import { adjustOperatorIfNeeded, getCondition, getOperator } from './tagUtils';
-import { toSelectableValue } from './toSelectableValue';
 
 type KnownOperator = '=' | '!=' | '<>' | '<' | '>' | '=~' | '!~';
 const knownOperators: KnownOperator[] = ['=', '!=', '<>', '<', '>', '=~', '!~'];

@@ -29,8 +29,8 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
+import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';

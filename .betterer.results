@@ -864,7 +864,7 @@ exports[`better eslint`] = {
     "packages/grafana-schema/src/veneer/dashboard.types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
@@ -4148,12 +4148,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/plugins/datasource/influxdb/components/ConfigEditor.tsx:5381": [
+    "public/app/plugins/datasource/influxdb/components/editor/config/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
-    "public/app/plugins/datasource/influxdb/components/InfluxCheatSheet.tsx:5381": [
+    "public/app/plugins/datasource/influxdb/components/editor/query/influxql/InfluxCheatSheet.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/influxdb/datasource.ts:5381": [

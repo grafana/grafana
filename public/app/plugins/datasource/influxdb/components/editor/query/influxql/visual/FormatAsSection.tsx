@@ -3,11 +3,11 @@ import React from 'react';
 
 import { Select } from '@grafana/ui';
 
-import { ResultFormat } from '../../types';
-import { RESULT_FORMATS } from '../constants';
+import { ResultFormat } from '../../../../../types';
+import { RESULT_FORMATS } from '../../../constants';
+import { unwrap } from '../utils/unwrap';
 
 import { paddingRightClass } from './styles';
-import { unwrap } from './unwrap';
 
 type Props = {
   inputId?: string;
