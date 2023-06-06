@@ -52,7 +52,7 @@ export const InfluxSqlConfig = (props: Props) => {
 
   const existingMetadata: MetadataState = jsonData?.metadata?.length
     ? jsonData?.metadata?.map((md) => ({ key: Object.keys(md)[0], value: Object.values(md)[0] }))
-    : [];
+    : [{ key: 'bucket-name', value: '' }];
   const [metaDataArr, setMetaData] = useState<MetadataState>(existingMetadata);
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export const InfluxSqlConfig = (props: Props) => {
         </InlineField>
       </FieldSet>
       <FieldSet label="MetaData" width={400}>
-        {metaDataArr?.map((_, i) => (
+        {metaDataArr.map((_, i) => (
           <InlineFieldRow key={i} style={{ flexFlow: 'row' }}>
             <InlineField labelWidth={20} label="Key">
               <Input
