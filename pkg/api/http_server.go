@@ -617,7 +617,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 
-	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if !hs.Cfg.AuthBrokerEnabled {
 		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
 	}
 
