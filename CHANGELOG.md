@@ -1380,7 +1380,7 @@ The following functions and classes related to logs are deprecated in the `grafa
 <!-- 9.3.0-beta1 END -->
 <!-- 9.2.19 START -->
 
-# 9.2.19 (2023-05-22)
+# 9.2.19 (2023-06-06)
 
 ### Bug fixes
 
