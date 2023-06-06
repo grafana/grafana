@@ -4,6 +4,8 @@ import React from 'react';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { FieldType } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -36,6 +38,8 @@ jest.spyOn(notificationPreview, 'useGetAlertManagersSourceNamesAndImage').mockRe
 ]);
 
 jest.spyOn(dataSource, 'getDatasourceAPIUid').mockImplementation((ds: string) => ds);
+jest.mock('app/core/services/context_srv');
+const contextSrvMock = jest.mocked(contextSrv);
 
 const useGetAlertManagersSourceNamesAndImageMock = useGetAlertManagersSourceNamesAndImage as jest.MockedFunction<
   typeof useGetAlertManagersSourceNamesAndImage
@@ -53,6 +57,7 @@ const ui = {
   details: {
     title: byRole('heading', { name: /alert routing details/i }),
     modal: byRole('dialog'),
+    linkToContactPoint: byRole('link', { name: /see details/i }),
   },
 };
 
@@ -109,6 +114,23 @@ function mockTwoAlertManagers() {
       .addReceivers((b) => b.withName('slack'))
       .addReceivers((b) => b.withName('opsgenie'))
   );
+}
+
+function mockHasEditPermission(enabled: boolean) {
+  contextSrvMock.accessControlEnabled.mockReturnValue(true);
+  contextSrvMock.hasAccess.mockImplementation((action) => {
+    const onlyReadPermissions: string[] = [
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsExternalRead,
+    ];
+    const readAndWritePermissions: string[] = [
+      AccessControlAction.AlertingNotificationsRead,
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingNotificationsExternalRead,
+      AccessControlAction.AlertingNotificationsExternalWrite,
+    ];
+    return enabled ? readAndWritePermissions.includes(action) : onlyReadPermissions.includes(action);
+  });
 }
 
 describe('NotificationPreview', () => {
@@ -192,6 +214,7 @@ describe('NotificationPreview', () => {
         ],
       },
     });
+    mockHasEditPermission(true);
 
     render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
       wrapper: TestProvider,
@@ -218,6 +241,47 @@ describe('NotificationPreview', () => {
     expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
     expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
     expect(within(ui.details.modal.get()).getByText(/slack/i)).toBeInTheDocument();
+    expect(ui.details.linkToContactPoint.get()).toBeInTheDocument();
+  });
+  it('should not render contact point link in details modal if user has no permissions for editing contact points', async () => {
+    // two alert managers configured  to receive alerts
+    mockOneAlertManager();
+    mockPreviewApiResponse(server, {
+      schema: {
+        fields: [
+          { name: 'value', type: FieldType.number, labels: { tomato: 'red', avocate: 'green' } },
+          { name: 'value', type: FieldType.number },
+        ],
+      },
+    });
+    mockHasEditPermission(false);
+
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
+      wrapper: TestProvider,
+    });
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
+
+    await userEvent.click(ui.previewButton.get());
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
+    //open details modal
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
+    await userEvent.click(ui.seeDetails.get());
+    expect(ui.details.title.query()).toBeInTheDocument();
+    //we expect seeing the default policy
+    expect(screen.getByText(/default policy/i)).toBeInTheDocument();
+    //we expect seeing tomato = red twice, as we render in the matching labels and in the policy path
+    const matchingPoliciesElements = within(ui.details.modal.get()).getAllByTestId('label-matchers');
+    expect(matchingPoliciesElements).toHaveLength(2);
+    expect(matchingPoliciesElements[0]).toHaveTextContent(/tomato = red/);
+    expect(matchingPoliciesElements[1]).toHaveTextContent(/tomato = red/);
+    expect(within(ui.details.modal.get()).getByText(/slack/i)).toBeInTheDocument();
+    expect(ui.details.linkToContactPoint.query()).not.toBeInTheDocument();
   });
 });
 

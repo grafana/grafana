@@ -7,7 +7,9 @@ import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
+import { getNotificationsPermissions } from '../../../utils/access-control';
 import { makeAMLink } from '../../../utils/misc';
+import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
@@ -56,6 +58,7 @@ export function NotificationRouteDetailsModal({
   const styles = useStyles2(getStyles);
   const isDefault = isDefaultPolicy(route);
 
+  const permissions = getNotificationsPermissions(alertManagerSourceName);
   return (
     <Modal
       className={styles.detailsModal}
@@ -90,19 +93,21 @@ export function NotificationRouteDetailsModal({
             Contact point:
             <span className={styles.textMuted}>{receiver.name}</span>
           </Stack>
-          <Stack gap={1} direction="row" alignItems="center">
-            <a
-              href={makeAMLink(
-                `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                alertManagerSourceName
-              )}
-              className={styles.link}
-              target="_blank"
-              rel="noreferrer"
-            >
-              See details <Icon name="external-link-alt" />
-            </a>
-          </Stack>
+          <Authorize actions={[permissions.update]}>
+            <Stack gap={1} direction="row" alignItems="center">
+              <a
+                href={makeAMLink(
+                  `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                  alertManagerSourceName
+                )}
+                className={styles.link}
+                target="_blank"
+                rel="noreferrer"
+              >
+                See details <Icon name="external-link-alt" />
+              </a>
+            </Stack>
+          </Authorize>
         </div>
         <div className={styles.button}>
           <Button variant="primary" type="button" onClick={onClose}>
