@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
-import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
+import { createAsyncThunk, ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { configureStore } from '../../../store/configureStore';
@@ -377,7 +377,7 @@ describe('changeQueries', () => {
   });
 
   it('runs remaining queries when one query is removed', async () => {
-    jest.spyOn(actions, 'runQueries').mockImplementation(() => () => Promise.resolve());
+    jest.spyOn(actions, 'runQueries').mockImplementation(createAsyncThunk('@explore/runQueries', () => {}));
 
     const originalQueries = [
       { refId: 'A', datasource: datasources[0].getRef() },
