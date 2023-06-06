@@ -288,15 +288,16 @@ type Cfg struct {
 	DefaultHomeDashboardPath string
 
 	// Auth
-	LoginCookieName              string
-	LoginMaxInactiveLifetime     time.Duration
-	LoginMaxLifetime             time.Duration
-	TokenRotationIntervalMinutes int
-	SigV4AuthEnabled             bool
-	SigV4VerboseLogging          bool
-	BasicAuthEnabled             bool
-	AdminUser                    string
-	AdminPassword                string
+	LoginCookieName               string
+	LoginMaxInactiveLifetime      time.Duration
+	LoginMaxLifetime              time.Duration
+	TokenRotationIntervalMinutes  int
+	SigV4AuthEnabled              bool
+	SigV4VerboseLogging           bool
+	BasicAuthEnabled              bool
+	AdminUser                     string
+	AdminPassword                 string
+	OAuthAllowInsecureEmailLookup bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -1261,6 +1262,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	} else {
 		maxLifetimeDaysVal = "30d"
 	}
+
+	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
 	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
 	if err != nil {
