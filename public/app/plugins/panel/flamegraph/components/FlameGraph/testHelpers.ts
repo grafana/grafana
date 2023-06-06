@@ -32,6 +32,7 @@ export function textToDataContainer(text: string) {
       });
 
       const node: LevelItem = {
+        value: match[0].length,
         itemIndexes: [dfValues.length - 1],
         start: match.index - leftMargin,
         children: [],
@@ -70,4 +71,23 @@ export function textToDataContainer(text: string) {
 
   const df = arrayToDataFrame(dfSorted);
   return new FlameGraphDataContainer(df);
+}
+
+export function trimLevelsString(s: string) {
+  const lines = s.split('\n').filter((l) => !l.match(/^\s*$/));
+  const offset = Math.min(lines[0].indexOf('['), lines[lines.length - 1].indexOf('['));
+  return lines.map((l) => l.substring(offset)).join('\n');
+}
+
+export function levelsToString(levels: LevelItem[][], data: FlameGraphDataContainer) {
+  let sLevels = [];
+  for (const level of levels) {
+    let sLevel = ' '.repeat(level[0].start);
+    for (const node of level) {
+      sLevel += ' '.repeat(node.start - sLevel.length);
+      sLevel += `[${data.getLabel(node.itemIndexes[0])}${'/'.repeat(node.value - 3)}]`;
+    }
+    sLevels.push(sLevel);
+  }
+  return sLevels.join('\n');
 }

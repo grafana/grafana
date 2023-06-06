@@ -28,7 +28,7 @@ const FlameGraphContainer = (props: Props) => {
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
-  // This is a label of the item because in sandwitch view we group all items by label and present a merged graph
+  // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
 
   const theme = useTheme2();

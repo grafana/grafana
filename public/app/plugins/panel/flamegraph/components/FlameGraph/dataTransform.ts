@@ -14,7 +14,15 @@ import { SampleUnit } from '../types';
 
 import { mergeSubtrees } from './treeTransforms';
 
-export type LevelItem = { start: number; itemIndexes: number[]; children: LevelItem[]; parents?: LevelItem[] };
+export type LevelItem = {
+  start: number;
+  // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
+  // to trim the value to correspond only to the part used by the children in the subtree.
+  value: number;
+  itemIndexes: number[];
+  children: LevelItem[];
+  parents?: LevelItem[];
+};
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
@@ -45,6 +53,7 @@ export function nestedSetToLevels(container: FlameGraphDataContainer): [LevelIte
 
     const newItem: LevelItem = {
       itemIndexes: [i],
+      value: container.getValue(i),
       start: offset,
       parents: parent && [parent],
       children: [],
@@ -176,6 +185,7 @@ export class FlameGraphDataContainer {
 
     let superNode: LevelItem = {
       start: 0,
+      value: 0,
       itemIndexes: [],
       children: [],
       parents: nodes,
@@ -221,9 +231,11 @@ function collapseParentNodes(data: FlameGraphDataContainer, node: LevelItem) {
   for (const k of Object.keys(groups)) {
     if (groups[k].length > 1) {
       const items = groups[k];
+      const indexes = items.flatMap((i) => i.itemIndexes);
       const superNode: LevelItem = {
         start: 0,
-        itemIndexes: items.flatMap((i) => i.itemIndexes),
+        value: data.getValue(indexes),
+        itemIndexes: indexes,
         parents: items.flatMap((i) => i.parents || []),
         children: items[0].children,
       };
