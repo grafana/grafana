@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
 import {
   RouteWithID,
@@ -110,11 +111,9 @@ const Policy: FC<PolicyComponentProps> = ({
   const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
 
   const childPolicies = currentRoute.routes ?? [];
+
   const inheritedGrouping = hasInheritedProperties && inheritedProperties.group_by;
   const noGrouping = isArray(groupBy) && groupBy[0] === '...';
-
-  // for now "single group" is only supported on the default policy
-  const singleGroup = !noGrouping && isArray(groupBy) && groupBy.length === 0;
   const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
 
   const isEditable = canEditRoutes;
@@ -232,12 +231,6 @@ const Policy: FC<PolicyComponentProps> = ({
                       <Strong>{groupBy.join(', ')}</Strong>
                     </MetaText>
                   )}
-                  {singleGroup && (
-                    <MetaText icon="layer-group" data-testid="grouping">
-                      <span>Grouped by</span>
-                      <Strong>a single group</Strong>
-                    </MetaText>
-                  )}
                   {noGrouping && (
                     <MetaText icon="layer-group">
                       <span>Not grouping</span>
@@ -268,7 +261,7 @@ const Policy: FC<PolicyComponentProps> = ({
       </div>
       <div className={styles.childPolicies}>
         {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {childPolicies.map((route) => {
+        {childPolicies.map((child) => {
           // inherited properties are config properties that exist on the parent but not on currentRoute
           const inheritableProperties: InhertitableProperties = pick(currentRoute, [
             'receiver',
@@ -285,13 +278,16 @@ const Policy: FC<PolicyComponentProps> = ({
               inheritableProperties,
               (acc: Partial<Route> = {}, value, key) => {
                 // @ts-ignore
-                if (value !== undefined && route[key] === undefined) {
+                if (value !== undefined && child[key] === undefined) {
                   // @ts-ignore
                   acc[key] = value;
                   // @ts-ignore
-                } else if (!value && isArray(acc[key]) && isArray(value)) {
+                }
+
+                // when "group_by" is an empty Array, it _should_ be inherited
+                if (value !== undefined && key === 'group_by' && isArray(child[key]) && child[key]?.length === 0) {
                   // @ts-ignore
-                  acc[key] = acc[key].concat(value);
+                  acc[key] = value;
                 }
 
                 return acc;
@@ -305,7 +301,7 @@ const Policy: FC<PolicyComponentProps> = ({
             <Policy
               key={uniqueId()}
               routeTree={routeTree}
-              currentRoute={route}
+              currentRoute={child}
               receivers={receivers}
               contactPointsState={contactPointsState}
               readOnly={readOnly}
@@ -384,13 +380,14 @@ const InheritedProperties: FC<{ properties: InhertitableProperties }> = ({ prope
     content={
       <Stack direction="row" gap={0.5}>
         {Object.entries(properties).map(([key, value]) => {
-          // no idea how to do this with TypeScript
+          // no idea how to do this with TypeScript without type casting...
           return (
             <Label
               key={key}
               // @ts-ignore
               label={routePropertyToLabel(key)}
-              value={<Strong>{Array.isArray(value) ? value.join(', ') : value}</Strong>}
+              // @ts-ignore
+              value={<Strong>{routePropertyToValue(key, value)}</Strong>}
             />
           );
         })}
@@ -576,6 +573,18 @@ const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
     case 'repeat_interval':
       return 'Repeat interval';
   }
+};
+
+const routePropertyToValue = (key: keyof InhertitableProperties, value: string | string[]): React.ReactNode => {
+  if (key === 'group_by' && value.length === 0) {
+    return (
+      <Span variant="bodySmall" color="secondary">
+        No grouping
+      </Span>
+    );
+  }
+
+  return Array.isArray(value) ? value.join(', ') : value;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

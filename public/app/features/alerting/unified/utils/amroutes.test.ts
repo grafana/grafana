@@ -66,7 +66,7 @@ describe('amRouteToFormAmRoute', () => {
 
       // Assert
       expect(formRoute.groupBy).toStrictEqual([]);
-      expect(formRoute.overrideGrouping).toBe(true);
+      expect(formRoute.overrideGrouping).toBe(false);
     });
   });
 
