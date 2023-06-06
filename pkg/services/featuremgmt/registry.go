@@ -542,5 +542,12 @@ var (
 			State:        FeatureStateAlpha,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:         "dashboardEmbed",
+			Description:  "Allow embedding dashboard for external use in Code editors",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaAsCodeSquad,
+		},
 	}
 )
