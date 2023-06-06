@@ -2,6 +2,13 @@ import { arrayToDataFrame } from '@grafana/data';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
+// Convert text to a FlameGraphDataContainer for testing. The format representing the flamegraph for example:
+// [0///////]
+// [1//][4//]
+// [2//][5]
+// [3]  [6]
+//      [7]
+// Each node starts with [ ends with ], single digit is used for label and the length of a node is it's value.
 export function textToDataContainer(text: string) {
   const levels = text.split('\n');
 
@@ -79,6 +86,8 @@ export function trimLevelsString(s: string) {
   return lines.map((l) => l.substring(offset)).join('\n');
 }
 
+// Convert levels array to a string representation that can be visually compared. Mainly useful together with
+// textToDataContainer to create more visual tests.
 export function levelsToString(levels: LevelItem[][], data: FlameGraphDataContainer) {
   let sLevels = [];
   for (const level of levels) {

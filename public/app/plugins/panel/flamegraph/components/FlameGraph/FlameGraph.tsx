@@ -61,8 +61,15 @@ const FlameGraph = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const levels = sandwichItem ? data.getCalleesTree(sandwichItem) : data.getLevels();
-  const totalTicks = data.getValue(levels[0][0].itemIndexes);
+  let levels = data.getLevels();
+  let totalTicks = levels[0][0].value;
+
+  if (sandwichItem) {
+    const [callers, callees] = data.getSandwichLevels(sandwichItem);
+    levels = [...callers, [], ...callees];
+    totalTicks = callees[0][0].value;
+  }
+
   console.log({ levels, totalTicks, data });
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
@@ -72,7 +79,18 @@ const FlameGraph = ({
 
   const [clickedItemData, setClickedItemData] = useState<ClickedItemData>();
 
-  useFlameRender(graphRef, data, levels, wrapperWidth, rangeMin, rangeMax, search, textAlign, focusedItemIndex);
+  useFlameRender(
+    graphRef,
+    data,
+    levels,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    search,
+    textAlign,
+    totalTicks,
+    focusedItemIndex
+  );
 
   const onGraphClick = useCallback(
     (e: ReactMouseEvent<HTMLCanvasElement>) => {

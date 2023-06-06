@@ -12,7 +12,7 @@ import {
 
 import { SampleUnit } from '../types';
 
-import { mergeSubtrees } from './treeTransforms';
+import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
 
 export type LevelItem = {
   start: number;
@@ -177,32 +177,21 @@ export class FlameGraphDataContainer {
     return this.levels![0][0];
   }
 
-  getCallersTree(label: string) {
-    const nodes = this.getNodesWithLabel(label);
-    if (nodes?.length <= 1) {
-      return nodes && nodes[0];
-    }
-
-    let superNode: LevelItem = {
-      start: 0,
-      value: 0,
-      itemIndexes: [],
-      children: [],
-      parents: nodes,
-    };
-
-    collapseParentNodes(this, superNode);
-    return superNode.parents![0];
-  }
-
-  getCalleesTree(label: string) {
+  getSandwichLevels(label: string) {
     const nodes = this.getNodesWithLabel(label);
 
     if (!nodes?.length) {
       return [];
     }
 
-    return mergeSubtrees(nodes, this);
+    const callers = mergeParentSubtrees(nodes, this);
+    const callees = mergeSubtrees(nodes, this);
+
+    // The first level of callees should be the same as last level of the callers, so we can remove one of them.
+    // callees.shift()
+
+    return [callers, callees];
+    // return callers;
   }
 
   getNodesWithLabel(label: string) {

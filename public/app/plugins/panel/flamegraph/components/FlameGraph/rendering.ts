@@ -26,6 +26,7 @@ export function useFlameRender(
   rangeMax: number,
   search: string,
   textAlign: TextAlign,
+  totalTicks: number,
   focusedItemIndex?: number
 ) {
   const foundLabels = useMemo(() => {
@@ -52,8 +53,6 @@ export function useFlameRender(
       return;
     }
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    const totalTicks = data.getValue(levels[0][0].itemIndexes);
     const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
 
     for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
@@ -67,7 +66,19 @@ export function useFlameRender(
         renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
       }
     }
-  }, [ctx, data, levels, wrapperWidth, rangeMin, rangeMax, search, focusedItemIndex, foundLabels, textAlign]);
+  }, [
+    ctx,
+    data,
+    levels,
+    wrapperWidth,
+    rangeMin,
+    rangeMax,
+    search,
+    focusedItemIndex,
+    foundLabels,
+    textAlign,
+    totalTicks,
+  ]);
 }
 
 function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement>, wrapperWidth: number, numberOfLevels: number) {
@@ -121,7 +132,7 @@ export function getRectDimensionsForLevel(
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
     const item = level[barIndex];
     const barX = getBarX(item.start, totalTicks, rangeMin, pixelsPerTick);
-    let curBarTicks = data.getValue(item.itemIndexes);
+    let curBarTicks = item.value;
 
     // merge very small blocks into big "collapsed" ones for performance
     const collapsed = curBarTicks * pixelsPerTick <= COLLAPSE_THRESHOLD;
@@ -129,14 +140,14 @@ export function getRectDimensionsForLevel(
       while (
         barIndex < level.length - 1 &&
         item.start + curBarTicks === level[barIndex + 1].start &&
-        data.getValue(level[barIndex + 1].itemIndexes) * pixelsPerTick <= COLLAPSE_THRESHOLD
+        level[barIndex + 1].value * pixelsPerTick <= COLLAPSE_THRESHOLD
       ) {
         barIndex += 1;
-        curBarTicks += data.getValue(level[barIndex].itemIndexes);
+        curBarTicks += level[barIndex].value;
       }
     }
 
-    const displayValue = data.getValueDisplay(item.itemIndexes);
+    const displayValue = data.valueDisplayProcessor(item.value);
     let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
 
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
