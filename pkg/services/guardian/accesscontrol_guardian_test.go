@@ -108,7 +108,7 @@ func TestAccessControlDashboardGuardian_CanSave(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t), nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil)
 			can, err := guardian.CanSave()
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected, can)
@@ -202,8 +202,7 @@ func TestAccessControlDashboardGuardian_CanEdit(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.ViewersCanEdit = tt.viewersCanEdit
-			dashSvc := testDashSvc(t)
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, cfg, dashSvc, nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, cfg, nil)
 
 			can, err := guardian.CanEdit()
 			require.NoError(t, err)
@@ -283,7 +282,7 @@ func TestAccessControlDashboardGuardian_CanView(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t), nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil)
 
 			can, err := guardian.CanView()
 			require.NoError(t, err)
@@ -387,7 +386,7 @@ func TestAccessControlDashboardGuardian_CanAdmin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t), nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil)
 
 			can, err := guardian.CanAdmin()
 			require.NoError(t, err)
@@ -467,7 +466,7 @@ func TestAccessControlDashboardGuardian_CanDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, testDashSvc(t), nil)
+			guardian := setupAccessControlGuardianTest(t, tt.dashUID, tt.permissions, nil, nil)
 
 			can, err := guardian.CanDelete()
 			require.NoError(t, err)
@@ -531,7 +530,7 @@ func TestAccessControlDashboardGuardian_CanCreate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			guardian := setupAccessControlGuardianTest(t, "0", tt.permissions, nil, nil, nil)
+			guardian := setupAccessControlGuardianTest(t, "0", tt.permissions, nil, nil)
 
 			can, err := guardian.CanCreate(tt.folderID, tt.isFolder)
 			require.NoError(t, err)
@@ -566,7 +565,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 			mocked := accesscontrolmock.NewMockedPermissionsService()
 			mocked.On("MapActions", mock.Anything).Return("View")
 			mocked.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return(tt.permissions, nil)
-			guardian := setupAccessControlGuardianTest(t, "1", nil, nil, testDashSvc(t), mocked)
+			guardian := setupAccessControlGuardianTest(t, "1", nil, nil, mocked)
 
 			cfg := setting.NewCfg()
 			cfg.HiddenUsers = tt.hiddenUsers
@@ -587,7 +586,7 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 func setupAccessControlGuardianTest(t *testing.T, uid string,
 	permissions []accesscontrol.Permission,
 	cfg *setting.Cfg,
-	dashboardSvc dashboards.DashboardService, dashboardPermissions accesscontrol.DashboardPermissionsService) DashboardGuardian {
+	dashboardPermissions accesscontrol.DashboardPermissionsService) DashboardGuardian {
 	t.Helper()
 	store := db.InitTestDB(t)
 
@@ -604,23 +603,20 @@ func setupAccessControlGuardianTest(t *testing.T, uid string,
 		OrgID:     1,
 	})
 	require.NoError(t, err)
-	if dashboardSvc == nil {
-		fakeDashboardService := dashboards.NewFakeDashboardService(t)
-		qResult := &dashboards.Dashboard{}
-		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			qResult = &dashboards.Dashboard{
-				ID:    q.ID,
-				UID:   q.UID,
-				OrgID: q.OrgID,
-			}
-		}).Maybe().Return(qResult, nil)
-		dashboardSvc = fakeDashboardService
-	}
+	fakeDashboardService := dashboards.NewFakeDashboardService(t)
+	qResult := &dashboards.Dashboard{}
+	fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		qResult = &dashboards.Dashboard{
+			ID:    q.ID,
+			UID:   q.UID,
+			OrgID: q.OrgID,
+		}
+	}).Maybe().Return(qResult, nil)
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
 	// TODO replace with actual folder store implementation after resolving import cycles
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), dashboardSvc, foldertest.NewFakeService()))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), fakeDashboardService, foldertest.NewFakeService()))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
@@ -636,18 +632,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string,
 		require.NoError(t, err)
 	}
 
-	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, dash, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	g, err := NewAccessControlDashboardGuardianByDashboard(context.Background(), cfg, dash, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, fakeDashboardService)
 	require.NoError(t, err)
 	return g
-}
-
-func testDashSvc(t *testing.T) dashboards.DashboardService {
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	d := &dashboards.Dashboard{}
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		d := dashboards.NewDashboard("mocked")
-		d.ID = 1
-		d.UID = "1"
-	}).Maybe().Return(d, nil)
-	return dashSvc
 }
