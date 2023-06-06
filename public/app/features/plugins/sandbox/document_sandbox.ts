@@ -50,11 +50,11 @@ export function isDomElement(obj: unknown): obj is Element {
 }
 
 /**
- * Mark an element as a live target inside the sandbox
+ * Mark an element style attribute as a live target inside the sandbox
  * A "live target" is an object which attributes can be observed
  * and modified directly inside the sandbox
  *
- * This is necessary for some specific cases such as modifying the style atribute of an element
+ * This is necessary for plugins working with style attributes to work in Chrome
  */
 export function markDomElementStyleAsALiveTarget(el: Element, mark: symbol) {
   if (
