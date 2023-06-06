@@ -18,19 +18,21 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 1. Log in to the [Okta portal](https://login.okta.com/).
 
-1. Go to Admin and then select **Developer Console**.
+2. Go to Admin and then select **Developer Console**.
 
-1. Select **Applications**, then **Add Application**.
+3. Select **Applications**, then **Add Application**.
 
-1. Pick **Web** as the platform.
+4. Pick **Web** as the platform.
 
-1. Enter a name for your application (or leave the default value).
+5. Enter a name for your application (or leave the default value).
 
-1. Add the **Base URI** of your application, such as https://grafana.example.com.
+6. Add the **Base URI** of your application, such as https://grafana.example.com (on-prem)
+https://example.grafana.net (cloud)
 
-1. Enter values for the **Login redirect URI**. Use **Base URI** and append it with `/login/okta`, for example: https://grafana.example.com/login/okta.
+7. Enter values for the **Login redirect URI**. Use **Base URI** and append it with `/login/okta`, for example: https://grafana.example.com/login/okta (on-prem)
+https://example.grafana.net/login/okta (cloud)
 
-1. Click **Done** to finish creating the Okta application.
+8. Click **Done** to finish creating the Okta application.
 
 ## Enable Okta OAuth in Grafana
 
@@ -110,13 +112,13 @@ enable the `skip_org_role_sync` option.
 See [Configure Grafana]({{< relref "../../../configure-grafana#authokta" >}}) for more information.
 {{% /admonition %}}
 
-On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
+On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
+You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
 {{% admonition type="warning" %}}
-With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
 then the user is assigned the role specified by
 [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 {{% /admonition %}}
