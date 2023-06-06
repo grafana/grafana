@@ -36,24 +36,20 @@ type Loader struct {
 	log                 log.Logger
 	cfg                 *config.Cfg
 
-	angularInspector angulardetector.Inspector
-
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
 	return &Loader{
 		pluginFinder:        pluginFinder,
 		pluginRegistry:      pluginRegistry,
@@ -66,7 +62,6 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		roleRegistry:        roleRegistry,
 		cfg:                 cfg,
 		assetPath:           assetPath,
-		angularInspector:    angularInspector,
 	}
 }
 
@@ -168,6 +163,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			}
 		}
 
+		// Detect angular for external plugins
+		if plugin.IsExternalPlugin() {
+			var err error
+			plugin.AngularDetected, err = angulardetector.Inspect(plugin)
+			if err != nil {
+				l.log.Warn("could not inspect plugin for angular", "pluginID", plugin.ID, "err", err)
+			}
+		}
+
 		if plugin.IsApp() {
 			setDefaultNavURL(plugin)
 		}
@@ -182,21 +186,6 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	// initialize plugins
 	initializedPlugins := make([]*plugins.Plugin, 0)
 	for _, p := range verifiedPlugins {
-		// Detect angular for external plugins
-		if p.IsExternalPlugin() {
-			var err error
-			p.AngularDetected, err = l.angularInspector.Inspect(p)
-			if err != nil {
-				l.log.Warn("could not inspect plugin for angular", "pluginID", p.ID, "err", err)
-			}
-
-			// Do not initialize plugins if they're using Angular and Angular support is disabled
-			if p.AngularDetected && !l.cfg.AngularSupportEnabled {
-				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
-				continue
-			}
-		}
-
 		err := l.pluginInitializer.Initialize(ctx, p)
 		if err != nil {
 			l.log.Error("Could not initialize plugin", "pluginId", p.ID, "err", err)

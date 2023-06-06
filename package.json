@@ -273,7 +273,7 @@
     "@locker/near-membrane-shared": "^0.12.14",
     "@opentelemetry/api": "1.4.0",
     "@opentelemetry/exporter-collector": "0.25.0",
-    "@opentelemetry/semantic-conventions": "1.9.1",
+    "@opentelemetry/semantic-conventions": "1.14.0",
     "@popperjs/core": "2.11.6",
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@pyroscope/flamegraph": "^0.35.5",
