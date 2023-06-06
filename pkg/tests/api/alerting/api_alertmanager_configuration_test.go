@@ -281,6 +281,7 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	"template_files": {},
 	"alertmanager_config": {
 		"route": {
+			"group_by": null,
 			"receiver": "slack.receiver"
 		},
 		"templates": null,
