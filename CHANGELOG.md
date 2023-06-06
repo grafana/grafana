@@ -267,6 +267,16 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.3 START -->
+
+# 9.5.3 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.5.3 END -->
 <!-- 9.5.2 START -->
 
 # 9.5.2 (2023-05-03)
@@ -544,6 +554,16 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 9.4.12 START -->
+
+# 9.4.12 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.4.12 END -->
 <!-- 9.4.10 START -->
 
 # 9.4.10 (2023-05-08)
@@ -956,6 +976,15 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 <!-- 9.3.7 END -->
 <!-- 9.4.0-beta1 END -->
+<!-- 9.3.15 START -->
+
+# 9.3.15 (2023-06-06)
+
+### Bug fixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.3.15 END -->
 <!-- 9.3.14 START -->
 
 # 9.3.14 (2023-05-08)
@@ -1378,6 +1407,15 @@ The following functions and classes related to logs are deprecated in the `grafa
 
 <!-- 9.2.5 END -->
 <!-- 9.3.0-beta1 END -->
+<!-- 9.2.19 START -->
+
+# 9.2.19 (2023-06-06)
+
+### Bug fixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.2.19 END -->
 <!-- 9.2.18 START -->
 
 # 9.2.18 (2023-05-08)
@@ -3162,6 +3200,15 @@ For a data source query made via /api/ds/query :
 
 <!-- 8.5.4 END -->
 <!-- 9.0.0-beta1 END -->
+<!-- 8.5.26 START -->
+
+# 8.5.26 (2023-05-22)
+
+### Bugfixes
+
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 8.5.26 END -->
 <!-- 8.5.3 START -->
 
 # 8.5.3
