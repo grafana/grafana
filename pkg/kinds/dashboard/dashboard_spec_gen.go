@@ -738,7 +738,6 @@ type Spec struct {
 	// 2 for shared crosshair AND shared tooltip.
 	GraphTooltip CursorSync `json:"graphTooltip"`
 
-	// Unique numeric identifier for the dashboard.
 	// `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
 	Id *int64 `json:"id,omitempty"`
 

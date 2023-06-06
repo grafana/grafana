@@ -1018,10 +1018,9 @@ export interface Dashboard {
    */
   graphTooltip: DashboardCursorSync;
   /**
-   * Unique numeric identifier for the dashboard.
    * `id` is internal to a specific Grafana instance. `uid` should be used to identify a dashboard across Grafana instances.
    */
-  id?: number;
+  id?: number; // Unique numeric identifier for the dashboard.
   /**
    * Links with references to other dashboards or external websites.
    */
