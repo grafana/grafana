@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React from 'react';
 
-import { Select } from '@grafana/ui/src';
+import { Select } from '@grafana/ui';
 
 import { ResultFormat } from '../../../../../types';
 import { RESULT_FORMATS } from '../../../constants';

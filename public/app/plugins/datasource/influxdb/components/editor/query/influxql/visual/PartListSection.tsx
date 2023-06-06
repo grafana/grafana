@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui/src';
+import { MenuGroup, MenuItem, useTheme2, WithContextMenu } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 import { unwrap } from '../utils/unwrap';

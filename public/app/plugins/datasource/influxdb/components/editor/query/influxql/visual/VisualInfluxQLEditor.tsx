@@ -3,8 +3,8 @@ import React, { useId, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, TypedVariableModel } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime/src';
-import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui/src';
+import { getTemplateSrv } from '@grafana/runtime';
+import { InlineLabel, SegmentSection, useStyles2 } from '@grafana/ui';
 
 import InfluxDatasource from '../../../../../datasource';
 import {

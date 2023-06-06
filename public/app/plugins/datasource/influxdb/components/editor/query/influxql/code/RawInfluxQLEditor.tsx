@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 
-import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui/src';
+import { HorizontalGroup, InlineFormLabel, Input, Select, TextArea } from '@grafana/ui';
 
 import { InfluxQuery } from '../../../../../types';
 import { DEFAULT_RESULT_FORMAT, RESULT_FORMATS } from '../../../constants';

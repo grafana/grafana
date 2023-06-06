@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
-import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui/src';
+import { AsyncSelect, InlineLabel, Input, Select } from '@grafana/ui';
 
 import { useShadowedState } from '../../hooks/useShadowedState';
 

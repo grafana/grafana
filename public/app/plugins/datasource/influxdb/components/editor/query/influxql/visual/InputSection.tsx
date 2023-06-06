@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React from 'react';
 
-import { Input } from '@grafana/ui/src';
+import { Input } from '@grafana/ui';
 
 import { useShadowedState } from '../../hooks/useShadowedState';
 
