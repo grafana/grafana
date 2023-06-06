@@ -1,3 +1,13 @@
+<!-- 9.4.12 START -->
+
+# 9.4.12 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.4.12 END -->
 <!-- 9.4.10 START -->
 
 # 9.4.10 (2023-05-08)
