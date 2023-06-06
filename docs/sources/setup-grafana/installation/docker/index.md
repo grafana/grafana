@@ -73,13 +73,14 @@ It is recommended to have persistent storage because without it, all data will b
 
 To use persistent storage, complete the following steps:
 
-1. Create a Docker volume by running the following commands:
+1. Create a Grafana Docker volume `grafana-storage` by running the following commands:
 
    ```bash
    # create a persistent volume for your data
    docker volume create grafana-storage
 
    # verify that the volume was created correctly
+   # you should see a json output
    docker volume inspect grafana-storage
    ```
 
