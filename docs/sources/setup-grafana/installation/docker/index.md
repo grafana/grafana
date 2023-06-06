@@ -205,6 +205,16 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
 
 1. Create a `docker-compose.yaml` file.
 
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   #now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```
+
+2. Now, add the following code into the `docker-compose.yaml` file.
+   
    For example:
 
    ```bash
@@ -218,13 +228,10 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
         - '3000:3000'
    ```
 
-1. To run `docker-compose.yaml`, run the following command:
+3. To run `docker-compose.yaml`, run the following command:
 
    ```bash
-   # first go into the directory where you have created this docker-compose.yaml file
-   cd /path/to/docker-compose-folder
-
-   # then start the grafana container
+   # start the grafana container
    docker compose up -d
    ```
 
@@ -257,7 +264,15 @@ It is recommended to have persistent storage because without it, all data will b
 Complete the following steps to use persistent storage.
 
 1. Create a `docker-compose.yaml` file
-1. Add the following code to the into it:
+
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   #now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```   
+2. Now, add the following code into the `docker-compose.yaml` file.
 
    ```yaml
    version: '3.8'
@@ -274,10 +289,10 @@ Complete the following steps to use persistent storage.
      grafana_data: {}
    ```
 
-1. Save the file and run the following command:
+3. Save the file and run the following command:
 
    ```bash
-   docker compose up -d docker-compose.yaml
+   docker compose up -d
    ```
 
 #### Use bind mounts
@@ -286,15 +301,23 @@ If you plan to use folders on your host for the database or configuration when r
 
 To use bind mounts, complete the following steps:
 
-1. Create a new `docker-compose.yaml` file
+1. Create a `docker-compose.yaml` file
 
-2. Create the folder where you will be mounting, in this case is `/data` e.g. in your current working directory:
+   ```bash
+   # first go into the directory where you have created this docker-compose.yaml file
+   cd /path/to/docker-compose-folder
+
+   #now create the docker-compose.yaml file
+   touch docker-compose.yaml
+   ```
+
+2. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
 
    ```bash
    mkdir $PWD/data
    ```
 
-3. Add the following code into it:
+3. Now, add the following code into the `docker-compose.yaml` file.
 
    ```yaml
    version: '3.8'
@@ -308,6 +331,7 @@ To use bind mounts, complete the following steps:
        user: '0'
        ports:
          - '3000:3000'
+       # adding the mount volume point which we create earlier
        volumes:
          - '$PWD/data:/var/lib/grafana'
    ```
@@ -315,7 +339,7 @@ To use bind mounts, complete the following steps:
 4. Save the file and run the following command:
 
    ```bash
-   docker compose up -d docker-compose.yaml
+   docker compose up -d
    ```
 
 ### Example
