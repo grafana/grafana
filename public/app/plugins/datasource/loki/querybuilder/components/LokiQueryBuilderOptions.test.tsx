@@ -26,7 +26,8 @@ describe('LokiQueryBuilderOptions', () => {
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
 
-    const element = screen.getByLabelText('Legend');
+    // First autosize input is a Legend
+    const element = screen.getAllByTestId('autosize-input')[0];
     await userEvent.type(element, 'asd');
     await userEvent.keyboard('{enter}');
 
@@ -41,8 +42,8 @@ describe('LokiQueryBuilderOptions', () => {
     props.query.expr = '{foo="bar"}';
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
-
-    const element = screen.getByLabelText('Line limit');
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, '10');
     await userEvent.keyboard('{enter}');
 
@@ -59,8 +60,8 @@ describe('LokiQueryBuilderOptions', () => {
     props.query.expr = '{foo="bar"}';
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
-
-    const element = screen.getByLabelText('Line limit');
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, '-10');
     await userEvent.keyboard('{enter}');
 
@@ -77,8 +78,8 @@ describe('LokiQueryBuilderOptions', () => {
     props.query.expr = '{foo="bar"}';
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
-
-    const element = screen.getByLabelText('Line limit');
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, 'asd');
     await userEvent.keyboard('{enter}');
 
