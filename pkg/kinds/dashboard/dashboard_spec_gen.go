@@ -929,7 +929,7 @@ type VariableModel struct {
 	// Accepted values are 0 (show label and value), 1 (show value only), 2 (show nothing).
 	Hide VariableHide `json:"hide"`
 
-	// Unique numeric identifier for the dashboard.
+	// Unique numeric identifier for the variable.
 	Id string `json:"id"`
 
 	// Optional display name
@@ -954,8 +954,18 @@ type VariableModel struct {
 	Refresh *VariableRefresh `json:"refresh,omitempty"`
 
 	// Whether the variable value should be managed by URL query params or not
-	SkipUrlSync bool         `json:"skipUrlSync"`
-	Type        VariableType `json:"type"`
+	SkipUrlSync bool `json:"skipUrlSync"`
+
+	// Dashboard variable type
+	// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+	// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
+	// `constant`: 	Define a hidden constant.
+	// `datasource`: Quickly change the data source for an entire dashboard.
+	// `interval`: Interval variables represent time spans.
+	// `textbox`: Display a free text input field with an optional default value.
+	// `custom`: Define the variable options manually using a comma-separated list.
+	// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
+	Type VariableType `json:"type"`
 }
 
 // Option to be selected in a variable.
@@ -976,5 +986,13 @@ type VariableOption struct {
 // `2`: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
 
-// VariableType defines model for VariableType.
+// Dashboard variable type
+// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
+// `constant`: 	Define a hidden constant.
+// `datasource`: Quickly change the data source for an entire dashboard.
+// `interval`: Interval variables represent time spans.
+// `textbox`: Display a free text input field with an optional default value.
+// `custom`: Define the variable options manually using a comma-separated list.
+// `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
 type VariableType string

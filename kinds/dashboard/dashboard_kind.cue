@@ -187,9 +187,9 @@ lineage: schemas: [{
 			...
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
-		// Generic variable model to be used for all variable types
+		// A variable is a placeholder for a value. You can use variables in metric queries and in panel titles.
 		#VariableModel: {
-			// Unique numeric identifier for the dashboard.
+			// Unique numeric identifier for the variable.
 			id: string | *"00000000-0000-0000-0000-000000000000"
 			// Type of variable
 			type: #VariableType
