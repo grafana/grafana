@@ -269,7 +269,12 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 <!-- 10.0.0-preview END -->
 <!-- 9.5.3 START -->
 
-# 9.5.3 (2023-05-26)
+# 9.5.3 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
 
 <!-- 9.5.3 END -->
 <!-- 9.5.2 START -->
