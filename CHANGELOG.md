@@ -181,13 +181,14 @@ The deprecated `plugin:test` and `plugin:dev` commands in the Grafana Toolkit ha
 
 The type signature of the `testDatasource()` method on the `DataSourceWithBackend` class [has changed](https://github.com/grafana/grafana/pull/67014/files/a5608dc4f27ab4459e725b22ff60b8fc05390c08#diff-c58fc1a09e9b9b17e5f45efbfb646273e69145f7687facb134440da4edafc745R263), the returned Promise is now typed stricter, which is probably going to cause type-errors while building plugins against the latest Grafana versions.
 
-````typescript
+```typescript
 // Before
 abstract testDatasource(): Promise<any>;
 
 // After
 abstract testDatasource(): Promise<TestDataSourceResponse>;
-``` Issue [#67014](https://github.com/grafana/grafana/issues/67014)
+```
+Issue [#67014](https://github.com/grafana/grafana/issues/67014)
 
 Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
 
@@ -211,7 +212,7 @@ The `ArrayVector` class now extends the native JavaScript `Array` and gains all 
 We've removed the ability for functions to be passed as children to the `Dropdown` component. Previously, this was used to access the `isOpen` state of the dropdown. This can be now be achieved with the `onVisibleChange` prop.
 
 Before:
-````
+```
 
 return (
 <Dropdown overlay={MenuActions} placement="bottom-end">
@@ -236,7 +237,8 @@ return (
 </Dropdown>
 );
 
-````Issue [#65467](https://github.com/grafana/grafana/issues/65467)
+```
+Issue [#65467](https://github.com/grafana/grafana/issues/65467)
 
 (relevant for plugin developers) The deprecated internal `dashboardId` is now removed from the request context.  For usage tracking use the `dashboardUid`
 
@@ -2650,7 +2652,7 @@ await selectOptionInTest(selectEl, 'Option 2');
 import { select } from 'react-select-event';
 // ...test usage
 await select(selectEl, 'Option 2', { container: document.body });
-````
+```
 
 Issue [#50442](https://github.com/grafana/grafana/issues/50442)
 
