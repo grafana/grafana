@@ -10,7 +10,7 @@ import { CoreApp } from './app';
 import { KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { PanelData } from './panel';
-import { GrafanaPlugin, PluginMeta, PluginSignatureStatus } from './plugin';
+import { GrafanaPlugin, PluginMeta } from './plugin';
 import { DataQuery } from './query';
 import { RawTimeRange, TimeRange } from './time';
 import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
