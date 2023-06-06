@@ -38,7 +38,7 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
     kind: ['dashboard'],
     query: '*',
     location: parentUID || 'general',
-    from: page * pageSize,
+    from: (page - 1) * pageSize,
     limit: pageSize,
   });
 
