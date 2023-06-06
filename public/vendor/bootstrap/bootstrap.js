@@ -1121,7 +1121,7 @@
     , lookup: function(event) {
       var items
 
-      this.queryString = this.$element.val()
+      this.query = this.$element.val()
 
       if (!this.query || this.query.length < this.options.minLength) {
         return this.shown ? this.hide() : this
