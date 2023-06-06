@@ -13,7 +13,7 @@ import {
   getFieldKeysForMeasurement,
   getTagKeysForMeasurementAndTags,
   getTagValues,
-} from '../../influxQLMetadataQuery';
+} from '../../influxql_metadata_query';
 import {
   addNewGroupByPart,
   addNewSelectPart,
