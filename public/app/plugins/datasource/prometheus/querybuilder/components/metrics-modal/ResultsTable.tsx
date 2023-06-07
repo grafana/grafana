@@ -3,8 +3,9 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
+import { docsTip } from '../../../configuration/ConfigEditor';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';
@@ -51,14 +52,7 @@ export function ResultsTable(props: ResultsTableProps) {
     if (state.fullMetaSearch && metric) {
       return (
         <>
-          <td>
-            <Highlighter
-              textToHighlight={metric.type ?? ''}
-              searchWords={state.metaHaystackMatches}
-              autoEscape
-              highlightClassName={styles.matchHighLight}
-            />
-          </td>
+          <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
@@ -72,11 +66,47 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td>{metric.type ?? ''}</td>
+          <td>{displayType(metric.type ?? '')}</td>
           <td>{metric.description ?? ''}</td>
         </>
       );
     }
+  }
+
+  function addHelpIcon(fullType: string, descriptiveType: string, link: string) {
+    return (
+      <>
+        {fullType}
+        <Tooltip
+          content={
+            <>
+              When creating a {descriptiveType}, Prometheus exposes multiple series with the type counter.{' '}
+              {docsTip(link)}
+            </>
+          }
+          placement="bottom-end"
+          interactive={true}
+        >
+          <Icon name="info-circle" size="xs" />
+        </Tooltip>
+      </>
+    );
+  }
+
+  function displayType(type: string | null) {
+    if (!type) {
+      return '';
+    }
+
+    if (type.includes('(summary)')) {
+      return addHelpIcon(type, 'summary', 'https://prometheus.io/docs/concepts/metric_types/#summary');
+    }
+
+    if (type.includes('(histogram)')) {
+      return addHelpIcon(type, 'histogram', 'https://prometheus.io/docs/concepts/metric_types/#histogram');
+    }
+
+    return type;
   }
 
   function noMetricsMessages(): ReactElement {
