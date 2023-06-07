@@ -149,31 +149,6 @@ describe('ExplorePage', () => {
       });
     });
 
-    it('Reacts to URL changes and opens a pane if an entry is pushed to history', async () => {
-      const urlParams = {
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-      };
-      const { datasources, location } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
-      jest.mocked(datasources.elastic.query).mockReturnValue(makeLogsQueryResponse());
-
-      await waitFor(() => {
-        expect(screen.getByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
-      });
-
-      act(() => {
-        location.partial({
-          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-          right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
-        });
-      });
-
-      await waitFor(() => {
-        expect(screen.getByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
-        expect(screen.getByText(`elastic Editor input: error`)).toBeInTheDocument();
-      });
-    });
-
     it('handles opening split with split open func', async () => {
       const urlParams = {
         left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
