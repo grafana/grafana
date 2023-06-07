@@ -36,6 +36,9 @@ func (auth GrafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 	
 	// We are being called using a Grafana token
 	if orgRole := extra["org-role"]; len(orgRole) > 0 {
+		// NOTE: signedInUser only has one org role which the authenticator is providing through header auth
+		// That is the single role the below logic is based off of
+		// TBD: is a single value enough for our purposes?
 		switch org.RoleType(orgRole[0]) {
 		case org.RoleAdmin:
 			return authorizer.DecisionAllow, "", nil
