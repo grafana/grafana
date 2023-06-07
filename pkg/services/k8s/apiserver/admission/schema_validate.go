@@ -18,17 +18,20 @@ package admission
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 )
 
 const PluginNameSchemaValidate = "SchemaValidate"
 
 // Register registers a plugin
-func RegisterSchemaValidte(plugins *admission.Plugins) {
+func RegisterSchemaValidate(plugins *admission.Plugins) {
 	plugins.Register(PluginNameSchemaValidate, func(config io.Reader) (admission.Interface, error) {
-		return NewDenyByName(), nil
+		return NewSchemaValidate(), nil
 	})
 }
 
@@ -38,6 +41,21 @@ var _ admission.ValidationInterface = schemaValidate{}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
 func (schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+	// pretending only dashboards exist
+	obj := a.GetObject()
+	if obj.GetObjectKind().GroupVersionKind().Kind == "Dashboard" {
+		uobj := obj.(*unstructured.Unstructured)
+		b, err := json.Marshal(&uobj.Object)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("b: %v\n", b)
+
+		return nil
+	} else {
+		return fmt.Errorf("i like dashboards and only dashboards")
+	}
+
 	return nil
 }
 

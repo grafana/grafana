@@ -8,27 +8,17 @@ import (
 	"path"
 	"strconv"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/apis/kinds/install"
 	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/certgenerator"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
@@ -41,6 +31,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -150,10 +150,11 @@ func (s *service) start(ctx context.Context) error {
 	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	grafanaAdmission.RegisterSchemaValidate(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
