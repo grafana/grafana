@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
 import { ConfirmModal } from '@grafana/ui';
@@ -10,14 +10,17 @@ import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onDismiss: () => void;
   selectedItems: DashboardTreeSelection;
 }
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const onDelete = () => {
-    onConfirm();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const onDelete = async () => {
+    setIsDeleting(true);
+    await onConfirm();
+    setIsDeleting(false);
     onDismiss();
   };
 
@@ -31,7 +34,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         </>
       }
       confirmationText="Delete"
-      confirmText="Delete"
+      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
       onDismiss={onDismiss}
       onConfirm={onDelete}
       title="Delete"
