@@ -44,6 +44,7 @@ import (
 
 const userInDbName = "user_in_db"
 const userInDbAvatar = "/avatar/402d08de060496d6b6874495fe20f5ad"
+const generalFolder = "General"
 
 func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with a library panel, it should connect the two",
@@ -367,14 +368,16 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: generalFolder})
 
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: generalFolder})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, missingUID, missingName, missingModel)
 			var result = toLibraryElement(t, element)
@@ -406,13 +409,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: generalFolder})
 			require.NoError(t, err)
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: generalFolder})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
 			expected.FolderID = sc.initialResult.Result.FolderID
@@ -519,16 +524,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: generalFolder})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
-			_, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: generalFolder})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: generalFolder})
 			require.NoError(t, err)
 			expected := getExpected(t, element, outsideUID, outsideName, outsideModel)
 			result := toLibraryElement(t, element)
@@ -536,7 +540,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			element, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
+			element, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: generalFolder})
 			require.NoError(t, err)
 			expected = getExpected(t, element, insideUID, insideName, insideModel)
 			result = toLibraryElement(t, element)

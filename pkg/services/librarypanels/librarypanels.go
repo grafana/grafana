@@ -140,7 +140,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			return errLibraryPanelHeaderUIDMissing
 		}
 
-		_, err := service.GetElement(c, signedInUser, UID)
+		_, err := service.GetElement(c, signedInUser, model.GetLibraryElementCommand{UID: UID, FolderName: "General"})
 		if err == nil {
 			continue
 		}
