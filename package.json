@@ -176,7 +176,7 @@
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "6.7.3",
     "css-minimizer-webpack-plugin": "4.2.2",
-    "cypress": "12.12.0",
+    "cypress": "12.13.0",
     "esbuild": "0.17.19",
     "esbuild-loader": "3.0.1",
     "esbuild-plugin-browserslist": "^0.6.0",

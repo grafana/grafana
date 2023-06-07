@@ -638,7 +638,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -646,7 +646,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -654,7 +654,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -662,7 +662,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -1617,7 +1617,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -1625,7 +1625,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -1633,7 +1633,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -1641,7 +1641,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - cd /
@@ -2439,7 +2439,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -2447,7 +2447,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -2455,7 +2455,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
@@ -2463,7 +2463,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -2981,7 +2981,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -2989,7 +2989,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -2997,7 +2997,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
@@ -3005,7 +3005,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -4951,7 +4951,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -4959,7 +4959,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -4967,7 +4967,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
@@ -4975,7 +4975,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -5628,7 +5628,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite --tries 3
@@ -5636,7 +5636,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite --tries 3
@@ -5644,7 +5644,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite --tries 3
@@ -5652,7 +5652,7 @@ steps:
   - grafana-server
   environment:
     HOST: grafana-server
-  image: cypress/included:12.12.0
+  image: cypress/included:12.13.0
   name: end-to-end-tests-various-suite
 - commands:
   - apt-get update
@@ -7218,6 +7218,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 05a59cb4a71698da9a7464ec5a86fa9258ba2da9a336c65f5717ab675b00c2d2
+hmac: 11f5a49a666322ab76615ee987a67a4f6a77a834bfcb2c4cd8673410978d6f8a
 
 ...
