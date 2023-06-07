@@ -36,11 +36,11 @@ describe('NewActionsButton', () => {
 
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
-    await userEvent.click(screen.getByText('New Folder'));
+    await userEvent.click(screen.getByText('New folder'));
 
-    const drawer = screen.getByRole('dialog', { name: 'Drawer title New Folder' });
+    const drawer = screen.getByRole('dialog', { name: 'Drawer title New folder' });
     expect(drawer).toBeInTheDocument();
-    expect(within(drawer).getByRole('heading', { name: 'New Folder' })).toBeInTheDocument();
+    expect(within(drawer).getByRole('heading', { name: 'New folder' })).toBeInTheDocument();
     expect(within(drawer).getByText(`Location: ${mockParentFolderTitle}`)).toBeInTheDocument();
   });
 
@@ -51,7 +51,7 @@ describe('NewActionsButton', () => {
 
     expect(screen.getByText('New Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Import')).toBeInTheDocument();
-    expect(screen.queryByText('New Folder')).not.toBeInTheDocument();
+    expect(screen.queryByText('New folder')).not.toBeInTheDocument();
   });
 
   it('should only render folder item when dashboard creation is disabled', async () => {
@@ -61,6 +61,6 @@ describe('NewActionsButton', () => {
 
     expect(screen.queryByText('New Dashboard')).not.toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
-    expect(screen.getByText('New Folder')).toBeInTheDocument();
+    expect(screen.getByText('New folder')).toBeInTheDocument();
   });
 });
