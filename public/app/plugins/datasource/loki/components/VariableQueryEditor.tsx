@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { FormEvent, useState, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -70,33 +71,45 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField label="Query type" labelWidth={20}>
-        <Select
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={type}
-          options={variableOptions}
-          width={16}
-        />
-      </InlineField>
+    <>
+      <InlineFieldRow>
+        <InlineField label="Query type" labelWidth={20}>
+          <Select
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
+            onBlur={handleBlur}
+            value={type}
+            options={variableOptions}
+            width={16}
+          />
+        </InlineField>
+        {type === QueryType.LabelValues && (
+          <>
+            <InlineField label="Label" labelWidth={20}>
+              <Select
+                aria-label="Label"
+                onChange={onLabelChange}
+                onBlur={handleBlur}
+                value={{ label: label, value: label }}
+                options={labelOptions}
+                width={16}
+                allowCustomValue
+              />
+            </InlineField>
+          </>
+        )}
+      </InlineFieldRow>
       {type === QueryType.LabelValues && (
-        <>
-          <InlineField label="Label" labelWidth={20}>
-            <Select
-              aria-label="Label"
-              onChange={onLabelChange}
-              onBlur={handleBlur}
-              value={{ label: label, value: label }}
-              options={labelOptions}
-              width={16}
-              allowCustomValue
-            />
-          </InlineField>
+        <InlineFieldRow
+          // We want stream selector input to have a space for long stream selectors
+          className={css`
+            width: 75%;
+          `}
+        >
           <InlineField
             label="Stream selector"
             labelWidth={20}
+            grow={true}
             tooltip={
               <div>
                 {
@@ -112,11 +125,10 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               value={stream}
               onChange={onStreamChange}
               onBlur={handleBlur}
-              width={22}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
-    </InlineFieldRow>
+    </>
   );
 };
