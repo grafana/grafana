@@ -3,7 +3,7 @@ import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { LogRowModel, findHighlightChunksInText, CoreApp } from '@grafana/data';
+import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
 import { ClipboardButton, IconButton } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -100,12 +100,7 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span
-            className={cx('log-row-menu', styles.rowMenu, {
-              [styles.rowMenuWithContextButton]: shouldShowContextToggle,
-            })}
-            onClick={this.onLogRowClick}
-          >
+          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
