@@ -280,12 +280,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:        "authnService",
-			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus exemplar sampling",
 			State:       FeatureStateStable,
