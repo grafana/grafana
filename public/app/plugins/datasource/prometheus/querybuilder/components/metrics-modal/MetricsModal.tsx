@@ -239,9 +239,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
             }}
           />
         </div>
-        <div>
-          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
-        </div>
         {state.hasMetadata && (
           <div className={styles.inputItem}>
             <MultiSelect
@@ -254,6 +251,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
             />
           </div>
         )}
+        <div>
+          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
+        </div>
         <div className={styles.inputItem}>
           <Toggletip
             aria-label="Additional settings"

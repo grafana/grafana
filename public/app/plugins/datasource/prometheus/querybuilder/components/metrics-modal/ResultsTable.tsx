@@ -77,18 +77,20 @@ export function ResultsTable(props: ResultsTableProps) {
     return (
       <>
         {fullType}
-        <Tooltip
-          content={
-            <>
-              When creating a {descriptiveType}, Prometheus exposes multiple series with the type counter.{' '}
-              {docsTip(link)}
-            </>
-          }
-          placement="bottom-end"
-          interactive={true}
-        >
-          <Icon name="info-circle" size="xs" />
-        </Tooltip>
+        <span className={styles.tooltipSpace}>
+          <Tooltip
+            content={
+              <>
+                When creating a {descriptiveType}, Prometheus exposes multiple series with the type counter.{' '}
+                {docsTip(link)}
+              </>
+            }
+            placement="bottom-start"
+            interactive={true}
+          >
+            <Icon name="info-circle" size="xs" />
+          </Tooltip>
+        </span>
       </>
     );
   }
@@ -185,7 +187,12 @@ export function ResultsTable(props: ResultsTableProps) {
                   </td>
                   {state.hasMetadata && metaRows(metric)}
                   <td>
-                    <Button size="sm" variant="secondary" onClick={() => selectMetric(metric)}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => selectMetric(metric)}
+                      className={styles.centerButton}
+                    >
                       Select
                     </Button>
                   </td>
@@ -220,7 +227,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     row: css`
       label: row;
-      cursor: pointer;
       border-bottom: 1px solid ${theme.colors.border.weak}
       &:last-child {
         border-bottom: 0;
@@ -263,6 +269,14 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     noResults: css`
       text-align: center;
       color: ${theme.colors.text.secondary};
+    `,
+    tooltipSpace: css`
+      margin-left: 4px;
+    `,
+    centerButton: css`
+      display: block;
+      margin: auto;
+      border: none;
     `,
   };
 };

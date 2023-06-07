@@ -17,10 +17,10 @@ export const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
-      gap: ${theme.spacing(2)};
     `,
     inputItemFirst: css`
       flex-basis: 40%;
+      padding-right: 16px;
     `,
     inputItem: css`
       flex-grow: 1;
