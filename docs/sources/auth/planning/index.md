@@ -162,7 +162,7 @@ Moreover, RBAC allows you to create your own custom roles and edit permissions g
 
 ## User synchronization between Grafana and Identity Providers
 
-When integrating Grafana with an Identity Provider, besides the initial authentication configuration, we might want to consider user base and role synchronization. This will allow the users within a group to share the same configuration, thus preventing setting permissions for each user.
+When connecting Grafana to an Identity Provider, it's important to think beyond just the initial authentication setup. You should also think about synchronizing user bases and roles. Doing so will enable users within a group to share the same configuration, so you won't have to set individual permissions for each user.
 
 ### Team sync
 
