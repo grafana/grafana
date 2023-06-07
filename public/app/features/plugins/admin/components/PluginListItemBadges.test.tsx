@@ -75,4 +75,14 @@ describe('PluginListItemBadges', () => {
     render(<PluginListItemBadges plugin={{ ...plugin, hasUpdate: true, installedVersion: '0.0.9' }} />);
     expect(screen.getByText(/update available/i)).toBeVisible();
   });
+
+  it('renders an angular badge (when plugin is angular)', () => {
+    render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: true }} />);
+    expect(screen.getByText(/angular/i)).toBeVisible();
+  });
+
+  it('does not render an angular badge (when plugin is not angular)', () => {
+    render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: false }} />);
+    expect(screen.queryByText(/angular/i)).toBeNull();
+  });
 });
