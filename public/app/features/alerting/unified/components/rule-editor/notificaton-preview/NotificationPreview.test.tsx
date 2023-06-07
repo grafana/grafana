@@ -45,7 +45,7 @@ const ui = {
   route: byTestId('matching-policy-route'),
   routeButton: byRole('button', { name: /Expand policy route/ }),
   routeMatchingInstances: byTestId('route-matching-instance'),
-  loadingIndicator: byText('Loading routing preview...'),
+  loadingIndicator: byText(/Loading/),
   previewButton: byRole('button', { name: /preview routing/i }),
   grafanaAlertManagerLabel: byText(/alert manager:grafana/i),
   otherAlertManagerLabel: byText(/alert manager:other_am/i),
@@ -133,10 +133,14 @@ describe('NotificationPreview', () => {
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
     mockOneAlertManager();
     mockPreviewApiResponse(server, {
+      data: {
+        // @ts-ignore
+        values: [1686126555914, 'Normal'],
+      },
       schema: {
         fields: [
-          { name: 'value', type: FieldType.number, labels: { tomato: 'red', avocate: 'green' } },
-          { name: 'value', type: FieldType.number },
+          { name: 'Time', type: FieldType.number },
+          { name: 'State', type: FieldType.string, labels: { tomato: 'red', avocate: 'green' } },
         ],
       },
     });
@@ -144,13 +148,8 @@ describe('NotificationPreview', () => {
     render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
       wrapper: TestProvider,
     });
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
+
     await userEvent.click(ui.previewButton.get());
-    await waitFor(() => {
-      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
-    });
     await waitFor(() => {
       expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
     });
