@@ -28,7 +28,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 			expected: JSONData{
 				ID:   "test-app",
-				Type: "app",
+				Type: TypeApp,
 				Name: "Test App",
 				Info: Info{
 					Author: InfoLink{
@@ -91,7 +91,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			},
 			expected: JSONData{
 				ID:   "grafana-piechart-panel",
-				Type: "panel",
+				Type: TypePanel,
 				Name: "Pie Chart (old)",
 				Dependencies: Dependencies{
 					GrafanaVersion: "*",
@@ -114,7 +114,7 @@ func Test_ReadPluginJSON(t *testing.T) {
 			expected: JSONData{
 				ID:    "grafana-pyroscope-datasource",
 				Alias: "phlare", // Hardcoded from the parser
-				Type:  "datasource",
+				Type:  TypeDataSource,
 				Dependencies: Dependencies{
 					GrafanaDependency: "",
 					GrafanaVersion:    "*",

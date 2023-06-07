@@ -273,7 +273,7 @@ func urlMatch(specs []string, target string, signatureType plugins.SignatureType
 			return true, nil
 		}
 
-		if signatureType != plugins.PrivateGlobSignature {
+		if signatureType != plugins.SignatureTypePrivateGlob {
 			continue
 		}
 

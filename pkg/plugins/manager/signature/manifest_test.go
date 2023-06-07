@@ -118,7 +118,7 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, plugins.PrivateSignature, manifest.SignatureType)
+		assert.Equal(t, plugins.SignatureTypePrivate, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
@@ -545,7 +545,7 @@ func Test_urlMatch_privateGlob(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateGlobSignature)
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.SignatureTypePrivateGlob)
 			require.NoError(t, err)
 			require.Equal(t, tt.shouldMatch, got)
 		})
@@ -661,7 +661,7 @@ func Test_urlMatch_private(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.PrivateSignature)
+			got, err := urlMatch(tt.args.specs, tt.args.target, plugins.SignatureTypePrivate)
 			require.NoError(t, err)
 			require.Equal(t, tt.shouldMatch, got)
 		})

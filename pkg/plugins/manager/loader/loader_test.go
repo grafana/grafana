@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -78,7 +79,7 @@ func TestLoader_Load(t *testing.T) {
 				{
 					JSONData: plugins.JSONData{
 						ID:   "cloudwatch",
-						Type: "datasource",
+						Type: plugins.TypeDataSource,
 						Name: "CloudWatch",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -128,7 +129,7 @@ func TestLoader_Load(t *testing.T) {
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
-						Type: "datasource",
+						Type: plugins.TypeDataSource,
 						Name: "Test",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -203,25 +204,25 @@ func TestLoader_Load(t *testing.T) {
 								Name: "Nginx Connections",
 								Path: "dashboards/connections.json",
 								Type: "dashboard",
-								Role: "Viewer",
+								Role: org.RoleViewer,
 								Slug: "nginx-connections",
 							},
 							{
 								Name: "Nginx Memory",
 								Path: "dashboards/memory.json",
 								Type: "dashboard",
-								Role: "Viewer",
+								Role: org.RoleViewer,
 								Slug: "nginx-memory",
 							},
 							{
 								Name: "Nginx Panel",
-								Type: "panel",
-								Role: "Viewer",
+								Type: string(plugins.TypePanel),
+								Role: org.RoleViewer,
 								Slug: "nginx-panel"},
 							{
 								Name: "Nginx Datasource",
-								Type: "datasource",
-								Role: "Viewer",
+								Type: string(plugins.TypeDataSource),
+								Role: org.RoleViewer,
 								Slug: "nginx-datasource",
 							},
 						},
@@ -246,7 +247,7 @@ func TestLoader_Load(t *testing.T) {
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
-						Type: "datasource",
+						Type: plugins.TypeDataSource,
 						Name: "Test",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -297,7 +298,7 @@ func TestLoader_Load(t *testing.T) {
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test-datasource",
-						Type: "datasource",
+						Type: plugins.TypeDataSource,
 						Name: "Test",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -393,7 +394,7 @@ func TestLoader_Load(t *testing.T) {
 			want: []*plugins.Plugin{
 				{JSONData: plugins.JSONData{
 					ID:   "test-app",
-					Type: "app",
+					Type: plugins.TypeApp,
 					Name: "Test App",
 					Info: plugins.Info{
 						Author: plugins.InfoLink{
@@ -418,8 +419,8 @@ func TestLoader_Load(t *testing.T) {
 						Plugins:           []plugins.Dependency{},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
+						{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
 					Backend: false,
 				},
@@ -480,7 +481,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 		expected := []*plugins.Plugin{{
 			JSONData: plugins.JSONData{
 				ID:   "grafana-worldmap-panel",
-				Type: "panel",
+				Type: plugins.TypePanel,
 				Name: "Worldmap Panel",
 				Info: plugins.Info{
 					Version: "0.3.3",
@@ -627,7 +628,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-datasource",
-							Type: "datasource",
+							Type: plugins.TypeDataSource,
 							Name: "Test",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
@@ -654,7 +655,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 						BaseURL:       "public/plugins/test-datasource",
 						FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "testdata/valid-v2-pvt-signature/plugin")),
 						Signature:     "valid",
-						SignatureType: plugins.PrivateSignature,
+						SignatureType: plugins.SignatureTypePrivate,
 						SignatureOrg:  "Will Browne",
 					},
 				},
@@ -733,7 +734,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 				{
 					JSONData: plugins.JSONData{
 						ID:   "test-app",
-						Type: "app",
+						Type: plugins.TypeApp,
 						Name: "Test App",
 						Info: plugins.Info{
 							Author: plugins.InfoLink{
@@ -774,7 +775,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 					FS:            mustNewStaticFSForTests(t, pluginDir),
 					Class:         plugins.ClassExternal,
 					Signature:     plugins.SignatureStatusValid,
-					SignatureType: plugins.PrivateSignature,
+					SignatureType: plugins.SignatureTypePrivate,
 					SignatureOrg:  "gabrielmabille",
 					Module:        "plugins/test-app/module",
 					BaseURL:       "public/plugins/test-app",
@@ -842,7 +843,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 			{
 				JSONData: plugins.JSONData{
 					ID:   "test-datasource",
-					Type: "datasource",
+					Type: plugins.TypeDataSource,
 					Name: "Test",
 					Info: plugins.Info{
 						Author:      plugins.InfoLink{Name: "Will Browne", URL: "https://willbrowne.com"},
@@ -861,7 +862,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 				FS:            mustNewStaticFSForTests(t, filepath.Join(parentDir, "/testdata/valid-v2-pvt-signature-root-url-uri/plugin")),
 				Class:         plugins.ClassExternal,
 				Signature:     plugins.SignatureStatusValid,
-				SignatureType: plugins.PrivateSignature,
+				SignatureType: plugins.SignatureTypePrivate,
 				SignatureOrg:  "Will Browne",
 				Module:        "plugins/test-datasource/module",
 				BaseURL:       "public/plugins/test-datasource",
@@ -904,7 +905,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 			{
 				JSONData: plugins.JSONData{
 					ID:   "test-app",
-					Type: "app",
+					Type: plugins.TypeApp,
 					Name: "Test App",
 					Info: plugins.Info{
 						Author: plugins.InfoLink{
@@ -935,10 +936,10 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 						},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Slug: "nginx-datasource"},
 					},
 					Backend: false,
 				},
@@ -994,7 +995,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			{
 				JSONData: plugins.JSONData{
 					ID:   "test-app",
-					Type: "app",
+					Type: plugins.TypeApp,
 					Name: "Test App",
 					Info: plugins.Info{
 						Author: plugins.InfoLink{
@@ -1025,10 +1026,10 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 						},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: "Viewer", Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: "Viewer", Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: "Viewer", Slug: "nginx-datasource"},
+						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-connections"},
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
+						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Slug: "nginx-panel"},
+						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Slug: "nginx-datasource"},
 					},
 					Backend: false,
 				},
@@ -1080,7 +1081,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 func TestLoader_Load_Angular(t *testing.T) {
 	fakePluginSource := &fakes.FakePluginSource{
 		PluginClassFunc: func(ctx context.Context) plugins.Class {
-			return plugins.External
+			return plugins.ClassExternal
 		},
 		PluginURIsFunc: func(ctx context.Context) []string {
 			return []string{"../testdata/valid-v2-signature"}
@@ -1138,7 +1139,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	parent := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   "test-datasource",
-			Type: "datasource",
+			Type: plugins.TypeDataSource,
 			Name: "Parent",
 			Info: plugins.Info{
 				Author: plugins.InfoLink{
@@ -1171,7 +1172,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	child := &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:   "test-panel",
-			Type: "panel",
+			Type: plugins.TypePanel,
 			Name: "Child",
 			Info: plugins.Info{
 				Author: plugins.InfoLink{
@@ -1263,7 +1264,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		parent := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "myorgid-simple-app",
-				Type: "app",
+				Type: plugins.TypeApp,
 				Name: "Simple App",
 				Info: plugins.Info{
 					Author: plugins.InfoLink{
@@ -1292,7 +1293,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Name:       "Root Page (react)",
 						Path:       "/a/myorgid-simple-app",
 						Type:       "page",
-						Role:       "Viewer",
+						Role:       org.RoleViewer,
 						AddToNav:   true,
 						DefaultNav: true,
 						Slug:       "root-page-react",
@@ -1301,7 +1302,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Name:     "Root Page (Tab B)",
 						Path:     "/a/myorgid-simple-app/?tab=b",
 						Type:     "page",
-						Role:     "Viewer",
+						Role:     org.RoleViewer,
 						AddToNav: true,
 						Slug:     "root-page-tab-b",
 					},
@@ -1309,7 +1310,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Name:     "React Config",
 						Path:     "/plugins/myorgid-simple-app/?page=page2",
 						Type:     "page",
-						Role:     "Admin",
+						Role:     org.RoleAdmin,
 						AddToNav: true,
 						Slug:     "react-config",
 					},
@@ -1317,14 +1318,14 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 						Name: "Streaming Example",
 						Path: "dashboards/streaming.json",
 						Type: "dashboard",
-						Role: "Viewer",
+						Role: org.RoleViewer,
 						Slug: "streaming-example",
 					},
 					{
 						Name: "Lots of Stats",
 						Path: "dashboards/stats.json",
 						Type: "dashboard",
-						Role: "Viewer",
+						Role: org.RoleViewer,
 						Slug: "lots-of-stats",
 					},
 				},
@@ -1343,7 +1344,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		child := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "myorgid-simple-panel",
-				Type: "panel",
+				Type: plugins.TypePanel,
 				Name: "Grafana Panel Plugin Template",
 				Info: plugins.Info{
 					Author: plugins.InfoLink{
