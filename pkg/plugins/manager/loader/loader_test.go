@@ -2,7 +2,7 @@ package loader
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -1049,7 +1049,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		procPrvdr.BackendFactoryFunc = func(ctx context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 				if pluginID == "test-datasource" {
-					return nil, fmt.Errorf("failed to initialize")
+					return nil, errors.New("failed to initialize")
 				}
 				return &fakes.FakePluginClient{}, nil
 			}
