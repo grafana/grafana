@@ -201,7 +201,7 @@ describe('ExplorePage', () => {
 
       const splitButton = await screen.findByText(/split/i);
       await userEvent.click(splitButton);
-      await waitForExplore('left', true);
+      await waitForExplore('left');
 
       expect(await screen.findAllByLabelText('Widen pane')).toHaveLength(2);
       expect(screen.queryByLabelText('Narrow pane')).not.toBeInTheDocument();

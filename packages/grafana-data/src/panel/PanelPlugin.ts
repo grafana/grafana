@@ -3,15 +3,15 @@ import { ComponentClass, ComponentType } from 'react';
 
 import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import {
+  FieldConfigProperty,
   FieldConfigSource,
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
+  PanelPluginDataSupport,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
-  FieldConfigProperty,
-  PanelPluginDataSupport,
   VisualizationSuggestionsSupplier,
 } from '../types';
 import { deprecationWarning } from '../utils';
@@ -120,7 +120,7 @@ export class PanelPlugin<
   };
 
   /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
+   * Legacy angular ctrl. If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
 

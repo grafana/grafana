@@ -21,7 +21,7 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
 
   return (
     <>
-      <h6 className="page-heading">Alerting</h6>
+      <h3 className="page-heading">Alerting</h3>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">

@@ -68,7 +68,7 @@ const ui = {
     matcherOperatorSelect: byLabelText('operator'),
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
-    submit: byText('Submit'),
+    submit: byText(/save silence/i),
     createdBy: byText(/created by \*/i),
   },
 };

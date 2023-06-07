@@ -1,25 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { assertInstanceOf } from 'test/helpers/asserts';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
 
 import SharedPreferences from './SharedPreferences';
-
-jest.mock('@grafana/runtime', () => {
-  const originalModule = jest.requireActual('@grafana/runtime');
-  return {
-    ...originalModule,
-    config: {
-      ...originalModule.config,
-      featureToggles: {
-        internationalization: true,
-      },
-    },
-  };
-});
 
 jest.mock('app/core/services/backend_srv', () => {
   return {
@@ -85,6 +71,17 @@ const mockPreferences: UserPreferencesDTO = {
   language: '',
 };
 
+const defaultPreferences: UserPreferencesDTO = {
+  timezone: '',
+  weekStart: '',
+  theme: '',
+  homeDashboardUID: '',
+  queryHistory: {
+    homeTab: '',
+  },
+  language: '',
+};
+
 const mockPrefsPatch = jest.fn();
 const mockPrefsUpdate = jest.fn();
 const mockPrefsLoad = jest.fn().mockResolvedValue(mockPreferences);
@@ -129,8 +126,8 @@ describe('SharedPreferences', () => {
   });
 
   it('renders the theme preference', () => {
-    const lightThemeRadio = assertInstanceOf(screen.getByLabelText('Light'), HTMLInputElement);
-    expect(lightThemeRadio.checked).toBeTruthy();
+    const themeSelect = getSelectParent(screen.getByLabelText('Interface theme'));
+    expect(themeSelect).toHaveTextContent('Light');
   });
 
   it('renders the home dashboard preference', async () => {
@@ -155,15 +152,14 @@ describe('SharedPreferences', () => {
     expect(weekSelect).toHaveTextContent('Default');
   });
 
-  it("saves the user's new preferences", async () => {
-    const darkThemeRadio = assertInstanceOf(screen.getByLabelText('Dark'), HTMLInputElement);
-    await userEvent.click(darkThemeRadio);
-
+  it('saves the users new preferences', async () => {
+    await selectOptionInTest(screen.getByLabelText('Interface theme'), 'Dark');
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Australia/Sydney');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Saturday');
     await selectOptionInTest(screen.getByLabelText(/language/i), 'Français');
 
     await userEvent.click(screen.getByText('Save'));
+
     expect(mockPrefsUpdate).toHaveBeenCalledWith({
       timezone: 'Australia/Sydney',
       weekStart: 'saturday',
@@ -176,26 +172,20 @@ describe('SharedPreferences', () => {
     });
   });
 
-  it("saves the user's default preferences", async () => {
-    const defThemeRadio = assertInstanceOf(screen.getByLabelText('Default'), HTMLInputElement);
-    await userEvent.click(defThemeRadio);
+  it('saves the users default preferences', async () => {
+    await selectOptionInTest(screen.getByLabelText('Interface theme'), 'Default');
 
-    await selectOptionInTest(screen.getByLabelText('Home Dashboard'), 'Default');
+    // there's no default option in this dropdown - there's a clear selection button
+    // get the parent container, and find the "select-clear-value" button
+    const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
+    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'select-clear-value' }));
+
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
     await selectOptionInTest(screen.getByLabelText('Week start'), 'Default');
     await selectOptionInTest(screen.getByLabelText(/language/i), 'Default');
 
     await userEvent.click(screen.getByText('Save'));
-    expect(mockPrefsUpdate).toHaveBeenCalledWith({
-      timezone: 'browser',
-      weekStart: '',
-      theme: '',
-      homeDashboardUID: 'myDash',
-      queryHistory: {
-        homeTab: '',
-      },
-      language: '',
-    });
+    expect(mockPrefsUpdate).toHaveBeenCalledWith(defaultPreferences);
   });
 
   it('refreshes the page after saving preferences', async () => {

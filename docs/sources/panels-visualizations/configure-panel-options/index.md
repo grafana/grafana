@@ -32,7 +32,7 @@ This topic describes how to:
 
 ## Edit a panel
 
-After you add a panel to a dashboard, you can open it at any time to change change or update queries, add data transformation, and change visualization settings.
+After you add a panel to a dashboard, you can open it at any time to change or update queries, add data transformation, and change visualization settings.
 
 1. Open the dashboard that contains the panel you want to edit.
 
@@ -86,7 +86,9 @@ Explore and export panel, panel data, and data frame JSON models.
 
 You can configure Grafana to dynamically add panels or rows to a dashboard. A dynamic panel is a panel that the system creates based on the value of a variable. Variables dynamically change your queries across all panels in a dashboard. For more information about repeating rows, refer to [Configure repeating rows](../add-organize-panels/#configure-repeating-rows).
 
-> **Note:** Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
+{{% admonition type="note" %}}
+Repeating panels require variables to have one or more items selected; you cannot repeat a panel zero times to hide it.
+{{% /admonition %}}
 
 To see an example of repeating panels, refer to [Prometheus dashboard with repeating panels](https://play.grafana.org/d/000000036/prometheus-repeat).
 

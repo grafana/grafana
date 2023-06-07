@@ -59,7 +59,7 @@ function setup(error: DataQueryError) {
 
   render(
     <TestProvider store={store}>
-      <ResponseErrorContainer exploreId={'left'} />
+      <ResponseErrorContainer exploreId="left" />
     </TestProvider>
   );
 }

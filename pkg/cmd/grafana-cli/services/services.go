@@ -1,8 +1,8 @@
 package services
 
 import (
+	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -12,6 +12,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 )
 
 var (
@@ -62,43 +66,25 @@ func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	}
 }
 
-func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
-	distPluginDataPath := filepath.Join(pluginDir, pluginName, "dist", "plugin.json")
+func GetLocalPlugin(pluginDir, pluginID string) (plugins.FoundPlugin, error) {
+	pluginPath := filepath.Join(pluginDir, pluginID)
 
-	data, err := IoHelper.ReadFile(distPluginDataPath)
-	if err != nil {
-		pluginDataPath := filepath.Join(pluginDir, pluginName, "plugin.json")
-		data, err = IoHelper.ReadFile(pluginDataPath)
-		if err != nil {
-			return models.InstalledPlugin{}, errors.New("Could not find dist/plugin.json or plugin.json for " + pluginName + " in " + pluginDir)
-		}
+	ps := GetLocalPlugins(pluginPath)
+	if len(ps) == 0 {
+		return plugins.FoundPlugin{}, errors.New("could not find plugin " + pluginID + " in " + pluginDir)
 	}
 
-	res := models.InstalledPlugin{}
-	if err := json.Unmarshal(data, &res); err != nil {
-		return res, err
-	}
-
-	if res.Info.Version == "" {
-		res.Info.Version = "0.0.0"
-	}
-
-	if res.ID == "" {
-		return models.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
-	}
-
-	return res, nil
+	return ps[0].Primary, nil
 }
 
-func GetLocalPlugins(pluginDir string) []models.InstalledPlugin {
-	result := make([]models.InstalledPlugin, 0)
-	files, _ := IoHelper.ReadDir(pluginDir)
-	for _, f := range files {
-		res, err := ReadPlugin(pluginDir, f.Name())
-		if err == nil {
-			result = append(result, res)
-		}
+func GetLocalPlugins(pluginDir string) []*plugins.FoundBundle {
+	f := finder.NewLocalFinder(&config.Cfg{})
+
+	res, err := f.Find(context.Background(), sources.NewLocalSource(plugins.External, []string{pluginDir}))
+	if err != nil {
+		logger.Error("Could not get local plugins", err)
+		return make([]*plugins.FoundBundle, 0)
 	}
 
-	return result
+	return res
 }

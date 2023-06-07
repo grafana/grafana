@@ -30,7 +30,7 @@ const styles = {
   `,
 };
 
-export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useTimeSrvFix();
   useStateSync(props.queryParams);
   useExplorePageTitle(props.queryParams);

@@ -49,7 +49,7 @@ func logRestartNotice() {
 	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 }
 
-func (cmd Command) installCommand(c utils.CommandLine) error {
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -67,8 +67,11 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
-	skipTLSVerify := c.Bool("insecure")
-	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	repository := repo.NewManager(repo.ManagerCfg{
+		SkipTLSVerify: c.Bool("insecure"),
+		BaseURL:       c.PluginRepoURL(),
+		Logger:        services.Logger,
+	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 
@@ -127,7 +130,7 @@ func osAndArchString() string {
 	return osString + "-" + arch
 }
 
-func supportsCurrentArch(version *models.Version) bool {
+func supportsCurrentArch(version models.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -139,10 +142,10 @@ func supportsCurrentArch(version *models.Version) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *models.Plugin) *models.Version {
+func latestSupportedVersion(plugin models.Plugin) *models.Version {
 	for _, v := range plugin.Versions {
 		ver := v
-		if supportsCurrentArch(&ver) {
+		if supportsCurrentArch(ver) {
 			return &ver
 		}
 	}

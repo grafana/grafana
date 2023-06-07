@@ -35,7 +35,7 @@ import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreQueryParams } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
-import { ExplorePage } from '../../ExplorePage';
+import ExplorePage from '../../ExplorePage';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -86,7 +86,6 @@ export function setupExplore(options?: SetupOptions): {
     },
     get(datasource?: string | DataSourceRef | null): Promise<DataSourceApi> {
       let ds: DataSourceApi | undefined;
-      // console.log('datasource', datasource);
       if (!datasource) {
         ds = dsSettings[0]?.api;
       } else {
@@ -233,7 +232,7 @@ function makeDatasourceSetup({
   };
 }
 
-export const waitForExplore = (exploreId = 'left', multi = false) => {
+export const waitForExplore = (exploreId = 'left') => {
   return waitFor(async () => {
     const container = screen.getAllByTestId('data-testid Explore');
     return within(container[exploreId === 'left' ? 0 : 1]);
