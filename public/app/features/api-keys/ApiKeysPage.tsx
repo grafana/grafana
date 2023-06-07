@@ -17,7 +17,6 @@ import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabl
 
 function mapStateToProps(state: StoreState) {
   const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
-
   return {
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,

@@ -39,7 +39,8 @@ const apiKeysSlice = createSlice({
       return { ...state, hasFetched: false };
     },
     setMigrationResult: (state, action): ApiKeysState => {
-      return { ...state, migrationResult: action.payload };
+      const { migrationResult } = action.payload;
+      return { ...state, migrationResult: migrationResult };
     },
   },
 });
