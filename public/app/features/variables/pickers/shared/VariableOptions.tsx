@@ -43,6 +43,8 @@ class VariableOptions extends PureComponent<Props> {
     // Don't want to pass faulty rest props to the div
     const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, theme, ...restProps } = this.props;
     const styles = getStyles(theme);
+    const allOption = values.find((v) => v.value === ALL_VARIABLE_VALUE);
+    const restOptions = values.filter((v) => v.value !== ALL_VARIABLE_VALUE);
 
     return (
       <div className={styles.variableValueDropdown}>
@@ -52,14 +54,51 @@ class VariableOptions extends PureComponent<Props> {
             aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
+            {allOption && this.renderAllOption(allOption, 0)}
             {this.renderMultiToggle()}
-            {values.map((option, index) => this.renderOption(option, index))}
+            {restOptions.map((option, index) => this.renderOption(option, index))}
           </ul>
         </div>
       </div>
     );
   }
 
+  renderAllOption(option: VariableOption, index: number) {
+    const { highlightIndex, multi, theme } = this.props;
+    const styles = getStyles(theme);
+
+    const isAllOption = option.value === ALL_VARIABLE_VALUE;
+
+    return (
+      <li key={`${option.value}`}>
+        <button
+          data-testid={selectors.components.Variables.variableOption}
+          role="checkbox"
+          type="button"
+          aria-checked={option.selected}
+          className={cx(
+            clearButtonStyles(theme),
+            styles.variableOption,
+            {
+              [styles.highlighted]: index === highlightIndex,
+            },
+            styles.noStyledButton
+          )}
+          onClick={this.onToggle(option)}
+        >
+          <span
+            className={cx(styles.variableOptionIcon, {
+              [styles.variableOptionIconSelected]: option.selected,
+              [styles.hideVariableOptionIcon]: !multi,
+            })}
+          ></span>
+          <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
+            {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
+          </span>
+        </button>
+      </li>
+    );
+  }
   renderOption(option: VariableOption, index: number) {
     const { highlightIndex, multi, theme } = this.props;
     const styles = getStyles(theme);
@@ -106,7 +145,6 @@ class VariableOptions extends PureComponent<Props> {
     }
 
     const tooltipContent = () => <Trans i18nKey="variable.picker.option-tooltip">Clear selections</Trans>;
-
     return (
       <Tooltip content={tooltipContent} placement={'top'}>
         <button

@@ -105,6 +105,15 @@ const updateAllSelection = (state: OptionsPickerState): OptionsPickerState => {
   return state;
 };
 
+// Utility function to select all options except 'ALL_VARIABLE_VALUE'
+const selectAllOptions = (options: VariableOption[]) =>
+  options
+    .filter((option) => option.value !== ALL_VARIABLE_VALUE)
+    .map((option) => ({
+      ...option,
+      selected: true,
+    }));
+
 const optionsPickerSlice = createSlice({
   name: 'templating/optionsPicker',
   initialState: initialOptionPickerState,
@@ -178,20 +187,39 @@ const optionsPickerSlice = createSlice({
       };
     },
     toggleAllOptions: (state, action: PayloadAction): OptionsPickerState => {
-      if (state.selectedValues.length > 0) {
+      // Check if 'All' option is configured and if it's selected
+      const isAllSelected = state.selectedValues.find((option) => option.value === ALL_VARIABLE_VALUE);
+      const isAllConfigured = state.options.find((option) => option.value === ALL_VARIABLE_VALUE);
+
+      // If 'All' option is not selected but some options are, clear all options and select 'All'
+      if (state.selectedValues.length > 0 && isAllConfigured && !isAllSelected) {
+        state.selectedValues = [];
+        const allOptionState = state.options.find((option) => option.value === ALL_VARIABLE_VALUE);
+        state.selectedValues.push({
+          text: allOptionState?.text ?? 'All',
+          value: allOptionState?.value ?? ALL_VARIABLE_VALUE,
+          selected: true,
+        });
+        return applyStateChanges(state, updateOptions);
+      }
+
+      // If 'All' option is the only one selected, select all other options
+      if (isAllSelected && state.selectedValues.length === 1) {
+        state.selectedValues = selectAllOptions(state.options);
+        return applyStateChanges(state, updateOptions);
+      }
+
+      // If some options are selected but 'All' is not configured, clear the selection
+      if (state.selectedValues.length > 0 && !isAllConfigured) {
         state.selectedValues = [];
         return applyStateChanges(state, updateOptions);
       }
 
-      state.selectedValues = state.options
-        .filter((option) => option.value !== ALL_VARIABLE_VALUE)
-        .map((option) => ({
-          ...option,
-          selected: true,
-        }));
-
+      // If no options are selected and 'All' is not selected, select all options
+      state.selectedValues = selectAllOptions(state.options);
       return applyStateChanges(state, updateOptions);
     },
+
     updateSearchQuery: (state, action: PayloadAction<string>): OptionsPickerState => {
       state.queryValue = action.payload;
       return state;
