@@ -1,10 +1,11 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
-import { PluginExtensionLink, PluginExtensionPoints, type PluginExtensionExploreContext } from '@grafana/data';
+import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange } from '@grafana/data';
 import { getPluginLinkExtensions } from '@grafana/runtime';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ExploreId, useSelector } from 'app/types';
+import { AccessControlAction, ExploreId, ExplorePanelData, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
@@ -16,7 +17,16 @@ const AddToDashboard = lazy(() =>
 
 type Props = {
   exploreId: ExploreId;
+  timeZone: TimeZone;
   splitted: boolean;
+};
+
+export type PluginExtensionExploreContext = {
+  exploreId: string;
+  targets: DataQuery[];
+  data: ExplorePanelData;
+  timeRange: RawTimeRange;
+  timeZone: TimeZone;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
@@ -83,13 +93,18 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 }
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
-  const { exploreId } = props;
+  const { exploreId, timeZone } = props;
+  const { queries, queryResponse, range } = useSelector(getExploreItemSelector(exploreId))!;
 
   return useMemo(() => {
     return {
       exploreId,
+      targets: queries,
+      data: queryResponse,
+      timeRange: range.raw,
+      timeZone: timeZone,
     };
-  }, [exploreId]);
+  }, [exploreId, queries, queryResponse, range, timeZone]);
 }
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {

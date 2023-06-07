@@ -137,7 +137,3 @@ type Dashboard = {
   title: string;
   tags: string[];
 };
-
-export type PluginExtensionExploreContext = {
-  exploreId: string;
-};

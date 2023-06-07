@@ -1,12 +1,13 @@
 import React from 'react';
 
-import { PluginExtensionExploreContext, PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
+import { PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, ExploreId } from 'app/types';
 
-import { createExtensionLinkConfig } from '../../plugins/extensions/utils';
+import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
 
 import { AddToDashboardBody } from './AddToDashboard/AddToDashboardBody';
+import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
 export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
   try {
@@ -32,6 +33,8 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
           // temporary solution - will probably map values into context.
           const exploreId = toExploreId(context?.exploreId);
 
+          console.log('Explore context', { context });
+
           openModal({
             title: 'Add panel to dashboard',
             body: ({ onDismiss }) => <AddToDashboardBody onClose={onDismiss!} exploreId={exploreId} />,
@@ -40,6 +43,7 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
       }),
     ];
   } catch (error) {
+    logWarning(`Could not configure extensions for Explore due to: "${error}"`);
     return [];
   }
 }

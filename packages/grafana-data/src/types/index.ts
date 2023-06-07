@@ -62,6 +62,5 @@ export {
   type PluginExtensionComponentConfig,
   type PluginExtensionEventHelpers,
   type PluginExtensionPanelContext,
-  type PluginExtensionExploreContext,
   type PluginExtensionDataSourceConfigContext,
 } from './pluginExtensions';
