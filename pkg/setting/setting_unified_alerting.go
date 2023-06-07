@@ -95,8 +95,10 @@ type UnifiedAlertingSettings struct {
 	StateHistory                  UnifiedAlertingStateHistorySettings
 
 	// Disable the internal Alertmanager and use an external one instead.
-	ExternalAlertmanagersOnly bool
-	MainAlertmanagerURL       string
+	DisableInternalAlertmanager       bool
+	MainAlertmanagerURL               string
+	MainAlertmanagerBasicAuthUser     string
+	MainAlertmanagerBasicAuthPassword string
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -251,8 +253,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		}
 	}
 
-	uaCfg.ExternalAlertmanagersOnly = ua.Key("external_alertmanagers_only").MustBool(false)
+	uaCfg.DisableInternalAlertmanager = ua.Key("disable_internal_alertmanager").MustBool(false)
 	uaCfg.MainAlertmanagerURL = ua.Key("main_alertmanager_url").MustString("")
+	uaCfg.MainAlertmanagerBasicAuthUser = ua.Key("main_alertmanager_basic_auth_user").MustString("")
+	uaCfg.MainAlertmanagerBasicAuthPassword = ua.Key("main_alertmanager_basic_auth_password").MustString("")
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration
