@@ -57,20 +57,9 @@ export async function sandboxPluginComponents(
   // extension components
   if (Reflect.has(pluginObject, 'extensionConfigs')) {
     const extensions: PluginExtensionConfig[] = Reflect.get(pluginObject, 'extensionConfigs');
-    const newExtensions: PluginExtensionConfig[] = [];
     for (const extension of extensions) {
-      switch (extension.type) {
-        case PluginExtensionTypes.link:
-          newExtensions.push(extension);
-          break;
-        case PluginExtensionTypes.component:
-          newExtensions.push({
-            ...extension,
-            component: withSandboxWrapper(Reflect.get(extension, 'component')),
-          });
-          continue;
-        default:
-          assertNever(extension);
+      if (Reflect.has(extension, 'component')) {
+        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component')));
       }
     }
     Reflect.set(pluginObject, 'extensionConfigs', extensions);
