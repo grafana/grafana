@@ -1,5 +1,6 @@
 import { ExploreUrlState } from '@grafana/data';
-import { DEFAULT_RANGE, generateExploreId, safeParseJson } from 'app/core/utils/explore';
+import { generateExploreId, safeParseJson } from 'app/core/utils/explore';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { BaseExploreURL, MigrationHandler } from './types';
 import { ExploreURLV0 } from './v0';
@@ -17,22 +18,29 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
       return {
         schemaVersion: 1,
         panes: {
-          [generateExploreId()]: parseUrlState(undefined),
+          [generateExploreId()]: DEFAULT_STATE,
         },
       };
     }
 
+    const rawPanes: Record<string, unknown> = safeParseJson(params.panes) || {};
+
+    const panes = Object.entries(rawPanes)
+      .map(([key, value]) => [key, applyDefaults(value)] as const)
+      .reduce<Record<string, ExploreUrlState>>((acc, [key, value]) => {
+        return {
+          ...acc,
+          [key]: value,
+        };
+      }, {});
+
+    if (!Object.keys(panes).length) {
+      panes[generateExploreId()] = DEFAULT_STATE;
+    }
+
     return {
       schemaVersion: 1,
-      panes: Object.entries(safeParseJson(params?.panes) || { [generateExploreId()]: parseUrlState(undefined) }).reduce(
-        (acc, [key, value]) => {
-          return {
-            ...acc,
-            [key]: value,
-          };
-        },
-        {}
-      ),
+      panes,
     };
   },
   migrate: (params) => {
@@ -46,17 +54,39 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
   },
 };
 
-function parseUrlState(initial: string | undefined): ExploreUrlState {
-  const parsed = safeParseJson(initial);
-  const errorResult = {
-    datasource: '',
-    queries: [],
-    range: DEFAULT_RANGE,
-  };
+const DEFAULT_STATE: ExploreUrlState = {
+  datasource: null,
+  queries: [],
+  range: DEFAULT_RANGE,
+};
 
-  if (!parsed) {
-    return errorResult;
+function applyDefaults(input: unknown): ExploreUrlState {
+  if (!input || typeof input !== 'object') {
+    return DEFAULT_STATE;
   }
 
-  return { queries: [], range: DEFAULT_RANGE, ...parsed };
+  return {
+    ...DEFAULT_STATE,
+    // queries
+    ...(hasKey('queries', input) && Array.isArray(input.queries) && { queries: input.queries }),
+    // datasource
+    ...(hasKey('datasource', input) && typeof input.datasource === 'string' && { datasource: input.datasource }),
+    // panelsState
+    ...(hasKey('panelsState', input) &&
+      !!input.panelsState &&
+      typeof input.panelsState === 'object' && { panelsState: input.panelsState }),
+    // range
+    ...(hasKey('range', input) &&
+      !!input.range &&
+      typeof input.range === 'object' &&
+      hasKey('from', input.range) &&
+      hasKey('to', input.range) &&
+      typeof input.range.from === 'string' &&
+      typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
+  };
+}
+
+// TS<5 does not support `in` operator for type narrowing. once we upgrade to TS5, we can remove this function and just use the in operator instead.
+function hasKey<K extends string, T extends object>(k: K, o: T): o is T & Record<K, unknown> {
+  return k in o;
 }

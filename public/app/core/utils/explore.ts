@@ -33,11 +33,6 @@ import { config } from '../config';
 
 import { getNextRefIdChar } from './query';
 
-export const DEFAULT_RANGE = {
-  from: 'now-1h',
-  to: 'now',
-};
-
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
 };

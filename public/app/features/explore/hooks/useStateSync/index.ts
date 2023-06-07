@@ -31,7 +31,7 @@ export function useStateSync(params: ExploreQueryParams) {
     },
   } = useGrafana();
   const dispatch = useDispatch();
-  const statePanes = useSelector(selectPanes);
+  const panesState = useSelector(selectPanes);
   const orgId = useSelector((state) => state.user.orgId);
   const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
@@ -108,14 +108,14 @@ export function useStateSync(params: ExploreQueryParams) {
       Object.entries(urlState.panes).forEach(([exploreId, urlPane], i) => {
         const { datasource, queries, range, panelsState } = urlPane;
 
-        const statePane = statePanes[exploreId];
+        const paneState = panesState[exploreId];
 
-        if (statePane !== undefined) {
-          const update = urlDiff(urlPane, getUrlStateFromPaneState(statePane));
+        if (paneState !== undefined) {
+          const update = urlDiff(urlPane, getUrlStateFromPaneState(paneState));
 
           Promise.resolve()
             .then(async () => {
-              if (update.datasource) {
+              if (update.datasource && datasource) {
                 await dispatch(changeDatasource(exploreId, datasource));
               }
               return;
@@ -141,7 +141,7 @@ export function useStateSync(params: ExploreQueryParams) {
           dispatch(
             initializeExplore({
               exploreId,
-              datasource,
+              datasource: datasource || '',
               queries: withUniqueRefIds(queries),
               range,
               panelsState,
@@ -153,7 +153,7 @@ export function useStateSync(params: ExploreQueryParams) {
 
       // Close all the panes that are not in the URL but are still in the store
       // ie. because the user has navigated back after opening the split view.
-      Object.keys(statePanes)
+      Object.keys(panesState)
         .filter((keyInStore) => !Object.keys(urlState.panes).includes(keyInStore))
         .forEach((paneId) => dispatch(splitClose(paneId)));
     }
@@ -247,7 +247,7 @@ export function useStateSync(params: ExploreQueryParams) {
     prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [dispatch, statePanes, exploreMixedDatasource, orgId, location, params]);
+  }, [dispatch, panesState, exploreMixedDatasource, orgId, location, params]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {

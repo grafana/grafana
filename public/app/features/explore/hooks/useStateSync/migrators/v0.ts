@@ -1,5 +1,6 @@
 import { ExploreUrlState } from '@grafana/data';
-import { DEFAULT_RANGE, safeParseJson } from 'app/core/utils/explore';
+import { safeParseJson } from 'app/core/utils/explore';
+import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { BaseExploreURL, MigrationHandler } from './types';
 
@@ -14,7 +15,9 @@ export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
     return {
       schemaVersion: 0,
       left: parseUrlState(typeof params.left === 'string' ? params.left : undefined),
-      ...(params.right && { right: parseUrlState(typeof params.right === 'string' ? params.right : undefined) }),
+      ...(params.right && {
+        right: parseUrlState(typeof params.right === 'string' ? params.right : undefined),
+      }),
     };
   },
 };
@@ -32,7 +35,7 @@ enum ParseUrlStateIndex {
 function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsed = safeParseJson(initial);
   const errorResult = {
-    datasource: 'null',
+    datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
   };
