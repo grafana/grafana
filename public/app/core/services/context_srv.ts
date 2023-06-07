@@ -202,8 +202,10 @@ export class ContextSrv {
 
   // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
-    // only schedule job if feature toggle is enabled and user is signed in
-    if (config.featureToggles.clientTokenRotation && this.isSignedIn) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isRenderRequest = !!urlParams.get('render');
+    // only schedule job if feature toggle is enabled, user is signed in and it's not a render request
+    if (config.featureToggles.clientTokenRotation && this.isSignedIn && !isRenderRequest) {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
@@ -243,7 +245,7 @@ export class ContextSrv {
 
   private rotateToken() {
     // We directly use fetch here to bypass the request queue from backendSvc
-    return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
+    return fetch(config.appSubUrl + '/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
           this.scheduleTokenRotationJob();

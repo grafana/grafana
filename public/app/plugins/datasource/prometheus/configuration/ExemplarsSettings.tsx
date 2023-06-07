@@ -20,7 +20,7 @@ export function ExemplarsSettings({ options, onChange, disabled }: Props) {
   const styles = overhaulStyles(theme);
   return (
     <div className={styles.sectionBottomPadding}>
-      <h6 className="page-heading">Exemplars</h6>
+      <h3 className="page-heading">Exemplars</h3>
 
       {options &&
         options.map((option, index) => {

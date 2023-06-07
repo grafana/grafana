@@ -316,8 +316,10 @@ const (
 	ActionAPIKeyDelete = "apikeys:delete"
 
 	// Users actions
-	ActionUsersRead  = "users:read"
-	ActionUsersWrite = "users:write"
+	ActionUsersRead        = "users:read"
+	ActionUsersWrite       = "users:write"
+	ActionUsersImpersonate = "users:impersonate"
+
 	// We can ignore gosec G101 since this does not contain any credentials.
 	// nolint:gosec
 	ActionUsersAuthTokenList = "users.authtoken:read"
@@ -375,7 +377,8 @@ const (
 	ScopeAPIKeysAll = "apikeys:*"
 
 	// Users scope
-	ScopeUsersAll = "users:*"
+	ScopeUsersAll    = "users:*"
+	ScopeUsersPrefix = "users:id:"
 
 	// Settings scope
 	ScopeSettingsAll  = "settings:*"

@@ -230,7 +230,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -239,6 +238,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   event:
   - pull_request
@@ -427,6 +440,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -697,7 +715,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -745,7 +763,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -758,7 +776,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -780,7 +798,7 @@ steps:
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   failure: ignore
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -1282,7 +1300,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -1290,6 +1307,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   branch: main
   event:
@@ -1425,6 +1456,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 - commands:
   - ./bin/build verify-drone
   depends_on:
@@ -1658,7 +1694,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -1740,7 +1776,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -1753,7 +1789,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -1776,7 +1812,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -1802,7 +1838,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -2366,7 +2402,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -2379,7 +2415,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -2454,7 +2490,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2907,7 +2943,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -2920,7 +2956,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -2996,7 +3032,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -3494,7 +3530,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -3509,7 +3545,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -3528,7 +3564,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -3552,7 +3588,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-enterprise2
   volumes:
   - name: docker
@@ -3638,7 +3674,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-oss
   volumes:
   - name: docker
@@ -3661,7 +3697,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -3684,7 +3720,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -3746,7 +3782,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise
   volumes:
   - name: docker
@@ -3769,7 +3805,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-enterprise
   volumes:
   - name: docker
@@ -3831,7 +3867,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise
   volumes:
   - name: docker
@@ -3854,7 +3890,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-enterprise
   volumes:
   - name: docker
@@ -3906,7 +3942,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -3969,7 +4005,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -4451,7 +4487,7 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
@@ -4459,7 +4495,7 @@ steps:
       from_secret: prerelease_bucket
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
   event:
@@ -4520,6 +4556,12 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -4598,14 +4640,14 @@ steps:
   - apt-get update && apt-get install -yq gettext
   - printenv GCP_KEY | base64 -d > /tmp/key.json
   - gcloud auth activate-service-account --key-file=/tmp/key.json
-  - VERSION=${DRONE_TAG} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
   - clone
   environment:
     BUCKET: grafana-prerelease-dev
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: gsutil-stat
 trigger:
   event:
@@ -4872,7 +4914,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -4885,7 +4927,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -4960,7 +5002,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -5548,7 +5590,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -5561,7 +5603,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -5637,7 +5679,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -6326,7 +6368,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -6341,7 +6383,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -6360,7 +6402,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -6384,7 +6426,7 @@ steps:
       from_secret: delivery-bot-app-installation-id
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: publish-images-enterprise2
   volumes:
   - name: docker
@@ -7176,6 +7218,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: a2d1566156edb9e596f7d986b902c2de6af98c0741f35828268fa775292d3eb5
+hmac: 05a59cb4a71698da9a7464ec5a86fa9258ba2da9a336c65f5717ab675b00c2d2
 
 ...

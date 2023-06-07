@@ -110,17 +110,15 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) 
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to create service account", err)
 	}
 
-	if !api.accesscontrol.IsDisabled() {
-		if c.SignedInUser.IsRealUser() {
-			if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
-				return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
-			}
+	if c.SignedInUser.IsRealUser() {
+		if _, err := api.permissionService.SetUserPermission(c.Req.Context(), c.OrgID, accesscontrol.User{ID: c.SignedInUser.UserID}, strconv.FormatInt(serviceAccount.Id, 10), "Admin"); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to set permissions for service account creator", err)
 		}
-
-		// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
+
+	// Clear permission cache for the user who's created the service account, so that new permissions are fetched for their next call
+	// Required for cases when caller wants to immediately interact with the newly created object
+	api.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 
 	return response.JSON(http.StatusCreated, serviceAccount)
 }
@@ -339,7 +337,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
-	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}
 
