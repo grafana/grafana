@@ -79,6 +79,7 @@ func (l *Loader) Load(ctx context.Context, src plugins.PluginSource) ([]*plugins
 	return l.loadPlugins(ctx, src, found)
 }
 
+// nolint:gocyclo
 func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, found []*plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	var loadedPlugins []*plugins.Plugin
 
@@ -145,7 +146,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 		// Hardcoded alias changes
 		switch plugin.ID {
-		case "grafana-pyroscope": // rebranding
+		case "grafana-pyroscope-datasource": // rebranding
 			plugin.Alias = "phlare"
 		case "debug": // panel plugin used for testing
 			plugin.Alias = "debugX"
