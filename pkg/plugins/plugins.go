@@ -26,6 +26,7 @@ var (
 	ErrPluginFileRead            = errors.New("file could not be read")
 	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
 	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
+	ErrUnsupportedAlias          = errors.New("can not set alias in plugin.json")
 )
 
 type Plugin struct {
@@ -169,11 +170,11 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		fallthrough
 	case "debug":
 		if plugin.Alias == "" {
-			return plugin, fmt.Errorf("expected alias")
+			return plugin, fmt.Errorf("expected alias to be set")
 		}
 	default:
 		if plugin.Alias != "" {
-			return plugin, fmt.Errorf("unexpected alias")
+			return plugin, ErrUnsupportedAlias
 		}
 	}
 
