@@ -1,17 +1,20 @@
 import { css, cx } from '@emotion/css';
 import produce from 'immer';
-import React, { useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Input, InputControl, TextArea, useStyles2 } from '@grafana/ui';
+import { DashboardSearchItem } from 'app/features/search/types';
+import { DashboardDataDTO } from 'app/types';
 
+import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
-import { DashboardPicker } from './DashboardPicker';
+import { DashboardPicker, PanelDTO } from './DashboardPicker';
 
 const AnnotationsField = () => {
   const styles = useStyles2(getStyles);
@@ -30,6 +33,26 @@ const AnnotationsField = () => {
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = annotations.find((annotation) => annotation.key === Annotation.panelID)?.value;
+
+  const [selectedDashboard, setSelectedDashboard] = useState<DashboardDataDTO | undefined>(undefined);
+  const [selectedPanel, setSelectedPanel] = useState<PanelDTO | undefined>(undefined);
+
+  const { useDashboardQuery } = dashboardApi;
+
+  const { currentData: dashboardResult, isFetching: isDashboardFetching } = useDashboardQuery(
+    { uid: selectedDashboardUid ?? '' },
+    { skip: !selectedDashboardUid }
+  );
+
+  useEffect(() => {
+    if (isDashboardFetching) {
+      return;
+    }
+
+    setSelectedDashboard(dashboardResult?.dashboard);
+    const currentPanel = dashboardResult?.dashboard?.panels?.find((panel) => panel.id.toString() === selectedPanelId);
+    setSelectedPanel(currentPanel);
+  }, [selectedPanelId, dashboardResult, isDashboardFetching]);
 
   const setSelectedDashboardAndPanelId = (dashboardUid: string, panelId: string) => {
     const updatedAnnotations = produce(annotations, (draft) => {
@@ -61,7 +84,6 @@ const AnnotationsField = () => {
           const ValueInputComponent = isUrl ? Input : TextArea;
           // eslint-disable-next-line
           const annotation = annotationField.key as Annotation;
-
           return (
             <div key={annotationField.id} className={styles.flexRow}>
               <div>
@@ -91,19 +113,28 @@ const AnnotationsField = () => {
                   </label>
                   <div>{annotationDescriptions[annotation]}</div>
                 </div>
-                <Field
-                  className={cx(styles.flexRowItemMargin, styles.field)}
-                  invalid={!!errors.annotations?.[index]?.value?.message}
-                  error={errors.annotations?.[index]?.value?.message}
-                >
-                  <ValueInputComponent
-                    data-testid={`annotation-value-${index}`}
-                    className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                    {...register(`annotations.${index}.value`)}
-                    placeholder={isUrl ? 'https://' : `Text`}
-                    defaultValue={annotationField.value}
-                  />
-                </Field>
+                {selectedDashboard && annotationField.key === Annotation.dashboardUID && (
+                  <div>
+                    <span>{selectedDashboard.title}</span>
+                    <span>{selectedPanel?.title}</span>
+                  </div>
+                )}
+
+                {(!selectedDashboard || annotationField.key !== Annotation.dashboardUID) && (
+                  <Field
+                    className={cx(styles.flexRowItemMargin, styles.field)}
+                    invalid={!!errors.annotations?.[index]?.value?.message}
+                    error={errors.annotations?.[index]?.value?.message}
+                  >
+                    <ValueInputComponent
+                      data-testid={`annotation-value-${index}`}
+                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                      {...register(`annotations.${index}.value`)}
+                      placeholder={isUrl ? 'https://' : `Text`}
+                      defaultValue={annotationField.value}
+                    />
+                  </Field>
+                )}
                 {!annotationLabels[annotation] && (
                   <Button
                     type="button"
