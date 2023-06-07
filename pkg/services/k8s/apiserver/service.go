@@ -3,6 +3,8 @@ package apiserver
 import (
 	"context"
 	"crypto/x509"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"net"
 	"os"
 	"path"
@@ -189,11 +191,17 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	authorizer, err := newAuthorizer()
+	if err != nil {
+		return err
+	}
+
 	serverConfig.ExtraConfig.RESTOptionsGetter = s.restOptionsGetter(unstructured.UnstructuredJSONScheme)
 	serverConfig.GenericConfig.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 	serverConfig.GenericConfig.Config.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
+	serverConfig.GenericConfig.Authorization.Authorizer = authorizer
 
 	server, err := serverConfig.Complete().New(genericapiserver.NewEmptyDelegate())
 	if err != nil {
@@ -275,6 +283,10 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		AuthInfos:      authinfos,
 	}
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+}
+
+func newAuthorizer() (authorizer.Authorizer, error) {
+	return authorization.NewGrafanaAuthorizer(), nil
 }
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
