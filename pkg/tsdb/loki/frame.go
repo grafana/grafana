@@ -84,7 +84,7 @@ func adjustMetricFrame(frame *data.Frame, query *lokiQuery, setFrameName bool) e
 
 func adjustLogsFrame(frame *data.Frame, query *lokiQuery, dataplane bool) error {
 	if dataplane {
-		return adjustLegacyLogsFrame(frame, query)
+		return adjustDataplaneLogsFrame(frame, query)
 	} else {
 		return adjustLegacyLogsFrame(frame, query)
 	}
@@ -181,6 +181,7 @@ func adjustDataplaneLogsFrame(frame *data.Frame, query *lokiQuery) error {
 	}
 
 	frame.Meta.Stats = parseStats(frame.Meta.Custom)
+	frame.Meta.Custom = nil
 	frame.Meta.Type = data.FrameTypeLogLines
 
 	frame.Meta.ExecutedQueryString = "Expr: " + query.Expr
