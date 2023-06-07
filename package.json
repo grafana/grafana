@@ -102,7 +102,7 @@
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.10",
     "@react-types/button": "3.7.1",
-    "@react-types/menu": "3.7.2",
+    "@react-types/menu": "3.9.1",
     "@react-types/overlays": "3.6.4",
     "@react-types/shared": "3.16.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
