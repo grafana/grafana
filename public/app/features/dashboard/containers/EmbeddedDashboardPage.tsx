@@ -1,12 +1,12 @@
-import React, { useEffect } from 'react';
+import { css } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Button, PageToolbar } from '@grafana/ui';
+import { Button, ModalsController, PageToolbar } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { useDispatch, useSelector } from 'app/types';
 
@@ -14,6 +14,7 @@ import { updateTimeZoneForSession } from '../../profile/state/reducers';
 import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
+import { SaveDashboardDrawer } from '../components/EmbeddedDashboard/SaveDashboardDrawer';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashboardModel } from '../state';
 import { initDashboard } from '../state/initDashboard';
@@ -38,7 +39,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
-
+  const [json, setJson] = useState('');
   /**
    * Create dashboard model and initialize the dashboard from JSON
    */
@@ -46,7 +47,9 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
     getBackendSrv()
       .get('http://localhost:3001/load-dashboard')
       .then((json) => {
+        setJson(json);
         const dashboardModel = new DashboardModel(json);
+
         dispatch(
           initDashboard({
             routeName: route.routeName,
@@ -72,7 +75,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
 
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} />
+      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} json={json} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={''}>
         <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
@@ -84,38 +87,51 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
 interface ToolbarProps {
   dashboard: DashboardModel;
   callbackUrl?: string;
+  json: string;
 }
 
-const Toolbar = ({ dashboard, callbackUrl }: ToolbarProps) => {
+const Toolbar = ({ dashboard, callbackUrl, json }: ToolbarProps) => {
   const dispatch = useDispatch();
-  const notifyApp = useAppNotification();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
   };
 
-  const saveDashboard = () => {
-    const clone = dashboard?.getSaveModelClone();
+  const saveDashboard = async (clone: DashboardModel) => {
     if (!clone || !callbackUrl) {
       return;
     }
 
-    return getBackendSrv()
-      .post(callbackUrl, { dashboard: clone })
-      .then(() => {
-        notifyApp.success('Dashboard saved');
-      })
-      .catch((error) => {
-        notifyApp.error(error.message || 'Error saving dashboard');
-      });
+    return getBackendSrv().post(callbackUrl, { dashboard: clone });
   };
 
   return (
-    <PageToolbar title={dashboard.title} buttonOverflowAlignment="right">
+    <PageToolbar
+      title={dashboard.title}
+      buttonOverflowAlignment="right"
+      className={css`
+        padding: 26px 16px;
+      `}
+    >
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
-      <Button onClick={saveDashboard}>Save</Button>
+      <ModalsController key="button-save">
+        {({ showModal, hideModal }) => (
+          <Button
+            onClick={() => {
+              showModal(SaveDashboardDrawer, {
+                dashboard,
+                json,
+                onDismiss: hideModal,
+                onSave: saveDashboard,
+              });
+            }}
+          >
+            Save
+          </Button>
+        )}
+      </ModalsController>
     </PageToolbar>
   );
 };
