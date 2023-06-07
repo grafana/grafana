@@ -13,6 +13,7 @@ import (
 var defaultDetectors = []detector{
 	&containsBytesDetector{pattern: []byte("PanelCtrl")},
 	&containsBytesDetector{pattern: []byte("QueryCtrl")},
+	&containsBytesDetector{pattern: []byte("ConfigCtrl")},
 	&containsBytesDetector{pattern: []byte("app/plugins/sdk")},
 	&containsBytesDetector{pattern: []byte("angular.isNumber(")},
 	&containsBytesDetector{pattern: []byte("editor.html")},
