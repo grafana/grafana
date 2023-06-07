@@ -2,7 +2,6 @@ import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
-import { withSandboxWrapper } from '../utils/sandbox';
 
 import { ScopedVars } from './ScopedVars';
 import { AnnotationEvent, AnnotationQuery, AnnotationSupport } from './annotations';
@@ -37,24 +36,14 @@ export class DataSourcePlugin<
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
   TSecureOptions = {}
 > extends GrafanaPlugin<DataSourcePluginMeta<TOptions>> {
-  _components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
-
-  components = new Proxy(this._components, {
-    get: (target, prop: keyof typeof this._components) => {
-      const component = target[prop];
-      if (!component) {
-        return undefined;
-      }
-      return withSandboxWrapper(component, this.meta);
-    },
-  });
+  components: DataSourcePluginComponents<DSType, TQuery, TOptions, TSecureOptions> = {};
 
   constructor(public DataSourceClass: DataSourceConstructor<DSType, TQuery, TOptions>) {
     super();
   }
 
   setConfigEditor(editor: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>) {
-    this._components.ConfigEditor = editor;
+    this.components.ConfigEditor = editor;
     return this;
   }
 
@@ -64,41 +53,41 @@ export class DataSourcePlugin<
   }
 
   setQueryCtrl(QueryCtrl: any) {
-    this._components.QueryCtrl = QueryCtrl;
+    this.components.QueryCtrl = QueryCtrl;
     return this;
   }
 
   /** @deprecated -- register the annotation support in the instance constructor */
   setAnnotationQueryCtrl(AnnotationsQueryCtrl: any) {
-    this._components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
+    this.components.AnnotationsQueryCtrl = AnnotationsQueryCtrl;
     return this;
   }
 
   setQueryEditor(QueryEditor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this._components.QueryEditor = QueryEditor;
+    this.components.QueryEditor = QueryEditor;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. When using Explore `props.app` is equal to `CoreApp.Explore` */
   setExploreQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this._components.ExploreQueryField = ExploreQueryField;
+    this.components.ExploreQueryField = ExploreQueryField;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreMetricsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this._components.ExploreMetricsQueryField = ExploreQueryField;
+    this.components.ExploreMetricsQueryField = ExploreQueryField;
     return this;
   }
 
   /** @deprecated Use `setQueryEditor` instead. */
   setExploreLogsQueryField(ExploreQueryField: ComponentType<QueryEditorProps<DSType, TQuery, TOptions>>) {
-    this._components.ExploreLogsQueryField = ExploreQueryField;
+    this.components.ExploreLogsQueryField = ExploreQueryField;
     return this;
   }
 
   setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps<TQuery>>) {
-    this._components.QueryEditorHelp = QueryEditorHelp;
+    this.components.QueryEditorHelp = QueryEditorHelp;
     return this;
   }
 
@@ -113,25 +102,24 @@ export class DataSourcePlugin<
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
    */
   setVariableQueryEditor(VariableQueryEditor: any) {
-    this._components.VariableQueryEditor = VariableQueryEditor;
+    this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
   }
 
   setMetadataInspector(MetadataInspector: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>) {
-    this._components.MetadataInspector = MetadataInspector;
+    this.components.MetadataInspector = MetadataInspector;
     return this;
   }
 
-  // legacy exports for Angular
   setComponentsFromLegacyExports(pluginExports: any) {
     this.angularConfigCtrl = pluginExports.ConfigCtrl;
 
-    this._components.QueryCtrl = pluginExports.QueryCtrl;
-    this._components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
-    this._components.ExploreQueryField = pluginExports.ExploreQueryField;
-    this._components.QueryEditor = pluginExports.QueryEditor;
-    this._components.QueryEditorHelp = pluginExports.QueryEditorHelp;
-    this._components.VariableQueryEditor = pluginExports.VariableQueryEditor;
+    this.components.QueryCtrl = pluginExports.QueryCtrl;
+    this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
+    this.components.ExploreQueryField = pluginExports.ExploreQueryField;
+    this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.QueryEditorHelp = pluginExports.QueryEditorHelp;
+    this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
 
