@@ -33,7 +33,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
-  if (extensions.length <= 1) {
+  if (extensions.length) {
     const canAddPanelToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);

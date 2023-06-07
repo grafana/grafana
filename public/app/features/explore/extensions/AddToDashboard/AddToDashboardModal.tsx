@@ -30,7 +30,7 @@ type FormDTO = SaveToNewDashboardDTO | SaveToExistingDashboard;
 interface Props {
   onClose: () => void;
   exploreId: ExploreId;
-  excludeModal: boolean;
+  excludeModal?: boolean;
 }
 
 export const AddToDashboardModal = ({ onClose, exploreId, excludeModal = false }: Props) => {
