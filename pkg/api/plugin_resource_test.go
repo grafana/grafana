@@ -22,6 +22,7 @@ import (
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -67,7 +68,8 @@ func TestCallResource(t *testing.T) {
 	reg := registry.ProvideService()
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()))
+		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
+		angulardetector.NewDefaultPatternsListInspector())
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)

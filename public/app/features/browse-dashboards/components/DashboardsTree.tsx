@@ -76,7 +76,7 @@ export function DashboardsTree({
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
       width: 3,
-      Header: <span style={{ paddingLeft: 20 }}>Name</span>,
+      Header: <span style={{ paddingLeft: 24 }}>Name</span>,
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 

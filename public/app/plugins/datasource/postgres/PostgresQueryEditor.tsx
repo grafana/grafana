@@ -6,8 +6,8 @@ import { SQLOptions, SQLQuery } from 'app/features/plugins/sql/types';
 
 import { PostgresDatasource } from './datasource';
 
-const queryHeaderProps = { isDatasetSelectorHidden: true };
+const queryHeaderProps = { isPostgresInstance: true };
 
-export function QueryEditor(props: QueryEditorProps<PostgresDatasource, SQLQuery, SQLOptions>) {
+export function PostgresQueryEditor(props: QueryEditorProps<PostgresDatasource, SQLQuery, SQLOptions>) {
   return <SqlQueryEditor {...props} queryHeaderProps={queryHeaderProps} />;
 }

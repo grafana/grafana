@@ -32,7 +32,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
         name: 'Run query (left)',
         keywords: 'query left',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: exploreIdLeft }));
         },
         section: exploreSection,
       });
@@ -43,7 +43,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
           name: 'Run query (right)',
           keywords: 'query right',
           perform: () => {
-            dispatch(runQueries(exploreIdRight));
+            dispatch(runQueries({ exploreId: exploreIdRight }));
           },
           section: exploreSection,
         });
@@ -72,7 +72,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
         name: 'Run query',
         keywords: 'query',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: exploreIdLeft }));
         },
         section: exploreSection,
       });
