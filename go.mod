@@ -246,7 +246,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/matryer/is v1.4.0
 	github.com/urfave/cli v1.22.12
-	go.etcd.io/etcd/api/v3 v3.5.5
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0

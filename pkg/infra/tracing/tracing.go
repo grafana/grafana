@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"go.etcd.io/etcd/api/v3/version"
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
 	"go.opentelemetry.io/otel"
@@ -320,15 +319,15 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 		return nil, err
 	}
 
-	return initTracerProvider(exp, ots.customAttribs...)
+	return initTracerProvider(exp, ots.Cfg.BuildVersion, ots.customAttribs...)
 }
 
-func initTracerProvider(exp tracesdk.SpanExporter, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
+func initTracerProvider(exp tracesdk.SpanExporter, version string, customAttribs ...attribute.KeyValue) (*tracesdk.TracerProvider, error) {
 	res, err := resource.New(
 		context.Background(),
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String("grafana"),
-			semconv.ServiceVersionKey.String(version.Version),
+			semconv.ServiceVersionKey.String(version),
 		),
 		resource.WithAttributes(customAttribs...),
 		resource.WithProcessRuntimeDescription(),

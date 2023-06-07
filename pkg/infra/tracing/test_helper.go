@@ -13,7 +13,7 @@ import (
 
 func InitializeTracerForTest() Tracer {
 	exp := tracetest.NewInMemoryExporter()
-	tp, _ := initTracerProvider(exp)
+	tp, _ := initTracerProvider(exp, "testing")
 	otel.SetTracerProvider(tp)
 
 	ots := &Opentelemetry{Propagation: "jaeger,w3c", tracerProvider: tp}
