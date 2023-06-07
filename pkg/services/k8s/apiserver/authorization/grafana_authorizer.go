@@ -11,6 +11,14 @@ import (
 type GrafanaAuthorizer struct {
 }
 
+func errorMessageForGrafanaOrgRole(grafanaOrgRole string, a authorizer.Attributes) string {
+	return fmt.Sprintf("Grafana org role (%s) didn't allow %s access on requested resource=%s, path=%s", grafanaOrgRole, a.GetVerb(), a.GetResource(), a.GetPath())
+}
+
+func errorMessageForK8sGroup(k8sGroups []string, a authorizer.Attributes) string {
+	return fmt.Sprintf("K8s groups (%v) didn't allow %s access on requested resource=%s, path=%s", k8sGroups, a.GetVerb(), a.GetResource(), a.GetPath())
+}
+
 func NewGrafanaAuthorizer() *GrafanaAuthorizer {
 	return &GrafanaAuthorizer{}
 }
@@ -30,14 +38,18 @@ func (auth GrafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 					switch a.GetVerb() {
 					case "get", "list", "watch", "create", "update", "patch", "delete", "put", "post":
 						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole[0], a), nil
 					}
 				case org.RoleViewer:
 					switch a.GetVerb() {
 					case "get", "list", "watch":
 						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole[0], a), nil
 					}
 				default:
-					return authorizer.DecisionDeny, fmt.Sprintf("Grafana user's org role (%s) didn't allow access on requested resource=%s, path=%s", orgRole[0], a.GetResource(), a.GetPath()), nil
+					return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole[0], a), nil
 				}
 			}
 		} else if groups != nil && len(groups) > 0 {
@@ -47,10 +59,10 @@ func (auth GrafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 					return authorizer.DecisionAllow, "", nil
 				}
 			}
-			return authorizer.DecisionDeny, fmt.Sprintf("K8s groups didn't allow access on requested resource=%s, path=%s", a.GetResource(), a.GetPath()), nil
+			return authorizer.DecisionDeny, errorMessageForK8sGroup(groups, a), nil
 		} else {
 			fmt.Printf("Didn't match the K8s or Grafana code paths for groups=%v, extra=%v", groups, extra)
 		}
 	}
-	return authorizer.DecisionDeny, fmt.Sprintf("Neither Grafana token rules nor K8s token rules were applicable, denied access on requested resource=%s, path=%s", a.GetResource(), a.GetPath()), nil
+	return authorizer.DecisionDeny, fmt.Sprintf("could not determine user info from context, denied %s access on requested resource=%s, path=%s", a.GetVerb(), a.GetResource(), a.GetPath()), nil
 }
