@@ -1,4 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
+import glob from 'glob';
+import { fileURLToPath } from 'node:url';
 import path from 'path';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
@@ -32,6 +34,21 @@ export default [
     output: {
       file: pkg.publishConfig.types,
       format: 'es',
+    },
+  },
+  {
+    input: Object.fromEntries(
+      glob
+        .sync('src/raw/composable/**/*.ts')
+        .map((file) => [
+          path.relative('src', file.slice(0, file.length - path.extname(file).length)),
+          fileURLToPath(new URL(file, import.meta.url)),
+        ])
+    ),
+    plugins: [resolve(), esbuild(), dts()],
+    output: {
+      format: 'esm',
+      dir: path.dirname(pkg.publishConfig.module),
     },
   },
 ];
