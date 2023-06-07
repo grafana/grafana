@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -1076,6 +1077,58 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 	})
 }
 
+func TestLoader_Load_Angular(t *testing.T) {
+	fakePluginSource := &fakes.FakePluginSource{
+		PluginClassFunc: func(ctx context.Context) plugins.Class {
+			return plugins.External
+		},
+		PluginURIsFunc: func(ctx context.Context) []string {
+			return []string{"../testdata/valid-v2-signature"}
+		},
+	}
+	for _, cfgTc := range []struct {
+		name string
+		cfg  *config.Cfg
+	}{
+		{name: "angular support enabled", cfg: &config.Cfg{AngularSupportEnabled: true}},
+		{name: "angular support disabled", cfg: &config.Cfg{AngularSupportEnabled: false}},
+	} {
+		t.Run(cfgTc.name, func(t *testing.T) {
+			for _, tc := range []struct {
+				name             string
+				angularInspector angulardetector.Inspector
+				shouldLoad       bool
+			}{
+				{
+					name:             "angular plugin",
+					angularInspector: angulardetector.AlwaysAngularFakeInspector,
+					// angular plugins should load only if allowed by the cfg
+					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
+				},
+				{
+					name:             "non angular plugin",
+					angularInspector: angulardetector.NeverAngularFakeInspector,
+					// non-angular plugins should always load
+					shouldLoad: true,
+				},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					l := newLoader(cfgTc.cfg, func(l *Loader) {
+						l.angularInspector = tc.angularInspector
+					})
+					p, err := l.Load(context.Background(), fakePluginSource)
+					require.NoError(t, err)
+					if tc.shouldLoad {
+						require.Len(t, p, 1, "plugin should have been loaded")
+					} else {
+						require.Empty(t, p, "plugin shouldn't have been loaded")
+					}
+				})
+			}
+		})
+	}
+}
+
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	rootDir, err := filepath.Abs("../")
 	if err != nil {
@@ -1387,7 +1440,7 @@ func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()))
+		signature.ProvideService(cfg, statickey.New()), angulardetector.NewDefaultPatternsListInspector())
 
 	for _, cb := range cbs {
 		cb(l)

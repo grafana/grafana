@@ -4,6 +4,7 @@ import {
   dateTime,
   durationToMilliseconds,
   Field,
+  incrRoundDn,
   isValidDuration,
   parseDuration,
 } from '@grafana/data/src';
@@ -17,16 +18,15 @@ import { PromQuery } from '../types';
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)
 type TargetIdent = string;
 
+type RequestID = string;
+
 // query + template variables + interval + raw time range
 // used for full target cache busting -> full range re-query
 type TargetSig = string;
 
 type TimestampMs = number;
 
-// Look like Q001, Q002, etc
-type RequestID = string;
-
-type StringInterpolator = (expr: string) => string;
+type SupportedQueryTypes = PromQuery;
 
 // string matching requirements defined in durationutil.ts
 export const defaultPrometheusQueryOverlapWindow = '10m';
@@ -37,10 +37,23 @@ interface TargetCache {
   frames: DataFrame[];
 }
 
-export interface CacheRequestInfo {
-  requests: Array<DataQueryRequest<PromQuery>>;
+export interface CacheRequestInfo<T extends SupportedQueryTypes> {
+  requests: Array<DataQueryRequest<T>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
+}
+
+export interface DatasourceProfileData {
+  interval?: string;
+  expr: string;
+  datasource: string;
+}
+
+interface ProfileData extends DatasourceProfileData {
+  identity: string;
+  bytes: number | null;
+  dashboardUID: string;
+  panelId?: number;
 }
 
 /**
@@ -51,40 +64,23 @@ export interface CacheRequestInfo {
 export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
 /**
- * Get target signature
- * @param targExpr
- * @param request
- * @param targ
- */
-export function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
-  return `${targExpr}|${targ.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
-}
-
-/**
  * NOMENCLATURE
  * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
  * Ident: Identity: the string that is not expected to change
  * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
  */
-export class QueryCache {
+export class QueryCache<T extends SupportedQueryTypes> {
   private overlapWindowMs: number;
+  private getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+  private getProfileData?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+
   private perfObeserver?: PerformanceObserver;
   private shouldProfile: boolean;
 
   // send profile events every 5 minutes
   sendEventsInterval = 60000 * 5;
 
-  pendingRequestIdsToTargSigs = new Map<
-    RequestID,
-    {
-      identity: string;
-      bytes: number | null;
-      dashboardUID?: string;
-      interval?: string;
-      panelId?: number;
-      expr?: string;
-    }
-  >();
+  pendingRequestIdsToTargSigs = new Map<RequestID, ProfileData>();
 
   pendingAccumulatedEvents = new Map<
     string,
@@ -98,14 +94,18 @@ export class QueryCache {
       expr: string;
       interval: string;
       sent: boolean;
+      datasource: string;
     }
   >();
 
   cache = new Map<TargetIdent, TargetCache>();
 
-  constructor(overlapString?: string) {
-    const unverifiedOverlap = overlapString ?? defaultPrometheusQueryOverlapWindow;
-
+  constructor(options: {
+    getTargetSignature: (request: DataQueryRequest<T>, target: T) => string;
+    overlapString: string;
+    profileFunction?: (request: DataQueryRequest<T>, target: T) => DatasourceProfileData;
+  }) {
+    const unverifiedOverlap = options.overlapString;
     if (isValidDuration(unverifiedOverlap)) {
       const duration = parseDuration(unverifiedOverlap);
       this.overlapWindowMs = durationToMilliseconds(duration);
@@ -114,12 +114,14 @@ export class QueryCache {
       this.overlapWindowMs = durationToMilliseconds(duration);
     }
 
-    if (config.grafanaJavascriptAgent.enabled) {
+    if (config.grafanaJavascriptAgent.enabled && options.profileFunction !== undefined) {
       this.profile();
       this.shouldProfile = true;
     } else {
       this.shouldProfile = false;
     }
+    this.getProfileData = options.profileFunction;
+    this.getTargetSignature = options.getTargetSignature;
   }
 
   private profile() {
@@ -157,6 +159,7 @@ export class QueryCache {
                       const savedBytes = value.bytes - requestTransferSize;
 
                       this.pendingAccumulatedEvents.set(value.identity, {
+                        datasource: value.datasource ?? 'N/A',
                         requestCount: (previous?.requestCount ?? 0) + 1,
                         savedBytesTotal: (previous?.savedBytesTotal ?? 0) + savedBytes,
                         initialRequestSize: value.bytes,
@@ -199,16 +202,10 @@ export class QueryCache {
     for (let [key, value] of entries) {
       if (!value.sent) {
         this.pendingAccumulatedEvents.set(key, { ...value, sent: true });
-        faro.api.pushMeasurement({
-          type: 'custom',
-          values: {
-            thing: 0,
-            thing2: 1,
-          },
-        });
         faro.api.pushEvent(
-          'prometheus incremental query response size',
+          'incremental query response size',
           {
+            datasource: value.datasource.toString(),
             requestCount: value.requestCount.toString(),
             savedBytesTotal: value.savedBytesTotal.toString(),
             initialRequestSize: value.initialRequestSize.toString(),
@@ -228,33 +225,32 @@ export class QueryCache {
   };
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
+  requestInfo(request: DataQueryRequest<T>): CacheRequestInfo<T> {
     // TODO: align from/to to interval to increase probability of hitting backend cache
+
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
-    const shouldCache = request.rangeRaw?.to?.toString() === 'now' && !request.targets.some((targ) => targ.instant);
+    const shouldCache = request.rangeRaw?.to?.toString() === 'now';
 
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
-    let prevTo: TimestampMs;
+    let prevTo: TimestampMs | undefined = undefined;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-      let targExpr = interpolateString(targ.expr);
-      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
+      let targSig = this.getTargetSignature(request, targ); // ${request.maxDataPoints} ?
 
-      if (this.shouldProfile) {
+      if (this.shouldProfile && this.getProfileData) {
         this.pendingRequestIdsToTargSigs.set(request.requestId, {
+          ...this.getProfileData(request, targ),
           identity: targIdent + '|' + targSig,
-          dashboardUID: request.dashboardUID ?? '',
-          interval: targ.interval ?? request.interval,
-          panelId: request.panelId,
-          expr: targExpr,
           bytes: null,
+          panelId: request.panelId,
+          dashboardUID: request.dashboardUID ?? '',
         });
       }
 
@@ -272,6 +268,7 @@ export class QueryCache {
         // only do partial queries when new request range follows prior request range (possibly with overlap)
         // e.g. now-6h with refresh <= 6h
         prevTo = cached?.prevTo ?? Infinity;
+
         doPartialQuery = newTo > prevTo && newFrom <= prevTo;
       }
 
@@ -280,19 +277,20 @@ export class QueryCache {
       }
     }
 
-    if (doPartialQuery) {
-      // 10m re-query overlap
-
+    if (doPartialQuery && prevTo) {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-      let newFromPartial = Math.max(prevTo! - this.overlapWindowMs, newFrom);
+      let newFromPartial = Math.max(prevTo - this.overlapWindowMs, newFrom);
+
+      const newToDate = dateTime(newTo);
+      const newFromPartialDate = dateTime(incrRoundDn(newFromPartial, request.intervalMs));
 
       // modify to partial query
       request = {
         ...request,
         range: {
           ...request.range,
-          from: dateTime(newFromPartial),
-          to: dateTime(newTo),
+          from: newFromPartialDate,
+          to: newToDate,
         },
       };
     } else {
@@ -310,8 +308,8 @@ export class QueryCache {
 
   // should amend existing cache with new frames and return full response
   procFrames(
-    request: DataQueryRequest<PromQuery>,
-    requestInfo: CacheRequestInfo | undefined,
+    request: DataQueryRequest<T>,
+    requestInfo: CacheRequestInfo<T> | undefined,
     respFrames: DataFrame[]
   ): DataFrame[] {
     if (requestInfo?.shouldCache) {

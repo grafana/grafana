@@ -57,6 +57,9 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 type PluginDTO struct {
@@ -84,6 +87,9 @@ type PluginDTO struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
@@ -108,6 +114,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
+	Alias        string       `json:"alias,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -155,8 +162,14 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		return JSONData{}, err
 	}
 
-	if plugin.ID == "grafana-piechart-panel" {
+	// Hardcoded changes
+	switch plugin.ID {
+	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
+	case "grafana-pyroscope-datasource": // rebranding
+		plugin.Alias = "phlare"
+	case "debug": // panel plugin used for testing
+		plugin.Alias = "debugX"
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
@@ -429,6 +442,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
+		Alias:             p.Alias,
 	}
 }
 
