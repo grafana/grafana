@@ -106,13 +106,13 @@ func Test_ReadPluginJSON(t *testing.T) {
 			name: "Phlare<>Pyroscope rebranding -- hardcoded alias",
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
-					"id": "grafana-pyroscope",
+					"id": "grafana-pyroscope-datasource",
 					"type": "datasource"
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
-				ID:    "grafana-pyroscope",
+				ID:    "grafana-pyroscope-datasource",
 				Alias: "phlare", // Hardcoded from the parser
 				Type:  "datasource",
 				Dependencies: Dependencies{
