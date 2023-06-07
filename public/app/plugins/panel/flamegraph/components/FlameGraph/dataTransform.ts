@@ -1,5 +1,3 @@
-import { groupBy } from 'lodash';
-
 import {
   createTheme,
   DataFrame,
@@ -172,11 +170,6 @@ export class FlameGraphDataContainer {
     return this.levels!;
   }
 
-  getTree() {
-    this.initLevels();
-    return this.levels![0][0];
-  }
-
   getSandwichLevels(label: string) {
     const nodes = this.getNodesWithLabel(label);
 
@@ -187,11 +180,7 @@ export class FlameGraphDataContainer {
     const callers = mergeParentSubtrees(nodes, this);
     const callees = mergeSubtrees(nodes, this);
 
-    // The first level of callees should be the same as last level of the callers, so we can remove one of them.
-    // callees.shift()
-
     return [callers, callees];
-    // return callers;
   }
 
   getNodesWithLabel(label: string) {
@@ -206,33 +195,4 @@ export class FlameGraphDataContainer {
       this.uniqueLabelsMap = uniqueLabelsMap;
     }
   }
-}
-
-function collapseParentNodes(data: FlameGraphDataContainer, node: LevelItem) {
-  if (!node.parents?.length || node.parents?.length === 1) {
-    return;
-  }
-
-  const groups = groupBy(node.parents, (i) => data.getLabel(i.itemIndexes[0]));
-
-  const newParents = [];
-
-  for (const k of Object.keys(groups)) {
-    if (groups[k].length > 1) {
-      const items = groups[k];
-      const indexes = items.flatMap((i) => i.itemIndexes);
-      const superNode: LevelItem = {
-        start: 0,
-        value: data.getValue(indexes),
-        itemIndexes: indexes,
-        parents: items.flatMap((i) => i.parents || []),
-        children: items[0].children,
-      };
-      collapseParentNodes(data, superNode);
-      newParents.push(superNode);
-    } else {
-      newParents.push(groups[k][0]);
-    }
-  }
-  node.parents = newParents;
 }
