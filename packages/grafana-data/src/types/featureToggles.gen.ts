@@ -99,4 +99,5 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  transformationsRedesign?: boolean;
 }

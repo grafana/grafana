@@ -549,5 +549,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "transformationsRedesign",
+			Description:  "Enables the transformations redesign",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )

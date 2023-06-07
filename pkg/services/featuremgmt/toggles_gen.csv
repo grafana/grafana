@@ -80,3 +80,4 @@ dataSourcePageHeader,beta,@grafana/enterprise-datasources,false,false,false,true
 extraThemes,alpha,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,alpha,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,alpha,@grafana/plugins-platform-backend,false,false,false,true
+transformationsRedesign,alpha,@grafana/observability-metrics,false,false,false,true
