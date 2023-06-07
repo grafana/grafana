@@ -40,7 +40,6 @@ export async function sandboxPluginComponents(pluginExports: unknown): Promise<S
   if (Reflect.has(pluginObject, 'components')) {
     const components: Record<string, ComponentType> = Reflect.get(pluginObject, 'components');
     Object.entries(components).forEach(([key, value]) => {
-      console.log('sandboxPluginComponents', key, value);
       Reflect.set(components, key, withSandboxWrapper(value));
     });
     Reflect.set(pluginObject, 'components', components);
