@@ -62,7 +62,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
-      onChange({ ...query, step: e.currentTarget.value.trimEnd() });
+      onChange({ ...query, step: trim(e.currentTarget.value) });
       onRunQuery();
     }
 
