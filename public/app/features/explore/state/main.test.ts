@@ -117,36 +117,6 @@ describe('navigateToExplore', () => {
 describe('Explore reducer', () => {
   describe('split view', () => {
     describe('split close', () => {
-      it('should move right pane to left when left is closed', () => {
-        const leftItemMock = {
-          containerWidth: 100,
-        } as unknown as ExploreItemState;
-
-        const rightItemMock = {
-          containerWidth: 200,
-        } as unknown as ExploreItemState;
-
-        const initialState = {
-          panes: {
-            left: leftItemMock,
-            right: rightItemMock,
-          },
-        } as unknown as ExploreState;
-
-        // closing left item
-        reducerTester<ExploreState>()
-          .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitClose('left'))
-          .thenStateShouldEqual({
-            evenSplitPanes: true,
-            largerExploreId: undefined,
-            panes: {
-              left: rightItemMock,
-            },
-            maxedExploreId: undefined,
-            syncedTimes: false,
-          } as unknown as ExploreState);
-      });
       it('should reset right pane when it is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
