@@ -29,42 +29,11 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 Following is a list of configuration options for Prometheus. For step-by-step instructions on how to configure the Prometheus data source see [Configure the Prometheus data source]().
 
-### Connection
+The first option to configure is the name of your connection:
 
-Add your Prometheus server URL in the **Connection** section.
+**Name** - The data source name. This is how you refer to the data source in panels and queries. Examples: prometheus-1, prom-metrics.
 
-**Name** - The data source name. This is how you refer to the data source in panels and queries.
-
-**Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the first selected data source.
-
-<!-- | Option         | Description                                                                                                                      |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Name           | The data source name. This is how you refer to the data source in panels and queries.                                            |
-| Default toggle | Switch the toggle to select the default in panels. | -->
-
-### Authentication section
-
-In this section, select the authentication method to access the data source.
-
-There are several authentication methods you can choose in the Authentication section.
-
-- **Basic authentication** - The most common authentication method. Use your `data source` username and `data source` password to connect.
-
-- **Enable cross-site access control requests** -
-
-- **Forward OAuth identity** -
-
-- **No authentication** - Use no authentication. This is **not recommended**.
-
-**TLS Settings** -
-
-Use TLS (transport Layer Security) for an additional layer of security when working with the data source. For information on using TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/).
-
-- **Add self-signed certificate** -
-
-- **TLS client authentication**-
-
-- **Skip TLS certificate validation** - Check this if you want to sip TLS certificate validation.
+**Default** - Toggle to select as the default name in dashboard panels. When you go to a dashboard panel this will be the default selected data source.
 
 ### HTTP section
 
@@ -72,7 +41,37 @@ Use TLS (transport Layer Security) for an additional layer of security when work
 
 **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
-**Timeout** - The HTTP request timeout in seconds.
+**Timeout** - The HTTP request timeout in seconds. Default is
+
+### Authentication section
+
+There are several authentication methods you can choose in the Authentication section.
+
+- **Basic authentication** - The most common authentication method. Use your `data source` username and `data source` password to connect.
+
+- **Enable cross-site access control requests** - Allows cross-site access control requests with your existing credentials and cookies. Enables the server to authenticate the user and perform authorized requests on their behalf on other domains.
+
+- **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
+
+- **No authentication** - Use no authentication required to access the data source. This is **not recommended**.
+
+### TLS Settings
+
+Use TLS (transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/).
+
+> You must add TLS settings to your Prometheus configuration file prior to setting these options in Grafana.
+
+- **Add self-signed certificate** - Authenticate with a self-signed certificate.
+
+- **TLS client authentication**-
+
+- **Skip TLS certificate validation** - Check this if you want to skip TLS certificate validation.
+
+### HTTP headers
+
+- **Header** - Custom header.
+
+- **Value** -
 
 ## Additional settings
 
