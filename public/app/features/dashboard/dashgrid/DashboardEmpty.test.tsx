@@ -9,6 +9,12 @@ import { onCreateNewPanel, onCreateNewRow, onAddLibraryPanel } from '../utils/da
 
 import DashboardEmpty, { Props } from './DashboardEmpty';
 
+jest.mock('app/types', () => ({
+  ...jest.requireActual('app/types'),
+  useDispatch: () => jest.fn(),
+  useSelector: () => jest.fn(),
+}));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   locationService: {
@@ -67,7 +73,7 @@ it('creates new visualization when clicked Add visualization', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add visualization' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('Create new panel');
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
   expect(locationService.partial).toHaveBeenCalled();
   expect(onCreateNewPanel).toHaveBeenCalled();
 });
@@ -79,7 +85,7 @@ it('creates new row when clicked Add row', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add row' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('Create new row');
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'add_row' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onCreateNewRow).toHaveBeenCalled();
 });
@@ -91,7 +97,7 @@ it('adds a library panel when clicked Import library panel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Import library panel' }));
   });
 
-  expect(reportInteraction).toHaveBeenCalledWith('Add a panel from the panel library');
+  expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
 });
