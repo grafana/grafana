@@ -64,6 +64,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
+| `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 
 ## Alpha feature toggles
 
@@ -89,7 +90,6 @@ Alpha features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                         |
 | `showTraceId`                      | Show trace ids for requests                                                                                  |
-| `authnService`                     | Use new auth service to perform authentication                                                               |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                     |
