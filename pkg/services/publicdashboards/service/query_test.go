@@ -1659,12 +1659,12 @@ func TestBuildTimeSettings(t *testing.T) {
 			},
 		},
 		{
-			name:      "should return user time range with location with relative time range",
-			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "America/Argentina/Mendoza")},
+			name:      "should return default time range with location with relative time range if time selection is not enabled",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			reqDTO: PublicDashboardQueryDTO{
 				TimeRange: TimeRangeDTO{
-					Location: "Australia/Sydney",
+					Location: "Europe/Madrid",
 				}},
 			want: TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),

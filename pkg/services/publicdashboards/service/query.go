@@ -327,15 +327,7 @@ var NewDataTimeRange = legacydata.NewDataTimeRange
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
 func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
-	from := d.Data.GetPath("time", "from").MustString()
-	to := d.Data.GetPath("time", "to").MustString()
-	tz := d.Data.GetPath("timezone").MustString()
-
-	location := getLocation(reqDTO, tz)
-	if pd.TimeSelectionEnabled && reqDTO.TimeRange.From != "" && reqDTO.TimeRange.To != "" {
-		from = reqDTO.TimeRange.From
-		to = reqDTO.TimeRange.To
-	}
+	from, to, location := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
 
 	timeRange := NewDataTimeRange(from, to)
 
@@ -355,19 +347,31 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 	}
 }
 
-// getLocation returns the location from the request or the default location
-func getLocation(reqDTO models.PublicDashboardQueryDTO, dashboardLocation string) *time.Location {
-	if reqDTO.TimeRange.Location != "" {
-		if userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location); err == nil {
-			return userLocation
+// returns form, to and location from the request if the timeSelection is enabled or the dashboard default values
+func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool) (string, string, *time.Location) {
+	from := d.Data.GetPath("time", "from").MustString()
+	to := d.Data.GetPath("time", "to").MustString()
+	dashboardLocation := d.Data.GetPath("timezone").MustString()
+
+	// we use the values from the request if the time selection is enabled and the values are valid
+	if timeSelectionEnabled {
+		if reqDTO.TimeRange.From != "" && reqDTO.TimeRange.To != "" {
+			from = reqDTO.TimeRange.From
+			to = reqDTO.TimeRange.To
+		}
+
+		if reqDTO.TimeRange.Location != "" {
+			if userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location); err == nil {
+				return from, to, userLocation
+			}
 		}
 	}
 
 	// if the Location is blank or there is an error default is UTC
 	location, err := time.LoadLocation(dashboardLocation)
 	if err != nil {
-		return time.UTC
+		return from, to, time.UTC
 	}
 
-	return location
+	return from, to, location
 }
