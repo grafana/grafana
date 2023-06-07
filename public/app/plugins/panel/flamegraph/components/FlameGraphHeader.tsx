@@ -5,7 +5,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Input, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { config } from '../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
@@ -22,6 +22,8 @@ type Props = {
   onReset: () => void;
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
+  focusedLabel?: string;
+  sandwichedLabel?: string;
 };
 
 const FlameGraphHeader = ({
@@ -34,6 +36,8 @@ const FlameGraphHeader = ({
   onReset,
   textAlign,
   onTextAlignChange,
+  focusedLabel,
+  sandwichedLabel,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
   function interaction(name: string, context: Record<string, string | number>) {
@@ -46,34 +50,68 @@ const FlameGraphHeader = ({
 
   const [localSearch, setLocalSearch] = useSearchInput(search, setSearch);
 
+  const suffix =
+    localSearch !== '' ? (
+      <Button
+        icon="times"
+        fill="text"
+        size="sm"
+        onClick={() => {
+          // We could set only one and wait them to sync but there is no need to debounce this.
+          setSearch('');
+          setLocalSearch('');
+        }}
+      >
+        Clear
+      </Button>
+    ) : null;
+
   return (
     <div className={styles.header}>
-      <div className={styles.leftContainer}>
-        <div className={styles.inputContainer}>
-          <Input
-            value={localSearch || ''}
-            onChange={(v) => {
-              setLocalSearch(v.currentTarget.value);
-            }}
-            placeholder={'Search..'}
-            width={44}
-          />
-        </div>
-        <Button
-          type={'button'}
-          variant="secondary"
-          onClick={() => {
-            onReset();
-            // We could set only one and wait them to sync but there is no need to debounce this.
-            setSearch('');
-            setLocalSearch('');
+      <div className={styles.inputContainer}>
+        <Input
+          value={localSearch || ''}
+          onChange={(v) => {
+            setLocalSearch(v.currentTarget.value);
           }}
-        >
-          Reset view
-        </Button>
+          placeholder={'Search..'}
+          width={44}
+          suffix={suffix}
+        />
       </div>
 
       <div className={styles.rightContainer}>
+        {(focusedLabel || sandwichedLabel) && (
+          <div className={styles.resetButton}>
+            {sandwichedLabel && (
+              <Tooltip content={'Sandwich view on ' + sandwichedLabel}>
+                <div className={styles.resetButtonIconWrapper}>
+                  <Icon size={'xs'} name={'gf-show-context'} />
+                </div>
+              </Tooltip>
+            )}
+            {focusedLabel && (
+              <Tooltip content={'Focused on ' + focusedLabel}>
+                <div className={styles.resetButtonIconWrapper}>
+                  <Icon size={'xs'} name={'eye'} />
+                </div>
+              </Tooltip>
+            )}
+            <Button
+              variant={'secondary'}
+              fill={'solid'}
+              size={'sm'}
+              icon={'history-alt'}
+              tooltip={
+                'Reset ' + (focusedLabel && sandwichedLabel ? 'focus' : sandwichedLabel ? 'sandwich view' : 'focus')
+              }
+              onClick={() => {
+                onReset();
+              }}
+            />
+          </div>
+        )}
+
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -150,7 +188,9 @@ function useSearchInput(
 
 const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
   header: css`
-    display: flow-root;
+    label: header;
+    display: flex;
+    justify-content: space-between;
     width: 100%;
     background: ${theme.colors.background.primary};
     top: 0;
@@ -164,17 +204,28 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
       : ''};
   `,
   inputContainer: css`
-    float: left;
+    label: inputContainer;
     margin-right: 20px;
   `,
-  leftContainer: css`
-    float: left;
-  `,
   rightContainer: css`
-    float: right;
+    label: rightContainer;
+    display: flex;
+    align-items: flex-start;
   `,
   buttonSpacing: css`
+    label: buttonSpacing;
     margin-right: ${theme.spacing(1)};
+  `,
+
+  resetButton: css`
+    label: resetButton;
+    display: flex;
+    margin-right: ${theme.spacing(2)};
+  `,
+  resetButtonIconWrapper: css`
+    label: resetButtonIcon;
+    padding: 0 5px;
+    color: ${theme.colors.text.disabled};
   `,
 });
 

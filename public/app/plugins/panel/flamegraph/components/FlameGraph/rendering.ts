@@ -11,7 +11,7 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../../constants';
-import { TextAlign } from '../types';
+import { ClickedItemData, TextAlign } from '../types';
 
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -27,7 +27,7 @@ export function useFlameRender(
   search: string,
   textAlign: TextAlign,
   totalTicks: number,
-  focusedItemIndex?: number
+  focusedItemData?: ClickedItemData
 ) {
   const foundLabels = useMemo(() => {
     if (search) {
@@ -61,7 +61,7 @@ export function useFlameRender(
       // sometimes we collapse multiple bars into single rect.
       const dimensions = getRectDimensionsForLevel(data, level, levelIndex, totalTicks, rangeMin, pixelsPerTick);
       for (const rect of dimensions) {
-        const focusedLevel = focusedItemIndex ? data.getLevel(focusedItemIndex) : 0;
+        const focusedLevel = focusedItemData ? focusedItemData.level : 0;
         // Render each rectangle based on the computed dimensions
         renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
       }
@@ -74,7 +74,7 @@ export function useFlameRender(
     rangeMin,
     rangeMax,
     search,
-    focusedItemIndex,
+    focusedItemData,
     foundLabels,
     textAlign,
     totalTicks,

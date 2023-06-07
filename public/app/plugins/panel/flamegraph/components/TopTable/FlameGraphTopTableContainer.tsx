@@ -14,16 +14,17 @@ type Props = {
   data: FlameGraphDataContainer;
   app: CoreApp;
   onSymbolClick: (symbol: string) => void;
+  height?: number;
 };
 
-const FlameGraphTopTableContainer = ({ data, app, onSymbolClick }: Props) => {
+const FlameGraphTopTableContainer = ({ data, app, onSymbolClick, height }: Props) => {
   const styles = useStyles2(getStyles);
 
   const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
   return (
     <div className={styles.topTableContainer} data-testid="topTable">
-      <AutoSizer style={{ width: '100%' }}>
+      <AutoSizer style={{ width: '100%', height }}>
         {({ width, height }) => {
           if (width < 3 || height < 3) {
             return null;

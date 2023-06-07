@@ -12,7 +12,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView, TextAlign } from './types';
+import { ClickedItemData, SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -20,7 +20,7 @@ type Props = {
 };
 
 const FlameGraphContainer = (props: Props) => {
-  const [focusedItemIndex, setFocusedItemIndex] = useState<number>();
+  const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
@@ -53,10 +53,19 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
-  useEffect(() => {
-    setFocusedItemIndex(undefined);
+  function resetFocus() {
+    setFocusedItemData(undefined);
     setRangeMin(0);
     setRangeMax(1);
+  }
+
+  function resetSandwich() {
+    setSandwichItem(undefined);
+  }
+
+  useEffect(() => {
+    resetFocus();
+    resetSandwich();
   }, [props.data]);
 
   return (
@@ -71,13 +80,18 @@ const FlameGraphContainer = (props: Props) => {
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
             onReset={() => {
-              setRangeMin(0);
-              setRangeMax(1);
-              setFocusedItemIndex(undefined);
-              setSandwichItem(undefined);
+              if (focusedItemData && sandwichItem) {
+                // if we have both things reset focus first so it behaves sort of like a history back button
+                resetFocus();
+              } else {
+                resetFocus();
+                resetSandwich();
+              }
             }}
             textAlign={textAlign}
             onTextAlignChange={setTextAlign}
+            focusedLabel={focusedItemData?.label}
+            sandwichedLabel={sandwichItem}
           />
 
           <div className={styles.body}>
@@ -94,11 +108,10 @@ const FlameGraphContainer = (props: Props) => {
                       grafana_version: config.buildInfo.version,
                     });
                     setSearch(symbol);
-                    // Reset selected level in flamegraph when selecting row in top table
-                    setRangeMin(0);
-                    setRangeMax(1);
+                    resetFocus();
                   }
                 }}
+                height={selectedView === SelectedView.TopTable ? 600 : undefined}
               />
             )}
 
@@ -110,11 +123,12 @@ const FlameGraphContainer = (props: Props) => {
                 search={search}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
-                onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
-                focusedItemIndex={focusedItemIndex}
+                onItemFocused={(data) => setFocusedItemData(data)}
+                focusedItemData={focusedItemData}
                 textAlign={textAlign}
                 sandwichItem={sandwichItem}
                 onSandwich={(label: string) => {
+                  resetFocus();
                   setSandwichItem(label);
                 }}
               />

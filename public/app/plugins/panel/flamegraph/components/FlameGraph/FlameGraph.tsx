@@ -39,8 +39,8 @@ type Props = {
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   style?: React.CSSProperties;
-  onItemFocused: (itemIndex: number) => void;
-  focusedItemIndex?: number;
+  onItemFocused: (data: ClickedItemData) => void;
+  focusedItemData?: ClickedItemData;
   textAlign: TextAlign;
   sandwichItem?: string;
   onSandwich: (label: string) => void;
@@ -92,7 +92,7 @@ const FlameGraph = ({
     search,
     textAlign,
     totalTicks,
-    focusedItemIndex
+    focusedItemData
   );
 
   const onGraphClick = useCallback(
@@ -101,7 +101,6 @@ const FlameGraph = ({
       const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
       const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
         { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
-        data,
         levels,
         pixelsPerTick,
         totalTicks,
@@ -114,9 +113,9 @@ const FlameGraph = ({
         setClickedItemData({
           posY: e.clientY,
           posX: e.clientX,
-          itemIndex: item.itemIndexes[0],
+          item,
+          level: levelIndex,
           label: data.getLabel(item.itemIndexes[0]),
-          start: item.start,
         });
       } else {
         // if clicking on the canvas but there is no block beneath the cursor
@@ -133,7 +132,6 @@ const FlameGraph = ({
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
         const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
           { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY },
-          data,
           levels,
           pixelsPerTick,
           totalTicks,
@@ -154,7 +152,7 @@ const FlameGraph = ({
         }
       }
     },
-    [data, rangeMin, rangeMax, totalTicks, clickedItemData, levels]
+    [rangeMin, rangeMax, totalTicks, clickedItemData, levels]
   );
 
   const onGraphMouseLeave = useCallback(() => {
@@ -175,7 +173,11 @@ const FlameGraph = ({
 
   return (
     <div className={styles.graph} ref={sizeRef}>
-      <FlameGraphMetadata data={data} focusedItemIndex={focusedItemIndex} totalTicks={totalTicks} />
+      <FlameGraphMetadata
+        data={data}
+        value={focusedItemData ? focusedItemData.item.value : totalTicks}
+        totalTicks={totalTicks}
+      />
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
         <canvas
           ref={graphRef}
@@ -192,13 +194,13 @@ const FlameGraph = ({
           onMenuItemClick={() => {
             setClickedItemData(undefined);
           }}
-          onItemFocus={(itemIndex) => {
-            setRangeMin(clickedItemData.start / totalTicks);
-            setRangeMax((clickedItemData.start + data.getValue(clickedItemData.itemIndex)) / totalTicks);
-            onItemFocused(itemIndex);
+          onItemFocus={() => {
+            setRangeMin(clickedItemData.item.start / totalTicks);
+            setRangeMax((clickedItemData.item.start + clickedItemData.item.value) / totalTicks);
+            onItemFocused(clickedItemData);
           }}
-          onSandwich={(itemIndex) => {
-            const label = data.getLabel(itemIndex);
+          onSandwich={() => {
+            const label = data.getLabel(clickedItemData.item.itemIndexes[0]);
             onSandwich(label);
           }}
         />
@@ -224,14 +226,13 @@ const getStyles = () => ({
 const convertPixelCoordinatesToBarCoordinates = (
   // position relative to the start of the graph
   pos: { x: number; y: number },
-  data: FlameGraphDataContainer,
   levels: LevelItem[][],
   pixelsPerTick: number,
   totalTicks: number,
   rangeMin: number
 ) => {
   const levelIndex = Math.floor(pos.y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-  const barIndex = getBarIndex(pos.x, data, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  const barIndex = getBarIndex(pos.x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
   return { levelIndex, barIndex };
 };
 
@@ -239,14 +240,7 @@ const convertPixelCoordinatesToBarCoordinates = (
  * Binary search for a bar in a level, based on the X pixel coordinate. Useful for detecting which bar did user click
  * on.
  */
-const getBarIndex = (
-  x: number,
-  data: FlameGraphDataContainer,
-  level: LevelItem[],
-  pixelsPerTick: number,
-  totalTicks: number,
-  rangeMin: number
-) => {
+const getBarIndex = (x: number, level: LevelItem[], pixelsPerTick: number, totalTicks: number, rangeMin: number) => {
   if (level) {
     let start = 0;
     let end = level.length - 1;
@@ -255,7 +249,7 @@ const getBarIndex = (
       const midIndex = (start + end) >> 1;
       const startOfBar = getBarX(level[midIndex].start, totalTicks, rangeMin, pixelsPerTick);
       const startOfNextBar = getBarX(
-        level[midIndex].start + data.getValue(level[midIndex].itemIndexes),
+        level[midIndex].start + level[midIndex].value,
         totalTicks,
         rangeMin,
         pixelsPerTick

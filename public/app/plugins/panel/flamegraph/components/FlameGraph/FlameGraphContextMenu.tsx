@@ -7,8 +7,8 @@ import { ClickedItemData } from '../types';
 type Props = {
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
-  onItemFocus: (itemIndex: number) => void;
-  onSandwich: (itemIndex: number) => void;
+  onItemFocus: () => void;
+  onSandwich: () => void;
 };
 
 const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandwich }: Props) => {
@@ -19,7 +19,7 @@ const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandw
           label="Focus block"
           icon={'eye'}
           onClick={() => {
-            onItemFocus(itemData.itemIndex);
+            onItemFocus();
             onMenuItemClick();
           }}
         />
@@ -34,9 +34,9 @@ const FlameGraphContextMenu = ({ itemData, onMenuItemClick, onItemFocus, onSandw
         />
         <MenuItem
           label="Sandwich view"
-          icon={'align-center-v'}
+          icon={'gf-show-context'}
           onClick={() => {
-            onSandwich(itemData.itemIndex);
+            onSandwich();
             onMenuItemClick();
           }}
         />

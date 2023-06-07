@@ -10,18 +10,18 @@ import { FlameGraphDataContainer } from './dataTransform';
 type Props = {
   data: FlameGraphDataContainer;
   totalTicks: number;
-  focusedItemIndex?: number;
+  value: number;
 };
 
-const FlameGraphMetadata = React.memo(({ data, focusedItemIndex, totalTicks }: Props) => {
+const FlameGraphMetadata = React.memo(({ data, value, totalTicks }: Props) => {
   const styles = useStyles2(getStyles);
-  const metadata = getMetadata(data, focusedItemIndex || 0, totalTicks);
+  const metadata = getMetadata(data, value, totalTicks);
   const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
   return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
 });
 
-export const getMetadata = (data: FlameGraphDataContainer, itemIndex: number, totalTicks: number): Metadata => {
-  const displayValue = data.getValueDisplay(itemIndex);
+export const getMetadata = (data: FlameGraphDataContainer, value: number, totalTicks: number): Metadata => {
+  const displayValue = data.valueDisplayProcessor(value);
   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
   let unitValue = displayValue.text + displayValue.suffix;
 

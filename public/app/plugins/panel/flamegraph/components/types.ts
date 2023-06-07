@@ -1,9 +1,11 @@
+import { LevelItem } from './FlameGraph/dataTransform';
+
 export type ClickedItemData = {
   posX: number;
   posY: number;
-  itemIndex: number;
   label: string;
-  start: number;
+  item: LevelItem;
+  level: number;
 };
 
 export type Metadata = {
