@@ -2024,6 +2024,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
+  - export DRONE_SOURCE_BRANCH=v8.5.x
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -2383,6 +2384,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
+  - export DRONE_SOURCE_BRANCH=v8.5.x
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -2564,6 +2566,7 @@ steps:
   - rmdir bin
   - mv grafana-enterprise /tmp/
   - export DRONE_TARGET_BRANCH=$${DRONE_TAG}
+  - export DRONE_SOURCE_BRANCH=v8.5.x
   - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
     ${DRONE_TAG}
   - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
@@ -2683,6 +2686,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
+  - set DRONE_SOURCE_BRANCH=v8.5.x
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
     ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
@@ -4543,6 +4547,7 @@ steps:
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
+  - set DRONE_SOURCE_BRANCH=v8.5.x
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
     $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
@@ -4800,6 +4805,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 92be66311309e1019e95ab96a54ccb844d25a566965c7d76d0450ca524233932
+hmac: 94c74447971d89d8633785e4ab8b4477cd6641901336bc24f0b6d51925d97997
 
 ...

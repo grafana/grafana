@@ -138,7 +138,10 @@ def init_enterprise_step(ver_mode):
     ]
 
     if ver_mode == 'release':
-      commands += ['export DRONE_TARGET_BRANCH=$${DRONE_TAG}']
+      commands += [
+        'export DRONE_TARGET_BRANCH=$${DRONE_TAG}',
+        'export DRONE_SOURCE_BRANCH=v8.5.x',
+    ]
 
     commands += [
         '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
@@ -1182,6 +1185,7 @@ def get_windows_steps(edition, ver_mode):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
+            'set DRONE_SOURCE_BRANCH=v8.5.x',
             'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}'.format(committish),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
