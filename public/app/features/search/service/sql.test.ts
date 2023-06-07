@@ -118,4 +118,31 @@ describe('SQLSearcher', () => {
       starred: true,
     });
   });
+
+  describe('pagination', () => {
+    it.each([
+      { from: undefined, expectedPage: undefined },
+      { from: 0, expectedPage: 1 },
+      { from: 50, expectedPage: 2 },
+      { from: 150, expectedPage: 4 },
+    ])('should search page $expectedPage when skipping $from results', async ({ from, expectedPage }) => {
+      searchMock.mockResolvedValue([]);
+      const sqlSearcher = new SQLSearcher();
+
+      await sqlSearcher.search({
+        query: '*',
+        kind: ['dashboard'],
+        from,
+        limit: 50,
+      });
+
+      expect(searchMock).toHaveBeenLastCalledWith('/api/search', {
+        limit: 50,
+        page: expectedPage,
+        sort: undefined,
+        tag: undefined,
+        type: 'dash-db',
+      });
+    });
+  });
 });

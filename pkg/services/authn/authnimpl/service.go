@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -64,7 +65,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-	signingKeysService signingkeys.Service,
+	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -131,7 +132,7 @@ func ProvideService(
 	}
 
 	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {

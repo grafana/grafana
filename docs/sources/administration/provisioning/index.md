@@ -5,10 +5,6 @@ description: Describes provisioning settings for Grafana using configuration fil
 keywords:
   - grafana
   - provisioning
-labels:
-  products:
-    - enterprise
-    - oss
 title: Provision Grafana
 weight: 600
 ---
@@ -63,7 +59,7 @@ Currently we do not provide any scripts/manifests for configuring Grafana. Rathe
 | --------- | -------------------------------------------------------------------------------------------------------------- |
 | Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
 | Ansible   | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)             |
-| Chef      | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)                   |
+| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
 | Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
 | Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
 

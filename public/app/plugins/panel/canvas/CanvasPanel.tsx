@@ -90,11 +90,6 @@ export class CanvasPanel extends Component<Props, State> {
         if (this.props.id === evt.payload) {
           this.needsReload = true;
           this.scene.clearCurrentSelection();
-          this.scene.load(
-            this.props.options.root,
-            this.props.options.inlineEditing,
-            this.props.options.showAdvancedTypes
-          );
         }
       })
     );

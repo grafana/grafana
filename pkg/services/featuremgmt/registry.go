@@ -59,6 +59,7 @@ var (
 			State:           FeatureStateBeta,
 			RequiresLicense: true,
 			Owner:           grafanaDashboardsSquad,
+			HideFromDocs:    true,
 		},
 		{
 			Name:        "lokiLive",
@@ -186,18 +187,11 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
-		},
-		{
 			Name:        "topnav",
 			Description: "Enables new top navigation and page layouts",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "grpcServer",
@@ -284,12 +278,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:        "authnService",
-			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
@@ -436,6 +424,14 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
+			Name:         "alertingNotificationsPoliciesMatchingInstances",
+			Description:  "Enables the preview of matching instances for notification policies",
+			State:        FeatureStateStable,
+			FrontendOnly: true,
+			Expression:   "true", // enabled by default
+			Owner:        grafanaAlertingSquad,
+		},
+		{
 			Name:        "alertStateHistoryLokiPrimary",
 			Description: "Enable a remote Loki instance as the primary source for state history reads.",
 			State:       FeatureStateAlpha,
@@ -471,6 +467,12 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 			Owner:           grafanaAuthnzSquad,
+		},
+		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			State:       FeatureStateBeta,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "useCachingService",
@@ -531,7 +533,28 @@ var (
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
-			Owner:        grafanaUserEssentialsSquad,
+			Owner:        grafanaFrontendPlatformSquad,
+		},
+		{
+			Name:         "lokiPredefinedOperations",
+			Description:  "Adds predefined query operations to Loki query editor",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "pluginsFrontendSandbox",
+			Description:  "Enables the plugins frontend sandbox",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )
