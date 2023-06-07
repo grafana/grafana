@@ -188,7 +188,7 @@ export function ResultsTable(props: ResultsTableProps) {
                   {state.hasMetadata && metaRows(metric)}
                   <td>
                     <Button
-                      size="sm"
+                      size="md"
                       variant="secondary"
                       onClick={() => selectMetric(metric)}
                       className={styles.centerButton}
@@ -247,7 +247,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       background-color: ${theme.components.textHighlight.background};
     `,
     nameWidth: css`
-      ${disableTextWrap ? '' : 'width: 40%;'}
+      ${disableTextWrap ? '' : 'width: 37.5%;'}
     `,
     nameOverflow: css`
       ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
@@ -259,7 +259,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${disableTextWrap ? '' : 'width: 35%;'}
     `,
     selectButtonWidth: css`
-      ${disableTextWrap ? '' : 'width: 10%;'}
+      ${disableTextWrap ? '' : 'width: 12.5%;'}
     `,
     stickyHeader: css`
       position: sticky;

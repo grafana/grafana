@@ -267,10 +267,15 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 size="md"
                 onClick={() => dispatch(showAdditionalSettings())}
                 data-testid={testIds.showAdditionalSettings}
+                className={styles.noBorder}
               >
                 Additional Settings
               </Button>
-              <Button variant="secondary" icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'} />
+              <Button
+                className={styles.noBorder}
+                variant="secondary"
+                icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'}
+              />
             </ButtonGroup>
           </Toggletip>
         </div>
