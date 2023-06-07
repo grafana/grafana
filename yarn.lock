@@ -2303,10 +2303,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@daybrush/utils@npm:1.11.0":
-  version: 1.11.0
-  resolution: "@daybrush/utils@npm:1.11.0"
-  checksum: 876c320e5315a7fd213b16f9f85f09dc8775b8ba627923cf6694f0e20369e1072417e51c23ce060a0e544910468152523d5f0ecc6e3a8b414a9c47b02e58c7bd
+"@daybrush/utils@npm:1.13.0":
+  version: 1.13.0
+  resolution: "@daybrush/utils@npm:1.13.0"
+  checksum: 0ec0670016efc66b367fbef6581718eb5fc383b612d1290637845b9b9572e3cc19717ad63a35689f12d5a95a3dbdc9552fd1e57169077745ef0fee1a0b4e0fcd
   languageName: node
   linkType: hard
 
@@ -3548,9 +3548,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@grafana/scenes@npm:0.7.0"
+"@grafana/scenes@npm:^0.14.0":
+  version: 0.14.0
+  resolution: "@grafana/scenes@npm:0.14.0"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -3558,7 +3558,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 78cff0b04cc1237d32b5d3fae816cc2814e6aeed11cbe443814347d73df7ec97e1ce204733ea7f4e6b39c39dd56f37c15829c530cf0ca9bba646a8b78aa7a74e
+  checksum: a33193fe4b7d18d934d7885ad5e2da0051bde64af865ef593aa2f182ea2190f3f16d163da5e7b2e9ac848187323124308be9f2cea61ccd246e287738113c1107
   languageName: node
   linkType: hard
 
@@ -3618,7 +3618,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.6
     "@mdx-js/react": 1.6.22
-    "@monaco-editor/react": 4.4.6
+    "@monaco-editor/react": 4.5.1
     "@popperjs/core": 2.11.6
     "@react-aria/button": 3.7.1
     "@react-aria/dialog": 3.5.1
@@ -5303,28 +5303,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@monaco-editor/loader@npm:^1.3.2":
-  version: 1.3.2
-  resolution: "@monaco-editor/loader@npm:1.3.2"
+"@monaco-editor/loader@npm:^1.3.3":
+  version: 1.3.3
+  resolution: "@monaco-editor/loader@npm:1.3.3"
   dependencies:
     state-local: ^1.0.6
   peerDependencies:
     monaco-editor: ">= 0.21.0 < 1"
-  checksum: 7a1b65052bbaf4ef826392687bd7cfaf839509611034d2d616783b5d3fee91ed304d9086517c3b5f9099707828c57c855ff43407b3c2f5ae480faebb104d4343
+  checksum: 037dd4758651cb623482398fba884c0ddec1ed40502185f1fa417e54f47485291e236eb13bcdffb7bca292edd97ca8e3c51c2c3505e17a3184f4c6d11016fcac
   languageName: node
   linkType: hard
 
-"@monaco-editor/react@npm:4.4.6":
-  version: 4.4.6
-  resolution: "@monaco-editor/react@npm:4.4.6"
+"@monaco-editor/react@npm:4.5.1":
+  version: 4.5.1
+  resolution: "@monaco-editor/react@npm:4.5.1"
   dependencies:
-    "@monaco-editor/loader": ^1.3.2
-    prop-types: ^15.7.2
+    "@monaco-editor/loader": ^1.3.3
   peerDependencies:
     monaco-editor: ">= 0.25.0 < 1"
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: cb25b5ce153608c2a4291390456488e100c5e3ac48a913875c98182836e2a9f315d4f96e85cf6f7d4b1eadff8d08d13356e38891b472894155bcb2c4aeaf3b1c
+  checksum: 989b98f5750f0b0ad54dc1dd7da8e92c67fcab55e89e26465ab7312fae87b3795f2e4603e7979e9545b7ad5d00fbcb3f21d20144d9e7eafa6f6989a76ad78c3a
   languageName: node
   linkType: hard
 
@@ -5934,6 +5933,13 @@ __metadata:
   version: 0.25.0
   resolution: "@opentelemetry/semantic-conventions@npm:0.25.0"
   checksum: 0771e3298ed67f87d466e3eeac17fb3363cd7759b0b306b42d296464ef40c5f00e351535bc5eab0b678f3c60cb256309d6c4779b586beaf5edf99300d1e0ab45
+  languageName: node
+  linkType: hard
+
+"@opentelemetry/semantic-conventions@npm:1.14.0":
+  version: 1.14.0
+  resolution: "@opentelemetry/semantic-conventions@npm:1.14.0"
+  checksum: 0d4f752035ac25d10cfcaf0e16f29bff8fa47877baff61dc4d047f9fe1e70f1459d02f5b70982c579db48584038e4fe263755b35ffa7254385604917337469f3
   languageName: node
   linkType: hard
 
@@ -18170,7 +18176,7 @@ __metadata:
     "@betterer/cli": 5.4.0
     "@betterer/eslint": 5.4.0
     "@betterer/regexp": 5.4.0
-    "@daybrush/utils": 1.11.0
+    "@daybrush/utils": 1.13.0
     "@emotion/css": 11.10.6
     "@emotion/eslint-plugin": 11.10.0
     "@emotion/react": 11.10.6
@@ -18188,7 +18194,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.7.0
+    "@grafana/scenes": ^0.14.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -18202,7 +18208,7 @@ __metadata:
     "@locker/near-membrane-shared": ^0.12.14
     "@opentelemetry/api": 1.4.0
     "@opentelemetry/exporter-collector": 0.25.0
-    "@opentelemetry/semantic-conventions": 1.9.1
+    "@opentelemetry/semantic-conventions": 1.14.0
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.10
     "@popperjs/core": 2.11.6
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1

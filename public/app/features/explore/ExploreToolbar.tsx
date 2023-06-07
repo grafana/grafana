@@ -83,7 +83,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
-      return dispatch(runQueries(exploreId));
+      return dispatch(runQueries({ exploreId }));
     }
   };
 
@@ -114,8 +114,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const onChangeFiscalYearStartMonth = (fiscalyearStartMonth: number) =>
     dispatch(updateFiscalYearStartMonthForSession(fiscalyearStartMonth));
 
-  const onChangeRefreshInterval = (item: string) => {
-    dispatch(changeRefreshInterval(exploreId, item));
+  const onChangeRefreshInterval = (refreshInterval: string) => {
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
   return (
