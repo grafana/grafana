@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { FormEvent, useState, useEffect } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -100,12 +99,7 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
         )}
       </InlineFieldRow>
       {type === QueryType.LabelValues && (
-        <InlineFieldRow
-          // We want stream selector input to have a space for long stream selectors
-          className={css`
-            width: 75%;
-          `}
-        >
+        <InlineFieldRow>
           <InlineField
             label="Stream selector"
             labelWidth={20}
