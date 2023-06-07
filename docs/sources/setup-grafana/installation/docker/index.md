@@ -214,7 +214,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    ```
 
 1. Now, add the following code into the `docker-compose.yaml` file.
-   
+
    For example:
 
    ```bash
@@ -271,7 +271,8 @@ Complete the following steps to use persistent storage.
 
    # now create the docker-compose.yaml file
    touch docker-compose.yaml
-   ```   
+   ```
+
 1. Add the following code into the `docker-compose.yaml` file.
 
    ```yaml
