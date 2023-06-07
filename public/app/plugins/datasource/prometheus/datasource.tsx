@@ -107,7 +107,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
   cacheLevel: PrometheusCacheLevel;
-  cache: QueryCache;
+  cache: QueryCache<PromQuery>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -143,9 +143,12 @@ export class PrometheusDatasource
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
-    this.cache = new QueryCache(
-      instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow
-    );
+
+    this.cache = new QueryCache({
+      getTargetSignature: this.getPrometheusTargetSignature.bind(this),
+      overlapString: instanceSettings.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow,
+      profileFunction: this.getPrometheusProfileData.bind(this),
+    });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -163,6 +166,26 @@ export class PrometheusDatasource
 
   getQueryDisplayText(query: PromQuery) {
     return query.expr;
+  }
+
+  getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+    return {
+      interval: targ.interval ?? request.interval,
+      expr: this.interpolateString(targ.expr),
+      datasource: 'Prometheus',
+    };
+  }
+
+  /**
+   * Get target signature for query caching
+   * @param request
+   * @param query
+   */
+  getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
+    const targExpr = this.interpolateString(query.expr);
+    return `${targExpr}|${query.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
+      query.exemplar
+    }`;
   }
 
   hasLabelsMatchAPISupport(): boolean {
@@ -451,12 +474,19 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
+  intepolateStringHelper = (query: PromQuery): string => {
+    return this.interpolateString(query.expr);
+  };
+
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       let fullOrPartialRequest: DataQueryRequest<PromQuery>;
-      let requestInfo: CacheRequestInfo | undefined = undefined;
-      if (this.hasIncrementalQuery) {
-        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+      let requestInfo: CacheRequestInfo<PromQuery> | undefined = undefined;
+      const hasInstantQuery = request.targets.some((target) => target.instant);
+
+      // Don't cache instant queries
+      if (this.hasIncrementalQuery && !hasInstantQuery) {
+        requestInfo = this.cache.requestInfo(request);
         fullOrPartialRequest = requestInfo.requests[0];
       } else {
         fullOrPartialRequest = request;

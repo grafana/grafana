@@ -140,7 +140,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 
 		// Hardcoded alias changes
 		switch plugin.ID {
-		case "grafana-pyroscope": // rebranding
+		case "grafana-pyroscope-datasource": // rebranding
 			plugin.Alias = "phlare"
 		case "debug": // panel plugin used for testing
 			plugin.Alias = "debugX"
