@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { Button, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
+import { createNewFolder } from 'app/features/folders/state/actions';
 import {
   getNewDashboardPhrase,
   getNewFolderPhrase,
@@ -8,40 +10,77 @@ import {
   getNewPhrase,
 } from 'app/features/search/tempI18nPhrases';
 
-interface Props {
+import { NewFolderForm } from './NewFolderForm';
+
+const mapDispatchToProps = {
+  createNewFolder,
+};
+
+const connector = connect(null, mapDispatchToProps);
+
+interface OwnProps {
+  parentFolderTitle?: string;
   /**
    * Pass a folder UID in which the dashboard or folder will be created
    */
-  inFolder?: string;
+  parentFolderUid?: string;
   canCreateFolder: boolean;
   canCreateDashboard: boolean;
 }
 
-export function CreateNewButton({ inFolder, canCreateDashboard, canCreateFolder }: Props) {
+type Props = OwnProps & ConnectedProps<typeof connector>;
+
+function CreateNewButton({
+  parentFolderTitle,
+  parentFolderUid,
+  canCreateDashboard,
+  canCreateFolder,
+  createNewFolder,
+}: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
+
+  const onCreateFolder = (folderName: string) => {
+    createNewFolder(folderName, parentFolderUid);
+    setShowNewFolderDrawer(false);
+  };
+
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
-        <MenuItem url={addFolderUidToUrl('/dashboard/new', inFolder)} label={getNewDashboardPhrase()} />
+        <MenuItem url={addFolderUidToUrl('/dashboard/new', parentFolderUid)} label={getNewDashboardPhrase()} />
       )}
-      {canCreateFolder && (
-        <MenuItem url={addFolderUidToUrl('/dashboards/folder/new', inFolder)} label={getNewFolderPhrase()} />
-      )}
+      {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
       {canCreateDashboard && (
-        <MenuItem url={addFolderUidToUrl('/dashboard/import', inFolder)} label={getImportPhrase()} />
+        <MenuItem url={addFolderUidToUrl('/dashboard/import', parentFolderUid)} label={getImportPhrase()} />
       )}
     </Menu>
   );
 
   return (
-    <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
-      <Button>
-        {getNewPhrase()}
-        <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-      </Button>
-    </Dropdown>
+    <>
+      <Dropdown overlay={newMenu} onVisibleChange={setIsOpen}>
+        <Button>
+          {getNewPhrase()}
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
+        </Button>
+      </Dropdown>
+      {showNewFolderDrawer && (
+        <Drawer
+          title={getNewFolderPhrase()}
+          subtitle={parentFolderTitle ? `Location: ${parentFolderTitle}` : undefined}
+          scrollableContent
+          onClose={() => setShowNewFolderDrawer(false)}
+          size="md"
+        >
+          <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
+        </Drawer>
+      )}
+    </>
   );
 }
+
+export default connector(CreateNewButton);
 
 /**
  *
