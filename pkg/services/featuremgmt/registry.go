@@ -563,5 +563,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "transformationsRedesign",
+			Description:  "Enables the transformations redesign",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )

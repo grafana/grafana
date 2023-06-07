@@ -24,11 +24,13 @@ import {
   VerticalGroup,
   withTheme,
   Input,
+  Icon,
   IconButton,
   useStyles2,
   Card,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import config from 'app/core/config';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -312,29 +314,80 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           </Container>
         )}
         {showPicker ? (
-          <VerticalGroup>
-            <Input
-              aria-label={selectors.components.Transforms.searchInput}
-              value={search ?? ''}
-              autoFocus={!noTransforms}
-              placeholder="Add transformation"
-              onChange={this.onSearchChange}
-              onKeyDown={this.onSearchKeyDown}
-              suffix={suffix}
-            />
+          <>
+            {config.featureToggles.transformationsRedesign && (
+              <>
+                {!noTransforms && (
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      this.setState({ showPicker: false });
+                    }}
+                  >
+                    <p
+                      className={css`
+                        color: ${config.theme2.colors.text.secondary};
+                      `}
+                    >
+                      <Icon
+                        className={css`
+                          color: ${config.theme2.colors.text.secondary};
+                        `}
+                        name="angle-left"
+                        size="xl"
+                      />{' '}
+                      <span
+                        className={css`
+                          vertical-align: middle;
+                        `}
+                      >
+                        Go back to <i>Transformations in use</i>
+                      </span>
+                    </p>
+                  </div>
+                )}
+                <p
+                  className={css`
+                    font-size: 16px;
+                  `}
+                >
+                  <a
+                    href={getDocsLink(DocsId.Transformations)}
+                    className="external-link"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Transformations
+                  </a>{' '}
+                  allow you to manipulate your data before a visualization is applied.
+                </p>
+              </>
+            )}
+            <VerticalGroup>
+              <Input
+                aria-label={selectors.components.Transforms.searchInput}
+                value={search ?? ''}
+                autoFocus={!noTransforms}
+                placeholder="Add transformation"
+                onChange={this.onSearchChange}
+                onKeyDown={this.onSearchKeyDown}
+                suffix={suffix}
+              />
 
-            {xforms.map((t) => {
-              return (
-                <TransformationCard
-                  key={t.name}
-                  transform={t}
-                  onClick={() => {
-                    this.onTransformationAdd({ value: t.id });
-                  }}
-                />
-              );
-            })}
-          </VerticalGroup>
+              {xforms.map((t) => {
+                return (
+                  <TransformationCard
+                    key={t.name}
+                    transform={t}
+                    onClick={() => {
+                      this.onTransformationAdd({ value: t.id });
+                    }}
+                  />
+                );
+              })}
+            </VerticalGroup>
+          </>
         ) : (
           <Button
             icon="plus"

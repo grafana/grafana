@@ -114,6 +114,7 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 | `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `recordedQueriesMulti`             | Enables writing multiple items from a single query within Recorded Queries                                   |
+| `transformationsRedesign`          | Enables the transformations redesign                                                                         |
 
 ## Development feature toggles
 
