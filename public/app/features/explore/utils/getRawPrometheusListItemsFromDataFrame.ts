@@ -39,7 +39,7 @@ export const getRawPrometheusListItemsFromDataFrame = (dataFrame: DataFrame): in
         // Initialize the objects
         if (typeof field?.display === 'function') {
           const value = field?.display(field.values[i]);
-          if (value.numeric) {
+          if (!isNaN(value.numeric)) {
             formattedMetric[label] = value.numeric.toString(10);
           } else {
             const stringValue = formattedValueToString(value);
