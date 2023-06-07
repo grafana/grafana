@@ -150,11 +150,13 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
             ) : null}
           </>
         </Page.Contents>
-        <MigrationSummary
-          visible={this.state.showMigrationResult}
-          data={migrationResult}
-          onDismiss={this.dismissModal}
-        />
+        {migrationResult && (
+          <MigrationSummary
+            visible={this.state.showMigrationResult}
+            data={migrationResult}
+            onDismiss={this.dismissModal}
+          />
+        )}
       </Page>
     );
   }
@@ -181,12 +183,8 @@ const styles: { [key: string]: React.CSSProperties } = {
 };
 
 export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
-  if (!visible) {
-    return null;
-  }
-
   return (
-    <Modal title="Migration summary" isOpen={true} closeOnBackdropClick={true} onDismiss={onDismiss}>
+    <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
       {data.failedApikeyIDs.length === 0 && <div style={styles.migrationSummary}>Migration Completed!</div>}
       {data.failedApikeyIDs.length !== 0 && (
         <div style={styles.migrationSummary}>
