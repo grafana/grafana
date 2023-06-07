@@ -72,7 +72,7 @@ docker run -d -p 3000:3000 --name grafana grafana/grafana-enterprise:9.4.7
 
 ## Run the Grafana main branch
 
-After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:<version><build ID>-pre` and `grafana/grafana-oss-dev:<version><build ID>-pre-ubuntu`, where version is the next version of Grafana and build ID is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds. You can check this [link](https://hub.docker.com/r/grafana/grafana-oss-dev/tags) for further reference.
+After every successful build of the main branch, two tags, `grafana/grafana-oss:main` and `grafana/grafana-oss:main-ubuntu`, are updated. Additionally, two new tags are created: `grafana/grafana-oss-dev:<version><build ID>-pre` and `grafana/grafana-oss-dev:<version><build ID>-pre-ubuntu`, where `version` is the next version of Grafana and `build ID `is the ID of the corresponding CI build. These tags provide access to the most recent Grafana main builds. For more information, refer to [grafana/grafana-oss-dev](https://hub.docker.com/r/grafana/grafana-oss-dev/tags).
 
 To ensure stability and consistency, we strongly recommend using the `grafana/grafana-oss-dev:<version><build ID>-pre` tag when running the Grafana main branch in a production environment. This tag ensures that you are using a specific version of Grafana instead of the most recent commit, which could potentially introduce bugs or issues. It also avoids polluting the tag namespace for the main Grafana images with thousands of pre-release tags.
 
@@ -138,7 +138,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 > **Note:** This feature is experimental.
 
-Currently, the Grafana Image Renderer plugin requires dependencies which are not available in the Grafana Docker image (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301) for more details). However, you can create a customized Docker image utilizing the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
+Currently, the Grafana Image Renderer plugin requires dependencies that are not available in the Grafana Docker image (see [GitHub Issue#301](https://github.com/grafana/grafana-image-renderer/issues/301) for more details). However, you can create a customized Docker image using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument as a solution. This will install the necessary dependencies for the Grafana Image Renderer plugin to run.
 
 Example:
 
@@ -160,7 +160,7 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ### Build a Grafana Docker image with pre-installed plugins
 
-If you run multiple Grafana installations with the same plugins you can save time by building your own customized image that includes plugins available on the [Grafana Plugin download page](/grafana/plugins) so that Grafans won't have to install the plugins each time it starts, making the process more efficient.
+If you run multiple Grafana installations with the same plugins, you can save time by building a customized image that includes plugins available on the [Grafana Plugin download page](/grafana/plugins). When you build a customized image, Grafana doesn't have to install the plugins each time it starts, making the startup process more efficient.
 
 > **Note:** To specify the version of a plugin, you can use the `GF_INSTALL_PLUGINS` build argument and add the version number. The latest version is used if you don't specify a version number. For example, you can use `--build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"` to specify the versions of two plugins.
 
@@ -185,9 +185,9 @@ docker run -d -p 3000:3000 --name=grafana grafana-custom
 
 ### Build a Grafana Docker image with pre-installed plugins from other sources
 
-You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`
+You can create a Docker image containing a plugin that is exclusive to your organization, even if it is not accessible to the public. Simply use the `GF_INSTALL_PLUGINS` build argument to specify the plugin's URL and installation folder name, such as `GF_INSTALL_PLUGINS=<url to plugin zip>;<plugin install folder name>`.
 
-The following example demonstrates creating a customized Grafana Docker image that includes a custom plugin from a URL link, the clock panel and simple-json-datasource plugins. You can define these plugins in the build argument using the Grafana Plugin environment variable.
+The following example demonstrates creating a customized Grafana Docker image that includes a custom plugin from a URL link, the clock panel plugin, and the simple-json-datasource plugin. You can define these plugins in the build argument using the Grafana Plugin environment variable.
 
 ```bash
 # go to the folder
@@ -220,7 +220,7 @@ docker run -p 3000:3000 -e "GF_LOG_MODE=console file" grafana/grafana-enterprise
 
 ## Configure Grafana with Docker Secrets
 
-Using configuration files, you can input confidential data like login credentials and secrets into Grafana. This method works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/), as the secrets are automatically mapped to the `/run/secrets/` location within the container.
+You can input confidential data like login credentials and secrets into Grafana using configuration files. This method works well with [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/), as the secrets are automatically mapped to the `/run/secrets/` location within the container.
 
 You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information. For more information about Docker secret command usage, refer to [docker secret](https://docs.docker.com/engine/reference/commandline/secret/).
 
@@ -276,7 +276,7 @@ AWS_default_REGION=us-east-1
 
    Where:
 
-   ID = the secret unique ID which we will use in the docker run command
+   ID = the secret unique ID that you will use in the docker run command
 
    NAME = the we defined for each secret
 
@@ -303,7 +303,7 @@ The following list includes the supported environment variables:
 
 ## Troubleshoot a Docker deployment
 
-By default, the Grafana log level is set to `INFO`, but you can increase the log level to `DEBUG` mode when you try to reproduce a problem.
+By default, the Grafana log level is set to `INFO`, but you can increase the log level to `DEBUG` mode when you want to reproduce a problem.
 
 For more information about logging, refer to [logs]({{< relref "./configure-grafana#log" >}}).
 

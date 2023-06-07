@@ -69,7 +69,7 @@ When you use Docker containers, their data is temporary by default. If you don't
 
 #### Use persistent storage (recommended)
 
-It is recommended to have persistent storage because without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to fully manage the storage volume.
+It is recommended to have persistent storage because, without it, all data will be lost once the container is shut down. Use this method when you want the Docker service to manage the storage volume fully.
 
 To use persistent storage, complete the following steps:
 
@@ -183,7 +183,7 @@ docker run -d -p 3000:3000 --name=grafana \
 
 ## Run Grafana via Docker Compose
 
-Docker Compose is a software tool that makes it easy to define and share applications that consist of multiple containers. It works by using a YAML file, usually called `docker-compose.yaml`, which lists all the services that make up the application. With a single command, you can start up all the containers in the correct order, and with another command, you can shut everything down. For more information about the benefits of using Docker Compose and how to use it refer to [Use Docker Compose](https://docs.docker.com/get-started/08_using_compose/).
+Docker Compose is a software tool that makes it easy to define and share applications that consist of multiple containers. It works by using a YAML file, usually called `docker-compose.yaml`, which lists all the services that make up the application. You can start the containers in the correct order with a single command, and with another command, you can shut them down. For more information about the benefits of using Docker Compose and how to use it refer to [Use Docker Compose](https://docs.docker.com/get-started/08_using_compose/).
 
 ### Before you begin
 
@@ -213,7 +213,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    touch docker-compose.yaml
    ```
 
-2. Now, add the following code into the `docker-compose.yaml` file.
+1. Now, add the following code into the `docker-compose.yaml` file.
    
    For example:
 
@@ -228,7 +228,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
         - '3000:3000'
    ```
 
-3. To run `docker-compose.yaml`, run the following command:
+1. To run `docker-compose.yaml`, run the following command:
 
    ```bash
    # start the grafana container
@@ -272,7 +272,7 @@ Complete the following steps to use persistent storage.
    #now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```   
-2. Now, add the following code into the `docker-compose.yaml` file.
+1. Add the following code into the `docker-compose.yaml` file.
 
    ```yaml
    version: '3.8'
@@ -289,7 +289,7 @@ Complete the following steps to use persistent storage.
      grafana_data: {}
    ```
 
-3. Save the file and run the following command:
+1. Save the file and run the following command:
 
    ```bash
    docker compose up -d
@@ -311,13 +311,13 @@ To use bind mounts, complete the following steps:
    touch docker-compose.yaml
    ```
 
-2. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
+1. Create the folder where you will be mounting your data, in this case is `/data` e.g. in your current working directory:
 
    ```bash
    mkdir $PWD/data
    ```
 
-3. Now, add the following code into the `docker-compose.yaml` file.
+1. Now, add the following code into the `docker-compose.yaml` file.
 
    ```yaml
    version: '3.8'
@@ -336,7 +336,7 @@ To use bind mounts, complete the following steps:
          - '$PWD/data:/var/lib/grafana'
    ```
 
-4. Save the file and run the following command:
+1. Save the file and run the following command:
 
    ```bash
    docker compose up -d
