@@ -1,14 +1,13 @@
 import { partial } from 'lodash';
-import React, { useEffect, useState } from 'react';
-import { DeepMap, FieldError, useForm } from 'react-hook-form';
+import React, { type ReactElement, useEffect, useState } from 'react';
+import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
-import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { ExploreId, AccessControlAction, useSelector } from 'app/types';
+import { ExploreId, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
 
@@ -58,9 +57,11 @@ interface SubmissionError {
 interface Props {
   onClose: () => void;
   exploreId: ExploreId;
+  saveTargets: Array<SelectableValue<SaveTarget>>;
 }
 
-export const AddToDashboardBody = ({ onClose, exploreId }: Props) => {
+export function AddToDashboardBody(props: Props): ReactElement {
+  const { exploreId, onClose, saveTargets } = props;
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
   const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
@@ -68,26 +69,7 @@ export const AddToDashboardBody = ({ onClose, exploreId }: Props) => {
     control,
     formState: { errors },
     watch,
-  } = useForm<FormDTO>({
-    defaultValues: { saveTarget: SaveTarget.NewDashboard },
-  });
-
-  const canCreateDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
-  const canWriteDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
-
-  const saveTargets: Array<SelectableValue<SaveTarget>> = [];
-  if (canCreateDashboard) {
-    saveTargets.push({
-      label: 'New dashboard',
-      value: SaveTarget.NewDashboard,
-    });
-  }
-  if (canWriteDashboard) {
-    saveTargets.push({
-      label: 'Existing dashboard',
-      value: SaveTarget.ExistingDashboard,
-    });
-  }
+  } = useFormContext();
 
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0].value;
 
@@ -211,4 +193,4 @@ export const AddToDashboardBody = ({ onClose, exploreId }: Props) => {
       </Modal.ButtonRow>
     </form>
   );
-};
+}

@@ -6,7 +6,7 @@ import { AccessControlAction, ExploreId } from 'app/types';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
 
-import { AddToDashboardBody } from './AddToDashboard/AddToDashboardBody';
+import { AddToDashboardModal } from './AddToDashboard/AddToDashboardModal';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
 export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
@@ -35,7 +35,9 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
 
           openModal({
             title: 'Add panel to dashboard',
-            body: ({ onDismiss }) => <AddToDashboardBody onClose={onDismiss!} exploreId={exploreId} />,
+            body: ({ onDismiss }) => (
+              <AddToDashboardModal excludeModal={true} onClose={onDismiss!} exploreId={exploreId} />
+            ),
           });
         },
       }),

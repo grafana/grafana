@@ -22,6 +22,7 @@ import {
   setLocationService,
   HistoryWrapper,
   LocationService,
+  setPluginExtensionGetter,
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -54,6 +55,8 @@ export function setupExplore(options?: SetupOptions): {
   container: HTMLElement;
   location: LocationService;
 } {
+  setPluginExtensionGetter(() => ({ extensions: [] }));
+
   // Clear this up otherwise it persists data source selection
   // TODO: probably add test for that too
   if (options?.clearLocalStorage !== false) {
