@@ -88,7 +88,7 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               aria-label="Label"
               onChange={onLabelChange}
               onBlur={handleBlur}
-              value={label}
+              value={{ label: label, value: label }}
               options={labelOptions}
               width={16}
               allowCustomValue
