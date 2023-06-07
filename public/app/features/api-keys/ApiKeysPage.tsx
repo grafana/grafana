@@ -185,7 +185,19 @@ const styles: { [key: string]: React.CSSProperties } = {
 export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
   return (
     <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
-      {data.failedApikeyIDs.length === 0 && <div style={styles.migrationSummary}>Migration Completed!</div>}
+      {data.failedApikeyIDs.length === 0 && (
+        <div style={styles.migrationSummary}>
+          <p>Migration Successful!</p>
+          <p>
+            <strong>Total: </strong>
+            {data.total}
+          </p>
+          <p>
+            <strong>Migrated: </strong>
+            {data.migrated}
+          </p>
+        </div>
+      )}
       {data.failedApikeyIDs.length !== 0 && (
         <div style={styles.migrationSummary}>
           <p>
