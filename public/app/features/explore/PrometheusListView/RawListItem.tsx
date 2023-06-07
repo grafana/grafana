@@ -108,19 +108,17 @@ const RawListItem = ({ listItemData, listKey, totalNumberOfValues, valueLabels, 
    * Transform the symbols in the dataFrame to uniform strings
    */
   const transformCopyValue = (value: string): string => {
-    if (value === '∞') {
+    if (value === '∞' || value === 'Infinity') {
       return '+Inf';
     }
     return value;
   };
 
   // Convert the object back into a string
-  const stringRep = `${__name__}{${attributeValues
-    .filter((value) => value.key !== 'le')
-    .map((value) => {
-      // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
-      return `${value.key}="${transformCopyValue(value.value)}"`;
-    })}}`;
+  const stringRep = `${__name__}{${attributeValues.map((value) => {
+    // For histograms the string representation currently in this object is not directly queryable in all situations, leading to broken copied queries. Omitting the attribute from the copied result gives a query which returns all le values, which I assume to be a more common use case.
+    return `${value.key}="${transformCopyValue(value.value)}"`;
+  })}}`;
 
   const hideFieldsWithoutValues = Boolean(valueLabels && valueLabels?.length);
 
