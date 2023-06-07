@@ -164,8 +164,28 @@ You can assign these roles to users, teams and service accounts.
 
 Moreover, RBAC allows you to create your own custom roles and edit permissions granted by Grafana's basic roles.
 
-## 🚧 Will I need synchronization?
+## User synchronization between Grafana and Identity Providers
 
-### 🚧 Team sync
+When connecting Grafana to an Identity Provider, it's important to think beyond just the initial authentication setup. You should also think about synchronizing user bases and roles. Doing so will enable users within a group to share the same configuration, so you won't have to set individual permissions for each user.
 
-### 🚧 Organization sync
+### Team sync
+
+Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users who are part of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+
+> **Note:** Currently, team synchronization occurs only when a user logs in. However, if you are using LDAP, it is possible to enable active background synchronization, which was added to Grafana 6.3. This allows for the continuous synchronization of teams.
+
+### Organization sync
+
+> **Note:** Available in Grafana version 7.0 and later.
+
+Organization sync is the process of binding all the users from an organization in Grafana. This allows to delegate the role of managing users to the IdP. This way, there's no need to manage user access from Grafana since the IdP will be queried eveytime a new user tries to log in.
+
+Organization sync allows mapping users from IdP groups to Grafana organizations. It works similarly as role sync, but in addition allows specifying Grafana organization that a user who belongs to a specific IdP group should be added to. This feature can only be used in self-hosted Grafana instances, as Cloud Grafana instances are limited to one organization.
+
+> **Note:** Organization sync is currently only supported for SAML and LDAP.
+
+> **Note:** When syncing users with Organization sync, you don't need to invite them through Grafana.
+
+> **Note:** Currently, only mapping of basic roles can be achieved via Organization sync.
