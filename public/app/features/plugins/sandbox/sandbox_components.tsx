@@ -36,12 +36,12 @@ export async function sandboxPluginComponents(
   // intentionally not early exit to cover possible future cases
 
   // wrap panel component
-  if (pluginObject.hasOwnProperty('panel')) {
+  if (Reflect.has(pluginObject, 'panel')) {
     Reflect.set(pluginObject, 'panel', withSandboxWrapper(Reflect.get(pluginObject, 'panel')));
   }
 
   // wrap datasource components
-  if (pluginObject.hasOwnProperty('components')) {
+  if (Reflect.has(pluginObject, 'datasource')) {
     const components: Record<string, ComponentType> = Reflect.get(pluginObject, 'components');
     Object.entries(components).forEach(([key, value]) => {
       Reflect.set(components, key, withSandboxWrapper(value));
@@ -50,12 +50,12 @@ export async function sandboxPluginComponents(
   }
 
   // wrap app components
-  if (pluginObject.hasOwnProperty('root')) {
+  if (Reflect.has(pluginObject, 'root')) {
     Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root')));
   }
 
   // extension components
-  if (pluginObject.hasOwnProperty('extensionConfigs')) {
+  if (Reflect.has(pluginObject, 'extensionConfigs')) {
     const extensions: PluginExtensionConfig[] = Reflect.get(pluginObject, 'extensionConfigs');
     const newExtensions: PluginExtensionConfig[] = [];
     for (const extension of extensions) {
@@ -77,7 +77,7 @@ export async function sandboxPluginComponents(
   }
 
   // config pages
-  if (pluginObject.hasOwnProperty('configPages')) {
+  if (Reflect.has(pluginObject, 'configPages')) {
     const configPages: Record<string, PluginConfigPage<any>> = Reflect.get(pluginObject, 'configPages');
     for (const [key, value] of Object.entries(configPages)) {
       if (!value.body || !isFunction(value.body)) {
