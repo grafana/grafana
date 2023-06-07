@@ -13,12 +13,17 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
   const dsService = useRef(getDatasourceSrv());
 
   useEffect(() => {
+    if (!params.panes || params.panes !== 'string') {
+      return;
+    }
+
     Promise.all(
-      Object.values(safeParseJson(params.panes || '{}')).map((pane) => {
-        if (pane && typeof pane === 'object' && 'datasource' in pane) {
-          return dsService.current.get(pane.datasource);
+      Object.values(safeParseJson(params.panes)).map((pane) => {
+        if (!pane || typeof pane !== 'object' || !hasKey('datasource', pane) || typeof pane.datasource !== 'string') {
+          return Promise.reject();
         }
-        return Promise.reject();
+
+        return dsService.current.get(pane.datasource);
       })
     ).then((datasources) => {
       if (!navModel.current) {
@@ -35,4 +40,9 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
       document.title = `${navModel.current.main.text} - ${names.join(' | ')} - ${Branding.AppTitle}`;
     });
   }, [params.panes]);
+}
+
+// TS<5 does not support `in` operator for type narrowing. once we upgrade to TS5, we can remove this function and just use the in operator instead.
+function hasKey<K extends string, T extends object>(k: K, o: T): o is T & Record<K, unknown> {
+  return k in o;
 }
