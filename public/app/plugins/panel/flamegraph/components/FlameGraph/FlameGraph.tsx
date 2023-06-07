@@ -17,7 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { useStyles2 } from '@grafana/ui';
@@ -54,21 +54,24 @@ const FlameGraph = ({
   setRangeMin,
   setRangeMax,
   onItemFocused,
-  focusedItemIndex,
+  focusedItemData,
   textAlign,
   onSandwich,
   sandwichItem,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  let levels = data.getLevels();
-  let totalTicks = levels[0][0].value;
+  const [levels, totalTicks] = useMemo(() => {
+    let levels = data.getLevels();
+    let totalTicks = levels[0][0].value;
 
-  if (sandwichItem) {
-    const [callers, callees] = data.getSandwichLevels(sandwichItem);
-    levels = [...callers, [], ...callees];
-    totalTicks = callees[0][0].value;
-  }
+    if (sandwichItem) {
+      const [callers, callees] = data.getSandwichLevels(sandwichItem);
+      levels = [...callers, [], ...callees];
+      totalTicks = callees[0][0].value;
+    }
+    return [levels, totalTicks];
+  }, [data, sandwichItem]);
 
   console.log({ levels, totalTicks, data });
 
