@@ -209,7 +209,7 @@ To run the latest stable version of Grafana using Docker Compose, complete the f
    # first go into the directory where you have created this docker-compose.yaml file
    cd /path/to/docker-compose-folder
 
-   #now create the docker-compose.yaml file
+   # now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```
 
@@ -269,7 +269,7 @@ Complete the following steps to use persistent storage.
    # first go into the directory where you have created this docker-compose.yaml file
    cd /path/to/docker-compose-folder
 
-   #now create the docker-compose.yaml file
+   # now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```   
 1. Add the following code into the `docker-compose.yaml` file.
@@ -307,7 +307,7 @@ To use bind mounts, complete the following steps:
    # first go into the directory where you have created this docker-compose.yaml file
    cd /path/to/docker-compose-folder
 
-   #now create the docker-compose.yaml file
+   # now create the docker-compose.yaml file
    touch docker-compose.yaml
    ```
 

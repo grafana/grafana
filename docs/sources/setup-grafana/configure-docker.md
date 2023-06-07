@@ -145,10 +145,10 @@ Example:
 The following example shows how to build a customized Grafana Docker image that includes the Image Renderer plugin.
 
 ```bash
-#go to the folder
+# go to the folder
 cd packaging/docker/custom
 
-#running the build command
+# running the build command
 docker build \
   --build-arg "GRAFANA_VERSION=latest" \
   --build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
@@ -276,7 +276,7 @@ AWS_default_REGION=us-east-1
 
    Where:
 
-   ID = the secret unique ID that you will use in the docker run command
+   ID = the secret unique ID that will be use in the docker run command
 
    NAME = the logical name defined for each secret
 
@@ -344,10 +344,10 @@ volumes:
 The chance of syntax errors appearing in a YAML file increases as the file becomes more complex. You can use the following command to check for syntax errors.
 
 ```bash
-#go to your docker-compose.yaml directory
+# go to your docker-compose.yaml directory
 cd /path-to/docker-compose/file
 
-#run the validation command
+# run the validation command
 docker compose config
 ```
 
