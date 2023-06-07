@@ -15,24 +15,38 @@ export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 type LimitedIconSize = ComponentSize | 'xl';
 
-export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface BaseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Name of the icon **/
   name: IconName;
   /** Icon size - sizes xxl and xxxl are deprecated and when used being decreased to xl*/
   size?: IconSize;
   /** Type of the icon - mono or default */
   iconType?: IconType;
-  /** Tooltip content to display on hover */
-  tooltip?: PopoverContent;
-  /** Position of the tooltip */
-  tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
+}
+
+interface BasePropsWithTooltip extends BaseProps {
+  /** Tooltip content to display on hover */
+  tooltip: PopoverContent;
+  /** Position of the tooltip */
+  tooltipPlacement?: TooltipPlacement;
   /** Text available only for screen readers. Will use tooltip text as fallback. */
   ariaLabel?: string;
 }
 
-export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
+interface BasePropsWithAriaLabel extends BaseProps {
+  /** Tooltip content to display on hover */
+  tooltip?: PopoverContent;
+  /** Position of the tooltip */
+  tooltipPlacement?: TooltipPlacement;
+  /** Text available only for screen readers. Will use tooltip text as fallback. */
+  ariaLabel: string;
+}
+
+export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
+
+export const IconButton = React.forwardRef<HTMLButtonElement, BasePropsWithTooltip | BasePropsWithAriaLabel>(
   (
     {
       name,
