@@ -95,7 +95,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
             // only after the plugin has been executed
             // we can return the plugin exports.
             // This is what grafana effectively gets.
-            const pluginExports = await sandboxPluginComponents(meta, pluginExportsRaw);
+            const pluginExports = await sandboxPluginComponents(pluginExportsRaw);
             resolve(pluginExports);
           } catch (e) {
             reject(new Error(`Could not execute plugin ${meta.id}: ` + e));

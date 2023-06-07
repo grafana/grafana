@@ -21,11 +21,7 @@ import { assertNever, isFunction, isSandboxedPluginObject } from './utils';
  * classes that plugins could bring.
  *
  */
-export async function sandboxPluginComponents(
-  meta: PluginMeta,
-  pluginExports: unknown
-): Promise<SandboxedPluginObject | unknown> {
-  console.log('sandboxPluginComponents', meta.id);
+export async function sandboxPluginComponents(pluginExports: unknown): Promise<SandboxedPluginObject | unknown> {
   if (!isSandboxedPluginObject(pluginExports)) {
     // we should monitor these cases. There should not be any plugins without a plugin export loaded inside the sandbox
     return pluginExports;
@@ -41,9 +37,10 @@ export async function sandboxPluginComponents(
   }
 
   // wrap datasource components
-  if (Reflect.has(pluginObject, 'datasource')) {
+  if (Reflect.has(pluginObject, 'components')) {
     const components: Record<string, ComponentType> = Reflect.get(pluginObject, 'components');
     Object.entries(components).forEach(([key, value]) => {
+      console.log('sandboxPluginComponents', key, value);
       Reflect.set(components, key, withSandboxWrapper(value));
     });
     Reflect.set(pluginObject, 'components', components);
