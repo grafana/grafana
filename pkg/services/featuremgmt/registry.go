@@ -191,7 +191,7 @@ var (
 			Description: "Enables new top navigation and page layouts",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
-			Owner:       grafanaUserEssentialsSquad,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "grpcServer",
@@ -278,12 +278,6 @@ var (
 			FrontendOnly: true,
 			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
-		},
-		{
-			Name:        "authnService",
-			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
@@ -475,6 +469,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			State:       FeatureStateBeta,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
 			Name:            "useCachingService",
 			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
 			State:           FeatureStateStable,
@@ -533,7 +533,7 @@ var (
 			Description:  "Enables extra themes",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
-			Owner:        grafanaUserEssentialsSquad,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "lokiPredefinedOperations",
@@ -541,6 +541,20 @@ var (
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
 			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "pluginsFrontendSandbox",
+			Description:  "Enables the plugins frontend sandbox",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

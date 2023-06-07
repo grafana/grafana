@@ -10,7 +10,7 @@ import { DashboardsTreeItem } from '../types';
 export function TagsCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
   const styles = useStyles2(getStyles);
   const item = data.item;
-  if (item.kind === 'ui-empty-folder' || !item.tags) {
+  if (item.kind === 'ui' || !item.tags) {
     return null;
   }
 
