@@ -3,7 +3,7 @@ import { AnyAction } from 'redux';
 
 import { SplitOpenOptions } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
-import { GetExploreUrlArguments } from 'app/core/utils/explore';
+import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreItemState, ExploreState } from 'app/types/explore';
 
@@ -85,6 +85,9 @@ export const splitOpen = createAsyncThunk(
         panelsState: options?.panelsState || originState?.panelsState,
       })
     );
+  },
+  {
+    idGenerator: generateExploreId,
   }
 );
 

@@ -1,7 +1,5 @@
-import { nanoid } from '@reduxjs/toolkit';
-
 import { ExploreUrlState } from '@grafana/data';
-import { DEFAULT_RANGE, safeParseJson } from 'app/core/utils/explore';
+import { DEFAULT_RANGE, generateExploreId, safeParseJson } from 'app/core/utils/explore';
 
 import { BaseExploreURL, MigrationHandler } from './types';
 import { ExploreURLV0 } from './v0';
@@ -19,14 +17,14 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
       return {
         schemaVersion: 1,
         panes: {
-          [nanoid()]: parseUrlState(undefined),
+          [generateExploreId()]: parseUrlState(undefined),
         },
       };
     }
 
     return {
       schemaVersion: 1,
-      panes: Object.entries(safeParseJson(params?.panes) || { [nanoid()]: parseUrlState(undefined) }).reduce(
+      panes: Object.entries(safeParseJson(params?.panes) || { [generateExploreId()]: parseUrlState(undefined) }).reduce(
         (acc, [key, value]) => {
           return {
             ...acc,
@@ -41,8 +39,8 @@ export const v1Migrator: MigrationHandler<ExploreURLV0, ExploreURLV1> = {
     return {
       schemaVersion: 1,
       panes: {
-        [nanoid()]: params.left,
-        ...(params.right && { [nanoid()]: params.right }),
+        [generateExploreId()]: params.left,
+        ...(params.right && { [generateExploreId()]: params.right }),
       },
     };
   },

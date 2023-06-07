@@ -59,6 +59,10 @@ export interface GetExploreUrlArguments {
   timeSrv: TimeSrv;
 }
 
+export function generateExploreId() {
+  return nanoid(3);
+}
+
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
@@ -110,7 +114,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
       };
     }
 
-    const exploreState = JSON.stringify({ [nanoid()]: state });
+    const exploreState = JSON.stringify({ [generateExploreId()]: state });
     url = urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
   }
 
