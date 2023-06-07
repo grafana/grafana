@@ -113,7 +113,7 @@ func clientFromMiddlewares(middlewares []plugins.ClientMiddleware, finalClient p
 }
 
 func reverseMiddlewares(middlewares []plugins.ClientMiddleware) []plugins.ClientMiddleware {
-	reversed := make([]plugins.ClientMiddleware, 0, len(middlewares))
+	reversed := make([]plugins.ClientMiddleware, len(middlewares))
 	copy(reversed, middlewares)
 
 	for i, j := 0, len(reversed)-1; i < j; i, j = i+1, j-1 {
