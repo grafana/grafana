@@ -31,12 +31,14 @@ interface Props {
     isOauthEnabled: boolean;
     loginHint: string;
     passwordHint: string;
+    showDefaultPasswordWarning: boolean;
   }) => JSX.Element;
 }
 
 interface State {
   isLoggingIn: boolean;
   isChangingPassword: boolean;
+  showDefaultPasswordWarning: boolean;
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
@@ -47,6 +49,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
     this.state = {
       isLoggingIn: false,
       isChangingPassword: false,
+      showDefaultPasswordWarning: false,
     };
 
     if (config.loginError) {
@@ -96,7 +99,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
           this.toGrafana();
           return;
         } else {
-          this.changeView();
+          this.changeView(formModel.password === 'admin');
         }
       })
       .catch(() => {
@@ -106,9 +109,10 @@ export class LoginCtrl extends PureComponent<Props, State> {
       });
   };
 
-  changeView = () => {
+  changeView = (showDefaultPasswordWarning: boolean) => {
     this.setState({
       isChangingPassword: true,
+      showDefaultPasswordWarning,
     });
   };
 
@@ -127,7 +131,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { isLoggingIn, isChangingPassword } = this.state;
+    const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning } = this.state;
     const { login, toGrafana, changePassword } = this;
     const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
@@ -144,6 +148,7 @@ export class LoginCtrl extends PureComponent<Props, State> {
           changePassword,
           skipPasswordChange: toGrafana,
           isChangingPassword,
+          showDefaultPasswordWarning,
         })}
       </>
     );

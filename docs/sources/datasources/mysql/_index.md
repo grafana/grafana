@@ -186,6 +186,8 @@ If your table or database name contains a reserved word or a [not permitted char
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
 
+**Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
+
 ### Columns and Aggregation functions (SELECT)
 
 Using the dropdown, select a column to include in the data. You can also specify an optional aggregation function.
