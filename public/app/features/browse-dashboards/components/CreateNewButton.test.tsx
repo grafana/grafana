@@ -19,14 +19,14 @@ describe('NewActionsButton', () => {
   it('should display the correct urls with a given folderUID', async () => {
     await renderAndOpen('123');
 
-    expect(screen.getByText('New Dashboard')).toHaveAttribute('href', '/dashboard/new?folderUid=123');
+    expect(screen.getByText('New dashboard')).toHaveAttribute('href', '/dashboard/new?folderUid=123');
     expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import?folderUid=123');
   });
 
   it('should display urls without params when there is no folderUID', async () => {
     await renderAndOpen();
 
-    expect(screen.getByText('New Dashboard')).toHaveAttribute('href', '/dashboard/new');
+    expect(screen.getByText('New dashboard')).toHaveAttribute('href', '/dashboard/new');
     expect(screen.getByText('Import')).toHaveAttribute('href', '/dashboard/import');
   });
 
@@ -49,7 +49,7 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
-    expect(screen.getByText('New Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('New dashboard')).toBeInTheDocument();
     expect(screen.getByText('Import')).toBeInTheDocument();
     expect(screen.queryByText('New folder')).not.toBeInTheDocument();
   });
@@ -59,7 +59,7 @@ describe('NewActionsButton', () => {
     const newButton = screen.getByText('New');
     await userEvent.click(newButton);
 
-    expect(screen.queryByText('New Dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('New dashboard')).not.toBeInTheDocument();
     expect(screen.queryByText('Import')).not.toBeInTheDocument();
     expect(screen.getByText('New folder')).toBeInTheDocument();
   });
