@@ -64,15 +64,14 @@ func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
 		return nil
 	}
 
-	var vars []string
+	vars := []string{
+		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
+		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
+	}
 	if plugin.Info.Version != "" {
 		vars = append(vars, fmt.Sprintf("GF_PLUGIN_VERSION=%s", plugin.Info.Version))
 	}
-	return append(
-		vars,
-		fmt.Sprintf("GF_INSTANCE_OTLP_ADDRESS=%s", s.cfg.Tracing.OpenTelemetry.Address),
-		fmt.Sprintf("GF_INSTANCE_OTLP_PROPAGATION=%s", s.cfg.Tracing.OpenTelemetry.Propagation),
-	)
+	return vars
 }
 
 func (s *Service) awsEnvVars() []string {
@@ -88,17 +87,17 @@ func (s *Service) awsEnvVars() []string {
 }
 
 func (s *Service) secureSocksProxyEnvVars() []string {
-	var variables []string
 	if s.cfg.ProxySettings.Enabled {
-		variables = append(variables, proxy.PluginSecureSocksProxyClientCert+"="+s.cfg.ProxySettings.ClientCert)
-		variables = append(variables, proxy.PluginSecureSocksProxyClientKey+"="+s.cfg.ProxySettings.ClientKey)
-		variables = append(variables, proxy.PluginSecureSocksProxyRootCACert+"="+s.cfg.ProxySettings.RootCA)
-		variables = append(variables, proxy.PluginSecureSocksProxyProxyAddress+"="+s.cfg.ProxySettings.ProxyAddress)
-		variables = append(variables, proxy.PluginSecureSocksProxyServerName+"="+s.cfg.ProxySettings.ServerName)
-		variables = append(variables, proxy.PluginSecureSocksProxyEnabled+"="+strconv.FormatBool(s.cfg.ProxySettings.Enabled))
+		return []string{
+			proxy.PluginSecureSocksProxyClientCert + "=" + s.cfg.ProxySettings.ClientCert,
+			proxy.PluginSecureSocksProxyClientKey + "=" + s.cfg.ProxySettings.ClientKey,
+			proxy.PluginSecureSocksProxyRootCACert + "=" + s.cfg.ProxySettings.RootCA,
+			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
+			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
+			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+		}
 	}
-
-	return variables
+	return nil
 }
 
 type pluginSettings map[string]string
