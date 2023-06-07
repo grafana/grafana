@@ -9,6 +9,8 @@ var Versions = VersionMap{
 			VariantLinuxAmd64Musl,
 			VariantDarwinAmd64,
 			VariantWindowsAmd64,
+			VariantArm64,
+			VariantArm64Musl,
 		},
 		PluginSignature: PluginSignature{
 			Sign:      false,
