@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy, isArray } from 'lodash';
+import { uniqueId, pick, groupBy, upperFirst, reduce, sumBy, isArray, mergeWith } from 'lodash';
 import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode, useMemo } from 'react';
 import { useEnabled } from 'react-enable';
@@ -115,6 +115,7 @@ const Policy: FC<PolicyComponentProps> = ({
   const inheritedGrouping = hasInheritedProperties && inheritedProperties.group_by;
   const noGrouping = isArray(groupBy) && groupBy[0] === '...';
   const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
+  const singleGroup = isDefaultPolicy && isArray(groupBy) && groupBy.length === 0;
 
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
@@ -231,6 +232,11 @@ const Policy: FC<PolicyComponentProps> = ({
                       <Strong>{groupBy.join(', ')}</Strong>
                     </MetaText>
                   )}
+                  {singleGroup && (
+                    <MetaText icon="layer-group">
+                      <span>Single group</span>
+                    </MetaText>
+                  )}
                   {noGrouping && (
                     <MetaText icon="layer-group">
                       <span>Not grouping</span>
@@ -273,28 +279,32 @@ const Policy: FC<PolicyComponentProps> = ({
           ]);
 
           // TODO how to solve this TypeScript mystery
-          const inherited = merge(
+          const inherited = mergeWith(
             reduce(
               inheritableProperties,
-              (acc: Partial<Route> = {}, value, key) => {
+              (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
                 // @ts-ignore
-                if (value !== undefined && child[key] === undefined) {
+                const inheritFromParent = parentValue !== undefined && child[property] === undefined;
+                const inheritEmptyGroupByFromParent =
+                  property === 'group_by' && isArray(child[property]) && child[property]?.length === 0;
+
+                if (inheritFromParent) {
                   // @ts-ignore
-                  acc[key] = value;
-                  // @ts-ignore
+                  inheritedProperties[property] = parentValue;
                 }
 
-                // when "group_by" is an empty Array, it _should_ be inherited
-                if (value !== undefined && key === 'group_by' && isArray(child[key]) && child[key]?.length === 0) {
+                if (inheritEmptyGroupByFromParent) {
                   // @ts-ignore
-                  acc[key] = value;
+                  inheritedProperties[property] = parentValue;
                 }
 
-                return acc;
+                return inheritedProperties;
               },
               {}
             ),
-            inheritedProperties
+            inheritedProperties,
+            // we're using this customizer to concat arrays for group_by: [] (which means "inherit from parent")
+            (objValue, srcValue) => (Array.isArray(objValue) ? objValue.concat(srcValue) : srcValue)
           );
 
           return (
@@ -576,10 +586,21 @@ const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
 };
 
 const routePropertyToValue = (key: keyof InhertitableProperties, value: string | string[]): React.ReactNode => {
-  if (key === 'group_by' && value.length === 0) {
+  const isNotGrouping = key === 'group_by' && Array.isArray(value) && value[0] === '...';
+  const isSingleGroup = key === 'group_by' && Array.isArray(value) && value.length === 0;
+
+  if (isNotGrouping) {
     return (
       <Span variant="bodySmall" color="secondary">
-        No grouping
+        Not grouping
+      </Span>
+    );
+  }
+
+  if (isSingleGroup) {
+    return (
+      <Span variant="bodySmall" color="secondary">
+        Single group
       </Span>
     );
   }
