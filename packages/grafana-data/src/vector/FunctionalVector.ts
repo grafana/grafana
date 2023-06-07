@@ -101,7 +101,7 @@ export abstract class FunctionalVector<T = any> implements Vector<T> {
   copyWithin(target: number, start: number, end?: number | undefined): this {
     throw new Error('Method not implemented.');
   }
-  // Methods not implemented
+  // Object not implemented
   [Symbol.unscopables] = {};
 
   //--------------------------------------------------------------------------------
