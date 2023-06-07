@@ -2,7 +2,6 @@ package plugins
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -55,11 +54,7 @@ func TestConfigReader(t *testing.T) {
 			},
 		}
 
-		err := os.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = os.Unsetenv("ENABLE_PLUGIN_VAR")
-		})
+		t.Setenv("ENABLE_PLUGIN_VAR", "test-plugin")
 
 		cfgProvider := newConfigReader(log.New("test logger"), pm)
 		cfg, err := cfgProvider.readConfig(context.Background(), correctProperties)

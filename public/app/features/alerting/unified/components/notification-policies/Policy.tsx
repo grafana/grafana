@@ -1,8 +1,7 @@
 import { css } from '@emotion/css';
 import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useMemo } from 'react';
-import { useEnabled } from 'react-enable';
+import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -13,15 +12,10 @@ import { contextSrv } from 'app/core/core';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { AlertingFeature } from '../../features';
 import { getNotificationsPermissions } from '../../utils/access-control';
-import { normalizeMatchers } from '../../utils/amroutes';
+import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
-import {
-  findMatchingAlertGroups,
-  getInheritedProperties,
-  InhertitableProperties,
-} from '../../utils/notification-policies';
+import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -38,6 +32,9 @@ interface PolicyComponentProps {
   readOnly?: boolean;
   inheritedProperties?: Partial<InhertitableProperties>;
   routesMatchingFilters?: RouteWithID[];
+  // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
+
+  matchingInstancesPreview?: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -58,6 +55,7 @@ const Policy: FC<PolicyComponentProps> = ({
   routeTree,
   inheritedProperties,
   routesMatchingFilters = [],
+  matchingInstancesPreview = { enabled: false },
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -65,7 +63,6 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
-  const showMatchingInstances = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -113,12 +110,12 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = useMemo(() => {
-    return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
-  }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
+  const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
-  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
+  const numberOfAlertInstances = matchingAlertGroups
+    ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
+    : undefined;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -195,15 +192,15 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              {showMatchingInstances && (
+              {matchingInstancesPreview.enabled && (
                 <MetaText
                   icon="layers-alt"
                   onClick={() => {
-                    onShowAlertInstances(matchingAlertGroups, matchers);
+                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
                   }}
                   data-testid="matching-instances"
                 >
-                  <Strong>{numberOfAlertInstances}</Strong>
+                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
                   <span>{pluralize('instance', numberOfAlertInstances)}</span>
                 </MetaText>
               )}
@@ -279,6 +276,7 @@ const Policy: FC<PolicyComponentProps> = ({
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
               routesMatchingFilters={routesMatchingFilters}
+              matchingInstancesPreview={matchingInstancesPreview}
             />
           );
         })}
