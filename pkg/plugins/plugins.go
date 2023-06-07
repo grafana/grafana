@@ -57,9 +57,6 @@ type Plugin struct {
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
 	log            log.Logger
-
-	// This will be moved to plugin.json when we have general support in gcom
-	Alias string `json:"alias,omitempty"`
 }
 
 type PluginDTO struct {
@@ -166,10 +163,18 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	switch plugin.ID {
 	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
-	case "grafana-pyroscope-datasource": // rebranding
-		plugin.Alias = "phlare"
-	case "debug": // panel plugin used for testing
-		plugin.Alias = "debugX"
+	case "grafana-pyroscope-datasource":
+		fallthrough
+	case "annolist":
+		fallthrough
+	case "debug":
+		if plugin.Alias == "" {
+			return plugin, fmt.Errorf("expected alias")
+		}
+	default:
+		if plugin.Alias != "" {
+			return plugin, fmt.Errorf("unexpected alias")
+		}
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
