@@ -1,7 +1,7 @@
 import React, { lazy, ReactElement, Suspense, useMemo, useState } from 'react';
 
 import { PluginExtensionLink, PluginExtensionPoints, type PluginExtensionExploreContext } from '@grafana/data';
-import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
+import { getPluginLinkExtensions } from '@grafana/runtime';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, ExploreId, useSelector } from 'app/types';
@@ -16,10 +16,11 @@ const AddToDashboard = lazy(() =>
 
 type Props = {
   exploreId: ExploreId;
+  splitted: boolean;
 };
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
-  const { exploreId } = props;
+  const { exploreId, splitted } = props;
   const [extension, setExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
@@ -66,8 +67,8 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   return (
     <Suspense fallback={null}>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
-          Turn into...
+        <ToolbarButton icon="plus" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+          {splitted ? ' ' : 'Add to...'}
         </ToolbarButton>
       </Dropdown>
       {!!extension && !!extension.path && (
@@ -93,22 +94,11 @@ function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
 
 function useExtensionLinks(context: PluginExtensionExploreContext): PluginExtensionLink[] {
   return useMemo(() => {
-    const { extensions } = getPluginExtensions({
+    const { extensions } = getPluginLinkExtensions({
       extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
       context: context,
     });
 
-    return extensions.reduce((links: PluginExtensionLink[], extension) => {
-      if (!isPluginExtensionLink(extension)) {
-        return links;
-      }
-
-      if (!extension.onClick && !extension.path) {
-        return links;
-      }
-
-      links.push(extension);
-      return links;
-    }, []);
+    return extensions;
   }, [context]);
 }

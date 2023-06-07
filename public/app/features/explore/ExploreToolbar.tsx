@@ -176,7 +176,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
               </ToolbarButton>
             </ButtonGroup>
           ),
-          <ToolbarExtensionPoint key="toolbar-extension-point" exploreId={exploreId} />,
+          <ToolbarExtensionPoint splitted={splitted} key="toolbar-extension-point" exploreId={exploreId} />,
           !isLive && (
             <ExploreTimeControls
               key="timeControls"

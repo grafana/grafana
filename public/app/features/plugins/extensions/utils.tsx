@@ -174,14 +174,14 @@ export function createExtensionLinkConfig<T extends object>(
     type: PluginExtensionTypes.link,
     ...config,
   };
-  assertIsLinkConfig(linkConfig);
+  assertLinkConfig(linkConfig);
   return linkConfig;
 }
 
-function assertIsLinkConfig<T extends object>(
+function assertLinkConfig<T extends object>(
   config: PluginExtensionLinkConfig<T>
 ): asserts config is PluginExtensionLinkConfig {
   if (config.type !== PluginExtensionTypes.link) {
-    throw Error('value is not a string');
+    throw Error('config is not a extension link');
   }
 }
