@@ -1,5 +1,50 @@
 describe('useStateSync', () => {});
 
+// describe('handles url change', () => {
+//     const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+
+//     it('and runs the new query', async () => {
+//       const { datasources } = setupExplore({ urlParams });
+//       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+//       // Wait for rendering the logs
+//       await screen.findByText(/custom log line/i);
+
+//       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
+
+//       act(() => {
+//         locationService.partial({
+//           left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+//         });
+//       });
+
+//       // Editor renders the new query
+//       await screen.findByText(`loki Editor input: { label="different"}`);
+//       // Renders new response
+//       await screen.findByText(/different log/i);
+//     });
+
+//     it('and runs the new query with different datasource', async () => {
+//       const { datasources } = setupExplore({ urlParams });
+//       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+//       // Wait for rendering the logs
+//       await screen.findByText(/custom log line/i);
+//       await screen.findByText(`loki Editor input: { label="value"}`);
+
+//       jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
+
+//       act(() => {
+//         locationService.partial({
+//           left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+//         });
+//       });
+
+//       // Editor renders the new query
+//       await screen.findByText(`elastic Editor input: other query`);
+//       // Renders graph
+//       await screen.findByText(/Graph/i);
+//     });
+//   });
+
 // it('Reacts to URL changes and opens a pane if an entry is pushed to history', async () => {
 //     const urlParams = {
 //       left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
