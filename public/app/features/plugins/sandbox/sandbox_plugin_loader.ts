@@ -1,7 +1,7 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { PluginMeta } from '@grafana/data';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -13,11 +13,8 @@ import {
   SANDBOX_LIVE_VALUE,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
-
-type CompartmentDependencyModule = unknown;
-type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => {
-  plugin: GrafanaPlugin;
-};
+import { sandboxPluginComponents } from './sandbox_components';
+import { CompartmentDependencyModule, PluginFactoryFunction } from './types';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
 if (process.env.NODE_ENV !== 'production') {
@@ -76,11 +73,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
         // This is that `define` function the plugin will call.
         // More info about how AMD works https://github.com/amdjs/amdjs-api/blob/master/AMD.md
         // Plugins code normally use the "anonymous module" signature: define(depencies, factoryFunction)
-        define(
+        async define(
           idOrDependencies: string | string[],
           maybeDependencies: string[] | PluginFactoryFunction,
           maybeFactory?: PluginFactoryFunction
-        ): void {
+        ): Promise<void> {
           let dependencies: string[];
           let factory: PluginFactoryFunction;
           if (Array.isArray(idOrDependencies)) {
@@ -94,10 +91,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
           try {
             const resolvedDeps = resolvePluginDependencies(dependencies);
             // execute the plugin's code
-            const pluginExports: { plugin: GrafanaPlugin } = factory.apply(null, resolvedDeps);
+            const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
             // we can return the plugin exports.
             // This is what grafana effectively gets.
+            const pluginExports = await sandboxPluginComponents(meta, pluginExportsRaw);
             resolve(pluginExports);
           } catch (e) {
             reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
