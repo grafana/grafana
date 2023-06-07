@@ -1,9 +1,9 @@
 import React, { ComponentType, FC } from 'react';
 
-import { PluginConfigPage, PluginExtensionConfig, PluginExtensionTypes, PluginMeta } from '@grafana/data';
+import { PluginConfigPage, PluginExtensionConfig } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
-import { assertNever, isFunction, isSandboxedPluginObject } from './utils';
+import { isFunction, isSandboxedPluginObject } from './utils';
 
 /**
  * Plugins must render their components inside a div with a `data-plugin-sandbox` attribute
