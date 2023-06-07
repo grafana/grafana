@@ -3,7 +3,6 @@ package finder
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -317,7 +316,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
 		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
-			return walkFn(path, nil, fmt.Errorf("random error"))
+			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
 			walk = origWalk

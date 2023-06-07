@@ -103,10 +103,10 @@ describe('browse-dashboards DashboardsTree', () => {
         requestLoadMore={requestLoadMore}
       />
     );
-    const folderButton = screen.getByLabelText('Collapse folder');
+    const folderButton = screen.getByLabelText('Expand folder');
     await userEvent.click(folderButton);
 
-    expect(handler).toHaveBeenCalledWith(folder.item.uid, false);
+    expect(handler).toHaveBeenCalledWith(folder.item.uid, true);
   });
 
   it('renders empty folder indicators', () => {
