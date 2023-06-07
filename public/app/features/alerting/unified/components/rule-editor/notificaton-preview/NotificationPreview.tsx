@@ -1,44 +1,18 @@
 import { css } from '@emotion/css';
 import { compact } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { lazy, Suspense, useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
+import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertQuery, Labels } from '../../../../../../types/unified-alerting-dto';
 import { alertRuleApi } from '../../../api/alertRuleApi';
-import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { useExternalDataSourceAlertmanagers } from '../../../hooks/useExternalAmSelector';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
-import { NotificationRoute } from './NotificationRoute';
-import { useAlertmanagerNotificationRoutingPreview } from './useAlertmanagerNotificationRoutingPreview';
+// import { NotificationPreviewByAlertManager } from './NotificationPreviewByAlertManager';
+import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
 
-interface AlertManagerNameWithImage {
-  name: string;
-  img: string;
-}
-
-export const useGetAlertManagersSourceNamesAndImage = () => {
-  //get current alerting config
-  const { currentData: amConfigStatus } = alertmanagerApi.useGetAlertmanagerChoiceStatusQuery(undefined);
-
-  const externalDsAlertManagers: AlertManagerNameWithImage[] = useExternalDataSourceAlertmanagers().map((ds) => ({
-    name: ds.dataSource.name,
-    img: ds.dataSource.meta.info.logos.small,
-  }));
-  const alertmanagerChoice = amConfigStatus?.alertmanagersChoice;
-  const alertManagerSourceNamesWithImage: AlertManagerNameWithImage[] =
-    alertmanagerChoice === AlertmanagerChoice.Internal
-      ? [{ name: GRAFANA_RULES_SOURCE_NAME, img: 'public/img/grafana_icon.svg' }]
-      : alertmanagerChoice === AlertmanagerChoice.External
-      ? externalDsAlertManagers
-      : [{ name: GRAFANA_RULES_SOURCE_NAME, img: 'public/img/grafana_icon.svg' }, ...externalDsAlertManagers];
-
-  return alertManagerSourceNamesWithImage;
-};
+const NotificationPreviewByAlertManager = lazy(() => import('./NotificationPreviewByAlertManager'));
 
 interface NotificationPreviewProps {
   customLabels: Array<{
@@ -58,7 +32,7 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
 
   const { usePreviewMutation } = alertRuleApi;
 
-  const [trigger, { data, isLoading }] = usePreviewMutation();
+  const [trigger, { data, isLoading, isUninitialized: previewUninitialized }] = usePreviewMutation();
 
   useEffect(() => {
     // any time data is updated from trigger, we need to update the potential instances
@@ -102,87 +76,21 @@ export const NotificationPreview = ({ alertQueries, customLabels, condition }: N
           {`When your query and labels are configured, click "Preview routing" to see the results here.`}
         </div>
       )}
-      {!isLoading &&
-        alertManagerSourceNamesAndImage.map((alertManagerSource) => {
-          return (
+      {!isLoading && !previewUninitialized && potentialInstances.length > 0 && (
+        <Suspense fallback={<LoadingPlaceholder text="Loading preview..." />}>
+          {alertManagerSourceNamesAndImage.map((alertManagerSource) => (
             <NotificationPreviewByAlertManager
               alertManagerSource={alertManagerSource}
               potentialInstances={potentialInstances}
               onlyOneAM={onlyOneAM}
               key={alertManagerSource.name}
             />
-          );
-        })}
+          ))}
+        </Suspense>
+      )}
     </Stack>
   );
 };
-
-export function NotificationPreviewByAlertManager({
-  alertManagerSource,
-  potentialInstances,
-  onlyOneAM,
-}: {
-  alertManagerSource: AlertManagerNameWithImage;
-  potentialInstances: Labels[];
-  onlyOneAM: boolean;
-}) {
-  const styles = useStyles2(getStyles);
-
-  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
-    alertManagerSource.name,
-    potentialInstances
-  );
-
-  if (error) {
-    return (
-      <Alert title="Cannot load Alertmanager configuration" severity="error">
-        {error.message}
-      </Alert>
-    );
-  }
-
-  if (loading) {
-    return <LoadingPlaceholder text="Loading routing preview..." />;
-  }
-
-  const matchingPoliciesFound = matchingMap.size > 0;
-
-  return matchingPoliciesFound ? (
-    <div className={styles.alertManagerRow}>
-      {!onlyOneAM && (
-        <Stack direction="row" alignItems="center">
-          <div className={styles.firstAlertManagerLine}></div>
-          <div className={styles.alertManagerName}>
-            {' '}
-            Alert manager:
-            <img src={alertManagerSource.img} alt="" className={styles.img} />
-            {alertManagerSource.name}
-          </div>
-          <div className={styles.secondAlertManagerLine}></div>
-        </Stack>
-      )}
-      <Stack gap={1} direction="column">
-        {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
-          const route = routesByIdMap.get(routeId);
-          const receiver = route?.receiver && receiversByName.get(route.receiver);
-          if (!route || !receiver) {
-            return null;
-          }
-          return (
-            <NotificationRoute
-              instanceMatches={instanceMatches}
-              route={route}
-              receiver={receiver}
-              key={routeId}
-              routesByIdMap={routesByIdMap}
-              alertManagerSourceName={alertManagerSource.name}
-            />
-          );
-        })}
-      </Stack>
-    </div>
-  ) : null;
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsableSection: css`
@@ -214,27 +122,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justify-content: flex-end;
     display: flex;
   `,
-  alertManagerRow: css`
-    margin-top: ${theme.spacing(2)};
-    display: flex;
-    flex-direction: column;
-    gap: ${theme.spacing(1)};
-    width: 100%;
-  `,
-  alertManagerName: css`
-    width: fit-content;
-  `,
-  firstAlertManagerLine: css`
-    height: 1px;
-    width: ${theme.spacing(4)};
-    background-color: ${theme.colors.secondary.main};
-  `,
-  secondAlertManagerLine: css`
-    height: 1px;
-    width: 100%;
-    flex: 1;
-    background-color: ${theme.colors.secondary.main};
-  `,
   tagsInDetails: css`
     display: flex;
     justify-content: flex-start;
@@ -244,11 +131,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     gap: ${theme.spacing(1)};
-  `,
-  img: css`
-    margin-left: ${theme.spacing(2)};
-    width: ${theme.spacing(3)};
-    height: ${theme.spacing(3)};
-    margin-right: ${theme.spacing(1)};
   `,
 });

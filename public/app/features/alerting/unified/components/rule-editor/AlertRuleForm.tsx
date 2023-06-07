@@ -18,7 +18,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
+import { getDefaultFormValues, getDefaultQueries, MINUTE, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -66,8 +66,6 @@ const AlertRuleNameInput = () => {
     </RuleEditorSection>
   );
 };
-
-export const MINUTE = '1m';
 
 type Props = {
   existing?: RuleWithLocation;

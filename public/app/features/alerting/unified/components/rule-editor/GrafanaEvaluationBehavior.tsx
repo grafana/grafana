@@ -13,11 +13,11 @@ import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { MINUTE } from '../../utils/rule-form';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { MINUTE } from './AlertRuleForm';
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';

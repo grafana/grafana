@@ -14,16 +14,12 @@ import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
 import * as dataSource from '../../../utils/datasource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 
-import * as notificationPreview from './NotificationPreview';
-import {
-  NotificationPreview,
-  NotificationPreviewByAlertManager,
-  useGetAlertManagersSourceNamesAndImage,
-} from './NotificationPreview';
-
+import { NotificationPreview } from './NotificationPreview';
+import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
+import * as notificationPreview from './useGetAlertManagersSourceNamesAndImage';
 import 'core-js/stable/structured-clone';
+import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
 
-// jest.mock('../../../createRouteGroupsMatcherWorker');
 jest.mock('../../../useRouteGroupsMatcher');
 
 jest

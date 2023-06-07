@@ -14,10 +14,10 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
-import { MINUTE } from './AlertRuleForm';
 import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 

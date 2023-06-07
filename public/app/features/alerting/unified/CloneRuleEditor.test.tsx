@@ -32,6 +32,12 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   ),
 }));
 
+// For simplicity of the test we mock the NotificationPreview component
+// Otherwise we would need to mock a few more HTTP api calls which are not relevant for these tests
+jest.mock('./components/rule-editor/notificaton-preview/NotificationPreview', () => ({
+  NotificationPreview: () => <div />,
+}));
+
 const server = setupServer();
 
 beforeAll(() => {
@@ -99,6 +105,7 @@ function getProvidersWrapper() {
     );
   };
 }
+
 const amConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     receivers: [{ name: 'default' }, { name: 'critical' }],

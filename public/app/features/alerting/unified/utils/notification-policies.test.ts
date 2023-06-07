@@ -41,13 +41,13 @@ describe('findMatchingRoutes', () => {
   it('should match root route with no matching labels', () => {
     const matches = findMatchingRoutes(policies, []);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'ROOT');
+    expect(matches[0].route).toHaveProperty('receiver', 'ROOT');
   });
 
   it('should match parent route with no matching children', () => {
     const matches = findMatchingRoutes(policies, [['team', 'operations']]);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'A');
+    expect(matches[0].route).toHaveProperty('receiver', 'A');
   });
 
   it('should match child route of matching parent', () => {
@@ -56,13 +56,13 @@ describe('findMatchingRoutes', () => {
       ['region', 'europe'],
     ]);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'B1');
+    expect(matches[0].route).toHaveProperty('receiver', 'B1');
   });
 
   it('should match simple policy', () => {
     const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'C');
+    expect(matches[0].route).toHaveProperty('receiver', 'C');
   });
 
   it('should match catch-all route', () => {
@@ -73,7 +73,7 @@ describe('findMatchingRoutes', () => {
 
     const matches = findMatchingRoutes(policiesWithAll, []);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'ALL');
+    expect(matches[0].route).toHaveProperty('receiver', 'ALL');
   });
 
   it('should match multiple routes with continue', () => {
@@ -90,8 +90,8 @@ describe('findMatchingRoutes', () => {
 
     const matches = findMatchingRoutes(policiesWithAll, [['foo', 'bar']]);
     expect(matches).toHaveLength(2);
-    expect(matches[0]).toHaveProperty('receiver', 'ALL');
-    expect(matches[1]).toHaveProperty('receiver', 'C');
+    expect(matches[0].route).toHaveProperty('receiver', 'ALL');
+    expect(matches[1].route).toHaveProperty('receiver', 'C');
   });
 
   it('should not match grandchild routes with same labels as parent', () => {
@@ -117,7 +117,7 @@ describe('findMatchingRoutes', () => {
 
     const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
     expect(matches).toHaveLength(1);
-    expect(matches[0]).toHaveProperty('receiver', 'PARENT');
+    expect(matches[0].route).toHaveProperty('receiver', 'PARENT');
   });
 });
 

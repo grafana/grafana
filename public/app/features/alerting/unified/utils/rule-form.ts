@@ -1,5 +1,6 @@
 import {
   DataQuery,
+  DataSourceInstanceSettings,
   DataSourceRef,
   getDefaultRelativeTimeRange,
   IntervalValues,
@@ -7,14 +8,13 @@ import {
   RelativeTimeRange,
   ScopedVars,
   TimeRange,
-  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionQuery, ExpressionQueryType, ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
@@ -31,7 +31,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { MINUTE } from '../components/rule-editor/AlertRuleForm';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
@@ -42,6 +41,8 @@ import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '.
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
+
+export const MINUTE = '1m';
 
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
