@@ -4,7 +4,7 @@ import { type PluginExtensionLink, PluginExtensionPoints, RawTimeRange } from '@
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/services/context_srv';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { AccessControlAction, ExploreId, ExplorePanelData, useSelector } from 'app/types';
 
@@ -22,14 +22,6 @@ type Props = {
   splitted: boolean;
 };
 
-export type PluginExtensionExploreContext = {
-  exploreId: string;
-  targets: DataQuery[];
-  data: ExplorePanelData;
-  timeRange: RawTimeRange;
-  timeZone: TimeZone;
-};
-
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId, splitted } = props;
   const [extension, setExtension] = useState<PluginExtensionLink | undefined>();
@@ -41,7 +33,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
 
   // If we only have the explore core extension point registered we show the old way of
   // adding a query to a dashboard.
-  if (extensions.length === 1) {
+  if (extensions.length <= 1) {
     const canAddPanelToDashboard =
       contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor) ||
       contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
@@ -61,6 +53,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     <Menu>
       {extensions.map((extension) => (
         <Menu.Item
+          ariaLabel={extension.title}
           icon={extension?.icon || 'plug'}
           key={extension.id}
           label={truncateTitle(extension.title, 25)}
@@ -76,9 +69,15 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   );
 
   return (
-    <Suspense fallback={null}>
+    <>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
-        <ToolbarButton icon="plus" disabled={!Boolean(noQueriesInPane)} variant="canvas" isOpen={isOpen}>
+        <ToolbarButton
+          aria-label="Add to..."
+          icon="plus"
+          disabled={!Boolean(noQueriesInPane)}
+          variant="canvas"
+          isOpen={isOpen}
+        >
           {splitted ? ' ' : 'Add to...'}
         </ToolbarButton>
       </Dropdown>
@@ -89,9 +88,17 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
           onDismiss={() => setExtension(undefined)}
         />
       )}
-    </Suspense>
+    </>
   );
 }
+
+export type PluginExtensionExploreContext = {
+  exploreId: string;
+  targets: DataQuery[];
+  data: ExplorePanelData;
+  timeRange: RawTimeRange;
+  timeZone: TimeZone;
+};
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
   const { exploreId, timeZone } = props;

@@ -33,8 +33,6 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
           // temporary solution - will probably map values into context.
           const exploreId = toExploreId(context?.exploreId);
 
-          console.log('Explore context', { context });
-
           openModal({
             title: 'Add panel to dashboard',
             body: ({ onDismiss }) => <AddToDashboardBody onClose={onDismiss!} exploreId={exploreId} />,
