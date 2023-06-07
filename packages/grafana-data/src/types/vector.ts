@@ -52,7 +52,6 @@ if (!Object.getOwnPropertyDescriptor(Array.prototype, 'toArray')) {
 
 /** @deprecated use a simple Array<T> */
 export interface Vector<T = any> extends Array<T> {
-  [Symbol.unscopables]: any;
   length: number;
 
   /**
