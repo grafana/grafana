@@ -28,6 +28,7 @@ import {
   formatLokiQuery,
   indent,
   indentMultiline,
+  trimMultiline,
   needsBrackets,
   iterateNode,
   buildResponse,
@@ -284,6 +285,15 @@ describe('utility functions', () => {
     expect(indentMultiline('level one\n  level two\n    level three', 1)).toBe(
       '  level one\n    level two\n      level three'
     );
+  });
+
+  it('trimMultiline should return the the query stripped of whitespace', () => {
+    expect(trimMultiline('{label=""} ')).toBe('{label=""}');
+    expect(
+      trimMultiline(
+        'rate( \n  {compose_project="tns-custom"}  \n    |= "hiii" != "byeee"    \n    | logfmt \n    | lvl="e"    \n  [1s] \n)'
+      )
+    ).toBe('rate(\n  {compose_project="tns-custom"}\n    |= "hiii" != "byeee"\n    | logfmt\n    | lvl="e"\n  [1s]\n)');
   });
 
   it('needsBrackets should return true if the expression needs brackets', () => {

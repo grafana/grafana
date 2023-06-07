@@ -1,7 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 import { trimEnd } from 'lodash';
 
-import { TypedVariableModel } from '@grafana/data';
 import {
   Identifier,
   String,
@@ -53,12 +52,13 @@ import {
   DecolorizeExpr,
   DistinctFilter,
 } from '@grafana/lezer-logql';
-import { getTemplateSrv } from '@grafana/runtime';
+
+import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import { isValidQuery } from './queryUtils';
 
 export const formatLokiQuery = (query: string): string => {
-  const { transformedQuery, transformations } = transformVariablesToValue(query.trim());
+  const transformedQuery = replaceVariables(query);
 
   if (isValidQuery(transformedQuery) === false) {
     return query;
@@ -87,14 +87,14 @@ export const formatLokiQuery = (query: string): string => {
     },
   });
 
-  return transformValuesToVariables(formatted, transformations).trim();
+  return trimMultiline(returnVariables(formatted));
 };
 
 // TODO:
 //   - fix (nested vector expr): count(sum(rate({compose_project="tns-custom"}[1s])))
 //   - support: LabelReplaceExpr
 //   - support: LineComment
-//   - support: Variables in queries
+//   - BROKEN -- __V_0__var_type_interval__V__ throws an error in lezer
 
 /* 
 the functions below are used to format metric queries
@@ -642,6 +642,11 @@ export function indentMultiline(block: string, level: number): string {
   return lines.map((line) => indent(level) + line).join('\n');
 }
 
+export function trimMultiline(block: string): string {
+  const lines = block.split('\n');
+  return lines.map((line) => line.trimEnd()).join('\n');
+}
+
 export function needsBrackets(node: SyntaxNode, queryType: number): { addBrackets: boolean; newNode: SyntaxNode } {
   const childNodeIsSame = node.firstChild?.type.id === queryType;
   let addBrackets = false;
@@ -680,113 +685,4 @@ export function buildResponse(pipelineType: number, lastPipelineType: number, fo
   }
 
   return `\n${indent(1)}${formattedNode}`;
-}
-
-function transformVariablesToValue(query: string): { transformedQuery: string; transformations: TypedVariableModel[] } {
-  const variables = getTemplateSrv().getVariables();
-  const transformations: TypedVariableModel[] = [];
-
-  variables.forEach((variable) => {
-    if (variable.type === 'query') {
-      const replaceRegex = new RegExp(`\\$${variable.name}`, 'g');
-      const replacedQuery = query.replace(replaceRegex, variable.current.value as string);
-
-      if (replacedQuery !== query) {
-        query = replacedQuery;
-        transformations.push(variable);
-      }
-    }
-
-    if (variable.type === 'constant') {
-      const replaceRegex = new RegExp(`\\$${variable.name}`, 'g');
-      const replacedQuery = query.replace(replaceRegex, variable.current.value as string);
-
-      if (replacedQuery !== query) {
-        query = replacedQuery;
-        transformations.push(variable);
-      }
-    }
-
-    if (variable.type === 'custom') {
-      const replaceRegex = new RegExp(`\\$${variable.name}`, 'g');
-      const replacedQuery = query.replace(replaceRegex, variable.current.value as string);
-
-      if (replacedQuery !== query) {
-        query = replacedQuery;
-        transformations.push(variable);
-      }
-    }
-
-    if (variable.type === 'textbox') {
-      const replaceRegex = new RegExp(`\\$${variable.name}`, 'g');
-      let replacedQuery = '';
-
-      if (variable.current.value) {
-        replacedQuery = query.replace(replaceRegex, variable.current.value as string);
-      } else {
-        replacedQuery = query.replace(replaceRegex, variable.query);
-      }
-
-      if (replacedQuery !== query) {
-        query = replacedQuery;
-        transformations.push(variable);
-      }
-    }
-
-    if (variable.type === 'interval') {
-      const replaceRegex = new RegExp(`\\$${variable.name}`, 'g');
-      const replacedQuery = query.replace(replaceRegex, variable.current.value as string);
-
-      if (replacedQuery !== query) {
-        query = replacedQuery;
-        transformations.push(variable);
-      }
-    }
-
-    if (variable.type === 'adhoc') {
-    }
-  });
-
-  return { transformedQuery: query, transformations };
-}
-
-function transformValuesToVariables(query: string, transformations: TypedVariableModel[]): string {
-  transformations.forEach((variable) => {
-    if (variable.type === 'query') {
-      const replaceRegex = new RegExp(variable.current.value as string, 'g');
-      query = query.replace(replaceRegex, `$${variable.name}`);
-    }
-
-    if (variable.type === 'constant') {
-      const replaceRegex = new RegExp(variable.current.value as string, 'g');
-      query = query.replace(replaceRegex, `$${variable.name}`);
-    }
-
-    if (variable.type === 'custom') {
-      const replaceRegex = new RegExp(variable.current.value as string, 'g');
-      query = query.replace(replaceRegex, `$${variable.name}`);
-    }
-
-    if (variable.type === 'textbox') {
-      let replaceRegex: RegExp;
-
-      if (variable.current.value) {
-        replaceRegex = new RegExp(variable.current.value as string, 'g');
-      } else {
-        replaceRegex = new RegExp(variable.query as string, 'g');
-      }
-
-      query = query.replace(replaceRegex, `$${variable.name}`);
-    }
-
-    if (variable.type === 'interval') {
-      const replaceRegex = new RegExp(variable.current.value as string, 'g');
-      query = query.replace(replaceRegex, `$${variable.name}`);
-    }
-
-    if (variable.type === 'adhoc') {
-    }
-  });
-
-  return query;
 }
