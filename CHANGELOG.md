@@ -1,3 +1,13 @@
+<!-- 9.5.3 START -->
+
+# 9.5.3 (2023-06-06)
+
+### Bug fixes
+
+- **Query:** Prevent crash while executing concurrent mixed queries
+- **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+
+<!-- 9.5.3 END -->
 <!-- 9.5.2 START -->
 
 # 9.5.2 (2023-05-03)

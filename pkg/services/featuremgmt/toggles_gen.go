@@ -195,10 +195,6 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
-	// FlagDatasourceOnboarding
-	// Enable data source onboarding page
-	FlagDatasourceOnboarding = "datasourceOnboarding"
-
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"

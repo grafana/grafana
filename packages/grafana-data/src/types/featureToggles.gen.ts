@@ -65,7 +65,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   elasticsearchBackendMigration?: boolean;
-  datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;

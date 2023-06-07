@@ -98,7 +98,7 @@ export function getPanelChromeProps(props: CommonProps) {
     />
   );
 
-  const description = props.panel.description ? onShowPanelDescription() : undefined;
+  const description = props.panel.description ? onShowPanelDescription : undefined;
 
   const dragClass = !(props.isViewing || props.isEditing) ? 'grid-drag-handle' : '';
 

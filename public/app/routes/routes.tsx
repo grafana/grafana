@@ -74,11 +74,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboard/new',
-      roles: () => contextSrv.evaluatePermission(() => ['Editor', 'Admin'], [AccessControlAction.DashboardsCreate]),
+      roles: () => contextSrv.evaluatePermission(() => [], [AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.New,
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/NewDashboardPage')
+        () => import(/* webpackChunkName: "DashboardPage" */ '../features/dashboard/containers/DashboardPage')
       ),
     },
     {
@@ -220,7 +220,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         ),
       component: SafeDynamicImport(() =>
         config.exploreEnabled
-          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/EmptyStateWrapper')
+          ? import(/* webpackChunkName: "explore" */ 'app/features/explore/ExplorePage')
           : import(/* webpackChunkName: "explore-feature-toggle-page" */ 'app/features/explore/FeatureTogglePage')
       ),
     },

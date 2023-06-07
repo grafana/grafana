@@ -233,9 +233,8 @@ callback URL to be correct).
 
 Serve Grafana from subpath specified in `root_url` setting. By default it is set to `false` for compatibility reasons.
 
-By enabling this setting and using a subpath in `root_url` above, e.g.
-`root_url = http://localhost:3000/grafana`, Grafana is accessible on
-`http://localhost:3000/grafana`.
+By enabling this setting and using a subpath in `root_url` above, e.g.`root_url = http://localhost:3000/grafana`, Grafana is accessible on `http://localhost:3000/grafana`. If accessed without subpath Grafana will redirect to
+an URL with the subpath.
 
 ### router_logging
 
@@ -1120,7 +1119,7 @@ Enable this to allow Grafana to send email. Default is `false`.
 
 ### host
 
-Default is `localhost:25`.
+Default is `localhost:25`. Use port 465 for implicit TLS.
 
 ### user
 

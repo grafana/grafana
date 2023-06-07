@@ -31,7 +31,7 @@ const styles = {
   `,
 };
 
-export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useExplorePageTitle();
   const dispatch = useDispatch();
   const queryParams = props.queryParams;
