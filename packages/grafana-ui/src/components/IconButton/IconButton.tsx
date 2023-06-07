@@ -23,7 +23,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Type of the icon - mono or default */
   iconType?: IconType;
   /** Tooltip content to display on hover */
-  tooltip: PopoverContent;
+  tooltip?: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
@@ -61,19 +61,27 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
     const styles = getStyles(theme, limitedIconSize, variant);
     const tooltipString = typeof tooltip === 'string' ? tooltip : '';
 
-    // ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
-    return (
-      <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-        <button
-          aria-label={ariaLabel || tooltipString}
-          {...restProps}
-          className={cx(styles.button, className)}
-          type="button"
-        >
-          <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
-        </button>
-      </Tooltip>
+    // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
+    const button = (
+      <button
+        ref={tooltip ? undefined : ref}
+        aria-label={ariaLabel || tooltipString}
+        {...restProps}
+        className={cx(styles.button, className)}
+      >
+        <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+      </button>
     );
+
+    if (tooltip) {
+      return (
+        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+          {button}
+        </Tooltip>
+      );
+    }
+
+    return button;
   }
 );
 
