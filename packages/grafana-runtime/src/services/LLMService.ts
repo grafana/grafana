@@ -55,10 +55,11 @@ export type LLMChatCompletionsRequest = LLMRequestCommonOptions & {
  * This is currently behind the `llms` feature toggle.
  */
 export interface LLMSrv {
+  isEnabled: boolean;
   chatCompletions(request: LLMChatCompletionsRequest): Promise<string>;
 }
 
-let singletonInstance: LLMSrv | undefined;
+let singletonInstance: LLMSrv;
 
 /**
  * Used during startup by Grafana to set the LLMSrv so it is available
@@ -76,4 +77,4 @@ export const setLLMSrv = (instance: LLMSrv) => {
  *
  * @public
  */
-export const getLLMSrv = (): LLMSrv | undefined => singletonInstance;
+export const getLLMSrv = (): LLMSrv => singletonInstance;

@@ -56,7 +56,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
   let editorMode = query.editorMode!;
-  if (llmSrv === undefined && editorMode === QueryEditorMode.Natural_language) {
+  if (!llmSrv.isEnabled && editorMode === QueryEditorMode.Natural_language) {
     editorMode = QueryEditorMode.Builder;
   }
 
@@ -158,7 +158,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             showExplain={explain}
           />
         )}
-        {editorMode === QueryEditorMode.Natural_language && (
+        {editorMode === QueryEditorMode.Natural_language && llmSrv.isEnabled && (
           <LLMQueryEditor
             systemPrompt="You are a helpful assistant who is an expert in PromQL. Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text."
             onChange={(expr) => onChangeInternal({ ...query, expr })}
