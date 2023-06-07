@@ -160,6 +160,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     maxIdleConns: 100,
     connMaxLifetime: 14400,
   };
+  llms?: { enabled: boolean };
 
   tokenExpirationDayLimit: undefined;
 

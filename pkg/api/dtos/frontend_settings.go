@@ -120,6 +120,10 @@ type FrontendSettingsSqlConnectionLimitsDTO struct {
 	ConnMaxLifetime int `json:"connMaxLifetime"`
 }
 
+type FrontendSettingsLLMs struct {
+	Enabled bool `json:"enabled"`
+}
+
 type FrontendSettingsDTO struct {
 	DefaultDatasource          string                           `json:"defaultDatasource"`
 	Datasources                map[string]plugins.DataSourceDTO `json:"datasources"`
@@ -224,6 +228,8 @@ type FrontendSettingsDTO struct {
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
 
 	SqlConnectionLimits FrontendSettingsSqlConnectionLimitsDTO `json:"sqlConnectionLimits"`
+
+	LLMs FrontendSettingsLLMs `json:"llms,omitempty"`
 
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`

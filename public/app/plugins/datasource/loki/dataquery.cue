@@ -47,7 +47,7 @@ composableKinds: DataQuery: {
 				// Used to set step value for range queries.
 				step?: string
 
-				#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
+				#QueryEditorMode: "code" | "builder" | "natural_language" @cuetsy(kind="enum")
 
 				#LokiQueryType: "range" | "instant" | "stream" @cuetsy(kind="enum")
 

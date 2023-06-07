@@ -29,6 +29,7 @@ import {
   setBackendSrv,
   setDataSourceSrv,
   setEchoSrv,
+  setLLMSrv,
   setLocationSrv,
   setQueryRunnerFactory,
   setRunRequest,
@@ -67,6 +68,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { llmSrv } from './core/services/llm_srv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -119,6 +121,9 @@ export class GrafanaApp {
       const initI18nPromise = initializeI18n(config.bootData.user.language);
 
       setBackendSrv(backendSrv);
+      if (llmSrv.isEnabled) {
+        setLLMSrv(llmSrv);
+      }
       initEchoSrv();
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');

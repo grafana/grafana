@@ -586,6 +586,11 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
+
+		// LLMs
+		if hs.Cfg.IsFeatureToggleEnabled("llmAPI") {
+			apiRoute.Any("/llms/*", hs.ProxyLLMRequest)
+		}
 	}, reqSignedIn)
 
 	// admin api

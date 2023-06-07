@@ -39,7 +39,7 @@ composableKinds: DataQuery: {
 				range?: bool
 				// Execute an additional query to identify interesting raw samples relevant for the given expr
 				exemplar?: bool
-				// Specifies which editor is being used to prepare the query. It can be "code" or "builder"
+				// Specifies which editor is being used to prepare the query. It can be "code", "builder" or "natural_language"
 				editorMode?: #QueryEditorMode
 				// Query format to determine how to display data points in panel. It can be "time_series", "table", "heatmap"
 				format?: #PromQueryFormat
@@ -49,8 +49,8 @@ composableKinds: DataQuery: {
 				// See https://github.com/grafana/grafana/issues/48081
 				intervalFactor?: number
 
-				#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
-				#PromQueryFormat: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
+				#QueryEditorMode: "code" | "builder" | "natural_language" @cuetsy(kind="enum")
+				#PromQueryFormat: "time_series" | "table" | "heatmap"     @cuetsy(kind="type")
 			}
 		}]
 		lenses: []

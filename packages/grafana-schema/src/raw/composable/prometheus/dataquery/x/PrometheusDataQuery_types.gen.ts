@@ -14,13 +14,14 @@ import * as common from '@grafana/schema';
 export enum QueryEditorMode {
   Builder = 'builder',
   Code = 'code',
+  Natural_language = 'natural_language',
 }
 
 export type PromQueryFormat = ('time_series' | 'table' | 'heatmap');
 
 export interface PrometheusDataQuery extends common.DataQuery {
   /**
-   * Specifies which editor is being used to prepare the query. It can be "code" or "builder"
+   * Specifies which editor is being used to prepare the query. It can be "code", "builder" or "natural_language"
    */
   editorMode?: QueryEditorMode;
   /**

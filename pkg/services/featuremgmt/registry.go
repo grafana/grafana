@@ -564,5 +564,11 @@ var (
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
+		{
+			Name:        "llmAPI",
+			Description: "Enables the LLM API",
+			Stage:       FeatureStageExperimental,
+			Owner:       machineLearningSquad,
+		},
 	}
 )

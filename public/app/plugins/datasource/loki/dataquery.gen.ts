@@ -15,6 +15,7 @@ export const DataQueryModelVersion = Object.freeze([0, 0]);
 export enum QueryEditorMode {
   Builder = 'builder',
   Code = 'code',
+  Natural_language = 'natural_language',
 }
 
 export enum LokiQueryType {

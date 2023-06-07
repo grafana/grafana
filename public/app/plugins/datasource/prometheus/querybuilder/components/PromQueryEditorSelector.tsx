@@ -4,8 +4,8 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { getLLMSrv, reportInteraction } from '@grafana/runtime';
+import { Button, ConfirmModal, LLMQueryEditor } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
@@ -51,9 +51,14 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
   const [dataIsStale, setDataIsStale] = useState(false);
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
+  const llmSrv = getLLMSrv();
+
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.
-  const editorMode = query.editorMode!;
+  let editorMode = query.editorMode!;
+  if (llmSrv === undefined && editorMode === QueryEditorMode.Natural_language) {
+    editorMode = QueryEditorMode.Builder;
+  }
 
   const onEditorModeChange = useCallback(
     (newMetricEditorMode: QueryEditorMode) => {
@@ -151,6 +156,13 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             onRunQuery={props.onRunQuery}
             data={data}
             showExplain={explain}
+          />
+        )}
+        {editorMode === QueryEditorMode.Natural_language && (
+          <LLMQueryEditor
+            systemPrompt="You are a helpful assistant who is an expert in PromQL. Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text."
+            onChange={(expr) => onChangeInternal({ ...query, expr })}
+            llmSrv={llmSrv}
           />
         )}
         <PromQueryBuilderOptions query={query} app={props.app} onChange={onChange} onRunQuery={onRunQuery} />

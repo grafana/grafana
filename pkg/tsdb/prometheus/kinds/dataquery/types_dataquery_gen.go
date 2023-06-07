@@ -18,8 +18,9 @@ const (
 
 // Defines values for QueryEditorMode.
 const (
-	QueryEditorModeBuilder QueryEditorMode = "builder"
-	QueryEditorModeCode    QueryEditorMode = "code"
+	QueryEditorModeBuilder         QueryEditorMode = "builder"
+	QueryEditorModeCode            QueryEditorMode = "code"
+	QueryEditorModeNaturalLanguage QueryEditorMode = "natural_language"
 )
 
 // These are the common properties available to all queries in all datasources.

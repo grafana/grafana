@@ -338,4 +338,8 @@ const (
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagLlmAPI
+	// Enables the LLM API
+	FlagLlmAPI = "llmAPI"
 )

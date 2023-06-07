@@ -54,6 +54,7 @@ export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './ConfirmModal/ConfirmModal';
+export { LLMQueryEditor, type LLMQueryEditorProps } from './LLMQueryEditor/LLMQueryEditor';
 export { QueryField, type QueryFieldProps } from './QueryField/QueryField';
 
 export { CodeEditor } from './Monaco/CodeEditor';

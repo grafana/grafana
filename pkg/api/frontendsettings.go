@@ -265,6 +265,10 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.GeomapDisableCustomBaseLayer = true
 	}
 
+	if hs.Cfg.IsFeatureToggleEnabled("llmAPI") {
+		frontendSettings.LLMs.Enabled = hs.Cfg.LLM.Enabled
+	}
+
 	return frontendSettings, nil
 }
 

@@ -25,4 +25,5 @@ const (
 	grafanaPartnerPluginsSquad                  codeowner = "@grafana/partner-plugins"
 	grafanaOperatorExperienceSquad              codeowner = "@grafana/grafana-operator-experience-squad"
 	enterpriseDatasourcesSquad                  codeowner = "@grafana/enterprise-datasources"
+	machineLearningSquad                        codeowner = "@grafana/machine-learning"
 )
