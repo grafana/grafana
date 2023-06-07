@@ -140,7 +140,7 @@ export const formAmRouteToAmRoute = (
   // "undefined" means "inherit from the parent policy", currently supported by group_by, group_wait, group_interval, and repeat_interval
   const INHERIT_FROM_PARENT = undefined;
 
-  const group_by = overrideGrouping ? (groupBy ? groupBy : []) : INHERIT_FROM_PARENT;
+  const group_by = overrideGrouping ? groupBy : INHERIT_FROM_PARENT;
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
   const group_wait = overrideGroupWait ? groupWaitValue : INHERIT_FROM_PARENT;
