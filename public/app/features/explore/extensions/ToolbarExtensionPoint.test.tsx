@@ -1,1 +1,5 @@
-describe('ToolbarExtensionPoint', () => {});
+describe('ToolbarExtensionPoint', () => {
+  describe('', () => {});
+
+  describe('', () => {});
+});

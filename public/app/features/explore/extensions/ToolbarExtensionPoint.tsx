@@ -5,6 +5,7 @@ import { getPluginLinkExtensions } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { AccessControlAction, ExploreId, ExplorePanelData, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
@@ -62,7 +63,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
         <Menu.Item
           icon={extension?.icon || 'plug'}
           key={extension.id}
-          label={extension.title}
+          label={truncateTitle(extension.title, 25)}
           onClick={(event) => {
             if (extension.path) {
               return setExtension(extension);

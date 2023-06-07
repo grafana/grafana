@@ -185,3 +185,11 @@ function assertLinkConfig<T extends object>(
     throw Error('config is not a extension link');
   }
 }
+
+export function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
+}
