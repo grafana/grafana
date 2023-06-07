@@ -52,8 +52,6 @@ func (schemaValidate) Validate(ctx context.Context, a admission.Attributes, o ad
 		fmt.Printf("b: %v\n", b)
 
 		return nil
-	} else {
-		return fmt.Errorf("i like dashboards and only dashboards")
 	}
 
 	return nil
