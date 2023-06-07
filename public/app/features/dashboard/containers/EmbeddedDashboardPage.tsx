@@ -43,17 +43,22 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
    * Create dashboard model and initialize the dashboard from JSON
    */
   useEffect(() => {
-    const dashboardModel = new DashboardModel(JSON.parse(queryParams.json!));
-    dispatch(
-      initDashboard({
-        routeName: route.routeName,
-        fixUrl: false,
-        // TODO check auth
-        accessToken: queryParams.accessToken,
-        keybindingSrv: context.keybindings,
-        dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
+    getBackendSrv()
+      .get('http://localhost:3001/load-dashboard')
+      .then((json) => {
+        const dashboardModel = new DashboardModel(json);
+        dispatch(
+          initDashboard({
+            routeName: route.routeName,
+            fixUrl: false,
+            keybindingSrv: context.keybindings,
+            dashboardDto: { dashboard: dashboardModel, meta: { canEdit: true } },
+          })
+        );
       })
-    );
+      .catch((err) => {
+        console.log('Error getting dashboard JSON: ', err);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
