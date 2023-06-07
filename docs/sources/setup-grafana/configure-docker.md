@@ -278,7 +278,7 @@ AWS_default_REGION=us-east-1
 
    ID = the secret unique ID that you will use in the docker run command
 
-   NAME = the we defined for each secret
+   NAME = the logical name defined for each secret
 
 1. Add the secrets to the command line when you run Docker.
 
