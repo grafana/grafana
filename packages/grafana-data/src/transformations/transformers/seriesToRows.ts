@@ -73,8 +73,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
           const firstNonTimeField = frame.fields[1];
 
           // To support consistent naming for dataplane and prometheus
-          // displayNameFromDS > frameDisplayName 
-
+          // displayNameFromDS > frameDisplayName
           // This supports new naming and custom names (from the prom legend option)
           // and supports the older pattern of getting the frame name.
           // if neither of those return a name we use getFieldDisplayName which is good.
