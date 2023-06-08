@@ -1,17 +1,13 @@
 package ngalert
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -113,7 +109,7 @@ func ProvideService(
 }
 
 type multiOrgAlertmanager interface {
-	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	AlertmanagerFor(orgID int64) (notifier.Alertmanager, error)
 	LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error
 	Run(ctx context.Context) error
 	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
@@ -171,7 +167,10 @@ func (ng *AlertNG) init() error {
 	// TODO: what if we have no external AM configured?
 	if ng.Cfg.UnifiedAlerting.DisableInternalAlertmanager {
 		ng.Log.Info("Starting Grafana with a no-op internal Alertmanager")
-		ng.MultiOrgAlertmanager = notifier.NewNoopMultiOrgAlertmanager()
+		amURL := ng.Cfg.UnifiedAlerting.MainAlertmanagerURL
+		amUser := ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthUser
+		amPassword := ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthPassword
+		ng.MultiOrgAlertmanager = notifier.NewExternalMultiOrgAlertmanager(amURL, amUser, amPassword, ng.store, log.New("ngalert.multiorg.external.alertmanager"))
 	} else {
 		decryptFn := ng.SecretsService.GetDecryptedValue
 		multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
@@ -209,42 +208,6 @@ func (ng *AlertNG) init() error {
 	}
 
 	ng.AlertsRouter = alertsRouter
-
-	// TODO: pull, merge, post AM configs.
-	// TODO: move, no-op moa would be a better place for this.
-	if ng.Cfg.UnifiedAlerting.DisableInternalAlertmanager {
-		// Get configuration from the external Alertmanager.
-		user := ng.Cfg.UnifiedAlerting.MainAlertmanagerURL
-		password := ng.Cfg.UnifiedAlerting.MainAlertmanagerURL
-		amURL := ng.Cfg.UnifiedAlerting.MainAlertmanagerURL
-
-		externalConfig, err := getExternalAmConfig(initCtx, amURL, user, password)
-		if err != nil {
-			return err
-		}
-
-		// TODO: main org.
-		query := models.GetLatestAlertmanagerConfigurationQuery{
-			OrgID: 1,
-		}
-		internalConfig, err := ng.store.GetLatestAlertmanagerConfiguration(initCtx, &query)
-		if err != nil {
-			return err
-		}
-
-		// Merge configurations.
-		mergedConfiguration, err := mergeAlertmanagerConfigurations(internalConfig, externalConfig)
-		if err != nil {
-			return err
-		}
-
-		// TODO: check if we need to update or if we already did.
-		// Update external AM configuration.
-		if err := postExternalAmConfig(initCtx, mergedConfiguration, amURL, user, password); err != nil {
-			return err
-		}
-		// Disable internal Alertmanager.
-	}
 
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
@@ -540,68 +503,4 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-}
-
-func getExternalAmConfig(ctx context.Context, url string, user string, password string) (apimodels.GettableUserConfig, error) {
-	req, err := http.NewRequest("GET", url+"/api/v1/alerts", nil)
-	if err != nil {
-		return apimodels.GettableUserConfig{}, err
-	}
-	// TODO: use basic auth...
-	fmt.Println("Making request to", req.URL)
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return apimodels.GettableUserConfig{}, err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode/100 != 2 {
-		return apimodels.GettableUserConfig{}, fmt.Errorf("bad response status %s", res.Status)
-	}
-
-	var gettableUserConfig apimodels.GettableUserConfig
-	if err := yaml.NewDecoder(res.Body).Decode(&gettableUserConfig); err != nil {
-		return apimodels.GettableUserConfig{}, err
-	}
-
-	return gettableUserConfig, nil
-}
-
-// TODO: implement merge, for now it's ignoring the external configuration and parsing the internal one into a postable config.
-// mergeAlertmanagerConfigurations takes the Grafana Alertmanager configuration and the external Alertmanager configuration.
-// It merges both into a single configuration that can be applied to the external Alertmanager.
-func mergeAlertmanagerConfigurations(internalConfig *models.AlertConfiguration, externalConfig apimodels.GettableUserConfig) (*apimodels.PostableUserConfig, error) {
-	postableConfig, err := notifier.Load([]byte(internalConfig.AlertmanagerConfiguration))
-	if err != nil {
-		return nil, err
-	}
-	return postableConfig, nil
-}
-
-// Note: this can be moved to the no-op Multiorg Alertmanager.
-func postExternalAmConfig(ctx context.Context, config *apimodels.PostableUserConfig, url, user, password string) error {
-	b, err := yaml.Marshal(config)
-	if err != nil {
-		return err
-	}
-
-	req, err := http.NewRequest("POST", url+"/api/v1/alerts", bytes.NewReader(b))
-	if err != nil {
-		return err
-	}
-
-	// TODO: use basic auth...
-	fmt.Println("Making request to", req.URL, "with data", string(b))
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	io.Copy(io.Discard, res.Body)
-
-	if res.StatusCode/100 != 2 {
-		return fmt.Errorf("bad response status %s", res.Status)
-	}
-
-	return nil
 }

@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -36,7 +35,7 @@ type MultiOrgAlertmanager struct {
 	ProvStore provisioning.ProvisioningStore
 
 	alertmanagersMtx sync.RWMutex
-	alertmanagers    map[int64]*Alertmanager
+	alertmanagers    map[int64]*alertmanager
 
 	settings *setting.Cfg
 	logger   log.Logger
@@ -65,7 +64,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 
 		logger:        l,
 		settings:      cfg,
-		alertmanagers: map[int64]*Alertmanager{},
+		alertmanagers: map[int64]*alertmanager{},
 		configStore:   configStore,
 		orgStore:      orgStore,
 		kvStore:       kvStore,
@@ -245,7 +244,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.alertmanagers[orgID] = alertmanager
 	}
 
-	amsToStop := map[int64]*Alertmanager{}
+	amsToStop := map[int64]*alertmanager{}
 	for orgId, am := range moa.alertmanagers {
 		if _, exists := orgsFound[orgId]; !exists {
 			amsToStop[orgId] = am
@@ -349,7 +348,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 // AlertmanagerFor returns the Alertmanager instance for the organization provided.
 // When the organization does not have an active Alertmanager, it returns a ErrNoAlertmanagerForOrg.
 // When the Alertmanager of the organization is not ready, it returns a ErrAlertmanagerNotReady.
-func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
+func (moa *MultiOrgAlertmanager) AlertmanagerFor(orgID int64) (Alertmanager, error) {
 	moa.alertmanagersMtx.RLock()
 	defer moa.alertmanagersMtx.RUnlock()
 
@@ -377,46 +376,3 @@ func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster
 type NilChannel struct{}
 
 func (c *NilChannel) Broadcast([]byte) {}
-
-// TODO: move.
-type noopMultiOrgAlertmanager struct{}
-
-func NewNoopMultiOrgAlertmanager() *noopMultiOrgAlertmanager {
-	return &noopMultiOrgAlertmanager{}
-}
-
-func (*noopMultiOrgAlertmanager) AlertmanagerFor(orgID int64) (*Alertmanager, error) {
-	fmt.Println("noop.AlertmanagerFor() called")
-	return nil, ErrNoAlertmanagerForOrg
-}
-
-// Note: we could use this to sync internal and external AM config.
-func (*noopMultiOrgAlertmanager) LoadAndSyncAlertmanagersForOrgs(ctx context.Context) error {
-	fmt.Println("noop.LoadAndSyncAlertmanagersForOrgs() called")
-	return nil
-}
-
-func (*noopMultiOrgAlertmanager) Run(ctx context.Context) error {
-	fmt.Println("noop.Run() called")
-	return nil
-}
-
-func (*noopMultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
-	fmt.Println("noop.ActivateHistoricalConfiguration() called")
-	return nil
-}
-
-func (*noopMultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (apimodels.GettableUserConfig, error) {
-	fmt.Println("noop.GetAlertmanagerConfiguration() called")
-	return apimodels.GettableUserConfig{}, nil
-}
-
-func (*noopMultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error) {
-	fmt.Println("noop.GetAppliedAlertmanagerConfigurations() called")
-	return []*apimodels.GettableHistoricUserConfig{}, nil
-}
-
-func (*noopMultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error {
-	fmt.Println("noop.ApplyAlertmanagerConfiguration() called")
-	return nil
-}

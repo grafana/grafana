@@ -23,7 +23,7 @@ import (
 )
 
 type multiOrgAlertmanager interface {
-	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	AlertmanagerFor(orgID int64) (notifier.Alertmanager, error)
 }
 
 // AlertsRouter handles alerts generated during alert rule evaluation.

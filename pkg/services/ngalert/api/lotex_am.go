@@ -60,7 +60,7 @@ func NewLotexAM(proxy *AlertingProxy, log log.Logger) *LotexAM {
 	}
 }
 
-// Note: redirects requests to external AMs.
+// Note: redirects requests to external AMs but uses datasources...
 func (am *LotexAM) withAMReq(
 	ctx *contextmodel.ReqContext,
 	method string,

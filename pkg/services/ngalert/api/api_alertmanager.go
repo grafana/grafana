@@ -33,7 +33,7 @@ type multiOrgAlertmanager interface {
 	GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*apimodels.GettableHistoricUserConfig, error)
 	ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error
 	ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config apimodels.PostableUserConfig) error
-	AlertmanagerFor(orgID int64) (*notifier.Alertmanager, error)
+	AlertmanagerFor(orgID int64) (notifier.Alertmanager, error)
 }
 
 type AlertmanagerSrv struct {
@@ -473,7 +473,7 @@ func newTestTemplateResult(res *notifier.TestTemplatesResults) apimodels.TestTem
 	return apiRes
 }
 
-func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response.NormalResponse) {
+func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, *response.NormalResponse) {
 	am, err := srv.moa.AlertmanagerFor(orgID)
 	if err == nil {
 		return am, nil
