@@ -260,7 +260,7 @@ function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
 
   return (
     <DetailsField label="Rule UID" childrenWrapperClassName={styles.ruleUid}>
-      {rule.uid} <IconButton name="copy" onClick={copyUID} />
+      {rule.uid} <IconButton name="copy" onClick={copyUID} tooltip="Copy rule" />
     </DetailsField>
   );
 }

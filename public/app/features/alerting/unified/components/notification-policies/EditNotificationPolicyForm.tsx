@@ -137,12 +137,7 @@ export const AmRoutesExpandedForm = ({
                                 placeholder="value"
                               />
                             </Field>
-                            <IconButton
-                              type="button"
-                              tooltip="Remove matcher"
-                              name={'trash-alt'}
-                              onClick={() => remove(index)}
-                            >
+                            <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
                               Remove
                             </IconButton>
                           </Stack>
