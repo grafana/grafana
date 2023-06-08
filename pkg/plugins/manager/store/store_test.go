@@ -25,7 +25,7 @@ func TestStore_ProvideService(t *testing.T) {
 			return []plugins.PluginSource{
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.Bundled
+						return plugins.ClassBundled
 					},
 					PluginURIsFunc: func(ctx context.Context) []string {
 						return []string{"path1"}
@@ -33,7 +33,7 @@ func TestStore_ProvideService(t *testing.T) {
 				},
 				&fakes.FakePluginSource{
 					PluginClassFunc: func(ctx context.Context) plugins.Class {
-						return plugins.External
+						return plugins.ClassExternal
 					},
 					PluginURIsFunc: func(ctx context.Context) []string {
 						return []string{"path2", "path3"}
@@ -71,11 +71,11 @@ func TestStore_Plugin(t *testing.T) {
 
 func TestStore_Plugins(t *testing.T) {
 	t.Run("Plugin returns all non-decommissioned plugins by type", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.DataSource}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.Panel}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.App}}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.Panel}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.TypeDataSource}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.TypePanel}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.TypeApp}}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
 		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
@@ -89,28 +89,28 @@ func TestStore_Plugins(t *testing.T) {
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.App)
+		pss = ps.Plugins(context.Background(), plugins.TypeApp)
 		require.Equal(t, pss, []plugins.PluginDTO{p4.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.Panel)
+		pss = ps.Plugins(context.Background(), plugins.TypePanel)
 		require.Equal(t, pss, []plugins.PluginDTO{p2.ToDTO(), p3.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.DataSource)
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource)
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO()})
 
-		pss = ps.Plugins(context.Background(), plugins.DataSource, plugins.App, plugins.Panel)
+		pss = ps.Plugins(context.Background(), plugins.TypeDataSource, plugins.TypeApp, plugins.TypePanel)
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
 	})
 }
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.Renderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.Panel}, FS: fakes.NewFakePluginFiles("/grafana/")}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.SecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.Core}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.DataSource}, FS: fakes.NewFakePluginFiles("../test")}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.App}, FS: fakes.NewFakePluginFiles("any/path")}
-		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.TypeRenderer}, FS: fakes.NewFakePluginFiles("/some/dir")}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}, FS: fakes.NewFakePluginFiles("/grafana/")}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.TypeSecretsManager}, FS: fakes.NewFakePluginFiles("./secrets"), Class: plugins.ClassCore}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.TypeDataSource}, FS: fakes.NewFakePluginFiles("../test")}
+		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.TypeApp}, FS: fakes.NewFakePluginFiles("any/path")}
+		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
 		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
@@ -133,9 +133,9 @@ func TestStore_Routes(t *testing.T) {
 
 func TestStore_Renderer(t *testing.T) {
 	t.Run("Renderer returns a single (non-decommissioned) renderer plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.App}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp}}
 
 		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
 			p1.ID: p1,
@@ -150,10 +150,10 @@ func TestStore_Renderer(t *testing.T) {
 
 func TestStore_SecretsManager(t *testing.T) {
 	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.Renderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.Panel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.SecretsManager}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.DataSource}}
+		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
+		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
+		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.TypeSecretsManager}}
+		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
 
 		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
 			p1.ID: p1,

@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 
-import { Spinner } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
@@ -44,10 +43,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     },
     [dispatch]
   );
-
-  useEffect(() => {
-    dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-  }, [handleFolderClick, dispatch, folderUID]);
 
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
@@ -116,10 +111,6 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   const handleLoadMore = useLoadNextChildrenPage(folderUID);
 
-  if (status === 'pending') {
-    return <Spinner />;
-  }
-
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
       <div style={{ width }}>
@@ -145,7 +136,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState }))}
+      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
