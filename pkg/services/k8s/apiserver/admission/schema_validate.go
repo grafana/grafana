@@ -74,12 +74,6 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		if err != nil {
 			sv.log.Info("failed to validate dashboard", "err", err)
 		}
-
-		/*  This chunk needs to move to a mutating webhook
-		// Translate doesn't return an error, so we just hope it doesn't panic.
-		_, _ = inst.Translate(thema.LatestVersion(dk.Lineage()))
-		return nil
-		*/
 	}
 	return nil
 }
@@ -93,6 +87,6 @@ func (schemaValidate) Handles(operation admission.Operation) bool {
 // NewSchemaValidate creates a NewSchemaValidate admission handler
 func NewSchemaValidate() admission.Interface {
 	return schemaValidate{
-		log: log.New("validate"),
+		log: log.New("admission.schema-validate"),
 	}
 }

@@ -3,12 +3,14 @@ package apiserver
 import (
 	"context"
 	"crypto/x509"
-	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
-	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"net"
 	"os"
 	"path"
 	"strconv"
+
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
 
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
@@ -152,11 +154,12 @@ func (s *service) start(ctx context.Context) error {
 	// plugins that depend on the Core V1 APIs and informers.
 	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
 	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	grafanaAdmission.RegisterSchemaTranslate(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterSchemaValidate(o.RecommendedOptions.Admission.Plugins)
 	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaTranslate, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
-	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameSchemaTranslate, grafanaAdmission.PluginNameSchemaValidate, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
