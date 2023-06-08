@@ -6,7 +6,7 @@ headless: true
 [//]: # 'This shared file is included in these locations:'
 [//]: # '/grafana/docs/sources/datasources/tempo/query-editor/index.md'
 [//]: # '/website/docs/grfana-cloud/data-configuration/traces/traces-query-editor.md'
-[//]: # ''
+[//]: #
 [//]: # 'If you make changes to this file, verify that the meaning and content are not changed in any place where the file is included.'
 [//]: # 'Any links should be fully qualified and not relative: /docs/grafana/ instead of ../grafana/.'
 
