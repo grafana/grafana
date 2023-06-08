@@ -15,6 +15,7 @@ func TestSlugify(t *testing.T) {
 	results["hi-this-is-a-test"] = "方向盤後面 hi this is a test خلف المقو"
 	results["cong-hoa-xa-hoi-chu-nghia-viet-nam"] = "Cộng hòa xã hội chủ nghĩa Việt Nam"
 	results["noi-nang-canh-canh-ben-long-bieng-khuay"] = "Nỗi nàng canh cánh bên lòng biếng khuây" // This line in a poem called Truyen Kieu
+	results["helloyue-han"] = "hello约翰"                                                            // Chinese can be slugfy
 
 	for slug, original := range results {
 		actual := Slugify(original)
