@@ -10691,9 +10691,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:3.0.0":
-  version: 3.0.0
-  resolution: "@visx/tooltip@npm:3.0.0"
+"@visx/tooltip@npm:3.1.2":
+  version: 3.1.2
+  resolution: "@visx/tooltip@npm:3.1.2"
   dependencies:
     "@types/react": "*"
     "@visx/bounds": 3.0.0
@@ -10703,7 +10703,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: f3d9b62905424c8c3bd10f2fcbf6947da9adc7fff9a22aa961ce1c4523db4f0297b066a2fe27eeae7f4e45f0a4f7049067b6da71c6566a3991cb6fc53f6f8eb4
+  checksum: 4c2127068f22766e984ed3ed1452dcece919bacb0297b17ba862a6815bb7f04c4fc462a100d3934e0cb56a9c7962b82f7c4184748ef4b2dbef3b4b0d5b717fdd
   languageName: node
   linkType: hard
 
@@ -18327,7 +18327,7 @@ __metadata:
     "@visx/group": 3.0.0
     "@visx/scale": 3.0.0
     "@visx/shape": 3.0.0
-    "@visx/tooltip": 3.0.0
+    "@visx/tooltip": 3.1.2
     "@welldone-software/why-did-you-render": 7.0.1
     angular: 1.8.3
     angular-bindonce: 0.3.1

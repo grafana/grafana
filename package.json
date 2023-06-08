@@ -298,7 +298,7 @@
     "@visx/group": "3.0.0",
     "@visx/scale": "3.0.0",
     "@visx/shape": "3.0.0",
-    "@visx/tooltip": "3.0.0",
+    "@visx/tooltip": "3.1.2",
     "@welldone-software/why-did-you-render": "7.0.1",
     "angular": "1.8.3",
     "angular-bindonce": "0.3.1",
