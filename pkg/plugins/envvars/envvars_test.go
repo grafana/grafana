@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -304,4 +306,37 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			tc.exp(t, envVars)
 		})
 	}
+}
+
+func TestInitializer_oauthEnvVars(t *testing.T) {
+	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:                       "test",
+				OauthServiceRegistration: &oauth.ExternalServiceRegistration{},
+			},
+		}
+
+		envVarsProvider := NewProvider(&config.Cfg{
+			GrafanaAppURL: "https://myorg.com/",
+			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+		}, nil, &fakes.FakeOauthService{
+			Result: &oauth.ExternalServiceDTO{
+				ID:     "clientID",
+				Secret: "clientSecret",
+				KeyResult: &oauth.KeyResult{
+					PrivatePem: "privatePem",
+				},
+			},
+		})
+		envVars, err := envVarsProvider.Get(context.Background(), p)
+
+		require.NoError(t, err)
+		assert.Len(t, envVars, 5)
+		assert.Equal(t, "GF_VERSION=", envVars[0])
+		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
+		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+	})
 }

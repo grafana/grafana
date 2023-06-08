@@ -32,7 +32,9 @@ type ImpersonationCfg struct {
 
 // ExternalServiceRegistration represents the registration form to save new OAuth2 client.
 type ExternalServiceRegistration struct {
-	Name string `json:"name"`
+	// Name is the name of the external service.
+	// This is translated to the plugin ID.
+	Name string `json:"name,omitempty"`
 	// RedirectURI is the URI that is used in the code flow.
 	// Note that this is not used yet.
 	RedirectURI *string `json:"redirectUri,omitempty"`

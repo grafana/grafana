@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type Provider interface {
@@ -37,7 +38,6 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing, oauthServer oauth.E
 func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
-		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 	}
 
 	if s.license != nil {
@@ -50,8 +50,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
-	// TODO: Add check for feature flag here
-	if p.OauthServiceRegistration != nil {
+	if p.OauthServiceRegistration != nil && s.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 		vars, err := s.oauth2OnBehalfOfVars(ctx, p.ID, p.OauthServiceRegistration)
 		if err != nil {
 			return nil, err
@@ -126,6 +125,7 @@ func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oau
 	}
 
 	return []string{
+		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ID),
 		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.Secret),
 		fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.KeyResult.PrivatePem),
