@@ -41,19 +41,21 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
-	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator) *Loader {
+	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
+	oauthServer plugins.OAuth2Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		roleRegistry, assetPath, pluginFinder, signatureCalculator)
+		roleRegistry, assetPath, pluginFinder, signatureCalculator, oauthServer)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
-	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator) *Loader {
+	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
+	oauthServer plugins.OAuth2Service) *Loader {
 	return &Loader{
 		pluginFinder:        pluginFinder,
 		pluginRegistry:      pluginRegistry,
-		pluginInitializer:   initializer.New(cfg, backendProvider, license),
+		pluginInitializer:   initializer.New(cfg, backendProvider, license, oauthServer),
 		signatureValidator:  signature.NewValidator(authorizer),
 		signatureCalculator: signatureCalculator,
 		processManager:      processManager,

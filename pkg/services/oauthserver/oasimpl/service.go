@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -33,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthserver/store"
 	"github.com/grafana/grafana/pkg/services/oauthserver/utils"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -62,7 +62,7 @@ type OAuth2ServiceImpl struct {
 	publicKey     interface{}
 }
 
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
+func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg,
 	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
 	teamSvc team.Service, keySvc signingkeys.Service, fmgmt *featuremgmt.FeatureManager) (*OAuth2ServiceImpl, error) {
 	if !fmgmt.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
@@ -190,7 +190,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ExternalServiceDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *plugins.ExternalServiceRegistration) (*plugins.ExternalServiceDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -307,7 +307,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEn
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *plugins.KeyOption) (*plugins.KeyResult, error) {
 	if keyOption == nil {
 		return nil, fmt.Errorf("keyOption is nil")
 	}
@@ -356,7 +356,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Debug("ECDSA key has been generated")
 		}
 
-		return &oauthserver.KeyResult{
+		return &plugins.KeyResult{
 			PrivatePem: privatePem,
 			PublicPem:  publicPem,
 			Generated:  true,
@@ -380,7 +380,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Error("cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
-		return &oauthserver.KeyResult{
+		return &plugins.KeyResult{
 			PublicPem: string(pemEncoded),
 		}, nil
 	}
@@ -479,7 +479,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 
 // handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
 // permissions when impersonation is requested
-func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserver.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
+func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *plugins.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
 	selfPermissions := []ac.Permission{}
 	impersonatePermissions := []ac.Permission{}
 

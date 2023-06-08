@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/plugins"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -358,6 +359,7 @@ var wireBasicSet = wire.NewSet(
 	supportbundlesimpl.ProvideService,
 	oasimpl.ProvideService,
 	wire.Bind(new(oauthserver.OAuth2Server), new(*oasimpl.OAuth2ServiceImpl)),
+	wire.Bind(new(plugins.OAuth2Service), new(*oasimpl.OAuth2ServiceImpl)),
 	loggermw.Provide,
 	modules.WireSet,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,

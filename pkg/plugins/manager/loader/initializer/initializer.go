@@ -14,9 +14,10 @@ type Initializer struct {
 	backendProvider plugins.BackendFactoryProvider
 }
 
-func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
+func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing,
+	oauthServer plugins.OAuth2Service) Initializer {
 	return Initializer{
-		envVarProvider:  envvars.NewProvider(cfg, license),
+		envVarProvider:  envvars.NewProvider(cfg, license, oauthServer),
 		backendProvider: backendProvider,
 	}
 }
@@ -28,7 +29,10 @@ func (i *Initializer) Initialize(ctx context.Context, p *plugins.Plugin) error {
 			return errors.New("could not find backend factory for plugin")
 		}
 
-		env := i.envVarProvider.Get(ctx, p)
+		env, err := i.envVarProvider.Get(ctx, p)
+		if err != nil {
+			return err
+		}
 		if backendClient, err := backendFactory(p.ID, p.Logger(), env); err != nil {
 			return err
 		} else {

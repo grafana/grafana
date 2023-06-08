@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -116,7 +117,7 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 	tests := []struct {
 		name       string
 		init       func(*TestEnv)
-		cmd        *oauthserver.ExternalServiceRegistration
+		cmd        *plugins.ExternalServiceRegistration
 		mockChecks func(*testing.T, *TestEnv)
 		wantErr    bool
 	}{
@@ -127,9 +128,9 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.OAuthStore.On("GetExternalServiceByName", mock.Anything, mock.Anything).Return(nil, oauthserver.ErrClientNotFound(serviceName))
 				env.OAuthStore.On("SaveExternalService", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
+			cmd: &plugins.ExternalServiceRegistration{
 				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
+				Key:  &plugins.KeyOption{Generate: true},
 			},
 			mockChecks: func(t *testing.T, env *TestEnv) {
 				env.OAuthStore.AssertCalled(t, "GetExternalServiceByName", mock.Anything, mock.MatchedBy(func(name string) bool {
@@ -152,10 +153,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
+			cmd: &plugins.ExternalServiceRegistration{
 				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+				Key:  &plugins.KeyOption{Generate: true},
+				Self: plugins.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "users:read", Scope: "users:*"}},
 				},
@@ -186,10 +187,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("DeleteServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				env.AcStore.On("DeleteExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
+			cmd: &plugins.ExternalServiceRegistration{
 				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+				Key:  &plugins.KeyOption{Generate: true},
+				Self: plugins.SelfCfg{
 					Enabled: false,
 				},
 			},
@@ -221,10 +222,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				// Update the service account permissions
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
+			cmd: &plugins.ExternalServiceRegistration{
 				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Self: oauthserver.SelfCfg{
+				Key:  &plugins.KeyOption{Generate: true},
+				Self: plugins.SelfCfg{
 					Enabled:     true,
 					Permissions: []ac.Permission{{Action: "dashboards:create", Scope: "folders:uid:general"}},
 				},
@@ -249,10 +250,10 @@ func TestOAuth2ServiceImpl_SaveExternalService(t *testing.T) {
 				env.SAService.On("CreateServiceAccount", mock.Anything, mock.Anything, mock.Anything).Return(&sa1, nil)
 				env.AcStore.On("SaveExternalServiceRole", mock.Anything, mock.Anything).Return(nil)
 			},
-			cmd: &oauthserver.ExternalServiceRegistration{
+			cmd: &plugins.ExternalServiceRegistration{
 				Name: serviceName,
-				Key:  &oauthserver.KeyOption{Generate: true},
-				Impersonation: oauthserver.ImpersonationCfg{
+				Key:  &plugins.KeyOption{Generate: true},
+				Impersonation: plugins.ImpersonationCfg{
 					Enabled:     true,
 					Groups:      true,
 					Permissions: []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:*"}},
@@ -478,8 +479,8 @@ func assertArrayInMap[K comparable, V string](t *testing.T, m1 map[K][]V, m2 map
 func TestTestOAuth2ServiceImpl_handleKeyOptions(t *testing.T) {
 	testCases := []struct {
 		name           string
-		keyOption      *oauthserver.KeyOption
-		expectedResult *oauthserver.KeyResult
+		keyOption      *plugins.KeyOption
+		expectedResult *plugins.KeyResult
 		wantErr        bool
 	}{
 		{
@@ -488,19 +489,19 @@ func TestTestOAuth2ServiceImpl_handleKeyOptions(t *testing.T) {
 		},
 		{
 			name:      "should return error when the key option is empty",
-			keyOption: &oauthserver.KeyOption{},
+			keyOption: &plugins.KeyOption{},
 			wantErr:   true,
 		},
 		{
 			name: "should return successfully when PublicPEM is specified",
-			keyOption: &oauthserver.KeyOption{
+			keyOption: &plugins.KeyOption{
 				PublicPEM: base64.StdEncoding.EncodeToString([]byte(`-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 -----END PUBLIC KEY-----`)),
 			},
 			wantErr: false,
-			expectedResult: &oauthserver.KeyResult{
+			expectedResult: &plugins.KeyResult{
 				PublicPem: `-----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEbsGtoGJTopAIbhqy49/vyCJuDot+
 mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
@@ -525,7 +526,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 	}
 
 	t.Run("should generate an ECDSA key pair (default) when generate key option is specified", func(t *testing.T) {
-		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+		result, err := env.S.handleKeyOptions(context.Background(), &plugins.KeyOption{Generate: true})
 
 		require.NoError(t, err)
 		require.NotNil(t, result.PrivatePem)
@@ -535,7 +536,7 @@ mgGaC8vUIigFQVsVB+v/HZ4yG1Rcvysig+tyNk1dZQpozpFc2dGmzHlGhw==
 
 	t.Run("should generate an RSA key pair when generate key option is specified", func(t *testing.T) {
 		env.S.cfg.OAuth2ServerGeneratedKeyTypeForClient = "RSA"
-		result, err := env.S.handleKeyOptions(context.Background(), &oauthserver.KeyOption{Generate: true})
+		result, err := env.S.handleKeyOptions(context.Background(), &plugins.KeyOption{Generate: true})
 
 		require.NoError(t, err)
 		require.NotNil(t, result.PrivatePem)

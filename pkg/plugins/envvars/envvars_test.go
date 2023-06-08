@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,9 +36,10 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
-		}, licensing)
+		}, licensing, &oasimpl.OAuth2ServiceImpl{})
 
-		envVars := envVarsProvider.Get(context.Background(), p)
+		envVars, err := envVarsProvider.Get(context.Background(), p)
+		require.NoError(t, err)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
@@ -296,8 +298,9 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			envVarsProvider := NewProvider(tc.cfg, nil)
-			envVars := envVarsProvider.Get(context.Background(), tc.plugin)
+			envVarsProvider := NewProvider(tc.cfg, nil, &oasimpl.OAuth2ServiceImpl{})
+			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
+			require.NoError(t, err)
 			tc.exp(t, envVars)
 		})
 	}
