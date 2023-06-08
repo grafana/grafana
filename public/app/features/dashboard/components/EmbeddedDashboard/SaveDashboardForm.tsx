@@ -1,37 +1,30 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Button, Form } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DashboardModel } from '../../state';
-import { SaveDashboardData, SaveDashboardOptions } from '../SaveDashboard/types';
-
-interface FormDTO {
-  message: string;
-}
+import { SaveDashboardData } from '../SaveDashboard/types';
 
 interface SaveDashboardProps {
-  dashboard: DashboardModel; // original
-  saveModel: SaveDashboardData; // already cloned
+  dashboard: DashboardModel;
   onCancel: () => void;
-  onSuccess: () => void;
   onSubmit?: (clone: DashboardModel) => Promise<unknown>;
-  options: SaveDashboardOptions;
-  onOptionsChange: (opts: SaveDashboardOptions) => void;
+  onSuccess: () => void;
+  saveModel: SaveDashboardData;
 }
-export const SaveDashboardForm = ({ saveModel, options, onSubmit, onCancel, onSuccess }: SaveDashboardProps) => {
+export const SaveDashboardForm = ({ dashboard, onCancel, onSubmit, onSuccess, saveModel }: SaveDashboardProps) => {
   const [saving, setSaving] = useState(false);
   const notifyApp = useAppNotification();
-
+  const hasChanges = useMemo(() => dashboard.hasTimeChanged() || saveModel.hasChanges, [dashboard, saveModel]);
   return (
     <Form
-      onSubmit={async (data: FormDTO) => {
+      onSubmit={async () => {
         if (!onSubmit) {
           return;
         }
         setSaving(true);
-        options = { ...options, message: data.message };
         onSubmit(saveModel.clone)
           .then(() => {
             notifyApp.success('Dashboard saved');
@@ -50,10 +43,10 @@ export const SaveDashboardForm = ({ saveModel, options, onSubmit, onCancel, onSu
               <Button variant="secondary" onClick={onCancel} fill="outline">
                 Cancel
               </Button>
-              <Button type="submit" disabled={!saveModel.hasChanges} icon={saving ? 'fa fa-spinner' : undefined}>
+              <Button type="submit" disabled={!hasChanges} icon={saving ? 'fa fa-spinner' : undefined}>
                 Save
               </Button>
-              {!saveModel.hasChanges && <div>No changes to save</div>}
+              {!hasChanges && <div>No changes to save</div>}
             </Stack>
           </Stack>
         );

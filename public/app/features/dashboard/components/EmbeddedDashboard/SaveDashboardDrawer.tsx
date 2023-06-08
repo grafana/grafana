@@ -6,7 +6,7 @@ import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { DashboardModel } from '../../state';
 import DashboardValidation from '../SaveDashboard/DashboardValidation';
 import { SaveDashboardDiff } from '../SaveDashboard/SaveDashboardDiff';
-import { SaveDashboardData, SaveDashboardOptions } from '../SaveDashboard/types';
+import { SaveDashboardData } from '../SaveDashboard/types';
 import { jsonDiff } from '../VersionHistory/utils';
 
 import { SaveDashboardForm } from './SaveDashboardForm';
@@ -19,8 +19,6 @@ type SaveDashboardDrawerProps = {
 };
 
 export const SaveDashboardDrawer = ({ dashboard, onDismiss, json, onSave }: SaveDashboardDrawerProps) => {
-  const [options, setOptions] = useState<SaveDashboardOptions>({});
-
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone();
     const cloneJSON = JSON.stringify(clone, null, 2);
@@ -65,8 +63,6 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, json, onSave }: Save
           saveModel={data}
           onCancel={onDismiss}
           onSuccess={onDismiss}
-          options={options}
-          onOptionsChange={setOptions}
           onSubmit={onSave}
         />
       )}
