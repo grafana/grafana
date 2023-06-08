@@ -1,6 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
-import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -38,7 +37,7 @@ import { safeStringifyValue } from 'app/core/utils/explore';
 import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import config from '../../../core/config';
 
@@ -970,10 +969,6 @@ export class PrometheusDatasource
       // We don't want to break the rest of functionality if build info does not work correctly
       return undefined;
     }
-  }
-
-  renderHealthCheckDetails(buildInfo: PromApiFeatures) {
-    return <></>;
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
