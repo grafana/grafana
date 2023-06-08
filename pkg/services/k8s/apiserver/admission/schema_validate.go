@@ -74,6 +74,12 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		if err != nil {
 			sv.log.Info("failed to validate dashboard", "err", err)
 		}
+
+		/*  This chunk needs to move to a mutating webhook
+		// Translate doesn't return an error, so we just hope it doesn't panic.
+		_, _ = inst.Translate(thema.LatestVersion(dk.Lineage()))
+		return nil
+		*/
 	}
 	return nil
 }

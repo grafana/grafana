@@ -8,10 +8,6 @@ import (
 	"path"
 	"strconv"
 
-	"k8s.io/apiserver/pkg/authorization/authorizer"
-
-	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
-
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
@@ -27,6 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -43,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
