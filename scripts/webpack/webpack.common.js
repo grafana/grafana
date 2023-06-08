@@ -57,7 +57,7 @@ module.exports = {
           },
         },
         {
-          context: path.join(require.resolve('@kusto/monaco-kusto'), '../'),
+          context: path.join(require.resolve('@kusto/monaco-kusto/package.json'), '../release/min'),
           from: '**/*',
           to: '../lib/monaco/min/vs/language/kusto/',
         },
