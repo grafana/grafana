@@ -34,9 +34,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"github.com/mozillazg/go-pinyin"
 )
 
 var (
