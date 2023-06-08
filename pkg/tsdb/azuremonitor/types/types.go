@@ -222,25 +222,7 @@ type LogJSONQuery struct {
 }
 
 type TracesJSONQuery struct {
-	AzureTraces struct {
-		// Filters for property values.
-		Filters []TracesFilters `json:"filters"`
-
-		// Operation ID. Used only for Traces queries.
-		OperationId *string `json:"operationId"`
-
-		// KQL query to be executed.
-		Query *string `json:"query"`
-
-		// Array of resource URIs to be queried.
-		Resources []string `json:"resources"`
-
-		// Specifies the format results should be returned as.
-		ResultFormat *string `json:"resultFormat"`
-
-		// Types of events to filter by.
-		TraceTypes []string `json:"traceTypes"`
-	} `json:"azureTraces"`
+	AzureTraces dataquery.AzureTracesQuery `json:"azureTraces"`
 }
 
 type TracesFilters struct {

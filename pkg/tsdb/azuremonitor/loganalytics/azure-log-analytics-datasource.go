@@ -89,7 +89,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 		resources := []string{}
 		var resourceOrWorkspace string
 		var queryString string
-		var resultFormat string
+		var resultFormat dataquery.ResultFormat
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
@@ -103,7 +103,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
-			resultFormat = azureLogAnalyticsTarget.ResultFormat
+			resultFormat = dataquery.ResultFormat(azureLogAnalyticsTarget.ResultFormat)
 			if resultFormat == "" {
 				resultFormat = types.TimeSeries
 			}
@@ -205,7 +205,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
 			RefID:                   query.RefID,
-			ResultFormat:            resultFormat,
+			ResultFormat:            string(resultFormat),
 			URL:                     apiURL,
 			JSON:                    query.JSON,
 			TimeRange:               query.TimeRange,
@@ -701,7 +701,7 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, resources []string) string {
+func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []string, filters []dataquery.AzureTracesFilter, resultFormat *dataquery.ResultFormat, resources []string) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
