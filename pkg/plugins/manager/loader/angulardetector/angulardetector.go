@@ -45,6 +45,6 @@ func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
 	}, nil
 }
 
-func ProvideService(cfg *config.Cfg) (Inspector, error) {
+func ProvideInspector(cfg *config.Cfg) (Inspector, error) {
 	return newDefaultInspector(cfg)
 }

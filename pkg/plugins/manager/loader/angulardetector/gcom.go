@@ -20,7 +20,7 @@ type GCOMPattern struct {
 	Type  GCOMPatternType
 }
 
-// detector converts a pattern into a detector, based on its Type.
+// detector converts a GCOMPattern into a detector, based on its Type.
 func (p *GCOMPattern) detector() (detector, error) {
 	switch p.Type {
 	case GCOMPatternTypeContains:

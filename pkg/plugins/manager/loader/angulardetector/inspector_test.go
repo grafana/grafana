@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestInspector(t *testing.T) {
+func TestPatternsListInspector(t *testing.T) {
 	type tc struct {
 		name   string
 		plugin *plugins.Plugin
@@ -58,31 +58,5 @@ func TestInspector(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
 		require.ErrorIs(t, err, plugins.ErrFileNotExist)
-	})
-}
-
-func TestFakeInspector(t *testing.T) {
-	t.Run("FakeInspector", func(t *testing.T) {
-		var called bool
-		inspector := FakeInspector{InspectFunc: func(_ context.Context, _ *plugins.Plugin) (bool, error) {
-			called = true
-			return false, nil
-		}}
-		r, err := inspector.Inspect(context.Background(), &plugins.Plugin{})
-		require.True(t, called)
-		require.NoError(t, err)
-		require.False(t, r)
-	})
-
-	t.Run("AlwaysAngularFakeInspector", func(t *testing.T) {
-		r, err := AlwaysAngularFakeInspector.Inspect(context.Background(), &plugins.Plugin{})
-		require.NoError(t, err)
-		require.True(t, r)
-	})
-
-	t.Run("NeverAngularFakeInspector", func(t *testing.T) {
-		r, err := NeverAngularFakeInspector.Inspect(context.Background(), &plugins.Plugin{})
-		require.NoError(t, err)
-		require.False(t, r)
 	})
 }
