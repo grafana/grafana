@@ -37,7 +37,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app1",
 			Name: "Test app1 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
@@ -60,7 +60,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app2",
 			Name: "Test app2 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Hello",
@@ -77,7 +77,7 @@ func TestAddAppLinks(t *testing.T) {
 		JSONData: plugins.JSONData{
 			ID:   "test-app3",
 			Name: "Test app3 name",
-			Type: plugins.App,
+			Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Default page",
@@ -402,7 +402,7 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 
 	testApp1 := plugins.PluginDTO{
 		JSONData: plugins.JSONData{
-			ID: "test-app1", Name: "Test app1 name", Type: plugins.App,
+			ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{
 					Name:       "Catalog",
