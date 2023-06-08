@@ -47,6 +47,7 @@ var (
 		replaceCharacter: '-',
 		replacementMap:   getDefaultReplacements(),
 	}
+	normalPinyinStyle = pinyin.NewArgs()
 )
 
 // Slugify creates a URL safe latin slug for a given value
@@ -83,6 +84,7 @@ func (s slugger) Slugify(value string) string {
 	value = strings.ToLower(value)
 	var buffer bytes.Buffer
 	lastCharacterWasInvalid := false
+	lastCharacterWasHan := false
 
 	for len(value) > 0 {
 		c, size := utf8.DecodeRuneInString(value)
@@ -91,6 +93,17 @@ func (s slugger) Slugify(value string) string {
 		if newCharacter, ok := s.replacementMap[c]; ok {
 			buffer.WriteString(newCharacter)
 			lastCharacterWasInvalid = false
+			continue
+		}
+
+		if unicode.Is(unicode.Han, c) {
+			if !lastCharacterWasInvalid && lastCharacterWasHan {
+				buffer.WriteRune(s.replaceCharacter)
+			}
+			newCharacter := slugHan(c)
+			buffer.WriteString(newCharacter)
+			lastCharacterWasInvalid = false
+			lastCharacterWasHan = true
 			continue
 		}
 
@@ -104,6 +117,14 @@ func (s slugger) Slugify(value string) string {
 	}
 
 	return strings.Trim(buffer.String(), string(s.replaceCharacter))
+}
+
+func slugHan(r rune) string {
+	pinyins := pinyin.SinglePinyin(r, normalPinyinStyle)
+	if len(pinyins) > 0 {
+		return pinyins[0]
+	}
+	return ""
 }
 
 func getDefaultReplacements() map[rune]string {
