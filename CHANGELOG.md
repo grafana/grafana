@@ -187,7 +187,9 @@ abstract testDatasource(): Promise<any>;
 
 // After
 abstract testDatasource(): Promise<TestDataSourceResponse>;
-``` Issue [#67014](https://github.com/grafana/grafana/issues/67014)
+```
+
+Issue [#67014](https://github.com/grafana/grafana/issues/67014)
 
 Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
 
@@ -212,7 +214,6 @@ We've removed the ability for functions to be passed as children to the `Dropdow
 
 Before:
 ````
-
 return (
 <Dropdown overlay={MenuActions} placement="bottom-end">
 {(isOpen) =>
@@ -222,9 +223,7 @@ return (
 );
 
 ```
-
 After:
-```
 
 const [isOpen, setIsOpen] = useState(false);
 
@@ -235,8 +234,9 @@ return (
 <ToolbarButton iconOnly icon="plus" isOpen={isOpen} aria-label="New" />
 </Dropdown>
 );
+```
 
-````Issue [#65467](https://github.com/grafana/grafana/issues/65467)
+Issue [#65467](https://github.com/grafana/grafana/issues/65467)
 
 (relevant for plugin developers) The deprecated internal `dashboardId` is now removed from the request context.  For usage tracking use the `dashboardUid`
 
