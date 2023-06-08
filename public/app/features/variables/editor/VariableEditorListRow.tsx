@@ -72,7 +72,7 @@ export function VariableEditorListRow({
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDescriptionFields(variable.name)}
           >
             {variable.description}
           </td>
