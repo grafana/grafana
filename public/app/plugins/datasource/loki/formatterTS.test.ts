@@ -176,6 +176,28 @@ describe('formats logql queries', () => {
   });
 });
 
+describe('formats queries using variables', () => {
+  it('correctly formats a query using a variable', () => {
+    // LogExpr
+    expect(formatLokiQuery(`{label="$value_variable",label="val"}`)).toBe(`{label="$value_variable", label="val"}`);
+
+    // MetricExpr
+    expect(formatLokiQuery(`rate({label="val"}[$interval_variable])`)).toBe(
+      `rate(\n  {label="val"}\n  [$interval_variable]\n)`
+    );
+
+    // MetricExpr
+    expect(formatLokiQuery(`rate({label="val"}[$interval_variable]) + rate({label="val"}[$interval_variable_2])`)).toBe(
+      `rate(\n  {label="val"}\n  [$interval_variable]\n)\n+\nrate(\n  {label="val"}\n  [$interval_variable_2]\n)`
+    );
+
+    // MetricExpr
+    expect(formatLokiQuery(`rate({label="$value_variable"}[$interval_variable])`)).toBe(
+      `rate(\n  {label="$value_variable"}\n  [$interval_variable]\n)`
+    );
+  });
+});
+
 describe('metric expression syntaxnode functions', () => {
   it('formatRangeAggregationExpr should return a formatted range aggregation expression', () => {
     const MOCK_NODE = generateNode(RangeAggregationExpr, `rate({label=""}[5m])`);

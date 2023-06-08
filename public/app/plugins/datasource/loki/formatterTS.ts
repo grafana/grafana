@@ -58,16 +58,25 @@ import { replaceVariables, returnVariables } from '../prometheus/querybuilder/sh
 import { isValidQuery } from './queryUtils';
 
 export const formatLokiQuery = (query: string): string => {
-  const transformedQuery = replaceVariables(query);
+  let transformedQuery = replaceVariables(query);
+  let formatted = '';
+  const tree = parser.parse(transformedQuery);
+  const transformationMatches = [];
+
+  // replaceVariables(query) converts $interval_variable to a format similar to __V_0__text__V__
+  // however lezer does not support __V_0__text__V__ so we need to replace it with [0s] to make it valid
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
+    transformationMatches.push(...transformedQuery.matchAll(pattern));
+    transformedQuery = transformedQuery.replace(pattern, '[0s]');
+  }
 
   if (isValidQuery(transformedQuery) === false) {
     return query;
   }
 
-  const tree = parser.parse(transformedQuery);
-  let formatted = '';
-
-  tree.iterate({
+  const newTree = parser.parse(transformedQuery);
+  newTree.iterate({
     enter: (ref): false | void => {
       const node = ref.node;
 
@@ -87,6 +96,12 @@ export const formatLokiQuery = (query: string): string => {
     },
   });
 
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    transformationMatches.forEach((match) => {
+      formatted = formatted.replace('[0s]', match[0]);
+    });
+  }
+
   return trimMultiline(returnVariables(formatted));
 };
 
@@ -94,7 +109,6 @@ export const formatLokiQuery = (query: string): string => {
 //   - fix (nested vector expr): count(sum(rate({compose_project="tns-custom"}[1s])))
 //   - support: LabelReplaceExpr
 //   - support: LineComment
-//   - BROKEN -- __V_0__var_type_interval__V__ throws an error in lezer
 
 /* 
 the functions below are used to format metric queries
