@@ -831,7 +831,7 @@ export class ElasticDatasource
     return false;
   }
 
-  private isPrimitive(obj: undefined | null | string | number | boolean | unknown) {
+  private isPrimitive(obj: unknown) {
     if (obj === null || obj === undefined) {
       return true;
     }
