@@ -6,26 +6,26 @@ import (
 	"regexp"
 )
 
-type PatternType string
+type GCOMPatternType string
 
 const (
-	PatternTypeContains PatternType = "contains"
-	PatternTypeRegex    PatternType = "regex"
+	GCOMPatternTypeContains GCOMPatternType = "contains"
+	GCOMPatternTypeRegex    GCOMPatternType = "regex"
 )
 
 // GCOMPattern is an Angular detection pattern returned by the GCOM API.
 type GCOMPattern struct {
 	Name  string
 	Value string
-	Type  PatternType
+	Type  GCOMPatternType
 }
 
 // detector converts a pattern into a detector, based on its Type.
 func (p *GCOMPattern) detector() (detector, error) {
 	switch p.Type {
-	case PatternTypeContains:
+	case GCOMPatternTypeContains:
 		return &containsBytesDetector{pattern: []byte(p.Value)}, nil
-	case PatternTypeRegex:
+	case GCOMPatternTypeRegex:
 		re, err := regexp.Compile(p.Value)
 		if err != nil {
 			return nil, fmt.Errorf("%q regexp compile: %w", p.Value, err)
