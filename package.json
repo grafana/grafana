@@ -135,7 +135,7 @@
     "@types/logfmt": "^1.2.3",
     "@types/marked": "^4",
     "@types/mousetrap": "1.6.11",
-    "@types/node": "18.14.6",
+    "@types/node": "18.16.16",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.9",
     "@types/papaparse": "5.3.7",
     "@types/pluralize": "^0.0.29",
