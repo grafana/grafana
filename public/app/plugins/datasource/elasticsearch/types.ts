@@ -131,6 +131,7 @@ export interface ElasticsearchAnnotationQuery {
   query?: string;
   tagsField?: string;
   textField?: string;
+  // @deprecated index is deprecated and will be removed in the future
   index?: string;
 }
 
