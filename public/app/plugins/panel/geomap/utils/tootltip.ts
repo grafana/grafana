@@ -19,9 +19,7 @@ export const setTooltipListeners = (panel: GeomapPanel) => {
 };
 
 export const pointerClickListener = (evt: MapBrowserEvent<MouseEvent>, panel: GeomapPanel) => {
-  console.log('pointerClickListener', evt, panel);
   if (pointerMoveListener(evt, panel)) {
-    console.log('SET TTIP OPEN TRUE');
     evt.preventDefault();
     evt.stopPropagation();
     panel.mapDiv!.style.cursor = 'auto';
