@@ -496,7 +496,7 @@ export class PrometheusDatasource
       const startTime = new Date();
       return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
         map((response) => {
-          const transformed = transformV2(response, request, {
+          const transformed = transformV2(response, fullOrPartialRequest, {
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
 

@@ -347,7 +347,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
           // TODO: maybe also frame.meta.type?
           let respFrameIdent = getFieldIdent(respFrame.fields[1]);
 
-          let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
+          let cachedFrame = cachedFrames.find(
+            (cached) =>
+              getFieldIdent(cached.fields[1]) === respFrameIdent && respFrame.fields[1].type === cached.fields[1].type
+          );
 
           if (!cachedFrame) {
             // append new unknown frames
