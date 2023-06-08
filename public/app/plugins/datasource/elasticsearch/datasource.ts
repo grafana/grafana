@@ -828,37 +828,22 @@ export class ElasticDatasource
     return false;
   }
 
-  private isPrimitive(obj: unknown) {
-    if (obj === null || obj === undefined) {
-      return true;
-    }
-    if (['string', 'number', 'boolean'].some((type) => type === typeof true)) {
-      return true;
-    }
-
-    return false;
-  }
-
   private objectContainsTemplate(obj: any) {
-    if (!obj) {
+    if (!obj || typeof obj !== 'object') {
       return false;
     }
 
     for (const key of Object.keys(obj)) {
-      if (this.isPrimitive(obj[key])) {
-        if (this.templateSrv.containsTemplate(obj[key])) {
-          return true;
-        }
+      if (typeof obj[key] === 'string' && this.templateSrv.containsTemplate(obj[key])) {
+        return true;
       } else if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {
             return true;
           }
         }
-      } else {
-        if (this.objectContainsTemplate(obj[key])) {
-          return true;
-        }
+      } else if (this.objectContainsTemplate(obj[key])) {
+        return true;
       }
     }
 
