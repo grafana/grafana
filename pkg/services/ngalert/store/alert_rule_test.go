@@ -323,8 +323,8 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
-		SQLStore:      sqlStore,
-		Cfg:           cfg.UnifiedAlerting,
+		SQLStore:       sqlStore,
+		Cfg:            cfg.UnifiedAlerting,
 		FolderService:  setupFolderService(t, sqlStore, cfg),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
