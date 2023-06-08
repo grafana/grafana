@@ -2,10 +2,9 @@ package angulardetector
 
 import (
 	"fmt"
-	"io"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 // defaultDetectors contains all the detectors to detect Angular plugins.
@@ -24,39 +23,28 @@ var defaultDetectors = []detector{
 	&regexDetector{regex: regexp.MustCompile(`System\.register\(`)},
 }
 
-// PatternsListInspector matches module.js against all the specified patterns, in sequence.
-type PatternsListInspector struct {
-	detectors []detector
+// newDefaultStaticDetectorsGetter returns a new staticDetectorsGetter with the default (hardcoded) angular
+// detection patterns (defaultDetectors)
+func newDefaultStaticDetectorsGetter() detectorsGetter {
+	return &staticDetectorsGetter{detectors: defaultDetectors}
 }
 
-// NewDefaultPatternsListInspector returns a new *PatternsListInspector using defaultDetectors as detectors.
-func NewDefaultPatternsListInspector() *PatternsListInspector {
-	return &PatternsListInspector{detectors: defaultDetectors}
-}
-
-func ProvideService() Inspector {
-	return NewDefaultPatternsListInspector()
-}
-
-func (i *PatternsListInspector) Inspect(p *plugins.Plugin) (isAngular bool, err error) {
-	f, err := p.FS.Open("module.js")
+// newDefaultInspector returns the default Inspector, which is a PatternsListInspector that will:
+//  1. Try to get the Angular detectors from GCOM
+//  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
+func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
+	remoteGetter, err := newGCOMDetectorsGetter(cfg.GrafanaComURL, defaultRemoteDetectorsGetterTTL)
 	if err != nil {
-		return false, fmt.Errorf("open module.js: %w", err)
+		return nil, fmt.Errorf("newGCOMDetectorsGetter: %w", err)
 	}
-	defer func() {
-		if closeErr := f.Close(); closeErr != nil && err == nil {
-			err = fmt.Errorf("close module.js: %w", closeErr)
-		}
-	}()
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return false, fmt.Errorf("module.js readall: %w", err)
-	}
-	for _, d := range i.detectors {
-		if d.Detect(b) {
-			isAngular = true
-			break
-		}
-	}
-	return
+	return &PatternsListInspector{
+		detectorsGetter: sequenceDetectorsGetter{
+			remoteGetter,
+			newDefaultStaticDetectorsGetter(),
+		},
+	}, nil
+}
+
+func ProvideService(cfg *config.Cfg) (Inspector, error) {
+	return newDefaultInspector(cfg)
 }

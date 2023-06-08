@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -185,7 +186,11 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 		// Detect angular for external plugins
 		if p.IsExternalPlugin() {
 			var err error
-			p.AngularDetected, err = l.angularInspector.Inspect(p)
+
+			cctx, canc := context.WithTimeout(ctx, time.Minute*1)
+			p.AngularDetected, err = l.angularInspector.Inspect(cctx, p)
+			canc()
+
 			if err != nil {
 				l.log.Warn("could not inspect plugin for angular", "pluginID", p.ID, "err", err)
 			}

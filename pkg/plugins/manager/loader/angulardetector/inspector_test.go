@@ -1,6 +1,7 @@
 package angulardetector
 
 import (
+	"context"
 	"strconv"
 	"testing"
 
@@ -8,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAngularDetector_Inspect(t *testing.T) {
+func TestInspector(t *testing.T) {
 	type tc struct {
 		name   string
 		plugin *plugins.Plugin
@@ -44,10 +45,10 @@ func TestAngularDetector_Inspect(t *testing.T) {
 		},
 		exp: false,
 	})
-	inspector := NewDefaultPatternsListInspector()
+	inspector := PatternsListInspector{detectorsGetter: newDefaultStaticDetectorsGetter()}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			isAngular, err := inspector.Inspect(tc.plugin)
+			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, isAngular)
 		})
@@ -55,7 +56,7 @@ func TestAngularDetector_Inspect(t *testing.T) {
 
 	t.Run("no module.js", func(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
-		_, err := inspector.Inspect(p)
+		_, err := inspector.Inspect(context.Background(), p)
 		require.ErrorIs(t, err, plugins.ErrFileNotExist)
 	})
 }
@@ -63,24 +64,24 @@ func TestAngularDetector_Inspect(t *testing.T) {
 func TestFakeInspector(t *testing.T) {
 	t.Run("FakeInspector", func(t *testing.T) {
 		var called bool
-		inspector := FakeInspector{InspectFunc: func(p *plugins.Plugin) (bool, error) {
+		inspector := FakeInspector{InspectFunc: func(_ context.Context, _ *plugins.Plugin) (bool, error) {
 			called = true
 			return false, nil
 		}}
-		r, err := inspector.Inspect(&plugins.Plugin{})
+		r, err := inspector.Inspect(context.Background(), &plugins.Plugin{})
 		require.True(t, called)
 		require.NoError(t, err)
 		require.False(t, r)
 	})
 
 	t.Run("AlwaysAngularFakeInspector", func(t *testing.T) {
-		r, err := AlwaysAngularFakeInspector.Inspect(&plugins.Plugin{})
+		r, err := AlwaysAngularFakeInspector.Inspect(context.Background(), &plugins.Plugin{})
 		require.NoError(t, err)
 		require.True(t, r)
 	})
 
 	t.Run("NeverAngularFakeInspector", func(t *testing.T) {
-		r, err := NeverAngularFakeInspector.Inspect(&plugins.Plugin{})
+		r, err := NeverAngularFakeInspector.Inspect(context.Background(), &plugins.Plugin{})
 		require.NoError(t, err)
 		require.False(t, r)
 	})
