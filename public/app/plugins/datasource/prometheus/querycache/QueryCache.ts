@@ -343,8 +343,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
             return;
           }
 
-          // frames are identified by their second (non-time) field's name + labels
-          // TODO: maybe also frame.meta.type?
+          // frames are identified by their second (non-time) field's name + labels, also frame.meta.type?
           let respFrameIdent = getFieldIdent(respFrame.fields[1]);
 
           let cachedFrame = cachedFrames.find(
