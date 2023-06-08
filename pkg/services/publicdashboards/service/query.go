@@ -327,15 +327,15 @@ var NewDataTimeRange = legacydata.NewDataTimeRange
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
 func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQueryDTO, pd *models.PublicDashboard) models.TimeSettings {
-	from, to, location := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
+	from, to, timezone := getTimeRangeValuesOrDefault(reqDTO, d, pd.TimeSelectionEnabled)
 
 	timeRange := NewDataTimeRange(from, to)
 
 	timeFrom, _ := timeRange.ParseFrom(
-		legacydata.WithLocation(location),
+		legacydata.WithLocation(timezone),
 	)
 	timeTo, _ := timeRange.ParseTo(
-		legacydata.WithLocation(location),
+		legacydata.WithLocation(timezone),
 	)
 	timeToAsEpoch := timeTo.UnixMilli()
 	timeFromAsEpoch := timeFrom.UnixMilli()
@@ -351,7 +351,7 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool) (string, string, *time.Location) {
 	from := d.Data.GetPath("time", "from").MustString()
 	to := d.Data.GetPath("time", "to").MustString()
-	dashboardLocation := d.Data.GetPath("timezone").MustString()
+	dashboardTimezone := d.Data.GetPath("timezone").MustString()
 
 	// we use the values from the request if the time selection is enabled and the values are valid
 	if timeSelectionEnabled {
@@ -360,18 +360,18 @@ func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashb
 			to = reqDTO.TimeRange.To
 		}
 
-		if reqDTO.TimeRange.Location != "" {
-			if userLocation, err := time.LoadLocation(reqDTO.TimeRange.Location); err == nil {
-				return from, to, userLocation
+		if reqDTO.TimeRange.Timezone != "" {
+			if userTimezone, err := time.LoadLocation(reqDTO.TimeRange.Timezone); err == nil {
+				return from, to, userTimezone
 			}
 		}
 	}
 
 	// if the Location is blank or there is an error default is UTC
-	location, err := time.LoadLocation(dashboardLocation)
+	timezone, err := time.LoadLocation(dashboardTimezone)
 	if err != nil {
 		return from, to, time.UTC
 	}
 
-	return from, to, location
+	return from, to, timezone
 }

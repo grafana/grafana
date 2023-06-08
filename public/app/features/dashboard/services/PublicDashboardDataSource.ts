@@ -116,7 +116,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
         timeRange: {
           from: fromRange.valueOf().toString(),
           to: toRange.valueOf().toString(),
-          location: this.getBrowserLocation(),
+          timezone: this.getBrowserTimezone(),
         },
       };
 
@@ -160,8 +160,8 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return Promise.resolve({ message: '', status: '' });
   }
 
-  // Try to get the browser location otherwise return blank
-  getBrowserLocation(): string {
+  // Try to get the browser timezone otherwise return blank
+  getBrowserTimezone(): string {
     return window.Intl?.DateTimeFormat().resolvedOptions()?.timeZone || '';
   }
 }

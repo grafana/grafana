@@ -114,9 +114,9 @@ type SavePublicDashboardDTO struct {
 }
 
 type TimeRangeDTO struct {
-	From     string `json:"from"`
-	To       string `json:"to"`
-	Location string `json:"location"`
+	From     string
+	To       string
+	Timezone string
 }
 
 type PublicDashboardQueryDTO struct {

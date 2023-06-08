@@ -1621,8 +1621,8 @@ func TestBuildTimeSettings(t *testing.T) {
 
 	defaultFromMs, defaultToMs := internal.GetTimeRangeFromDashboard(t, defaultDashboardData)
 
-	fakeLocation, _ := time.LoadLocation("Europe/Madrid")
-	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeLocation)
+	fakeTimezone, _ := time.LoadLocation("Europe/Madrid")
+	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
 
 	// stub time range construction to have a fixed time.Now and be able to tests relative time ranges
 	NewDataTimeRange = func(from, to string) legacydata.DataTimeRange {
@@ -1649,7 +1649,7 @@ func TestBuildTimeSettings(t *testing.T) {
 		want      TimeSettings
 	}{
 		{
-			name:      "should return default time range with location with relative time range",
+			name:      "should return default time range with timezone with relative time range",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			reqDTO:    PublicDashboardQueryDTO{},
@@ -1659,12 +1659,12 @@ func TestBuildTimeSettings(t *testing.T) {
 			},
 		},
 		{
-			name:      "should return default time range with location with relative time range if time selection is not enabled",
+			name:      "should return default time range with timezone with relative time range if time selection is not enabled",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			reqDTO: PublicDashboardQueryDTO{
 				TimeRange: TimeRangeDTO{
-					Location: "Europe/Madrid",
+					Timezone: "Europe/Madrid",
 				}},
 			want: TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
@@ -1672,7 +1672,7 @@ func TestBuildTimeSettings(t *testing.T) {
 			},
 		},
 		{
-			name:      "should return user time range with dashboard location with relative time range",
+			name:      "should return user time range with dashboard timezone with relative time range",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid")},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			reqDTO:    PublicDashboardQueryDTO{},
@@ -1682,7 +1682,7 @@ func TestBuildTimeSettings(t *testing.T) {
 			},
 		},
 		{
-			name:      "should return user time range with dashboard location with relative time range for the last hour",
+			name:      "should return user time range with dashboard timezone with relative time range for the last hour",
 			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1h", "now", "Europe/Madrid")},
 			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
 			reqDTO:    PublicDashboardQueryDTO{},
@@ -1768,20 +1768,20 @@ func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result 
 	return
 }
 
-func getStartAndEndOfTheDayBefore(fakeNow time.Time, locationName string) (time.Time, time.Time) {
-	location, _ := time.LoadLocation(locationName)
-	fakeNowWithLocation := fakeNow.In(location)
-	yy, mm, dd := fakeNowWithLocation.Add(-24 * time.Hour).Date()
-	startOfYesterdaySydney := time.Date(yy, mm, dd, 0, 0, 0, 0, location)
-	endOfYesterdaySydney := time.Date(yy, mm, dd, 23, 59, 59, 999999999, location)
+func getStartAndEndOfTheDayBefore(fakeNow time.Time, timezoneName string) (time.Time, time.Time) {
+	timezone, _ := time.LoadLocation(timezoneName)
+	fakeNowWithTimezone := fakeNow.In(timezone)
+	yy, mm, dd := fakeNowWithTimezone.Add(-24 * time.Hour).Date()
+	startOfYesterdaySydney := time.Date(yy, mm, dd, 0, 0, 0, 0, timezone)
+	endOfYesterdaySydney := time.Date(yy, mm, dd, 23, 59, 59, 999999999, timezone)
 	return startOfYesterdaySydney, endOfYesterdaySydney
 }
 
-func buildJsonDataWithTimeRange(from, to, location string) *simplejson.Json {
+func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
 	return simplejson.NewFromAny(map[string]interface{}{
 		"time": map[string]interface{}{
 			"from": from, "to": to,
 		},
-		"timezone": location,
+		"timezone": timezone,
 	})
 }
