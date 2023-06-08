@@ -59,7 +59,7 @@ Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
 
 Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
 
-### [glpi](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
+### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
 
 Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
 
@@ -77,7 +77,7 @@ Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 
 Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
 
-> **Note:** Migration to react is planned.
+> **Note:** Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 
 ### [Kentik Connect Pro](https://grafana.com/grafana/plugins/kentik-connect-app/)
 
@@ -99,7 +99,7 @@ Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 > **Warning:** [Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
 
-### [stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
+### [Stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
 
 Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
 
@@ -158,10 +158,6 @@ Latest Version: 1.2.1 | Signature: Community | Last Updated: 2022
 Latest Version: 2.2.3 | Signature: Community | Last Updated: 2022
 
 > **Warning:** Lack of recent activity in the [project repository](https://github.com/chaos-mesh/datasource) in the past year suggests project _may_ not be actively maintained.
-
-### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
 
 ### [DeviceHive](https://grafana.com/grafana/plugins/devicehive-devicehive-datasource/)
 
@@ -241,12 +237,6 @@ Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
 
 > **Note:** If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
 
-### [Splunk](https://grafana.com/grafana/plugins/grafana-splunk-datasource/)
-
-Latest Version: 4.1.6 | Signature: Grafana | Last Updated: 2023
-
-> **Note:** Removal of any angular dependency is on the near term roadmap.
-
 ### [Strava](https://grafana.com/grafana/plugins/grafana-strava-datasource/)
 
 Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
@@ -258,12 +248,6 @@ Latest Version: 1.5.1 | Signature: Grafana | Last Updated: 2022
 Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
 
 > **Warning:** Lack of recent activity in the [project repository](https://github.com/GridProtectionAlliance/openHistorian-grafana/) in the past 2 years suggests project _may_ not be actively maintained.
-
-### [OSIsoft-PI](https://grafana.com/grafana/plugins/gridprotectionalliance-osisoftpi-datasource/)
-
-Latest Version: 3.1.0 | Signature: Community | Last Updated: 2023
-
-> **Note:** Fixed in 4.0.0 which should be published soon - [source](https://github.com/GridProtectionAlliance/osisoftpi-grafana/issues/119#issuecomment-1493566212).
 
 ### [Hawkular](https://grafana.com/grafana/plugins/hawkular-datasource/)
 
@@ -332,14 +316,6 @@ Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
 Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** this plugin was [discontinued in favour of the InfluxDB data source](https://github.com/ntop/ntopng-grafana-datasource) - a Core plugin included in Grafana, additional guidance is available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).
-
-### [Oracle Cloud Infrastructure Logs](https://grafana.com/grafana/plugins/oci-logs-datasource/)
-
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
-
-### [Oracle Cloud Infrastructure Metrics](https://grafana.com/grafana/plugins/oci-metrics-datasource/)
-
-Latest Version: 4.0.0 | Signature: Commercial | Last Updated: 2023
 
 ### [Warp 10](https://grafana.com/grafana/plugins/ovh-warp10-datasource/)
 
