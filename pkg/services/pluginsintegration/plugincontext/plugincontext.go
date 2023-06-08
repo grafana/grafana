@@ -90,14 +90,14 @@ func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, use
 	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
 	if err != nil {
 		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
-		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
+		// Otherwise, something is wrong with cache or database, and we return the error to the client.
 		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
-			return &backend.AppInstanceSettings{}, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
+			return nil, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
 		}
 	} else {
 		jsonData, err = json.Marshal(ps.JSONData)
 		if err != nil {
-			return &backend.AppInstanceSettings{}, fmt.Errorf("%v: %w", "Failed to unmarshal plugin json data", err)
+			return nil, fmt.Errorf("%v: %w", "Failed to unmarshal plugin json data", err)
 		}
 		decryptedSecureJSONData = p.pluginSettingsService.DecryptedValues(ps)
 		updated = ps.Updated
