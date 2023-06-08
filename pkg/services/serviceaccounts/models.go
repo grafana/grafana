@@ -38,11 +38,11 @@ var (
 )
 
 type MigrationResult struct {
-	Total           int
-	Migrated        int
-	Failed          int
-	FailedApikeyIDs []int64
-	FailedDetails   []string
+	Total           int      `json:"total"`
+	Migrated        int      `json:"migrated"`
+	Failed          int      `json:"failed"`
+	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
+	FailedDetails   []string `json:"failedDetails"`
 }
 
 type ServiceAccount struct {
