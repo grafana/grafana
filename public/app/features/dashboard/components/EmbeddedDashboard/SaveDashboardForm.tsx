@@ -20,15 +20,7 @@ interface SaveDashboardProps {
   options: SaveDashboardOptions;
   onOptionsChange: (opts: SaveDashboardOptions) => void;
 }
-export const SaveDashboardForm = ({
-  dashboard,
-  saveModel,
-  options,
-  onSubmit,
-  onCancel,
-  onSuccess,
-  onOptionsChange,
-}: SaveDashboardProps) => {
+export const SaveDashboardForm = ({ saveModel, options, onSubmit, onCancel, onSuccess }: SaveDashboardProps) => {
   const [saving, setSaving] = useState(false);
   const notifyApp = useAppNotification();
 
@@ -43,6 +35,7 @@ export const SaveDashboardForm = ({
         onSubmit(saveModel.clone)
           .then(() => {
             notifyApp.success('Dashboard saved');
+            onSuccess();
           })
           .catch((error) => {
             notifyApp.error(error.message || 'Error saving dashboard');
