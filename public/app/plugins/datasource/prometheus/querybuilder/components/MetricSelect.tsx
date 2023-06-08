@@ -33,8 +33,6 @@ export interface Props {
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
-let prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-
 export function MetricSelect({
   datasource,
   query,
@@ -52,6 +50,8 @@ export function MetricSelect({
     metricsModalOpen?: boolean;
     initialMetrics?: string[];
   }>({});
+
+  const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
 
   const metricsModalOption: SelectableValue[] = [
     {
@@ -85,7 +85,7 @@ export function MetricSelect({
         return acc && (matcheSearch || browseOption);
       }, true);
     },
-    [variableEditor]
+    [prometheusMetricEncyclopedia, variableEditor]
   );
 
   const formatOptionLabel = useCallback(
