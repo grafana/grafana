@@ -27,6 +27,8 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
+  isFilterLabelActive?: (key: string, value: string) => boolean;
+  isFilterOutLabelActive?: (key: string, value: string) => boolean;
 }
 
 interface State {
@@ -132,6 +134,22 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       logRowUid: row.uid,
       type: 'disable',
     });
+  };
+
+  isFilterLabelActive = () => {
+    const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
+    if (isFilterLabelActive) {
+      return isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+    }
+    return false;
+  };
+
+  isFilterOutLabelActive = () => {
+    const { isFilterOutLabelActive, parsedKeys, parsedValues } = this.props;
+    if (isFilterOutLabelActive) {
+      return isFilterOutLabelActive(parsedKeys[0], parsedValues[0]);
+    }
+    return false;
   };
 
   filterLabel = () => {
@@ -267,10 +285,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <td className={style.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <IconButton name="search-plus" tooltip="Filter for value" onClick={this.filterLabel} />
+                <IconButton
+                  name="search-plus"
+                  tooltip="Filter for value"
+                  onClick={this.filterLabel}
+                  variant={this.isFilterLabelActive() ? 'primary' : undefined}
+                />
               )}
               {hasFilteringFunctionality && (
-                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+                <IconButton
+                  name="search-minus"
+                  tooltip="Filter out value"
+                  onClick={this.filterOutLabel}
+                  variant={this.isFilterOutLabelActive() ? 'primary' : undefined}
+                />
               )}
               {!disableActions && displayedFields && toggleFieldButton}
               {!disableActions && (
