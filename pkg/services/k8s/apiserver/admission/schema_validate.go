@@ -32,12 +32,10 @@ var _ admission.ValidationInterface = schemaValidate{}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
 func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
-	// pretending only dashboards exist
 	obj := a.GetObject()
 	uobj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
-		// not sure what conditions caused this, but:
-		// interface conversion: runtime.Object is *kinds.GrafanaResourceDefinition, not *unstructured.Unstructured
+		// not sure if this is ever expected to happen
 		sv.log.Info("failed to cast object to unstructured")
 		return nil
 	}
@@ -47,9 +45,8 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 		return nil
 	}
 
-	// this can be generic, but for now, just do it for dashboards
+	// this needs to be generic, but for now, just do it for dashboards
 	if obj.GetObjectKind().GroupVersionKind().Kind == "Dashboard" {
-		// should NewKind be a singleton? it seems heavy to run each time
 		dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
 		if err != nil {
 			sv.log.Info("failed to create dashboard kind", "err", err)
@@ -87,6 +84,10 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 // Handles returns true if this admission controller can handle the given operation
 // where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
 func (schemaValidate) Handles(operation admission.Operation) bool {
+	switch operation {
+	case admission.Connect:
+		return false
+	}
 	return true
 }
 
