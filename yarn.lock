@@ -1814,6 +1814,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime-corejs3@npm:^7.16.5":
+  version: 7.22.3
+  resolution: "@babel/runtime-corejs3@npm:7.22.3"
+  dependencies:
+    core-js-pure: ^3.30.2
+    regenerator-runtime: ^0.13.11
+  checksum: ec92a0b874669bb5eff9e7f20d4e0dbfb0bb5d433bd9e2d6f892c38884079d657240165306a402bb4747942765bdd37b7b5857c573505d2179c1fa4162bf966b
+  languageName: node
+  linkType: hard
+
 "@babel/runtime@npm:7.20.1":
   version: 7.20.1
   resolution: "@babel/runtime@npm:7.20.1"
@@ -4418,29 +4428,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.59":
-  version: 0.0.59
-  resolution: "@kusto/language-service-next@npm:0.0.59"
-  checksum: 90f377a4c59e632a2fd904c202be3c823f41359b62b05a7bc66fd4a9e86d7bed34970822b720232dacd45f6ce3373abff53fb843b5228878c5f84f5b5ba68fba
+"@kusto/language-service-next@npm:0.0.66":
+  version: 0.0.66
+  resolution: "@kusto/language-service-next@npm:0.0.66"
+  checksum: d85dda481fc72b81097481ed6a8f51fe342cfbe17e8436c9a69ad22904e3c1695b4fbf26d63aef891e8d6f262d618e939e5ad5bdbd531c7cd4cd16ad91095865
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.38":
-  version: 0.0.38
-  resolution: "@kusto/language-service@npm:0.0.38"
-  checksum: 9ad45b144409162298f1e61b87209e40315f3fe30b5766175b831ce9ab6b5cd4f046323956fa35ce971993aa67f84b175c5af1de9614dd57a12f4fd61bfa401c
+"@kusto/language-service@npm:0.0.43":
+  version: 0.0.43
+  resolution: "@kusto/language-service@npm:0.0.43"
+  checksum: cae1ddf61424ff34e631e2defe54fc6344877079101b164d611606885207fef9128cfcf079f51b7dd8856132cf458e208396f418f7eb63c6342986c167a3be23
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.3.6":
-  version: 5.3.6
-  resolution: "@kusto/monaco-kusto@npm:5.3.6"
+"@kusto/monaco-kusto@npm:^7.4.0":
+  version: 7.4.0
+  resolution: "@kusto/monaco-kusto@npm:7.4.0"
   dependencies:
-    "@kusto/language-service": 0.0.38
-    "@kusto/language-service-next": 0.0.59
+    "@kusto/language-service": 0.0.43
+    "@kusto/language-service-next": 0.0.66
+    lodash-es: ^4.17.21
+    vscode-languageserver-types: 3.16.0
+    xregexp: ^5.1.1
   peerDependencies:
-    monaco-editor: 0.34.1
-  checksum: 55cef304cca6383ed4bccd60639d7429e2bee224e719eb33b294067ba47086df51752d5a51d9bb8cd73b7fe5a2fa3d6e5f625d392d013e281c451d967a529672
+    monaco-editor: ~0.38.0
+  bin:
+    copyMonacoFilesAMD: copyMonacoFilesAMD.js
+  checksum: d3905b049729f1b58286e868c000f934f237db07745f5498121c839bdf65e41c2564dca5a0ee0e53c9e4c413e2843e92cfbb2e5910bee620746625da02d4bf8d
   languageName: node
   linkType: hard
 
@@ -14803,6 +14818,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-js-pure@npm:^3.30.2":
+  version: 3.30.2
+  resolution: "core-js-pure@npm:3.30.2"
+  checksum: e0e012fe94e38663d837410baac62efe05d0c7431e3fbaa70c65f51eb980da9c3add225eca04208d576bc0d92cefeca9a4f7671a65fd84fd7dfc92d8618dddfd
+  languageName: node
+  linkType: hard
+
 "core-js@npm:3.28.0":
   version: 3.28.0
   resolution: "core-js@npm:3.28.0"
@@ -20115,7 +20137,7 @@ __metadata:
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
-    "@kusto/monaco-kusto": 5.3.6
+    "@kusto/monaco-kusto": ^7.4.0
     "@leeoniya/ufuzzy": 1.0.6
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
@@ -24906,6 +24928,13 @@ __metadata:
   dependencies:
     p-locate: ^5.0.0
   checksum: 72eb661788a0368c099a184c59d2fee760b3831c9c1c33955e8a19ae4a21b4116e53fa736dc086cdeb9fce9f7cc508f2f92d2d3aae516f133e16a2bb59a39f5a
+  languageName: node
+  linkType: hard
+
+"lodash-es@npm:^4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 05cbffad6e2adbb331a4e16fbd826e7faee403a1a04873b82b42c0f22090f280839f85b95393f487c1303c8a3d2a010048bf06151a6cbe03eee4d388fb0a12d2
   languageName: node
   linkType: hard
 
@@ -36831,6 +36860,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vscode-languageserver-types@npm:3.16.0":
+  version: 3.16.0
+  resolution: "vscode-languageserver-types@npm:3.16.0"
+  checksum: 7a44fb10b9fbeb9529f832337b7f0430fc6275d62945b86851d425a950e22da3917ef5f6c552688191769dd1eae047c6ee9ec3d9f2280498353007c2dfe0725c
+  languageName: node
+  linkType: hard
+
 "vue-template-compiler@npm:^2.6.11":
   version: 2.7.10
   resolution: "vue-template-compiler@npm:2.7.10"
@@ -37780,6 +37816,15 @@ __metadata:
   version: 2.2.0
   resolution: "xmlchars@npm:2.2.0"
   checksum: 8c70ac94070ccca03f47a81fcce3b271bd1f37a591bf5424e787ae313fcb9c212f5f6786e1fa82076a2c632c0141552babcd85698c437506dfa6ae2d58723062
+  languageName: node
+  linkType: hard
+
+"xregexp@npm:^5.1.1":
+  version: 5.1.1
+  resolution: "xregexp@npm:5.1.1"
+  dependencies:
+    "@babel/runtime-corejs3": ^7.16.5
+  checksum: b7fee45db0daacc68d8f747c9d3865af6b1135866c6dbd72980fc7d61138310018c397effdc0ec1f50ced71b9437ccb70c27818f4470e28e48dc59ea6e3900a0
   languageName: node
   linkType: hard
 
