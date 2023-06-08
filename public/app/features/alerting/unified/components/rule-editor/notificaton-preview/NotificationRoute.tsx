@@ -48,11 +48,14 @@ function NotificationRouteHeader({
         onToggle={(isCollapsed) => onExpandRouteClick(!isCollapsed)}
         aria-label="Expand policy route"
       />
+
       <Stack flexGrow={1} gap={1}>
-        <Stack gap={1} direction="row" alignItems="center">
-          Notification policy
-          <NotificationPolicyMatchers route={route} />
-        </Stack>
+        <div onClick={() => onExpandRouteClick(!expandRoute)} className={styles.expandable}>
+          <Stack gap={1} direction="row" alignItems="center">
+            Notification policy
+            <NotificationPolicyMatchers route={route} />
+          </Stack>
+        </div>
         <Spacer />
         <Stack gap={2} direction="row" alignItems="center">
           <MetaText icon="layers-alt" data-testid="matching-instances">
@@ -168,14 +171,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   textItalic: css`
     font-style: italic;
   `,
+  expandable: css`
+    cursor: pointer;
+  `,
   routeHeader: css`
     display: flex;
     flex-direction: row;
     gap: ${theme.spacing(1)};
     align-items: center;
-    border-bottom: solid 1px ${theme.colors.border.weak};
+    border-bottom: 1px solid ${theme.colors.border.weak};
+    &:hover {
+      background-color: ${theme.components.table.rowHoverBackground};
+    }
     padding: ${theme.spacing(0.5, 0.5, 0.5, 0)};
-    background: ${theme.colors.background.secondary};
   `,
   labelList: css`
     flex: 0 1 auto;
