@@ -1,37 +1,50 @@
 package angulardetector
 
 import (
-	"bytes"
+	"fmt"
 	"regexp"
+
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
-var (
-	_ detector = &containsBytesDetector{}
-	_ detector = &regexDetector{}
-)
+// defaultDetectors contains all the detectors to detect Angular plugins.
+// They are executed in the specified order.
+var defaultDetectors = []detector{
+	&containsBytesDetector{pattern: []byte("PanelCtrl")},
+	&containsBytesDetector{pattern: []byte("QueryCtrl")},
+	&containsBytesDetector{pattern: []byte("app/plugins/sdk")},
+	&containsBytesDetector{pattern: []byte("angular.isNumber(")},
+	&containsBytesDetector{pattern: []byte("editor.html")},
+	&containsBytesDetector{pattern: []byte("ctrl.annotation")},
+	&containsBytesDetector{pattern: []byte("getLegacyAngularInjector")},
 
-// detector implements a check to see if a plugin uses Angular.
-type detector interface {
-	// Detect takes the content of a moduleJs file and returns true if the plugin is using Angular.
-	Detect(moduleJs []byte) bool
+	&regexDetector{regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
+	&regexDetector{regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
+	&regexDetector{regex: regexp.MustCompile(`System\.register\(`)},
 }
 
-// containsBytesDetector is a detector that returns true if module.js contains the "pattern" string.
-type containsBytesDetector struct {
-	pattern []byte
+// newDefaultStaticDetectorsGetter returns a new staticDetectorsGetter with the default (hardcoded) angular
+// detection patterns (defaultDetectors)
+func newDefaultStaticDetectorsGetter() detectorsGetter {
+	return &staticDetectorsGetter{detectors: defaultDetectors}
 }
 
-// Detect returns true if moduleJs contains the byte slice d.pattern.
-func (d *containsBytesDetector) Detect(moduleJs []byte) bool {
-	return bytes.Contains(moduleJs, d.pattern)
+// newDefaultInspector returns the default Inspector, which is a PatternsListInspector that will:
+//  1. Try to get the Angular detectors from GCOM
+//  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
+func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
+	remoteGetter, err := newGCOMDetectorsGetter(cfg.GrafanaComURL, defaultRemoteDetectorsGetterTTL)
+	if err != nil {
+		return nil, fmt.Errorf("newGCOMDetectorsGetter: %w", err)
+	}
+	return &PatternsListInspector{
+		detectorsGetter: sequenceDetectorsGetter{
+			remoteGetter,
+			newDefaultStaticDetectorsGetter(),
+		},
+	}, nil
 }
 
-// regexDetector is a detector that returns true if the module.js content matches a regular expression.
-type regexDetector struct {
-	regex *regexp.Regexp
-}
-
-// Detect returns true if moduleJs matches the regular expression d.regex.
-func (d *regexDetector) Detect(moduleJs []byte) bool {
-	return d.regex.Match(moduleJs)
+func ProvideService(cfg *config.Cfg) (Inspector, error) {
+	return newDefaultInspector(cfg)
 }
