@@ -232,13 +232,13 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, status)
 	})
 
-	t.Run("if user does not have permissions", func(t *testing.T) {
+	t.Run("authentication permissions", func(t *testing.T) {
 		if !setting.IsEnterprise {
 			t.Skip("Enterprise-only test")
 		}
 
 		testUserId := createUser(t, env.SQLStore, user.CreateUserCommand{
-			DefaultOrgRole: "",
+			DefaultOrgRole: "DOESNOTEXIST", // Needed so that the SignedInUser has OrgId=1. Otherwise, datasource will not be found.
 			Password:       "test",
 			Login:          "test",
 		})
@@ -246,7 +246,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		testUserApiCli := newAlertingApiClient(grafanaListedAddr, "test", "test")
 
 		t.Run("fail if can't read rules", func(t *testing.T) {
-			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(alertRuleGen()))
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
 			require.Contains(t, body, accesscontrol.ActionAlertingRuleRead)
 			require.Equalf(t, http.StatusForbidden, status, "Response: %s", body)
 		})
@@ -268,9 +268,28 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		testUserApiCli.ReloadCachedPermissions(t)
 
 		t.Run("fail if can't query data sources", func(t *testing.T) {
-			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(alertRuleGen()))
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
 			require.Contains(t, body, "user is not authorized to query one or many data sources used by the rule")
 			require.Equalf(t, http.StatusUnauthorized, status, "Response: %s", body)
+		})
+
+		_, err = permissionsStore.SetUserResourcePermission(context.Background(),
+			accesscontrol.GlobalOrgID,
+			accesscontrol.User{ID: testUserId},
+			resourcepermissions.SetResourcePermissionCommand{
+				Actions: []string{
+					datasources.ActionQuery,
+				},
+				Resource:          "datasources",
+				ResourceID:        TESTDATA_UID,
+				ResourceAttribute: "uid",
+			}, nil)
+		require.NoError(t, err)
+		testUserApiCli.ReloadCachedPermissions(t)
+
+		t.Run("succeed if can query data sources", func(t *testing.T) {
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
+			require.Equalf(t, http.StatusOK, status, "Response: %s", body)
 		})
 	})
 }
