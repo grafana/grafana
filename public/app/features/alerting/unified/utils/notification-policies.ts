@@ -1,12 +1,6 @@
 import { isArray, merge, pick, reduce } from 'lodash';
 
-import {
-  AlertmanagerGroup,
-  MatcherOperator,
-  ObjectMatcher,
-  Route,
-  RouteWithID,
-} from 'app/plugins/datasource/alertmanager/types';
+import { AlertmanagerGroup, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { normalizeMatchers } from './amroutes';
 
