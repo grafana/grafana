@@ -835,7 +835,7 @@ export class ElasticDatasource
     if (obj === null || obj === undefined) {
       return true;
     }
-    if (['string', 'number', 'boolean'].some((type) => type === typeof obj)) {
+    if (['string', 'number', 'boolean'].some((type) => type === typeof true)) {
       return true;
     }
 
