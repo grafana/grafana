@@ -26,7 +26,7 @@ export class DashboardKindService {
   private url: string;
   namespace: string;
 
-  groupVersion = 'dashboard.kinds.grafana.com/v0.0-alpha';
+  groupVersion = 'dashboard.kinds.grafana.com/v0-alpha'; // HARDCODED
   kind = 'Dashboard';
   name = 'dashboards';
 
