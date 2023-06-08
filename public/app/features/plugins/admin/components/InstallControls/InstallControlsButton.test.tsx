@@ -49,43 +49,24 @@ describe('InstallControlsButton', () => {
     config.angularSupportEnabled = oldAngularSupportEnabled;
   });
 
-  describe('angular support disabled', () => {
-    const angularSupportEnabled = false;
+  describe.each([{ angularSupportEnabled: true }, { angularSupportEnabled: false }])(
+    'angular support is $angularSupportEnabled',
+    ({ angularSupportEnabled }) => {
+      it.each([
+        { angularDetected: true, expectEnabled: angularSupportEnabled },
+        { angularDetected: false, expectEnabled: true },
+      ])('angular detected is $angularDetected', ({ angularDetected, expectEnabled }) => {
+        setup({ angularSupportEnabled, angularDetected });
 
-    it('disables install button for angular plugins', () => {
-      setup({ angularSupportEnabled, angularDetected: true });
-      const el = screen.getByRole('button');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).toBeDisabled();
-    });
-
-    it('does not disable install button for non-angular plugins', () => {
-      setup({ angularSupportEnabled, angularDetected: false });
-      const el = screen.getByRole('button');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).toBeEnabled();
-    });
-  });
-
-  describe('angular support enabled', () => {
-    const angularSupportEnabled = true;
-
-    it('does nothing for angular plugins', () => {
-      setup({ angularSupportEnabled, angularDetected: true });
-      const el = screen.getByRole('button');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).toBeEnabled();
-    });
-
-    it('does nothing for non-angular plugins', () => {
-      setup({ angularSupportEnabled, angularDetected: false });
-      const el = screen.getByRole('button');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).toBeEnabled();
-    });
-  });
+        const el = screen.getByRole('button');
+        expect(el).toHaveTextContent(/install/i);
+        expect(el).toBeVisible();
+        if (expectEnabled) {
+          expect(el).toBeEnabled();
+        } else {
+          expect(el).toBeDisabled();
+        }
+      });
+    }
+  );
 });

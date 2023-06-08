@@ -24,36 +24,25 @@ describe('ExternallyManagedButton', () => {
     config.angularSupportEnabled = oldAngularSupportEnabled;
   });
 
-  const linkDisabledStyle = 'pointer-events: none';
+  describe.each([{ angularSupportEnabled: true }, { angularSupportEnabled: false }])(
+    'angular support is $angularSupportEnabled',
+    ({ angularSupportEnabled }) => {
+      it.each([
+        { angularDetected: true, expectEnabled: angularSupportEnabled },
+        { angularDetected: false, expectEnabled: true },
+      ])('angular detected is $angularDetected', ({ angularDetected, expectEnabled }) => {
+        setup({ angularSupportEnabled, angularDetected });
 
-  describe('angular support disabled', () => {
-    const angularSupportEnabled = false;
-    it.each([
-      { angularDetected: true, expectDisabled: true },
-      { angularDetected: false, expectDisabled: false },
-    ])('%s', ({ angularDetected, expectDisabled }) => {
-      setup({ angularSupportEnabled, angularDetected });
-
-      const el = screen.getByRole('link');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      if (expectDisabled) {
-        expect(el).toHaveStyle(linkDisabledStyle);
-      } else {
-        expect(el).not.toHaveStyle(linkDisabledStyle);
-      }
-    });
-  });
-
-  describe('angular support enabled', () => {
-    const angularSupportEnabled = true;
-    it.each([{ angularDetected: true }, { angularDetected: false }])('%s', ({ angularDetected }) => {
-      setup({ angularSupportEnabled, angularDetected });
-
-      const el = screen.getByRole('link');
-      expect(el).toHaveTextContent(/install/i);
-      expect(el).toBeVisible();
-      expect(el).not.toHaveStyle(linkDisabledStyle);
-    });
-  });
+        const el = screen.getByRole('link');
+        expect(el).toHaveTextContent(/install/i);
+        expect(el).toBeVisible();
+        const linkDisabledStyle = 'pointer-events: none';
+        if (expectEnabled) {
+          expect(el).not.toHaveStyle(linkDisabledStyle);
+        } else {
+          expect(el).toHaveStyle(linkDisabledStyle);
+        }
+      });
+    }
+  );
 });
