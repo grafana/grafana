@@ -46,6 +46,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     dispatch(
       setAllSelection({
         isSelected: false,
+        folderUID: undefined,
       })
     );
   }, [dispatch, folderUID, stateManager]);
