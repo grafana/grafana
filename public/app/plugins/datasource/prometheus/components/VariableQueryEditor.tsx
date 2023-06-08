@@ -10,7 +10,6 @@ import {
 } from '../migrations/variableMigration';
 import { MetricSelect } from '../querybuilder/components/MetricSelect';
 import { getMetrics } from '../querybuilder/components/PromQueryBuilder';
-import { PromVisualQuery } from '../querybuilder/types';
 import {
   PromOptions,
   PromQuery,
