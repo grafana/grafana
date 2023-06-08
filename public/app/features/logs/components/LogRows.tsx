@@ -47,6 +47,8 @@ export interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string) => boolean;
+  isFilterOutLabelActive?: (key: string, value: string) => boolean;
 }
 
 interface State {
@@ -176,6 +178,67 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         <tbody>
           {hasData && firstRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
           {hasData && renderAll && lastRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
+          {hasData &&
+            firstRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                displayedFields={displayedFields}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                timeZone={timeZone}
+                enableLogDetails={enableLogDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+                onOpenContext={this.openContext}
+                onLogRowHover={onLogRowHover}
+                app={app}
+                styles={styles}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+                isFilterOutLabelActive={this.props.isFilterOutLabelActive}
+              />
+            ))}
+          {hasData &&
+            renderAll &&
+            lastRows.map((row, index) => (
+              <LogRow
+                key={row.uid}
+                getRows={getRows}
+                row={row}
+                showContextToggle={showContextToggle}
+                showDuplicates={showDuplicates}
+                showLabels={showLabels}
+                showTime={showTime}
+                displayedFields={displayedFields}
+                wrapLogMessage={wrapLogMessage}
+                prettifyLogMessage={prettifyLogMessage}
+                timeZone={timeZone}
+                enableLogDetails={enableLogDetails}
+                onClickFilterLabel={onClickFilterLabel}
+                onClickFilterOutLabel={onClickFilterOutLabel}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
+                getFieldLinks={getFieldLinks}
+                logsSortOrder={logsSortOrder}
+                forceEscape={forceEscape}
+                onOpenContext={this.openContext}
+                onLogRowHover={onLogRowHover}
+                app={app}
+                styles={styles}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+                isFilterOutLabelActive={this.props.isFilterOutLabelActive}
+              />
+            ))}
           {hasData && !renderAll && (
             <tr>
               <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>

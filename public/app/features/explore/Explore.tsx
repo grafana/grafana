@@ -182,6 +182,16 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
+  isFilterLabelActive = (key: string, value: string) => {
+    console.log(this.props.queryKeys);
+    return true;
+  };
+
+  isFilterOutLabelActive = (key: string, value: string) => {
+    console.log(this.props.queryKeys);
+    return true;
+  };
+
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
@@ -347,6 +357,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
         scrollElement={this.scrollElement}
+        isFilterLabelActive={this.isFilterLabelActive}
+        isFilterOutLabelActive={this.isFilterOutLabelActive}
       />
     );
   }

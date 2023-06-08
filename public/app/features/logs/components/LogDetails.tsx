@@ -26,6 +26,8 @@ export interface Props extends Themeable2 {
   displayedFields?: string[];
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
+  isFilterLabelActive?: (key: string, value: string) => boolean;
+  isFilterOutLabelActive?: (key: string, value: string) => boolean;
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
@@ -103,6 +105,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         wrapLogMessage={wrapLogMessage}
                         displayedFields={displayedFields}
                         disableActions={false}
+                        isFilterLabelActive={this.props.isFilterLabelActive}
+                        isFilterOutLabelActive={this.props.isFilterOutLabelActive}
                       />
                     );
                   })}
@@ -123,6 +127,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       row={row}
                       app={app}
                       disableActions={false}
+                      isFilterLabelActive={this.props.isFilterLabelActive}
+                      isFilterOutLabelActive={this.props.isFilterOutLabelActive}
                     />
                   );
                 })}

@@ -93,6 +93,8 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  isFilterLabelActive: (key: string, value: string) => boolean;
+  isFilterOutLabelActive: (key: string, value: string) => boolean;
 }
 
 interface State {
@@ -625,6 +627,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 onPermalinkClick={this.onPermalinkClick}
                 permalinkedRowId={this.props.panelState?.logs?.id}
                 scrollIntoView={this.scrollIntoView}
+                isFilterLabelActive={this.props.isFilterLabelActive}
+                isFilterOutLabelActive={this.props.isFilterOutLabelActive}
               />
               {!loading && !hasData && !scanning && (
                 <div className={styles.noData}>
