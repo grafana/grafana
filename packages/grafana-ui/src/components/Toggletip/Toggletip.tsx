@@ -97,7 +97,6 @@ export const Toggletip = React.memo(
               {closeButton && (
                 <div className={style.headerClose}>
                   <IconButton
-                    aria-label="Close Toggletip"
                     tooltip="Close"
                     name="times"
                     data-testid="toggletip-header-close"
