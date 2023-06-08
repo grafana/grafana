@@ -252,15 +252,15 @@ describe('browse-dashboards reducers', () => {
   });
 
   describe('setAllSelection', () => {
-    it('selects all loaded items', () => {
-      const state = createInitialState();
+    let seed = 1;
+    const topLevelDashboard = wellFormedDashboard(seed++).item;
+    const topLevelFolder = wellFormedFolder(seed++).item;
+    const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+    const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
+    const grandchildDashboard = wellFormedDashboard(seed++, {}, { parentUID: childFolder.uid }).item;
 
-      let seed = 1;
-      const topLevelDashboard = wellFormedDashboard(seed++).item;
-      const topLevelFolder = wellFormedFolder(seed++).item;
-      const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
-      const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
-      const grandchildDashboard = wellFormedDashboard(seed++, {}, { parentUID: childFolder.uid }).item;
+    it('selects all items in the root folder', () => {
+      const state = createInitialState();
 
       state.rootItems = [topLevelFolder, topLevelDashboard];
       state.childrenByParentUID[topLevelFolder.uid] = [childDashboard, childFolder];
@@ -269,7 +269,7 @@ describe('browse-dashboards reducers', () => {
       state.selectedItems.folder[childFolder.uid] = false;
       state.selectedItems.dashboard[grandchildDashboard.uid] = true;
 
-      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true } });
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true, folderUID: undefined } });
 
       expect(state.selectedItems).toEqual({
         $all: true,
@@ -286,15 +286,8 @@ describe('browse-dashboards reducers', () => {
       });
     });
 
-    it('deselects all items', () => {
+    it('selects all items when viewing a folder', () => {
       const state = createInitialState();
-
-      let seed = 1;
-      const topLevelDashboard = wellFormedDashboard(seed++).item;
-      const topLevelFolder = wellFormedFolder(seed++).item;
-      const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
-      const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
-      const grandchildDashboard = wellFormedDashboard(seed++, {}, { parentUID: childFolder.uid }).item;
 
       state.rootItems = [topLevelFolder, topLevelDashboard];
       state.childrenByParentUID[topLevelFolder.uid] = [childDashboard, childFolder];
@@ -303,7 +296,32 @@ describe('browse-dashboards reducers', () => {
       state.selectedItems.folder[childFolder.uid] = false;
       state.selectedItems.dashboard[grandchildDashboard.uid] = true;
 
-      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: false } });
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true, folderUID: topLevelFolder.uid } });
+
+      expect(state.selectedItems).toEqual({
+        $all: true,
+        dashboard: {
+          [childDashboard.uid]: true,
+          [grandchildDashboard.uid]: true,
+        },
+        folder: {
+          [childFolder.uid]: true,
+        },
+        panel: {},
+      });
+    });
+
+    it('deselects all items', () => {
+      const state = createInitialState();
+
+      state.rootItems = [topLevelFolder, topLevelDashboard];
+      state.childrenByParentUID[topLevelFolder.uid] = [childDashboard, childFolder];
+      state.childrenByParentUID[childFolder.uid] = [grandchildDashboard];
+
+      state.selectedItems.folder[childFolder.uid] = false;
+      state.selectedItems.dashboard[grandchildDashboard.uid] = true;
+
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: false, folderUID: undefined } });
 
       // Deselecting only sets selection = false for things already selected
       expect(state.selectedItems).toEqual({

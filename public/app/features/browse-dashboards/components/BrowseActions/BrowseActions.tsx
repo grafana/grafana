@@ -38,11 +38,8 @@ export function BrowseActions() {
   const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = (parentsToRefresh: Set<string | undefined>) => {
-    dispatch(
-      setAllSelection({
-        isSelected: false,
-      })
-    );
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
+
     if (isSearching) {
       // Redo search query
       stateManager.doSearchWithDebounce();
