@@ -334,3 +334,22 @@ func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.Backt
 	require.NoError(t, err)
 	return resp.StatusCode, string(b)
 }
+
+func (a apiClient) SubmitRuleForTesting(t *testing.T, config apimodels.PostableExtendedRuleNodeExtended) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(config)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/v1/rule/test/grafana", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, string(b)
+}

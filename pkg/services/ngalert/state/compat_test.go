@@ -1,4 +1,4 @@
-package schedule
+package state
 
 import (
 	"fmt"
@@ -16,11 +16,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func Test_stateToPostableAlert(t *testing.T) {
+func Test_StateToPostableAlert(t *testing.T) {
 	appURL := &url.URL{
 		Scheme: "http:",
 		Host:   fmt.Sprintf("host-%d", rand.Int()),
@@ -59,7 +58,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 				t.Run("to alert rule", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 					u := *appURL
 					u.Path = u.Path + "/alerting/grafana/" + alertState.AlertRuleUID + "/view"
 					require.Equal(t, u.String(), result.Alert.GeneratorURL.String())
@@ -68,25 +67,25 @@ func Test_stateToPostableAlert(t *testing.T) {
 				t.Run("app URL as is if rule UID is not specified", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = ""
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 
 					delete(alertState.Labels, alertingModels.RuleUIDLabel)
-					result = stateToPostableAlert(alertState, appURL)
+					result = StateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 				})
 
 				t.Run("empty string if app URL is not provided", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
-					result := stateToPostableAlert(alertState, nil)
+					result := StateToPostableAlert(alertState, nil)
 					require.Equal(t, "", result.Alert.GeneratorURL.String())
 				})
 			})
 
 			t.Run("Start and End timestamps should be the same", func(t *testing.T) {
 				alertState := randomState(tc.state)
-				result := stateToPostableAlert(alertState, appURL)
+				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, strfmt.DateTime(alertState.StartsAt), result.StartsAt)
 				require.Equal(t, strfmt.DateTime(alertState.EndsAt), result.EndsAt)
 			})
@@ -94,7 +93,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 			t.Run("should copy annotations", func(t *testing.T) {
 				alertState := randomState(tc.state)
 				alertState.Annotations = randomMapOfStrings()
-				result := stateToPostableAlert(alertState, appURL)
+				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, models.LabelSet(alertState.Annotations), result.Annotations)
 
 				t.Run("add __value_string__ if it has results", func(t *testing.T) {
@@ -103,7 +102,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					expectedValueString := util.GenerateShortUID()
 					alertState.LastEvaluationString = expectedValueString
 
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
 					for k, v := range alertState.Annotations {
@@ -115,7 +114,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 
 					// even overwrites
 					alertState.Annotations["__value_string__"] = util.GenerateShortUID()
-					result = stateToPostableAlert(alertState, appURL)
+					result = StateToPostableAlert(alertState, appURL)
 					require.Equal(t, expected, result.Annotations)
 				})
 
@@ -124,7 +123,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &ngModels.Image{Token: "test_token"}
 
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
 					for k, v := range alertState.Annotations {
@@ -154,7 +153,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 			t.Run("should add state reason annotation if not empty", func(t *testing.T) {
 				alertState := randomState(tc.state)
 				alertState.StateReason = "TEST_STATE_REASON"
-				result := stateToPostableAlert(alertState, appURL)
+				result := StateToPostableAlert(alertState, appURL)
 				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
 			})
 
@@ -166,7 +165,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertName := util.GenerateShortUID()
 					alertState.Labels[model.AlertNameLabel] = alertName
 
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Labels)+1)
 					for k, v := range alertState.Labels {
@@ -182,7 +181,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 						alertState.Labels = randomMapOfStrings()
 						delete(alertState.Labels, model.AlertNameLabel)
 
-						result := stateToPostableAlert(alertState, appURL)
+						result := StateToPostableAlert(alertState, appURL)
 
 						require.Equal(t, NoDataAlertName, result.Labels[model.AlertNameLabel])
 						require.NotContains(t, result.Labels[model.AlertNameLabel], Rulename)
@@ -195,7 +194,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertName := util.GenerateShortUID()
 					alertState.Labels[model.AlertNameLabel] = alertName
 
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Labels)+1)
 					for k, v := range alertState.Labels {
@@ -211,7 +210,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 						alertState.Labels = randomMapOfStrings()
 						delete(alertState.Labels, model.AlertNameLabel)
 
-						result := stateToPostableAlert(alertState, appURL)
+						result := StateToPostableAlert(alertState, appURL)
 
 						require.Equal(t, ErrorAlertName, result.Labels[model.AlertNameLabel])
 						require.NotContains(t, result.Labels[model.AlertNameLabel], Rulename)
@@ -221,7 +220,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 				t.Run("should copy labels as is", func(t *testing.T) {
 					alertState := randomState(tc.state)
 					alertState.Labels = randomMapOfStrings()
-					result := stateToPostableAlert(alertState, appURL)
+					result := StateToPostableAlert(alertState, appURL)
 					require.Equal(t, models.LabelSet(alertState.Labels), result.Labels)
 				})
 			}
@@ -237,10 +236,10 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	}
 
 	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
-	states := make([]state.StateTransition, 0, len(evalStates)*len(evalStates))
+	states := make([]StateTransition, 0, len(evalStates)*len(evalStates))
 	for _, to := range evalStates {
 		for _, from := range evalStates {
-			states = append(states, state.StateTransition{
+			states = append(states, StateTransition{
 				State:         randomState(to),
 				PreviousState: from,
 			})
@@ -255,7 +254,7 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 		if !(s.PreviousState == eval.Alerting || s.PreviousState == eval.Error || s.PreviousState == eval.NoData) {
 			continue
 		}
-		alert := stateToPostableAlert(s.State, appURL)
+		alert := StateToPostableAlert(s.State, appURL)
 		alert.EndsAt = strfmt.DateTime(clk.Now())
 		expected = append(expected, *alert)
 	}
@@ -286,8 +285,8 @@ func randomTimeInPast() time.Time {
 	return time.Now().Add(-randomDuration())
 }
 
-func randomState(evalState eval.State) *state.State {
-	return &state.State{
+func randomState(evalState eval.State) *State {
+	return &State{
 		State:              evalState,
 		AlertRuleUID:       util.GenerateShortUID(),
 		StartsAt:           time.Now(),

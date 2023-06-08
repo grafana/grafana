@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -22,6 +23,107 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func Test(t *testing.T) {
+	text := `{
+    "rule": {
+"grafana_alert" : {
+        "condition": "C",
+        "data": [
+            {
+                "refId": "A",
+                "relativeTimeRange": {
+                    "from": 600,
+                    "to": 0
+                },
+                "queryType": "",
+                "datasourceUid": "PD8C576611E62080A",
+                "model": {
+                    "refId": "A",
+                    "hide": false,
+                    "datasource": {
+                        "type": "testdata",
+                        "uid": "PD8C576611E62080A"
+                    },
+                    "scenarioId": "random_walk",
+                    "seriesCount": 5,
+                    "labels": "series=series-$seriesIndex"
+                }
+            },
+            {
+                "refId": "B",
+                "datasourceUid": "__expr__",
+                "queryType": "",
+                "model": {
+                    "refId": "B",
+                    "hide": false,
+                    "type": "reduce",
+                    "datasource": {
+                        "uid": "__expr__",
+                        "type": "__expr__"
+                    },
+                    "reducer": "last",
+                    "expression": "A"
+                },
+                "relativeTimeRange": {
+                    "from": 600,
+                    "to": 0
+                }
+            },
+            {
+                "refId": "C",
+                "datasourceUid": "__expr__",
+                "queryType": "",
+                "model": {
+                    "refId": "C",
+                    "hide": false,
+                    "type": "threshold",
+                    "datasource": {
+                        "uid": "__expr__",
+                        "type": "__expr__"
+                    },
+                    "conditions": [
+                        {
+                            "type": "query",
+                            "evaluator": {
+                                "params": [
+                                    0
+                                ],
+                                "type": "gt"
+                            }
+                        }
+                    ],
+                    "expression": "B"
+                },
+                "relativeTimeRange": {
+                    "from": 600,
+                    "to": 0
+                }
+            }
+        ],
+        "no_data_state": "Alerting",
+"title": "string"
+},
+        "for": "0s",
+        "labels": {
+            "additionalProp1": "string",
+            "additionalProp2": "string",
+            "additionalProp3": "string"
+        },
+ "annotations": {
+            "additionalProp1": "string",
+            "additionalProp2": "string",
+            "additionalProp3": "string"
+        }
+    },
+    "folderUid": "test-uid",
+    "folderTitle": "test-folder"
+}`
+	var conf definitions.PostableExtendedRuleNodeExtended
+	require.NoError(t, json.Unmarshal([]byte(text), &conf))
+
+	require.Equal(t, "test-folder", conf.NamespaceTitle)
+}
+
 func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		rc := &contextmodel.ReqContext{
@@ -41,15 +143,14 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
-			srv := createTestingApiSrv(nil, ac, nil)
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}))
 
-			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
-				Expr: "",
-				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
-					Condition: data1.RefID,
-					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
-					Now:       time.Time{},
-				},
+			rule := validRule()
+			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
+			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
+				Rule:           rule,
+				NamespaceUID:   "test-folder",
+				NamespaceTitle: "test-folder",
 			})
 
 			require.Equal(t, http.StatusUnauthorized, response.Status())
@@ -58,8 +159,6 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 		t.Run("should return 200 if user can query all data sources", func(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 			data2 := models.GenerateAlertQuery()
-
-			currentTime := time.Now()
 
 			ac := acMock.New().WithPermissions([]accesscontrol.Permission{
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
@@ -77,20 +176,19 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			evalFactory := eval_mocks.NewEvaluatorFactory(evaluator)
 
-			srv := createTestingApiSrv(ds, ac, evalFactory)
+			srv := createTestingApiSrv(t, ds, ac, evalFactory)
 
-			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
-				Expr: "",
-				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
-					Condition: data1.RefID,
-					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
-					Now:       currentTime,
-				},
+			rule := validRule()
+			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
+			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
+				Rule:           rule,
+				NamespaceUID:   "test-folder",
+				NamespaceTitle: "test-folder",
 			})
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "Evaluate", mock.Anything, currentTime)
+			evaluator.AssertCalled(t, "Evaluate", mock.Anything, mock.Anything)
 		})
 	})
 
@@ -208,7 +306,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
@@ -277,7 +375,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 }
 
-func createTestingApiSrv(ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
+func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New().WithDisabled()
 	}
@@ -286,5 +384,6 @@ func createTestingApiSrv(ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator 
 		DatasourceCache: ds,
 		accessControl:   ac,
 		evaluator:       evaluator,
+		cfg:             config(t),
 	}
 }
