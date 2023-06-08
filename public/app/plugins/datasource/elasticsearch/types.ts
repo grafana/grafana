@@ -1,4 +1,4 @@
-import { DataSourceJsonData, TimeRange } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
 import {
   BucketAggregationType,
