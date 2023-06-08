@@ -3,9 +3,12 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
+	"os"
+	"path"
 	"path/filepath"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/build"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
@@ -29,6 +32,8 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error finding plugin dirs: %w", err)
 	}
+
+	grafanaVersion := getGrafanaVersion()
 
 	decls := make([]*PluginDecl, 0)
 	for _, plugin := range plugins {
@@ -61,6 +66,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 				PluginMeta:      pp.Properties,
 				PluginPath:      path,
 				KindDecl:        kind.Def(),
+				GrafanaVersion:  grafanaVersion,
 			})
 		}
 	}
@@ -70,4 +76,18 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 	})
 
 	return decls, nil
+}
+
+func getGrafanaVersion() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+
+	pkg, err := build.OpenPackageJSON(path.Join(dir, "../../../"))
+	if err != nil {
+		return ""
+	}
+
+	return pkg.Version
 }

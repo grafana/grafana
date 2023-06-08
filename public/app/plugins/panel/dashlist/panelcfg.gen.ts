@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
+export const pluginVersion = "10.1.0-pre";
 
 export interface Options {
   folderId?: number;

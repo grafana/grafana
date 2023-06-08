@@ -15,6 +15,7 @@ type PluginDecl struct {
 	PluginPath      string
 	PluginMeta      plugindef.PluginDef
 	KindDecl        kindsys.Def[kindsys.ComposableProperties]
+	GrafanaVersion  string
 }
 
 func EmptyPluginDecl(path string, meta plugindef.PluginDef) *PluginDecl {

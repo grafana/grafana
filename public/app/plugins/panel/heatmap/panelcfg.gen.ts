@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
+export const pluginVersion = "10.1.0-pre";
 
 /**
  * Controls the color mode of the heatmap

@@ -42,10 +42,15 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		}
 	}
 
-	v := decl.Lineage.Latest().Version()
+	version := "export const pluginVersion = \"%s\";"
+	if decl.PluginMeta.Info.Version != nil {
+		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
+	} else {
+		version = fmt.Sprintf(version, decl.GrafanaVersion)
+	}
 
 	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", decl.SchemaInterface.Name(), v[0], v[1]),
+		Data: version,
 	})
 
 	jf, err := j.inner.Generate(decl)

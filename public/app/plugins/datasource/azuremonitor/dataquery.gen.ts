@@ -10,7 +10,7 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
+export const pluginVersion = "1.0.0";
 
 export interface AzureMonitorQuery extends common.DataQuery {
   /**
