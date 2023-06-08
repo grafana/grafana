@@ -77,6 +77,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
+			dsItem.Type = plugin.ID // may be from an alias
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -728,6 +729,15 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		SecureJsonFields: map[string]bool{},
 		Version:          ds.Version,
 		ReadOnly:         ds.ReadOnly,
+	}
+
+	if hs.pluginStore != nil {
+		if plugin, exists := hs.pluginStore.Plugin(ctx, ds.Type); exists {
+			dto.TypeLogoUrl = plugin.Info.Logos.Small
+			dto.Type = plugin.ID // may be from an alias
+		} else {
+			dto.TypeLogoUrl = "public/img/icn-datasource.svg"
+		}
 	}
 
 	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
