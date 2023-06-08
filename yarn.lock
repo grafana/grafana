@@ -8621,7 +8621,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:9.3.0":
+"@testing-library/dom@npm:9.3.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
   version: 9.3.0
   resolution: "@testing-library/dom@npm:9.3.0"
   dependencies:
@@ -8634,22 +8634,6 @@ __metadata:
     lz-string: ^1.5.0
     pretty-format: ^27.0.2
   checksum: 790f4da6a8cbe7da8b7769e81e68caea1aed5b5f1973b808895692a945fb854fe8acdc66ffc34b6a57ec49bad9d76ccdd69b632ea8a82ad61d1e97d76cfdf9ec
-  languageName: node
-  linkType: hard
-
-"@testing-library/dom@npm:>=7, @testing-library/dom@npm:^9.0.0":
-  version: 9.0.1
-  resolution: "@testing-library/dom@npm:9.0.1"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^5.0.1
-    aria-query: ^5.0.0
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.9
-    lz-string: ^1.5.0
-    pretty-format: ^27.0.2
-  checksum: fa3d4097d0efd3b186d90e32ffa71c3f9c4ea7a5a793b186b565044b2950eea469594e1f75803e5edb52a75731feecd19cf7034b009b0bd3bfba173eb9c9cd0c
   languageName: node
   linkType: hard
 
