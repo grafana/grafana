@@ -103,7 +103,9 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
-			resultFormat = dataquery.ResultFormat(azureLogAnalyticsTarget.ResultFormat)
+			if azureLogAnalyticsTarget.ResultFormat != nil {
+				resultFormat = *azureLogAnalyticsTarget.ResultFormat
+			}
 			if resultFormat == "" {
 				resultFormat = types.TimeSeries
 			}
@@ -115,14 +117,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if len(azureLogAnalyticsTarget.Resources) > 0 {
 				resources = azureLogAnalyticsTarget.Resources
 				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-			} else if azureLogAnalyticsTarget.Resource != "" {
-				resources = []string{azureLogAnalyticsTarget.Resource}
-				resourceOrWorkspace = azureLogAnalyticsTarget.Resource
-			} else {
-				resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
+				resources = []string{*azureLogAnalyticsTarget.Resource}
+				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
+			} else if azureLogAnalyticsTarget.Workspace != nil {
+				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
 
-			queryString = azureLogAnalyticsTarget.Query
+			if azureLogAnalyticsTarget.Query != nil {
+				queryString = *azureLogAnalyticsTarget.Query
+			}
 		}
 
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
