@@ -28,6 +28,7 @@ export interface Props {
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
   variableEditor?: boolean;
+  onBlur?: () => void;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -42,6 +43,7 @@ export function MetricSelect({
   labelsFilters,
   metricLookupDisabled,
   variableEditor,
+  onBlur,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
@@ -235,6 +237,7 @@ export function MetricSelect({
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
         defaultOptions={state.metrics}
+        onBlur={onBlur ? onBlur : () => {}}
         onChange={({ value }) => {
           if (value) {
             // if there is no metric and the m.e. is enabled, open the modal

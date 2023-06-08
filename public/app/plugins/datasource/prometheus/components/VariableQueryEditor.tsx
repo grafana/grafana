@@ -49,13 +49,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
-  // used as a shell for the metric select
-  const [queryShell, setQueryShell] = useState<PromVisualQuery>({
-    metric: '',
-    labels: [],
-    operations: [],
-  });
-
   useEffect(() => {
     if (!query) {
       return;
@@ -68,24 +61,19 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
-    setQueryShell({ ...queryShell, metric: variableQuery.metric ?? '' });
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
+  }, [query]);
 
-    // // set the migrated label in the label options
-    // if (variableQuery.label) {
-    //   setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    // }
-  }, [query, queryShell]);
-
-  // set the label names options for the label values var query
+  // set the label names options for the label values var query and add variables
   useEffect(() => {
     if (qryType !== QueryType.LabelValues) {
       return;
     }
-
     datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
-      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+      const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
+      const names = labelNames.map(({ text }) => ({ label: text, value: text }));
+      setLabelOptions([...variables, ...names]);
     });
   }, [datasource, qryType]);
 
@@ -118,7 +106,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setLabel(newLabel.value ?? '');
   };
 
-  const onMetricChange = (e: FormEvent<HTMLInputElement>) => {
+  const onMetricChange = (value: SelectableValue) => {
+    setMetric(value.metric);
+  };
+
+  const onMetricRegexChange = (e: FormEvent<HTMLInputElement>) => {
     setMetric(e.currentTarget.value);
   };
 
@@ -157,8 +149,8 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   );
 
   const onGetMetrics = useCallback(() => {
-    return withTemplateVariableOptions(getMetrics(datasource, queryShell));
-  }, [datasource, queryShell, withTemplateVariableOptions]);
+    return withTemplateVariableOptions(getMetrics(datasource, { metric: metric, labels: [], operations: [] }));
+  }, [datasource, metric, withTemplateVariableOptions]);
 
   return (
     <>
@@ -212,16 +204,14 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
             >
               <MetricSelect
-                query={queryShell}
-                onChange={(value) => {
-                  setQueryShell({ ...queryShell, metric: value.metric ?? '' });
-                  setMetric(value.metric);
-                }}
+                query={{ metric: metric, labels: [], operations: [] }}
+                onChange={onMetricChange}
                 onGetMetrics={onGetMetrics}
                 datasource={datasource}
-                labelsFilters={queryShell.labels}
+                labelsFilters={[]}
                 metricLookupDisabled={datasource.lookupsDisabled}
                 variableEditor={true}
+                onBlur={handleBlur}
               />
             </InlineField>
           </InlineFieldRow>
@@ -239,7 +229,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               aria-label="Metric selector"
               placeholder="Metric Regex"
               value={metric}
-              onChange={onMetricChange}
+              onChange={onMetricRegexChange}
               onBlur={handleBlur}
               width={25}
             />
