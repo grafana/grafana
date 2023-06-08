@@ -2323,6 +2323,10 @@
     },
     "rule": {
      "$ref": "#/definitions/PostableExtendedRuleNode"
+    },
+    "ruleGroup": {
+     "example": "eval_group_1",
+     "type": "string"
     }
    },
    "required": [
@@ -4020,7 +4024,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4131,6 +4134,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4280,6 +4284,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
