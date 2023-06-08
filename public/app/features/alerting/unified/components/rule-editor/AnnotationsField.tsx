@@ -7,13 +7,13 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Input, InputControl, TextArea, useStyles2 } from '@grafana/ui';
-import { DashboardSearchItem } from 'app/features/search/types';
 import { DashboardDataDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
+import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO } from './DashboardPicker';
 
 const AnnotationsField = () => {
@@ -76,6 +76,25 @@ const AnnotationsField = () => {
     setShowPanelSelector(false);
   };
 
+  const handleDeleteDashboardAnnotation = () => {
+    const updatedAnnotations = produce(annotations, (draft) => {
+      const dashboardAnnotation = draft.find((a) => a.key === Annotation.dashboardUID);
+      const panelAnnotation = draft.find((a) => a.key === Annotation.panelID);
+
+      if (dashboardAnnotation) {
+        dashboardAnnotation.value = '';
+      }
+      if (panelAnnotation) {
+        panelAnnotation.value = '';
+      }
+    });
+    setValue('annotations', updatedAnnotations);
+  };
+
+  const handleEditDashboardAnnotation = () => {
+    setShowPanelSelector(true);
+  };
+
   return (
     <>
       <div className={styles.flexColumn}>
@@ -93,19 +112,25 @@ const AnnotationsField = () => {
                       <InputControl
                         name={`annotations.${index}.key`}
                         defaultValue={annotationField.key}
-                        render={({ field: { ref, ...field } }) => (
-                          <div>
-                            {annotationLabels[annotation]}{' '}
-                            {annotationLabels[annotation] ? (
-                              '(optional)'
-                            ) : (
-                              <div>
-                                <div>Custom annotation name and content</div>
-                                <Input placeholder="Enter custom annotation name..." width={18} {...field} />
-                              </div>
-                            )}
-                          </div>
-                        )}
+                        render={({ field: { ref, ...field } }) =>
+                          annotationField.key === Annotation.dashboardUID ? (
+                            <div>Dashboard and panel</div>
+                          ) : annotationField.key === Annotation.panelID ? (
+                            <span></span>
+                          ) : (
+                            <div>
+                              {annotationLabels[annotation]}{' '}
+                              {annotationLabels[annotation] ? (
+                                '(optional)'
+                              ) : (
+                                <div>
+                                  <div>Custom annotation name and content</div>
+                                  <Input placeholder="Enter custom annotation name..." width={18} {...field} />
+                                </div>
+                              )}
+                            </div>
+                          )
+                        }
                         control={control}
                         rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
                       />
@@ -114,13 +139,16 @@ const AnnotationsField = () => {
                   <div>{annotationDescriptions[annotation]}</div>
                 </div>
                 {selectedDashboard && annotationField.key === Annotation.dashboardUID && (
-                  <div>
-                    <span>{selectedDashboard.title}</span>
-                    <span>{selectedPanel?.title}</span>
-                  </div>
+                  <DashboardAnnotationField
+                    dashboard={selectedDashboard}
+                    panel={selectedPanel}
+                    onEditClick={handleEditDashboardAnnotation}
+                    onDeleteClick={handleDeleteDashboardAnnotation}
+                  />
                 )}
 
-                {(!selectedDashboard || annotationField.key !== Annotation.dashboardUID) && (
+                {(!selectedDashboard ||
+                  (annotationField.key !== Annotation.dashboardUID && annotationField.key !== Annotation.panelID)) && (
                   <Field
                     className={cx(styles.flexRowItemMargin, styles.field)}
                     invalid={!!errors.annotations?.[index]?.value?.message}
@@ -161,9 +189,11 @@ const AnnotationsField = () => {
             >
               Add annotation
             </Button>
-            <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-              Set dashboard and panel
-            </Button>
+            {!selectedDashboard && (
+              <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
+                Set dashboard and panel
+              </Button>
+            )}
           </div>
         </Stack>
         {showPanelSelector && (
