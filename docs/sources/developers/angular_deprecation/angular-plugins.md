@@ -41,9 +41,29 @@ Guidance on migrating a plugin to React can be found in our [migration guide]({{
 
 ## Apps
 
+### [BelugaCDN](https://grafana.com/grafana/plugins/belugacdn-app)
+
+Latest Version: 1.2.1 | Signature: Commercial | Last Updated: 2023
+
+> [Migration issue](https://github.com/belugacdn/grafana-belugacdn-app/issues/7) has been raised.
+
+> **Warning:** Lack of recent activity in the [project repository](https://github.com/belugacdn/grafana-belugacdn-app) in the past 7 years suggests project _may_ not be actively maintained.
+
+### [Bosun](https://grafana.com/grafana/plugins/bosun-app)
+
+Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
+
+> [Migration issue](https://github.com/bosun-monitor/bosun-grafana-app/issues/63) has been raised.
+
 ### [Cloudflare Grafana App](https://grafana.com/grafana/plugins/cloudflare-app/)
 
 Latest Version: 0.2.4 | Signature: Commercial | Last Updated: 2022
+
+### [glpi](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
+
+Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
+
+> [Migration issue](https://github.com/ddurieux/glpi_app_grafana/issues/96) has been raised.
 
 ### [DevOpsProdigy KubeGraf](https://grafana.com/grafana/plugins/devopsprodigy-kubegraf-app/)
 
@@ -53,9 +73,45 @@ Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 
 > **Migration available - potential alternative:** Grafana Cloud includes a [Kubernetes integration](https://grafana.com/solutions/kubernetes/).
 
+### [AWS IoT TwinMaker App](https://grafana.com/grafana/plugins/grafana-iot-twinmaker-app)
+
+Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
+
+> **Note:** Migration to react is planned.
+
 ### [Kentik Connect Pro](https://grafana.com/grafana/plugins/kentik-connect-app/)
 
 Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
+
+### [Moogsoft AIOps](https://grafana.com/grafana/plugins/moogsoft-aiops-app)
+
+Latest Version: 8.0.2 | Signature: Commercial | Last Updated: 2022
+
+### [OpenNMS Helm](https://grafana.com/grafana/plugins/opennms-helm-app)
+
+Latest Version: 8.0.4 | Signature: Community | Last Updated: 2023
+
+> **Migration available - plugin superseded:** The plugin has effectively been replaced with a [new plugin](https://grafana.com/grafana/plugins/opennms-opennms-app/) based on React.
+
+### [Percona](https://grafana.com/grafana/plugins/percona-percona-app/)
+
+Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
+
+> **Warning:** [Project repository](https://github.com/percona/grafana-app) was archived on June 12, 2020.
+
+### [stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
+
+Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
+
+> [Migration issue](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch/issues/1) has been raised.
+
+> **Warning:** Lack of recent activity in the [project repository](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch) in the past 4 years suggests project _may_ not be actively maintained.
+
+### [Voxter VoIP Platform Metrics](https://grafana.com/grafana/plugins/voxter-app)
+
+Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
+
+> **Warning:** Lack of recent activity in the [project repository](https://github.com/raintank/voxter-app) in the past 3 years suggests project _may_ not be actively maintained.
 
 ## Datasources
 
