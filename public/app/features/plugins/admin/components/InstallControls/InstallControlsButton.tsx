@@ -17,7 +17,7 @@ type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
-  setNeedReload: (needReload: boolean) => void;
+  setNeedReload?: (needReload: boolean) => void;
 };
 
 export function InstallControlsButton({
@@ -58,7 +58,7 @@ export function InstallControlsButton({
     if (!errorInstalling && !('error' in result)) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
       if (plugin.type === 'app') {
-        setNeedReload(true);
+        setNeedReload?.(true);
       }
     }
   };
@@ -77,7 +77,7 @@ export function InstallControlsButton({
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
       if (plugin.type === 'app') {
         dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
-        setNeedReload(false);
+        setNeedReload?.(false);
       }
     }
   };
