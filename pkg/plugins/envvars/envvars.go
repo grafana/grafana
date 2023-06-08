@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 type Provider interface {
@@ -22,10 +23,10 @@ type Provider interface {
 type Service struct {
 	cfg         *config.Cfg
 	license     plugins.Licensing
-	oauthServer plugins.OAuth2Service
+	oauthServer oauth.ExternalServiceRegister
 }
 
-func NewProvider(cfg *config.Cfg, license plugins.Licensing, oauthServer plugins.OAuth2Service) *Service {
+func NewProvider(cfg *config.Cfg, license plugins.Licensing, oauthServer oauth.ExternalServiceRegister) *Service {
 	return &Service{
 		cfg:         cfg,
 		license:     license,
@@ -36,7 +37,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing, oauthServer plugins
 func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
-		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaComURL),
+		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
 	}
 
 	if s.license != nil {
@@ -113,8 +114,8 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 	return variables
 }
 
-func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oauthAppInfo *plugins.ExternalServiceRegistration) ([]string, error) {
-	cli, err := s.oauthServer.SaveExternalService(ctx, &plugins.ExternalServiceRegistration{
+func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.ExternalServiceRegistration) ([]string, error) {
+	cli, err := s.oauthServer.SaveExternalService(ctx, &oauth.ExternalServiceRegistration{
 		Name:          pluginID,
 		Self:          oauthAppInfo.Self,
 		Impersonation: oauthAppInfo.Impersonation,

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -151,7 +152,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	OauthServiceRegistration *ExternalServiceRegistration `json:"oauthServiceRegistration,omitempty"`
+	OauthServiceRegistration *oauth.ExternalServiceRegistration `json:"oauthServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

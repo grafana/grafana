@@ -7,7 +7,7 @@ import (
 
 	"github.com/ory/fosite"
 
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -33,8 +33,8 @@ type ExternalService struct {
 	ImpersonateScopes []string
 }
 
-func (c *ExternalService) ToDTO() *plugins.ExternalServiceDTO {
-	c2 := plugins.ExternalServiceDTO{
+func (c *ExternalService) ToDTO() *oauth.ExternalServiceDTO {
+	c2 := oauth.ExternalServiceDTO{
 		Name:        c.Name,
 		ID:          c.ClientID,
 		Secret:      c.Secret,
@@ -43,7 +43,7 @@ func (c *ExternalService) ToDTO() *plugins.ExternalServiceDTO {
 		RedirectURI: c.RedirectURI,
 	}
 	if len(c.PublicPem) > 0 {
-		c2.KeyResult = &plugins.KeyResult{PublicPem: string(c.PublicPem)}
+		c2.KeyResult = &oauth.KeyResult{PublicPem: string(c.PublicPem)}
 	}
 	return &c2
 }

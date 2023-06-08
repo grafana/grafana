@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 type Initializer struct {
@@ -15,7 +16,7 @@ type Initializer struct {
 }
 
 func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing,
-	oauthServer plugins.OAuth2Service) Initializer {
+	oauthServer oauth.ExternalServiceRegister) Initializer {
 	return Initializer{
 		envVarProvider:  envvars.NewProvider(cfg, license, oauthServer),
 		backendProvider: backendProvider,
