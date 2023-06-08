@@ -135,9 +135,4 @@ export interface ElasticsearchAnnotationQuery {
   index?: string;
 }
 
-export interface ElasticsearchAnnotationQueryOptions {
-  annotation: ElasticsearchAnnotationQuery;
-  range: TimeRange;
-}
-
 export type RangeMap = Record<string, { from: number; to: number; format: string }>;
