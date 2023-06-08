@@ -13,10 +13,10 @@ const loadingDSType = 'Loading';
 export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDataSourcePlugin): NavModelItem {
   const pluginMeta = plugin.meta;
   const highlightsEnabled = config.featureToggles.featureHighlights;
+  const dataSourcePageHeader = config.featureToggles.dataSourcePageHeader;
   const navModel: NavModelItem = {
     img: pluginMeta.info.logos.large,
     id: 'datasource-' + dataSource.uid,
-    subTitle: `Type: ${pluginMeta.name}`,
     url: '',
     text: dataSource.name,
     children: [
@@ -29,6 +29,10 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       },
     ],
   };
+
+  if (!dataSourcePageHeader) {
+    navModel.subTitle = `Type: ${pluginMeta.name}`;
+  }
 
   if (plugin.configPages) {
     for (const page of plugin.configPages) {

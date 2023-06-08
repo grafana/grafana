@@ -13,9 +13,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,15 +31,19 @@ func TestService(t *testing.T) {
 		Frames: []*data.Frame{dsDF},
 	}
 
-	cfg := setting.NewCfg()
+	pCtxProvider := plugincontext.ProvideService(nil, &plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{JSONData: plugins.JSONData{ID: "test"}},
+		},
+	}, &datafakes.FakeDataSourceService{}, nil)
 
 	s := Service{
-		cfg:               cfg,
-		dataService:       me,
-		dataSourceService: &datafakes.FakeDataSourceService{},
-		features:          &featuremgmt.FeatureManager{},
-		tracer:            tracing.InitializeTracerForTest(),
-		metrics:           newMetrics(nil),
+		cfg:          setting.NewCfg(),
+		dataService:  me,
+		pCtxProvider: pCtxProvider,
+		features:     &featuremgmt.FeatureManager{},
+		tracer:       tracing.InitializeTracerForTest(),
+		metrics:      newMetrics(nil),
 	}
 
 	queries := []Query{
@@ -60,7 +67,7 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	req := &Request{Queries: queries}
+	req := &Request{Queries: queries, User: &user.SignedInUser{}}
 
 	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)

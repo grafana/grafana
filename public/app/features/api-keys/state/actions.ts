@@ -1,7 +1,7 @@
 ﻿import { getBackendSrv } from 'app/core/services/backend_srv';
 import { ThunkResult } from 'app/types';
 
-import { apiKeysLoaded, includeExpiredToggled, isFetching } from './reducers';
+import { apiKeysLoaded, includeExpiredToggled, isFetching, setMigrationResult } from './reducers';
 
 export function loadApiKeys(): ThunkResult<void> {
   return async (dispatch) => {
@@ -35,7 +35,8 @@ export function migrateApiKey(id: number): ThunkResult<void> {
 export function migrateAll(): ThunkResult<void> {
   return async (dispatch) => {
     try {
-      await getBackendSrv().post('/api/serviceaccounts/migrate');
+      const payload = await getBackendSrv().post('/api/serviceaccounts/migrate');
+      dispatch(setMigrationResult(payload));
     } finally {
       dispatch(loadApiKeys());
     }

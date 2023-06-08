@@ -30,7 +30,7 @@ In the panel editor, you can update all the elements of a visualization includin
 
 To add a panel in a new dashboard click **+ Add visualization** in the middle of the dashboard. To add a panel to an existing dashboard, click **Add** in the dashboard header and select **Visualization** in the dropdown:
 
-![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-9.5.png)
+![Add dropdown](/media/docs/grafana/dashboards/screenshot-add-dropdown-10.0.png)
 
 ## Panel editor
 
@@ -51,7 +51,7 @@ This section describes the areas of the Grafana panel editor.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 
-   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../query-transform-data/#add-a-query" >}}).
+   - **Query tab:** Select your data source and enter queries here. For more information, refer to [Add a query]({{< relref "../query-transform-data/#add-a-query" >}}). When you create a new dashboard, you'll be prompted to select a data source before you get to the panel editor. You set or update the data source in existing dashboards using the dropdown in the **Query** tab.
    - **Transform tab:** Apply data transformations. For more information, refer to [Transform data]({{< relref "../query-transform-data/transform-data/" >}}).
    - **Alert tab:** Write alert rules. For more information, refer to [Overview of Grafana 8 alerting]({{< relref "../../alerting/" >}}).
 
@@ -63,7 +63,9 @@ The inspect drawer helps you understand and troubleshoot your panels. You can vi
 
 To access the panel inspect drawer from the edit view, hover over any part of the panel to display the actions menu on the top right corner. Click the menu and select **Inspect**.
 
-> **Note:** Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
+{{% admonition type="note" %}}
+Not all panel types include all tabs. For example, dashboard list panels do not have raw data to inspect, so they do not display the Stats, Data, or Query tabs.
+{{% /admonition %}}
 
 The panel inspector consists of the following options:
 
