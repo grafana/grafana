@@ -67,7 +67,7 @@ export function VariableEditorListRow({
           </td>
           <td
             role="gridcell"
-            className={styles.definitionColumn}
+            className={styles.descriptionColumn}
             onClick={(event) => {
               event.preventDefault();
               propsOnEdit(identifier);
@@ -158,7 +158,7 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: pointer;
       color: ${theme.colors.primary.text};
     `,
-    definitionColumn: css`
+    descriptionColumn: css`
       width: 100%;
       max-width: 200px;
       cursor: pointer;
