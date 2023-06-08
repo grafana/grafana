@@ -99,5 +99,6 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  dashboardEmbed?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
 }

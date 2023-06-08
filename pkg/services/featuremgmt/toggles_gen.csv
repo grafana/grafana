@@ -80,4 +80,5 @@ dataSourcePageHeader,beta,@grafana/enterprise-datasources,false,false,false,true
 extraThemes,alpha,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,alpha,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,alpha,@grafana/plugins-platform-backend,false,false,false,true
+dashboardEmbed,alpha,@grafana/grafana-as-code,false,false,false,true
 sqlDatasourceDatabaseSelection,beta,@grafana/grafana-bi-squad,false,false,false,true
