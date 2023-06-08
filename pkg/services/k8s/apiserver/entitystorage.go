@@ -389,7 +389,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
