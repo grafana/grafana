@@ -6,6 +6,7 @@ import { H1, Span } from '@grafana/ui/src/unstable';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
+import { useRuleViewerPageTitle } from '../../hooks/alert-details/useRuleViewerPageTitle';
 import { useCombinedRule } from '../../hooks/useCombinedRule';
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
@@ -39,6 +40,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
   const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+  useRuleViewerPageTitle(rule);
 
   if (loading) {
     return <LoadingPlaceholder text={'Loading...'} />;
@@ -144,9 +146,7 @@ const Title = ({ name, state }: TitleProps) => (
   <header>
     <Stack alignItems={'center'} gap={1}>
       {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
-      <H1 variant="h2" color="maxContrast" weight="bold">
-        {name}
-      </H1>
+      <H1>{name}</H1>
       <Badge color="red" text={state} icon="exclamation-circle" />
     </Stack>
   </header>
