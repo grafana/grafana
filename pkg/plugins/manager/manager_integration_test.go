@@ -10,8 +10,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
@@ -31,8 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	plicensing "github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -41,6 +43,7 @@ import (
 	cloudmonitoring "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	"github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
@@ -49,7 +52,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -109,7 +111,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	ms := mssql.ProvideService(cfg)
 	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
-	phlare := phlare.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
+	phlare := pyroscope.ProvideService(hcp, acimpl.ProvideAccessControl(cfg))
 	parca := parca.ProvideService(hcp)
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(am, cw, cm, es, grap, idb, lk, otsdb, pr, tmpo, td, pg, my, ms, graf, phlare, parca)
@@ -121,7 +123,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(pCfg)), signature.ProvideService(pCfg, statickey.New()),
-		&oasimpl.OAuth2ServiceImpl{})
+		angulardetector.NewDefaultPatternsListInspector(), &oasimpl.OAuth2ServiceImpl{})
 	srcs := sources.ProvideService(cfg, pCfg)
 	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
@@ -220,7 +222,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"jaeger":                           {},
 		"mixed":                            {},
 		"zipkin":                           {},
-		"phlare":                           {},
+		"grafana-pyroscope-datasource":     {},
 		"parca":                            {},
 	}
 
@@ -228,7 +230,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"test-app": {},
 	}
 
-	panels := ps.Plugins(ctx, plugins.Panel)
+	panels := ps.Plugins(ctx, plugins.TypePanel)
 	require.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
 		p, exists := ps.Plugin(ctx, p.ID)
@@ -237,7 +239,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		require.Contains(t, expPanels, p.ID)
 	}
 
-	dataSources := ps.Plugins(ctx, plugins.DataSource)
+	dataSources := ps.Plugins(ctx, plugins.TypeDataSource)
 	require.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
 		p, exists := ps.Plugin(ctx, ds.ID)
@@ -246,7 +248,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		require.Contains(t, expDataSources, ds.ID)
 	}
 
-	apps := ps.Plugins(ctx, plugins.App)
+	apps := ps.Plugins(ctx, plugins.TypeApp)
 	require.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
 		p, exists := ps.Plugin(ctx, app.ID)
@@ -262,7 +264,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range ps.Plugins(ctx, plugins.DataSource) {
+	for _, p := range ps.Plugins(ctx, plugins.TypeDataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 

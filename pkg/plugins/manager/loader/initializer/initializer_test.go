@@ -16,7 +16,7 @@ func TestInitializer_Initialize(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.DataSource,
+				Type: plugins.TypeDataSource,
 				Includes: []*plugins.Includes{
 					{
 						Name: "Example dashboard",
@@ -25,7 +25,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			Class: plugins.Core,
+			Class: plugins.ClassCore,
 		}
 
 		i := &Initializer{
@@ -47,13 +47,13 @@ func TestInitializer_Initialize(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.Renderer,
+				Type: plugins.TypeRenderer,
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion: ">=8.x",
 				},
 				Backend: true,
 			},
-			Class: plugins.External,
+			Class: plugins.ClassExternal,
 		}
 
 		i := &Initializer{
@@ -75,13 +75,13 @@ func TestInitializer_Initialize(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test",
-				Type: plugins.SecretsManager,
+				Type: plugins.TypeSecretsManager,
 				Dependencies: plugins.Dependencies{
 					GrafanaVersion: ">=8.x",
 				},
 				Backend: true,
 			},
-			Class: plugins.External,
+			Class: plugins.ClassExternal,
 		}
 
 		i := &Initializer{

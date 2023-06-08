@@ -280,12 +280,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:        "authnService",
-			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus exemplar sampling",
 			State:       FeatureStateStable,
@@ -554,6 +548,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			State:        FeatureStateBeta,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

@@ -171,10 +171,6 @@ const (
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
 
-	// FlagAuthnService
-	// Use new auth service to perform authentication
-	FlagAuthnService = "authnService"
-
 	// FlagDisablePrometheusExemplarSampling
 	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
@@ -334,4 +330,8 @@ const (
 	// FlagPluginsFrontendSandbox
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
+
+	// FlagSqlDatasourceDatabaseSelection
+	// Enables previous SQL data source dataset dropdown behavior
+	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 )
