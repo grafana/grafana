@@ -9,6 +9,9 @@ import (
 var (
 	_ detector = &containsBytesDetector{}
 	_ detector = &regexDetector{}
+
+	_ detectorsGetter = &staticDetectorsGetter{}
+	_ detectorsGetter = sequenceDetectorsGetter{}
 )
 
 // detector implements a check to see if a plugin uses Angular.

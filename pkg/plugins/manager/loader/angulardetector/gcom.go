@@ -18,6 +18,8 @@ import (
 
 const defaultGCOMDetectorsGetterTTL = time.Hour * 24
 
+var _ detectorsGetter = &gcomDetectorsGetter{}
+
 // gcomDetectorsGetter is a detectorsGetter which fetches patterns from GCOM, and caches the result for
 // the specified ttl. All subsequent calls to getDetectors will return the cached result until the TTL expires.
 // This struct is safe for concurrent use.
@@ -93,9 +95,9 @@ func (g *gcomDetectorsGetter) getDetectors(ctx context.Context) []detector {
 	return g.detectors
 }
 
-// fetch fetches the angular patterns from GCOM and returns them as GCOMPatterns.
+// fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
-func (g *gcomDetectorsGetter) fetch(ctx context.Context) (GCOMPatterns, error) {
+func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
 	g.log.Debug("fetching remote angular detection patterns")
 	st := time.Now()
 	defer func() {
@@ -119,33 +121,33 @@ func (g *gcomDetectorsGetter) fetch(ctx context.Context) (GCOMPatterns, error) {
 			g.log.Error("response body close error", "error", err)
 		}
 	}()
-	var out GCOMPatterns
+	var out gcomPatterns
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
 	return out, nil
 }
 
-type GCOMPatternType string
+type gcomPatternType string
 
 const (
-	GCOMPatternTypeContains GCOMPatternType = "contains"
-	GCOMPatternTypeRegex    GCOMPatternType = "regex"
+	gcomPatternTypeContains gcomPatternType = "contains"
+	gcomPatternTypeRegex    gcomPatternType = "regex"
 )
 
-// GCOMPattern is an Angular detection pattern returned by the GCOM API.
-type GCOMPattern struct {
+// gcomPattern is an Angular detection pattern returned by the GCOM API.
+type gcomPattern struct {
 	Name  string
 	Value string
-	Type  GCOMPatternType
+	Type  gcomPatternType
 }
 
-// detector converts a GCOMPattern into a detector, based on its Type.
-func (p *GCOMPattern) detector() (detector, error) {
+// detector converts a gcomPattern into a detector, based on its Type.
+func (p *gcomPattern) detector() (detector, error) {
 	switch p.Type {
-	case GCOMPatternTypeContains:
+	case gcomPatternTypeContains:
 		return &containsBytesDetector{pattern: []byte(p.Value)}, nil
-	case GCOMPatternTypeRegex:
+	case gcomPatternTypeRegex:
 		re, err := regexp.Compile(p.Value)
 		if err != nil {
 			return nil, fmt.Errorf("%q regexp compile: %w", p.Value, err)
@@ -155,11 +157,11 @@ func (p *GCOMPattern) detector() (detector, error) {
 	return nil, errors.New("unknown pattern type")
 }
 
-// GCOMPatterns is a slice of GCOMPattern s.
-type GCOMPatterns []GCOMPattern
+// gcomPatterns is a slice of gcomPattern s.
+type gcomPatterns []gcomPattern
 
-// detectors converts the slice of GCOMPattern s into a slice of detectors, by calling detector() on each GCOMPattern.
-func (p GCOMPatterns) detectors() ([]detector, error) {
+// detectors converts the slice of gcomPattern s into a slice of detectors, by calling detector() on each gcomPattern.
+func (p gcomPatterns) detectors() ([]detector, error) {
 	var finalErr error
 	detectors := make([]detector, 0, len(p))
 	for _, pattern := range p {
