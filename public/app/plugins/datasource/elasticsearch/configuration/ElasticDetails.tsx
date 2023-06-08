@@ -22,7 +22,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
   return (
     <>
       <FieldSet label="Elasticsearch details">
-        <InlineField label="Index name" labelWidth={26}>
+        <InlineField label="Index name" htmlFor="es_config_indexName" labelWidth={26}>
           <Input
             id="es_config_indexName"
             value={value.jsonData.index ?? (value.database || '')}
@@ -33,7 +33,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="Pattern" labelWidth={26}>
+        <InlineField label="Pattern" htmlFor="es_config_indexPattern" labelWidth={26}>
           <Select
             inputId="es_config_indexPattern"
             value={indexPatternTypes.find(
@@ -45,7 +45,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="Time field name" labelWidth={26}>
+        <InlineField label="Time field name" htmlFor="es_config_timeField" labelWidth={26}>
           <Input
             id="es_config_timeField"
             value={value.jsonData.timeField || ''}
@@ -56,7 +56,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
+        <InlineField label="Max concurrent Shard Requests" htmlFor="es_config_shardRequests" labelWidth={26}>
           <Input
             id="es_config_shardRequests"
             value={value.jsonData.maxConcurrentShardRequests || ''}
@@ -67,6 +67,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
 
         <InlineField
           label="Min time interval"
+          htmlFor="es_config_minTimeInterval"
           labelWidth={26}
           tooltip={
             <>
@@ -95,7 +96,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         </InlineField>
 
         {value.jsonData.xpack && (
-          <InlineField label="Include Frozen Indices" labelWidth={26}>
+          <InlineField label="Include Frozen Indices" htmlFor="es_config_frozenIndices" labelWidth={26}>
             <InlineSwitch
               id="es_config_frozenIndices"
               value={value.jsonData.includeFrozen ?? false}
