@@ -39,6 +39,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `lokiMetricDataplane`               | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`         | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
 | `useCachingService`                 | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
+| `authenticationConfigUI`            | Enables authentication configuration UI                                                                                                                                                             | Yes                |
 | `advancedDataSourcePicker`          | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 
 ## Beta feature toggles
@@ -108,7 +109,6 @@ Alpha features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                      |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
-| `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                       |
 
