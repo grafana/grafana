@@ -10,9 +10,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func prepare(text string) io.ReadCloser {
@@ -167,6 +168,76 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 		frame := result.Responses["metricFindQuery"]
 		if diff := cmp.Diff(testFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
+	t.Run("Influxdb response parser should parse metricFindQueries->SHOW RETENTION POLICIES normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+		  "results": [
+		    {
+		      "statement_id": 0,
+		      "series": [
+		        {
+		          "columns": [
+		            "name",
+		            "duration",
+		            "shardGroupDuration",
+		            "replicaN",
+		            "default"
+		          ],
+		          "values": [
+		            [
+		              "autogen",
+		              "0s",
+		              "168h0m0s",
+		              1,
+		              false
+		            ],
+		            [
+		              "bar",
+		              "24h0m0s",
+		              "1h0m0s",
+		              1,
+		              true
+		            ],
+		            [
+		              "5m_avg",
+		              "2400h0m0s",
+		              "24h0m0s",
+		              1,
+		              false
+		            ],
+		            [
+		              "1m_avg",
+		              "240h0m0s",
+		              "24h0m0s",
+		              1,
+		              false
+		            ]
+		          ]
+		        }
+		      ]
+		    }
+		  ]
+		}
+		`
+
+		var queries []Query
+		queries = append(queries, Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
+		policyFrame := data.NewFrame("",
+			data.NewField("value", nil, []string{
+				"bar", "autogen", "5m_avg", "1m_avg",
+			}),
+		)
+
+		result := parser.Parse(prepare(response), queries)
+
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(policyFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 	})
