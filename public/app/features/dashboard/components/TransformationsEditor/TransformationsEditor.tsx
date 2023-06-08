@@ -18,6 +18,7 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
   Button,
+  ConfirmModal,
   Container,
   CustomScrollbar,
   Themeable,
@@ -40,7 +41,6 @@ import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
-import { r } from 'msw/lib/glossary-de6278a9';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -54,6 +54,7 @@ interface State {
   search: string;
   showPicker?: boolean;
   scrollTop?: number;
+  showRemoveAllModal?: boolean;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -203,6 +204,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     });
     next.splice(idx, 1);
     this.onChange(next);
+  };
+
+  onTransformationRemoveAll = () => {
+    this.onChange([]);
+    this.setState({ showRemoveAllModal: false });
   };
 
   onDragEnd = (result: DropResult) => {
@@ -415,7 +421,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               this.setState({ showPicker: true });
             }}
           >
-            Add transformation
+            Add{config.featureToggles.transformationsRedesign ? ' another ' : ' '}transformation
           </Button>
         )}
       </>
@@ -444,6 +450,35 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
+            {hasTransforms && config.featureToggles.transformationsRedesign && (
+              <p
+                className={css`
+                  display: flex;
+                  justify-content: space-between;
+                `}
+              >
+                <span>Transformations in use</span>{' '}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    this.setState({ showRemoveAllModal: true });
+                  }}
+                >
+                  Delete all transformations
+                </Button>
+                {config.featureToggles.transformationsRedesign && (
+                  <ConfirmModal
+                    isOpen={Boolean(this.state.showRemoveAllModal)}
+                    title="Delete all transformations?"
+                    body="By deleting all transformations, you will go back to the main selection screen."
+                    confirmText="Delete all"
+                    onConfirm={() => this.onTransformationRemoveAll()}
+                    onDismiss={() => this.setState({ showRemoveAllModal: false })}
+                  />
+                )}
+              </p>
+            )}
             {hasTransforms &&
               (!config.featureToggles.transformationsRedesign || !this.state.showPicker) &&
               this.renderTransformationEditors()}
