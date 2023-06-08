@@ -30,6 +30,7 @@ export interface VizLegendTableProps<T> extends VizLegendBaseProps<T> {
   sortBy?: string;
   sortDesc?: boolean;
   onToggleSort?: (sortBy: string) => void;
+  isSortable?: boolean;
 }
 
 export interface LegendProps<T = any> extends VizLegendBaseProps<T>, VizLegendTableProps<T> {

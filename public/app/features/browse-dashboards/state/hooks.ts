@@ -143,7 +143,7 @@ function createFlatTree(
 
   let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
 
-  if (level === 0 && collection && !collection.isFullyLoaded) {
+  if (level === 0 && (!collection || !collection.isFullyLoaded)) {
     children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
   }
 

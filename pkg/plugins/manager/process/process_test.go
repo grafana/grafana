@@ -44,7 +44,7 @@ func TestProcessManager_Start(t *testing.T) {
 				managed: true,
 				backend: true,
 				signatureError: &plugins.SignatureError{
-					SignatureStatus: plugins.SignatureUnsigned,
+					SignatureStatus: plugins.SignatureStatusUnsigned,
 				},
 				expectedStartCount: 0,
 			},
@@ -265,7 +265,7 @@ func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.
 	t.Helper()
 
 	p := &plugins.Plugin{
-		Class: plugins.External,
+		Class: plugins.ClassExternal,
 		JSONData: plugins.JSONData{
 			ID: "test-datasource",
 		},

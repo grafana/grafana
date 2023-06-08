@@ -66,7 +66,7 @@ export const DynamicConfigValueEditor = ({
           </Label>
           {!isSystemOverride && (
             <div>
-              <IconButton name="times" onClick={onRemove} />
+              <IconButton name="times" onClick={onRemove} tooltip="Remove label" />
             </div>
           )}
         </HorizontalGroup>
