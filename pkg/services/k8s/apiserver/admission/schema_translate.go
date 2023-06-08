@@ -40,6 +40,7 @@ func (st schemaTranslate) Admit(ctx context.Context, a admission.Attributes, o a
 		spec, err := json.Marshal(uobj.Object["spec"])
 		if err != nil {
 			st.log.Error("failed to marshal spec", "err", err)
+			return nil
 		}
 		dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
 		if err != nil {
@@ -58,6 +59,7 @@ func (st schemaTranslate) Admit(ctx context.Context, a admission.Attributes, o a
 			inst, err := sch.Validate(cueVal)
 			if err != nil {
 				st.log.Info("failed to validate dashboard", "err", err)
+				return nil
 			}
 
 			// Translate doesn't return an error, so we just hope it doesn't panic.
