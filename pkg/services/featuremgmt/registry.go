@@ -490,7 +490,7 @@ var (
 		{
 			Name:        "authenticationConfigUI",
 			Description: "Enables authentication configuration UI",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateStable,
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
