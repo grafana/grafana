@@ -51,6 +51,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { isMetricAggregationWithMeta } from './guards';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -801,7 +802,7 @@ export class ElasticDatasource
 
     if (target.bucketAggs) {
       for (const bucketAgg of target.bucketAggs) {
-        if (bucketAgg.type !== 'filters' && this.templateSrv.containsTemplate(bucketAgg.field)) {
+        if (isBucketAggregationWithField(bucketAgg) && this.templateSrv.containsTemplate(bucketAgg.field)) {
           return true;
         }
         if (this.objectContainsTemplate(bucketAgg.settings)) {
@@ -812,15 +813,7 @@ export class ElasticDatasource
 
     if (target.metrics) {
       for (const metric of target.metrics) {
-        if (
-          metric.type === 'count' ||
-          metric.type === 'bucket_script' ||
-          metric.type === 'raw_data' ||
-          metric.type === 'raw_document' ||
-          metric.type === 'logs' ||
-          metric.type === 'top_metrics' ||
-          metric.type === 'moving_avg'
-        ) {
+        if (!isMetricAggregationWithField(metric)) {
           continue;
         }
         if (metric.field && this.templateSrv.containsTemplate(metric.field)) {
@@ -829,7 +822,7 @@ export class ElasticDatasource
         if (metric.settings && this.objectContainsTemplate(metric.settings)) {
           return true;
         }
-        if (metric.type === 'extended_stats' && this.objectContainsTemplate(metric.meta)) {
+        if (isMetricAggregationWithMeta(metric) && this.objectContainsTemplate(metric.meta)) {
           return true;
         }
       }
