@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/codejen"
@@ -37,6 +38,13 @@ func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 		return nil, err
 	}
 
+	version := "export const pluginVersion = \"%s\";"
+	if decl.PluginMeta.Info.Version != nil {
+		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
+	} else {
+		version = fmt.Sprintf(version, decl.GrafanaVersion)
+	}
+
 	files := make(codejen.Files, len(jf))
 	for i, file := range jf {
 		tsf := &tsast.File{}
@@ -47,6 +55,10 @@ func (j *pleJenny) Generate(decl *pfs.PluginDecl) (codejen.Files, error) {
 				tsf.Imports = append(tsf.Imports, tsim)
 			}
 		}
+
+		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
+			Data: version,
+		})
 
 		tsf.Nodes = append(tsf.Nodes, tsast.Raw{
 			Data: string(file.Data),
