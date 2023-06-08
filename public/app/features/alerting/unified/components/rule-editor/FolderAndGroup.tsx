@@ -12,7 +12,7 @@ import { AccessControlAction, useDispatch } from 'app/types';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
-import { RuleForm, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { MINUTE } from '../../utils/rule-form';
 import { isGrafanaRulerRule } from '../../utils/rules';
@@ -24,7 +24,7 @@ import { checkForPathSeparator } from './util';
 export const SLICE_GROUP_RESULTS_TO = 1000;
 
 interface FolderAndGroupProps {
-  initialFolder: RuleForm | null;
+  initialFolder: Folder | null;
 }
 
 export const useGetGroupOptionsFromFolder = (folderTitle: string) => {

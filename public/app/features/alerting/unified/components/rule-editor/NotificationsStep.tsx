@@ -12,16 +12,23 @@ import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
-export const NotificationsStep = () => {
+export const NotificationsStep = ({ id }: { id?: string }) => {
   const styles = useStyles2(getStyles);
   const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
 
-  const [type, labels, queries, condition] = watch(['type', 'labels', 'queries', 'condition']);
+  const [type, labels, queries, condition, folder, alertName] = watch([
+    'type',
+    'labels',
+    'queries',
+    'condition',
+    'folder',
+    'name',
+  ]);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const hasLabelsDefined = getNonEmptyLabels(getValues('labels')).length > 0;
 
-  const shouldRenderPreview = Boolean(condition) && type === RuleFormType.grafana;
+  const shouldRenderPreview = Boolean(condition) && Boolean(folder) && type === RuleFormType.grafana;
 
   return (
     <RuleEditorSection
@@ -48,8 +55,15 @@ export const NotificationsStep = () => {
           <LabelsField dataSourceName={dataSourceName} />
         </div>
       </div>
-      {shouldRenderPreview && condition && (
-        <NotificationPreview alertQueries={queries} customLabels={labels} condition={condition} />
+      {shouldRenderPreview && condition && folder && (
+        <NotificationPreview
+          alertQueries={queries}
+          customLabels={labels}
+          condition={condition}
+          folder={folder}
+          alertName={alertName}
+          alertUid={id}
+        />
       )}
     </RuleEditorSection>
   );

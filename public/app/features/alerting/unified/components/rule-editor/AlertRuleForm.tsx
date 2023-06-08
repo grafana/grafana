@@ -70,9 +70,10 @@ const AlertRuleNameInput = () => {
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
+  id?: string;
 };
 
-export const AlertRuleForm = ({ existing, prefill }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -250,7 +251,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep />
+                  <NotificationsStep id={id} />
                 </>
               )}
             </div>

@@ -49,6 +49,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
 
   return Object.freeze({
     name: '',
+    uid: '',
     labels: [{ key: '', value: '' }],
     annotations: [
       { key: Annotation.summary, value: '' },
@@ -107,6 +108,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     return {
       grafana_alert: {
         title: name,
+        uid: values.uid,
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
@@ -131,6 +133,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: ga.title,
+        uid: ga.uid,
         type: RuleFormType.grafana,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
@@ -141,7 +144,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
-        folder: { title: namespace, id: ga.namespace_id },
+        folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
       };
     } else {
@@ -420,14 +423,14 @@ export const panelToRuleFormValues = async (
     queries.push(thresholdExpression);
   }
 
-  const { folderId, folderTitle } = dashboard.meta;
+  const { folderTitle, folderUid } = dashboard.meta;
 
   const formValues = {
     type: RuleFormType.grafana,
     folder:
-      folderId && folderTitle
+      folderUid && folderTitle
         ? {
-            id: folderId,
+            uid: folderUid,
             title: folderTitle,
           }
         : undefined,

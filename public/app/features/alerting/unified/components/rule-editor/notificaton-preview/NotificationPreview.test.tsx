@@ -3,10 +3,10 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { FieldType } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import 'core-js/stable/structured-clone';
 import { TestProvider } from '../../../../../../../test/helpers/TestProvider';
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
@@ -15,11 +15,11 @@ import { mockAlertQuery } from '../../../mocks';
 import { mockPreviewApiResponse } from '../../../mocks/alertRuleApi';
 import * as dataSource from '../../../utils/datasource';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { Folder } from '../RuleFolderPicker';
 
 import { NotificationPreview } from './NotificationPreview';
 import NotificationPreviewByAlertManager from './NotificationPreviewByAlertManager';
 import * as notificationPreview from './useGetAlertManagersSourceNamesAndImage';
-import 'core-js/stable/structured-clone';
 import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
 
 jest.mock('../../../useRouteGroupsMatcher');
@@ -129,23 +129,17 @@ function mockHasEditPermission(enabled: boolean) {
   });
 }
 
+const folder: Folder = {
+  uid: '1',
+  title: 'title',
+};
+
 describe('NotificationPreview', () => {
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {
     mockOneAlertManager();
-    mockPreviewApiResponse(server, {
-      data: {
-        // @ts-ignore
-        values: [1686126555914, 'Normal'],
-      },
-      schema: {
-        fields: [
-          { name: 'Time', type: FieldType.number },
-          { name: 'State', type: FieldType.string, labels: { tomato: 'red', avocate: 'green' } },
-        ],
-      },
-    });
+    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
       wrapper: TestProvider,
     });
 
@@ -164,16 +158,9 @@ describe('NotificationPreview', () => {
   it('should render notification preview with alert manager sections, when having more than one alert manager configured to receive alerts', async () => {
     // two alert managers configured  to receive alerts
     mockTwoAlertManagers();
-    mockPreviewApiResponse(server, {
-      schema: {
-        fields: [
-          { name: 'value', type: FieldType.number, labels: { tomato: 'red', avocate: 'green' } },
-          { name: 'value', type: FieldType.number },
-        ],
-      },
-    });
+    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {
@@ -201,17 +188,10 @@ describe('NotificationPreview', () => {
   it('should render details modal when clicking see details button', async () => {
     // two alert managers configured  to receive alerts
     mockOneAlertManager();
-    mockPreviewApiResponse(server, {
-      schema: {
-        fields: [
-          { name: 'value', type: FieldType.number, labels: { tomato: 'red', avocate: 'green' } },
-          { name: 'value', type: FieldType.number },
-        ],
-      },
-    });
+    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(true);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {
@@ -241,17 +221,10 @@ describe('NotificationPreview', () => {
   it('should not render contact point link in details modal if user has no permissions for editing contact points', async () => {
     // two alert managers configured  to receive alerts
     mockOneAlertManager();
-    mockPreviewApiResponse(server, {
-      schema: {
-        fields: [
-          { name: 'value', type: FieldType.number, labels: { tomato: 'red', avocate: 'green' } },
-          { name: 'value', type: FieldType.number },
-        ],
-      },
-    });
+    mockPreviewApiResponse(server, [{ labels: [{ tomato: 'red', avocate: 'green' }] }]);
     mockHasEditPermission(false);
 
-    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" />, {
+    render(<NotificationPreview alertQueries={[alertQuery]} customLabels={[]} condition="" folder={folder} />, {
       wrapper: TestProvider,
     });
     await waitFor(() => {
