@@ -14,7 +14,7 @@ import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 
-import { DashboardEmpty } from './DashboardEmpty';
+import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {

@@ -38,6 +38,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
 | `alertingNotificationsPoliciesMatchingInstances` | Enables the preview of matching instances for notification policies                                                                                                                                 | Yes                |
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
+| `authenticationConfigUI`                         | Enables authentication configuration UI                                                                                                                                                             | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 
 ## Preview feature toggles
@@ -59,10 +60,12 @@ Some features are enabled by default. You can disable these feature by setting t
 | `nestedFolders`                      | Enable folder nesting                                                                                                                                                                        |
 | `alertingNoNormalState`              | Stop maintaining state of alerts that are not firing                                                                                                                                         |
 | `renderAuthJWT`                      | Uses JWT-based auth for rendering instead of relying on remote cache                                                                                                                         |
+| `refactorVariablesTimeRange`         | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `faroDatasourceSelector`             | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                                                                               |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
 | `dataSourcePageHeader`               | Apply new pageHeader UI in data source edit page                                                                                                                                             |
+| `sqlDatasourceDatabaseSelection`     | Enables previous SQL data source dataset dropdown behavior                                                                                                                                   |
 
 ## Experimental feature toggles
 
@@ -88,7 +91,6 @@ Experimental features might be changed or removed without prior notice.
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                         |
 | `showTraceId`                      | Show trace ids for requests                                                                                  |
-| `authnService`                     | Use new auth service to perform authentication                                                               |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                     |
@@ -107,7 +109,6 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                      |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
-| `authenticationConfigUI`           | Enables authentication configuration UI                                                                      |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |

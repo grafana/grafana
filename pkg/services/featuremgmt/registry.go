@@ -280,12 +280,6 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
-			Name:        "authnService",
-			Description: "Use new auth service to perform authentication",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus exemplar sampling",
 			Stage:       FeatureStageGeneralAvailability,
@@ -475,6 +469,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
 			Name:            "useCachingService",
 			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
 			Stage:           FeatureStageGeneralAvailability,
@@ -490,7 +490,8 @@ var (
 		{
 			Name:        "authenticationConfigUI",
 			Description: "Enables authentication configuration UI",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true",
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
@@ -548,6 +549,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "sqlDatasourceDatabaseSelection",
+			Description:  "Enables previous SQL data source dataset dropdown behavior",
+			FrontendOnly: true,
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaBiSquad,
 		},
 	}
 )

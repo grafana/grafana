@@ -94,7 +94,7 @@ export function VariableEditorListRow({
                 propsOnDuplicate(identifier);
               }}
               name="copy"
-              title="Duplicate variable"
+              tooltip="Duplicate variable"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
             />
           </td>
@@ -107,7 +107,7 @@ export function VariableEditorListRow({
                 propsOnDelete(identifier);
               }}
               name="trash-alt"
-              title="Remove variable"
+              tooltip="Remove variable"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
             />
           </td>

@@ -1,7 +1,7 @@
 import { PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
 
 const labelNamesRegex = /^label_names\(\)\s*$/;
-const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;
 const metricNamesRegex = /^metrics\((.+)\)\s*$/;
 const queryResultRegex = /^query_result\((.+)\)\s*$/;
 

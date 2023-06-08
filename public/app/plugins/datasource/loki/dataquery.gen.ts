@@ -60,4 +60,8 @@ export interface Loki extends common.DataQuery {
    * Used to scale the interval value.
    */
   resolution?: number;
+  /**
+   * Used to set step value for range queries.
+   */
+  step?: string;
 }
