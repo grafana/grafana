@@ -36,7 +36,7 @@ export function migrateAll(): ThunkResult<void> {
   return async (dispatch) => {
     try {
       const payload = await getBackendSrv().post('/api/serviceaccounts/migrate');
-      dispatch(setMigrationResult({ payload }));
+      dispatch(setMigrationResult(payload));
     } finally {
       dispatch(loadApiKeys());
     }
