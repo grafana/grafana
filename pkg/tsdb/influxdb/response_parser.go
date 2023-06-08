@@ -320,7 +320,7 @@ func parseNumber(value interface{}) *float64 {
 }
 
 func isTagValuesQuery(query Query) bool {
-	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUS"))
+	return strings.Contains(strings.ToLower(query.RawQuery), strings.ToLower("SHOW TAG VALUES"))
 }
 
 func isRetentionPolicyQuery(query Query) bool {
