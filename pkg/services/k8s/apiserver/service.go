@@ -144,8 +144,10 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
+	// NOTE: setting CoreAPI to nil is for standalone mode
 	o.RecommendedOptions.CoreAPI = nil
+	// For, aggregated mode, a remote kubeconfig should be supplied like below
+	// o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath = "/Users/charandas/.kube/config"
 
 	// this currently only will work for standalone mode. we are removing all default enabled plugins
 	// and replacing them with our internal admission plugins. this avoids issues with the default admission

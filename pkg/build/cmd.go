@@ -170,12 +170,19 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 		rmr(binary, binary+".md5")
 	}
 
-	lf, err := ldflags(opts)
+	_, err := ldflags(opts)
 	if err != nil {
 		return err
 	}
 
-	args := []string{"build", "-ldflags", lf}
+	args := []string{"build"} // , "-ldflags", lf
+
+	gc, err := gcflags(opts)
+	if err != nil {
+		return err
+	}
+
+	args = append(args, "-gcflags", gc)
 
 	if opts.goos == GoOSWindows {
 		// Work around a linking error on Windows: "export ordinal too large"
@@ -211,6 +218,10 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	return md5File(binary)
 }
 
+func gcflags(opts BuildOpts) (string, error) {
+	return "all=-N -l", nil
+}
+
 func ldflags(opts BuildOpts) (string, error) {
 	buildStamp, err := buildStamp()
 	if err != nil {
@@ -228,7 +239,7 @@ func ldflags(opts BuildOpts) (string, error) {
 	}
 
 	var b bytes.Buffer
-	b.WriteString("-w")
+	// b.WriteString("-w")
 	b.WriteString(fmt.Sprintf(" -X main.version=%s", opts.version))
 	b.WriteString(fmt.Sprintf(" -X main.commit=%s", commitSha))
 	b.WriteString(fmt.Sprintf(" -X main.buildstamp=%d", buildStamp))

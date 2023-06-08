@@ -1032,7 +1032,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 	for sch != nil {
 		vstr := versionString(sch.Version())
 		if props.Maturity.Less(kindsys.MaturityStable) {
-			vstr = "v0.0-alpha"
+			vstr = "v0-alpha"
 		}
 
 		ver := kindsv1.GrafanaResourceDefinitionVersion{
@@ -1055,7 +1055,9 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 }
 
 func versionString(version thema.SyntacticVersion) string {
-	return fmt.Sprintf("v%d-%d", version[0], version[1])
+	// TODO: v0.0-alpha throws the apiservice registration off in aggregated mode
+	// Cannot use dot in the DNS subdomain prefix in front of .dashboard.kinds.grafana.com
+	return fmt.Sprintf("v%d", version[0]) // , version[1]
 }
 
 func doNewRegistry(
