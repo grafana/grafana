@@ -61,6 +61,22 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 	require.NoError(t, err)
 
+	dynamicLabels := []string{"GA", "FL", "AL", "AZ"}
+	dynamicLabelsJson, _ := json.Marshal(&dynamicLabels)
+	testdataQueryModel := json.RawMessage(fmt.Sprintf(`{
+								  "refId": "A",
+								  "hide": false,
+								  "scenarioId": "usa",
+								  "usa": {
+									"mode": "timeseries",
+									"period": "1m",
+									"states": %s,
+									"fields": [
+									  "baz"
+									]
+								  }
+								}`, string(dynamicLabelsJson)))
+
 	genRule := func(ruleGen func() apimodels.PostableExtendedRuleNode) apimodels.PostableExtendedRuleNodeExtended {
 		return apimodels.PostableExtendedRuleNodeExtended{
 			Rule:           ruleGen(),
@@ -85,7 +101,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("valid rule should return static annotations", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Annotations = map[string]string{
 			"foo":  "bar",
 			"foo2": "bar2",
@@ -102,7 +118,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("valid rule should return static labels", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Labels = map[string]string{
 			"foo":  "bar",
 			"foo2": "bar2",
@@ -119,7 +135,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("valid rule should return interpolated annotations", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Annotations = map[string]string{
 			"value":    "{{ $value }}",
 			"values.B": "{{ $values.B }}",
@@ -130,19 +146,18 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		var result []amv2.PostableAlert
 		require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		require.Len(t, result, 4)
-		labels := []string{"GA", "FL", "AL", "AZ"}
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Annotations["values.B"])
 			require.NotEmpty(t, alert.Annotations["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", labels[i], alert.Annotations["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", labels[i], alert.Annotations["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Annotations["values.C"])
 			require.Contains(t, alert.Annotations["value"], valueB)
 			require.Contains(t, alert.Annotations["value"], valueC)
 		}
 	})
 
 	t.Run("valid rule should return interpolated labels", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Labels = map[string]string{
 			"value":    "{{ $value }}",
 			"values.B": "{{ $values.B }}",
@@ -153,19 +168,18 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		var result []amv2.PostableAlert
 		require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		require.Len(t, result, 4)
-		labels := []string{"GA", "FL", "AL", "AZ"}
 		for i, alert := range result {
 			require.NotEmpty(t, alert.Labels["values.B"])
 			require.NotEmpty(t, alert.Labels["values.C"])
-			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", labels[i], alert.Labels["values.B"])
-			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", labels[i], alert.Labels["values.C"])
+			valueB := fmt.Sprintf("[ var='B' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.B"])
+			valueC := fmt.Sprintf("[ var='C' labels={state=%s} value=%s ]", dynamicLabels[i], alert.Labels["values.C"])
 			require.Contains(t, alert.Labels["value"], valueB)
 			require.Contains(t, alert.Labels["value"], valueC)
 		}
 	})
 
 	t.Run("valid rule should use functions with annotations", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Annotations = map[string]string{
 			"externalURL": "{{ externalURL }}",
 			"humanize":    "{{ humanize 1000.0 }}",
@@ -182,7 +196,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("valid rule should use functions with labels", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		rule.Rule.Labels = map[string]string{
 			"externalURL": "{{ externalURL }}",
 			"humanize":    "{{ humanize 1000.0 }}",
@@ -199,20 +213,19 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("valid rule should return dynamic labels", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		status, body := apiCli.SubmitRuleForTesting(t, rule)
 		require.Equal(t, http.StatusOK, status)
 		var result []amv2.PostableAlert
 		require.NoErrorf(t, json.Unmarshal([]byte(body), &result), "cannot parse response to data frame")
 		require.Len(t, result, 4)
-		labels := []string{"GA", "FL", "AL", "AZ"}
 		for i, alert := range result {
-			require.Equal(t, labels[i], alert.Labels["state"])
+			require.Equal(t, dynamicLabels[i], alert.Labels["state"])
 		}
 	})
 
 	t.Run("valid rule should return built-in labels", func(t *testing.T) {
-		rule := genRule(testDataRule())
+		rule := genRule(testdataRule(testdataQueryModel, nil, nil))
 		status, body := apiCli.SubmitRuleForTesting(t, rule)
 		require.Equal(t, http.StatusOK, status)
 		var result []amv2.PostableAlert
@@ -246,7 +259,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		testUserApiCli := newAlertingApiClient(grafanaListedAddr, "test", "test")
 
 		t.Run("fail if can't read rules", func(t *testing.T) {
-			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testdataRule(testdataQueryModel, nil, nil)))
 			require.Contains(t, body, accesscontrol.ActionAlertingRuleRead)
 			require.Equalf(t, http.StatusForbidden, status, "Response: %s", body)
 		})
@@ -268,7 +281,7 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		testUserApiCli.ReloadCachedPermissions(t)
 
 		t.Run("fail if can't query data sources", func(t *testing.T) {
-			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testdataRule(testdataQueryModel, nil, nil)))
 			require.Contains(t, body, "user is not authorized to query one or many data sources used by the rule")
 			require.Equalf(t, http.StatusUnauthorized, status, "Response: %s", body)
 		})
@@ -288,55 +301,35 @@ func TestGrafanaRuleConfig(t *testing.T) {
 		testUserApiCli.ReloadCachedPermissions(t)
 
 		t.Run("succeed if can query data sources", func(t *testing.T) {
-			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testDataRule()))
+			status, body := testUserApiCli.SubmitRuleForTesting(t, genRule(testdataRule(testdataQueryModel, nil, nil)))
 			require.Equalf(t, http.StatusOK, status, "Response: %s", body)
 		})
 	})
 }
 
-func testDataRule() func() apimodels.PostableExtendedRuleNode {
+func testdataRule(queryModel json.RawMessage, labels map[string]string, annotations map[string]string) func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
 		forDuration := model.Duration(10 * time.Second)
 		return apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
 				For:         &forDuration,
-				Labels:      map[string]string{"label1": "val1"},
-				Annotations: map[string]string{"annotation1": "val1"},
+				Labels:      labels,
+				Annotations: annotations,
 			},
 			GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 				Title:     fmt.Sprintf("rule-%s", util.GenerateShortUID()),
 				Condition: "C",
 				Data: []apimodels.AlertQuery{
 					{
-						RefID: "A",
-						RelativeTimeRange: apimodels.RelativeTimeRange{
-							From: apimodels.Duration(time.Duration(5) * time.Hour),
-							To:   apimodels.Duration(time.Duration(3) * time.Hour),
-						},
-						DatasourceUID: TESTDATA_UID,
-						Model: json.RawMessage(`{
-								  "refId": "A",
-								  "hide": false,
-								  "scenarioId": "usa",
-								  "usa": {
-									"mode": "timeseries",
-									"period": "1m",
-									"states": [
-									  "GA", "FL", "AL", "AZ"
-									],
-									"fields": [
-									  "baz"
-									]
-								  }
-								}`),
+						RefID:             "A",
+						RelativeTimeRange: apimodels.RelativeTimeRange{From: 600, To: 0},
+						DatasourceUID:     TESTDATA_UID,
+						Model:             queryModel,
 					},
-					{
-						RefID: "B",
-						RelativeTimeRange: apimodels.RelativeTimeRange{
-							From: apimodels.Duration(time.Duration(5) * time.Hour),
-							To:   apimodels.Duration(time.Duration(3) * time.Hour),
-						},
-						DatasourceUID: expr.DatasourceUID,
+					{ // Simple reduce last A.
+						RefID:             "B",
+						RelativeTimeRange: apimodels.RelativeTimeRange{From: 0, To: 0},
+						DatasourceUID:     expr.DatasourceUID,
 						Model: json.RawMessage(`{
 								  "refId": "B",
 								  "hide": false,
@@ -370,13 +363,10 @@ func testDataRule() func() apimodels.PostableExtendedRuleNode {
 								  "expression": "A"
 								}`),
 					},
-					{
-						RefID: "C",
-						RelativeTimeRange: apimodels.RelativeTimeRange{
-							From: apimodels.Duration(time.Duration(5) * time.Hour),
-							To:   apimodels.Duration(time.Duration(3) * time.Hour),
-						},
-						DatasourceUID: expr.DatasourceUID,
+					{ // Threshold B > 0.
+						RefID:             "C",
+						RelativeTimeRange: apimodels.RelativeTimeRange{From: 0, To: 0},
+						DatasourceUID:     expr.DatasourceUID,
 						Model: json.RawMessage(`{
 							  "refId": "C",
 							  "hide": false,

@@ -47,7 +47,7 @@ type TestingApiSrv struct {
 func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, body apimodels.PostableExtendedRuleNodeExtended) response.Response {
 	rule, err := validateRuleNode(
 		&body.Rule,
-		"",
+		body.RuleGroup,
 		srv.cfg.BaseInterval,
 		c.OrgID,
 		&folder.Folder{
@@ -99,9 +99,9 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		state.GetRuleExtraLabels(rule, body.NamespaceTitle, includeFolder),
 	)
 
-	alerts := make([]amv2.PostableAlert, 0, len(transitions))
+	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
 	for _, alertState := range transitions {
-		alerts = append(alerts, *state.StateToPostableAlert(alertState.State, srv.appUrl))
+		alerts = append(alerts, state.StateToPostableAlert(alertState.State, srv.appUrl))
 	}
 
 	return response.JSON(http.StatusOK, alerts)

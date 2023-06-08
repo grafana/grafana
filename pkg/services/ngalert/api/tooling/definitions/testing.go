@@ -108,6 +108,8 @@ type PostableExtendedRuleNodeExtended struct {
 	NamespaceUID string `json:"folderUid"`
 	// example: project_x
 	NamespaceTitle string `json:"folderTitle"`
+	// example: eval_group_1
+	RuleGroup string `json:"ruleGroup"`
 }
 
 func (n *PostableExtendedRuleNodeExtended) UnmarshalJSON(b []byte) error {
