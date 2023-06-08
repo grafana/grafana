@@ -33,7 +33,7 @@ func newDefaultStaticDetectorsGetter() detectorsGetter {
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
 func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
-	remoteGetter, err := newGCOMDetectorsGetter(cfg.GrafanaComURL, defaultRemoteDetectorsGetterTTL)
+	remoteGetter, err := newGCOMDetectorsGetter(cfg.GrafanaComURL, defaultGCOMDetectorsGetterTTL)
 	if err != nil {
 		return nil, fmt.Errorf("newGCOMDetectorsGetter: %w", err)
 	}

@@ -2,6 +2,7 @@ package angulardetector
 
 import (
 	"bytes"
+	"context"
 	"regexp"
 )
 
@@ -34,4 +35,32 @@ type regexDetector struct {
 // Detect returns true if moduleJs matches the regular expression d.regex.
 func (d *regexDetector) Detect(moduleJs []byte) bool {
 	return d.regex.Match(moduleJs)
+}
+
+// detectorsGetter returns a list of angular detector s.
+type detectorsGetter interface {
+	// getDetectors returns a slice of detector provided by the detectorsGetter.
+	getDetectors(ctx context.Context) []detector
+}
+
+// staticDetectorsGetter is a detectorsGetter that always returns the provided detectors.
+type staticDetectorsGetter struct {
+	detectors []detector
+}
+
+func (g *staticDetectorsGetter) getDetectors(_ context.Context) []detector {
+	return g.detectors
+}
+
+// sequenceDetectorsGetter is a detectorsGetter that calls all the detectorsGetters in it and returns the
+// first value which isn't empty.
+type sequenceDetectorsGetter []detectorsGetter
+
+func (d sequenceDetectorsGetter) getDetectors(ctx context.Context) []detector {
+	for _, getter := range d {
+		if detectors := getter.getDetectors(ctx); len(detectors) > 0 {
+			return detectors
+		}
+	}
+	return nil
 }
