@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 
 import { MutableDataFrame, sortDataFrame } from '../../dataframe';
 import { isTimeSeriesFrames } from '../../dataframe/utils';
-import { getFieldDisplayName, getFrameDisplayName } from '../../field/fieldState';
+import { getFrameDisplayName } from '../../field/fieldState';
 import {
   Field,
   FieldType,
@@ -73,18 +73,15 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
           const firstNonTimeField = frame.fields[1];
 
           // To support consistent naming for dataplane and prometheus
-          // we implement the following hierarchy:
-
-          // displayNameFromDS > frameDisplayName > fieldDisplayName
+          // displayNameFromDS > frameDisplayName 
 
           // This supports new naming and custom names (from the prom legend option)
           // and supports the older pattern of getting the frame name.
           // if neither of those return a name we use getFieldDisplayName which is good.
           const displayNameFromDS = firstNonTimeField.config.displayNameFromDS;
-          const frameDisplayName = displayNameFromDS ?? getFrameDisplayName(frame);
-          const fieldDisplayName = getFieldDisplayName(firstNonTimeField, frame);
+          const frameDisplayName = getFrameDisplayName(frame);
 
-          const displayName = displayNameFromDS ?? frameDisplayName ?? fieldDisplayName;
+          const displayName = displayNameFromDS ?? frameDisplayName;
 
           for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
             const timeFieldIndex = timeFieldByIndex[frameIndex];
