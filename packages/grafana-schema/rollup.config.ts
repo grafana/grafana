@@ -29,7 +29,7 @@ export default [
     ],
   },
   {
-    input: './compiled/index.d.ts',
+    input: './dist/esm/index.d.ts',
     plugins: [dts()],
     output: {
       file: pkg.publishConfig.types,
@@ -45,7 +45,7 @@ export default [
           fileURLToPath(new URL(file, import.meta.url)),
         ])
     ),
-    plugins: [resolve(), esbuild(), dts()],
+    plugins: [resolve(), esbuild()],
     output: {
       format: 'esm',
       dir: path.dirname(pkg.publishConfig.module),
