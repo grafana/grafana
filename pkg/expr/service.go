@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,23 +41,24 @@ func IsDataSource(uid string) bool {
 
 // Service is service representation for expression handling.
 type Service struct {
-	cfg               *setting.Cfg
-	dataService       backend.QueryDataHandler
-	dataSourceService datasources.DataSourceService
-	features          featuremgmt.FeatureToggles
+	cfg          *setting.Cfg
+	dataService  backend.QueryDataHandler
+	pCtxProvider *plugincontext.Provider
+	features     featuremgmt.FeatureToggles
 
 	tracer  tracing.Tracer
 	metrics *metrics
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
 	return &Service{
-		cfg:               cfg,
-		dataService:       pluginClient,
-		dataSourceService: dataSourceService,
-		features:          features,
-		tracer:            tracer,
-		metrics:           newMetrics(registerer),
+		cfg:          cfg,
+		dataService:  pluginClient,
+		pCtxProvider: pCtxProvider,
+		features:     features,
+		tracer:       tracer,
+		metrics:      newMetrics(registerer),
 	}
 }
 

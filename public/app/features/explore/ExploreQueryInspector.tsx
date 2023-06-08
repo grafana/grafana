@@ -68,7 +68,9 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Query',
     value: 'query',
     icon: 'info-circle',
-    content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
+    content: (
+      <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+    ),
   };
 
   const tabs = [statsTab, queryTab, jsonTab, dataTab];

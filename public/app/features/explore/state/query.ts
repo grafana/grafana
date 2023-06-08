@@ -59,13 +59,8 @@ import {
 } from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
-import { stateSave } from './main';
 import { updateTime } from './time';
 import { createCacheKey, getResultsFromCache, filterLogRowsByIndex } from './utils';
-
-//
-// Actions and Payloads
-//
 
 /**
  * Adds a query row after the row with the given index.
@@ -232,10 +227,6 @@ export interface ClearCachePayload {
 }
 export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCache');
 
-//
-// Action creators
-//
-
 /**
  * Adds a query row after the row with the given index.
  */
@@ -277,7 +268,6 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
         dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
       }
     }
-    dispatch(stateSave());
   };
 }
 
@@ -330,8 +320,8 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
     }
 
     // if we are removing a query we want to run the remaining ones
-    if (queries.length < queries.length) {
-      dispatch(runQueries(exploreId));
+    if (queries.length < oldQueries.length) {
+      dispatch(runQueries({ exploreId }));
     }
   }
 );
@@ -435,7 +425,7 @@ export function modifyQueries(
 
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     if (!modification.preventSubmit) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
   };
 }
@@ -462,21 +452,22 @@ async function handleHistory(
   }
 }
 
+interface RunQueriesOptions {
+  exploreId: ExploreId;
+  preserveCache?: boolean;
+}
 /**
  * Main action to run queries and dispatches sub-actions based on which result viewers are active
  */
-export const runQueries = (
-  exploreId: ExploreId,
-  options?: { replaceUrl?: boolean; preserveCache?: boolean }
-): ThunkResult<void> => {
-  return (dispatch, getState) => {
+export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
+  'explore/runQueries',
+  async ({ exploreId, preserveCache }, { dispatch, getState }) => {
     dispatch(updateTime({ exploreId }));
 
     const correlations$ = getCorrelations();
 
     // We always want to clear cache unless we explicitly pass preserveCache parameter
-    const preserveCache = options?.preserveCache === true;
-    if (!preserveCache) {
+    if (preserveCache !== true) {
       dispatch(clearCache(exploreId));
     }
 
@@ -506,8 +497,6 @@ export const runQueries = (
       handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
     }
 
-    dispatch(stateSave({ replace: options?.replaceUrl }));
-
     const cachedValue = getResultsFromCache(cache, absoluteRange);
 
     // If we have results saved in cache, we are going to use those results instead of running queries
@@ -519,21 +508,12 @@ export const runQueries = (
       );
 
       newQuerySubscription = newQuerySource.subscribe((data) => {
-        if (!data.error) {
-          dispatch(stateSave());
-        }
-
         dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
       });
 
       // If we don't have results saved in cache, run new queries
     } else {
-      if (!hasNonEmptyQuery(queries)) {
-        dispatch(stateSave({ replace: options?.replaceUrl })); // Remember to save to state and update location
-        return;
-      }
-
-      if (!datasourceInstance) {
+      if (!hasNonEmptyQuery(queries) || !datasourceInstance) {
         return;
       }
 
@@ -587,7 +567,7 @@ export const runQueries = (
             if (data.state === LoadingState.Done && data.series.length === 0) {
               const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
-              dispatch(runQueries(exploreId));
+              dispatch(runQueries({ exploreId }));
             } else {
               // We can stop scanning if we have a result
               dispatch(scanStopAction({ exploreId }));
@@ -635,8 +615,8 @@ export const runQueries = (
     }
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
-  };
-};
+  }
+);
 
 const groupDataQueries = async (datasources: DataQuery[], scopedVars: ScopedVars) => {
   const nonMixedDataSources = datasources.filter((t) => {
@@ -781,7 +761,7 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
     const queries = getState().explore.panes[exploreId]!.queries;
     const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
     dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   };
 }
 
@@ -798,7 +778,7 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   };
 }
 

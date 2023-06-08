@@ -10,4 +10,4 @@ export const acceptedFiles: Accept = {
 };
 
 //This should probably set from grafana conf
-export const maxFileSize = 1000000;
+export const maxFileSize = 500000;

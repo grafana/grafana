@@ -29,6 +29,23 @@ describe('PromVariableQueryEditor', () => {
     expect(migration).toEqual(expected);
   });
 
+  test('Allows for use of variables to interpolate label names in the label values query type.', () => {
+    const query: StandardPromVariableQuery = {
+      query: 'label_values($label_name)',
+      refId: 'StandardVariableQuery',
+    };
+
+    const migration: PromVariableQuery = variableMigration(query);
+
+    const expected: PromVariableQuery = {
+      qryType: PromVariableQueryType.LabelValues,
+      label: '$label_name',
+      refId: 'PrometheusDatasource-VariableQuery',
+    };
+
+    expect(migration).toEqual(expected);
+  });
+
   test('Migrates from jsonnet grafana as code variable to custom variable query', () => {
     const query = 'label_names()';
 
