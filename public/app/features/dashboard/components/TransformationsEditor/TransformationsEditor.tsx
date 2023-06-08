@@ -40,6 +40,7 @@ import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
 import { TransformationsEditorTransformation } from './types';
+import { r } from 'msw/lib/glossary-de6278a9';
 
 const LOCAL_STORAGE_KEY = 'dashboard.components.TransformationEditor.featureInfoBox.isDismissed';
 
@@ -52,6 +53,7 @@ interface State {
   transformations: TransformationsEditorTransformation[];
   search: string;
   showPicker?: boolean;
+  scrollTop?: number;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -124,6 +126,20 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   componentWillUnmount() {
     if (this.subscription) {
       this.subscription.unsubscribe();
+    }
+  }
+
+  componentDidUpdate(prevProps: Readonly<TransformationsEditorProps>, prevState: Readonly<State>): void {
+    if (config.featureToggles.transformationsRedesign) {
+      const prevHasTransforms = prevState.transformations.length > 0;
+      const prevShowPicker = !prevHasTransforms || prevState.showPicker;
+
+      const currentHasTransforms = this.state.transformations.length > 0;
+      const currentShowPicker = !currentHasTransforms || this.state.showPicker;
+
+      if (prevShowPicker !== currentShowPicker) {
+        this.setState({ scrollTop: currentShowPicker ? Math.random() / 2 : 1000000 });
+      }
     }
   }
 
@@ -324,8 +340,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     onClick={() => {
                       this.setState({ showPicker: false });
                     }}
+                    className={css`
+                      margin-bottom: 16px;
+                    `}
                   >
-                    <p
+                    <div
                       className={css`
                         color: ${config.theme2.colors.text.secondary};
                       `}
@@ -344,7 +363,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       >
                         Go back to <i>Transformations in use</i>
                       </span>
-                    </p>
+                    </div>
                   </div>
                 )}
                 <p
@@ -416,7 +435,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     }
 
     return (
-      <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
         <Container padding="md">
           <div aria-label={selectors.components.TransformTab.content}>
             {hasTransforms && alert ? (
@@ -425,7 +444,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
-            {hasTransforms && this.renderTransformationEditors()}
+            {hasTransforms &&
+              (!config.featureToggles.transformationsRedesign || !this.state.showPicker) &&
+              this.renderTransformationEditors()}
             {this.renderTransformsPicker()}
           </div>
         </Container>
