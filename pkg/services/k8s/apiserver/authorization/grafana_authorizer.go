@@ -3,6 +3,7 @@ package authorization
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -24,7 +25,7 @@ func NewGrafanaAuthorizer() *GrafanaAuthorizer {
 }
 
 func (auth GrafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	userInfo, ok := request.UserFrom(ctx);
+	userInfo, ok := request.UserFrom(ctx)
 	if !ok {
 		return authorizer.DecisionDeny, fmt.Sprintf("could not determine user info from context, denied %s access on requested resource=%s, path=%s", a.GetVerb(), a.GetResource(), a.GetPath()), nil
 	}
@@ -33,7 +34,7 @@ func (auth GrafanaAuthorizer) Authorize(ctx context.Context, a authorizer.Attrib
 
 	// TODO: take orgId into account in relation to namespaced resources
 	// if orgId := extra["org-id"]; len(orgId) > 0 {}
-	
+
 	// We are being called using a Grafana token
 	if orgRole := extra["org-role"]; len(orgRole) > 0 {
 		// NOTE: signedInUser only has one org role which the authenticator is providing through header auth
