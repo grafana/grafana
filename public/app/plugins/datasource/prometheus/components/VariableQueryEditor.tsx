@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
@@ -8,6 +8,9 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
+import { MetricSelect } from '../querybuilder/components/MetricSelect';
+import { getMetrics } from '../querybuilder/components/PromQueryBuilder';
+import { PromVisualQuery } from '../querybuilder/types';
 import {
   PromOptions,
   PromQuery,
@@ -46,10 +49,18 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
+  // used as a shell for the metric select
+  const [queryShell, setQueryShell] = useState<PromVisualQuery>({
+    metric: '',
+    labels: [],
+    operations: [],
+  });
+
   useEffect(() => {
     if (!query) {
       return;
     }
+
     // 1. Changing from standard to custom variable editor changes the string attr from expr to query
     // 2. jsonnet grafana as code passes a variable as a string
     const variableQuery = variableMigration(query);
@@ -57,14 +68,15 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
+    setQueryShell({ ...queryShell, metric: variableQuery.metric ?? '' });
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
 
-    // set the migrated label in the label options
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
-  }, [query]);
+    // // set the migrated label in the label options
+    // if (variableQuery.label) {
+    //   setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
+    // }
+  }, [query, queryShell]);
 
   // set the label names options for the label values var query
   useEffect(() => {
@@ -132,6 +144,22 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     }
   };
 
+  const withTemplateVariableOptions = useCallback(
+    async (optionsPromise: Promise<SelectableValue[]>): Promise<SelectableValue[]> => {
+      const variables = datasource.getVariables();
+      const options = await optionsPromise;
+      return [
+        ...variables.map((value) => ({ label: value, value })),
+        ...options.map((option) => ({ label: option.value, value: option.value, title: option.description })),
+      ];
+    },
+    [datasource]
+  );
+
+  const onGetMetrics = useCallback(() => {
+    return withTemplateVariableOptions(getMetrics(datasource, queryShell));
+  }, [datasource, queryShell, withTemplateVariableOptions]);
+
   return (
     <>
       <InlineFieldRow>
@@ -183,14 +211,17 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               labelWidth={20}
               tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
             >
-              <Input
-                type="text"
-                aria-label="Metric selector"
-                placeholder="Optional metric selector"
-                value={metric}
-                onChange={onMetricChange}
-                onBlur={handleBlur}
-                width={100}
+              <MetricSelect
+                query={queryShell}
+                onChange={(value) => {
+                  setQueryShell({ ...queryShell, metric: value.metric ?? '' });
+                  setMetric(value.metric);
+                }}
+                onGetMetrics={onGetMetrics}
+                datasource={datasource}
+                labelsFilters={queryShell.labels}
+                metricLookupDisabled={datasource.lookupsDisabled}
+                variableEditor={true}
               />
             </InlineField>
           </InlineFieldRow>

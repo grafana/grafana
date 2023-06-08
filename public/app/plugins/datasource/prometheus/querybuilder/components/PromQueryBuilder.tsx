@@ -294,7 +294,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
  * @param datasource
  * @param query
  */
-async function getMetrics(
+export async function getMetrics(
   datasource: PrometheusDatasource,
   query: PromVisualQuery
 ): Promise<Array<{ value: string; description?: string }>> {

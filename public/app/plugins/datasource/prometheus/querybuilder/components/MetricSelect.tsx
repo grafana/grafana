@@ -27,11 +27,12 @@ export interface Props {
   onGetMetrics: () => Promise<SelectableValue[]>;
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
+  variableEditor?: boolean;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
-const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+let prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
 
 export function MetricSelect({
   datasource,
@@ -40,6 +41,7 @@ export function MetricSelect({
   onGetMetrics,
   labelsFilters,
   metricLookupDisabled,
+  variableEditor,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
@@ -57,29 +59,32 @@ export function MetricSelect({
     },
   ];
 
-  const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
-    const label = option.label ?? option.value;
-    if (!label) {
-      return false;
-    }
-
-    // custom value is not a string label but a react node
-    if (!label.toLowerCase) {
-      return true;
-    }
-
-    const searchWords = searchQuery.split(splitSeparator);
-    return searchWords.reduce((acc, cur) => {
-      const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
-
-      let browseOption = false;
-      if (prometheusMetricEncyclopedia) {
-        browseOption = label === 'Metrics explorer';
+  const customFilterOption = useCallback(
+    (option: SelectableValue<any>, searchQuery: string) => {
+      const label = option.label ?? option.value;
+      if (!label) {
+        return false;
       }
 
-      return acc && (matcheSearch || browseOption);
-    }, true);
-  }, []);
+      // custom value is not a string label but a react node
+      if (!label.toLowerCase) {
+        return true;
+      }
+
+      const searchWords = searchQuery.split(splitSeparator);
+      return searchWords.reduce((acc, cur) => {
+        const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
+
+        let browseOption = false;
+        if (prometheusMetricEncyclopedia && !variableEditor) {
+          browseOption = label === 'Metrics explorer';
+        }
+
+        return acc && (matcheSearch || browseOption);
+      }, true);
+    },
+    [variableEditor]
+  );
 
   const formatOptionLabel = useCallback(
     (option: SelectableValue<any>, meta: FormatOptionLabelMeta<any>) => {
@@ -87,6 +92,7 @@ export function MetricSelect({
       if (option['__isNew__']) {
         return option.label;
       }
+
       // only matches on input, does not match on regex
       // look into matching for regex input
       return (
@@ -192,9 +198,62 @@ export function MetricSelect({
     return SelectMenuOptions(props);
   };
 
+  const asyncSelect = () => {
+    return (
+      <AsyncSelect
+        inputId="prometheus-metric-select"
+        className={styles.select}
+        value={query.metric ? toOption(query.metric) : undefined}
+        placeholder={'Select metric'}
+        allowCustomValue
+        formatOptionLabel={formatOptionLabel}
+        filterOption={customFilterOption}
+        onOpenMenu={async () => {
+          if (metricLookupDisabled) {
+            return;
+          }
+          setState({ isLoading: true });
+
+          const metrics = await onGetMetrics();
+          const initialMetrics: string[] = metrics.map((m) => m.value);
+          if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+            metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+          }
+
+          if (prometheusMetricEncyclopedia && !variableEditor) {
+            setState({
+              // add the modal butoon option to the options
+              metrics: [...metricsModalOption, ...metrics],
+              isLoading: undefined,
+              // pass the initial metrics into the Metrics Modal
+              initialMetrics: initialMetrics,
+            });
+          } else {
+            setState({ metrics, isLoading: undefined });
+          }
+        }}
+        loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
+        isLoading={state.isLoading}
+        defaultOptions={state.metrics}
+        onChange={({ value }) => {
+          if (value) {
+            // if there is no metric and the m.e. is enabled, open the modal
+            if (prometheusMetricEncyclopedia && !variableEditor && value === 'BrowseMetrics') {
+              tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
+              setState({ ...state, metricsModalOpen: true });
+            } else {
+              onChange({ ...query, metric: value });
+            }
+          }
+        }}
+        components={prometheusMetricEncyclopedia && !variableEditor ? { Option: CustomOption } : {}}
+      />
+    );
+  };
+
   return (
     <>
-      {prometheusMetricEncyclopedia && !datasource.lookupsDisabled && state.metricsModalOpen && (
+      {prometheusMetricEncyclopedia && !variableEditor && !datasource.lookupsDisabled && state.metricsModalOpen && (
         <MetricsModal
           datasource={datasource}
           isOpen={state.metricsModalOpen}
@@ -205,55 +264,7 @@ export function MetricSelect({
         />
       )}
       <EditorFieldGroup>
-        <EditorField label="Metric">
-          <AsyncSelect
-            inputId="prometheus-metric-select"
-            className={styles.select}
-            value={query.metric ? toOption(query.metric) : undefined}
-            placeholder={'Select metric'}
-            allowCustomValue
-            formatOptionLabel={formatOptionLabel}
-            filterOption={customFilterOption}
-            onOpenMenu={async () => {
-              if (metricLookupDisabled) {
-                return;
-              }
-              setState({ isLoading: true });
-              const metrics = await onGetMetrics();
-              const initialMetrics: string[] = metrics.map((m) => m.value);
-              if (metrics.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-                metrics.splice(0, metrics.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-              }
-
-              if (prometheusMetricEncyclopedia) {
-                setState({
-                  // add the modal butoon option to the options
-                  metrics: [...metricsModalOption, ...metrics],
-                  isLoading: undefined,
-                  // pass the initial metrics into the Metrics Modal
-                  initialMetrics: initialMetrics,
-                });
-              } else {
-                setState({ metrics, isLoading: undefined });
-              }
-            }}
-            loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
-            isLoading={state.isLoading}
-            defaultOptions={state.metrics}
-            onChange={({ value }) => {
-              if (value) {
-                // if there is no metric and the m.e. is enabled, open the modal
-                if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
-                  tracking('grafana_prometheus_metric_encyclopedia_open', null, '', query);
-                  setState({ ...state, metricsModalOpen: true });
-                } else {
-                  onChange({ ...query, metric: value });
-                }
-              }
-            }}
-            components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
-          />
-        </EditorField>
+        {variableEditor ? asyncSelect() : <EditorField label="Metric">{asyncSelect()}</EditorField>}
       </EditorFieldGroup>
     </>
   );
