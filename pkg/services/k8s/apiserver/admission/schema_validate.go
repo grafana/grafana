@@ -1,29 +1,18 @@
-/*
-Copyright 2014 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
 package admission
 
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 
+	"github.com/grafana/thema"
+	"github.com/grafana/thema/vmux"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
+
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
 )
 
 const PluginNameSchemaValidate = "SchemaValidate"
@@ -35,25 +24,63 @@ func RegisterSchemaValidate(plugins *admission.Plugins) {
 	})
 }
 
-type schemaValidate struct{}
+type schemaValidate struct {
+	log log.Logger
+}
 
 var _ admission.ValidationInterface = schemaValidate{}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
-func (schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	// pretending only dashboards exist
 	obj := a.GetObject()
-	if obj.GetObjectKind().GroupVersionKind().Kind == "Dashboard" {
-		uobj := obj.(*unstructured.Unstructured)
-		b, err := json.Marshal(&uobj.Object)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("b: %v\n", b)
-
+	uobj := obj.(*unstructured.Unstructured)
+	spec, err := json.Marshal(uobj.Object["spec"])
+	if err != nil {
+		sv.log.Info("failed to marshal spec", "err", err)
 		return nil
 	}
 
+	// this can be generic, but for now, just do it for dashboards
+	if obj.GetObjectKind().GroupVersionKind().Kind == "Dashboard" {
+		// should NewKind be a singleton? it seems heavy to run each time
+		dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
+		if err != nil {
+			sv.log.Info("failed to create dashboard kind", "err", err)
+			return nil
+		}
+
+		// TODO thema (or codegen, or both) request: rename JSONValueMux to
+		// something that's a bit clearer; it's unmarshalling the JSON bytes to
+		// a dashboard and validating that against any schema
+		_, _, err = dk.JSONValueMux(spec)
+		if err != nil {
+			sv.log.Error("failed to validate dashboard", "err", err)
+			return nil
+		}
+
+		// JSONValueMux validates that the dashboard matches *any* schema, so we
+		// may need to translate to latest.
+		//
+		// TODO: None of this feels correct; there should be a dashboard.Kind
+		// "validate latest" function, or something like that.
+		sch, err := dk.Lineage().Schema(thema.LatestVersion(dk.Lineage()))
+		if err != nil {
+			sv.log.Error("failed to get latest schema", "err", err)
+			return nil
+		}
+		cueVal, _ := vmux.NewJSONCodec("dashboard.json").Decode(cuectx.GrafanaCUEContext(), spec)
+		_, err = sch.Validate(cueVal)
+		if err != nil {
+			sv.log.Info("failed to validate dashboard", "err", err)
+		}
+
+		/*  This chunk needs to move to a mutating webhook
+		// Translate doesn't return an error, so we just hope it doesn't panic.
+		_, _ = inst.Translate(thema.LatestVersion(dk.Lineage()))
+		return nil
+		*/
+	}
 	return nil
 }
 
@@ -63,7 +90,9 @@ func (schemaValidate) Handles(operation admission.Operation) bool {
 	return true
 }
 
-// NewDenyByName creates an always deny admission handler
+// NewSchemaValidate creates a NewSchemaValidate admission handler
 func NewSchemaValidate() admission.Interface {
-	return new(schemaValidate)
+	return schemaValidate{
+		log: log.New("validate"),
+	}
 }
