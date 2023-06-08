@@ -19,7 +19,9 @@ export const setTooltipListeners = (panel: GeomapPanel) => {
 };
 
 export const pointerClickListener = (evt: MapBrowserEvent<MouseEvent>, panel: GeomapPanel) => {
+  console.log('pointerClickListener', evt, panel);
   if (pointerMoveListener(evt, panel)) {
+    console.log('SET TTIP OPEN TRUE');
     evt.preventDefault();
     evt.stopPropagation();
     panel.mapDiv!.style.cursor = 'auto';
@@ -32,9 +34,12 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
   if (panel.state.measureMenuActive) {
     return true;
   }
-  if (!panel.map || panel.state.ttipOpen) {
+
+  // Eject out of this function if map is not loaded or valid tooltip is already open
+  if (!panel.map || (panel.state.ttipOpen && panel.state?.ttip?.layers?.length)) {
     return false;
   }
+
   const mouse = evt.originalEvent;
   const pixel = panel.map.getEventPixel(mouse);
   const hover = toLonLat(panel.map.getCoordinateFromPixel(pixel));
