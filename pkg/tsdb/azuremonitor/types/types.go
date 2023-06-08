@@ -190,7 +190,15 @@ type AzureMonitorDimensionFilterBackend struct {
 func ConstructFiltersString(a dataquery.AzureMetricDimension) string {
 	var filterStrings []string
 	for _, filter := range a.Filters {
-		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter))
+		dimension := ""
+		operator := ""
+		if a.Dimension != nil {
+			dimension = *a.Dimension
+		}
+		if a.Operator != nil {
+			operator = *a.Operator
+		}
+		filterStrings = append(filterStrings, fmt.Sprintf("%v %v '%v'", dimension, operator, filter))
 	}
 	if a.Operator != nil && *a.Operator == "eq" {
 		return strings.Join(filterStrings, " or ")

@@ -722,7 +722,7 @@ func hasOneResource(query dataquery.AzureMonitorQuery) (bool, *string, *string) 
 	if len(azJSONModel.Resources) == 1 {
 		return true, azJSONModel.Resources[0].ResourceGroup, azJSONModel.Resources[0].ResourceName
 	}
-	if *azJSONModel.ResourceGroup != "" || *azJSONModel.ResourceName != "" {
+	if azJSONModel.ResourceGroup != nil || *azJSONModel.ResourceGroup != "" || *azJSONModel.ResourceName != "" {
 		// Deprecated, Resources should be used instead
 		return true, azJSONModel.ResourceGroup, azJSONModel.ResourceName
 	}

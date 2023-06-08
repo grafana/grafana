@@ -301,7 +301,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			if tt.azureMonitorVariedProperties["resources"] != nil {
 				resourceSlice := tt.azureMonitorVariedProperties["resources"].([]dataquery.AzureMonitorResource)
 				for _, resource := range resourceSlice {
-					resources[fmt.Sprintf("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", resource.ResourceGroup, resource.ResourceName)] = resource
+					resources[fmt.Sprintf("/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/%s/providers/Microsoft.Compute/virtualMachines/%s", *resource.ResourceGroup, *resource.ResourceName)] = resource
 				}
 			} else {
 				resources["/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"] = dataquery.AzureMonitorResource{ResourceGroup: strPtr("grafanastaging"), ResourceName: strPtr("grafana")}

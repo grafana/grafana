@@ -73,11 +73,11 @@ func (params *urlBuilder) BuildMetricsURL() string {
 	resourceURI := params.ResourceURI
 
 	// Prior to Grafana 9, we had a legacy query object rather than a resourceURI, so we manually create the resource URI
-	if resourceURI != nil && *resourceURI == "" {
+	if resourceURI == nil || *resourceURI == "" {
 		resourceURI = params.buildResourceURI()
 	}
 
-	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", resourceURI)
+	return fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceURI)
 }
 
 // BuildSubscriptionMetricsURL returns a URL for querying metrics for all resources in a subscription
