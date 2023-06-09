@@ -204,6 +204,7 @@ func (s *SocialGitlab) extractFromToken(client *http.Client, token *oauth2.Token
 		return nil, nil
 	}
 
+	s.log.Debug("Received id_token", "raw_json", string(rawJSON))
 	var data userData
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
 		s.log.Warn("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
@@ -237,7 +238,7 @@ func (s *SocialGitlab) extractFromToken(client *http.Client, token *oauth2.Token
 		data.Role = role
 	}
 
-	s.log.Debug("Received id_token", "raw_json", string(rawJSON), "data", fmt.Sprintf("%+v", data))
+	s.log.Debug("Resolved user data", "data", fmt.Sprintf("%+v", data))
 	return &data, nil
 }
 
