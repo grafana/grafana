@@ -44,7 +44,9 @@ export default class SearchBarInput extends React.PureComponent<Props> {
     const suffix = (
       <>
         {inputProps.suffix}
-        {allowClear && value && value.length && <IconButton name="times" onClick={this.clearUiFind} />}
+        {allowClear && value && value.length && (
+          <IconButton name="times" onClick={this.clearUiFind} tooltip="Clear input" />
+        )}
       </>
     );
 
