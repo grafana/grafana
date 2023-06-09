@@ -46,7 +46,7 @@ func newGCOMDetectorsGetter(baseURL string, ttl time.Duration) (detectorsGetter,
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
 	return &gcomDetectorsGetter{
-		log:        log.New("plugins.angulardetector.detectorsgetter"),
+		log:        log.New("plugins.angulardetector.gcom"),
 		baseURL:    baseURL,
 		httpClient: cl,
 		ttl:        ttl,
@@ -63,9 +63,14 @@ func (g *gcomDetectorsGetter) tryUpdateRemoteDetectors(ctx context.Context) erro
 		return nil
 	}
 
+	// Update last update even if there's an error, to avoid wasting time due to consecutive failures
+	defer func() {
+		g.lastUpdate = time.Now()
+	}()
+
 	// fetch patterns using fetcher
 	resp, err := g.fetch(ctx)
-	if err == nil {
+	if err != nil {
 		return fmt.Errorf("fetch: %w", err)
 	}
 
@@ -77,7 +82,6 @@ func (g *gcomDetectorsGetter) tryUpdateRemoteDetectors(ctx context.Context) erro
 
 	// Update cached result
 	g.detectors = detectors
-	g.lastUpdate = time.Now()
 	return nil
 }
 
@@ -90,7 +94,7 @@ func (g *gcomDetectorsGetter) getDetectors(ctx context.Context) []detector {
 
 	if err := g.tryUpdateRemoteDetectors(ctx); err != nil {
 		// Fail silently
-		g.log.Error("could not update remote detectors", "error", err)
+		g.log.Warn("Could not update remote detectors", "error", err)
 	}
 	return g.detectors
 }
@@ -98,16 +102,14 @@ func (g *gcomDetectorsGetter) getDetectors(ctx context.Context) []detector {
 // fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
 func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
-	g.log.Debug("fetching remote angular detection patterns")
 	st := time.Now()
-	defer func() {
-		g.log.Debug("fetched remote angular detection patterns", "took", time.Since(st))
-	}()
 
-	reqURL, err := url.JoinPath("/api/angular_patterns")
+	reqURL, err := url.JoinPath(g.baseURL, "/api/angular_patterns")
 	if err != nil {
 		return nil, fmt.Errorf("url joinpath: %w", err)
 	}
+
+	g.log.Debug("Fetching remote angular detection patterns", "url", reqURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request with context: %w", err)
@@ -125,6 +127,7 @@ func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
+	g.log.Debug("fetched remote angular detection patterns", "duration", time.Since(st))
 	return out, nil
 }
 
