@@ -3759,7 +3759,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:1.1.0, @grafana/faro-core@npm:^1.0.2":
+"@grafana/faro-core@npm:1.1.0, @grafana/faro-core@npm:^1.1.0":
   version: 1.1.0
   resolution: "@grafana/faro-core@npm:1.1.0"
   dependencies:
@@ -3771,14 +3771,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:1.0.2":
-  version: 1.0.2
-  resolution: "@grafana/faro-web-sdk@npm:1.0.2"
+"@grafana/faro-web-sdk@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@grafana/faro-web-sdk@npm:1.1.0"
   dependencies:
-    "@grafana/faro-core": ^1.0.2
+    "@grafana/faro-core": ^1.1.0
     ua-parser-js: ^1.0.32
     web-vitals: ^3.1.1
-  checksum: ca04add8469778d73e1bc15f057d063d93a88b9d76325c79060848ad3211fa929e30b6a85365981f7bcef023704f9f92f67678311bfed13dd521399c0f00e92f
+  checksum: e4fad2ff3c7d2d3cbc9e485e05a078a4ec0bc216907ed05361f91071611b7ce4256ba9cc8bbf6b23068efd02d32dfd42cfcd5d8a2b868c8ba006db27cd71c2a7
   languageName: node
   linkType: hard
 
@@ -3818,7 +3818,7 @@ __metadata:
   dependencies:
     "@grafana/data": 10.1.0-pre
     "@grafana/e2e-selectors": 10.1.0-pre
-    "@grafana/faro-web-sdk": 1.0.2
+    "@grafana/faro-web-sdk": 1.1.0
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": 10.1.0-pre
     "@rollup/plugin-commonjs": 23.0.2
@@ -3921,7 +3921,7 @@ __metadata:
     "@emotion/react": 11.10.6
     "@grafana/data": 10.1.0-pre
     "@grafana/e2e-selectors": 10.1.0-pre
-    "@grafana/faro-web-sdk": 1.0.2
+    "@grafana/faro-web-sdk": 1.1.0
     "@grafana/schema": 10.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
     "@leeoniya/ufuzzy": 1.0.6
@@ -18584,7 +18584,7 @@ __metadata:
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules"
     "@grafana/experimental": 1.4.2
     "@grafana/faro-core": 1.1.0
-    "@grafana/faro-web-sdk": 1.0.2
+    "@grafana/faro-web-sdk": 1.1.0
     "@grafana/google-sdk": 0.1.1
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
