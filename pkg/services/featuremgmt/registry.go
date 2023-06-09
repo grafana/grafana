@@ -557,5 +557,12 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "cloudWatchLogsMonacoEditor",
+			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
+		},
 	}
 )
