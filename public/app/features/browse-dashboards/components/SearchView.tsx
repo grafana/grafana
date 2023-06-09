@@ -46,7 +46,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   );
 
   const clearSelection = useCallback(() => {
-    dispatch(setAllSelection({ isSelected: false }));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
   }, [dispatch]);
 
   const handleItemSelectionChange = useCallback(
