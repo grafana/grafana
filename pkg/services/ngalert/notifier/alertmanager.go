@@ -257,7 +257,7 @@ func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 
 func (am *Alertmanager) aggregateMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
 	amu.Matchers += len(r.Matchers)
-	amu.MatchRE += len(r.Matchers)
+	amu.MatchRE += len(r.MatchRE)
 	amu.Match += len(r.Match)
 	amu.ObjectMatchers += len(r.ObjectMatchers)
 	for _, next := range r.Routes {

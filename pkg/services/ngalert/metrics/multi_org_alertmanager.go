@@ -325,5 +325,4 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfGauges(out, a.matchRE, "alertmanager_config_match_re")
 	data.SendSumOfGauges(out, a.match, "alertmanager_config_match")
 	data.SendSumOfGauges(out, a.objectMatchers, "alertmanager_config_object_matchers")
-
 }
