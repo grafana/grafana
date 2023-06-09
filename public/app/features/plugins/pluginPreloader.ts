@@ -22,7 +22,12 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   const { path, version, id: pluginId } = config;
   try {
     startMeasure(`frontend_plugin_preload_${pluginId}`);
-    const { plugin } = await pluginLoader.importPluginModule(path, version);
+    const { plugin } = await pluginLoader.importPluginModule({
+      path,
+      version,
+      isAngular: config.angularDetected,
+      pluginId,
+    });
     const { extensionConfigs = [] } = plugin;
     return { pluginId, extensionConfigs };
   } catch (error) {
