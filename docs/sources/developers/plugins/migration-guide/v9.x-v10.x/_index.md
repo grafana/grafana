@@ -34,3 +34,54 @@ Most code targeting 9.x will continue to work without any issues. An exception i
 When writing plugins that should run on 9.x, continue to use the Vector interfaces. In this case, when targeting versions 10+, you can now use simple arrays rather than wrapper classes.
 
 To make this transition seamless, we employed the Original JavaScript Sin™. That is, we[extended the native Array prototype](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) with several Vector methods. We will atone and undo this in v11, when Vector interfaces and classes are removed.
+
+## Update to React Router v6
+
+Starting from Grafana 10 plugins can start updating to use the v6 version of `react-router`. Overall, `react-router` v6 aims to simplify route configuration and provide a more flexible and intuitive API for developers.
+
+**We strongly encourage developers to update their plugins to use the v6 version `react-router` as soon as possible, as the v5 version is going to be deprecated in the future.**
+
+[Official React Router v5 to v6 migration guide](https://reactrouter.com/en/main/upgrading/v5)
+
+### Update using `@grafana/create-plugin`
+
+Please follow the steps below to start using react router v6 in your plugin.
+
+#### 1. Update the build related configuration:
+
+```
+$ npx @grafana/create-plugin update
+```
+
+#### 2. Use `<Routes>` instead of `<Switch>`
+
+```typescript
+
+Using Routes instead of Switch in react-router v6
+You are using react-router-dom version 6, which replaced Switch with the Routes component
+
+import { Routes } from "react-router-dom";
+
+// ...
+
+return (
+  <Routes>
+    <Route path="/" element={<Home />} />
+  </Routes>
+);
+```
+
+#### 3. Remove the `exact` prop from `<Route>` components
+
+```typescript
+return (
+  <Routes>
+    {/* Until v5 */}
+    <Route exact path="/" element={<Home />} />
+
+    {/* From v6 */}
+    {/* (Routes are "exact" by default, you need to use the "*" to match sub-routes) */}
+    <Route path="/" element={<Home />} />
+  </Routes>
+);
+```
