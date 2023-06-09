@@ -155,7 +155,7 @@ afterAll(() => {
 
 It's important to include `writable: true` in case the `window` object or its properties need to be redefined in another test.
 
-### Using Jest Spies
+#### Using Jest Spies
 
 This approach leverages the built-in mocking capabilities of Jest.
 
@@ -179,3 +179,139 @@ it('should test with window', function () {
 ```
 
 Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
+
+### Mocking getBackendSrv()
+
+The `getBackendSrv()` function is used to make HTTP requests to the Grafana backend. It is possible to mock this object using the `jest.mock` method.
+
+```tsx
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    post: postMock,
+  }),
+}));
+```
+
+#### Mocking getBackendSrv for AsyncSelect
+
+The `AsyncSelect` component is used to asynchronously load options. It is possible to mock the `getBackendSrv` function using the `jest.mock` method.
+
+```tsx
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: jest.fn(),
+    post: jest.fn(),
+  }),
+}));
+```
+
+Here's how the test would look like for this [OrgPicker](https://github.com/grafana/grafana/blob/main/public/app/core/components/Select/OrgPicker.tsx) component.
+
+```tsx
+import React, { useEffect } from 'react';
+import { useAsyncFn } from 'react-use';
+
+import { SelectableValue } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
+import { AsyncSelect } from '@grafana/ui';
+import { Organization, UserOrg } from 'app/types';
+
+export type OrgSelectItem = SelectableValue<Organization>;
+
+export interface Props {
+  onSelected: (org: OrgSelectItem) => void;
+  className?: string;
+  inputId?: string;
+  autoFocus?: boolean;
+  excludeOrgs?: UserOrg[];
+}
+
+export function OrgPicker({ onSelected, className, inputId, autoFocus, excludeOrgs }: Props) {
+  useEffect(() => {
+    if (autoFocus && inputId) {
+      document.getElementById(inputId)?.focus();
+    }
+  }, [autoFocus, inputId]);
+
+  const [orgOptionsState, getOrgOptions] = useAsyncFn(async () => {
+    const orgs: Organization[] = await getBackendSrv().get('/api/orgs');
+    const allOrgs = orgs.map((org) => ({ value: { id: org.id, name: org.name }, label: org.name }));
+    if (excludeOrgs) {
+      let idArray = excludeOrgs.map((anOrg) => anOrg.orgId);
+      const filteredOrgs = allOrgs.filter((item) => {
+        return !idArray.includes(item.value.id);
+      });
+      return filteredOrgs;
+    } else {
+      return allOrgs;
+    }
+  });
+
+  return (
+    <AsyncSelect
+      inputId={inputId}
+      className={className}
+      isLoading={orgOptionsState.loading}
+      defaultOptions={true}
+      isSearchable={false}
+      loadOptions={getOrgOptions}
+      onChange={onSelected}
+      placeholder="Select organization"
+      noOptionsMessage="No organizations found"
+    />
+  );
+}
+```
+
+```tsx
+import { screen, render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import React from 'react';
+
+import { OrgPicker } from './OrgPicker';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({
+    get: () =>
+      Promise.resolve([
+        { name: 'Org 1', id: 0 },
+        { name: 'Org 2', id: 1 },
+      ]),
+  }),
+}));
+
+function setup(jsx: JSX.Element) {
+  return {
+    user: userEvent.setup(),
+    ...render(jsx),
+  };
+}
+
+describe('OrgPicker', () => {
+  it('should render', async () => {
+    render(
+      <>
+        <label htmlFor={'picker'}>Org picker</label>
+        <OrgPicker onSelected={() => {}} inputId={'picker'} />
+      </>
+    );
+
+    expect(await screen.findByRole('combobox', { name: 'Org picker' })).toBeInTheDocument();
+  });
+
+  it('should have the options', async () => {
+    const { user } = setup(
+      <>
+        <label htmlFor={'picker'}>Org picker</label>
+        <OrgPicker onSelected={() => {}} inputId={'picker'} />
+      </>
+    );
+    await user.click(await screen.findByRole('combobox', { name: 'Org picker' }));
+    expect(screen.getByText('Org 1')).toBeInTheDocument();
+    expect(screen.getByText('Org 2')).toBeInTheDocument();
+  });
+});
+```
