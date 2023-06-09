@@ -84,13 +84,13 @@ export default class ResponseParser {
 
       // if group by tag(s) added
       if (dfs[0].fields[1] && dfs[0].fields[1].labels) {
-        let dfsByLabels: any = groupBy(dfs, (df: DataFrame) =>
+        let dfsByLabels = groupBy<DataFrame>(dfs, (df: DataFrame) =>
           df.fields[1].labels ? Object.values(df.fields[1].labels!) : null
         );
         const labels = Object.keys(dfsByLabels);
-        dfsByLabels = Object.values(dfsByLabels);
+        const dfsByLabelValues = Object.values(dfsByLabels);
 
-        for (let i = 0; i < dfsByLabels.length; i++) {
+        for (let i = 0; i < dfsByLabelValues.length; i++) {
           table = getTableRows(dfsByLabels[i], table, [...labels[i].split(',')]);
         }
       } else {
