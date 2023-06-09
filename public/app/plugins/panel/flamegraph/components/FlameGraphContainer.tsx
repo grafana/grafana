@@ -80,18 +80,12 @@ const FlameGraphContainer = (props: Props) => {
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
             onReset={() => {
-              if (focusedItemData && sandwichItem) {
-                // if we have both things reset focus first so it behaves sort of like a history back button
-                resetFocus();
-              } else {
-                resetFocus();
-                resetSandwich();
-              }
+              resetFocus();
+              resetSandwich();
             }}
             textAlign={textAlign}
             onTextAlignChange={setTextAlign}
-            focusedLabel={focusedItemData?.label}
-            sandwichedLabel={sandwichItem}
+            showResetButton={focusedItemData || sandwichItem}
           />
 
           <div className={styles.body}>
@@ -131,6 +125,8 @@ const FlameGraphContainer = (props: Props) => {
                   resetFocus();
                   setSandwichItem(label);
                 }}
+                onFocusPillClick={resetFocus}
+                onSandwichPillClick={resetSandwich}
               />
             )}
           </div>

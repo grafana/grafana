@@ -15,6 +15,7 @@ export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: IconSize;
   type?: IconType;
   title?: string;
+  containerClassName?: string;
 }
 
 const getIconStyles = (theme: GrafanaTheme2) => {
@@ -37,7 +38,10 @@ const getIconStyles = (theme: GrafanaTheme2) => {
 };
 
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
-  ({ size = 'md', type = 'default', name, className, style, title = '', ...divElementProps }, ref) => {
+  (
+    { size = 'md', type = 'default', name, className, style, title = '', containerClassName, ...divElementProps },
+    ref
+  ) => {
     const styles = useStyles2(getIconStyles);
 
     /* Temporary solution to display also font awesome icons */
@@ -64,7 +68,7 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 
     return (
-      <div className={styles.container} {...divElementProps} ref={ref}>
+      <div className={cx(styles.container, containerClassName)} {...divElementProps} ref={ref}>
         <SVG
           src={svgPath}
           width={svgWid}

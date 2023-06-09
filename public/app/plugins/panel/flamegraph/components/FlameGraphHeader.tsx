@@ -22,8 +22,7 @@ type Props = {
   onReset: () => void;
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
-  focusedLabel?: string;
-  sandwichedLabel?: string;
+  showResetButton: boolean;
 };
 
 const FlameGraphHeader = ({
@@ -36,8 +35,7 @@ const FlameGraphHeader = ({
   onReset,
   textAlign,
   onTextAlignChange,
-  focusedLabel,
-  sandwichedLabel,
+  showResetButton,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
   function interaction(name: string, context: Record<string, string | number>) {
@@ -81,35 +79,18 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {(focusedLabel || sandwichedLabel) && (
-          <div className={styles.resetButton}>
-            {sandwichedLabel && (
-              <Tooltip content={'Sandwich view on ' + sandwichedLabel}>
-                <div className={styles.resetButtonIconWrapper}>
-                  <Icon size={'xs'} name={'gf-show-context'} />
-                </div>
-              </Tooltip>
-            )}
-            {focusedLabel && (
-              <Tooltip content={'Focused on ' + focusedLabel}>
-                <div className={styles.resetButtonIconWrapper}>
-                  <Icon size={'xs'} name={'eye'} />
-                </div>
-              </Tooltip>
-            )}
-            <Button
-              variant={'secondary'}
-              fill={'solid'}
-              size={'sm'}
-              icon={'history-alt'}
-              tooltip={
-                'Reset ' + (focusedLabel && sandwichedLabel ? 'focus' : sandwichedLabel ? 'sandwich view' : 'focus')
-              }
-              onClick={() => {
-                onReset();
-              }}
-            />
-          </div>
+        {showResetButton && (
+          <Button
+            variant={'secondary'}
+            fill={'outline'}
+            size={'sm'}
+            icon={'history-alt'}
+            tooltip={'Reset focus and sandwich state'}
+            onClick={() => {
+              onReset();
+            }}
+            className={styles.buttonSpacing}
+          />
         )}
 
         <RadioButtonGroup<TextAlign>

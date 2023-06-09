@@ -8,13 +8,6 @@ export type ClickedItemData = {
   level: number;
 };
 
-export type Metadata = {
-  percentValue: number;
-  unitTitle: string;
-  unitValue: string;
-  samples: string;
-};
-
 export enum SampleUnit {
   Bytes = 'bytes',
   Short = 'short',

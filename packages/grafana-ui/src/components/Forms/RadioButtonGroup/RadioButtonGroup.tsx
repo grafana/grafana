@@ -91,7 +91,7 @@ export function RadioButtonGroup<T>({
             fullWidth={fullWidth}
             ref={value === opt.value ? activeButtonRef : undefined}
           >
-            {icon && <Icon name={icon} className={styles.icon} />}
+            {icon && <Icon size={size} name={icon} className={styles.icon} />}
             {opt.imgUrl && <img src={opt.imgUrl} alt={opt.label} className={styles.img} />}
             {opt.label} {opt.component ? <opt.component /> : null}
           </RadioButton>

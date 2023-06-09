@@ -44,6 +44,8 @@ type Props = {
   textAlign: TextAlign;
   sandwichItem?: string;
   onSandwich: (label: string) => void;
+  onFocusPillClick: () => void;
+  onSandwichPillClick: () => void;
 };
 
 const FlameGraph = ({
@@ -58,6 +60,8 @@ const FlameGraph = ({
   textAlign,
   onSandwich,
   sandwichItem,
+  onFocusPillClick,
+  onSandwichPillClick,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -72,8 +76,6 @@ const FlameGraph = ({
     }
     return [levels, totalTicks];
   }, [data, sandwichItem]);
-
-  console.log({ levels, totalTicks, data });
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
   const graphRef = useRef<HTMLCanvasElement>(null);
@@ -175,8 +177,11 @@ const FlameGraph = ({
     <div className={styles.graph} ref={sizeRef}>
       <FlameGraphMetadata
         data={data}
-        value={focusedItemData ? focusedItemData.item.value : totalTicks}
+        focusedItem={focusedItemData}
+        sandwichedLabel={sandwichItem}
         totalTicks={totalTicks}
+        onFocusPillClick={onFocusPillClick}
+        onSandwichPillClick={onSandwichPillClick}
       />
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
         <canvas
