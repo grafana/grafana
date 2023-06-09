@@ -39,7 +39,7 @@ type userData struct {
 	IsGrafanaAdmin *bool             `json:"-"`
 }
 
-func (s *SocialGitlab) IsGroupMember(groups []string) bool {
+func (s *SocialGitlab) isGroupMember(groups []string) bool {
 	if len(s.allowedGroups) == 0 {
 		return true
 	}
@@ -55,7 +55,7 @@ func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client) []string {
+func (s *SocialGitlab) getGroups(client *http.Client) []string {
 	groups := make([]string, 0)
 
 	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
@@ -132,7 +132,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		IsGrafanaAdmin: data.IsGrafanaAdmin,
 	}
 
-	if !s.IsGroupMember(data.Groups) {
+	if !s.isGroupMember(data.Groups) {
 		return nil, errMissingGroupMembership
 	}
 
@@ -163,7 +163,7 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 		return nil, fmt.Errorf("user %s is inactive", apiResp.Username)
 	}
 
-	groups := s.GetGroups(client)
+	groups := s.getGroups(client)
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil
@@ -191,7 +191,7 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 }
 
 func (s *SocialGitlab) extractFromToken(token *oauth2.Token) (*userData, error) {
-	s.log.Debug("Extracting user info from OAuth token", fmt.Sprintf("%+v", token))
+	s.log.Debug("Extracting user info from OAuth token", "token", fmt.Sprintf("%+v", token))
 
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -199,9 +199,9 @@ func (s *SocialGitlab) extractFromToken(token *oauth2.Token) (*userData, error) 
 		return nil, nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(token)
+	rawJSON, err := s.retrieveRawIDToken(idToken)
 	if err != nil {
-		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
+		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", idToken))
 		return nil, nil
 	}
 
