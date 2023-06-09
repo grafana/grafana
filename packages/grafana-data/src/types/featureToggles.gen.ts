@@ -100,4 +100,5 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  disableTraceQLStreaming?: boolean;
 }
