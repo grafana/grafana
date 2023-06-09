@@ -789,7 +789,8 @@ func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
 		}
 		`
 
-		queries := addQueryToQueries(Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
+		var queries []Query
+		queries = append(queries, Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
 		policyFrame := data.NewFrame("",
 			data.NewField("value", nil, []string{
 				"bar", "autogen", "5m_avg", "1m_avg",
