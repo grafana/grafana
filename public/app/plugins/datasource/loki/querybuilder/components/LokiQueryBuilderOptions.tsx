@@ -82,7 +82,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           >
             <AutoSizeInput
               placeholder="{{label}}"
-              id="loki-query-editor-legend-format"
               type="string"
               minWidth={14}
               defaultValue={query.legendFormat}

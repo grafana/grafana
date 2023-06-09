@@ -134,33 +134,33 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 						JSONData: plugins.JSONData{
 							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
-							Type: plugins.DataSource,
+							Type: plugins.TypeDataSource,
 						},
-						Class: plugins.External,
+						Class: plugins.ClassExternal,
 					},
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
 							Info: plugins.Info{Version: "0.5.0"},
-							Type: plugins.App,
+							Type: plugins.TypeApp,
 						},
-						Class: plugins.External,
+						Class: plugins.ClassExternal,
 					},
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-panel",
 							Info: plugins.Info{Version: "2.5.7"},
-							Type: plugins.Panel,
+							Type: plugins.TypePanel,
 						},
-						Class: plugins.Bundled,
+						Class: plugins.ClassBundled,
 					},
 					{
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",
 							Info: plugins.Info{Version: "0.0.1"},
-							Type: plugins.Panel,
+							Type: plugins.TypePanel,
 						},
-						Class: plugins.Core,
+						Class: plugins.ClassCore,
 					},
 				},
 			},
