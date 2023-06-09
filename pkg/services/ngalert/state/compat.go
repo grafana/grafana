@@ -49,7 +49,10 @@ func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAl
 	}
 
 	if alertState.Image != nil {
-		nA[alertingModels.ImageTokenAnnotation] = generateImageURI(alertState.Image)
+		imageURI := generateImageURI(alertState.Image)
+		if imageURI != "" {
+			nA[alertingModels.ImageTokenAnnotation] = imageURI
+		}
 	}
 
 	if alertState.StateReason != "" {
@@ -174,5 +177,9 @@ func generateImageURI(image *ngModels.Image) string {
 	if image.URL != "" {
 		return image.URL
 	}
-	return "token://" + image.Token
+	if image.Token != "" {
+		return "token://" + image.Token
+	}
+
+	return ""
 }
