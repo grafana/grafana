@@ -1,4 +1,4 @@
-import { DataFrameView, dateTime, MutableDataFrame, createDataFrame, FieldType } from '@grafana/data';
+import { DataFrameView, dateTime, MutableDataFrame, FieldType } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -212,7 +212,7 @@ const invalidFailedPromMetric = new MutableDataFrame({
   ],
 });
 
-const serverIsANumber = createDataFrame({
+const serverIsANumber = new MutableDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
