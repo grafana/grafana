@@ -49,6 +49,7 @@ export function doTempoChannelStream(
         .pipe(
           map((evt) => {
             if ('message' in evt && evt?.message) {
+              // Schema should be [traces, metrics, state, error]
               const traces = evt.message.data.values[0][0];
               const frameState: SearchStreamingState = evt.message.data.values[2][0];
               const error = evt.message.data.values[3][0];
