@@ -69,7 +69,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 
 	namespace := util.OrgIdToNamespace(cmd.OrgID)
 	dashboardResource, err := s.clientset.GetClientset().GetResourceClient(schema.GroupVersionKind{
-		Group:   "kkk",
+		Group:   "dashboard.kinds.grafana.com",
 		Version: "v0-alpha",
 		Kind:    "Dashboard",
 	}, namespace)
