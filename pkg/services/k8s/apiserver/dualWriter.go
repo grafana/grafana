@@ -4,47 +4,54 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
-	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+type DualWriter interface {
+	// Called before the create storage
+	Create(obj *unstructured.Unstructured) (*unstructured.Unstructured, error)
+
+	// Called before update storage
+	Update(obj *unstructured.Unstructured) (*unstructured.Unstructured, error)
+
+	// Called before delete
+	Delete(namespace string, name string) error
+
+	// FUTURE??? some way to read/sync
+}
+
+type DualWriterProvider = func(kind string) DualWriter
+
 // This offers a transition path where we write to SQL first, then into our k8s storage
-type DualWriter struct {
+type dashboardDualWriter struct {
 	dashboardStore database.DashboardSQLStore
 }
 
-func (d *DualWriter) create(kind kindsys.Core, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-	if kind.MachineName() == "Dashboards" {
-		fmt.Printf("TODO, create dashboard in SQL storage (may be an update!): %s\b", obj.GetName())
-
-		// if provisioning == nil {
-		// 	return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
-		// }
-		// return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
-	}
+func (d *dashboardDualWriter) Create(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	fmt.Printf("TODO, CREATE dashboard in SQL storage (may be an update!): %s\n", obj.GetName())
 	return obj, nil
 }
 
-func (d *DualWriter) update(kind kindsys.Core, obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
-	if kind.MachineName() == "Dashboards" {
-		fmt.Printf("TODO, update dashboard in SQL storage (may be an update!): %s\b", obj.GetName())
-
-		// if provisioning == nil {
-		// 	return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
-		// }
-		// return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
-	}
+func (d *dashboardDualWriter) Update(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	fmt.Printf("TODO, UPDATE dashboard in SQL storage (may be an update!): %s\n", obj.GetName())
 	return obj, nil
 }
 
-func (d *DualWriter) delete(kind kindsys.Core, grn string) error {
-	if kind.MachineName() == "Dashboards" {
-		fmt.Printf("TODO, delete dashboard in SQL storage (may be an update!): %s\b", grn)
+func (d *dashboardDualWriter) Delete(namespace string, name string) error {
+	fmt.Printf("TODO, DELETE %s/%s\n", namespace, name)
+	return nil
+}
 
-		// if provisioning == nil {
-		// 	return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
-		// }
-		// return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
-	}
+type noopDualWriter struct{}
+
+func (d *noopDualWriter) Create(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	return obj, nil
+}
+
+func (d *noopDualWriter) Update(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+	return obj, nil
+}
+
+func (d *noopDualWriter) Delete(namespace string, name string) error {
 	return nil
 }

@@ -22,7 +22,7 @@ import (
 )
 
 type RESTOptionsGetter struct {
-	dualWriter DualWriter
+	dualWriter DualWriterProvider
 	codec      runtime.Codec
 	registry   *corekind.Base
 
@@ -38,8 +38,11 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 			return fallback
 		}
 		return &RESTOptionsGetter{
-			dualWriter: DualWriter{
-				dashboardStore: dash,
+			dualWriter: func(kind string) DualWriter {
+				if kind == "Dashboard" {
+					return &dashboardDualWriter{dashboardStore: dash}
+				}
+				return &noopDualWriter{}
 			},
 			registry: registry,
 			codec:    codec,
@@ -84,18 +87,19 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-
+			var dualWrite DualWriter
 			var found kindsys.Core
 			kinds := f.registry.All()
 			for _, k := range kinds {
 				if k.Props().Common().PluralMachineName == config.GroupResource.Resource {
 					found = k
+					f.dualWriter(k.MachineName())
 					break
 				}
 			}
 
 			// implement this function with something like https://github.com/grafana/grafana-apiserver/blob/7a585ef1a6b082e4d164188f03e666f6df1d2ba1/pkg/storage/filepath/storage.go#L43
-			return NewEntityStorage(&f.dualWriter,
+			return NewEntityStorage(dualWrite,
 				found,
 				config, resourcePrefix,
 				keyFunc, newFunc, newListFunc,

@@ -37,7 +37,7 @@ const MaxUpdateAttempts = 30
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
-	dualWrite    *DualWriter
+	dualWrite    DualWriter
 	store        entity.EntityStoreServer
 	kind         kindsys.Core
 	gr           schema.GroupResource
@@ -59,7 +59,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
-	dualWriter *DualWriter,
+	dualWriter DualWriter,
 	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
@@ -190,7 +190,7 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		key = strings.ReplaceAll(key, old, grn.UID)
 	}
 
-	uObj, err = s.dualWrite.create(s.kind, uObj)
+	uObj, err = s.dualWrite.Create(uObj)
 	if err != nil {
 		return err
 	}
@@ -252,7 +252,7 @@ func (s *entityStorage) Delete(
 		return err
 	}
 
-	err = s.dualWrite.delete(s.kind, grn.ToGRNString())
+	err = s.dualWrite.Delete("namespace", "name") // TODO
 	if err != nil {
 		return err
 	}
@@ -540,7 +540,7 @@ func (s *entityStorage) GuaranteedUpdate(
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
 		}
 
-		uObj, err = s.dualWrite.update(s.kind, uObj)
+		uObj, err = s.dualWrite.Update(uObj)
 		if err != nil {
 			return err
 		}
