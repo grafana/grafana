@@ -172,76 +172,6 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
-	t.Run("Influxdb response parser should parse metricFindQueries->SHOW RETENTION POLICIES normally", func(t *testing.T) {
-		parser := &ResponseParser{}
-
-		response := `
-		{
-		  "results": [
-		    {
-		      "statement_id": 0,
-		      "series": [
-		        {
-		          "columns": [
-		            "name",
-		            "duration",
-		            "shardGroupDuration",
-		            "replicaN",
-		            "default"
-		          ],
-		          "values": [
-		            [
-		              "autogen",
-		              "0s",
-		              "168h0m0s",
-		              1,
-		              false
-		            ],
-		            [
-		              "bar",
-		              "24h0m0s",
-		              "1h0m0s",
-		              1,
-		              true
-		            ],
-		            [
-		              "5m_avg",
-		              "2400h0m0s",
-		              "24h0m0s",
-		              1,
-		              false
-		            ],
-		            [
-		              "1m_avg",
-		              "240h0m0s",
-		              "24h0m0s",
-		              1,
-		              false
-		            ]
-		          ]
-		        }
-		      ]
-		    }
-		  ]
-		}
-		`
-
-		var queries []Query
-		queries = append(queries, Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
-		policyFrame := data.NewFrame("",
-			data.NewField("value", nil, []string{
-				"bar", "autogen", "5m_avg", "1m_avg",
-			}),
-		)
-
-		result := parser.Parse(prepare(response), queries)
-
-		frame := result.Responses["metricFindQuery"]
-		if diff := cmp.Diff(policyFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
-			t.Errorf("Result mismatch (-want +got):\n%s", diff)
-		}
-	})
-
 	t.Run("Influxdb response parser should parse metricFindQueries->SHOW TAG VALUES normally", func(t *testing.T) {
 		parser := &ResponseParser{}
 
@@ -801,6 +731,77 @@ func TestInfluxdbResponseParser(t *testing.T) {
 	t.Run("Influxdb response parser parseNumber invalid type", func(t *testing.T) {
 		_, err := parseTimestamp("hello")
 		require.Error(t, err)
+	})
+}
+
+func TestResponseParser_Parse_RetentionPolicy(t *testing.T) {
+	t.Run("Influxdb response parser should parse metricFindQueries->SHOW RETENTION POLICIES normally", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+		  "results": [
+		    {
+		      "statement_id": 0,
+		      "series": [
+		        {
+		          "columns": [
+		            "name",
+		            "duration",
+		            "shardGroupDuration",
+		            "replicaN",
+		            "default"
+		          ],
+		          "values": [
+		            [
+		              "autogen",
+		              "0s",
+		              "168h0m0s",
+		              1,
+		              false
+		            ],
+		            [
+		              "bar",
+		              "24h0m0s",
+		              "1h0m0s",
+		              1,
+		              true
+		            ],
+		            [
+		              "5m_avg",
+		              "2400h0m0s",
+		              "24h0m0s",
+		              1,
+		              false
+		            ],
+		            [
+		              "1m_avg",
+		              "240h0m0s",
+		              "24h0m0s",
+		              1,
+		              false
+		            ]
+		          ]
+		        }
+		      ]
+		    }
+		  ]
+		}
+		`
+
+		queries := addQueryToQueries(Query{RefID: "metricFindQuery", RawQuery: "SHOW RETENTION POLICIES"})
+		policyFrame := data.NewFrame("",
+			data.NewField("value", nil, []string{
+				"bar", "autogen", "5m_avg", "1m_avg",
+			}),
+		)
+
+		result := parser.Parse(prepare(response), queries)
+
+		frame := result.Responses["metricFindQuery"]
+		if diff := cmp.Diff(policyFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 }
 
