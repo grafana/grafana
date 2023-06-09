@@ -4,7 +4,6 @@ export type MetricData = {
   value: string;
   type?: string | null;
   description?: string;
-  inferred?: boolean;
 };
 
 export type PromFilterOption = {

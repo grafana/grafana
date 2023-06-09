@@ -307,3 +307,7 @@ npx @grafana/create-plugin@latest migrate
 #### Learn more
 
 - [Migration guide](https://grafana.github.io/plugin-tools/docs/migrating-from-toolkit/)
+
+## Deprecations
+
+Changing the folder UID through the API is deprecated. This functionality will be removed in a future release.

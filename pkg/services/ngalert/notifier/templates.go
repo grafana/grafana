@@ -41,7 +41,7 @@ func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTempla
 	})
 }
 
-// addDefaultLabelsAndAnnotations is a slimmed down version of schedule.stateToPostableAlert and schedule.getRuleExtraLabels using default values.
+// addDefaultLabelsAndAnnotations is a slimmed down version of state.StateToPostableAlert and state.GetRuleExtraLabels using default values.
 func addDefaultLabelsAndAnnotations(alert *amv2.PostableAlert) {
 	if alert.Labels == nil {
 		alert.Labels = make(map[string]string)
