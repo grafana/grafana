@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
 
 import {
@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
+import { styles } from 'app/features/dashboard/components/DashboardLoading/DashboardFailed';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
@@ -42,7 +43,7 @@ export const LogsPanel = ({
   id,
 }: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
-  const style = useStyles2(getStyles(title, isAscending));
+  const style = useStyles2(getStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +96,7 @@ export const LogsPanel = ({
   }
 
   const renderCommonLabels = () => (
-    <div className={style.labelContainer}>
+    <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
       <span className={style.label}>Common labels:</span>
       <LogLabels labels={commonLabels ? (commonLabels.value as Labels) : { labels: '(no common labels)' }} />
     </div>
@@ -127,20 +128,21 @@ export const LogsPanel = ({
   );
 };
 
-const getStyles = (title: string, isAscending: boolean) => (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-bottom: ${theme.spacing(1.5)};
-    //We can remove this hot-fix when we fix panel menu with no title overflowing top of all panels
-    margin-top: ${theme.spacing(!title ? 2.5 : 0)};
-  `,
-  labelContainer: css`
-    margin: ${isAscending ? theme.spacing(0.5, 0, 0.5, 0) : theme.spacing(0, 0, 0.5, 0.5)};
-    display: flex;
-    align-items: center;
-  `,
-  label: css`
-    margin-right: ${theme.spacing(0.5)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginBottom: theme.spacing(1.5),
+  }),
+  labelContainer: css({
+    margin: theme.spacing(0, 0, 0.5, 0.5),
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  labelContainerAscending: css({
+    margin: theme.spacing(0.5, 0, 0.5, 0),
+  }),
+  label: css({
+    marginRight: theme.spacing(0.5),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
 });
