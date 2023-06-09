@@ -1,12 +1,8 @@
 package social
 
 import (
-	"bytes"
-	"compress/zlib"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 
@@ -23,11 +19,12 @@ type SocialGitlab struct {
 }
 
 type apiData struct {
-	ID       int64  `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	State    string `json:"state"`
-	Name     string `json:"name"`
+	ID          int64   `json:"id"`
+	Username    string  `json:"username"`
+	Email       string  `json:"email"`
+	State       string  `json:"state"`
+	Name        string  `json:"name"`
+	ConfirmedAt *string `json:"confirmed_at"` // "2020-10-02T09:39:40.882Z"
 }
 
 type userData struct {
@@ -111,7 +108,10 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 }
 
 func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-	data := s.extractFromToken(token)
+	data, err := s.extractFromToken(token)
+	if err != nil {
+		return nil, err
+	}
 
 	// fallback to API
 	if data == nil {
@@ -154,6 +154,11 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
+	// check confirmed_at exists and is not null
+	if apiResp.ConfirmedAt == nil || *apiResp.ConfirmedAt == "" {
+		return nil, fmt.Errorf("user %s's email is not confirmed", apiResp.Username)
+	}
+
 	if apiResp.State != "active" {
 		return nil, fmt.Errorf("user %s is inactive", apiResp.Username)
 	}
@@ -185,79 +190,32 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 	}, nil
 }
 
-func (s *SocialGitlab) extractFromToken(token *oauth2.Token) *userData {
+func (s *SocialGitlab) extractFromToken(token *oauth2.Token) (*userData, error) {
 	s.log.Debug("Extracting user info from OAuth token", fmt.Sprintf("%+v", token))
 
-	idTokenAttribute := "id_token"
-
-	idToken := token.Extra(idTokenAttribute)
+	idToken := token.Extra("id_token")
 	if idToken == nil {
-		s.log.Debug("No id_token found", "token", token)
-		return nil
+		s.log.Debug("No id_token found, defaulting to API access", "token", token)
+		return nil, nil
 	}
 
-	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
-	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
-	if matched == nil {
-		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return nil
-	}
-
-	// Check token signature
-
-	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
+	rawJSON, err := s.retrieveRawIDToken(token)
 	if err != nil {
-		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
-		return nil
-	}
-
-	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
-	if err != nil {
-		s.log.Error("Error base64 decoding header", "header", matched[1], "error", err)
-		return nil
-	}
-
-	var header map[string]interface{}
-	if err := json.Unmarshal(headerBytes, &header); err != nil {
-		s.log.Error("Error deserializing header", "error", err)
-		return nil
-	}
-
-	if compressionVal, exists := header["zip"]; exists {
-		compression, ok := compressionVal.(string)
-		if !ok {
-			s.log.Warn("Unknown compression algorithm")
-			return nil
-		}
-
-		if compression != "DEF" {
-			s.log.Warn("Unknown compression algorithm", "algorithm", compression)
-			return nil
-		}
-
-		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
-		if err != nil {
-			s.log.Error("Error creating zlib reader", "error", err)
-			return nil
-		}
-		defer func() {
-			if err := fr.Close(); err != nil {
-				s.log.Warn("Failed closing zlib reader", "error", err)
-			}
-		}()
-		rawJSON, err = io.ReadAll(fr)
-		if err != nil {
-			s.log.Error("Error decompressing payload", "error", err)
-			return nil
-		}
+		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
+		return nil, nil
 	}
 
 	var data userData
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
-		s.log.Error("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
-		return nil
+		s.log.Warn("Error decoding id_token JSON", "raw_json", string(rawJSON), "error", err)
+		return nil, nil
+	}
+
+	// check email_verified
+	if !data.EmailVerified {
+		return nil, fmt.Errorf("user %s's email is not confirmed", data.Login)
 	}
 
 	s.log.Debug("Received id_token", "raw_json", string(rawJSON), "data", fmt.Sprintf("%+v", data))
-	return &data
+	return &data, nil
 }

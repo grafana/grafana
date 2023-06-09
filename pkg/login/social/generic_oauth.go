@@ -2,15 +2,11 @@ package social
 
 import (
 	"bytes"
-	"compress/zlib"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/mail"
-	"regexp"
 	"strconv"
 
 	"golang.org/x/oauth2"
@@ -222,58 +218,10 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 		return nil
 	}
 
-	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
-	matched := jwtRegexp.FindStringSubmatch(idToken.(string))
-	if matched == nil {
-		s.log.Debug("id_token is not in JWT format", "id_token", idToken.(string))
-		return nil
-	}
-
-	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
+	rawJSON, err := s.retrieveRawIDToken(token)
 	if err != nil {
-		s.log.Error("Error base64 decoding id_token", "raw_payload", matched[2], "error", err)
+		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
 		return nil
-	}
-
-	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
-	if err != nil {
-		s.log.Error("Error base64 decoding header", "header", matched[1], "error", err)
-		return nil
-	}
-
-	var header map[string]interface{}
-	if err := json.Unmarshal(headerBytes, &header); err != nil {
-		s.log.Error("Error deserializing header", "error", err)
-		return nil
-	}
-
-	if compressionVal, exists := header["zip"]; exists {
-		compression, ok := compressionVal.(string)
-		if !ok {
-			s.log.Warn("Unknown compression algorithm")
-			return nil
-		}
-
-		if compression != "DEF" {
-			s.log.Warn("Unknown compression algorithm", "algorithm", compression)
-			return nil
-		}
-
-		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
-		if err != nil {
-			s.log.Error("Error creating zlib reader", "error", err)
-			return nil
-		}
-		defer func() {
-			if err := fr.Close(); err != nil {
-				s.log.Warn("Failed closing zlib reader", "error", err)
-			}
-		}()
-		rawJSON, err = io.ReadAll(fr)
-		if err != nil {
-			s.log.Error("Error decompressing payload", "error", err)
-			return nil
-		}
 	}
 
 	var data UserInfoJson
