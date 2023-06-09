@@ -43,8 +43,6 @@ class VariableOptions extends PureComponent<Props> {
     // Don't want to pass faulty rest props to the div
     const { multi, values, highlightIndex, selectedValues, onToggle, onToggleAll, theme, ...restProps } = this.props;
     const styles = getStyles(theme);
-    const allOption = values.find((v) => v.value === ALL_VARIABLE_VALUE);
-    const restOptions = values.filter((v) => v.value !== ALL_VARIABLE_VALUE);
 
     return (
       <div className={styles.variableValueDropdown}>
@@ -54,51 +52,14 @@ class VariableOptions extends PureComponent<Props> {
             aria-label={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown}
             {...restProps}
           >
-            {allOption && this.renderAllOption(allOption, 0)}
             {this.renderMultiToggle()}
-            {restOptions.map((option, index) => this.renderOption(option, index))}
+            {values.map((option, index) => this.renderOption(option, index))}
           </ul>
         </div>
       </div>
     );
   }
 
-  renderAllOption(option: VariableOption, index: number) {
-    const { highlightIndex, multi, theme } = this.props;
-    const styles = getStyles(theme);
-
-    const isAllOption = option.value === ALL_VARIABLE_VALUE;
-
-    return (
-      <li key={`${option.value}`}>
-        <button
-          data-testid={selectors.components.Variables.variableOption}
-          role="checkbox"
-          type="button"
-          aria-checked={option.selected}
-          className={cx(
-            clearButtonStyles(theme),
-            styles.variableOption,
-            {
-              [styles.highlighted]: index === highlightIndex,
-            },
-            styles.noStyledButton
-          )}
-          onClick={this.onToggle(option)}
-        >
-          <span
-            className={cx(styles.variableOptionIcon, {
-              [styles.variableOptionIconSelected]: option.selected,
-              [styles.hideVariableOptionIcon]: !multi,
-            })}
-          ></span>
-          <span data-testid={selectors.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts(`${option.text}`)}>
-            {isAllOption ? t('variable.picker.option-all', 'All') : option.text}
-          </span>
-        </button>
-      </li>
-    );
-  }
   renderOption(option: VariableOption, index: number) {
     const { highlightIndex, multi, theme } = this.props;
     const styles = getStyles(theme);
@@ -117,6 +78,7 @@ class VariableOptions extends PureComponent<Props> {
             styles.variableOption,
             {
               [styles.highlighted]: index === highlightIndex,
+              [styles.variableAllOption]: isAllOption,
             },
             styles.noStyledButton
           )}
@@ -137,8 +99,9 @@ class VariableOptions extends PureComponent<Props> {
   }
 
   renderMultiToggle() {
-    const { multi, selectedValues, theme } = this.props;
+    const { multi, selectedValues, theme, values } = this.props;
     const styles = getStyles(theme);
+    const isAllOptionConfigured = values.some((option) => option.value === ALL_VARIABLE_VALUE);
 
     if (!multi) {
       return null;
@@ -152,7 +115,8 @@ class VariableOptions extends PureComponent<Props> {
             clearButtonStyles(theme),
             styles.variableOption,
             styles.variableOptionColumnHeader,
-            styles.noStyledButton
+            styles.noStyledButton,
+            { [styles.noPaddingBotton]: isAllOptionConfigured }
           )}
           role="checkbox"
           aria-checked={selectedValues.length > 1 ? 'mixed' : 'false'}
@@ -238,6 +202,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     variableOptionsWrapper: css({
       display: 'table',
       width: '100%',
+    }),
+    variableAllOption: css({
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      paddingBottom: theme.spacing(1),
+    }),
+
+    noPaddingBotton: css({
+      paddingBottom: 0,
     }),
   };
 });
