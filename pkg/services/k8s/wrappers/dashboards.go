@@ -152,11 +152,6 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 		return nil, err
 	}
 	uObj := &unstructured.Unstructured{Object: out}
-
-	js, _ := json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
-	fmt.Printf("%s", string(js))
-
 	if rv == "" {
 		s.log.Debug("k8s action: create")
 		uObj, err = dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
@@ -167,15 +162,24 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	if err != nil {
 		return nil, err
 	}
+	js, _ := json.Marshal(uObj)
+	err = json.Unmarshal(js, &res)
+	if err != nil {
+		return nil, err
+	}
 
-	js, _ = json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
-	fmt.Printf("%s", string(js))
+	// TODO! depend on the write command above to make synchronous call to SQL storage
 
-	// TODO:
-	// The k8s storage should add this to the storage path above
-	// for now, we will just inject directly
+	// dash := &dashboards.Dashboard{
+	// 	UID:  res.Metadata.Name,
+	// 	Data: res.Spec,
+	// }
+	// dash.ID = res.Spec.Get("id").MustInt64(0)
+	// dash.Version = res.Spec.Get("version").MustInt()
+	// dash.UpdateSlug()
+	// return dash, nil
 
+	// Finally fall though to the standard SQL
 	if provisioning == nil {
 		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
 	}

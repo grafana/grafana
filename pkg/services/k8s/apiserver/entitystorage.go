@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
 	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,6 +37,7 @@ const MaxUpdateAttempts = 30
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
+	dualWrite    *DualWriter
 	store        entity.EntityStoreServer
 	kind         kindsys.Core
 	gr           schema.GroupResource
@@ -59,7 +59,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
-	dualSync database.DashboardSQLStore,
+	dualWriter *DualWriter,
 	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
@@ -72,6 +72,7 @@ func NewEntityStorage(
 ) (storage.Interface, factory.DestroyFunc, error) {
 	ws := NewWatchSet()
 	return &entityStorage{
+			dualWrite:    dualWriter,
 			store:        entity.WireCircularDependencyHack,
 			kind:         kind,
 			gr:           config.GroupResource,
@@ -189,7 +190,10 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		key = strings.ReplaceAll(key, old, grn.UID)
 	}
 
-	// TODO: write to legacy sql
+	uObj, err = s.dualWrite.create(s.kind, uObj)
+	if err != nil {
+		return err
+	}
 
 	rsp, err := s.write(ctx, grn, uObj)
 	if err != nil {
@@ -245,6 +249,11 @@ func (s *entityStorage) Delete(
 	}
 
 	if err := validateDeletion(ctx, out); err != nil {
+		return err
+	}
+
+	err = s.dualWrite.delete(s.kind, grn.ToGRNString())
+	if err != nil {
 		return err
 	}
 
@@ -529,6 +538,11 @@ func (s *entityStorage) GuaranteedUpdate(
 		uObj, ok := updatedObj.(*unstructured.Unstructured)
 		if !ok {
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
+		}
+
+		uObj, err = s.dualWrite.update(s.kind, uObj)
+		if err != nil {
+			return err
 		}
 
 		rsp, err := s.write(ctx, grn, uObj)
