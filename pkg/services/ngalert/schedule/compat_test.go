@@ -140,7 +140,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 					alertState.Annotations = randomMapOfStrings()
 					alertState.Image = &ngModels.Image{}
 
-					result := StateToPostableAlert(alertState, appURL)
+					result := stateToPostableAlert(alertState, appURL)
 
 					expected := make(models.LabelSet, len(alertState.Annotations)+1)
 					for k, v := range alertState.Annotations {
