@@ -13,13 +13,18 @@ export interface FilterPillProps {
   label: string;
   onClick: React.MouseEventHandler<HTMLElement>;
   icon?: IconName;
+  customClass?: string;
 }
 
-export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
+export const FilterPill = ({ label, selected, onClick, icon = 'check', customClass }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (
-    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
+    <button
+      type="button"
+      className={cx(clearButton, styles.wrapper, selected && styles.selected, customClass)}
+      onClick={onClick}
+    >
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} />}
     </button>
