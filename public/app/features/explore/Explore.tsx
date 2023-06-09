@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { get } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { createRef, useEffect } from 'react';
+import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { Unsubscribable } from 'rxjs';
@@ -32,11 +32,10 @@ import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
-import { StoreState, useDispatch } from 'app/types';
+import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
 import { ExploreId } from 'app/types/explore';
 
-import { CorrelationData, useCorrelations } from '../correlations/useCorrelations';
 import { getTimeZone } from '../profile/state/selectors';
 
 import ExploreQueryInspector from './ExploreQueryInspector';
@@ -55,7 +54,7 @@ import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
-import { changeSize, saveCorrelationsAction } from './state/explorePane';
+import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
@@ -113,41 +112,6 @@ interface ExploreState {
 }
 
 export type Props = ExploreProps & ConnectedProps<typeof connector>;
-
-const UseCorrelations = ({
-  exploreId,
-  datasourceUID,
-  queryDatasources,
-}: {
-  exploreId: ExploreId;
-  datasourceUID: string;
-  queryDatasources: string[];
-}) => {
-  const dispatch = useDispatch();
-  const {
-    getAllFromSourceUIDInfo: { execute: fetchCorrelations },
-  } = useCorrelations();
-
-  useEffect(() => {
-    if (datasourceUID === MIXED_DATASOURCE_NAME) {
-      const corrPromises = queryDatasources.map((queryDSUid) => fetchCorrelations({ sourceUID: queryDSUid }));
-      Promise.all(corrPromises).then((correlationsResponses) => {
-        const correlations = correlationsResponses.map((correlationResponse) => correlationResponse.correlations);
-        let correlationsAll: CorrelationData[] = [];
-        correlations.forEach((correlationGrp) => {
-          correlationsAll = correlationsAll.concat(correlationGrp);
-        });
-        dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsAll }));
-      });
-    } else {
-      fetchCorrelations({ sourceUID: datasourceUID }).then((correlationsData) => {
-        dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlationsData.correlations || [] }));
-      });
-    }
-  }, [datasourceUID, dispatch, exploreId, fetchCorrelations, queryDatasources]);
-
-  return null;
-};
 
 /**
  * Explore provides an area for quick query iteration for a given datasource.
@@ -463,7 +427,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       showLogsSample,
-      queries,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -489,15 +452,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         autoHeightMin={'100%'}
         scrollRefCallback={(scrollElement) => (this.scrollElement = scrollElement || undefined)}
       >
-        {config.featureToggles.correlations && datasourceInstance?.uid && (
-          <UseCorrelations
-            exploreId={exploreId}
-            datasourceUID={datasourceInstance.uid}
-            queryDatasources={
-              queries.map((query) => query.datasource?.uid).filter((query): query is string => !!query) || []
-            }
-          />
-        )}
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} topOfViewRef={this.topOfViewRef} />
         {datasourceInstance ? (
           <div className={styles.exploreContainer}>

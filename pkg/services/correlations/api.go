@@ -308,10 +308,13 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 		page = 1
 	}
 
+	sourceUIDs := c.QueryStrings("sourceuids")
+
 	query := GetCorrelationsQuery{
-		OrgId: c.OrgID,
-		Limit: limit,
-		Page:  page,
+		OrgId:      c.OrgID,
+		Limit:      limit,
+		Page:       page,
+		SourceUIDs: sourceUIDs,
 	}
 
 	correlations, err := s.getCorrelations(c.Req.Context(), query)

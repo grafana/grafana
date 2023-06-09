@@ -277,6 +277,9 @@ type GetCorrelationsQuery struct {
 	// required:false
 	// default:1
 	Page int64 `json:"page"`
+
+	// Filters to be applied to correlations
+	SourceUIDs []string `json:"sourceuid"`
 }
 
 type DeleteCorrelationsBySourceUIDCommand struct {
