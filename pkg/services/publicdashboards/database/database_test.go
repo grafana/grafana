@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"fmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"testing"
 	"time"
 
@@ -38,7 +40,7 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	publicdashboardStore := ProvideStore(sqlStore)
+	publicdashboardStore := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 
 	var orgId int64 = 1
 
@@ -59,13 +61,26 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	// should not be included in response
 	_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false, PublicShareType)
 
-	resp, err := publicdashboardStore.FindAll(context.Background(), orgId)
+	query := &PublicDashboardListQuery{
+		User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {"dashboards:read": {
+				fmt.Sprintf("dashboards:uid:%s", a.Uid),
+				fmt.Sprintf("dashboards:uid:%s", b.Uid),
+				fmt.Sprintf("dashboards:uid:%s", c.Uid),
+			}}},
+		},
+		OrgID:  orgId,
+		Page:   1,
+		Limit:  50,
+		Offset: 0,
+	}
+	resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
 	require.NoError(t, err)
 
 	assert.Len(t, resp, 3)
-	assert.Equal(t, resp[0].Uid, a.Uid)
-	assert.Equal(t, resp[1].Uid, b.Uid)
-	assert.Equal(t, resp[2].Uid, c.Uid)
+	assert.Equal(t, resp.PublicDashboards[0].Uid, a.Uid)
+	assert.Equal(t, resp.PublicDashboards[1].Uid, b.Uid)
+	assert.Equal(t, resp.PublicDashboards[2].Uid, c.Uid)
 }
 
 func TestIntegrationFindDashboard(t *testing.T) {
@@ -84,7 +99,7 @@ func TestIntegrationFindDashboard(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
@@ -114,7 +129,7 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 	t.Run("ExistsEnabledByAccessToken will return true when at least one public dashboard has a matching access token", func(t *testing.T) {
@@ -187,7 +202,7 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
@@ -252,7 +267,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
@@ -319,7 +334,7 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 
@@ -389,7 +404,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, true)
 		insertPublicDashboard(t, publicdashboardStore, savedDashboard2.UID, savedDashboard2.OrgID, false, PublicShareType)
@@ -468,7 +483,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		anotherSavedDashboard = insertTestDashboard(t, dashboardStore, "test another Dashie", 1, 0, true)
 	}
@@ -572,7 +587,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 	}
 	t.Run("GetOrgIdByAccessToken will OrgId when enabled", func(t *testing.T) {
@@ -644,7 +659,7 @@ func TestIntegrationDelete(t *testing.T) {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
 		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true)
 		savedPublicDashboard = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, true, PublicShareType)
 	}
@@ -675,7 +690,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
 		dashboard := &dashboards.Dashboard{IsFolder: false}
-		store := ProvideStore(sqlStore)
+		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		pubdashes, err := store.FindByDashboardFolder(context.Background(), dashboard)
 
 		require.NoError(t, err)
@@ -684,7 +699,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 
 	t.Run("returns nil when dashboard is nil", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
-		store := ProvideStore(sqlStore)
+		store := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 		pubdashes, err := store.FindByDashboardFolder(context.Background(), nil)
 
 		require.NoError(t, err)
@@ -696,7 +711,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
-		pubdashStore := ProvideStore(sqlStore)
+		pubdashStore := ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		dashboard := insertTestDashboard(t, dashboardStore, "title", 1, 1, true, PublicShareType)
 		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true, PublicShareType)
 		dashboard2 := insertTestDashboard(t, dashboardStore, "title", 1, 2, true, PublicShareType)
@@ -729,7 +744,7 @@ func TestGetMetrics(t *testing.T) {
 		store, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		dashboardStore = store
-		publicdashboardStore = ProvideStore(sqlStore)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
 		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, false)
 		savedDashboard2 = insertTestDashboard(t, dashboardStore, "testDashie2", 1, 0, false)
 		savedDashboard3 = insertTestDashboard(t, dashboardStore, "testDashie3", 2, 0, false)

@@ -276,7 +276,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	return "", ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
 }
 
-// FindAllWithPagination Returns a list of public dashboards by orgId
+// FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
 func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
 	query.Offset = query.Limit * (query.Page - 1)
 	resp, err := pd.store.FindAllWithPagination(ctx, query)
@@ -284,12 +284,6 @@ func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context,
 		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
 	}
 
-	filteredPubdashes, err := pd.filterDashboardsByPermissions(ctx, query.User, resp.PublicDashboards)
-	if err != nil {
-		return nil, err
-	}
-
-	resp.PublicDashboards = filteredPubdashes
 	resp.Page = query.Page
 	resp.PerPage = query.Limit
 

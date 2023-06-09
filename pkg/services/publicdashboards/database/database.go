@@ -6,9 +6,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -16,6 +19,8 @@ import (
 type PublicDashboardStoreImpl struct {
 	sqlStore db.DB
 	log      log.Logger
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -25,31 +30,54 @@ var LogPrefix = "publicdashboards.store"
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 
 // Factory used by wire to dependency injection
-func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
+func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
 		log:      log.New(LogPrefix),
+		cfg:      cfg,
+		features: features,
 	}
 }
 
-// FindAll Returns a list of public dashboards by orgId
+// FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
 func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
 	resp := &PublicDashboardListResponseWithPagination{
 		PublicDashboards: make([]*PublicDashboardListResponse, 0),
 		TotalCount:       0,
 	}
 
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		err := sess.SQL("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title "+
-			"FROM dashboard_public LEFT JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id "+
-			"WHERE dashboard_public.org_id = ? "+
-			"ORDER BY dashboard.title IS NULL, dashboard.title ASC "+
-			"LIMIT ? OFFSET ?", query.OrgID, query.Limit, query.Offset).Find(&resp.PublicDashboards)
+	recursiveQueriesAreSupported, err := d.sqlStore.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	pubdashBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title")
+	pubdashBuilder.Write(" FROM dashboard_public")
+	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
+	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
+	if query.User.OrgRole != org.RoleAdmin {
+		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
+	}
+	pubdashBuilder.Write(" ORDER BY dashboard.title")
+	pubdashBuilder.Write(` LIMIT ? OFFSET ?`, query.Limit, query.Offset)
+
+	counterBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	counterBuilder.Write("SELECT COUNT(*)")
+	counterBuilder.Write(" FROM dashboard_public")
+	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
+	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
+	if query.User.OrgRole != org.RoleAdmin {
+		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
+	}
+
+	err = d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.SQL(pubdashBuilder.GetSQLString(), pubdashBuilder.GetParams()...).Find(&resp.PublicDashboards)
 		if err != nil {
 			return err
 		}
 
-		_, err = sess.SQL("SELECT COUNT(*) FROM dashboard_public WHERE org_id = ?", query.OrgID).Get(&resp.TotalCount)
+		_, err = sess.SQL(counterBuilder.GetSQLString(), counterBuilder.GetParams()...).Get(&resp.TotalCount)
 		return err
 	})
 
