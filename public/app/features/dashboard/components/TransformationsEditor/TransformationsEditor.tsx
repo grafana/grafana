@@ -24,7 +24,6 @@ import {
   CustomScrollbar,
   FilterPill,
   Themeable,
-  HorizontalGroup,
   VerticalGroup,
   withTheme,
   Input,
@@ -387,6 +386,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       <span
                         className={css`
                           vertical-align: middle;
+                          &:hover {
+                            text-decoration: underline;
+                          }
                         `}
                       >
                         Go back to <i>Transformations in use</i>
@@ -425,26 +427,26 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               {config.featureToggles.transformationsRedesign && (
                 <div
                   className={css`
-                    width: 100%;
-                    overflow: auto;
                     padding: 8px 0;
+                    display: flex;
+                    flex-wrap: wrap;
+                    row-gap: 8px;
+                    column-gap: 4px;
                   `}
                 >
-                  <HorizontalGroup spacing="xs">
-                    {filterCategoriesLabels.map(([slug, label]) => {
-                      return (
-                        <FilterPill
-                          key={slug}
-                          onClick={() => this.setState({ selectedFilter: slug })}
-                          label={label}
-                          selected={this.state.selectedFilter === slug}
-                          customClass={css`
-                            white-space: nowrap;
-                          `}
-                        />
-                      );
-                    })}
-                  </HorizontalGroup>
+                  {filterCategoriesLabels.map(([slug, label]) => {
+                    return (
+                      <FilterPill
+                        key={slug}
+                        onClick={() => this.setState({ selectedFilter: slug })}
+                        label={label}
+                        selected={this.state.selectedFilter === slug}
+                        customClass={css`
+                          white-space: nowrap;
+                        `}
+                      />
+                    );
+                  })}
                 </div>
               )}
 
