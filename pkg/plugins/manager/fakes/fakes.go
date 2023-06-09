@@ -180,8 +180,7 @@ func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plug
 }
 
 func (f *FakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-
+	res := make([]*plugins.Plugin, 0, len(f.Store))
 	for _, p := range f.Store {
 		res = append(res, p)
 	}
