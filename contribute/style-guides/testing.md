@@ -100,7 +100,12 @@ At times, it might be necessary to verify that the `Select` component is display
 
 ```tsx
 it('should have an "Editor" option', async () => {
-  const { user } = setup(<OrgRolePicker value={OrgRole.Admin} aria-label={'Role picker'} onChange={() => {}} />);
+  const { user } = setup(
+    <>
+      <label htmlFor={'role-picker'}>Role picker</label>
+      <OrgRolePicker value={OrgRole.Admin} inputId={'role-picker'} onChange={() => {}} />
+    </>
+  );
   await user.click(screen.getByRole('combobox', { name: 'Role picker' }));
   expect(screen.getByText('Editor')).toBeInTheDocument();
 });
@@ -113,7 +118,12 @@ To simplify the process of selecting an option from a `Select` component, there 
 ```tsx
 it('should select an option', async () => {
   const mockOnChange = jest.fn();
-  setup(<OrgRolePicker value={OrgRole.Admin} aria-label={'Role picker'} onChange={mockOnChange} />);
+  setup(
+    <>
+      <label htmlFor={'role-picker'}>Role picker</label>
+      <OrgRolePicker value={OrgRole.Admin} inputId={'role-picker'} onChange={mockOnChange} />
+    </>
+  );
   await selectOptionInTest(screen.getByRole('combobox', { name: 'Role picker' }), 'Viewer');
   expect(mockOnChange).toHaveBeenCalledWith('Viewer');
 });
