@@ -219,7 +219,7 @@ function querySupportsSplitting(query: LokiQuery) {
     !isQueryWithDistinct(query.expr) &&
     // Queries with $__range variable should not be split because then the interpolated $__range variable is incorrect
     // because it is interpolated on the backend with the split timeRange
-    isQueryWithRangeVariable(query.expr)
+    !isQueryWithRangeVariable(query.expr)
   );
 }
 
