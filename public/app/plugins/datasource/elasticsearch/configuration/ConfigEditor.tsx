@@ -21,17 +21,13 @@ export const ConfigEditor = (props: Props) => {
   // the access-mode-select-box vanishes)
   const showAccessOptions = useRef(props.options.access === 'direct');
 
-  const { options: originalOptions, onOptionsChange } = props;
-  const options = coerceOptions(originalOptions);
+  const { options, onOptionsChange } = props;
 
   useEffect(() => {
-    if (!isValidOptions(originalOptions)) {
-      onOptionsChange(coerceOptions(originalOptions));
+    if (!isValidOptions(options)) {
+      onOptionsChange(coerceOptions(options));
     }
-
-    // We can't enforce the eslint rule here because we only want to run this once.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onOptionsChange, options]);
 
   return (
     <>

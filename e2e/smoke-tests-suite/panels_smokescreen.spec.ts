@@ -12,12 +12,12 @@ e2e.scenario({
 
     // TODO: Try and use e2e.flows.addPanel() instead of block below
     try {
-      e2e.components.PageToolbar.itemButton('Add panel button').should('be.visible');
-      e2e.components.PageToolbar.itemButton('Add panel button').click();
+      e2e.components.PageToolbar.itemButton('Add button').should('be.visible');
+      e2e.components.PageToolbar.itemButton('Add button').click();
     } catch (e) {
       // Depending on the screen size, the "Add panel" button might be hidden
       e2e.components.PageToolbar.item('Show more items').click();
-      e2e.components.PageToolbar.item('Add panel button').last().click();
+      e2e.components.PageToolbar.item('Add button').last().click();
     }
     e2e.pages.AddDashboard.itemButton('Add new visualization menu item').should('be.visible');
     e2e.pages.AddDashboard.itemButton('Add new visualization menu item').click();
