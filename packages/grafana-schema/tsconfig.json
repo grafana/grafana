@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "declarationDir": "./compiled",
+    "declarationDir": "./dist/esm",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."]

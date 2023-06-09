@@ -139,7 +139,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			reqContext.Logger = reqContext.Logger.New("traceID", traceID)
 		}
 
-		if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		if h.Cfg.AuthBrokerEnabled {
 			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
 				if errors.Is(err, auth.ErrInvalidSessionToken) {
@@ -207,7 +207,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		)
 
 		// when using authn service this is implemented as a post auth hook
-		if !h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+		if !h.Cfg.AuthBrokerEnabled {
 			// update last seen every 5min
 			if reqContext.ShouldUpdateLastSeenAt() {
 				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
