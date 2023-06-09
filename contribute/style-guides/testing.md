@@ -2,6 +2,10 @@
 
 The goal of this document is to address the most frequently asked "How to" questions related to unit testing.
 
+## Best practices
+
+- Default to the `*ByRole` queries when testing components as it encourages testing with accessibility concerns in mind. It's also possible to use `*ByLabelText` queries. However, the `*ByRole` queries are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name) and are generally recommended over the former.
+
 ## Testing User Interactions
 
 We use the [user-event](https://testing-library.com/docs/user-event/intro) library for simulating user interactions during testing. This library is preferred over the built-in `fireEvent` method, as it more accurately mirrors real user interactions with elements.
@@ -38,7 +42,7 @@ There are a few utilities that can be useful for debugging tests:
 
 ## Testing Select Components
 
-Here, the [OrgRolePicker](https://github.com/grafana/grafana/blob/main/public/app/features/admin/OrgRolePicker.tsx) component is used as an example. This component essentially serves as a wrapper for the `Select` component, complete with its own set of options.
+Here, the [OrgRolePicker](https://github.com/grafana/grafana/blob/38863844e7ac72c7756038a1097f89632f9985ff/public/app/features/admin/OrgRolePicker.tsx) component is used as an example. This component essentially serves as a wrapper for the `Select` component, complete with its own set of options.
 
 ```tsx
 import { OrgRole } from '@grafana/data';
@@ -74,20 +78,7 @@ export function OrgRolePicker({ value, onChange, 'aria-label': ariaLabel, inputI
 
 ### Querying the Select Component
 
-There are a few methods to query the `Select` component:
-
-1. One approach is to explicitly pass the `aria-label` prop and then use the `getByRole` method:
-
-```tsx
-describe('OrgRolePicker', () => {
-  it('should render the picker', () => {
-    setup(<OrgRolePicker value={OrgRole.Admin} aria-label={'Role picker'} onChange={() => {}} />);
-    expect(screen.getByRole('combobox', { name: 'Role picker' })).toBeInTheDocument();
-  });
-});
-```
-
-2. Alternatively, add a `label` element and provide the `htmlFor` prop. In this scenario, a matching `inputId` should be passed to the `Select` component:
+The recommended way to query `Select` components is by using a label. Add a `label` element and provide the `htmlFor` prop with a matching `inputId`. Alternatively, `aria-label` can be specified on the `Select`.
 
 ```tsx
 describe('OrgRolePicker', () => {
@@ -102,8 +93,6 @@ describe('OrgRolePicker', () => {
   });
 });
 ```
-
-It's also possible to use `*ByLabelText` queries. However, the `*ByRole` queries are [more robust](https://testing-library.com/docs/queries/bylabeltext/#name) and are generally recommended over the former.
 
 ### Testing the Display of Correct Options
 
@@ -134,30 +123,7 @@ it('should select an option', async () => {
 
 ### Mocking the `window` Object and Its Methods
 
-There are several approaches to mock the `window` object. The most common methods are using `Object.defineProperty` and Jest spies.
-
-#### Using `Object.defineProperty`
-
-This method allows for the creation of a new property directly on an object, or modification of an existing one.
-
-```tsx
-const originalLocation = window.location;
-beforeAll(() => {
-  Object.defineProperty(window, 'location', {
-    value: { href: 'www.example.com' },
-  });
-});
-
-afterAll(() => {
-  Object.defineProperty(window, 'location', { value: originalLocation });
-});
-```
-
-It's important to include `writable: true` in case the `window` object or its properties need to be redefined in another test.
-
-#### Using Jest Spies
-
-This approach leverages the built-in mocking capabilities of Jest.
+The recommended approach for mocking the `window` object is to use Jest spies. Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
 
 ```tsx
 let windowSpy: jest.SpyInstance;
@@ -178,8 +144,6 @@ it('should test with window', function () {
 });
 ```
 
-Jest's spy functions provide a built-in mechanism for restoring mocks. This feature eliminates the need to manually save a reference to the `window` object.
-
 ### Mocking getBackendSrv()
 
 The `getBackendSrv()` function is used to make HTTP requests to the Grafana backend. It is possible to mock this function using the `jest.mock` method.
@@ -197,7 +161,7 @@ jest.mock('@grafana/runtime', () => ({
 
 The `AsyncSelect` component is used to asynchronously load options. As such, it often relies on the `getBackendSrv` for loading the options.
 
-Here's how the test would look like for this [OrgPicker](https://github.com/grafana/grafana/blob/main/public/app/core/components/Select/OrgPicker.tsx) component, which uses `AsyncSelect` under the hood.
+Here's how the test would look like for this [OrgPicker](https://github.com/grafana/grafana/blob/38863844e7ac72c7756038a1097f89632f9985ff/public/app/core/components/Select/OrgPicker.tsx) component, which uses `AsyncSelect` under the hood.
 
 ```tsx
 import { screen, render } from '@testing-library/react';
