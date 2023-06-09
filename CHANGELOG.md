@@ -202,7 +202,7 @@
 ### Breaking changes
 
 The deprecated `plugin:build` command in the Grafana Toolkit have been removed in this release. The replacement [`create-plugin`](https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/) tool is recommended for plugin development.
- Issue [#67485](https://github.com/grafana/grafana/issues/67485)
+Issue [#67485](https://github.com/grafana/grafana/issues/67485)
 
 The deprecated `package:build`, `node-version-check` and `toolkit:build` commands in the Grafana Toolkit have been removed in this release. Issue [#67475](https://github.com/grafana/grafana/issues/67475)
 
@@ -212,9 +212,9 @@ The `/query-history/migrate` endpoint has been removed and query history entries
 
 The deprecated `plugin:ci-build`, `plugin:ci-package`, `plugin:ci-report`, `plugin:update-circleci` and `plugin:bundle-managed` commands in the Grafana Toolkit have been removed in this release. Issue [#67212](https://github.com/grafana/grafana/issues/67212)
 
-The data-format used by the Loki data source  for metric (graph producing) queries was changed to be compliant with the recommended Grafana format. The change is very small, we do not expect it to cause problems: for instant-queries the dataframe-type changed from `timeseries-multi` to `numeric-multi`, the dataframe-name attribute is not used anymore. If you are affected by this, you can revert back to the old format by setting the feature flag `lokiMetricDataplane` to `false`. We recommend migrating to the new format, because the feature-flag will be removed at some point in the future. Issue [#67137](https://github.com/grafana/grafana/issues/67137)
+The data-format used by the Loki data source for metric (graph producing) queries was changed to be compliant with the recommended Grafana format. The change is very small, we do not expect it to cause problems: for instant-queries the dataframe-type changed from `timeseries-multi` to `numeric-multi`, the dataframe-name attribute is not used anymore. If you are affected by this, you can revert back to the old format by setting the feature flag `lokiMetricDataplane` to `false`. We recommend migrating to the new format, because the feature-flag will be removed at some point in the future. Issue [#67137](https://github.com/grafana/grafana/issues/67137)
 
-The deprecated `plugin:sign`  command in the Grafana Toolkit have been removed in this release. The replacement `sign-plugin` tool is recommended for [plugin signing](https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin). Issue [#67130](https://github.com/grafana/grafana/issues/67130)
+The deprecated `plugin:sign` command in the Grafana Toolkit have been removed in this release. The replacement `sign-plugin` tool is recommended for [plugin signing](https://github.com/grafana/plugin-tools/tree/main/packages/sign-plugin). Issue [#67130](https://github.com/grafana/grafana/issues/67130)
 
 The deprecated `plugin:test` and `plugin:dev` commands in the Grafana Toolkit have been removed in this release. Issue [#67125](https://github.com/grafana/grafana/issues/67125)
 
@@ -227,7 +227,8 @@ abstract testDatasource(): Promise<any>;
 // After
 abstract testDatasource(): Promise<TestDataSourceResponse>;
 ```
- Issue [#67014](https://github.com/grafana/grafana/issues/67014)
+
+Issue [#67014](https://github.com/grafana/grafana/issues/67014)
 
 Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
 
@@ -240,17 +241,18 @@ We've removed some now unused properties from the `NavModel` interface. Issue [#
 We removed previously deprecated components from `@grafana/data` : `getLogLevel`, `getLogLevelFromKey`, `addLogLevelToSeries`, `LogsParser`, `LogsParsers`, `calculateFieldStats`, `calculateLogsLabelStats`, `calculateStats`, `getParser`, `sortInAscendingOrder`, `sortInDescendingOrder`, `sortLogsResult`, `sortLogRows`, `checkLogsError`, `escapeUnescapedString`. Issue [#66271](https://github.com/grafana/grafana/issues/66271)
 
 We removed previously deprecated components from `@grafana/ui` : `LogLabels`, `LogMessageAnsi`, `LogRows`, `getLogRowStyles`.
- Issue [#66268](https://github.com/grafana/grafana/issues/66268)
+Issue [#66268](https://github.com/grafana/grafana/issues/66268)
 
-We removed previously deprecated `DataSourceWithLogsVolumeSupport` that  was replaced with `DataSourceWithSupplementaryQueriesSupport`. Both APIs are for internal use only. Issue [#66266](https://github.com/grafana/grafana/issues/66266)
+We removed previously deprecated `DataSourceWithLogsVolumeSupport` that was replaced with `DataSourceWithSupplementaryQueriesSupport`. Both APIs are for internal use only. Issue [#66266](https://github.com/grafana/grafana/issues/66266)
 
-Additional functions (map/filter/forEach/iterator) have been added to the root Vector interface. Any code using vectors will continue to work unchanged, but in the rare case that you have implemented Vector directly, it be missing these functions.  The easiest fix is to extend [FunctionalVector](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/vector/FunctionalVector.ts).
+Additional functions (map/filter/forEach/iterator) have been added to the root Vector interface. Any code using vectors will continue to work unchanged, but in the rare case that you have implemented Vector directly, it be missing these functions. The easiest fix is to extend [FunctionalVector](https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/vector/FunctionalVector.ts).
 
 The `ArrayVector` class now extends the native JavaScript `Array` and gains all of its prototype/instance methods as a result. Issue [#66187](https://github.com/grafana/grafana/issues/66187)
 
 We've removed the ability for functions to be passed as children to the `Dropdown` component. Previously, this was used to access the `isOpen` state of the dropdown. This can be now be achieved with the `onVisibleChange` prop.
 
 Before:
+
 ```
 return (
 <Dropdown overlay={MenuActions} placement="bottom-end">
@@ -262,7 +264,8 @@ return (
 ```
 
 After:
-```
+
+````
 const [isOpen, setIsOpen] = useState(false);
 
 ...
@@ -3353,8 +3356,8 @@ The change in behavior is that negative-valued series are now stacked downwards 
 
 The meaning of the default data source has now changed from being a persisted property in a panel. Before when you selected the default data source for a panel and later changed the default data source to another data source it would change all panels who were configured to use the default data source. From now on the default data source is just the default for new panels and changing the default will not impact any currently saved dashboards. Issue [#45132](https://github.com/grafana/grafana/issues/45132)
 
-The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.  
- Issue [#45053](https://github.com/grafana/grafana/issues/45053)
+The Tooltip component provided by `@grafana/ui` is no longer automatically interactive (that is you can hover onto it and click a link or select text). It will from now on by default close automatically when you mouse out from the trigger element. To make tooltips behave like before set the new `interactive` property to true.
+Issue [#45053](https://github.com/grafana/grafana/issues/45053)
 
 ### Deprecations
 
