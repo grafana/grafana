@@ -1,4 +1,5 @@
 ---
+title: Migrate a plugin
 aliases:
   - ../../plugins/developing/migration-guide
 keywords:
@@ -7,7 +8,7 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migration guides
+weight: 500
 ---
 
 <script>
@@ -34,7 +35,7 @@ title: Migration guides
 })();
 </script>
 
-# Plugin migration guide
+# Migrate a plugin
 
 The following guides help you identify the steps required to update a plugin following changes between versions of Grafana.
 

@@ -1,11 +1,12 @@
 ---
+title: Legacy data source plugins
 aliases:
   - ../../../plugins/developing/datasources/
 keywords:
   - grafana
   - plugins
   - documentation
-title: Legacy data source plugins
+description: Deprecated guide for Angular plugin development.
 ---
 
 # Legacy data source plugins

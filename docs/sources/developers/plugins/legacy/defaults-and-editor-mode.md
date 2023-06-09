@@ -1,7 +1,8 @@
 ---
+title: Legacy defaults and editor mode
 aliases:
   - ../../../plugins/developing/defaults-and-editor-mode/
-title: Legacy defaults and editor mode
+description: Deprecated guide for Angular plugin development.
 ---
 
 # Legacy defaults and editor mode

@@ -6,6 +6,8 @@ keywords:
   - plugins
   - documentation
 title: plugin.json
+menuTitle: Reference (plugin.json)
+weight: 700
 ---
 
 # plugin.json

@@ -1,4 +1,6 @@
 ---
+title: Migrate plugins from Grafana version 8.x to 9.x
+menuTitle: v8.x to v9.x
 description: Guide for migrating plugins from Grafana v8.x to v9.x
 keywords:
   - grafana
@@ -6,8 +8,6 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana version 8.x to 9.x
-menutitle: v8.x to v9.x
 weight: 2300
 ---
 

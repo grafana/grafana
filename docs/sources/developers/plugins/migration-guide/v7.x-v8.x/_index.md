@@ -1,4 +1,6 @@
 ---
+title: Migrate plugins from Grafana version 7.x to 8.x
+menuTitle: v7.x to v8.x
 description: Guide for migrating plugins from Grafana v7.x to v8.x
 keywords:
   - grafana
@@ -6,8 +8,6 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana version 7.x to 8.x
-menutitle: v7.x to v8.x
 weight: 2400
 ---
 

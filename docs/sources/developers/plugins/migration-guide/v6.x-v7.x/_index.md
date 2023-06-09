@@ -1,4 +1,6 @@
 ---
+title: Migrate plugins from Grafana version 6.x to 7.x
+menuTitle: v6.x to v7.x
 description: Guide for migrating plugins from Grafana v6.x to v7.x
 keywords:
   - grafana
@@ -6,8 +8,6 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana version 6.x to 7.x
-menutitle: v6.x to v7.x
 weight: 2500
 ---
 

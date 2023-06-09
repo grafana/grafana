@@ -1,14 +1,16 @@
 ---
+title: Work with legacy plugins
 aliases:
   - ../../plugins/development/
   - /docs/grafana/next/plugins/apps/
   - /docs/grafana/next/plugins/datasources/
   - /docs/grafana/next/plugins/developing/development/
   - /docs/grafana/next/plugins/panels/
-title: Legacy plugins
+description: Deprecated guide for Angular plugin development.
+weight: 600
 ---
 
-# Legacy plugins
+# Work with legacy plugins
 
 > **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to [Plugins]({{< relref "../" >}}).
 
