@@ -95,11 +95,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 		})
 	}
 
-	if cmd.OrgID == 1 {
-		res.Metadata.Namespace = "default"
-	} else {
-		res.Metadata.Namespace = fmt.Sprintf("org-%d", cmd.OrgID)
-	}
+	res.Metadata.Namespace = util.OrgIdToNamespace(cmd.OrgID)
 
 	dto := cmd.GetDashboardModel()
 	if dto.UID == "" {
@@ -109,11 +105,11 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	}
 
 	if cmd.IsFolder {
-		res.APIVersion = "folders.kinds.grafana.com/v0.0-alpha"
+		res.APIVersion = "folders.kinds.grafana.com/v0-alpha"
 		res.Kind = "Folder"
 		res.Spec = cmd.Dashboard
 	} else {
-		res.APIVersion = "dashboard.kinds.grafana.com/v0.0-alpha"
+		res.APIVersion = "dashboard.kinds.grafana.com/v0-alpha"
 		res.Kind = "Dashbaord"
 		res.Spec = cmd.Dashboard
 	}
