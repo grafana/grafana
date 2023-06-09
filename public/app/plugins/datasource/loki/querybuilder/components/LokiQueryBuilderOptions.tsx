@@ -1,3 +1,4 @@
+import { trim } from 'lodash';
 import React, { useState } from 'react';
 
 import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
