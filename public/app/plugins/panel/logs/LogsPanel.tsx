@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
 import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
-import { styles } from 'app/features/dashboard/components/DashboardLoading/DashboardFailed';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
