@@ -269,12 +269,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   return uniqueParams;
 }
 
-function incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
-  if (params.indexOf(nameIncremenet) > -1) {
+function incrementName(name: string, nameIncrement: string, params: string[], index: number): string {
+  if (params.indexOf(nameIncrement) > -1) {
     index++;
     return incrementName(name, name + '_' + index, params, index);
   }
-  return nameIncremenet;
+  return nameIncrement;
 }
 
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
