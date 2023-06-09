@@ -134,6 +134,21 @@ func Test_stateToPostableAlert(t *testing.T) {
 
 					require.Equal(t, expected, result.Annotations)
 				})
+
+				t.Run("don't add __alertImageToken__ if there's no image token", func(t *testing.T) {
+					alertState := randomState(tc.state)
+					alertState.Annotations = randomMapOfStrings()
+					alertState.Image = &ngModels.Image{}
+
+					result := stateToPostableAlert(alertState, appURL)
+
+					expected := make(models.LabelSet, len(alertState.Annotations)+1)
+					for k, v := range alertState.Annotations {
+						expected[k] = v
+					}
+
+					require.Equal(t, expected, result.Annotations)
+				})
 			})
 
 			t.Run("should add state reason annotation if not empty", func(t *testing.T) {
