@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -129,7 +130,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 				c.retryCount = 0
 				failure := fmt.Sprintf("%v", r)
 				if failure == "runtime error: makeslice: len out of range" {
-					err = fmt.Errorf("corrupt HTTP response from source, please try again")
+					err = errors.New("corrupt HTTP response from source, please try again")
 				} else {
 					panic(r)
 				}
