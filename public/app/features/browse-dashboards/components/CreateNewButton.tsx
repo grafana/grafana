@@ -71,7 +71,7 @@ function CreateNewButton({
           subtitle={parentFolderTitle ? `Location: ${parentFolderTitle}` : undefined}
           scrollableContent
           onClose={() => setShowNewFolderDrawer(false)}
-          size="md"
+          size="sm"
         >
           <NewFolderForm onConfirm={onCreateFolder} onCancel={() => setShowNewFolderDrawer(false)} />
         </Drawer>
