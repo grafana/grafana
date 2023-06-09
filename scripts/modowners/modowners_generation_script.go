@@ -28,11 +28,11 @@ func getFiles(modules []Module) (map[string][]string, error) {
 	// // List of importing files
 	// importingFiles := make([]string, 0)
 
-	// Set to store unique imported packages
-	importedPackages := make(map[string]bool)
+	// Map to store imported files for each module
+	importedFiles := make(map[string][]string)
 
 	for _, module := range modules {
-		importedPackages[module.Name] = true
+		importedFiles[module.Name] = []string{}
 	}
 	fmt.Println("I AM BEFORE VISIT")
 
@@ -43,38 +43,37 @@ func getFiles(modules []Module) (map[string][]string, error) {
 		fmt.Println(err)
 	}
 
-	// Map to store imported files for each module
-	importedFiles := make(map[string][]string)
+	for importName, _ := range importedFiles {
+		// loop over elements of slice
+		// filemap is a map where key is what pkg we're in and value is ask.Package, which has info about a package obtained via parsing it's go source files
+		for p, ast := range filemap {
 
-	// loop over elements of slice
-	// filemap is a map where key is what pkg we're in and value is ask.Package, which has info about a package obtained via parsing it's go source files
-	for p, ast := range filemap {
+			// m is a map[string]interface.
+			// loop over keys and values in the map.
 
-		// m is a map[string]interface.
-		// loop over keys and values in the map.
+			fmt.Println("KEY FROM FILEMAP, aka what pkg are we in", p)
+			fmt.Println("VALUE FROM FILEMAP", ast)
+			// print out the files in the map: name and their imports
 
-		fmt.Println("KEY FROM FILEMAP, aka what pkg are we in", p)
-		fmt.Println("VALUE FROM FILEMAP", ast)
-		// print out the files in the map: name and their imports
+			for filename, fileobj := range ast.Files {
+				// ast.Files is a map of file objects in build directory
+				// filename is the absolute path to the repoAbsPath
+				fmt.Println("filename from ast.Files", filename)
 
-		for filename, fileobj := range ast.Files {
-			// ast.Files is a map of file objects in build directory
-			// filename is the absolute path to the repoAbsPath
-			fmt.Println("filename from ast.Files", filename)
+				for _, curImport := range fileobj.Imports {
+					// j, _ := json.MarshalIndent(curImport, "", "")
+					// fmt.Println(string(j))
+					fmt.Println("curImport.Path.Value", curImport.Path.Value)
+					if curImport.Path.Value == importName {
+						importedFiles[importName] = append(importedFiles[importName], filename) // NOTE: i dont think filename is what we want - it looks like /Users/kat/grafana/grafana/pkg/build/npm/npm.go
+					}
 
-			for _, curImport := range fileobj.Imports {
-				// j, _ := json.MarshalIndent(curImport, "", "")
-				// fmt.Println(string(j))
-				fmt.Println("curImport.Path.Value", curImport.Path.Value)
-				// TODO: how to get name of import we're looking for
-				// TODO: how to append the files it's in to the value
-				// i think we're currently getting the imports for a current file. i thought we want the files for a current import (aka, the opposite)
-				// importedFiles[]
+				}
+
 			}
-
 		}
 	}
-
+	fmt.Println("importedFiles", importedFiles)
 	fmt.Println("FILEMAP", filemap)
 
 	/*
@@ -120,17 +119,6 @@ func main() {
 	m, _ := parseGoMod(os.DirFS("."), "go.mod")
 	// if err != nil {
 	// 	return nil, err
-	// }
-
-	// for each direct module, get list of files that import it
-	// for _, mod := range m {
-	// 	if mod.Indirect == false {
-	// 		_, err := getFiles(mod)
-	// 		fmt.Println(mod)
-	// 		if err != nil {
-	// 			// return nil, err
-	// 		}
-	// 	}
 	// }
 
 	files, _ := getFiles(m)
