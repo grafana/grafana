@@ -163,30 +163,31 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
-          const seriesList: any[] = [];
-
           const groupedFrames = groupBy(res.data, (x) => x.refId);
-          if (Object.keys(groupedFrames).length > 0) {
-            filteredRequest.targets.forEach((target) => {
-              const filteredFrames = groupedFrames[target.refId] ?? [];
-              switch (target.resultFormat) {
-                case 'logs':
-                case 'table':
-                  seriesList.push(
-                    this.responseParser.getTable(filteredFrames, target, {
-                      preferredVisualisationType: target.resultFormat,
-                    })
-                  );
-                  break;
-                default: {
-                  for (let i = 0; i < filteredFrames.length; i++) {
-                    seriesList.push(filteredFrames[i]);
-                  }
-                  break;
-                }
-              }
-            });
+          if (Object.keys(groupedFrames).length === 0) {
+            return { data: [] };
           }
+
+          const seriesList: any[] = [];
+          filteredRequest.targets.forEach((target) => {
+            const filteredFrames = groupedFrames[target.refId] ?? [];
+            switch (target.resultFormat) {
+              case 'logs':
+              case 'table':
+                seriesList.push(
+                  this.responseParser.getTable(filteredFrames, target, {
+                    preferredVisualisationType: target.resultFormat,
+                  })
+                );
+                break;
+              default: {
+                for (let i = 0; i < filteredFrames.length; i++) {
+                  seriesList.push(filteredFrames[i]);
+                }
+                break;
+              }
+            }
+          });
 
           return { data: seriesList };
         })
