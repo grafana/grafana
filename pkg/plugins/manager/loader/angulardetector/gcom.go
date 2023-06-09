@@ -147,9 +147,9 @@ const (
 
 // gcomPattern is an Angular detection pattern returned by the GCOM API.
 type gcomPattern struct {
-	Name  string
-	Value string
-	Type  gcomPatternType
+	Name    string
+	Pattern string
+	Type    gcomPatternType
 }
 
 // errUnknownPatternType is returned when a pattern type is not known.
@@ -160,11 +160,11 @@ var errUnknownPatternType = errors.New("unknown pattern type")
 func (p *gcomPattern) detector() (detector, error) {
 	switch p.Type {
 	case gcomPatternTypeContains:
-		return &containsBytesDetector{pattern: []byte(p.Value)}, nil
+		return &containsBytesDetector{pattern: []byte(p.Pattern)}, nil
 	case gcomPatternTypeRegex:
-		re, err := regexp.Compile(p.Value)
+		re, err := regexp.Compile(p.Pattern)
 		if err != nil {
-			return nil, fmt.Errorf("%q regexp compile: %w", p.Value, err)
+			return nil, fmt.Errorf("%q regexp compile: %w", p.Pattern, err)
 		}
 		return &regexDetector{regex: re}, nil
 	}
