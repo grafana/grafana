@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"github.com/prometheus/alertmanager/config"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -248,20 +249,32 @@ type AggregateMatchersUsage struct {
 
 func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	var amu AggregateMatchersUsage
-	am.aggregateMatchers(cfg.AlertmanagerConfig.Route, &amu)
+	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
+	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
 	am.ConfigMetrics.Matchers.Set(float64(amu.Matchers))
 	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
 	am.ConfigMetrics.Match.Set(float64(amu.Match))
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
 }
 
-func (am *Alertmanager) aggregateMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
+func (am *Alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
 	amu.Matchers += len(r.Matchers)
 	amu.MatchRE += len(r.MatchRE)
 	amu.Match += len(r.Match)
 	amu.ObjectMatchers += len(r.ObjectMatchers)
 	for _, next := range r.Routes {
-		am.aggregateMatchers(next, amu)
+		am.aggregateRouteMatchers(next, amu)
+	}
+}
+
+func (am *Alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
+	for _, r := range rules {
+		amu.Matchers += len(r.SourceMatchers)
+		amu.Matchers += len(r.TargetMatchers)
+		amu.MatchRE += len(r.SourceMatchRE)
+		amu.MatchRE += len(r.TargetMatchRE)
+		amu.Match += len(r.SourceMatch)
+		amu.Match += len(r.TargetMatch)
 	}
 }
 
