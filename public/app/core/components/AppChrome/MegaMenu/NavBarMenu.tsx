@@ -67,6 +67,7 @@ export function NavBarMenu({ activeItem, navItems, searchBarHidden, onClose }: P
               <Icon name="bars" size="xl" />
               <IconButton
                 aria-label="Close navigation menu"
+                tooltip="Close menu"
                 name="times"
                 onClick={onMenuClose}
                 size="xl"
