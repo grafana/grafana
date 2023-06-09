@@ -20,7 +20,7 @@ import { css } from '@emotion/css';
 import React, { MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { ClickedItemData, TextAlign } from '../types';
@@ -65,16 +65,18 @@ const FlameGraph = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const [levels, totalTicks] = useMemo(() => {
+  const [levels, totalTicks, callersCount] = useMemo(() => {
     let levels = data.getLevels();
     let totalTicks = levels[0][0].value;
+    let callersCount = 0;
 
     if (sandwichItem) {
       const [callers, callees] = data.getSandwichLevels(sandwichItem);
       levels = [...callers, [], ...callees];
       totalTicks = callees[0][0].value;
+      callersCount = callers.length;
     }
-    return [levels, totalTicks];
+    return [levels, totalTicks, callersCount];
   }, [data, sandwichItem]);
 
   const [sizeRef, { width: wrapperWidth }] = useMeasure<HTMLDivElement>();
@@ -184,6 +186,21 @@ const FlameGraph = ({
         onSandwichPillClick={onSandwichPillClick}
       />
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
+        {sandwichItem && (
+          <div>
+            <div
+              className={styles.sandwichMarker}
+              style={{ height: (callersCount * PIXELS_PER_LEVEL) / window.devicePixelRatio }}
+            >
+              Callers
+              <Icon className={styles.sandwichMarkerIcon} name={'arrow-down'} />
+            </div>
+            <div className={styles.sandwichMarker} style={{ marginTop: PIXELS_PER_LEVEL / window.devicePixelRatio }}>
+              <Icon className={styles.sandwichMarkerIcon} name={'arrow-up'} />
+              Callees
+            </div>
+          </div>
+        )}
         <canvas
           ref={graphRef}
           data-testid="flameGraph"
@@ -223,6 +240,16 @@ const getStyles = () => ({
   `,
   canvasContainer: css`
     cursor: pointer;
+    display: flex;
+  `,
+  sandwichMarker: css`
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+    overflow: hidden;
+    white-space: nowrap;
+  `,
+  sandwichMarkerIcon: css`
+    vertical-align: baseline;
   `,
 });
 

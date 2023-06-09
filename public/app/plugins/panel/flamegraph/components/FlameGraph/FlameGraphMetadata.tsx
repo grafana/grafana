@@ -39,7 +39,7 @@ const FlameGraphMetadata = React.memo(
     parts.push(
       <FilterPill
         className={styles.pill}
-        label={`${unitValue} of ${ticksVal.text}${ticksVal.suffix} samples (${unitTitle})`}
+        label={`${unitValue} | ${ticksVal.text}${ticksVal.suffix} samples (${unitTitle})`}
         selected={false}
         onClick={() => {}}
       />
@@ -54,7 +54,7 @@ const FlameGraphMetadata = React.memo(
             label={
               <>
                 <Icon containerClassName={styles.pillIcon} size={'sm'} name={'gf-show-context'} />{' '}
-                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/'))}
+                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
               </>
             }
             selected={false}
