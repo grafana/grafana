@@ -15,7 +15,8 @@ import {
   isDateTime,
   toUtc,
 } from '@grafana/data';
-import { DataSourceRef, TimeZone } from '@grafana/schema';
+import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
@@ -68,7 +69,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
-  correlations: undefined,
+  correlations: undefined
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -206,4 +207,13 @@ export const filterLogRowsByIndex = (
   }
 
   return logRows;
+};
+
+export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
+  if (datasourceUID === MIXED_DATASOURCE_NAME) {
+    return queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid)
+    
+  } else {
+    return [datasourceUID];
+  }
 };

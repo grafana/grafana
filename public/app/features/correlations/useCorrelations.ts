@@ -17,7 +17,7 @@ import {
   UpdateCorrelationResponse,
 } from './types';
 
-interface CorrelationsResponse {
+export interface CorrelationsResponse {
   correlations: Correlation[];
   page: number;
   limit: number;
@@ -42,7 +42,7 @@ const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Cor
   target: getDataSourceSrv().getInstanceSettings(targetUID)!,
 });
 
-const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
+export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsResponse): CorrelationsData => {
   return {
     ...correlationsResponse,
     correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData),
