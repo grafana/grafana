@@ -183,12 +183,12 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
 
   dfs[0].fields.forEach((field) => {
     // Time col
-    if (field.name === 'time') {
+    if (field.name.toLowerCase() === 'time') {
       table.columns.push({ text: 'Time', type: FieldType.time });
     }
 
     // Group by (label) column(s)
-    else if (field.name === 'value') {
+    else if (field.name.toLowerCase() === 'value') {
       if (field.labels) {
         Object.keys(field.labels).forEach((key) => {
           table.columns.push({ text: key });
