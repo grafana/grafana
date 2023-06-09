@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
 	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -58,7 +59,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
-	store entity.EntityStoreServer,
+	dualSync database.DashboardSQLStore,
 	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
@@ -71,7 +72,7 @@ func NewEntityStorage(
 ) (storage.Interface, factory.DestroyFunc, error) {
 	ws := NewWatchSet()
 	return &entityStorage{
-			store:        store,
+			store:        entity.WireCircularDependencyHack,
 			kind:         kind,
 			gr:           config.GroupResource,
 			codec:        config.Codec,
@@ -187,6 +188,8 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		uObj.SetGenerateName("")
 		key = strings.ReplaceAll(key, old, grn.UID)
 	}
+
+	// TODO: write to legacy sql
 
 	rsp, err := s.write(ctx, grn, uObj)
 	if err != nil {

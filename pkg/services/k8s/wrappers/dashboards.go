@@ -37,7 +37,7 @@ var _ dashboards.Store = (*DashboardStoreWrapper)(nil)
 func ProvideDashboardStoreWrapper(
 	features featuremgmt.FeatureToggles,
 	store database.DashboardSQLStore,
-	//clientset client.ClientSetProvider,
+	clientset client.ClientSetProvider,
 	folders folder.FolderStore,
 ) (dashboards.Store, error) {
 	if !features.IsEnabled(featuremgmt.FlagEntityStore) {
@@ -47,9 +47,9 @@ func ProvideDashboardStoreWrapper(
 	return &DashboardStoreWrapper{
 		DashboardSQLStore: store,
 		log:               log.New("k8s.dashboards.service-wrapper"),
-		//	clientset:         clientset,
-		namespace: "default",
-		folders:   folders,
+		clientset:         clientset,
+		namespace:         "default",
+		folders:           folders,
 	}, nil
 }
 
