@@ -338,7 +338,7 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
-    test('Groups metric queries by resolution', async () => {
+    test('Groups metric queries with no step by calculated stepMs', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
           { expr: 'count_over_time({a="b"}[1m])', refId: 'A', resolution: 3 },
@@ -351,23 +351,21 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
-    test('Groups mixed queries by resolution', async () => {
+
+    test('Groups metric queries with step by stepMs', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
-          { expr: '{a="b"}', refId: 'A', resolution: 3 },
-          { expr: '{a="b"}', refId: 'B', resolution: 5 },
-          { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
-          { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
-          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', resolution: 1, step: '10' },
+          { expr: 'count_over_time{a="b"}[1m])', refId: 'B', resolution: 1, step: '5ms' },
         ],
         range: range1d,
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // A, B, C, D, E
-        expect(datasource.runQuery).toHaveBeenCalledTimes(5);
+        // A, B
+        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
-    test('Chunked groups mixed queries by resolution', async () => {
+    test('Groups mixed queries by stepMs', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
           { expr: '{a="b"}', refId: 'A', resolution: 3 },
@@ -375,12 +373,32 @@ describe('runSplitQuery()', () => {
           { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
           { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
           { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: 'rate({a="b"}[5m])', refId: 'F', resolution: 5, step: '10' },
+          { expr: 'rate({a="b"} | logfmt[5m])', refId: 'G', resolution: 5, step: '10s' },
+        ],
+        range: range1d,
+      });
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // A, B, C, D, E, F+G
+        expect(datasource.runQuery).toHaveBeenCalledTimes(6);
+      });
+    });
+    test('Chunked groups mixed queries by stepMs', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"}', refId: 'A', resolution: 3 },
+          { expr: '{a="b"}', refId: 'B', resolution: 5 },
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
+          { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
+          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: 'rate({a="b"}[5m])', refId: 'F', resolution: 5, step: '10' },
+          { expr: 'rate({a="b"} | logfmt[5m])', refId: 'G', resolution: 5, step: '10s' },
         ],
         range, // 3 days
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E
-        expect(datasource.runQuery).toHaveBeenCalledTimes(13);
+        // 3 * A, 3 * B, 3 * C, 3 * D, 1 * E, 3 * F+G
+        expect(datasource.runQuery).toHaveBeenCalledTimes(16);
       });
     });
   });
