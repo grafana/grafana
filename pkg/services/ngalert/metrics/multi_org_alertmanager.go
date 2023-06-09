@@ -18,12 +18,6 @@ type MultiOrgAlertmanager struct {
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
 
-	//
-	matchers       prometheus.Gauge
-	matchRE        prometheus.Gauge
-	match          prometheus.Gauge
-	objectMatchers prometheus.Gauge
-
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
 
@@ -43,22 +37,6 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 			Subsystem: Subsystem,
 			Name:      "active_configurations",
 			Help:      "The number of active Alertmanager configurations.",
-		}),
-		matchers: promauto.With(r).NewGauge(prometheus.GaugeOpts{
-			Name: "alertmanager_config_matchers",
-			Help: "The total number of matchers",
-		}),
-		matchRE: promauto.With(r).NewGauge(prometheus.GaugeOpts{
-			Name: "alertmanager_config_matchRE",
-			Help: "The total number of match_re",
-		}),
-		match: promauto.With(r).NewGauge(prometheus.GaugeOpts{
-			Name: "alertmanager_config_match",
-			Help: "The total number of match",
-		}),
-		objectMatchers: promauto.With(r).NewGauge(prometheus.GaugeOpts{
-			Name: "alertmanager_config_object_matchers",
-			Help: "The total number of object matchers",
 		}),
 		aggregatedMetrics: NewAlertmanagerAggregatedMetrics(registries),
 	}
