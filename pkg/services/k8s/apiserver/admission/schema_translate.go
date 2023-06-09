@@ -42,6 +42,7 @@ func (st schemaTranslate) Admit(ctx context.Context, a admission.Attributes, o a
 			st.log.Error("failed to marshal spec", "err", err)
 			return nil
 		}
+		st.log.Info("spec", "spec", string(spec))
 		dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
 		if err != nil {
 			st.log.Info("failed to create dashboard kind", "err", err)
@@ -55,7 +56,11 @@ func (st schemaTranslate) Admit(ctx context.Context, a admission.Attributes, o a
 
 		switch a.GetOperation() {
 		case admission.Create, admission.Update:
-			cueVal, _ := vmux.NewJSONCodec("dashboard.json").Decode(cuectx.GrafanaCUEContext(), spec)
+			cueVal, err := vmux.NewJSONCodec("dashboard.json").Decode(cuectx.GrafanaCUEContext(), spec)
+			if err != nil {
+				st.log.Info("failed to decode dashboard", "err", err)
+				return nil
+			}
 			inst, err := sch.Validate(cueVal)
 			if err != nil {
 				st.log.Info("failed to validate dashboard", "err", err)
