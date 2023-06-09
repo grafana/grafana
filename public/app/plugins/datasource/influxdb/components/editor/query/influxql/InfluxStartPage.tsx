@@ -1,11 +1,7 @@
-import React, { PureComponent } from 'react';
-
-import { QueryEditorHelpProps } from '@grafana/data';
+import React from 'react';
 
 import { InfluxCheatSheet } from './InfluxCheatSheet';
 
-export default class InfluxStartPage extends PureComponent<QueryEditorHelpProps> {
-  render() {
-    return <InfluxCheatSheet />;
-  }
+export function InfluxStartPage() {
+  return <InfluxCheatSheet />;
 }
