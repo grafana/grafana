@@ -13,7 +13,7 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
   const dsService = useRef(getDatasourceSrv());
 
   useEffect(() => {
-    if (!params.panes || params.panes !== 'string') {
+    if (!params.panes || typeof params.panes !== 'string') {
       return;
     }
 
@@ -33,11 +33,11 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
       const names = datasources.map((ds) => ds.name);
 
       if (names.length === 0) {
-        document.title = `${navModel.current.main.text} - ${Branding.AppTitle}`;
+        global.document.title = `${navModel.current.main.text} - ${Branding.AppTitle}`;
         return;
       }
 
-      document.title = `${navModel.current.main.text} - ${names.join(' | ')} - ${Branding.AppTitle}`;
+      global.document.title = `${navModel.current.main.text} - ${names.join(' | ')} - ${Branding.AppTitle}`;
     });
   }, [params.panes]);
 }

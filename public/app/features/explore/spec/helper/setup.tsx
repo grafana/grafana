@@ -166,7 +166,7 @@ export function setupExplore(options?: SetupOptions): {
   };
 }
 
-function makeDatasourceSetup({
+export function makeDatasourceSetup({
   name = 'loki',
   id = 1,
   uid: uidOverride,
