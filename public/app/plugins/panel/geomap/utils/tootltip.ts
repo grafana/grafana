@@ -96,7 +96,7 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
   panel.hoverPayload.layers = layers.length ? layers : undefined;
   panel.props.eventBus.publish(panel.hoverEvent);
 
-  // Added this check to optimize Geomap panel re-render (without these conditions we render on every mouse move event)
+  // This check optimizes Geomap panel re-render behavior (without it, Geomap renders on every mouse move event)
   if (panel.state.ttip === undefined || panel.state.ttip?.layers !== hoverPayload.layers || hoverPayload.layers) {
     panel.setState({ ttip: { ...hoverPayload } });
   }
