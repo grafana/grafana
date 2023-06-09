@@ -66,19 +66,12 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, original, results)
 
-		// TODO: Please update this test in issue https://github.com/grafana/grafana/issues/63686
-		// var multierr *multierror.Error
-		// require.True(t, errors.As(err, &multierr))
-		// require.Equal(t, multierr.Len(), 2)
-
 		multierr, is := err.(interface{ Unwrap() []error })
 		require.True(t, is)
 		unwrappedErrors := multierr.Unwrap()
 		require.Equal(t, len(unwrappedErrors), 2)
 
 		errsStr := []string{
-			// multierr.Errors[0].Error(),
-			// multierr.Errors[1].Error(),
 			unwrappedErrors[0].Error(),
 			unwrappedErrors[1].Error(),
 		}
@@ -109,10 +102,6 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, expected, results)
 
-		// TODO: Please update this test in issue https://github.com/grafana/grafana/issues/63686
-		// var multierr *multierror.Error
-		// require.True(t, errors.As(err, &multierr))
-		// require.Equal(t, multierr.Len(), 1)
 		multierr, is := err.(interface{ Unwrap() []error })
 		require.True(t, is)
 		unwrappedErrors := multierr.Unwrap()
