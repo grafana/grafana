@@ -60,10 +60,10 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/originName"
-const annoKeyOriginPath = "grafana.com/originPath"
-const annoKeyOriginKey = "grafana.com/originKey"
-const annoKeyOriginTime = "grafana.com/originTime"
+const annoKeyOriginName = "grafana.com/origin/name"
+const annoKeyOriginPath = "grafana.com/origin/path"
+const annoKeyOriginKey = "grafana.com/origin/key"
+const annoKeyOriginTime = "grafana.com/origin/time"
 
 func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {
@@ -139,7 +139,7 @@ func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
 	delete(m.Annotations, annoKeyOriginPath)
 	delete(m.Annotations, annoKeyOriginKey)
 	delete(m.Annotations, annoKeyOriginTime)
-	if info != nil || info.Name != "" {
+	if info != nil && info.Name != "" {
 		m.Annotations[annoKeyOriginName] = info.Name
 		if info.Path != "" {
 			m.Annotations[annoKeyOriginPath] = info.Path
@@ -156,7 +156,7 @@ func (m *GrafanaResourceMetadata) SetOriginInfo(info *ResourceOriginInfo) {
 // GetOriginInfo returns the origin info stored in k8s metadata annotations
 func (m *GrafanaResourceMetadata) GetOriginInfo() *ResourceOriginInfo {
 	v, ok := m.Annotations[annoKeyOriginName]
-	if !ok {
+	if !ok || v == "" {
 		return nil
 	}
 	info := &ResourceOriginInfo{

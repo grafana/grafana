@@ -7,17 +7,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"strings"
+
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 
 	"github.com/grafana/kindsys"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
+	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -141,6 +144,23 @@ func (s *entityStorage) write(ctx context.Context, grn *entity.GRN, uObj *unstru
 	return s.store.Write(ctx, req)
 }
 
+func getItems(listObj runtime.Object) ([]runtime.Object, error) {
+	out := make([]runtime.Object, 0)
+
+	switch list := listObj.(type) {
+	case *kindsv1.GrafanaResourceDefinitionList:
+	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
+	case *unstructured.UnstructuredList:
+		for _, item := range list.Items {
+			out = append(out, item.DeepCopyObject())
+		}
+	default:
+		return nil, fmt.Errorf("unsupported type %T", listObj)
+	}
+
+	return out, nil
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
@@ -176,26 +196,14 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		return fmt.Errorf("this was not a create operation... (%s)", rsp.Status.String())
 	}
 
-	fmt.Printf("CREATE:%s\n", uObj.GetName())
-
-	// TODO... would be better
-	return s.Get(ctx, key, storage.GetOptions{}, out)
-
-	// // if s.exists(ctx, grn) {
-	// // 	return apierrors.NewAlreadyExists(s.gr, key)
-	// // }
-
-	// res := dashboard.NewK8sResource(grn.UID, &dashboard.Spec{
-	// 	Title: utils.Pointer("the title"),
-	// })
-	// res.APIVersion = "dashboard.kinds.grafana.com/v1"
-	// res.Metadata.CreationTimestamp = v1.NewTime(time.Now())
-	// res.Metadata.SetUpdatedTimestamp(util.Pointer(time.Now()))
-	// res.Metadata.SetUpdatedBy("ryan")
-
-	// jjj, _ := json.MarshalIndent(res, "", "  ")
-	// fmt.Printf("WRITE: %s", string(jjj))
-	// _, _, err = s.codec.Decode(jjj, nil, out)
+	err = s.Get(ctx, key, storage.GetOptions{}, out)
+	if err == nil {
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: out.DeepCopyObject(),
+			Type:   watch.Added,
+		})
+	}
+	return err
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -240,8 +248,15 @@ func (s *entityStorage) Delete(
 	rsp, err := s.store.Delete(ctx, &entity.DeleteEntityRequest{
 		GRN: grn,
 	})
-	if err == nil && !rsp.OK {
-		return fmt.Errorf("did not delte")
+	if err == nil {
+		if !rsp.OK {
+			return fmt.Errorf("did not delete")
+		}
+
+		s.watchSet.notifyWatchers(watch.Event{
+			Object: out.DeepCopyObject(),
+			Type:   watch.Deleted,
+		})
 	}
 	return err
 }
@@ -254,7 +269,46 @@ func (s *entityStorage) Delete(
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return nil, fmt.Errorf("not implemented")
+	p := opts.Predicate
+	jw := s.watchSet.newWatch()
+
+	var listObj runtime.Object
+
+	switch s.gr.Group {
+	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
+	case grafanaApiServerKinds.GroupName:
+		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
+		break
+	default:
+		listObj = &unstructured.UnstructuredList{}
+	}
+
+	err := s.GetList(ctx, key, opts, listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	items, err := getItems(listObj)
+	if err != nil {
+		return nil, err
+	}
+
+	initEvents := make([]watch.Event, 0)
+	for _, obj := range items {
+		ok, err := p.Matches(obj)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			continue
+		}
+		initEvents = append(initEvents, watch.Event{
+			Type:   watch.Added,
+			Object: obj.DeepCopyObject(),
+		})
+	}
+	jw.Start(p, initEvents)
+	return jw, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -289,13 +343,27 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 				if err != nil {
 					return nil, false, "", err
 				}
-				return ioutil.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
-
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
 			}
 
 			streamer := objPtr.(*apihelpers.SubresourceStreamer)
 			streamer.SetInputStream(i)
+			return err
+		case "ref":
+			refs := make(map[string]interface{})
+			refs["TODO"] = "find references"
 
+			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
+				raw, err := json.Marshal(refs)
+				if err != nil {
+					return nil, false, "", err
+				}
+				fmt.Printf("REFS: %s\n", string(raw))
+				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
+			}
+
+			streamer := objPtr.(*apihelpers.SubresourceStreamer)
+			streamer.SetInputStream(i)
 			return err
 		case "":
 			// this is fine
@@ -321,14 +389,13 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
-	//	fmt.Printf("GET: %s", string(jjj))
 	_, _, err = s.codec.Decode(jjj, nil, objPtr)
 
-	fmt.Printf("GET:%s\n", res.Metadata.Name)
+	fmt.Printf("k8s GET/GOT:%s (rv:%s)\n", res.Metadata.Name, res.Metadata.ResourceVersion)
 	return err
 }
 
@@ -364,7 +431,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 	})
 	u.SetResourceVersion(opts.ResourceVersion) // ???
 
-	for i, r := range rsp.Results {
+	for _, r := range rsp.Results {
 		// convert r to object pointer???
 		//fmt.Printf("FOUND:" + r.Slug)
 
@@ -388,9 +455,6 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-
-		jjj, _ := json.MarshalIndent(out, "", "  ")
-		fmt.Printf("LIST: [%d] %s\n", i, string(jjj))
 
 		u.Items = append(u.Items, unstructured.Unstructured{Object: out})
 	}
@@ -435,8 +499,23 @@ func (s *entityStorage) GuaranteedUpdate(
 			return err
 		}
 
+		// MaxAttempts may be useful in case of server timeout but all the rest of errors such as forbidden
+		// and unauthorized need not be reattempted, below we are checking against forbidden
+		// but I wonder if we should switch it to != metav1.StatusReasonServerTimeout or just do a single attempt really
 		updatedObj, _, err := tryUpdate(destination, res)
 		if err != nil {
+			if statusErr, ok := err.(*apierrors.StatusError); ok {
+				// For now, forbidden may come from a mutation handler
+				if statusErr.ErrStatus.Reason == metav1.StatusReasonForbidden {
+					return statusErr
+				}
+			}
+
+			// Hard to debug when we keep trying errors!
+			if true {
+				return err // return the real error
+			}
+
 			if attempt == MaxUpdateAttempts {
 				return apierrors.NewInternalError(fmt.Errorf("could not successfully update object of type=%s, key=%s", destination.GetObjectKind(), key))
 			} else {
@@ -451,7 +530,7 @@ func (s *entityStorage) GuaranteedUpdate(
 
 		rsp, err := s.write(ctx, grn, uObj)
 		if err != nil {
-			return err
+			return err // continue???
 		}
 
 		if rsp.Status == entity.WriteEntityResponse_UNCHANGED {
@@ -468,6 +547,7 @@ func (s *entityStorage) GuaranteedUpdate(
 			Object: destination.DeepCopyObject(),
 			Type:   watch.Modified,
 		})
+		return nil
 	}
 	return nil
 }

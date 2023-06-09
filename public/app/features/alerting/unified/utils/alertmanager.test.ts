@@ -85,6 +85,17 @@ describe('Alertmanager utils', () => {
       ]);
     });
 
+    it('should parse with spaces in the value', () => {
+      expect(parseMatchers('foo=bar bazz')).toEqual<Matcher[]>([
+        {
+          name: 'foo',
+          value: 'bar bazz',
+          isRegex: false,
+          isEqual: true,
+        },
+      ]);
+    });
+
     it('should return nothing for invalid operator', () => {
       expect(parseMatchers('foo=!bar')).toEqual([]);
     });

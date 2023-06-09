@@ -31,6 +31,7 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
+        console.log('useDashboardSave', options);
         const result = await saveDashboard(clone, options, dashboard);
         dashboard.version = result.version;
         dashboard.clearUnsavedChanges();

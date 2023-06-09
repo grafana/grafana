@@ -1,8 +1,18 @@
+import { lastValueFrom } from 'rxjs';
+
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import {
+  getDataSourceSrv,
+  locationService,
+  getBackendSrv,
+  isFetchError,
+  config,
+  BackendSrvRequest,
+} from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { dashboardKindService } from 'app/features/dashboard/services/k8service';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
@@ -285,15 +295,48 @@ export function deleteFoldersAndDashboards(folderUids: string[], dashboardUids: 
   return executeInOrder(tasks);
 }
 
-export function saveDashboard(options: SaveDashboardCommand) {
+interface SaveDashboardResponse {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
+export async function saveDashboard(
+  cmd: SaveDashboardCommand,
+  requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
+) {
   dashboardWatcher.ignoreNextSave();
 
-  return getBackendSrv().post('/api/dashboards/db/', {
-    dashboard: options.dashboard,
-    message: options.message ?? '',
-    overwrite: options.overwrite ?? false,
-    folderUid: options.folderUid,
-  });
+  if (config.featureToggles.entityStore) {
+    // K8s frontend hack -- dual write from frontend
+    const v = await dashboardKindService.save(cmd);
+
+    // Set UID from k8s
+    if (!cmd.dashboard.uid) {
+      const uid = v.metadata.name!;
+      cmd.dashboard.uid = uid;
+      console.log('CREATE', { uid }, v);
+    } else {
+      console.log('UPDATE', v);
+    }
+  }
+
+  return lastValueFrom(
+    getBackendSrv().fetch<SaveDashboardResponse>({
+      url: '/api/dashboards/db/',
+      method: 'POST',
+      data: {
+        dashboard: cmd.dashboard,
+        message: cmd.message ?? '',
+        overwrite: cmd.overwrite ?? false,
+        folderUid: cmd.folderUid,
+      },
+      ...requestOptions,
+    })
+  ).then((v) => v.data);
 }
 
 function deleteFolder(uid: string, showSuccessAlert: boolean) {

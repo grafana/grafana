@@ -45,7 +45,10 @@ describe('runSplitQuery()', () => {
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
-      expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({ error: { refId: 'A', message: 'Error' }, state: LoadingState.Streaming })
+      );
     });
   });
 
@@ -182,6 +185,19 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(1);
       });
     });
+    test('Groups queries using distinct', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: '{a="b"} | distinct field', refId: 'A' },
+          { expr: 'count_over_time({c="d"} | distinct something [1m])', refId: 'B' },
+        ],
+        range,
+      });
+      await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+        // Queries using distinct are omitted from splitting
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
+    });
     test('Respects maxLines of logs queries', async () => {
       const { logFrameA } = getMockFrames();
       const request = getQueryOptions<LokiQuery>({
@@ -199,17 +215,18 @@ describe('runSplitQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
       });
     });
-    test('Groups multiple queries into logs, queries, and instant', async () => {
+    test('Groups multiple queries into logs, queries, instant, and distinct', async () => {
       const request = getQueryOptions<LokiQuery>({
         targets: [
           { expr: 'count_over_time({a="b"}[1m])', refId: 'A', queryType: LokiQueryType.Instant },
           { expr: '{c="d"}', refId: 'B' },
           { expr: 'count_over_time({c="d"}[1m])', refId: 'C' },
+          { expr: 'count_over_time({c="d"} | distinct id [1m])', refId: 'D' },
         ],
         range,
       });
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
+        // 3 days, 3 chunks, 3x Logs + 3x Metric + (1x Instant | Distinct), 7 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
     });

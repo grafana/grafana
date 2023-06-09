@@ -371,7 +371,7 @@ Set to `true` to log the sql calls and execution times.
 
 ### ssl_mode
 
-For Postgres, use either `disable`, `require` or `verify-full`.
+For Postgres, use use any [valid libpq `sslmode`](https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS), e.g.`disable`, `require`, `verify-full`, etc.
 For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### isolation_level
@@ -923,7 +923,7 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` default value is `false`.
 
-With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See provider specifities in the tables below.
+With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
 
@@ -1655,6 +1655,12 @@ Configures the Profile section.
 ### enabled
 
 Enable or disable the Profile section. Default is `enabled`.
+
+## [news]
+
+### news_feed_enabled
+
+Enables the news feed section. Default is `true`
 
 ## [query_history]
 

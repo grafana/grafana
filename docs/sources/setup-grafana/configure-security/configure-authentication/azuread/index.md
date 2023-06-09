@@ -243,7 +243,7 @@ If a user is member of more groups than the
 overage limit (200), then
 Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
 
-> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim)
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.

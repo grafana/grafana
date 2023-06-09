@@ -31,7 +31,7 @@ func ProvideService(db db.DB, toggles featuremgmt.FeatureToggles, objserver enti
 	svc := &Service{store: sqlstore}
 
 	// FlagObjectStore is only supported in development mode
-	if toggles.IsEnabled(featuremgmt.FlagEntityStore) {
+	if false && toggles.IsEnabled(featuremgmt.FlagEntityStore) {
 		impl := &entityStoreImpl{
 			sqlimpl: svc,
 			store:   objserver,

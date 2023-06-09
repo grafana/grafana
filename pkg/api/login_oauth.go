@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -84,7 +83,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 
 	code := ctx.Query("code")
 
-	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if hs.Cfg.AuthBrokerEnabled {
 		req := &authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp}
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
@@ -381,7 +380,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info l
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
 	// login hooks is handled by authn.Service
-	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if !hs.Cfg.AuthBrokerEnabled {
 		info.Error = err.Err
 		if info.Error == nil {
 			info.Error = errors.New(err.PublicMessage)
@@ -396,7 +395,7 @@ func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqCon
 	hs.redirectWithError(ctx, err, v...)
 
 	// login hooks is handled by authn.Service
-	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if !hs.Cfg.AuthBrokerEnabled {
 		info.Error = err
 		hs.HooksService.RunLoginHook(&info, ctx)
 	}

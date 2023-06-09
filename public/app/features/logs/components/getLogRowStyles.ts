@@ -241,16 +241,12 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       position: absolute;
       top: 0;
       bottom: auto;
-      height: ${theme.spacing(4.5)};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      padding: ${theme.spacing(0.5, 0.5, 0.5, 1)};
       z-index: 100;
       visibility: hidden;
-      width: ${theme.spacing(5)};
-    `,
-    rowMenuWithContextButton: css`
-      width: ${theme.spacing(10)};
+      gap: ${theme.spacing(0.5)};
     `,
     logRowMenuCell: css`
       position: sticky;

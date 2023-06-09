@@ -44,7 +44,7 @@ export function ManageActions({ items, folder, onChange, clearSelection }: Props
   return (
     <div className={styles.actionRow} data-testid="manage-actions">
       <HorizontalGroup spacing="md" width="auto">
-        <IconButton name="check-square" onClick={clearSelection} title="Uncheck everything" />
+        <IconButton name="check-square" onClick={clearSelection} tooltip="Uncheck everything" />
         <Button disabled={!canMove} onClick={onMove} icon="exchange-alt" variant="secondary">
           Move
         </Button>

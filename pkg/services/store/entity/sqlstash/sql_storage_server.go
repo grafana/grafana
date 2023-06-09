@@ -138,6 +138,7 @@ func (s *sqlEntityServer) validateGRN(ctx context.Context, grn *entity.GRN) (*en
 		return nil, fmt.Errorf("GRN missing UID")
 	}
 	if len(grn.UID) > 64 {
+		fmt.Printf("GRN!!!! %s", grn.UID)
 		return nil, fmt.Errorf("GRN UID is too long (>64)")
 	}
 	if strings.ContainsAny(grn.UID, "/#$@?") {
@@ -423,6 +424,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			delete(meta.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 		} */
 		meta.ResourceVersion = fmt.Sprintf("%d", versionInfo.Version)
+		meta.Namespace = util.OrgIdToNamespace(grn.TenantId)
 
 		meta.SetFolder(r.Folder)
 
@@ -451,6 +453,8 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				Key:       origin.Key,
 				Timestamp: ts,
 			})
+		} else {
+			meta.SetOriginInfo(nil)
 		}
 
 		if len(meta.Labels) > 0 {

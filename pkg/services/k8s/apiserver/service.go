@@ -8,6 +8,9 @@ import (
 	"path"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -24,13 +27,16 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/certgenerator"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -138,10 +144,31 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.RemoteKubeConfigFileOptional = true
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
-	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
-	o.RecommendedOptions.CoreAPI = nil
+
+	if true { // standalone
+		o.RecommendedOptions.CoreAPI = nil
+	} else {
+		// TODO... currently need ext-api registered manually:
+		// https://github.com/grafana/grafana-apiserver/blob/main/deploy/local-darwin/service.yaml
+		// for now, easiest setup is checkout:
+		// - https://github.com/grafana/grafana-apiserver
+		// - run tilt up
+		// - then quit
+		// verify exists:
+		// kubectl get service ext-api -n grafana
+		o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath = "/Users/ryan/.kube/config"
+	}
+
+	// this currently only will work for standalone mode. we are removing all default enabled plugins
+	// and replacing them with our internal admission plugins. this avoids issues with the default admission
+	// plugins that depend on the Core V1 APIs and informers.
+	o.RecommendedOptions.Admission.Plugins = admission.NewPlugins()
+	grafanaAdmission.RegisterDenyByName(o.RecommendedOptions.Admission.Plugins)
+	grafanaAdmission.RegisterAddDefaultFields(o.RecommendedOptions.Admission.Plugins)
+	o.RecommendedOptions.Admission.RecommendedPluginOrder = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
+	o.RecommendedOptions.Admission.DisablePlugins = append([]string{}, o.RecommendedOptions.Admission.EnablePlugins...)
+	o.RecommendedOptions.Admission.EnablePlugins = []string{grafanaAdmission.PluginNameDenyByName, grafanaAdmission.PluginNameAddDefaultFields}
 
 	// Get the util to get the paths to pre-generated certs
 	certUtil := certgenerator.CertUtil{
@@ -177,11 +204,17 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	authorizer, err := newAuthorizer()
+	if err != nil {
+		return err
+	}
+
 	serverConfig.ExtraConfig.RESTOptionsGetter = s.restOptionsGetter(unstructured.UnstructuredJSONScheme)
 	serverConfig.GenericConfig.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 	serverConfig.GenericConfig.Config.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
+	serverConfig.GenericConfig.Authorization.Authorizer = authorizer
 
 	server, err := serverConfig.Complete().New(genericapiserver.NewEmptyDelegate())
 	if err != nil {
@@ -211,7 +244,9 @@ func (s *service) start(ctx context.Context) error {
 		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
 		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
 		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
-		prepared.GenericAPIServer.Handler.ServeHTTP(c.Resp, req)
+
+		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
+		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
 	}
 
 	go func() {
@@ -261,6 +296,10 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		AuthInfos:      authinfos,
 	}
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+}
+
+func newAuthorizer() (authorizer.Authorizer, error) {
+	return authorization.NewGrafanaAuthorizer(), nil
 }
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {

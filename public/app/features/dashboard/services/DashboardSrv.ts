@@ -1,5 +1,3 @@
-import { lastValueFrom } from 'rxjs';
-
 import { AppEvents } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
@@ -28,15 +26,6 @@ export interface SaveDashboardOptions {
   /** Set the dashboard refresh interval.
    *  If this is lower than the minimum refresh interval, Grafana will ignore it and will enforce the minimum refresh interval. */
   refresh?: string;
-}
-
-interface SaveDashboardResponse {
-  id: number;
-  slug: string;
-  status: string;
-  uid: string;
-  url: string;
-  version: number;
 }
 
 export class DashboardSrv {
@@ -80,16 +69,14 @@ export class DashboardSrv {
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return lastValueFrom(
-      getBackendSrv().fetch<SaveDashboardResponse>({
-        url: '/api/dashboards/db/',
-        method: 'POST',
-        data: {
-          ...data,
-          dashboard: data.dashboard.getSaveModelClone(),
-        },
-        ...requestOptions,
-      })
+    return saveDashboard(
+      {
+        dashboard: data.dashboard.getSaveModelClone(),
+        folderUid: data.folderUid,
+        message: data.message,
+        overwrite: data.overwrite,
+      },
+      requestOptions
     );
   }
 
