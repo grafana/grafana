@@ -249,6 +249,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             onClick={() => {
               this.setState({ search: '' });
             }}
+            tooltip="Clear search"
           />
         </>
       );
@@ -266,6 +267,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           onClick={() => {
             this.setState({ showPicker: false });
           }}
+          tooltip="Close picker"
         />
       );
     }
