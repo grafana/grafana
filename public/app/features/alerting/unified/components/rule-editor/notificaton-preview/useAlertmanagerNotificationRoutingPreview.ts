@@ -7,6 +7,7 @@ import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
 import { AlertInstanceMatch, normalizeRoute } from '../../../utils/notification-policies';
+import { computeInheritedTree } from '../../notification-policies/Filters';
 
 import { getRoutesByIdMap, RouteWithPath } from './route';
 
@@ -35,7 +36,11 @@ export const useAlertmanagerNotificationRoutingPreview = (
   }, [AMConfig]);
 
   // create maps for routes to be get by id, this map also contains the path to the route
-  const routesByIdMap: Map<string, RouteWithPath> = rootRoute ? getRoutesByIdMap(rootRoute) : new Map();
+  // ⚠️ don't forget to compute the inherited tree before using this map
+  const routesByIdMap: Map<string, RouteWithPath> = rootRoute
+    ? getRoutesByIdMap(computeInheritedTree(rootRoute))
+    : new Map();
+
   // create map for receivers to be get by name
   const receiversByName =
     receivers.reduce((map, receiver) => {
