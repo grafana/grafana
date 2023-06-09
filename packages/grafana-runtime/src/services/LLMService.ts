@@ -45,6 +45,16 @@ export type LLMChatCompletionsRequest = LLMRequestCommonOptions & {
   messages: LLMChatCompletionsMessage[];
 };
 
+export interface LLMRelatedMetadataRequest {
+  datasourceType: string;
+  datasourceUid: string;
+  text: string;
+}
+
+export type DataSourceMetadata<T extends string> = {
+  [key in T]?: string[];
+}
+
 /**
  * Used to communicate with LLMs via Grafana.
  *
@@ -57,6 +67,13 @@ export type LLMChatCompletionsRequest = LLMRequestCommonOptions & {
 export interface LLMSrv {
   isEnabled: boolean;
   chatCompletions(request: LLMChatCompletionsRequest): Promise<string>;
+  /**
+   * Fetches related metadata for a given datasource.
+   *
+   * This is only available if Grafana has been configured with a
+   * vector database ([llms.vector_db] in grafana.ini).
+   */
+  relatedMetadata<M extends string>(request: LLMRelatedMetadataRequest): Promise<DataSourceMetadata<M>>;
 }
 
 let singletonInstance: LLMSrv;

@@ -82,3 +82,7 @@ func (m *TracingHeaderMiddleware) PublishStream(ctx context.Context, req *backen
 func (m *TracingHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *TracingHeaderMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	return m.next.ProvideMetadata(ctx, req)
+}

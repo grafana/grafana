@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -122,6 +123,67 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	}
 
 	return sender.Send(resp)
+}
+
+type promMetadata struct {
+	Type string `json:"type"`
+	Help string `json:"help"`
+	Unit string `json:"unit"`
+}
+
+type metadataResponseWrapper struct {
+	Status string                    `json:"status"`
+	Data   map[string][]promMetadata `json:"data"`
+}
+
+// providedMetricMetadata matches to the `PromMetric` interface in the frontend query editor.
+type providedMetricMetadata struct {
+	Name     string         `json:"name"`
+	Metadata []promMetadata `json:"metadata"`
+}
+
+// ProvideMetadata implements the backend plugin metadata interface (backend.MetadataHandler).
+// It is called by Grafana to metadata about the Prometheus datasource instance.
+// The metadata collections provided by Prometheus are currently:
+//
+//   - `metrics`: JSON objects each containing metric names (`name`) and a list of
+//     known types, descriptions and units for that metric.
+//
+// More can be added in future!
+func (s *Service) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	i, err := s.getInstance(ctx, req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+		Path:          "/api/v1/metadata",
+	})
+	if err != nil {
+		return nil, err
+	}
+	respWrapper := metadataResponseWrapper{}
+	err = json.Unmarshal(resp.Body, &respWrapper)
+	if err != nil {
+		return nil, err
+	}
+	pm := make([]string, 0, len(respWrapper.Data))
+	for k, v := range respWrapper.Data {
+		doc := providedMetricMetadata{
+			Name:     k,
+			Metadata: v,
+		}
+		jdoc, err := json.Marshal(doc)
+		if err != nil {
+			return nil, err
+		}
+		pm = append(pm, string(jdoc))
+	}
+	return &backend.ProvideMetadataResponse{
+		Metadata: map[string][]string{
+			"metrics": pm,
+		},
+	}, nil
 }
 
 func (s *Service) getInstance(ctx context.Context, pluginCtx backend.PluginContext) (*instance, error) {

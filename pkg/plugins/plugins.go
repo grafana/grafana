@@ -65,9 +65,10 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	fs                FS
-	logger            log.Logger
-	supportsStreaming bool
+	fs                  FS
+	logger              log.Logger
+	supportsStreaming   bool
+	supportsVectorStore bool
 
 	Class Class
 
@@ -94,6 +95,10 @@ type PluginDTO struct {
 
 func (p PluginDTO) SupportsStreaming() bool {
 	return p.supportsStreaming
+}
+
+func (p PluginDTO) SupportsVectorStore() bool {
+	return p.supportsVectorStore
 }
 
 func (p PluginDTO) Base() string {
@@ -147,6 +152,7 @@ type JSONData struct {
 	Mixed        bool            `json:"mixed,omitempty"`
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
+	Metadata     bool            `json:"metadata"`
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
@@ -364,6 +370,14 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+func (p *Plugin) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	pluginClient, ok := p.Client()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.ProvideMetadata(ctx, req)
+}
+
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := util.CleanRelativePath(name)
 	if err != nil {
@@ -423,26 +437,28 @@ type PluginClient interface {
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
+	backend.ProvideMetadataHandler
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
 	return PluginDTO{
-		logger:            p.Logger(),
-		fs:                p.FS,
-		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
-		Class:             p.Class,
-		JSONData:          p.JSONData,
-		IncludedInAppID:   p.IncludedInAppID,
-		DefaultNavURL:     p.DefaultNavURL,
-		Pinned:            p.Pinned,
-		Signature:         p.Signature,
-		SignatureType:     p.SignatureType,
-		SignatureOrg:      p.SignatureOrg,
-		SignatureError:    p.SignatureError,
-		Module:            p.Module,
-		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
-		Alias:             p.Alias,
+		logger:              p.Logger(),
+		fs:                  p.FS,
+		supportsStreaming:   p.client != nil && p.client.(backend.StreamHandler) != nil,
+		supportsVectorStore: p.Metadata && p.client != nil && p.client.(backend.ProvideMetadataHandler) != nil,
+		Class:               p.Class,
+		JSONData:            p.JSONData,
+		IncludedInAppID:     p.IncludedInAppID,
+		DefaultNavURL:       p.DefaultNavURL,
+		Pinned:              p.Pinned,
+		Signature:           p.Signature,
+		SignatureType:       p.SignatureType,
+		SignatureOrg:        p.SignatureOrg,
+		SignatureError:      p.SignatureError,
+		Module:              p.Module,
+		BaseURL:             p.BaseURL,
+		AngularDetected:     p.AngularDetected,
+		Alias:               p.Alias,
 	}
 }
 

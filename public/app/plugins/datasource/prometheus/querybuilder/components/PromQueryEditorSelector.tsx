@@ -9,7 +9,8 @@ import { Button, ConfirmModal, LLMQueryEditor } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
-import { PromQuery } from '../../types';
+import { PrometheusDatasource } from '../../datasource';
+import { PromOptions, PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
 import { buildVisualQueryFromString } from '../parsing';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
@@ -159,9 +160,11 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           />
         )}
         {editorMode === QueryEditorMode.Natural_language && llmSrv.isEnabled && (
-          <LLMQueryEditor
+          <LLMQueryEditor<PrometheusDatasource, 'metrics', PromQuery, PromOptions>
             systemPrompt="You are a helpful assistant who is an expert in PromQL. Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text."
+            createPrompt={({ metrics }) => generatePrompt(metrics)}
             onChange={(expr) => onChangeInternal({ ...query, expr })}
+            datasource={props.datasource}
             llmSrv={llmSrv}
           />
         )}
@@ -170,5 +173,39 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     </>
   );
 });
+
+// This matches the `providedMetricMetadata` in the backend `ProvideMetadata` implementation.
+interface PromMetric {
+  name: string;
+  metadata: PromMetricMetadata[];
+}
+
+interface PromMetricMetadata {
+  help: string;
+  type: string;
+  unit: string;
+}
+
+const generateMetricsPrompt = (metrics: string[]): string => {
+  const metricExamples = metrics.map((metricJSON) => {
+    const metric = JSON.parse(metricJSON) as unknown as PromMetric;
+    if (metric.metadata.length === 0) {
+      return ''
+    }
+    const firstMeta = metric.metadata[0];
+    return `* ${metric.name} (${firstMeta.type}) - ${firstMeta.help}\n`;
+  }).join('');
+  return `Here are some example metrics you can use in your query:
+
+${metricExamples}
+`
+}
+
+const generatePrompt = (metrics?: string[]): string => {
+  const metricsPrompt = metrics === undefined ? '' : generateMetricsPrompt(metrics);
+  return `You are a helpful assistant who is an expert in PromQL.
+
+${metricsPrompt}Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text.`
+}
 
 PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';

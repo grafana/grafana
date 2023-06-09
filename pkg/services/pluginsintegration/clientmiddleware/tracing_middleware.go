@@ -133,3 +133,11 @@ func (m *TracingMiddleware) RunStream(ctx context.Context, req *backend.RunStrea
 	err = m.next.RunStream(ctx, req, sender)
 	return err
 }
+
+func (m *TracingMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	var err error
+	ctx, end := m.traceWrap(ctx, req.PluginContext, "provideMetadata")
+	defer func() { end(err) }()
+	resp, err := m.next.ProvideMetadata(ctx, req)
+	return resp, err
+}

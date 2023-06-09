@@ -100,6 +100,7 @@ type Client interface {
 	backend.StreamHandler
 	backend.CallResourceHandler
 	backend.CollectMetricsHandler
+	backend.ProvideMetadataHandler
 }
 
 // BackendFactoryProvider provides a backend factory for a provided plugin.

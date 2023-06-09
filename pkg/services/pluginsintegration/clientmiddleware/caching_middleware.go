@@ -150,3 +150,7 @@ func (m *CachingMiddleware) PublishStream(ctx context.Context, req *backend.Publ
 func (m *CachingMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *CachingMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	return m.next.ProvideMetadata(ctx, req)
+}

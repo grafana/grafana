@@ -3,6 +3,7 @@ package grpcplugin
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -19,6 +20,7 @@ type pluginClient interface {
 	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
+	backend.ProvideMetadataHandler
 }
 
 type grpcPlugin struct {
@@ -59,7 +61,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	p.client = p.clientFactory()
 	rpcClient, err := p.client.Client()
 	if err != nil {
-		return err
+		return fmt.Errorf("create rpc client: %w", err)
 	}
 
 	if p.client.NegotiatedVersion() < 2 {
@@ -67,7 +69,7 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	}
 	p.pluginClient, err = newClientV2(p.descriptor, p.logger, rpcClient)
 	if err != nil {
-		return err
+		return fmt.Errorf("create plugin client: %w", err)
 	}
 
 	if p.pluginClient == nil {
@@ -193,4 +195,12 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 		return backendplugin.ErrPluginUnavailable
 	}
 	return pluginClient.RunStream(ctx, req, sender)
+}
+
+func (p *grpcPlugin) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	pluginClient, ok := p.getPluginClient()
+	if !ok {
+		return nil, backendplugin.ErrPluginUnavailable
+	}
+	return pluginClient.ProvideMetadata(ctx, req)
 }

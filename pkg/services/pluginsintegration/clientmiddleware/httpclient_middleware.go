@@ -106,3 +106,7 @@ func (m *HTTPClientMiddleware) PublishStream(ctx context.Context, req *backend.P
 func (m *HTTPClientMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *HTTPClientMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	return m.next.ProvideMetadata(ctx, req)
+}

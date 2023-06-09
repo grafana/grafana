@@ -24,6 +24,7 @@ type ClientV2 struct {
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
 	grpcplugin.StreamClient
+	grpcplugin.MetadataClient
 	pluginextensionv2.RendererPlugin
 	secretsmanagerplugin.SecretsManagerPlugin
 }
@@ -47,6 +48,11 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	rawStream, err := rpcClient.Dispense("stream")
 	if err != nil {
 		return nil, err
+	}
+
+	rawMetadata, err := rpcClient.Dispense("metadata")
+	if err != nil {
+		return nil, fmt.Errorf("dispensing metadata: %w", err)
 	}
 
 	rawRenderer, err := rpcClient.Dispense("renderer")
@@ -81,6 +87,12 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	if rawStream != nil {
 		if streamClient, ok := rawStream.(grpcplugin.StreamClient); ok {
 			c.StreamClient = streamClient
+		}
+	}
+
+	if rawMetadata != nil {
+		if metadataClient, ok := rawMetadata.(grpcplugin.MetadataClient); ok {
+			c.MetadataClient = metadataClient
 		}
 	}
 
@@ -256,4 +268,18 @@ func (c *ClientV2) RunStream(ctx context.Context, req *backend.RunStreamRequest,
 			return err
 		}
 	}
+}
+
+func (c *ClientV2) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	if c.MetadataClient == nil {
+		return nil, backendplugin.ErrMethodNotImplemented
+	}
+	protoResp, err := c.MetadataClient.ProvideMetadata(ctx, backend.ToProto().ProvideMetadataRequest(req))
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return nil, backendplugin.ErrMethodNotImplemented
+		}
+		return nil, err
+	}
+	return backend.FromProto().ProvideMetadataResponse(protoResp), nil
 }

@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -52,6 +53,7 @@ func (m *Manager) Start(ctx context.Context, pluginID string) error {
 	defer m.mu.Unlock()
 
 	if err := startPluginAndRestartKilledProcesses(ctx, p); err != nil {
+		p.Logger().Warn("Failed to start plugin process", "error", fmt.Sprintf("%+v", err))
 		return err
 	}
 

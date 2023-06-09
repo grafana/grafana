@@ -24,6 +24,7 @@ type Plugin interface {
 	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
+	backend.ProvideMetadataHandler
 }
 
 type Target string

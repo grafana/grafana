@@ -141,3 +141,7 @@ func (m *OAuthTokenMiddleware) PublishStream(ctx context.Context, req *backend.P
 func (m *OAuthTokenMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *OAuthTokenMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	return m.next.ProvideMetadata(ctx, req)
+}

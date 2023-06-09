@@ -73,6 +73,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
+	"github.com/grafana/grafana/pkg/services/llm/vector"
+	"github.com/grafana/grafana/pkg/services/llm/vectorsync"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfodatabase "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
@@ -362,6 +364,8 @@ var wireBasicSet = wire.NewSet(
 	modules.WireSet,
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
+	vector.ProvideService,
+	vectorsync.ProvideService,
 )
 
 var wireSet = wire.NewSet(

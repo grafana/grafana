@@ -81,3 +81,7 @@ func (m *UserHeaderMiddleware) PublishStream(ctx context.Context, req *backend.P
 func (m *UserHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	return m.next.RunStream(ctx, req, sender)
 }
+
+func (m *UserHeaderMiddleware) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	return m.next.ProvideMetadata(ctx, req)
+}

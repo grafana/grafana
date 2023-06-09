@@ -245,6 +245,19 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	return plugin.RunStream(ctx, req, sender)
 }
 
+func (s *Service) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	if req == nil {
+		return nil, errNilRequest
+	}
+
+	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
+	if !exists {
+		return nil, backendplugin.ErrPluginNotRegistered
+	}
+
+	return plugin.ProvideMetadata(ctx, req)
+}
+
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
 	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)

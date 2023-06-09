@@ -589,7 +589,8 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// LLMs
 		if hs.Cfg.IsFeatureToggleEnabled("llmAPI") {
-			apiRoute.Any("/llms/*", hs.ProxyLLMRequest)
+			apiRoute.Post("/llms/related-metadata", routing.Wrap(hs.RelatedMetadataRequest))
+			apiRoute.Any("/llms/proxy/*", hs.ProxyLLMRequest)
 		}
 	}, reqSignedIn)
 

@@ -178,7 +178,7 @@ export interface DataSourceConstructor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
+  new(instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
 }
 
 // VariableSupport is hoisted up to its own type to fix the wonky intermittent
@@ -197,7 +197,8 @@ type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonDa
 abstract class DataSourceApi<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
-  TQueryImportConfiguration extends Record<string, object> = {}
+  TQueryImportConfiguration extends Record<string, object> = {},
+  TMetadata extends string | undefined = undefined
 > {
   /**
    *  Set in constructor

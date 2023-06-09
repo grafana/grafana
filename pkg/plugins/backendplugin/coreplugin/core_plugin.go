@@ -17,18 +17,20 @@ type corePlugin struct {
 	backend.CallResourceHandler
 	backend.QueryDataHandler
 	backend.StreamHandler
+	backend.ProvideMetadataHandler
 }
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
 	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
-			pluginID:            pluginID,
-			logger:              logger,
-			CheckHealthHandler:  opts.CheckHealthHandler,
-			CallResourceHandler: opts.CallResourceHandler,
-			QueryDataHandler:    opts.QueryDataHandler,
-			StreamHandler:       opts.StreamHandler,
+			pluginID:               pluginID,
+			logger:                 logger,
+			CheckHealthHandler:     opts.CheckHealthHandler,
+			CallResourceHandler:    opts.CallResourceHandler,
+			QueryDataHandler:       opts.QueryDataHandler,
+			StreamHandler:          opts.StreamHandler,
+			ProvideMetadataHandler: opts.ProvideMetadataHandler,
 		}, nil
 	}
 }
@@ -116,4 +118,11 @@ func (cp *corePlugin) RunStream(ctx context.Context, req *backend.RunStreamReque
 		return cp.StreamHandler.RunStream(ctx, req, sender)
 	}
 	return backendplugin.ErrMethodNotImplemented
+}
+
+func (cp *corePlugin) ProvideMetadata(ctx context.Context, req *backend.ProvideMetadataRequest) (*backend.ProvideMetadataResponse, error) {
+	if cp.ProvideMetadataHandler != nil {
+		return cp.ProvideMetadataHandler.ProvideMetadata(ctx, req)
+	}
+	return nil, backendplugin.ErrMethodNotImplemented
 }

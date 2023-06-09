@@ -76,6 +76,7 @@ func getV2PluginSet() goplugin.PluginSet {
 		"resource":       &grpcplugin.ResourceGRPCPlugin{},
 		"data":           &grpcplugin.DataGRPCPlugin{},
 		"stream":         &grpcplugin.StreamGRPCPlugin{},
+		"metadata":       &grpcplugin.MetadataGRPCPlugin{},
 		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
 		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
 	}

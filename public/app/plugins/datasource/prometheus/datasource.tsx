@@ -79,8 +79,10 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 
 export const InstantQueryRefIdIndex = '-Instant';
 
+export type PrometheusVectorMetadataTypes = 'metrics' | 'example_queries';
+
 export class PrometheusDatasource
-  extends DataSourceWithBackend<PromQuery, PromOptions>
+  extends DataSourceWithBackend<PromQuery, PromOptions, PrometheusVectorMetadataTypes>
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
 {
   type: string;
@@ -183,9 +185,8 @@ export class PrometheusDatasource
    */
   getPrometheusTargetSignature(request: DataQueryRequest<PromQuery>, query: PromQuery) {
     const targExpr = this.interpolateString(query.expr);
-    return `${targExpr}|${query.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${
-      query.exemplar
-    }`;
+    return `${targExpr}|${query.interval ?? request.interval}|${JSON.stringify(request.rangeRaw ?? '')}|${query.exemplar
+      }`;
   }
 
   hasLabelsMatchAPISupport(): boolean {

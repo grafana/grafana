@@ -117,6 +117,9 @@ func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
 	if healthHandler, ok := svc.(backend.CheckHealthHandler); ok {
 		opts.CheckHealthHandler = healthHandler
 	}
+	if metadataHandler, ok := svc.(backend.ProvideMetadataHandler); ok {
+		opts.ProvideMetadataHandler = metadataHandler
+	}
 
 	if opts.QueryDataHandler != nil || opts.CallResourceHandler != nil ||
 		opts.CheckHealthHandler != nil || opts.StreamHandler != nil {

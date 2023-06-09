@@ -75,6 +75,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "metadata": true,
   "backend": true,
   "queryOptions": {
     "minInterval": true
