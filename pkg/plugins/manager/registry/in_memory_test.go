@@ -285,9 +285,9 @@ func TestAliasSupport(t *testing.T) {
 
 		pluginNew := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID: pluginIdNew,
+				ID:    pluginIdNew,
+				Alias: pluginIdOld,
 			},
-			Alias: pluginIdOld, // TODO: move to JSONData
 		}
 		err := i.Add(ctx, pluginNew)
 		require.NoError(t, err)
