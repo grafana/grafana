@@ -1,3 +1,5 @@
+import { isArray, merge, pick, reduce } from 'lodash';
+
 import {
   AlertmanagerGroup,
   MatcherOperator,
@@ -5,8 +7,7 @@ import {
   Route,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
-
-import { Labels } from '../../../../types/unified-alerting-dto';
+import { Labels } from 'app/types/unified-alerting-dto';
 
 import { Label, normalizeMatchers } from './matchers';
 
@@ -176,4 +177,53 @@ function findMatchingAlertGroups(
   }, matchingGroups);
 }
 
-export { findMatchingAlertGroups, findMatchingRoutes };
+export type InhertitableProperties = Pick<
+  Route,
+  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
+>;
+
+// inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
+function getInheritedProperties(
+  parentRoute: Route,
+  childRoute: Route,
+  propertiesParentInherited?: Partial<InhertitableProperties>
+) {
+  const fullParentProperties = merge({}, parentRoute, propertiesParentInherited);
+
+  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, [
+    'receiver',
+    'group_by',
+    'group_wait',
+    'group_interval',
+    'repeat_interval',
+    'mute_time_intervals',
+  ]);
+
+  // TODO how to solve this TypeScript mystery?
+  const inherited = reduce(
+    inheritableProperties,
+    (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
+      // @ts-ignore
+      const inheritFromParent = parentValue !== undefined && childRoute[property] === undefined;
+      const inheritEmptyGroupByFromParent =
+        property === 'group_by' && isArray(childRoute[property]) && childRoute[property]?.length === 0;
+
+      if (inheritFromParent) {
+        // @ts-ignore
+        inheritedProperties[property] = parentValue;
+      }
+
+      if (inheritEmptyGroupByFromParent) {
+        // @ts-ignore
+        inheritedProperties[property] = parentValue;
+      }
+
+      return inheritedProperties;
+    },
+    {}
+  );
+
+  return inherited;
+}
+
+export { findMatchingAlertGroups, findMatchingRoutes, getInheritedProperties };

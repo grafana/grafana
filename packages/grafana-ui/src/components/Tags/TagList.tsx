@@ -3,7 +3,7 @@ import React, { forwardRef, memo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 
 import { OnTagClick, Tag } from './Tag';
@@ -25,7 +25,7 @@ export interface Props {
   icon?: IconName;
 }
 
-export const TagList = memo(
+const TagListComponent = memo(
   forwardRef<HTMLUListElement, Props>(
     ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
       const theme = useTheme2();
@@ -54,8 +54,32 @@ export const TagList = memo(
     }
   )
 );
+TagListComponent.displayName = 'TagList';
 
-TagList.displayName = 'TagList';
+const TagListSkeleton = () => {
+  const styles = useStyles2(getSkeletonStyles);
+  return (
+    <div className={styles.container}>
+      <Tag.Skeleton />
+      <Tag.Skeleton />
+    </div>
+  );
+};
+
+interface TagListWithSkeleton extends React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLUListElement>> {
+  Skeleton: typeof TagListSkeleton;
+}
+
+export const TagList: TagListWithSkeleton = Object.assign(TagListComponent, {
+  Skeleton: TagListSkeleton,
+});
+
+const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2, isTruncated: boolean) => {
   return {
