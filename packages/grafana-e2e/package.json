@@ -47,10 +47,10 @@
     "postpack": "mv package.json.bak package.json"
   },
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "15.0.1",
+    "@rollup/plugin-node-resolve": "15.1.0",
     "@types/chrome-remote-interface": "0.31.9",
     "@types/lodash": "4.14.191",
-    "@types/node": "18.14.6",
+    "@types/node": "18.16.16",
     "@types/uuid": "9.0.1",
     "esbuild": "0.17.19",
     "rollup": "2.79.1",
