@@ -59,11 +59,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setMetric(variableQuery.metric ?? '');
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
-
-    // set the migrated label in the label options
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
   }, [query]);
 
   // set the label names options for the label values var query
@@ -73,7 +68,9 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     }
 
     datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
-      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
+      const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
+      const names = labelNames.map(({ text }) => ({ label: text, value: text }));
+      setLabelOptions([...variables, ...names]);
     });
   }, [datasource, qryType]);
 
