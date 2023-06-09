@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ConfirmModal, HorizontalGroup, Modal } from '@grafana/ui';
+import { ConfirmModal, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import {
   QueryOperationAction,

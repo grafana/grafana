@@ -12,6 +12,7 @@ import {
   SelectableValue,
   standardTransformersRegistry,
   TransformerRegistryItem,
+  TransformerCategory,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
@@ -21,7 +22,9 @@ import {
   ConfirmModal,
   Container,
   CustomScrollbar,
+  FilterPill,
   Themeable,
+  HorizontalGroup,
   VerticalGroup,
   withTheme,
   Input,
@@ -34,6 +37,7 @@ import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValue
 import config from 'app/core/config';
 import { getDocsLink } from 'app/core/utils/docsLinks';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
+import { categoriesLabels } from 'app/features/transformers/utils';
 
 import { AppNotificationSeverity } from '../../../../types';
 import { PanelModel } from '../../state';
@@ -48,6 +52,13 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
+type FilterCategory = TransformerCategory | 'viewAll';
+
+const filterCategoriesLabels: Array<[FilterCategory, string]> = [
+  ['viewAll', 'View all'],
+  ...(Object.entries(categoriesLabels) as Array<[FilterCategory, string]>),
+];
+
 interface State {
   data: DataFrame[];
   transformations: TransformationsEditorTransformation[];
@@ -55,6 +66,7 @@ interface State {
   showPicker?: boolean;
   scrollTop?: number;
   showRemoveAllModal?: boolean;
+  selectedFilter?: FilterCategory;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -72,6 +84,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       })),
       data: [],
       search: '',
+      selectedFilter: 'viewAll',
     };
   }
 
@@ -258,6 +271,15 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
 
+    if (this.state.selectedFilter !== 'viewAll') {
+      xforms = xforms.filter(
+        (t) =>
+          t.categories &&
+          this.state.selectedFilter &&
+          t.categories.has(this.state.selectedFilter as TransformerCategory)
+      );
+    }
+
     if (search) {
       const lower = search.toLowerCase();
       const filtered = xforms.filter((t) => {
@@ -400,6 +422,32 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 suffix={suffix}
               />
 
+              {config.featureToggles.transformationsRedesign && (
+                <div
+                  className={css`
+                    width: 100%;
+                    overflow: auto;
+                    padding: 8px 0;
+                  `}
+                >
+                  <HorizontalGroup spacing="xs">
+                    {filterCategoriesLabels.map(([slug, label]) => {
+                      return (
+                        <FilterPill
+                          key={slug}
+                          onClick={() => this.setState({ selectedFilter: slug })}
+                          label={label}
+                          selected={this.state.selectedFilter === slug}
+                          customClass={css`
+                            white-space: nowrap;
+                          `}
+                        />
+                      );
+                    })}
+                  </HorizontalGroup>
+                </div>
+              )}
+
               {xforms.map((t) => {
                 return (
                   <TransformationCard
@@ -450,7 +498,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 title="Transformations can't be used on a panel with alerts"
               />
             ) : null}
-            {hasTransforms && config.featureToggles.transformationsRedesign && (
+            {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
               <p
                 className={css`
                   display: flex;
@@ -467,16 +515,14 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 >
                   Delete all transformations
                 </Button>
-                {config.featureToggles.transformationsRedesign && (
-                  <ConfirmModal
-                    isOpen={Boolean(this.state.showRemoveAllModal)}
-                    title="Delete all transformations?"
-                    body="By deleting all transformations, you will go back to the main selection screen."
-                    confirmText="Delete all"
-                    onConfirm={() => this.onTransformationRemoveAll()}
-                    onDismiss={() => this.setState({ showRemoveAllModal: false })}
-                  />
-                )}
+                <ConfirmModal
+                  isOpen={Boolean(this.state.showRemoveAllModal)}
+                  title="Delete all transformations?"
+                  body="By deleting all transformations, you will go back to the main selection screen."
+                  confirmText="Delete all"
+                  onConfirm={() => this.onTransformationRemoveAll()}
+                  onDismiss={() => this.setState({ showRemoveAllModal: false })}
+                />
               </p>
             )}
             {hasTransforms &&

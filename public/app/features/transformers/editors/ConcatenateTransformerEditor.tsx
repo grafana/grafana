@@ -90,4 +90,5 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
   name: 'Concatenate fields',
   description:
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
+  categories: new Set(['combine']),
 };

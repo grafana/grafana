@@ -7,6 +7,7 @@ export { transformDataFrame } from './transformDataFrame';
 export {
   type TransformerRegistryItem,
   type TransformerUIProps,
+  type TransformerCategory,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
 export {
