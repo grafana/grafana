@@ -72,13 +72,13 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 					Traces:  traceList,
 				},
 			}, sender); err != nil {
-				return sendError(err, sender)
+				return err
 			}
 			break
 		}
 		if err != nil {
 			s.logger.Error("Error receiving message", "err", err)
-			return sendError(err, sender)
+			return err
 		}
 
 		metrics = msg.Metrics
@@ -92,7 +92,7 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 				Traces:  traceList,
 			},
 		}, sender); err != nil {
-			return sendError(err, sender)
+			return err
 		}
 	}
 
