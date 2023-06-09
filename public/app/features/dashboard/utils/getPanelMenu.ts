@@ -36,7 +36,7 @@ export function getPanelMenu(
   panel: PanelModel,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
-  const onViewPanel = (event: React.MouseEvent<any>) => {
+  const onViewPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     locationService.partial({
       viewPanel: panel.id,
@@ -44,7 +44,7 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'view' });
   };
 
-  const onEditPanel = (event: React.MouseEvent<any>) => {
+  const onEditPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     locationService.partial({
       editPanel: panel.id,
@@ -53,19 +53,19 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
   };
 
-  const onSharePanel = (event: React.MouseEvent<any>) => {
+  const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'share' });
   };
 
-  const onAddLibraryPanel = (event: React.MouseEvent<any>) => {
+  const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
   };
 
-  const onUnlinkLibraryPanel = (event: React.MouseEvent<any>) => {
+  const onUnlinkLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
@@ -79,29 +79,29 @@ export function getPanelMenu(
     reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
   };
 
-  const onMore = (event: React.MouseEvent<any>) => {
+  const onMore = (event: React.MouseEvent) => {
     event.preventDefault();
   };
 
-  const onDuplicatePanel = (event: React.MouseEvent<any>) => {
+  const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
   };
 
-  const onCopyPanel = (event: React.MouseEvent<any>) => {
+  const onCopyPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     copyPanel(panel);
     reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
   };
 
-  const onRemovePanel = (event: React.MouseEvent<any>) => {
+  const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
     reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
   };
 
-  const onNavigateToExplore = (event: React.MouseEvent<any>) => {
+  const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
@@ -161,20 +161,20 @@ export function getPanelMenu(
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
     inspectMenu.push({
       text: t('panel.header-menu.inspect-data', `Data`),
-      onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Data),
+      onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Data),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
         text: t('panel.header-menu.query', `Query`),
-        onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Query),
+        onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Query),
       });
     }
   }
 
   inspectMenu.push({
     text: t('panel.header-menu.inspect-json', `Panel JSON`),
-    onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
+    onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.JSON),
   });
 
   menu.push({

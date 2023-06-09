@@ -76,10 +76,14 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.Public: {
-        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug, args.accessToken);
+        return await dashboardLoaderSrv.loadDashboard('public', args.urlSlug ?? '', args.accessToken ?? '');
       }
       case DashboardRoutes.Normal: {
-        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
+        const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(
+          args.urlType,
+          args.urlSlug ?? '',
+          args.urlUid ?? ''
+        );
 
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
