@@ -67,7 +67,7 @@ export const NotificationPreview = ({
     });
   };
 
-  // Get alert managers source names
+  // Get list of alert managers source name + image
   const alertManagerSourceNamesAndImage = useGetAlertManagersSourceNamesAndImage();
 
   const onlyOneAM = alertManagerSourceNamesAndImage.length === 1;

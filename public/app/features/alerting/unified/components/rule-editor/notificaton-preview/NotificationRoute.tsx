@@ -105,6 +105,7 @@ export function NotificationRoute({
 }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
+  const GREY_COLOR_INDEX = 9;
 
   return (
     <div data-testid="matching-policy-route">
@@ -125,7 +126,7 @@ export function NotificationRoute({
               let matchResult = matchArray.map(([label, matchResult]) => ({
                 label: `${label[0]}=${label[1]}`,
                 match: matchResult.match,
-                colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : 9, // 9 is the gray color
+                colorIndex: matchResult.match ? getTagColorIndexFromName(label[0]) : GREY_COLOR_INDEX,
               }));
 
               const matchingLabels = matchResult.filter((mr) => mr.match);

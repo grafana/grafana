@@ -1,5 +1,4 @@
 import { RelativeTimeRange } from '@grafana/data';
-import { ClassicCondition } from 'app/features/expressions/types';
 import { AlertQuery, Annotations, GrafanaAlertStateDecision, Labels } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
@@ -18,18 +17,6 @@ export interface Datasource {
 }
 
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
-export interface Model {
-  refId: string;
-  hide: boolean;
-  datasource: Datasource;
-  scenarioId?: string;
-  seriesCount?: number;
-  labels?: string;
-  type?: string;
-  reducer?: string;
-  expression?: string;
-  conditions?: ClassicCondition[];
-}
 export interface Data {
   refId: string;
   relativeTimeRange: RelativeTimeRange;
@@ -75,13 +62,13 @@ export const alertRuleApi = alertingApi.injectEndpoints({
               data: alertQueries,
               condition: condition,
               no_data_state: 'Alerting',
-              title: alertName ?? 'testing alert for predicting potential instances',
-              uid: alertUid ?? '',
+              title: alertName ?? 'no alert name set yet',
+              uid: alertUid ?? 'N/A',
             },
             for: '0s',
             labels: arrayKeyValuesToObject(customLabels),
+            annotations: {},
           },
-          annotations: {},
           folderUid: folder.uid,
           folderTitle: folder.title,
         },
