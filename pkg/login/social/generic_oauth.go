@@ -214,11 +214,11 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 
 	idToken := token.Extra(idTokenAttribute)
 	if idToken == nil {
-		s.log.Debug("No id_token found", "token", token)
+		s.log.Debug("No id_token found", "token", idToken)
 		return nil
 	}
 
-	rawJSON, err := s.retrieveRawIDToken(token)
+	rawJSON, err := s.retrieveRawIDToken(idToken)
 	if err != nil {
 		s.log.Warn("Error retrieving id_token", "error", err, "token", fmt.Sprintf("%+v", token))
 		return nil
