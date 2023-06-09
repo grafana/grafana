@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
+// defaultGCOMDetectorsGetterTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
 const defaultGCOMDetectorsGetterTTL = time.Hour * 24
 
 var _ detectorsGetter = &gcomDetectorsGetter{}
@@ -54,9 +55,14 @@ func newGCOMDetectorsGetter(baseURL string, ttl time.Duration) (detectorsGetter,
 }
 
 // tryUpdateRemoteDetectors tries to update the cached detectors value, if the cache has expired.
+//
 // If the TTL hasn't passed yet, this function returns immediately.
 // Otherwise, it calls fetch on the fetcher, and updates the cached detectors value and lastUpdate.
-// The caller must have acquired f.mux.
+//
+// lastUpdate is also updated in case of an error, to avoid consecutive failures.
+// However, if there's an error, the cached value is not changed.
+//
+// The caller must have acquired g.mux.
 func (g *gcomDetectorsGetter) tryUpdateRemoteDetectors(ctx context.Context) error {
 	if time.Since(g.lastUpdate) <= g.ttl {
 		// Patterns already fetched
@@ -131,6 +137,7 @@ func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
 	return out, nil
 }
 
+// gcomPatternType is a pattern type returned by the GCOM API.
 type gcomPatternType string
 
 const (
@@ -145,7 +152,11 @@ type gcomPattern struct {
 	Type  gcomPatternType
 }
 
+// errUnknownPatternType is returned when a pattern type is not known.
+var errUnknownPatternType = errors.New("unknown pattern type")
+
 // detector converts a gcomPattern into a detector, based on its Type.
+// If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
 func (p *gcomPattern) detector() (detector, error) {
 	switch p.Type {
 	case gcomPatternTypeContains:
@@ -157,7 +168,7 @@ func (p *gcomPattern) detector() (detector, error) {
 		}
 		return &regexDetector{regex: re}, nil
 	}
-	return nil, errors.New("unknown pattern type")
+	return nil, fmt.Errorf("%q: %w", p.Type, errUnknownPatternType)
 }
 
 // gcomPatterns is a slice of gcomPattern s.
@@ -170,7 +181,12 @@ func (p gcomPatterns) detectors() ([]detector, error) {
 	for _, pattern := range p {
 		d, err := pattern.detector()
 		if err != nil {
-			finalErr = errors.Join(finalErr, err)
+			// Fail silently in case of an errUnknownPatternType.
+			// This allows us to introduce new pattern types without breaking old Grafana versions
+			if !errors.Is(err, errUnknownPatternType) {
+				// Other error, do not ignore it
+				finalErr = errors.Join(finalErr, err)
+			}
 			continue
 		}
 		detectors = append(detectors, d)
