@@ -140,7 +140,7 @@ export const testDataSource = (
       try {
         const result = await dsApi.testDatasource();
 
-        const parsedResult = parseHealthCheckSuccess(result);
+        const parsedResult = parseHealthCheckSuccess({ ...result, details: { ...result.details } });
         dispatch(testDataSourceSucceeded(parsedResult));
 
         trackDataSourceTested({
