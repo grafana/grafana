@@ -89,6 +89,8 @@ const AnnotationsField = () => {
       }
     });
     setValue('annotations', updatedAnnotations);
+    setSelectedDashboard(undefined);
+    setSelectedPanel(undefined);
   };
 
   const handleEditDashboardAnnotation = () => {
@@ -107,7 +109,7 @@ const AnnotationsField = () => {
             <div key={annotationField.id} className={styles.flexRow}>
               <div>
                 <div>
-                  <label>
+                  <label className={styles.annotationContainer}>
                     {
                       <InputControl
                         name={`annotations.${index}.key`}
@@ -119,13 +121,18 @@ const AnnotationsField = () => {
                             <span></span>
                           ) : (
                             <div>
-                              {annotationLabels[annotation]}{' '}
+                              <span className={styles.annotationTitle}>{annotationLabels[annotation]} </span>
                               {annotationLabels[annotation] ? (
-                                '(optional)'
+                                <span className={styles.annotationTitle}>(optional)</span>
                               ) : (
                                 <div>
-                                  <div>Custom annotation name and content</div>
-                                  <Input placeholder="Enter custom annotation name..." width={18} {...field} />
+                                  <span className={styles.annotationTitle}>Custom annotation name and content</span>
+                                  <Input
+                                    placeholder="Enter custom annotation name..."
+                                    width={18}
+                                    {...field}
+                                    className={styles.customAnnotationInput}
+                                  />
                                 </div>
                               )}
                             </div>
@@ -136,7 +143,7 @@ const AnnotationsField = () => {
                       />
                     }
                   </label>
-                  <div>{annotationDescriptions[annotation]}</div>
+                  <div className={styles.annotationDescription}>{annotationDescriptions[annotation]}</div>
                 </div>
                 {selectedDashboard && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
@@ -149,29 +156,36 @@ const AnnotationsField = () => {
 
                 {(!selectedDashboard ||
                   (annotationField.key !== Annotation.dashboardUID && annotationField.key !== Annotation.panelID)) && (
-                  <Field
-                    className={cx(styles.flexRowItemMargin, styles.field)}
-                    invalid={!!errors.annotations?.[index]?.value?.message}
-                    error={errors.annotations?.[index]?.value?.message}
-                  >
-                    <ValueInputComponent
-                      data-testid={`annotation-value-${index}`}
-                      className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
-                      {...register(`annotations.${index}.value`)}
-                      placeholder={isUrl ? 'https://' : `Text`}
-                      defaultValue={annotationField.value}
-                    />
-                  </Field>
-                )}
-                {!annotationLabels[annotation] && (
-                  <Button
-                    type="button"
-                    className={styles.deleteAnnotationButton}
-                    aria-label="delete annotation"
-                    icon="trash-alt"
-                    variant="secondary"
-                    onClick={() => remove(index)}
-                  />
+                  <div className={styles.annotationValueContainer}>
+                    <Field
+                      className={cx(styles.flexRowItemMargin, styles.field)}
+                      invalid={!!errors.annotations?.[index]?.value?.message}
+                      error={errors.annotations?.[index]?.value?.message}
+                    >
+                      <ValueInputComponent
+                        data-testid={`annotation-value-${index}`}
+                        className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
+                        {...register(`annotations.${index}.value`)}
+                        placeholder={
+                          isUrl
+                            ? 'https://'
+                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
+                              'Enter custom annotation content...'
+                        }
+                        defaultValue={annotationField.value}
+                      />
+                    </Field>
+                    {!annotationLabels[annotation] && (
+                      <Button
+                        type="button"
+                        className={styles.deleteAnnotationButton}
+                        aria-label="delete annotation"
+                        icon="trash-alt"
+                        variant="secondary"
+                        onClick={() => remove(index)}
+                      />
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -239,6 +253,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   deleteAnnotationButton: css`
     display: inline-block;
+    margin-top: 10px;
+    margin-left: 10px;
+  `,
+
+  annotationTitle: css`
+    color: ${theme.colors.text.primary};
+    margin-bottom: 3px;
+  `,
+
+  annotationContainer: css`
+    margin-top: 5px;
+  `,
+
+  annotationDescription: css`
+    color: ${theme.colors.text.secondary};
+  `,
+
+  customAnnotationInput: css`
+    margin-top: 5px;
+    width: 100%;
+  `,
+
+  annotationValueContainer: css`
+    display: flex;
   `,
 });
 

@@ -30,7 +30,7 @@ const DashboardAnnotationField = ({
         {dashboard.title} <Icon name={'external-link-alt'} />
       </a>
       <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer">
-        {panel?.title} <Icon name={'external-link-alt'} />
+        {panel?.title || '<No title>'} <Icon name={'external-link-alt'} />
       </a>
 
       <Icon name={'pen'} onClick={onEditClick} className={styles.icon} />
