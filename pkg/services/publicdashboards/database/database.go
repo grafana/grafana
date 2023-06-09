@@ -60,7 +60,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
 	}
 	pubdashBuilder.Write(" ORDER BY dashboard.title")
-	pubdashBuilder.Write(` LIMIT ? OFFSET ?`, query.Limit, query.Offset)
+	pubdashBuilder.Write(d.sqlStore.GetDialect().LimitOffset(int64(query.Limit), int64(query.Offset)))
 
 	counterBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	counterBuilder.Write("SELECT COUNT(*)")
