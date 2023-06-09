@@ -39,6 +39,8 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 		}
 		if err = s.runSearchStream(ctx, request, sender, tempoDatasource); err != nil {
 			return sendError(err, sender)
+		} else {
+			return nil
 		}
 	}
 
