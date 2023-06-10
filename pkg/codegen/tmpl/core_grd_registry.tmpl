@@ -54,92 +54,57 @@ func (r *Registry) start(ctx context.Context) error {
     return err
   }
 
-  _, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
+  //_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
+ 
+  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
+  for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
+    subresource := applyConfig.GrafanaResourceSubresources()
+    if v.Subresources != nil && v.Subresources.Status != nil {
+      subresource = subresource.WithStatus(*v.Subresources.Status)
+    }
 
-//  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-//  for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
-//    subresource := applyConfig.GrafanaResourceSubresources()
-//    if v.Subresources != nil && v.Subresources.Status != nil {
-//      subresource = subresource.WithStatus(*v.Subresources.Status)
-//    }
-//
-//    version := applyConfig.GrafanaResourceDefinitionVersion().
-//      WithName(v.Name).
-//      WithServed(v.Served).
-//      WithStorage(v.Storage).
-//      WithDeprecated(v.Deprecated).
-//      WithSubresources(subresource)
-//    if v.DeprecationWarning != nil {
-//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-//    }
-//    {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
-//  }
-//
-//  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-//    WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
-//    WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
-//    WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
-//    WithPlural({{ $k.Props.MachineName }}GRD.Spec.Names.Plural).
-//    WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
-//    WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
-//
-//  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-//    WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
-//    WithNames({{ $k.Props.MachineName }}ApplyNames).
-//    WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
-//    WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
-//    WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
-//
-//  {{ $k.Props.MachineName }}ApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-//      WithKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Kind).
-//      WithListKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ListKind).
-//      WithSingular({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Singular).
-//      WithPlural({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Plural).
-//      WithCategories({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Categories...).
-//      WithShortNames({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ShortNames...)
-//
-//
-//  {{ $k.Props.MachineName }}ApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-//  for _, c := range {{ $k.Props.MachineName }}GRD.Status.Conditions {
-//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-//      WithType(c.Type).
-//      WithStatus(c.Status).
-//      WithLastTransitionTime(c.LastTransitionTime).
-//      WithReason(c.Reason).
-//      WithMessage(c.Message)
-//    {{ $k.Props.MachineName }}ApplyConditions = append({{ $k.Props.MachineName }}ApplyConditions, condition)
-//  }
-//
-//  {{ $k.Props.MachineName }}ApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-//    WithConditions({{ $k.Props.MachineName }}ApplyConditions...).
-//    WithAcceptedNames({{ $k.Props.MachineName }}ApplyAcceptedNames).
-//    WithStoredVersions({{ $k.Props.MachineName }}GRD.Status.StoredVersions...)
-//
-//  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaResourceDefinition({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
-//    WithSpec({{ $k.Props.MachineName }}ApplySpec).
-//    WithStatus({{ $k.Props.MachineName }}ApplyStatus).
-//    WithGenerateName({{ $k.Props.MachineName }}GRD.ObjectMeta.GenerateName).
-//    WithNamespace({{ $k.Props.MachineName }}GRD.ObjectMeta.Namespace).
-//    WithLabels({{ $k.Props.MachineName }}GRD.ObjectMeta.Labels).
-//    WithAnnotations({{ $k.Props.MachineName }}GRD.ObjectMeta.Annotations).
-//    WithFinalizers({{ $k.Props.MachineName }}GRD.ObjectMeta.Finalizers...).
-//    WithUID({{ $k.Props.MachineName }}GRD.ObjectMeta.UID).
-//    WithGeneration({{ $k.Props.MachineName }}GRD.ObjectMeta.Generation).
-//    WithCreationTimestamp({{ $k.Props.MachineName }}GRD.ObjectMeta.CreationTimestamp).
-//    WithResourceVersion({{ $k.Props.MachineName }}GRD.ObjectMeta.ResourceVersion)
-//
-//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp != nil {
-//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionTimestamp(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp)
-//    }
-//
-//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionGracePeriodSeconds(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds)
-//    }
-//
-//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-//  if err != nil {
-//    return err
-//  }
+    if v.Subresources != nil && v.Subresources.Ref!= nil {
+      subresource = subresource.WithRef(*v.Subresources.Ref)
+    }
+
+    if v.Subresources != nil && v.Subresources.History != nil {
+      subresource = subresource.WithHistory(*v.Subresources.History)
+    }
+
+    version := applyConfig.GrafanaResourceDefinitionVersion().
+      WithName(v.Name).
+      WithServed(v.Served).
+      WithStorage(v.Storage).
+      WithDeprecated(v.Deprecated).
+      WithSubresources(subresource)
+    if v.DeprecationWarning != nil {
+      version = version.WithDeprecationWarning(*v.DeprecationWarning)
+    }
+    {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
+  }
+
+  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaResourceDefinitionNames().
+    WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
+    WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
+    WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
+    WithPlural({{ $k.Props.MachineName }}GRD.Spec.Names.Plural).
+    WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
+    WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
+
+  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
+    WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
+    WithNames({{ $k.Props.MachineName }}ApplyNames).
+    WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
+    WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
+    WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
+
+  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaResourceDefinition({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
+    WithSpec({{ $k.Props.MachineName }}ApplySpec)
+
+  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+  if err != nil {
+    return err
+  }
 {{end}}
   return nil
 }
