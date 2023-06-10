@@ -89,44 +89,11 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		if azJSONModel.Alias != nil {
 			alias = *azJSONModel.Alias
 		}
-
-		timeGrain := azJSONModel.TimeGrain
-		timeGrains := azJSONModel.AllowedTimeGrainsMs
-
-		if timeGrain != nil && *timeGrain == "auto" {
-			timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		params := url.Values{}
-		params.Add("api-version", AzureMonitorAPIVersion)
-		params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
-		if timeGrain != nil {
-			params.Add("interval", *timeGrain)
-		}
-		if azJSONModel.Aggregation != nil {
-			params.Add("aggregation", *azJSONModel.Aggregation)
-		}
-		if azJSONModel.MetricName != nil {
-			params.Add("metricnames", *azJSONModel.MetricName)
-		}
-
-		if azJSONModel.CustomNamespace != nil && *azJSONModel.CustomNamespace != "" {
-			params.Add("metricnamespace", *azJSONModel.CustomNamespace)
-		} else if azJSONModel.MetricNamespace != nil {
-			params.Add("metricnamespace", *azJSONModel.MetricNamespace)
-		}
-
 		azureURL := ""
 		if queryJSONModel.Subscription != nil {
 			azureURL = BuildSubscriptionMetricsURL(*queryJSONModel.Subscription)
 		}
 		filterInBody := true
-		if azJSONModel.Region != nil && *azJSONModel.Region != "" {
-			params.Add("region", *azJSONModel.Region)
-		}
 		resourceIDs := []string{}
 		resourceMap := map[string]dataquery.AzureMonitorResource{}
 		if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
@@ -200,10 +167,10 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			}
 		}
 
-		if azJSONModel.Top != nil && *azJSONModel.Top != "" {
-			params.Add("top", *azJSONModel.Top)
+		params, err := getParams(azJSONModel, query)
+		if err != nil {
+			return nil, err
 		}
-
 		target = params.Encode()
 
 		if setting.Env == setting.Dev {
@@ -237,6 +204,45 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 	}
 
 	return azureMonitorQueries, nil
+}
+
+func getParams(azJSONModel *dataquery.AzureMetricQuery, query backend.DataQuery) (url.Values, error) {
+	params := url.Values{}
+
+	timeGrain := azJSONModel.TimeGrain
+	timeGrains := azJSONModel.AllowedTimeGrainsMs
+
+	if timeGrain != nil && *timeGrain == "auto" {
+		var err error
+		timeGrain, err = azTime.SetAutoTimeGrain(query.Interval.Milliseconds(), timeGrains)
+		if err != nil {
+			return nil, err
+		}
+	}
+	params.Add("api-version", AzureMonitorAPIVersion)
+	params.Add("timespan", fmt.Sprintf("%v/%v", query.TimeRange.From.UTC().Format(time.RFC3339), query.TimeRange.To.UTC().Format(time.RFC3339)))
+	if timeGrain != nil {
+		params.Add("interval", *timeGrain)
+	}
+	if azJSONModel.Aggregation != nil {
+		params.Add("aggregation", *azJSONModel.Aggregation)
+	}
+	if azJSONModel.MetricName != nil {
+		params.Add("metricnames", *azJSONModel.MetricName)
+	}
+	if azJSONModel.CustomNamespace != nil && *azJSONModel.CustomNamespace != "" {
+		params.Add("metricnamespace", *azJSONModel.CustomNamespace)
+	} else if azJSONModel.MetricNamespace != nil {
+		params.Add("metricnamespace", *azJSONModel.MetricNamespace)
+	}
+	if azJSONModel.Region != nil && *azJSONModel.Region != "" {
+		params.Add("region", *azJSONModel.Region)
+	}
+	if azJSONModel.Top != nil && *azJSONModel.Top != "" {
+		params.Add("top", *azJSONModel.Top)
+	}
+
+	return params, nil
 }
 
 func retrieveSubscriptionDetails(e *AzureMonitorDatasource, cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) {

@@ -713,7 +713,7 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 
 	filteredTypes := make([]string, 0)
 	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
-	if resultFormat != nil && dataquery.ResultFormat(*resultFormat) == dataquery.ResultFormatTrace {
+	if resultFormat != nil && *resultFormat == dataquery.ResultFormatTrace {
 		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
 	} else {
 		filteredTypes = types
