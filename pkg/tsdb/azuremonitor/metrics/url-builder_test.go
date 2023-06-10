@@ -100,7 +100,7 @@ func TestURLBuilder(t *testing.T) {
 					ResourceName:        strPtr("rn1"),
 				}
 
-				url := ub.buildResourceURI()
+				url := *ub.buildResourceURI()
 				assert.Equal(t, "/subscriptions/default-sub/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/rn1/blobServices/default", url)
 			})
 		})

@@ -119,7 +119,10 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			params.Add("metricnamespace", *azJSONModel.MetricNamespace)
 		}
 
-		azureURL := BuildSubscriptionMetricsURL(*queryJSONModel.Subscription)
+		azureURL := ""
+		if queryJSONModel.Subscription != nil {
+			azureURL = BuildSubscriptionMetricsURL(*queryJSONModel.Subscription)
+		}
 		filterInBody := true
 		if azJSONModel.Region != nil && *azJSONModel.Region != "" {
 			params.Add("region", *azJSONModel.Region)
@@ -722,7 +725,7 @@ func hasOneResource(query dataquery.AzureMonitorQuery) (bool, *string, *string) 
 	if len(azJSONModel.Resources) == 1 {
 		return true, azJSONModel.Resources[0].ResourceGroup, azJSONModel.Resources[0].ResourceName
 	}
-	if azJSONModel.ResourceGroup != nil || *azJSONModel.ResourceGroup != "" || *azJSONModel.ResourceName != "" {
+	if (azJSONModel.ResourceGroup != nil && *azJSONModel.ResourceGroup != "") || (azJSONModel.ResourceName != nil && *azJSONModel.ResourceName != "") {
 		// Deprecated, Resources should be used instead
 		return true, azJSONModel.ResourceGroup, azJSONModel.ResourceName
 	}
