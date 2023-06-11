@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
@@ -8,6 +8,7 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
+import { promQueryModeller } from '../querybuilder/PromQueryModeller';
 import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
 import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
 import { PromVisualQuery } from '../querybuilder/types';
@@ -72,13 +73,33 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     if (qryType !== QueryType.LabelValues) {
       return;
     }
+    const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
+    if (!metric) {
+      // get all the labels
+      datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
+        const names = labelNames.map(({ text }) => ({ label: text, value: text }));
+        setLabelOptions([...variables, ...names]);
+      });
+    } else {
+      // fetch the labels filtered by the metric
+      const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
+      const expr = promQueryModeller.renderLabels(labelToConsider);
 
-    datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
-      const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
-      const names = labelNames.map(({ text }) => ({ label: text, value: text }));
-      setLabelOptions([...variables, ...names]);
-    });
-  }, [datasource, qryType]);
+      if (datasource.hasLabelsMatchAPISupport()) {
+        datasource.languageProvider.fetchSeriesLabelsMatch(expr).then((labelsIndex: Record<string, string[]>) => {
+          const labelNames = Object.keys(labelsIndex);
+          const names = labelNames.map((value) => ({ label: value, value: value }));
+          setLabelOptions([...variables, ...names]);
+        });
+      } else {
+        datasource.languageProvider.fetchSeriesLabels(expr).then((labelsIndex: Record<string, string[]>) => {
+          const labelNames = Object.keys(labelsIndex);
+          const names = labelNames.map((value) => ({ label: value, value: value }));
+          setLabelOptions([...variables, ...names]);
+        });
+      }
+    }
+  }, [datasource, qryType, metric]);
 
   const onChangeWithVariableString = (qryType: QueryType) => {
     const queryVar = {
@@ -137,6 +158,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     }
   };
 
+  const promViualQuery = useCallback(() => {
+    return { metric: metric, labels: labelFilters, operations: [] };
+  }, [metric, labelFilters]);
+
   return (
     <>
       <InlineFieldRow>
@@ -185,7 +210,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
           </InlineFieldRow>
           {/* Used to select an optional metric with optional label filters */}
           <MetricsLabelsSection
-            query={{ metric: metric, labels: labelFilters, operations: [] }}
+            query={promViualQuery()}
             datasource={datasource}
             onChange={(update: PromVisualQuery) => {
               setMetric(update.metric);

@@ -199,6 +199,7 @@ export function MetricSelect({
   const asyncSelect = () => {
     return (
       <AsyncSelect
+        isClearable={variableEditor ? true : false}
         inputId="prometheus-metric-select"
         className={styles.select}
         value={query.metric ? toOption(query.metric) : undefined}
@@ -232,7 +233,8 @@ export function MetricSelect({
         loadOptions={metricLookupDisabled ? metricLookupDisabledSearch : debouncedSearch}
         isLoading={state.isLoading}
         defaultOptions={state.metrics}
-        onChange={({ value }) => {
+        onChange={(input) => {
+          const value = input?.value;
           if (value) {
             // if there is no metric and the m.e. is enabled, open the modal
             if (prometheusMetricEncyclopedia && value === 'BrowseMetrics') {
@@ -241,6 +243,8 @@ export function MetricSelect({
             } else {
               onChange({ ...query, metric: value });
             }
+          } else {
+            onChange({ ...query, metric: '' });
           }
         }}
         components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
