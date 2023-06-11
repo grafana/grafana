@@ -27,6 +27,7 @@ export interface Props {
   onGetMetrics: () => Promise<SelectableValue[]>;
   datasource: PrometheusDatasource;
   labelsFilters: QueryBuilderLabelFilter[];
+  onBlur?: () => void;
 }
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
@@ -40,6 +41,7 @@ export function MetricSelect({
   onGetMetrics,
   labelsFilters,
   metricLookupDisabled,
+  onBlur,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
@@ -252,6 +254,7 @@ export function MetricSelect({
               }
             }}
             components={prometheusMetricEncyclopedia ? { Option: CustomOption } : {}}
+            onBlur={onBlur ? onBlur : () => {}}
           />
         </EditorField>
       </EditorFieldGroup>

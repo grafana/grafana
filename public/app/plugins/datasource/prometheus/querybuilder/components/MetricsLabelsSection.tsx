@@ -16,9 +16,11 @@ export interface MetricsLabelsSectionProps {
   query: PromVisualQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromVisualQuery) => void;
+  variableEditor?: boolean;
+  onBlur?: () => void;
 }
 
-export function MetricsLabelsSection({ datasource, query, onChange }: MetricsLabelsSectionProps) {
+export function MetricsLabelsSection({ datasource, query, onChange, onBlur }: MetricsLabelsSectionProps) {
   // fixing the use of 'as' from refactoring
   // @ts-ignore
   const onChangeLabels = (labels) => {
@@ -199,6 +201,7 @@ export function MetricsLabelsSection({ datasource, query, onChange }: MetricsLab
         datasource={datasource}
         labelsFilters={query.labels}
         metricLookupDisabled={datasource.lookupsDisabled}
+        onBlur={onBlur ? onBlur : () => {}}
       />
       <LabelFilters
         debounceDuration={datasource.getDebounceTimeInMilliseconds()}

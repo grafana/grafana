@@ -8,6 +8,9 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
+import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
+import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
+import { PromVisualQuery } from '../querybuilder/types';
 import {
   PromOptions,
   PromQuery,
@@ -46,6 +49,8 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
+  const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
+
   useEffect(() => {
     if (!query) {
       return;
@@ -57,6 +62,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
+    setLabelFilters(query.labelFilters ?? []);
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
   }, [query]);
@@ -86,8 +92,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
 
     const queryString = migrateVariableEditorBackToVariableSupport(queryVar);
 
+    // setting query.query prop allows for update of variable definition
     onChange({
       query: queryString,
+      labelFilters: labelFilters,
       refId,
     });
   };
@@ -175,14 +183,15 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
             labelWidth={20}
             tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
           >
-            <Input
-              type="text"
-              aria-label="Metric selector"
-              placeholder="Optional metric selector"
-              value={metric}
-              onChange={onMetricChange}
+            <MetricsLabelsSection
+              query={{ metric: metric, labels: labelFilters, operations: [] }}
+              datasource={datasource}
+              onChange={(update: PromVisualQuery) => {
+                setMetric(update.metric);
+                setLabelFilters(update.labels);
+              }}
+              variableEditor={true}
               onBlur={handleBlur}
-              width={25}
             />
           </InlineField>
         </>
