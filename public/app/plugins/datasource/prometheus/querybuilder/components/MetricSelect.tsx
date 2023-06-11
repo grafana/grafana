@@ -33,8 +33,6 @@ export interface Props {
 
 export const PROMETHEUS_QUERY_BUILDER_MAX_RESULTS = 1000;
 
-const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-
 export function MetricSelect({
   datasource,
   query,
@@ -53,6 +51,8 @@ export function MetricSelect({
     initialMetrics?: string[];
   }>({});
 
+  const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+
   const metricsModalOption: SelectableValue[] = [
     {
       value: 'BrowseMetrics',
@@ -61,29 +61,32 @@ export function MetricSelect({
     },
   ];
 
-  const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
-    const label = option.label ?? option.value;
-    if (!label) {
-      return false;
-    }
-
-    // custom value is not a string label but a react node
-    if (!label.toLowerCase) {
-      return true;
-    }
-
-    const searchWords = searchQuery.split(splitSeparator);
-    return searchWords.reduce((acc, cur) => {
-      const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
-
-      let browseOption = false;
-      if (prometheusMetricEncyclopedia) {
-        browseOption = label === 'Metrics explorer';
+  const customFilterOption = useCallback(
+    (option: SelectableValue<any>, searchQuery: string) => {
+      const label = option.label ?? option.value;
+      if (!label) {
+        return false;
       }
 
-      return acc && (matcheSearch || browseOption);
-    }, true);
-  }, []);
+      // custom value is not a string label but a react node
+      if (!label.toLowerCase) {
+        return true;
+      }
+
+      const searchWords = searchQuery.split(splitSeparator);
+      return searchWords.reduce((acc, cur) => {
+        const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
+
+        let browseOption = false;
+        if (prometheusMetricEncyclopedia) {
+          browseOption = label === 'Metrics explorer';
+        }
+
+        return acc && (matcheSearch || browseOption);
+      }, true);
+    },
+    [prometheusMetricEncyclopedia]
+  );
 
   const formatOptionLabel = useCallback(
     (option: SelectableValue<any>, meta: FormatOptionLabelMeta<any>) => {
