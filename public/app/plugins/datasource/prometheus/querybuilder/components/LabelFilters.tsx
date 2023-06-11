@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorFieldGroup, EditorField, EditorList } from '@grafana/experimental';
+import { InlineField, InlineFieldRow } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from '../shared/types';
 
@@ -19,6 +20,7 @@ export interface Props {
   labelFilterRequired?: boolean;
   getLabelValuesAutofillSuggestions: (query: string, labelName?: string) => Promise<SelectableValue[]>;
   debounceDuration: number;
+  variableEditor?: boolean;
 }
 
 export function LabelFilters({
@@ -29,6 +31,7 @@ export function LabelFilters({
   labelFilterRequired,
   getLabelValuesAutofillSuggestions,
   debounceDuration,
+  variableEditor,
 }: Props) {
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
@@ -53,32 +56,52 @@ export function LabelFilters({
 
   const hasLabelFilter = items.some((item) => item.label && item.value);
 
+  const editorList = () => {
+    return (
+      <EditorList
+        items={items}
+        onChange={onLabelsChange}
+        renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
+          <LabelFilterItem
+            debounceDuration={debounceDuration}
+            item={item}
+            defaultOp={defaultOp}
+            onChange={onChangeItem}
+            onDelete={onDelete}
+            onGetLabelNames={onGetLabelNames}
+            onGetLabelValues={onGetLabelValues}
+            invalidLabel={labelFilterRequired && !item.label}
+            invalidValue={labelFilterRequired && !item.value}
+            getLabelValuesAutofillSuggestions={getLabelValuesAutofillSuggestions}
+          />
+        )}
+      />
+    );
+  };
+
   return (
-    <EditorFieldGroup>
-      <EditorField
-        label="Label filters"
-        error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
-        invalid={labelFilterRequired && !hasLabelFilter}
-      >
-        <EditorList
-          items={items}
-          onChange={onLabelsChange}
-          renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
-            <LabelFilterItem
-              debounceDuration={debounceDuration}
-              item={item}
-              defaultOp={defaultOp}
-              onChange={onChangeItem}
-              onDelete={onDelete}
-              onGetLabelNames={onGetLabelNames}
-              onGetLabelValues={onGetLabelValues}
-              invalidLabel={labelFilterRequired && !item.label}
-              invalidValue={labelFilterRequired && !item.value}
-              getLabelValuesAutofillSuggestions={getLabelValuesAutofillSuggestions}
-            />
-          )}
-        />
-      </EditorField>
-    </EditorFieldGroup>
+    <>
+      {variableEditor ? (
+        <InlineFieldRow>
+          <InlineField
+            label="Label filters"
+            labelWidth={20}
+            tooltip={<div>Optional: used to filter the metric select for this query type.</div>}
+          >
+            {editorList()}
+          </InlineField>
+        </InlineFieldRow>
+      ) : (
+        <EditorFieldGroup>
+          <EditorField
+            label="Label filters"
+            error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
+            invalid={labelFilterRequired && !hasLabelFilter}
+          >
+            {editorList()}
+          </EditorField>
+        </EditorFieldGroup>
+      )}
+    </>
   );
 }

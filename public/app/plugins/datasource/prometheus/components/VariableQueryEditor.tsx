@@ -138,66 +138,67 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   };
 
   return (
-    <InlineFieldRow>
-      <InlineField
-        label="Query Type"
-        labelWidth={20}
-        tooltip={
-          <div>The Prometheus data source plugin provides the following query types for template variables.</div>
-        }
-      >
-        <Select
-          placeholder="Select query type"
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={qryType}
-          options={variableOptions}
-          width={25}
-        />
-      </InlineField>
+    <>
+      <InlineFieldRow>
+        <InlineField
+          label="Query type"
+          labelWidth={20}
+          tooltip={
+            <div>The Prometheus data source plugin provides the following query types for template variables.</div>
+          }
+        >
+          <Select
+            placeholder="Select query type"
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
+            onBlur={handleBlur}
+            value={qryType}
+            options={variableOptions}
+            width={25}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
       {qryType === QueryType.LabelValues && (
         <>
-          <InlineField
-            label="Label"
-            labelWidth={20}
-            required
-            tooltip={
-              <div>
-                Returns a list of label values for the label name in all metrics unless the metric is specified.
-              </div>
-            }
-          >
-            <Select
-              aria-label="label-select"
-              onChange={onLabelChange}
-              onBlur={handleBlur}
-              value={label}
-              options={labelOptions}
-              width={25}
-              allowCustomValue
-            />
-          </InlineField>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            <MetricsLabelsSection
-              query={{ metric: metric, labels: labelFilters, operations: [] }}
-              datasource={datasource}
-              onChange={(update: PromVisualQuery) => {
-                setMetric(update.metric);
-                setLabelFilters(update.labels);
-              }}
-              variableEditor={true}
-              onBlur={handleBlur}
-            />
-          </InlineField>
+          <InlineFieldRow>
+            <InlineField
+              label="Label"
+              labelWidth={20}
+              required
+              tooltip={
+                <div>
+                  Returns a list of label values for the label name in all metrics unless the metric is specified.
+                </div>
+              }
+            >
+              <Select
+                aria-label="label-select"
+                onChange={onLabelChange}
+                onBlur={handleBlur}
+                value={label}
+                options={labelOptions}
+                width={25}
+                allowCustomValue
+              />
+            </InlineField>
+          </InlineFieldRow>
+          {/* Used to select an optional metric with optional label filters */}
+          <MetricsLabelsSection
+            query={{ metric: metric, labels: labelFilters, operations: [] }}
+            datasource={datasource}
+            onChange={(update: PromVisualQuery) => {
+              setMetric(update.metric);
+              setLabelFilters(update.labels);
+            }}
+            variableEditor={true}
+            onBlur={handleBlur}
+          />
         </>
       )}
+
       {qryType === QueryType.MetricNames && (
-        <>
+        <InlineFieldRow>
           <InlineField
             label="Metric Regex"
             labelWidth={20}
@@ -213,10 +214,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               width={25}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
+
       {qryType === QueryType.VarQueryResult && (
-        <>
+        <InlineFieldRow>
           <InlineField
             label="Query"
             labelWidth={20}
@@ -237,10 +239,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               cols={100}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
+
       {qryType === QueryType.SeriesQuery && (
-        <>
+        <InlineFieldRow>
           <InlineField
             label="Series Query"
             labelWidth={20}
@@ -263,9 +266,9 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               width={100}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
-    </InlineFieldRow>
+    </>
   );
 };
 

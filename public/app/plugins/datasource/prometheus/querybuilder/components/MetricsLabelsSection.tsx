@@ -20,7 +20,13 @@ export interface MetricsLabelsSectionProps {
   onBlur?: () => void;
 }
 
-export function MetricsLabelsSection({ datasource, query, onChange, onBlur }: MetricsLabelsSectionProps) {
+export function MetricsLabelsSection({
+  datasource,
+  query,
+  onChange,
+  onBlur,
+  variableEditor,
+}: MetricsLabelsSectionProps) {
   // fixing the use of 'as' from refactoring
   // @ts-ignore
   const onChangeLabels = (labels) => {
@@ -202,6 +208,7 @@ export function MetricsLabelsSection({ datasource, query, onChange, onBlur }: Me
         labelsFilters={query.labels}
         metricLookupDisabled={datasource.lookupsDisabled}
         onBlur={onBlur ? onBlur : () => {}}
+        variableEditor={variableEditor}
       />
       <LabelFilters
         debounceDuration={datasource.getDebounceTimeInMilliseconds()}
@@ -210,6 +217,7 @@ export function MetricsLabelsSection({ datasource, query, onChange, onBlur }: Me
         onChange={onChangeLabels}
         onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
         onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
+        variableEditor={variableEditor}
       />
     </>
   );
