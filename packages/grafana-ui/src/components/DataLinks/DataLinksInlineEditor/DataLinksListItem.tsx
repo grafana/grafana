@@ -35,8 +35,8 @@ export const DataLinksListItem = ({ link, onEdit, onRemove }: DataLinksListItemP
           {hasTitle ? title : 'Data link title not provided'}
         </div>
         <div className={styles.actionButtons}>
-          <IconButton name="pen" onClick={onEdit} />
-          <IconButton name="times" onClick={onRemove} />
+          <IconButton name="pen" onClick={onEdit} tooltip="Edit data link title" />
+          <IconButton name="times" onClick={onRemove} tooltip="Remove data link title" />
         </div>
       </div>
       <div

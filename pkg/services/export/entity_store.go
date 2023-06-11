@@ -361,9 +361,6 @@ func (e *entityStoreJob) start(ctx context.Context) {
 				ExternalURL: dto.ExternalURL,
 				Expires:     dto.Expires.UnixMilli(),
 			}
-
-			//			team.Metadata.Namespace = orgIdToNamespace(info.OrgID)
-
 			rowUser.OrgID = dto.OrgID
 			rowUser.UserID = dto.UserID
 

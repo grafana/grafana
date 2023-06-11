@@ -8,31 +8,22 @@ import (
 	"path"
 	"strconv"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-apiserver/pkg/apis/kinds/install"
 	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/services/certgenerator"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -41,6 +32,17 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	"k8s.io/klog/v2"
+
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	grafanaAdmission "github.com/grafana/grafana/pkg/services/k8s/apiserver/admission"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver/authorization"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -132,7 +134,7 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	logger := logr.New(newLogAdapter())
-	logger.V(9)
+	logger.V(10)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := grafanaapiserveroptions.NewGrafanaAPIServerOptions(os.Stdout, os.Stderr)
@@ -142,8 +144,20 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
-	o.RecommendedOptions.CoreAPI = nil
+
+	if true { // standalone
+		o.RecommendedOptions.CoreAPI = nil
+	} else {
+		// TODO... currently need ext-api registered manually:
+		// https://github.com/grafana/grafana-apiserver/blob/main/deploy/local-darwin/service.yaml
+		// for now, easiest setup is checkout:
+		// - https://github.com/grafana/grafana-apiserver
+		// - run tilt up
+		// - then quit
+		// verify exists:
+		// kubectl get service ext-api -n grafana
+		o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath = "/Users/ryan/.kube/config"
+	}
 
 	// this currently only will work for standalone mode. we are removing all default enabled plugins
 	// and replacing them with our internal admission plugins. this avoids issues with the default admission
@@ -189,11 +203,17 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	authorizer, err := newAuthorizer()
+	if err != nil {
+		return err
+	}
+
 	serverConfig.ExtraConfig.RESTOptionsGetter = s.restOptionsGetter(unstructured.UnstructuredJSONScheme)
 	serverConfig.GenericConfig.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 	serverConfig.GenericConfig.Config.RESTOptionsGetter = s.restOptionsGetter(Codecs.LegacyCodec(kindsv1.SchemeGroupVersion))
 
 	serverConfig.GenericConfig.Authentication.Authenticator = authenticator
+	serverConfig.GenericConfig.Authorization.Authorizer = authorizer
 
 	server, err := serverConfig.Complete().New(genericapiserver.NewEmptyDelegate())
 	if err != nil {
@@ -231,6 +251,8 @@ func (s *service) start(ctx context.Context) error {
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
+
+	<-prepared.MuxAndDiscoveryCompleteSignals()["GrafanaKindDiscoveryReady"]
 
 	return nil
 }
@@ -275,6 +297,10 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 		AuthInfos:      authinfos,
 	}
 	return clientcmd.WriteToFile(clientConfig, path.Join(s.dataPath, "grafana.kubeconfig"))
+}
+
+func newAuthorizer() (authorizer.Authorizer, error) {
+	return authorization.NewGrafanaAuthorizer(), nil
 }
 
 func newAuthenticator(cert *x509.Certificate) (authenticator.Request, error) {
