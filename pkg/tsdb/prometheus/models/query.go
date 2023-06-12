@@ -88,7 +88,8 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, intervalCalculator, timeInterval)
+
+	expr := interpolateVariables(*model.Expr, model.Interval, interval, timeRange, intervalCalculator, timeInterval)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false

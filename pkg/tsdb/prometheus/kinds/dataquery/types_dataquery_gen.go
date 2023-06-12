@@ -56,25 +56,14 @@ type PrometheusDataQuery struct {
 	// Specific implementations will *extend* this interface, adding the required
 	// properties for the given context.
 	DataQuery
-
-	// For mixed data sources the selected datasource is on the query level.
-	// For non mixed scenarios this is undefined.
-	// TODO find a better way to do this ^ that's friendly to schema
-	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{}     `json:"datasource,omitempty"`
 	EditorMode *QueryEditorMode `json:"editorMode,omitempty"`
 
 	// Execute an additional query to identify interesting raw samples relevant for the given expr
 	Exemplar *bool `json:"exemplar,omitempty"`
 
 	// The actual expression/query that will be evaluated by Prometheus
-	Expr   string           `json:"expr"`
+	Expr   *string          `json:"expr,omitempty"`
 	Format *PromQueryFormat `json:"format,omitempty"`
-
-	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	// Note this does not always imply that the query should not be executed since
-	// the results from a hidden query may be used as the input to other queries (SSE etc)
-	Hide *bool `json:"hide,omitempty"`
 
 	// Returns only the latest value that Prometheus has scraped for the requested time series
 	Instant *bool `json:"instant,omitempty"`
@@ -86,17 +75,8 @@ type PrometheusDataQuery struct {
 	// Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname
 	LegendFormat *string `json:"legendFormat,omitempty"`
 
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
 	// Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
 	Range *bool `json:"range,omitempty"`
-
-	// A unique identifier for the query within the list of targets.
-	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
-	RefId string `json:"refId"`
 }
 
 // QueryEditorMode defines model for QueryEditorMode.

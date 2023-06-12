@@ -31,7 +31,7 @@ export interface Prometheus extends common.DataQuery {
   /**
    * The actual expression/query that will be evaluated by Prometheus
    */
-  expr: string;
+  expr?: string;
   /**
    * Query format to determine how to display data points in panel. It can be "time_series", "table", "heatmap"
    */

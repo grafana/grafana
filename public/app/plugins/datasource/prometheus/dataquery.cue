@@ -32,7 +32,7 @@ composableKinds: DataQuery: {
 				common.DataQuery
 
 				// The actual expression/query that will be evaluated by Prometheus
-				expr: string
+				expr?: string
 				// Returns only the latest value that Prometheus has scraped for the requested time series
 				instant?: bool
 				// Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series

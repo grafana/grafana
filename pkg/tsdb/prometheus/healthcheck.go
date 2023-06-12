@@ -57,13 +57,16 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 }
 
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
+
+	exprString := "1+1"
+
 	qm := models.QueryModel{
 		LegendFormat: "",
 		UtcOffsetSec: 0,
 		PrometheusDataQuery: dataquery.PrometheusDataQuery{
-			Expr:    "1+1",
+			Expr:    &exprString,
 			Instant: kindsys.Ptr(true),
-			RefId:   refID,
+			//RefId:   refID,
 		},
 	}
 	b, _ := json.Marshal(&qm)
