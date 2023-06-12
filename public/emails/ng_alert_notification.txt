@@ -1,41 +1,55 @@
-{{HiddenSubject .Subject "{{.Title}}"}}
+{{- define "__default_message" -}}
+You have {{ len .Alerts.Firing }} firing alert(s), and {{ len .Alerts.Resolved }} resolved alert(s) for {{ .GroupLabels }}
 
-{{.Title}}
-----------------
+{{ if .Alerts.Firing -}}
+({{ len .Alerts.Firing }}) FIRING
+-----------
+{{ template "__default_alerts_summarize" .Alerts.Firing }}
+{{- end -}}
 
-{{ .Alerts | len }} alert{{ if gt (len .Alerts) 1 }}s{{ end }} for
-{{ range .GroupLabels.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{ end }}
-{{ if gt (len .Alerts.Firing) 0 }}({{ .Alerts.Firing | len }}) Firing{{ end }}
-{{ range .Alerts.Firing }}
-Labels:
-{{ range .Labels.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{ end }}
-{{ if gt (len .Annotations) 0 }}
-Annotations:
-{{ end }}
-{{ range .Annotations.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{ end }}
-{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}({{ .Alerts.Resolved | len }}) Resolved{{ end }}
-{{ range .Alerts.Resolved }}
-Labels:
-{{ range .Labels.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{ end }}
-{{ if gt (len .Annotations) 0 }}
-Annotations:
-{{ end }}
-{{ range .Annotations.SortedPairs }}
-{{ .Name }} = {{ .Value }}
-{{ end }}
-{{ end }}View your Alert rule:
-{{.RuleUrl}}
+{{ if .Alerts.Resolved -}}
+({{ len .Alerts.Resolved }}) RESOLVED
+-------------
+{{ template "__default_alerts_summarize" .Alerts.Resolved }}
+{{- end }}
+Go to the Alerts page: {{ .AlertPageUrl }}
+{{- end }}
 
-Go to the Alerts page:
-{{.AlertPageUrl}}
+{{- define "__default_alerts_summarize" -}}
+{{ range . -}}
+Labels: {{ .Labels.SortedPairs }}
+{{ if .Annotations -}}
+{{ if index .Annotations "summary" -}}
+Summary: {{ index .Annotations "summary" }}
+{{ if index .Annotations "description" -}}
+Description: {{ index .Annotations "description" }}
+{{ end -}}
+Annotations: {{ template "__extra_annotations" .Annotations }}
+{{ else -}}
+Annotations: {{ template "__all_annotations" .Annotations }}
+{{ end }}
+{{- end }}
+{{ end }}
+{{- end }}
 
+{{- define "__all_annotations" -}}
+{{ range .SortedPairs }}
+    {{ .Name }} = {{ .Value }}
+{{- end }}
+{{- end }}
+
+{{- define "__extra_annotations" -}}
+{{ range .SortedPairs -}}
+{{ if (and (ne "summary" .Name) (ne "description" .Name)) }}
+    {{ .Name }} = {{ .Value }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Message -}}
+    {{ .Message }}
+{{ else -}}
+    {{ template "__default_message" . }}
+{{ end }}
 
 Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs
