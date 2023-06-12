@@ -347,7 +347,7 @@ func buildTimeSettings(d *dashboards.Dashboard, reqDTO models.PublicDashboardQue
 	}
 }
 
-// returns form, to and location from the request if the timeSelection is enabled or the dashboard default values
+// returns from, to and timezone from the request if the timeSelection is enabled or the dashboard default values
 func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashboards.Dashboard, timeSelectionEnabled bool) (string, string, *time.Location) {
 	from := d.Data.GetPath("time", "from").MustString()
 	to := d.Data.GetPath("time", "to").MustString()
@@ -367,7 +367,7 @@ func getTimeRangeValuesOrDefault(reqDTO models.PublicDashboardQueryDTO, d *dashb
 		}
 	}
 
-	// if the Location is blank or there is an error default is UTC
+	// if the dashboardTimezone is blank or there is an error default is UTC
 	timezone, err := time.LoadLocation(dashboardTimezone)
 	if err != nil {
 		return from, to, time.UTC
