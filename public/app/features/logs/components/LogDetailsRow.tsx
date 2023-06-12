@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, useEffect, useState } from 'react';
 
-import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
@@ -27,8 +27,8 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
-  isFilterLabelActive?: (key: string, value: string) => boolean;
-  isFilterOutLabelActive?: (key: string, value: string) => boolean;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterOutLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
@@ -136,18 +136,18 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
-  isFilterLabelActive = () => {
+  isFilterLabelActive = async () => {
     const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
     if (isFilterLabelActive) {
-      return isFilterLabelActive(parsedKeys[0], parsedValues[0]);
+      return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
     }
     return false;
   };
 
-  isFilterOutLabelActive = () => {
+  isFilterOutLabelActive = async () => {
     const { isFilterOutLabelActive, parsedKeys, parsedValues } = this.props;
     if (isFilterOutLabelActive) {
-      return isFilterOutLabelActive(parsedKeys[0], parsedValues[0]);
+      return await isFilterOutLabelActive(parsedKeys[0], parsedValues[0]);
     }
     return false;
   };
@@ -285,19 +285,19 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <td className={style.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <IconButton
+                <AsyncIconButton
                   name="search-plus"
                   tooltip="Filter for value"
                   onClick={this.filterLabel}
-                  variant={this.isFilterLabelActive() ? 'primary' : undefined}
+                  isActive={this.isFilterLabelActive}
                 />
               )}
               {hasFilteringFunctionality && (
-                <IconButton
+                <AsyncIconButton
                   name="search-minus"
                   tooltip="Filter out value"
                   onClick={this.filterOutLabel}
-                  variant={this.isFilterOutLabelActive() ? 'primary' : undefined}
+                  isActive={this.isFilterOutLabelActive}
                 />
               )}
               {!disableActions && displayedFields && toggleFieldButton}
@@ -357,6 +357,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     );
   }
 }
+
+interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
+  name: IconName;
+  tooltip: string;
+  isActive(): Promise<boolean>;
+}
+
+const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    isActive().then(setActive).catch(console.log);
+  }, [isActive]);
+
+  return <IconButton {...rest} variant={active ? 'primary' : undefined} />;
+};
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);
 LogDetailsRow.displayName = 'LogDetailsRow';

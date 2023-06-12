@@ -182,14 +182,24 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
-  isFilterLabelActive = (key: string, value: string) => {
-    console.log(this.props.queryKeys);
-    return true;
+  isFilterActive = async (type: string, key: string, value: string) => {
+    let isActive = false;
+    const { queries } = this.props;
+    for (const query of queries) {
+      const ds = await getDataSourceSrv().get(query.datasource);
+      if (ds) {
+        isActive = true;
+      }
+    }
+    return isActive;
   };
 
-  isFilterOutLabelActive = (key: string, value: string) => {
-    console.log(this.props.queryKeys);
-    return true;
+  isFilterLabelActive = async (key: string, value: string) => {
+    return await this.isFilterActive('FILTER', key, value);
+  };
+
+  isFilterOutLabelActive = async (key: string, value: string) => {
+    return await this.isFilterActive('FILTER_OUT', key, value);
   };
 
   onClickFilterLabel = (key: string, value: string) => {
