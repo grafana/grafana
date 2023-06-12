@@ -1,6 +1,7 @@
 package kinds
 
 import (
+	"fmt"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +42,24 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 
 	// Avoid extending
 	_ interface{} `json:"-"`
+}
+
+type AnyGrafanaResource = GrafanaResource[any, any]
+
+func toAnyGrafanaResource(obj interface{}) (*AnyGrafanaResource, error) {
+	var rsp *AnyGrafanaResource
+	rsp, ok := obj.(*AnyGrafanaResource)
+	if ok {
+		return rsp, nil
+	}
+
+	v, ok := obj.(AnyGrafanaResource)
+	if ok {
+		return &v, nil
+	}
+
+	return rsp, fmt.Errorf("unable to convert")
+
 }
 
 // NOTE: The below annotation keys must confirm to K8s requirements, which are:
