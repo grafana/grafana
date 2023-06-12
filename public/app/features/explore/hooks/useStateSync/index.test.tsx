@@ -13,7 +13,6 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { configureStore } from 'app/store/configureStore';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
-import { changeDatasource } from '../../state/datasource';
 import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
