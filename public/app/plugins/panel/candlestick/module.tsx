@@ -15,14 +15,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 import { CandlestickPanel } from './CandlestickPanel';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
 import { CandlestickSuggestionsSupplier } from './suggestions';
-import {
-  defaultCandlestickColors,
-  defaultPanelOptions,
-  PanelOptions,
-  VizDisplayMode,
-  ColorStrategy,
-  CandleStyle,
-} from './types';
+import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const modeOptions = [
   { label: 'Candles', value: VizDisplayMode.Candles },
@@ -43,7 +36,7 @@ const colorStrategies = [
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
-  builder: PanelOptionsEditorBuilder<PanelOptions>,
+  builder: PanelOptionsEditorBuilder<Options>,
   info: FieldPickerInfo,
   data: CandlestickData | null
 ) {
@@ -74,10 +67,10 @@ function addFieldPicker(
   });
 }
 
-export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(CandlestickPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
-    const opts = context.options ?? defaultPanelOptions;
+    const opts = context.options ?? defaultOptions;
     const info = prepareCandlestickFields(context.data, opts, config.theme2);
 
     builder
@@ -85,7 +78,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(Candlestic
         path: 'mode',
         name: 'Mode',
         description: '',
-        defaultValue: defaultPanelOptions.mode,
+        defaultValue: defaultOptions.mode,
         settings: {
           options: modeOptions,
         },
@@ -94,7 +87,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(Candlestic
         path: 'candleStyle',
         name: 'Candle style',
         description: '',
-        defaultValue: defaultPanelOptions.candleStyle,
+        defaultValue: defaultOptions.candleStyle,
         settings: {
           options: candleStyles,
         },
@@ -104,7 +97,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(Candlestic
         path: 'colorStrategy',
         name: 'Color strategy',
         description: '',
-        defaultValue: defaultPanelOptions.colorStrategy,
+        defaultValue: defaultOptions.colorStrategy,
         settings: {
           options: colorStrategies,
         },
@@ -135,7 +128,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(Candlestic
       path: 'includeAllFields',
       name: 'Additional fields',
       description: 'Use standard timeseries options to configure any fields not mapped above',
-      defaultValue: defaultPanelOptions.includeAllFields,
+      defaultValue: defaultOptions.includeAllFields,
       settings: {
         options: [
           { label: 'Ignore', value: false },

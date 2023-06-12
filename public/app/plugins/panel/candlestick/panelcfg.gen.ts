@@ -67,7 +67,7 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
   up: 'green',
 };
 
-export interface PanelOptions extends common.OptionsWithLegend {
+export interface Options extends common.OptionsWithLegend {
   /**
    * TODO docs
    */
@@ -94,7 +94,7 @@ export interface PanelOptions extends common.OptionsWithLegend {
   mode: VizDisplayMode;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
+export const defaultOptions: Partial<Options> = {
   candleStyle: CandleStyle.Candles,
   colorStrategy: ColorStrategy.OpenClose,
   fields: {},
@@ -102,4 +102,4 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   mode: VizDisplayMode.CandlesVolume,
 };
 
-export interface PanelFieldConfig extends common.GraphFieldConfig {}
+export interface FieldConfig extends common.GraphFieldConfig {}

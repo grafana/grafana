@@ -1,20 +1,20 @@
 import { LegendDisplayMode } from '@grafana/schema';
 
 import {
-  defaultPanelOptions as defaultPanelOptionsBase,
+  defaultOptions as defaultOptionsBase,
   defaultCandlestickColors,
-  PanelOptions,
+  Options,
   CandlestickColors,
   CandleStyle,
   ColorStrategy,
   VizDisplayMode,
   CandlestickFieldMap,
-  PanelFieldConfig,
+  FieldConfig,
   PanelCfgModelVersion,
 } from './panelcfg.gen';
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
-  ...defaultPanelOptionsBase,
+export const defaultOptions: Partial<Options> = {
+  ...defaultOptionsBase,
   colors: defaultCandlestickColors as CandlestickColors,
   // TODO: This should be included in the cue schema in the future.
   legend: {
@@ -26,13 +26,13 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 };
 
 export {
-  PanelOptions,
+  Options,
   CandlestickColors,
   defaultCandlestickColors,
   CandleStyle,
   ColorStrategy,
   VizDisplayMode,
   CandlestickFieldMap,
-  PanelFieldConfig,
+  FieldConfig,
   PanelCfgModelVersion,
 };

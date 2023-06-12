@@ -50,7 +50,7 @@ composableKinds: PanelCfg: {
 							down: string | *"red"
 							flat: string | *"gray"
 						} @cuetsy(kind="interface")
-						PanelOptions: {
+						Options: {
 							common.OptionsWithLegend
 
 							// TODO docs
@@ -66,7 +66,7 @@ composableKinds: PanelCfg: {
 							// When enabled, all fields will be sent to the graph
 							includeAllFields?: bool | *false
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
+						FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
 					},
 				]
 			},

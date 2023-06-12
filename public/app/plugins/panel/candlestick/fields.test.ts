@@ -1,12 +1,12 @@
 import { createTheme, toDataFrame } from '@grafana/data';
 
 import { prepareCandlestickFields } from './fields';
-import { PanelOptions, VizDisplayMode } from './types';
+import { Options, VizDisplayMode } from './types';
 
 const theme = createTheme();
 
 describe('Candlestick data', () => {
-  const options: PanelOptions = {} as PanelOptions;
+  const options: Options = {} as Options;
 
   it('require a time field', () => {
     const info = prepareCandlestickFields(
@@ -122,10 +122,10 @@ describe('Candlestick data', () => {
   });
 
   it('will unmap high & low fields in volume-only mode', () => {
-    const options: PanelOptions = {
+    const options: Options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: true,
-    } as PanelOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [
@@ -184,10 +184,10 @@ describe('Candlestick data', () => {
   });
 
   it('will unmap volume field in candles-only mode', () => {
-    const options: PanelOptions = {
+    const options: Options = {
       mode: VizDisplayMode.Candles,
       includeAllFields: false,
-    } as PanelOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [
@@ -246,10 +246,10 @@ describe('Candlestick data', () => {
   });
 
   it("will not remove open field from frame when it's also mapped to high in volume-only mode", () => {
-    const options: PanelOptions = {
+    const options: Options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: false,
-    } as PanelOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [
