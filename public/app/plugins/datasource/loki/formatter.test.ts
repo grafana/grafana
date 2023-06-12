@@ -69,6 +69,14 @@ describe('formats logql queries', () => {
     // RangeOp "(" LogRangeExpr ")"
     expect(formatLokiQuery(`count_over_time ( {label=""} [5m])`)).toBe(`count_over_time(\n  {label=""}\n  [5m]\n)`);
 
+    expect(
+      formatLokiQuery(
+        `quantile_over_time(0.99,{container="ingress-nginx",service="hosted-grafana"}| json| unwrap response_latency_seconds| __error__=""[1m]) by (cluster)`
+      )
+    ).toBe(
+      `quantile_over_time(\n  0.99,\n  {container="ingress-nginx", service="hosted-grafana"}\n    | json\n  | unwrap response_latency_seconds | __error__=""\n  [1m]\n) by (cluster)`
+    );
+
     // RangeOp "(" Number "," LogRangeExpr ")"
     expect(formatLokiQuery(`bytes_rate (1, {label=""} [5m])`)).toBe(`bytes_rate(\n  1,\n  {label=""}\n  [5m]\n)`);
 

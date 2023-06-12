@@ -210,9 +210,13 @@ export function formatLogRangeExpr(node: SyntaxNode, query: string): string {
         break;
 
       case UnwrapExpr:
-        iterateNode(node, [Identifier, ConvOp]).forEach((node, _, arr) => {
+        iterateNode(node, [Identifier, ConvOp, LabelFilter]).forEach((node, _, arr) => {
           switch (node.type.id) {
             case Identifier:
+              if (node.parent?.type.id !== UnwrapExpr) {
+                return;
+              }
+
               const hasConvOp = arr.find((node) => node.type.id === ConvOp);
 
               if (hasConvOp) {
@@ -225,7 +229,11 @@ export function formatLogRangeExpr(node: SyntaxNode, query: string): string {
             case ConvOp:
               const identifierNode = arr.find((node) => node.type.id === Identifier);
               const identifier = identifierNode ? query.substring(identifierNode.from, identifierNode.to) : '';
-              unwrap += `| unwrap ${query.substring(node.from, node.to)}(${identifier})`;
+              unwrap += `| unwrap ${query.substring(node.from, node.to)}(${identifier}) `;
+              return;
+
+            case LabelFilter:
+              unwrap += formatLabelFilter(node, query);
               return;
           }
         });
