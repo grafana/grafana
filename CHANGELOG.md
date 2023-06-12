@@ -201,8 +201,7 @@
 
 ### Breaking changes
 
-The deprecated `plugin:build` command in the Grafana Toolkit have been removed in this release. The replacement [`create-plugin`](https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/) tool is recommended for plugin development.
-Issue [#67485](https://github.com/grafana/grafana/issues/67485)
+The deprecated `plugin:build` command in the Grafana Toolkit have been removed in this release. The replacement [`create-plugin`](https://github.com/grafana/plugin-tools/tree/main/packages/create-plugin/) tool is recommended for plugin development. Issue [#67485](https://github.com/grafana/grafana/issues/67485)
 
 The deprecated `package:build`, `node-version-check` and `toolkit:build` commands in the Grafana Toolkit have been removed in this release. Issue [#67475](https://github.com/grafana/grafana/issues/67475)
 
@@ -240,8 +239,7 @@ We've removed some now unused properties from the `NavModel` interface. Issue [#
 
 We removed previously deprecated components from `@grafana/data` : `getLogLevel`, `getLogLevelFromKey`, `addLogLevelToSeries`, `LogsParser`, `LogsParsers`, `calculateFieldStats`, `calculateLogsLabelStats`, `calculateStats`, `getParser`, `sortInAscendingOrder`, `sortInDescendingOrder`, `sortLogsResult`, `sortLogRows`, `checkLogsError`, `escapeUnescapedString`. Issue [#66271](https://github.com/grafana/grafana/issues/66271)
 
-We removed previously deprecated components from `@grafana/ui` : `LogLabels`, `LogMessageAnsi`, `LogRows`, `getLogRowStyles`.
-Issue [#66268](https://github.com/grafana/grafana/issues/66268)
+We removed previously deprecated components from `@grafana/ui` : `LogLabels`, `LogMessageAnsi`, `LogRows`, `getLogRowStyles`. Issue [#66268](https://github.com/grafana/grafana/issues/66268)
 
 We removed previously deprecated `DataSourceWithLogsVolumeSupport` that was replaced with `DataSourceWithSupplementaryQueriesSupport`. Both APIs are for internal use only. Issue [#66266](https://github.com/grafana/grafana/issues/66266)
 
@@ -265,7 +263,7 @@ return (
 
 After:
 
-````
+```
 const [isOpen, setIsOpen] = useState(false);
 
 ...
@@ -275,12 +273,11 @@ return (
 <ToolbarButton iconOnly icon="plus" isOpen={isOpen} aria-label="New" />
 </Dropdown>
 );
-``` Issue [#65467](https://github.com/grafana/grafana/issues/65467)
+```
 
-(relevant for plugin developers) The deprecated internal `dashboardId` is now removed from the request context.  For usage tracking use the `dashboardUid`
+Issue [#65467](https://github.com/grafana/grafana/issues/65467)
 
-
- Issue [#64786](https://github.com/grafana/grafana/issues/64786)
+(relevant for plugin developers) The deprecated internal `dashboardId` is now removed from the request context. For usage tracking use the `dashboardUid` Issue [#64786](https://github.com/grafana/grafana/issues/64786)
 
 Grafana has been upgraded to React 18 and now leverages the new React client rendering API. Plugin authors in particular should be aware, as there could be unintended side effects due to the changes around automatic batching of state updates and consistent `useEffect` timings. Be sure to test your plugins and reference the React 18 upgrade docs here: https://react.dev/blog/2022/03/08/react-18-upgrade-guide Issue [#64428](https://github.com/grafana/grafana/issues/64428)
 
@@ -2689,7 +2686,7 @@ await selectOptionInTest(selectEl, 'Option 2');
 import { select } from 'react-select-event';
 // ...test usage
 await select(selectEl, 'Option 2', { container: document.body });
-````
+```
 
 Issue [#50442](https://github.com/grafana/grafana/issues/50442)
 

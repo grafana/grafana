@@ -113,6 +113,7 @@ Experimental features might be changed or removed without prior notice.
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
+| `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 
 ## Development feature toggles
 
