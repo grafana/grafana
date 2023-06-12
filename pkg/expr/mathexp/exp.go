@@ -7,7 +7,9 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Expr holds a parsed math command expression.
@@ -24,6 +26,8 @@ type State struct {
 	//  - Unions (How many result A and many Result B in case A + B are joined)
 	//  - NaN/Null behavior
 	RefID string
+
+	tracer tracing.Tracer
 }
 
 // Vars holds the results of datasource queries or other expression commands.
@@ -43,11 +47,13 @@ func New(expr string, funcs ...map[string]parse.Func) (*Expr, error) {
 }
 
 // Execute applies a parse expression to the context and executes it
-func (e *Expr) Execute(refID string, vars Vars) (r Results, err error) {
+func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Results, err error) {
 	s := &State{
 		Expr:  e,
 		Vars:  vars,
 		RefID: refID,
+
+		tracer: tracer,
 	}
 	return e.executeState(s)
 }
@@ -117,6 +123,8 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 			newVal, err = e.unaryNumber(rt, node.OpStr)
 		case Series:
 			newVal, err = e.unarySeries(rt, node.OpStr)
+		case NoData:
+			newVal = NoData{}.New()
 		default:
 			return newResults, fmt.Errorf("can not perform a unary operation on type %v", rt.Type())
 		}
@@ -133,18 +141,14 @@ func (e *State) unarySeries(s Series, op string) (Series, error) {
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		newF, err := unaryOp(op, *f)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &newF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &newF)
 	}
 	return newSeries, nil
 }
@@ -196,8 +200,20 @@ type Union struct {
 // number of tags.
 func union(aResults, bResults Results) []*Union {
 	unions := []*Union{}
-	if len(aResults.Values) == 0 || len(bResults.Values) == 0 {
+	aValueLen := len(aResults.Values)
+	bValueLen := len(bResults.Values)
+	if aValueLen == 0 || bValueLen == 0 {
 		return unions
+	}
+	if aValueLen == 1 || bValueLen == 1 {
+		if aResults.Values[0].Type() == parse.TypeNoData || bResults.Values[0].Type() == parse.TypeNoData {
+			unions = append(unions, &Union{
+				Labels: nil,
+				A:      aResults.Values[0],
+				B:      bResults.Values[0],
+			})
+			return unions
+		}
 	}
 	for _, a := range aResults.Values {
 		for _, b := range bResults.Values {
@@ -280,6 +296,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// Scalar op Series
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -296,6 +314,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// case Series op Series
 			case Series:
 				value, err = e.biSeriesSeries(uni.Labels, node.OpStr, at, bt)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -310,9 +330,13 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 				value, err = e.biScalarNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
+			case NoData:
+				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
+		case NoData:
+			value = uni.A
 		default:
 			return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 		}
@@ -437,9 +461,7 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 		nF := math.NaN()
 		t, f := s.GetPoint(i)
 		if f == nil || scalarVal == nil {
-			if err := newSeries.SetPoint(i, t, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.SetPoint(i, t, nil)
 			continue
 		}
 		if seriesFirst {
@@ -450,9 +472,7 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.SetPoint(i, t, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.SetPoint(i, t, &nF)
 	}
 	return newSeries, nil
 }
@@ -475,18 +495,14 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 			continue
 		}
 		if aF == nil || bF == nil {
-			if err := newSeries.AppendPoint(aIdx, aTime, nil); err != nil {
-				return newSeries, err
-			}
+			newSeries.AppendPoint(aTime, nil)
 			continue
 		}
 		nF, err := binaryOp(op, *aF, *bF)
 		if err != nil {
 			return newSeries, err
 		}
-		if err := newSeries.AppendPoint(aIdx, aTime, &nF); err != nil {
-			return newSeries, err
-		}
+		newSeries.AppendPoint(aTime, &nF)
 	}
 	return newSeries, nil
 }

@@ -1,4 +1,6 @@
-Right now Tempo is before stable release so this uses :latest tag which means there can be changes depending on when
-you pull the image.
-
-For adding some traces easily you can run Loki block and enable tracing (see ../loki/README.md)
+This devenv docker-compose.yaml will allow you to;
+- search traces
+- view traces
+- upload/download trace JSON files
+- view service graphs
+- search traces via Loki

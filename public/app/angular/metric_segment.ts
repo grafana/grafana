@@ -1,9 +1,10 @@
-import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
 import $ from 'jquery';
-import coreModule from './core_module';
+import { debounce, find, indexOf, map, escape, unescape } from 'lodash';
+
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-/** @ngInject */
+import coreModule from './core_module';
+
 export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv) {
   const inputTemplate =
     '<input type="text" data-provide="typeahead" ' +
@@ -186,7 +187,6 @@ export function metricSegment($compile: any, $sce: any, templateSrv: TemplateSrv
   };
 }
 
-/** @ngInject */
 export function metricSegmentModel(uiSegmentSrv: any) {
   return {
     template:
@@ -262,5 +262,5 @@ export function metricSegmentModel(uiSegmentSrv: any) {
   };
 }
 
-coreModule.directive('metricSegment', metricSegment);
-coreModule.directive('metricSegmentModel', metricSegmentModel);
+coreModule.directive('metricSegment', ['$compile', '$sce', 'templateSrv', metricSegment]);
+coreModule.directive('metricSegmentModel', ['uiSegmentSrv', metricSegmentModel]);

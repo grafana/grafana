@@ -1,10 +1,6 @@
 // Use the real plugin_loader (stubbed by default)
 jest.unmock('app/features/plugins/plugin_loader');
 
-(global as any).ace = {
-  define: jest.fn(),
-};
-
 jest.mock('app/core/core', () => {
   return {
     coreModule: {
@@ -13,8 +9,8 @@ jest.mock('app/core/core', () => {
   };
 });
 
-import { SystemJS } from '@grafana/runtime';
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
+import { SystemJS } from '@grafana/runtime';
 
 // Loaded after the `unmock` abve
 import { importAppPlugin } from '../plugin_loader';

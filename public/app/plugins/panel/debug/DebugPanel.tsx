@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
+
 import { PanelProps } from '@grafana/data';
 
-import { DebugPanelOptions, DebugMode } from './types';
+import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
-import { CursorView } from './CursorView';
 import { StateView } from './StateView';
+import { Options, DebugMode } from './panelcfg.gen';
 
-type Props = PanelProps<DebugPanelOptions>;
+type Props = PanelProps<Options>;
 
 export class DebugPanel extends Component<Props> {
   render() {

@@ -1,19 +1,59 @@
 package ualert
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"testing"
 
-	"xorm.io/xorm"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/stretchr/testify/require"
 )
+
+var MigTitle = migTitle
+var RmMigTitle = rmMigTitle
+var ClearMigrationEntryTitle = clearMigrationEntryTitle
+
+type RmMigration = rmMigration
+
+// UnmarshalJSON implements the json.Unmarshaler interface for Matchers. Vendored from definitions.ObjectMatchers.
+func (m *ObjectMatchers) UnmarshalJSON(data []byte) error {
+	var rawMatchers [][3]string
+	if err := json.Unmarshal(data, &rawMatchers); err != nil {
+		return err
+	}
+	for _, rawMatcher := range rawMatchers {
+		var matchType labels.MatchType
+		switch rawMatcher[1] {
+		case "=":
+			matchType = labels.MatchEqual
+		case "!=":
+			matchType = labels.MatchNotEqual
+		case "=~":
+			matchType = labels.MatchRegexp
+		case "!~":
+			matchType = labels.MatchNotRegexp
+		default:
+			return fmt.Errorf("unsupported match type %q in matcher", rawMatcher[1])
+		}
+
+		rawMatcher[2] = strings.TrimPrefix(rawMatcher[2], "\"")
+		rawMatcher[2] = strings.TrimSuffix(rawMatcher[2], "\"")
+
+		matcher, err := labels.NewMatcher(matchType, rawMatcher[0], rawMatcher[2])
+		if err != nil {
+			return err
+		}
+		*m = append(*m, matcher)
+	}
+	sort.Sort(labels.Matchers(*m))
+	return nil
+}
 
 func Test_validateAlertmanagerConfig(t *testing.T) {
 	tc := []struct {
@@ -25,14 +65,14 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 			name: "when a slack receiver does not have a valid URL - it should error",
 			receivers: []*PostableGrafanaReceiver{
 				{
-					UID:            util.GenerateShortUID(),
+					UID:            "test-uid",
 					Name:           "SlackWithBadURL",
 					Type:           "slack",
 					Settings:       simplejson.NewFromAny(map[string]interface{}{}),
 					SecureSettings: map[string]string{"url": invalidUri},
 				},
 			},
-			err: fmt.Errorf("failed to validate receiver \"SlackWithBadURL\" of type \"slack\": invalid URL %q: parse %q: net/url: invalid control character in URL", invalidUri, invalidUri),
+			err: fmt.Errorf("failed to validate integration \"SlackWithBadURL\" (UID test-uid) of type \"slack\": invalid URL %q", invalidUri),
 		},
 		{
 			name: "when a slack receiver has an invalid recipient - it should not error",
@@ -63,110 +103,16 @@ func Test_validateAlertmanagerConfig(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			mg := newTestMigration(t)
-			orgID := int64(1)
 
 			config := configFromReceivers(t, tt.receivers)
 			require.NoError(t, config.EncryptSecureSettings()) // make sure we encrypt the settings
-			err := mg.validateAlertmanagerConfig(orgID, config)
+			err := mg.validateAlertmanagerConfig(config)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.err.Error())
 			} else {
 				require.NoError(t, err)
 			}
-		})
-	}
-}
-
-func TestCheckUnifiedAlertingEnabledByDefault(t *testing.T) {
-	testDB := sqlutil.SQLite3TestDB()
-	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-	require.NoError(t, err)
-	_, err = x.Exec("CREATE TABLE alert ( id bigint )")
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_, err = x.Exec("DROP TABLE alert")
-		require.NoError(t, err)
-	})
-
-	tests := []struct {
-		title                   string
-		legacyAlertExists       bool
-		legacyIsDefined         bool
-		legacyValue             bool
-		expectedUnifiedAlerting bool
-	}{
-		{
-			title:                   "enable unified alerting when there are no legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are no legacy alerts and legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       false,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "enable unified alerting when there are legacy alerts but legacy disabled",
-			legacyIsDefined:         true,
-			legacyValue:             false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: true,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts",
-			legacyIsDefined:         false,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-		{
-			title:                   "disable unified alerting when there are legacy alerts and it is enabled",
-			legacyIsDefined:         true,
-			legacyValue:             true,
-			legacyAlertExists:       true,
-			expectedUnifiedAlerting: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.title, func(t *testing.T) {
-			setting.AlertingEnabled = nil
-			if test.legacyIsDefined {
-				value := test.legacyValue
-				setting.AlertingEnabled = &value
-			}
-
-			if test.legacyAlertExists {
-				_, err := x.Exec("INSERT INTO alert VALUES (1)")
-				require.NoError(t, err)
-			} else {
-				_, err := x.Exec("DELETE FROM alert")
-				require.NoError(t, err)
-			}
-
-			cfg := setting.Cfg{
-				UnifiedAlerting: setting.UnifiedAlertingSettings{
-					Enabled: nil,
-				},
-			}
-			mg := migrator.NewMigrator(x, &cfg)
-
-			err := CheckUnifiedAlertingEnabledByDefault(mg)
-			require.NoError(t, err)
-			require.NotNil(t, setting.AlertingEnabled)
-			require.NotNil(t, cfg.UnifiedAlerting.Enabled)
-			require.Equal(t, *cfg.UnifiedAlerting.Enabled, test.expectedUnifiedAlerting)
-			require.Equal(t, *setting.AlertingEnabled, !test.expectedUnifiedAlerting)
 		})
 	}
 }
@@ -183,4 +129,66 @@ func configFromReceivers(t *testing.T, receivers []*PostableGrafanaReceiver) *Po
 	}
 }
 
+func (c *PostableUserConfig) EncryptSecureSettings() error {
+	for _, r := range c.AlertmanagerConfig.Receivers {
+		for _, gr := range r.GrafanaManagedReceivers {
+			encryptedData := GetEncryptedJsonData(gr.SecureSettings)
+			for k, v := range encryptedData {
+				gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(v)
+			}
+		}
+	}
+	return nil
+}
+
 const invalidUri = "�6�M��)uk譹1(�h`$�o�N>mĕ����cS2�dh![ę�	���`csB�!��OSxP�{�"
+
+func Test_getAlertFolderNameFromDashboard(t *testing.T) {
+	t.Run("should include full title", func(t *testing.T) {
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: "TEST",
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Contains(t, folder, dash.Title)
+		require.Contains(t, folder, dash.Uid)
+	})
+	t.Run("should cut title to the length", func(t *testing.T) {
+		title := ""
+		for {
+			title += util.GenerateShortUID()
+			if len(title) > MaxFolderName {
+				title = title[:MaxFolderName]
+				break
+			}
+		}
+
+		dash := &dashboard{
+			Uid:   util.GenerateShortUID(),
+			Title: title,
+		}
+		folder := getAlertFolderNameFromDashboard(dash)
+		require.Len(t, folder, MaxFolderName)
+		require.Contains(t, folder, dash.Uid)
+	})
+}
+
+func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
+	s := uidSet{
+		set:             make(map[string]struct{}),
+		caseInsensitive: true,
+	}
+
+	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
+	for i := 0; i < 10000; i++ {
+		_, _ = s.generateUid()
+	}
+
+	// check if any are case-insensitive duplicates.
+	deduped := make(map[string]struct{})
+	for k := range s.set {
+		deduped[strings.ToLower(k)] = struct{}{}
+	}
+
+	require.Equal(t, len(s.set), len(deduped))
+}

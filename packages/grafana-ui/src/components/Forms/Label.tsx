@@ -1,7 +1,9 @@
-import React from 'react';
-import { useTheme2, stylesFactory } from '../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2, stylesFactory } from '../../themes';
 import { Icon } from '../Icon/Icon';
 
 export interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
@@ -44,7 +46,7 @@ export const getLabelStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-export const Label: React.FC<LabelProps> = ({ children, description, className, category, ...labelProps }) => {
+export const Label = ({ children, description, className, category, ...labelProps }: LabelProps) => {
   const theme = useTheme2();
   const styles = getLabelStyles(theme);
   const categories = category?.map((c, i) => {

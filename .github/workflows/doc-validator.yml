@@ -1,0 +1,29 @@
+name: "doc-validator"
+on:
+  pull_request:
+    paths: ["docs/sources/**"]
+  workflow_dispatch:
+jobs:
+  doc-validator:
+    runs-on: "ubuntu-latest"
+    container:
+      image: "grafana/doc-validator:v3.0.0"
+    steps:
+      - name: "Checkout code"
+        uses: "actions/checkout@v3"
+      - name: "Run doc-validator tool"
+        # Only run doc-validator on specific directories.
+        run: >
+          doc-validator
+          '--include=^docs/sources/(?:alerting|fundamentals|getting-started|introduction|setup-grafana|upgrade-guide|whatsnew/whats-new-in-v(?:9|10))/.+\.md$'
+          '--skip-checks=^(?:image.+|canonical-does-not-match-pretty-URL)$'
+          ./docs/sources
+          /docs/grafana/latest
+          | reviewdog
+          -f=rdjsonl
+          --fail-on-error
+          --filter-mode=nofilter
+          --name=doc-validator
+          --reporter=github-pr-review
+        env:
+          REVIEWDOG_GITHUB_API_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

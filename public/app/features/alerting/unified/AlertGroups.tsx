@@ -1,37 +1,54 @@
+import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { useDispatch } from 'app/types';
+
+import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
+
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
-import { fetchAlertGroupsAction } from './state/actions';
-
-import { initialAsyncRequestState } from './utils/redux';
-import { getFiltersFromUrlParams } from './utils/misc';
-import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
-
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
-import { css } from '@emotion/css';
+import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { fetchAlertGroupsAction } from './state/actions';
+import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
+import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
+import { getFiltersFromUrlParams } from './utils/misc';
+import { initialAsyncRequestState } from './utils/redux';
 
 const AlertGroups = () => {
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+
+  const alertManagers = useAlertManagersByPermission('instance');
+  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
+  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
+
   const alertGroups = useUnifiedAlertingSelector((state) => state.amAlertGroups);
-  const { loading, error, result: results = [] } =
-    alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
+  const {
+    loading,
+    error,
+    result: results = [],
+  } = alertGroups[alertManagerSourceName || ''] ?? initialAsyncRequestState;
 
   const groupedAlerts = useGroupedAlerts(results, groupBy);
   const filteredAlertGroups = useFilteredAmGroups(groupedAlerts);
+
+  const grafanaAmDeliveryDisabled =
+    alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME &&
+    amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
 
   useEffect(() => {
     function fetchNotifications() {
@@ -46,6 +63,14 @@ const AlertGroups = () => {
     };
   }, [dispatch, alertManagerSourceName]);
 
+  if (!alertManagerSourceName) {
+    return (
+      <AlertingPageWrapper pageId="groups">
+        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
+      </AlertingPageWrapper>
+    );
+  }
+
   return (
     <AlertingPageWrapper pageId="groups">
       <AlertGroupFilter groups={results} />
@@ -55,6 +80,14 @@ const AlertGroups = () => {
           {error.message || 'Unknown error'}
         </Alert>
       )}
+
+      {grafanaAmDeliveryDisabled && (
+        <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
+          Grafana is configured to send alerts to external alertmanagers only. No alerts are expected to be available
+          here for the selected Alertmanager.
+        </Alert>
+      )}
+
       {results &&
         filteredAlertGroups.map((group, index) => {
           return (

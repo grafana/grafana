@@ -1,18 +1,22 @@
-import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
+import React, { HTMLProps, useRef } from 'react';
+
 import { GrafanaTheme2, deprecationWarning } from '@grafana/data';
+
 import { stylesFactory, useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
-  /** Make switch's background and border transparent */
+  /** Make inline switch's background and border transparent */
   transparent?: boolean;
+  /** Show an invalid state around the input */
+  invalid?: boolean;
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled, onChange, id, ...inputProps }, ref) => {
+  ({ value, checked, onChange, id, label, disabled, invalid = false, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -22,19 +26,19 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
     const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
     return (
-      <div className={cx(styles.switch)}>
+      <div className={cx(styles.switch, invalid && styles.invalid)}>
         <input
           type="checkbox"
           disabled={disabled}
           checked={value}
           onChange={(event) => {
-            onChange?.(event);
+            !disabled && onChange?.(event);
           }}
           id={switchIdRef.current}
           {...inputProps}
           ref={ref}
         />
-        <label htmlFor={switchIdRef.current} />
+        <label htmlFor={switchIdRef.current} aria-label={label ?? 'Toggle switch'} />
       </div>
     );
   }
@@ -47,12 +51,14 @@ export interface InlineSwitchProps extends Props {
 }
 
 export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps>(
-  ({ transparent, showLabel, label, value, id, ...props }, ref) => {
+  ({ transparent, className, showLabel, label, value, id, invalid, ...props }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme, transparent);
 
     return (
-      <div className={styles.inlineContainer}>
+      <div
+        className={cx(styles.inlineContainer, className, props.disabled && styles.disabled, invalid && styles.invalid)}
+      >
         {showLabel && (
           <label
             htmlFor={id}
@@ -116,7 +122,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
         height: 100%;
         cursor: pointer;
         border: none;
-        border-radius: 50px;
+        border-radius: ${theme.shape.radius.pill};
         background: ${theme.components.input.background};
         border: 1px solid ${theme.components.input.borderColor};
         transition: all 0.3s ease;
@@ -131,7 +137,7 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
           content: '';
           width: 12px;
           height: 12px;
-          border-radius: 6px;
+          border-radius: ${theme.shape.radius.circle};
           background: ${theme.colors.text.secondary};
           box-shadow: ${theme.shadows.z1};
           top: 50%;
@@ -157,6 +163,11 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
         }
       }
     `,
+    disabled: css`
+      background-color: rgba(204, 204, 220, 0.04);
+      color: rgba(204, 204, 220, 0.6);
+      border: 1px solid rgba(204, 204, 220, 0.04);
+    `,
     inlineLabel: css`
       cursor: pointer;
       padding-right: ${theme.spacing(1)};
@@ -165,6 +176,13 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
     `,
     inlineLabelEnabled: css`
       color: ${theme.colors.text.primary};
+    `,
+    invalid: css`
+      input + label,
+      input:checked + label,
+      input:hover + label {
+        border: 1px solid ${theme.colors.error.border};
+      }
     `,
   };
 });

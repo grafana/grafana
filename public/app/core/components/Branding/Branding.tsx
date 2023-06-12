@@ -1,15 +1,16 @@
-import React, { FC } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme2, styleMixins } from '@grafana/ui';
+import React, { FC } from 'react';
+
 import { colorManipulator } from '@grafana/data';
+import { useTheme2, styleMixins } from '@grafana/ui';
 
 export interface BrandComponentProps {
   className?: string;
   children?: JSX.Element | JSX.Element[];
 }
 
-const LoginLogo: FC<BrandComponentProps> = ({ className }) => {
-  return <img className={className} src="public/img/grafana_icon.svg" alt="Grafana" />;
+export const LoginLogo: FC<BrandComponentProps & { logo?: string }> = ({ className, logo }) => {
+  return <img className={className} src={`${logo ? logo : 'public/img/grafana_icon.svg'}`} alt="Grafana" />;
 };
 
 const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {

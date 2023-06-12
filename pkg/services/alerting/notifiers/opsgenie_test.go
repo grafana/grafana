@@ -6,17 +6,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/encryption/ossencryption"
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/tag"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestOpsGenieNotifier(t *testing.T) {
+	encryptionService := encryptionservice.SetupTestService(t)
+
 	t.Run("Parsing alert notification from settings", func(t *testing.T) {
 		t.Run("empty settings should return error", func(t *testing.T) {
 			json := `{ }`
@@ -28,7 +32,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -45,7 +49,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			not, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			opsgenieNotifier := not.(*OpsGenieNotifier)
 
 			require.Nil(t, err)
@@ -69,7 +73,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue)
+			_, err := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 			require.Equal(t, reflect.TypeOf(err), reflect.TypeOf(alerting.ValidationError{}))
 			require.True(t, strings.HasSuffix(err.Error(), "Invalid value for sendTagsAs: \"not_a_valid_value\""))
@@ -80,7 +84,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "apiKey": "abcdefgh0123456789"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -92,7 +96,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+			notificationService := notifications.MockNotificationService()
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -102,21 +107,19 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, &validations.OSSPluginRequestValidator{})
+			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
-				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
-				if err == nil {
-					tags = bodyJSON.Get("tags").MustStringArray([]string{})
-					details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
-				}
-				return err
-			})
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
+
+			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
+			if err == nil {
+				tags = bodyJSON.Get("tags").MustStringArray([]string{})
+				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)
@@ -130,7 +133,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "details"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -142,7 +145,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+			notificationService := notifications.MockNotificationService()
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -152,21 +156,19 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
-				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
-				if err == nil {
-					tags = bodyJSON.Get("tags").MustStringArray([]string{})
-					details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
-				}
-				return err
-			})
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
+
+			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
+			if err == nil {
+				tags = bodyJSON.Get("tags").MustStringArray([]string{})
+				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)
@@ -180,7 +182,7 @@ func TestOpsGenieNotifier(t *testing.T) {
           "sendTagsAs": "both"
 				}`
 
-			tagPairs := []*models.Tag{
+			tagPairs := []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "aKey", Value: "aValue"},
 			}
@@ -192,7 +194,8 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			notifier, notifierErr := NewOpsGenieNotifier(model, ossencryption.ProvideService().GetDecryptedValue) // unhandled error
+			notificationService := notifications.MockNotificationService()
+			notifier, notifierErr := NewOpsGenieNotifier(model, encryptionService.GetDecryptedValue, notificationService) // unhandled error
 
 			opsgenieNotifier := notifier.(*OpsGenieNotifier)
 
@@ -202,21 +205,19 @@ func TestOpsGenieNotifier(t *testing.T) {
 				Message:       "someMessage",
 				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
-			}, nil)
+			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
 
 			tags := make([]string, 0)
 			details := make(map[string]interface{})
-			bus.AddHandler("alerting", func(ctx context.Context, cmd *models.SendWebhookSync) error {
-				bodyJSON, err := simplejson.NewJson([]byte(cmd.Body))
-				if err == nil {
-					tags = bodyJSON.Get("tags").MustStringArray([]string{})
-					details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
-				}
-				return err
-			})
 
 			alertErr := opsgenieNotifier.createAlert(evalContext)
+
+			bodyJSON, err := simplejson.NewJson([]byte(notificationService.Webhook.Body))
+			if err == nil {
+				tags = bodyJSON.Get("tags").MustStringArray([]string{})
+				details = bodyJSON.Get("details").MustMap(map[string]interface{}{})
+			}
 
 			require.Nil(t, notifierErr)
 			require.Nil(t, alertErr)

@@ -1,17 +1,18 @@
-import React from 'react';
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
 import { css } from '@emotion/css';
-import { selectors } from '@grafana/e2e-selectors';
-import { VisualizationButton } from './VisualizationButton';
-import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { useSelector } from 'react-redux';
-import { StoreState } from 'app/types';
-import { VisualizationSelectPane } from './VisualizationSelectPane';
-import { usePanelLatestData } from './usePanelLatestData';
-import { OptionPaneRenderProps } from './types';
+import React from 'react';
 
-export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { useStyles2 } from '@grafana/ui';
+import { useSelector } from 'app/types';
+
+import { OptionsPaneOptions } from './OptionsPaneOptions';
+import { VisualizationButton } from './VisualizationButton';
+import { VisualizationSelectPane } from './VisualizationSelectPane';
+import { OptionPaneRenderProps } from './types';
+import { usePanelLatestData } from './usePanelLatestData';
+
+export const OptionsPane = ({
   plugin,
   panel,
   onFieldConfigsChange,
@@ -19,9 +20,9 @@ export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   onPanelConfigChange,
   dashboard,
   instanceState,
-}) => {
-  const styles = useStyles(getStyles);
-  const isVizPickerOpen = useSelector((state: StoreState) => state.panelEditor.isVizPickerOpen);
+}: OptionPaneRenderProps) => {
+  const styles = useStyles2(getStyles);
+  const isVizPickerOpen = useSelector((state) => state.panelEditor.isVizPickerOpen);
   const { data } = usePanelLatestData(panel, { withTransforms: true, withFieldConfig: false }, true);
 
   return (
@@ -50,7 +51,7 @@ export const OptionsPane: React.FC<OptionPaneRenderProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
       height: 100%;
@@ -65,7 +66,7 @@ const getStyles = (theme: GrafanaTheme) => {
       min-height: 0;
     `,
     vizButtonWrapper: css`
-      padding: 0 ${theme.spacing.md} ${theme.spacing.md} 0;
+      padding: 0 ${theme.spacing(2, 2)} 0;
     `,
     legacyOptions: css`
       label: legacy-options;
@@ -77,12 +78,12 @@ const getStyles = (theme: GrafanaTheme) => {
         margin-bottom: 0;
       }
       .panel-options-group__body {
-        padding: ${theme.spacing.md} 0;
+        padding: ${theme.spacing(2)} 0;
       }
 
       .section {
         display: block;
-        margin: ${theme.spacing.md} 0;
+        margin: ${theme.spacing(2)} 0;
 
         &:first-child {
           margin-top: 0;

@@ -1,18 +1,32 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
-import { MetricQuery } from '../types';
+
 import { getAlignmentPickerData } from '../functions';
-import { SELECT_WIDTH } from '../constants';
+import { PreprocessorType, SLOQuery, TimeSeriesList } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 export interface Props {
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  inputId: string;
+  onChange: (query: TimeSeriesList | SLOQuery) => void;
+  query: TimeSeriesList | SLOQuery;
   templateVariableOptions: Array<SelectableValue<string>>;
+  metricDescriptor?: MetricDescriptor;
+  preprocessor?: PreprocessorType;
 }
 
-export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, onChange }) => {
-  const { valueType, metricKind, perSeriesAligner: psa, preprocessor } = query;
+export const AlignmentFunction = ({
+  inputId,
+  query,
+  templateVariableOptions,
+  onChange,
+  metricDescriptor,
+  preprocessor,
+}: Props) => {
+  const { perSeriesAligner: psa } = query;
+  let { valueType, metricKind } = metricDescriptor || {};
+
   const { perSeriesAligner, alignOptions } = useMemo(
     () => getAlignmentPickerData(valueType, metricKind, psa, preprocessor),
     [valueType, metricKind, psa, preprocessor]
@@ -20,8 +34,6 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
 
   return (
     <Select
-      menuShouldPortal
-      width={SELECT_WIDTH}
       onChange={({ value }) => onChange({ ...query, perSeriesAligner: value! })}
       value={[...alignOptions, ...templateVariableOptions].find((s) => s.value === perSeriesAligner)}
       options={[
@@ -36,6 +48,8 @@ export const AlignmentFunction: FC<Props> = ({ query, templateVariableOptions, o
         },
       ]}
       placeholder="Select Alignment"
-    ></Select>
+      inputId={inputId}
+      menuPlacement="top"
+    />
   );
 };

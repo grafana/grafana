@@ -2,15 +2,17 @@ name: PR automation
 on:
   pull_request_target:
     types:
+      - labeled
       - opened
       - synchronize
-
+concurrency:
+  group: pr-commands-${{ github.event.number }}
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions

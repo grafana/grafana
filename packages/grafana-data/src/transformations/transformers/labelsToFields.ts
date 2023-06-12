@@ -1,18 +1,19 @@
 import { map } from 'rxjs/operators';
 
-import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
-import { DataTransformerID } from './ids';
-import { ArrayVector } from '../../vector';
 import { getFieldDisplayName } from '../..';
+import { DataFrame, Field, FieldType, SynchronousDataTransformerInfo } from '../../types';
+
+import { DataTransformerID } from './ids';
 
 export enum LabelsToFieldsMode {
   Columns = 'columns', // default mode
   Rows = 'rows',
 }
+
 export interface LabelsToFieldsOptions {
   mode?: LabelsToFieldsMode;
 
-  /** When empty, this will keep all labels, otherise it will keep only labels matching the value */
+  /** When empty, this will keep all labels, otherwise it will keep only labels matching the value */
   keepLabels?: string[];
 
   /**
@@ -27,7 +28,8 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
   description: 'Extract time series labels to fields (columns or rows)',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => labelsToFieldsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => labelsToFieldsTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: LabelsToFieldsOptions) => (data: DataFrame[]) => {
     // Show each label as a field row
@@ -51,7 +53,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           ...field,
           config: {
             ...field.config,
-            // we need to clear thes for this transform as these can contain label names that we no longer want
+            // we need to clear these for this transform as these can contain label names that we no longer want
             displayName: undefined,
             displayNameFromDS: undefined,
           },
@@ -70,7 +72,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
             continue;
           }
 
-          const uniqueValues = (uniqueLabels[labelName] ||= new Set());
+          const uniqueValues = uniqueLabels[labelName] ?? (uniqueLabels[labelName] = new Set()); // (Safari 13.1 lacks ??= support)
           uniqueValues.add(field.labels[labelName]);
         }
       }
@@ -81,13 +83,14 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
           newFields.push({
             name: name,
             type: FieldType.string,
-            values: new ArrayVector(values),
+            values: values,
             config: {},
           });
         }
       }
 
       result.push({
+        ...frame,
         fields: newFields,
         length: frame.length,
       });
@@ -120,8 +123,8 @@ function convertLabelsToRows(data: DataFrame[], keepLabels?: string[]): DataFram
             ...frame,
             name: getFieldDisplayName(field, frame, data),
             fields: [
-              { name: 'label', type: FieldType.string, config: {}, values: new ArrayVector(keys) },
-              { name: 'value', type: FieldType.string, config: {}, values: new ArrayVector(vals) },
+              { name: 'label', type: FieldType.string, config: {}, values: keys },
+              { name: 'value', type: FieldType.string, config: {}, values: vals },
             ],
             length: vals.length,
           });

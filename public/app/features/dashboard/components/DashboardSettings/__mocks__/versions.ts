@@ -2,6 +2,7 @@ export const versions = [
   {
     id: 249,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 10,
     restoredFrom: 0,
     version: 11,
@@ -12,6 +13,7 @@ export const versions = [
   {
     id: 247,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 9,
     restoredFrom: 0,
     version: 10,
@@ -22,6 +24,7 @@ export const versions = [
   {
     id: 246,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 8,
     restoredFrom: 0,
     version: 9,
@@ -32,6 +35,7 @@ export const versions = [
   {
     id: 245,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 7,
     restoredFrom: 0,
     version: 8,
@@ -42,6 +46,7 @@ export const versions = [
   {
     id: 239,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 6,
     restoredFrom: 0,
     version: 7,
@@ -52,6 +57,7 @@ export const versions = [
   {
     id: 237,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 5,
     restoredFrom: 0,
     version: 6,
@@ -62,6 +68,7 @@ export const versions = [
   {
     id: 236,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 4,
     restoredFrom: 0,
     version: 5,
@@ -72,6 +79,7 @@ export const versions = [
   {
     id: 218,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 3,
     restoredFrom: 0,
     version: 4,
@@ -82,6 +90,7 @@ export const versions = [
   {
     id: 217,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 2,
     restoredFrom: 0,
     version: 3,
@@ -92,6 +101,7 @@ export const versions = [
   {
     id: 216,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 1,
     restoredFrom: 0,
     version: 2,
@@ -102,6 +112,7 @@ export const versions = [
   {
     id: 215,
     dashboardId: 74,
+    dashboardUID: '_U4zObQMz',
     parentVersion: 1,
     restoredFrom: 0,
     version: 1,

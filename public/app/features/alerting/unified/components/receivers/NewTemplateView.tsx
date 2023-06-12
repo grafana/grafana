@@ -1,5 +1,7 @@
+import React from 'react';
+
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC } from 'react';
+
 import { TemplateForm } from './TemplateForm';
 
 interface Props {
@@ -7,6 +9,6 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const NewTemplateView: FC<Props> = ({ config, alertManagerSourceName }) => {
+export const NewTemplateView = ({ config, alertManagerSourceName }: Props) => {
   return <TemplateForm config={config} alertManagerSourceName={alertManagerSourceName} />;
 };

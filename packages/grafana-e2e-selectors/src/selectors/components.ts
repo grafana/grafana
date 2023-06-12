@@ -10,6 +10,9 @@
  * @alpha
  */
 export const Components = {
+  Breadcrumbs: {
+    breadcrumb: (title: string) => `data-testid ${title} breadcrumb`,
+  },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
     fromField: 'Time Range from field',
@@ -22,6 +25,12 @@ export const Components = {
     },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
+  DataSourcePermissions: {
+    form: () => 'form[name="addPermission"]',
+    roleType: 'Role to add new permission to',
+    rolePicker: 'Built-in role picker',
+    permissionLevel: 'Permission Level',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -33,7 +42,11 @@ export const Components = {
         seriesCount: 'TestData series count',
         spread: 'TestData spread',
         startValue: 'TestData start value',
+        drop: 'TestData drop values',
       },
+    },
+    DataSourceHttpSettings: {
+      urlInput: 'Datasource HTTP settings url',
     },
     Jaeger: {
       traceIDInput: 'Trace ID',
@@ -59,11 +72,19 @@ export const Components = {
     Panel: {
       title: (title: string) => `data-testid Panel header ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
+      menuItems: (item: string) => `data-testid Panel menu item ${item}`,
+      menu: (title: string) => `data-testid Panel menu ${title}`,
       containerByTitle: (title: string) => `${title} panel`,
       headerCornerInfo: (mode: string) => `Panel header ${mode}`,
+      loadingBar: () => `Panel loading bar`,
+      HoverWidget: {
+        container: 'data-test-id hover-header-container',
+        dragIcon: 'data-testid drag-icon',
+      },
     },
     Visualization: {
       Graph: {
+        container: 'Graph container',
         VisualizationTab: {
           legendSection: 'Legend section',
         },
@@ -103,7 +124,7 @@ export const Components = {
       expand: 'Drawer expand',
       contract: 'Drawer contract',
       close: 'Drawer close',
-      rcContentWrapper: () => '.drawer-content-wrapper',
+      rcContentWrapper: () => '.rc-drawer-content-wrapper',
     },
   },
   PanelEditor: {
@@ -119,10 +140,13 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
-    applyButton: 'panel editor apply',
-    toggleVizPicker: 'toggle-viz-picker',
-    toggleVizOptions: 'toggle-viz-options',
+    applyButton: 'data-testid Apply changes and go back to dashboard',
+    toggleVizPicker: 'data-testid toggle-viz-picker',
+    toggleVizOptions: 'data-testid toggle-viz-options',
     toggleTableView: 'toggle-table-view',
+
+    // [Geomap] Map controls
+    measureButton: 'show measure tools',
   },
   PanelInspector: {
     Data: {
@@ -159,14 +183,19 @@ export const Components = {
   QueryTab: {
     content: 'Query editor tab content',
     queryInspectorButton: 'Query inspector button',
+    queryHistoryButton: 'Rich history button',
     addQuery: 'Query editor add query button',
+  },
+  QueryHistory: {
+    queryText: 'Query text',
   },
   QueryEditorRows: {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title} query operation action`,
+    actionButton: (title: string) => `${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
+    container: (refId: string) => `Query editor row ${refId}`,
   },
   AlertTab: {
     content: 'Alert editor tab content',
@@ -190,11 +219,50 @@ export const Components = {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
+    SpatialOperations: {
+      actionLabel: 'root Action field property editor',
+      locationLabel: 'root Location field property editor',
+      location: {
+        autoOption: 'Auto location option',
+        coords: {
+          option: 'Coords location option',
+          latitudeFieldLabel: 'root Latitude field field property editor',
+          longitudeFieldLabel: 'root Longitude field field property editor',
+        },
+        geohash: {
+          option: 'Geohash location option',
+          geohashFieldLabel: 'root Geohash field field property editor',
+        },
+        lookup: {
+          option: 'Lookup location option',
+          lookupFieldLabel: 'root Lookup field field property editor',
+          gazetteerFieldLabel: 'root Gazetteer field property editor',
+        },
+      },
+    },
     searchInput: 'search transformations',
+  },
+  NavBar: {
+    Configuration: {
+      button: 'Configuration',
+    },
+    Toggle: {
+      button: 'Toggle menu',
+    },
+    Reporting: {
+      button: 'Reporting',
+    },
+  },
+  NavMenu: {
+    item: 'data-testid Nav menu item',
+  },
+  NavToolbar: {
+    container: 'data-testid Nav toolbar',
   },
   PageToolbar: {
     container: () => '.page-toolbar',
     item: (tooltip: string) => `${tooltip}`,
+    itemButton: (title: string) => `data-testid ${title}`,
   },
   QueryEditorToolbarItem: {
     button: (title: string) => `QueryEditor toolbar item button ${title}`,
@@ -233,7 +301,7 @@ export const Components = {
     container: 'data-testid Readonly folder picker select container',
   },
   DataSourcePicker: {
-    container: 'Data source picker select container',
+    container: 'data-testid Data source picker select container',
     /**
      * @deprecated use inputV2 instead
      */
@@ -256,9 +324,15 @@ export const Components = {
     placeholder: 'Choose starting day of the week',
   },
   TraceViewer: {
-    spanBar: () => '[data-test-id="SpanBar--wrapper"]',
+    spanBar: 'data-testid SpanBar--wrapper',
   },
   QueryField: { container: 'Query field' },
+  QueryBuilder: {
+    queryPatterns: 'Query patterns',
+    labelSelect: 'Select label',
+    valueSelect: 'Select value',
+    matchOperatorSelect: 'Select match operator',
+  },
   ValuePicker: {
     button: (name: string) => `Value picker button ${name}`,
     select: (name: string) => `Value picker select ${name}`,
@@ -279,6 +353,8 @@ export const Components = {
     expandFolder: (sectionId: string) => `data-testid Expand folder ${sectionId}`,
     dashboardItem: (item: string) => `${Components.Search.dashboardItems} ${item}`,
     dashboardCard: (item: string) => `data-testid Search card ${item}`,
+    folderHeader: (folderName: string) => `data-testid Folder header ${folderName}`,
+    folderContent: (folderName: string) => `data-testid Folder content ${folderName}`,
     dashboardItems: 'data-testid Dashboard search item',
   },
   DashboardLinks: {
@@ -318,5 +394,34 @@ export const Components = {
   },
   ColorSwatch: {
     name: `data-testid-colorswatch`,
+  },
+  DashboardRow: {
+    title: (title: string) => `data-testid dashboard-row-title-${title}`,
+  },
+  UserProfile: {
+    profileSaveButton: 'data-testid-user-profile-save',
+    preferencesSaveButton: 'data-testid-shared-prefs-save',
+    orgsTable: 'data-testid-user-orgs-table',
+    sessionsTable: 'data-testid-user-sessions-table',
+  },
+  FileUpload: {
+    inputField: 'data-testid-file-upload-input-field',
+    fileNameSpan: 'data-testid-file-upload-file-name',
+  },
+  DebugOverlay: {
+    wrapper: 'debug-overlay',
+  },
+  OrgRolePicker: {
+    input: 'Role',
+  },
+  AnalyticsToolbarButton: {
+    button: 'Dashboard insights',
+  },
+  Variables: {
+    variableOption: 'data-testid variable-option',
+  },
+  Annotations: {
+    annotationsTypeInput: 'annotations-type-input',
+    annotationsChoosePanelInput: 'choose-panels-input',
   },
 };

@@ -1,6 +1,8 @@
 import React from 'react';
-import { GraphiteSegment } from '../types';
+
 import { GraphiteQueryEditorState } from '../state/store';
+import { GraphiteSegment } from '../types';
+
 import { MetricSegment } from './MetricSegment';
 
 type Props = {

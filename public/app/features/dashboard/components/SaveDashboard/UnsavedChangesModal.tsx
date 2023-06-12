@@ -1,8 +1,11 @@
-import React from 'react';
-import { Button, Modal } from '@grafana/ui';
-import { SaveDashboardButton } from './SaveDashboardButton';
-import { DashboardModel } from '../../state';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { Button, Modal } from '@grafana/ui';
+
+import { DashboardModel } from '../../state';
+
+import { SaveDashboardButton } from './SaveDashboardButton';
 
 interface UnsavedChangesModalProps {
   dashboard: DashboardModel;
@@ -11,12 +14,7 @@ interface UnsavedChangesModalProps {
   onSaveSuccess?: () => void;
 }
 
-export const UnsavedChangesModal: React.FC<UnsavedChangesModalProps> = ({
-  dashboard,
-  onSaveSuccess,
-  onDiscard,
-  onDismiss,
-}) => {
+export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDismiss }: UnsavedChangesModalProps) => {
   return (
     <Modal
       isOpen={true}

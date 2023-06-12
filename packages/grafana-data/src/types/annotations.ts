@@ -1,29 +1,22 @@
-import { Observable } from 'rxjs';
 import { ComponentType } from 'react';
+import { Observable } from 'rxjs';
 
-import { QueryEditorProps } from './datasource';
+import { AnnotationQuery as SchemaAnnotationQuery, DataQuery } from '@grafana/schema';
+
 import { DataFrame } from './dataFrame';
-import { DataQuery, DataSourceRef } from './query';
+import { QueryEditorProps } from './datasource';
 
 /**
  * This JSON object is stored in the dashboard json model.
  */
-export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> {
-  datasource?: DataSourceRef | string | null;
-
-  enable: boolean;
-  name: string;
-  iconColor: string;
-  hide?: boolean;
-  builtIn?: number;
-  type?: string;
+export interface AnnotationQuery<TQuery extends DataQuery = DataQuery> extends SchemaAnnotationQuery<TQuery> {
   snapshotData?: any;
-
-  // Standard datasource query
-  target?: TQuery;
 
   // Convert a dataframe to an AnnotationEvent
   mappings?: AnnotationEventMappings;
+
+  // When using the 'grafana' datasource, this may be dashboard
+  type?: string;
 
   // Sadly plugins can set any property directly on the main object
   [key: string]: any;
@@ -33,6 +26,7 @@ export interface AnnotationEvent {
   id?: string;
   annotation?: any;
   dashboardId?: number;
+  dashboardUID?: string;
   panelId?: number;
   userId?: number;
   login?: string;
@@ -50,7 +44,7 @@ export interface AnnotationEvent {
   newState?: string;
 
   // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
+  source?: any; // source.type === 'dashboard' -- should be AnnotationQuery
 }
 
 export interface AnnotationEventUIModel {
@@ -77,6 +71,12 @@ export interface AnnotationEventFieldMapping {
 }
 
 export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, AnnotationEventFieldMapping>>;
+type AnnotationQueryEditorProps<TQuery extends DataQuery> = QueryEditorProps<any, TQuery> & {
+  // Needs to be optional otherwise component not using these cannot be used, even though they are passed on and can be
+  // just ignored if not used.
+  annotation?: AnnotationQuery<TQuery>;
+  onAnnotationChange?: (annotation: AnnotationQuery<TQuery>) => void;
+};
 
 /**
  * Since Grafana 7.2
@@ -86,7 +86,7 @@ export type AnnotationEventMappings = Partial<Record<keyof AnnotationEvent, Anno
 export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno = AnnotationQuery<TQuery>> {
   /**
    * This hook lets you manipulate any existing stored values before running them though the processor.
-   * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object
+   * This is particularly helpful when dealing with migrating old formats.  ie query as a string vs object.
    */
   prepareAnnotation?(json: any): TAnno;
 
@@ -103,7 +103,12 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
   processEvents?(anno: TAnno, data: DataFrame[]): Observable<AnnotationEvent[] | undefined>;
 
   /**
-   * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
+   * Specify a custom QueryEditor for the annotation page. If not specified, the standard one will be used
    */
-  QueryEditor?: ComponentType<QueryEditorProps<any, TQuery>>;
+  QueryEditor?: ComponentType<AnnotationQueryEditorProps<TQuery>>;
+
+  /**
+   * Define this method if you want to pre-populate the editor with a default query
+   */
+  getDefaultQuery?(): Partial<TQuery>;
 }

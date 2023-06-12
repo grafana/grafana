@@ -25,14 +25,15 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-const getComponentStyles = (theme: GrafanaTheme2) => css`
-  padding: ${theme.spacing.md};
-`;
-
-const Foo: FC<FooProps> = () => {
-  const styles = useStyles2(getComponentsStyles);
+function Foo(props: FooProps) {
+  const styles = useStyles2(getStyles);
   // Use styles with className
-};
+}
+
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    padding: theme.spacing(1, 2),
+  });
 ```
 
 #### Get the theme object
@@ -93,7 +94,7 @@ Example use cases:
 | -------------------------- | ------------------------------------------------------------ |
 | theme.colors.border.weak   | Primary border for panels and panes and other subtle borders |
 | theme.colors.border.medium | For stronger borders like inputs                             |
-| theme.colors.border.strong | For even stronger border like hover highighted border        |
+| theme.colors.border.strong | For even stronger border like hover highlighted border       |
 
 ### Actions
 

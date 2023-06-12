@@ -1,11 +1,11 @@
-import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC, useState } from 'react';
-import { CollapseToggle } from '../CollapseToggle';
-import { ActionIcon } from '../rules/ActionIcon';
-import { getAlertTableStyles } from '../../styles/table';
-import { useStyles2 } from '@grafana/ui';
+import React, { useState } from 'react';
+
 import { intervalToAbbreviatedDurationString } from '@grafana/data';
+import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+
 import { AlertLabels } from '../AlertLabels';
+import { CollapseToggle } from '../CollapseToggle';
+
 import { AmAlertStateTag } from './AmAlertStateTag';
 
 interface Props {
@@ -13,9 +13,8 @@ interface Props {
   className?: string;
 }
 
-export const SilencedAlertsTableRow: FC<Props> = ({ alert, className }) => {
+export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const tableStyles = useStyles2(getAlertTableStyles);
 
   const duration = intervalToAbbreviatedDurationString({
     start: new Date(alert.startsAt),
@@ -38,9 +37,6 @@ export const SilencedAlertsTableRow: FC<Props> = ({ alert, className }) => {
         </td>
         <td>for {duration} seconds</td>
         <td>{alertName}</td>
-        <td className={tableStyles.actionsCell}>
-          <ActionIcon icon="chart-line" to={alert.generatorURL} tooltip="View in explorer" />
-        </td>
       </tr>
       {!isCollapsed && (
         <tr className={className}>

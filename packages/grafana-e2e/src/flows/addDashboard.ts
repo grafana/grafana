@@ -1,9 +1,11 @@
-import { DeleteDashboardConfig } from './deleteDashboard';
+import { v4 as uuidv4 } from 'uuid';
+
 import { e2e } from '../index';
 import { getDashboardUid } from '../support/url';
-import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
-import { v4 as uuidv4 } from 'uuid';
+
+import { DeleteDashboardConfig } from './deleteDashboard';
 import { selectOption } from './selectOption';
+import { setDashboardTimeRange, TimeRangeConfig } from './setDashboardTimeRange';
 
 export interface AddAnnotationConfig {
   dataSource: string;
@@ -29,6 +31,7 @@ interface AddVariableOptional {
   label?: string;
   query?: string;
   regex?: string;
+  variableQueryForm?: (config: AddVariableConfig) => void;
 }
 
 interface AddVariableRequired {
@@ -38,6 +41,74 @@ interface AddVariableRequired {
 export type PartialAddVariableConfig = Partial<AddVariableDefault> & AddVariableOptional & AddVariableRequired;
 export type AddVariableConfig = AddVariableDefault & AddVariableOptional & AddVariableRequired;
 
+/**
+ * This flow is used to add a dashboard with whatever configuration specified.
+ * @param config Configuration object. Currently supports configuring dashboard time range, annotations, and variables (support dependant on type).
+ * @see{@link AddDashboardConfig}
+ *
+ * @example
+ * ```
+ * // Configuring a simple dashboard
+ * addDashboard({
+ *    timeRange: {
+ *      from: '2022-10-03 00:00:00',
+ *      to: '2022-10-03 23:59:59',
+ *      zone: 'Coordinated Universal Time',
+ *    },
+ *    title: 'Test Dashboard',
+ * })
+ * ```
+ *
+ * @example
+ * ```
+ * // Configuring a dashboard with annotations
+ * addDashboard({
+ *    title: 'Test Dashboard',
+ *    annotations: [
+ *      {
+ *        // This should match the datasource name
+ *        dataSource: 'azure-monitor',
+ *        name: 'Test Annotation',
+ *        dataSourceForm: () => {
+ *          // Insert steps to create annotation using datasource form
+ *        }
+ *      }
+ *    ]
+ * })
+ * ```
+ *
+ * @see{@link AddAnnotationConfig}
+ *
+ * @example
+ * ```
+ * // Configuring a dashboard with variables
+ * addDashboard({
+ *    title: 'Test Dashboard',
+ *    variables: [
+ *      {
+ *        name: 'test-query-variable',
+ *        label: 'Testing Query',
+ *        hide: '',
+ *        type: e2e.flows.VARIABLE_TYPE_QUERY,
+ *        dataSource: 'azure-monitor',
+ *        variableQueryForm: () => {
+ *          // Insert steps to create variable using datasource form
+ *        },
+ *      },
+ *      {
+ *        name: 'test-constant-variable',
+ *        label: 'Testing Constant',
+ *        type: e2e.flows.VARIABLE_TYPE_CONSTANT,
+ *        constantValue: 'constant',
+ *      }
+ *    ]
+ * })
+ * ```
+ *
+ * @see{@link AddVariableConfig}
+ *
+ * @see{@link https://github.com/grafana/grafana/blob/main/e2e/cloud-plugins-suite/azure-monitor.spec.ts Azure Monitor Tests for full examples}
+ */
 export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   const fullConfig: AddDashboardConfig = {
     annotations: [],
@@ -73,6 +144,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.pages.SaveDashboardAsModal.newName().clear().type(title, { force: true });
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();
+  e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
 
   e2e().logToConsole('Added dashboard with title:', title);
 
@@ -158,23 +230,23 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.List.newButton().click();
   }
 
-  const { constantValue, dataSource, label, name, query, regex, type } = fullConfig;
+  const { constantValue, dataSource, label, name, query, regex, type, variableQueryForm } = fullConfig;
 
   // This field is key to many reactive changes
   if (type !== VARIABLE_TYPE_QUERY) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect()
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue().should('have.text', 'Query').click();
+        e2e.components.Select.singleValue().should('have.text', 'Query').parent().click();
       });
-    e2e.components.Select.option().should('be.visible').contains(type).click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().find('input').type(`${type}{enter}`);
   }
 
   if (label) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2().type(label);
   }
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().clear().type(name);
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2().clear().type(name);
 
   if (
     dataSource &&
@@ -183,12 +255,12 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.input().should('be.visible').type(`${dataSource}{enter}`);
+        e2e.components.DataSourcePicker.inputV2().type(`${dataSource}{enter}`);
       });
   }
 
   if (constantValue && type === VARIABLE_TYPE_CONSTANT) {
-    e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(constantValue);
+    e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInputV2().type(constantValue);
   }
 
   if (type === VARIABLE_TYPE_QUERY) {
@@ -197,7 +269,11 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     }
 
     if (regex) {
-      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput().type(regex);
+      e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2().type(regex);
+    }
+
+    if (variableQueryForm) {
+      variableQueryForm(fullConfig);
     }
   }
 
@@ -213,13 +289,14 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.applyButton().click();
 
   return fullConfig;
 };
 
 const addVariables = (configs: PartialAddVariableConfig[]): AddVariableConfig[] => {
   if (configs.length > 0) {
-    e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
+    e2e.components.Tab.title('Variables').click();
   }
 
   return configs.map((config, i) => addVariable(config, i === 0));

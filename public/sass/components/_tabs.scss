@@ -12,7 +12,7 @@
 
 .gf-tabs-link {
   padding: $tabs-padding;
-  margin-right: $spacer/2;
+  margin-right: calc($spacer/2);
   position: relative;
   display: block;
   border: solid transparent;

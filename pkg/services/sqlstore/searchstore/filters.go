@@ -14,6 +14,12 @@ type FilterWhere interface {
 	Where() (string, []interface{})
 }
 
+// FilterWith returns any recursive CTE queries (if supported)
+// and their parameters
+type FilterWith interface {
+	With() (string, []interface{})
+}
+
 // FilterGroupBy should be used after performing an outer join on the
 // search result to ensure there is only one of each ID in the results.
 // The id column must be present in the result.
@@ -38,8 +44,9 @@ type FilterSelect interface {
 }
 
 const (
-	TypeFolder    = "dash-folder"
-	TypeDashboard = "dash-db"
+	TypeFolder      = "dash-folder"
+	TypeDashboard   = "dash-db"
+	TypeAlertFolder = "dash-folder-alerting"
 )
 
 type TypeFilter struct {
@@ -48,7 +55,7 @@ type TypeFilter struct {
 }
 
 func (f TypeFilter) Where() (string, []interface{}) {
-	if f.Type == TypeFolder {
+	if f.Type == TypeFolder || f.Type == TypeAlertFolder {
 		return "dashboard.is_folder = " + f.Dialect.BooleanStr(true), nil
 	}
 
@@ -65,16 +72,6 @@ type OrgFilter struct {
 
 func (f OrgFilter) Where() (string, []interface{}) {
 	return "dashboard.org_id=?", []interface{}{f.OrgId}
-}
-
-type StarredFilter struct {
-	UserId int64
-}
-
-func (f StarredFilter) Where() (string, []interface{}) {
-	return `(SELECT count(*)
-			 FROM star
-			 WHERE star.dashboard_id = dashboard.id AND star.user_id = ?) > 0`, []interface{}{f.UserId}
 }
 
 type TitleFilter struct {
@@ -94,12 +91,20 @@ func (f FolderFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.folder_id", f.IDs)
 }
 
-type DashboardFilter struct {
+type DashboardIDFilter struct {
 	IDs []int64
 }
 
-func (f DashboardFilter) Where() (string, []interface{}) {
+func (f DashboardIDFilter) Where() (string, []interface{}) {
 	return sqlIDin("dashboard.id", f.IDs)
+}
+
+type DashboardFilter struct {
+	UIDs []string
+}
+
+func (f DashboardFilter) Where() (string, []interface{}) {
+	return sqlUIDin("dashboard.uid", f.UIDs)
 }
 
 type TagsFilter struct {
@@ -147,4 +152,29 @@ func sqlIDin(column string, ids []int64) (string, []interface{}) {
 		params = append(params, id)
 	}
 	return fmt.Sprintf("%s IN %s", column, sqlArray), params
+}
+
+func sqlUIDin(column string, uids []string) (string, []interface{}) {
+	length := len(uids)
+	if length < 1 {
+		return "", nil
+	}
+
+	sqlArray := "(?" + strings.Repeat(",?", length-1) + ")"
+
+	params := []interface{}{}
+	for _, id := range uids {
+		params = append(params, id)
+	}
+	return fmt.Sprintf("%s IN %s", column, sqlArray), params
+}
+
+// FolderWithAlertsFilter applies a filter that makes the result contain only folders that contain alert rules
+type FolderWithAlertsFilter struct {
+}
+
+var _ FilterWhere = &FolderWithAlertsFilter{}
+
+func (f FolderWithAlertsFilter) Where() (string, []interface{}) {
+	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }

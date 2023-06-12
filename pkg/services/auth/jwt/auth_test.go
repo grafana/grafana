@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -14,10 +13,10 @@ import (
 	"testing"
 	"time"
 
+	jose "github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	jose "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
@@ -66,7 +65,7 @@ func TestVerifyUsingJWKSetFile(t *testing.T) {
 	configure := func(t *testing.T, cfg *setting.Cfg) {
 		t.Helper()
 
-		file, err := ioutil.TempFile(os.TempDir(), "jwk-*.json")
+		file, err := os.CreateTemp(os.TempDir(), "jwk-*.json")
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			if err := os.Remove(file.Name()); err != nil {
@@ -110,6 +109,16 @@ func TestVerifyUsingJWKSetURL(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
+		})
+		require.NoError(t, err)
+
+		oldEnv := setting.Env
+		setting.Env = setting.Prod
+		defer func() {
+			setting.Env = oldEnv
+		}()
 		_, err = initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
 			cfg.JWTAuthJWKSetURL = "http://example.com/.well-known/jwks.json"
 		})
@@ -402,7 +411,7 @@ func scenarioRunner(fn scenarioFunc, cbs ...configureFunc) func(t *testing.T) {
 func configurePKIXPublicKeyFile(t *testing.T, cfg *setting.Cfg) {
 	t.Helper()
 
-	file, err := ioutil.TempFile(os.TempDir(), "public-key-*.pem")
+	file, err := os.CreateTemp(os.TempDir(), "public-key-*.pem")
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		if err := os.Remove(file.Name()); err != nil {

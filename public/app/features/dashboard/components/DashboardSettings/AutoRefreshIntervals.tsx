@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+
 import { Input, defaultIntervals, Field } from '@grafana/ui';
 
 import { getTimeSrv } from '../../services/TimeSrv';
@@ -10,12 +11,12 @@ export interface Props {
   validateIntervalsFunc?: typeof validateIntervals;
 }
 
-export const AutoRefreshIntervals: FC<Props> = ({
+export const AutoRefreshIntervals = ({
   refreshIntervals,
   onRefreshIntervalChange,
   getIntervalsFunc = getValidIntervals,
   validateIntervalsFunc = validateIntervals,
-}) => {
+}: Props) => {
   const [intervals, setIntervals] = useState<string[]>(getIntervalsFunc(refreshIntervals ?? defaultIntervals));
   const [invalidIntervalsMessage, setInvalidIntervalsMessage] = useState<string | null>(null);
 
@@ -81,7 +82,7 @@ export const validateIntervals = (
     getValidIntervals(intervals, dependencies);
     return null;
   } catch (err) {
-    return err.message;
+    return err instanceof Error ? err.message : 'Invalid intervals';
   }
 };
 

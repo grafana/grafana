@@ -1,7 +1,10 @@
-import { updateOrganization, setUserOrganization, getUserOrganizations } from './actions';
-import { updateConfigurationSubtitle } from 'app/core/actions';
 import { thunkTester } from 'test/core/thunk/thunkTester';
+
+import { BackendSrv } from '@grafana/runtime';
+import { updateConfigurationSubtitle } from 'app/core/actions';
 import { OrgRole } from 'app/types';
+
+import { updateOrganization, setUserOrganization, getUserOrganizations } from './actions';
 
 const setup = () => {
   const initialState = {
@@ -23,10 +26,10 @@ describe('updateOrganization', () => {
   describe('when updateOrganization thunk is dispatched', () => {
     const getMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
     const putMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
-    const backendSrvMock: any = {
+    const backendSrvMock = {
       get: getMock,
       put: putMock,
-    };
+    } as unknown as BackendSrv;
 
     it('then it should dispatch updateConfigurationSubtitle', async () => {
       const { initialState } = setup();
@@ -45,9 +48,9 @@ describe('setUserOrganization', () => {
   describe('when setUserOrganization thunk is dispatched', () => {
     const postMock = jest.fn().mockResolvedValue({ id: 1, name: 'New Org Name' });
 
-    const backendSrvMock: any = {
+    const backendSrvMock = {
       post: postMock,
-    };
+    } as unknown as BackendSrv;
 
     const orgId = 1;
 
@@ -67,9 +70,9 @@ describe('setUserOrganization', () => {
 describe('getUserOrganizations', () => {
   describe('when getUserOrganizations thunk is dispatched', () => {
     const getMock = jest.fn().mockResolvedValue({ orgId: 1, name: 'New Org Name', role: OrgRole.Editor });
-    const backendSrvMock: any = {
+    const backendSrvMock = {
       get: getMock,
-    };
+    } as unknown as BackendSrv;
 
     it('then it should dispatch updateConfigurationSubtitle', async () => {
       const { initialState } = setup();

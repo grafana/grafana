@@ -1,8 +1,4 @@
 // Load the Builtin matchers
-import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
-import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
-import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
-import { getRefIdMatchers } from './matchers/refIdMatcher';
 import {
   FieldMatcherInfo,
   MatcherConfig,
@@ -13,12 +9,20 @@ import {
   ValueMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
+
+import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
+import { fieldValueMatcherInfo } from './matchers/fieldValueMatcher';
+import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
+import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
+import { getRefIdMatchers } from './matchers/refIdMatcher';
+import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
+import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
-import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
-import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
+
+export { type FieldValueMatcherConfig } from './matchers/fieldValueMatcher';
 
 /**
  * Registry that contains all of the built in field matchers.
@@ -30,6 +34,7 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
     ...getSimpleFieldMatchers(), // first
+    fieldValueMatcherInfo, // reduce field (all null/zero)
   ];
 });
 

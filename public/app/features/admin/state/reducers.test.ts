@@ -1,4 +1,7 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
+
+import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types';
+
 import {
   clearUserMappingInfoAction,
   ldapConnectionInfoLoadedAction,
@@ -12,8 +15,8 @@ import {
   userSessionsLoadedAction,
   userListAdminReducer,
   queryChanged,
+  filterChanged,
 } from './reducers';
-import { LdapState, LdapUser, UserAdminState, UserDTO, UserListAdminState } from 'app/types';
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
@@ -77,7 +80,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ])
           )
@@ -88,7 +91,7 @@ describe('LDAP page reducer', () => {
                 available: true,
                 host: 'localhost',
                 port: 389,
-                error: (null as unknown) as string,
+                error: null as unknown as string,
               },
             ],
             ldapError: undefined,
@@ -284,6 +287,24 @@ describe('User List Admin reducer', () => {
           ...makeInitialUserListAdminState(),
           query: 'test',
           page: 0,
+        });
+    });
+  });
+
+  describe('When filter changed', () => {
+    it('should reset page to 0', () => {
+      const initialState = {
+        ...makeInitialUserListAdminState(),
+        page: 3,
+      };
+
+      reducerTester<UserListAdminState>()
+        .givenReducer(userListAdminReducer, initialState)
+        .whenActionIsDispatched(filterChanged({ test: true }))
+        .thenStateShouldEqual({
+          ...makeInitialUserListAdminState(),
+          page: 0,
+          filters: expect.arrayContaining([{ test: true }]),
         });
     });
   });

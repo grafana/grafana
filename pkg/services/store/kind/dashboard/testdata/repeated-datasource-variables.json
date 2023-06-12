@@ -1,0 +1,143 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 209,
+  "iteration": 1656507534777,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "sqlite-datasource",
+        "uid": "${sqllite}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.1.0-pre",
+      "repeat": "sqllite",
+      "repeatDirection": "h",
+      "targets": [
+        {
+          "datasource": {
+            "type": "sqlite-datasource",
+            "uid": "${sqllite}"
+          },
+          "key": "Q-7ab4ab1a-3c70-41f4-9a45-19919e1c2193-0",
+          "queryText": "select * from user",
+          "queryType": "table",
+          "rawQueryText": "select * from user",
+          "refId": "A",
+          "timeColumns": [
+            "time",
+            "ts"
+          ]
+        }
+      ],
+      "title": "usersss!",
+      "type": "table"
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": [
+            "SQLite Grafana",
+            "SQLite Grafana2"
+          ],
+          "value": [
+            "SQLite Grafana",
+            "SQLite Grafana2"
+          ]
+        },
+        "hide": 0,
+        "includeAll": false,
+        "multi": true,
+        "name": "sqllite",
+        "options": [],
+        "query": "sqlite-datasource",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "ds-variables",
+  "uid": "7BzWolqnk",
+  "version": 8,
+  "weekStart": ""
+}

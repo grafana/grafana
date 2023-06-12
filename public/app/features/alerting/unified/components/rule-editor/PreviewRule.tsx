@@ -1,42 +1,57 @@
-import React, { useCallback, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { takeWhile } from 'rxjs/operators';
 import { useMountedState } from 'react-use';
-import { Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { takeWhile } from 'rxjs/operators';
+
 import { dateTimeFormatISO, GrafanaTheme2, LoadingState } from '@grafana/data';
-import { RuleFormType } from '../../types/rule-form';
-import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { Alert, Button, HorizontalGroup, useStyles2 } from '@grafana/ui';
+
 import { previewAlertRule } from '../../api/preview';
+import { useAlertQueriesStatus } from '../../hooks/useAlertQueriesStatus';
+import { PreviewRuleRequest, PreviewRuleResponse } from '../../types/preview';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields: string[] = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
+const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
 
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
   const [preview, onPreview] = usePreview();
-  const { watch } = useFormContext();
-  const [type, condition] = watch(['type', 'condition']);
+  const { watch } = useFormContext<RuleFormValues>();
+  const [type, condition, queries] = watch(['type', 'condition', 'queries']);
+  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
   if (type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) {
     return null;
   }
 
+  const isPreviewAvailable = Boolean(condition) && allDataSourcesAvailable;
+
   return (
     <div className={styles.container}>
       <HorizontalGroup>
-        <Button disabled={!condition} type="button" variant="primary" onClick={onPreview}>
-          Preview alerts
-        </Button>
+        {allDataSourcesAvailable && (
+          <Button disabled={!isPreviewAvailable} type="button" variant="primary" onClick={onPreview}>
+            Preview alerts
+          </Button>
+        )}
+        {!allDataSourcesAvailable && (
+          <Alert title="Preview is not available" severity="warning">
+            Cannot display the query preview. Some of the data sources used in the queries are not available.
+          </Alert>
+        )}
       </HorizontalGroup>
       <PreviewRuleResult preview={preview} />
     </div>
   );
 }
 
-function usePreview(): [PreviewRuleResponse | undefined, () => void] {
+export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
-  const { getValues } = useFormContext();
+  const { getValues } = useFormContext<RuleFormValues>();
   const isMounted = useMountedState();
 
   const onPreview = useCallback(() => {
@@ -58,10 +73,15 @@ function usePreview(): [PreviewRuleResponse | undefined, () => void] {
 
 function createPreviewRequest(values: any[]): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
+  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
+  if (!dsSettings) {
+    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
+  }
 
   switch (type) {
     case RuleFormType.cloudAlerting:
       return {
+        dataSourceUid: dsSettings.uid,
         dataSourceName,
         expr: expression,
       };

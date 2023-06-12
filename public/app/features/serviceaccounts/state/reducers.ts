@@ -1,39 +1,120 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { OrgServiceAccount, ServiceAccountsState } from 'app/types';
+import {
+  ApiKey,
+  Role,
+  ServiceAccountDTO,
+  ServiceAccountProfileState,
+  ServiceAccountsState,
+  ServiceAccountStateFilter,
+} from 'app/types';
 
-export const initialState: ServiceAccountsState = {
-  serviceAccounts: [] as OrgServiceAccount[],
-  searchQuery: '',
-  searchPage: 1,
+// serviceAccountsProfilePage
+export const initialStateProfile: ServiceAccountProfileState = {
+  serviceAccount: {} as ServiceAccountDTO,
   isLoading: true,
+  tokens: [] as ApiKey[],
 };
 
-const serviceAccountsSlice = createSlice({
-  name: 'serviceaccounts',
-  initialState,
+export const serviceAccountProfileSlice = createSlice({
+  name: 'serviceaccount',
+  initialState: initialStateProfile,
   reducers: {
-    serviceAccountsLoaded: (state, action: PayloadAction<OrgServiceAccount[]>): ServiceAccountsState => {
-      return { ...state, isLoading: true, serviceAccounts: action.payload };
+    serviceAccountFetchBegin: (state) => {
+      return { ...state, isLoading: true };
     },
-    setServiceAccountsSearchQuery: (state, action: PayloadAction<string>): ServiceAccountsState => {
-      // reset searchPage otherwise search results won't appear
-      return { ...state, searchQuery: action.payload, searchPage: initialState.searchPage };
+    serviceAccountFetchEnd: (state) => {
+      return { ...state, isLoading: false };
     },
-    setServiceAccountsSearchPage: (state, action: PayloadAction<number>): ServiceAccountsState => {
-      return { ...state, searchPage: action.payload };
+    serviceAccountLoaded: (state, action: PayloadAction<ServiceAccountDTO>): ServiceAccountProfileState => {
+      return { ...state, serviceAccount: action.payload, isLoading: false };
+    },
+    serviceAccountTokensLoaded: (state, action: PayloadAction<ApiKey[]>): ServiceAccountProfileState => {
+      return { ...state, tokens: action.payload, isLoading: false };
     },
   },
 });
 
-export const {
-  setServiceAccountsSearchQuery,
-  setServiceAccountsSearchPage,
-  serviceAccountsLoaded,
-} = serviceAccountsSlice.actions;
+export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
+export const { serviceAccountLoaded, serviceAccountTokensLoaded, serviceAccountFetchBegin, serviceAccountFetchEnd } =
+  serviceAccountProfileSlice.actions;
 
+// serviceAccountsListPage
+export const initialStateList: ServiceAccountsState = {
+  serviceAccounts: [] as ServiceAccountDTO[],
+  isLoading: true,
+  roleOptions: [],
+  query: '',
+  page: 0,
+  perPage: 50,
+  totalPages: 1,
+  showPaging: false,
+  serviceAccountStateFilter: ServiceAccountStateFilter.All,
+};
+
+interface ServiceAccountsFetched {
+  serviceAccounts: ServiceAccountDTO[];
+  perPage: number;
+  page: number;
+  totalCount: number;
+}
+
+const serviceAccountsSlice = createSlice({
+  name: 'serviceaccounts',
+  initialState: initialStateList,
+  reducers: {
+    serviceAccountsFetched: (state, action: PayloadAction<ServiceAccountsFetched>): ServiceAccountsState => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+
+      return {
+        ...state,
+        ...rest,
+        totalPages,
+        perPage,
+        showPaging: totalPages > 1,
+        isLoading: false,
+      };
+    },
+    serviceAccountsFetchBegin: (state) => {
+      return { ...state, isLoading: true };
+    },
+    serviceAccountsFetchEnd: (state) => {
+      return { ...state, isLoading: false };
+    },
+    acOptionsLoaded: (state, action: PayloadAction<Role[]>): ServiceAccountsState => {
+      return { ...state, roleOptions: action.payload };
+    },
+    queryChanged: (state, action: PayloadAction<string>) => {
+      return {
+        ...state,
+        query: action.payload,
+        page: 0,
+      };
+    },
+    pageChanged: (state, action: PayloadAction<number>) => ({
+      ...state,
+      page: action.payload,
+    }),
+    stateFilterChanged: (state, action: PayloadAction<ServiceAccountStateFilter>) => ({
+      ...state,
+      serviceAccountStateFilter: action.payload,
+    }),
+  },
+});
 export const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
+export const {
+  serviceAccountsFetchBegin,
+  serviceAccountsFetchEnd,
+  serviceAccountsFetched,
+  acOptionsLoaded,
+  pageChanged,
+  stateFilterChanged,
+  queryChanged,
+} = serviceAccountsSlice.actions;
+
 export default {
+  serviceAccountProfile: serviceAccountProfileReducer,
   serviceAccounts: serviceAccountsReducer,
 };

@@ -1,5 +1,5 @@
-import { DisplayValue } from './displayValue';
 import { Field } from './dataFrame';
+import { DisplayValue } from './displayValue';
 
 export interface YAxis {
   index: number;

@@ -1,11 +1,14 @@
 import React, { useMemo, useState } from 'react';
+
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
+
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorGroupByExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
 import { CloudWatchMetricsQuery } from '../../types';
+
 import {
   getFlattenedGroupBys,
   getMetricNameFromExpression,
@@ -20,7 +23,7 @@ interface SQLGroupByProps {
   onQueryChange: (query: CloudWatchMetricsQuery) => void;
 }
 
-const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChange }) => {
+const SQLGroupBy = ({ query, datasource, onQueryChange }: SQLGroupByProps) => {
   const sql = query.sql ?? {};
   const groupBysFromQuery = useMemo(() => getFlattenedGroupBys(query.sql ?? {}), [query.sql]);
   const [items, setItems] = useState<QueryEditorGroupByExpression[]>(groupBysFromQuery);
@@ -28,7 +31,7 @@ const SQLGroupBy: React.FC<SQLGroupByProps> = ({ query, datasource, onQueryChang
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const baseOptions = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const baseOptions = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
   const options = useMemo(
     // Exclude options we've already selected
     () => baseOptions.filter((option) => !groupBysFromQuery.some((v) => v.property.name === option.value)),
@@ -84,19 +87,19 @@ interface GroupByItemProps {
   onDelete: () => void;
 }
 
-const GroupByItem: React.FC<GroupByItemProps> = (props) => {
+const GroupByItem = (props: GroupByItemProps) => {
   const { options, item, onChange, onDelete } = props;
   const fieldName = item.property?.name;
 
   return (
     <InputGroup>
       <Select
+        aria-label={`Group by ${fieldName ?? 'filter key'}`}
         width="auto"
         value={fieldName ? toOption(fieldName) : null}
         options={options}
         allowCustomValue
         onChange={({ value }) => value && onChange(setGroupByField(value))}
-        menuShouldPortal
       />
 
       <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />

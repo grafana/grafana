@@ -5,9 +5,9 @@ $progress-line-uncompleted: lightOrDark($gray-3, $gray-1);
 
 // Sizing
 $marker-size: 60px !default;
-$marker-size-half: ($marker-size / 2);
+$marker-size-half: calc($marker-size / 2);
 $path-height: 2px !default;
-$path-position: $marker-size-half - ($path-height / 2);
+$path-position: $marker-size-half - calc($path-height / 2);
 
 .progress-tracker-container {
   height: 100%;

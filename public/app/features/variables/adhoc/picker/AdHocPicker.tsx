@@ -1,8 +1,12 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
 import { AdHocVariableFilter, AdHocVariableModel } from 'app/features/variables/types';
+
 import { VariablePickerProps } from '../../pickers/types';
+import { toKeyedVariableIdentifier } from '../../utils';
 import { addFilter, changeFilter, removeFilter } from '../actions';
+
 import { AdHocFilter } from './AdHocFilter';
 
 const mapDispatchToProps = {
@@ -23,15 +27,15 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
  */
 export class AdHocPickerUnconnected extends PureComponent<Props> {
   addFilter = (filter: AdHocVariableFilter) => {
-    this.props.addFilter(this.props.variable.id, filter);
+    this.props.addFilter(toKeyedVariableIdentifier(this.props.variable), filter);
   };
 
   removeFilter = (index: number) => {
-    this.props.removeFilter(this.props.variable.id, index);
+    this.props.removeFilter(toKeyedVariableIdentifier(this.props.variable), index);
   };
 
   changeFilter = (index: number, filter: AdHocVariableFilter) => {
-    this.props.changeFilter(this.props.variable.id, {
+    this.props.changeFilter(toKeyedVariableIdentifier(this.props.variable), {
       index,
       filter,
     });
@@ -44,6 +48,7 @@ export class AdHocPickerUnconnected extends PureComponent<Props> {
       <AdHocFilter
         datasource={datasource}
         filters={filters}
+        disabled={this.props.readOnly}
         addFilter={this.addFilter}
         removeFilter={this.removeFilter}
         changeFilter={this.changeFilter}

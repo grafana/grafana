@@ -10,14 +10,18 @@ export class SelectionReference implements VirtualElement {
       return rect;
     }
 
-    return {
+    const fallbackDOMRect: DOMRect = {
       top: 0,
       left: 0,
       bottom: 0,
       right: 0,
       width: 0,
       height: 0,
-    } as DOMRect;
+      x: 0,
+      y: 0,
+      toJSON: () => {},
+    };
+    return fallbackDOMRect;
   }
 
   get clientWidth() {

@@ -1,9 +1,12 @@
-import { TimeSrv } from './TimeSrv';
-import { ContextSrvStub } from 'test/specs/helpers';
-import { dateTime, isDateTime } from '@grafana/data';
 import * as H from 'history';
-import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
-import { beforeEach } from '../../../../test/lib/common';
+import { ContextSrvStub } from 'test/specs/helpers';
+
+import { dateTime, isDateTime } from '@grafana/data';
+import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+
+import { TimeModel } from '../state/TimeModel';
+
+import { TimeSrv } from './TimeSrv';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
@@ -13,7 +16,7 @@ jest.mock('app/core/core', () => ({
 
 describe('timeSrv', () => {
   let timeSrv: TimeSrv;
-  let _dashboard: any;
+  let _dashboard: TimeModel;
   let locationUpdates: H.Location[] = [];
 
   beforeEach(() => {
@@ -22,9 +25,10 @@ describe('timeSrv', () => {
       getTimezone: jest.fn(() => 'browser'),
       refresh: false,
       timeRangeUpdated: jest.fn(() => {}),
+      timepicker: {},
     };
 
-    timeSrv = new TimeSrv(new ContextSrvStub() as any);
+    timeSrv = new TimeSrv(new ContextSrvStub());
     timeSrv.init(_dashboard);
 
     locationUpdates = [];
@@ -53,7 +57,7 @@ describe('timeSrv', () => {
     it('should handle relative times', () => {
       locationService.push('/d/id?from=now-2d&to=now');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -64,7 +68,7 @@ describe('timeSrv', () => {
     it('should handle formatted dates', () => {
       locationService.push('/d/id?from=20140410T052010&to=20140520T031022');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -75,7 +79,7 @@ describe('timeSrv', () => {
     it('should ignore refresh if time absolute', () => {
       locationService.push('/d/id?from=20140410T052010&to=20140520T031022');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       // dashboard saved with refresh on
       _dashboard.refresh = true;
@@ -84,10 +88,42 @@ describe('timeSrv', () => {
       expect(timeSrv.refresh).toBe(false);
     });
 
+    describe('public dashboard', () => {
+      beforeEach(() => {
+        _dashboard = {
+          time: { from: 'now-6h', to: 'now' },
+          getTimezone: jest.fn(() => 'browser'),
+          refresh: false,
+          timeRangeUpdated: jest.fn(() => {}),
+          timepicker: {},
+        };
+
+        locationService.push('/d/id?from=now-24h&to=now');
+        config.isPublicDashboardView = true;
+        timeSrv = new TimeSrv(new ContextSrvStub());
+      });
+
+      it("should ignore from and to if it's a public dashboard and time picker is hidden", () => {
+        timeSrv.init({ ..._dashboard, timepicker: { hidden: true } });
+        const time = timeSrv.timeRange();
+
+        expect(time.raw.from).toBe('now-6h');
+        expect(time.raw.to).toBe('now');
+      });
+
+      it("should not ignore from and to if it's a public dashboard but time picker is not hidden", () => {
+        timeSrv.init({ ..._dashboard, timepicker: { hidden: false } });
+        const time = timeSrv.timeRange();
+
+        expect(time.raw.from).toBe('now-24h');
+        expect(time.raw.to).toBe('now');
+      });
+    });
+
     it('should handle formatted dates without time', () => {
       locationService.push('/d/id?from=20140410&to=20140520');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -98,7 +134,7 @@ describe('timeSrv', () => {
     it('should handle epochs', () => {
       locationService.push('/d/id?from=1410337646373&to=1410337665699');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -109,7 +145,7 @@ describe('timeSrv', () => {
     it('should handle epochs that look like formatted date without time', () => {
       locationService.push('/d/id?from=20149999&to=20159999');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -120,7 +156,7 @@ describe('timeSrv', () => {
     it('should handle epochs that look like formatted date', () => {
       locationService.push('/d/id?from=201499991234567&to=201599991234567');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       timeSrv.init(_dashboard);
       const time = timeSrv.timeRange();
@@ -131,7 +167,7 @@ describe('timeSrv', () => {
     it('should handle bad dates', () => {
       locationService.push('/d/id?from=20151126T00010%3C%2Fp%3E%3Cspan%20class&to=now');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       _dashboard.time.from = 'now-6h';
       timeSrv.init(_dashboard);
@@ -142,7 +178,7 @@ describe('timeSrv', () => {
     it('should handle refresh_intervals=null when refresh is enabled', () => {
       locationService.push('/d/id?refresh=30s');
 
-      timeSrv = new TimeSrv(new ContextSrvStub() as any);
+      timeSrv = new TimeSrv(new ContextSrvStub());
 
       _dashboard.timepicker = {
         refresh_intervals: null,
@@ -154,7 +190,7 @@ describe('timeSrv', () => {
       it('handles time window specfied as interval string', () => {
         locationService.push('/d/id?time=1410337645000&time.window=10s');
 
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
@@ -165,7 +201,7 @@ describe('timeSrv', () => {
       it('handles time window specified in ms', () => {
         locationService.push('/d/id?time=1410337645000&time.window=10000');
 
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
@@ -176,7 +212,7 @@ describe('timeSrv', () => {
       it('corrects inverted from/to dates in ms', () => {
         locationService.push('/d/id?from=1621436828909&to=1621436818909');
 
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
@@ -187,7 +223,7 @@ describe('timeSrv', () => {
       it('corrects inverted from/to dates as relative times', () => {
         locationService.push('/d/id?from=now&to=now-1h');
 
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub());
 
         timeSrv.init(_dashboard);
         const time = timeSrv.timeRange();
@@ -244,27 +280,23 @@ describe('timeSrv', () => {
 
       expect(locationUpdates[1].search).toEqual('?kiosk&from=now-1h&to=now-10s');
     });
-  });
 
-  describe('pauseAutoRefresh', () => {
-    it('should set refresh to empty value', () => {
-      _dashboard.refresh = '10s';
-      timeSrv.pauseAutoRefresh();
-      expect(_dashboard.refresh).toBe('');
-    });
-
-    it('should set previousAutoRefresh value', () => {
-      _dashboard.refresh = '10s';
-      timeSrv.pauseAutoRefresh();
-      expect(timeSrv.previousAutoRefresh).toBe('10s');
+    it('should not change the URL if the updateUrl param is false', () => {
+      timeSrv.setTime({ from: '1644340584281', to: '1644340584281' }, false);
+      expect(locationUpdates.length).toBe(0);
     });
   });
 
   describe('resumeAutoRefresh', () => {
-    it('should set refresh to empty value', () => {
-      timeSrv.previousAutoRefresh = '10s';
+    it('should set auto-refresh interval', () => {
+      timeSrv.setAutoRefresh('10s');
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
+
+      timeSrv.stopAutoRefresh();
+      expect(timeSrv.refreshTimer).toBeUndefined();
+
       timeSrv.resumeAutoRefresh();
-      expect(_dashboard.refresh).toBe('10s');
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
     });
   });
 

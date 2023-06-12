@@ -1,15 +1,21 @@
-import React from 'react';
-import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Layout, LayoutProps } from './Layout';
-import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
-import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
 import { Story, Meta } from '@storybook/react';
+import React from 'react';
+
+import { Button, VerticalGroup, HorizontalGroup } from '@grafana/ui';
+
+import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { withStoryContainer } from '../../utils/storybook/withStoryContainer';
+
+import { Layout, LayoutProps } from './Layout';
 import mdx from './Layout.mdx';
 
 export default {
   title: 'Layout/Groups',
   component: Layout,
   decorators: [withStoryContainer, withCenteredStory, withHorizontallyCenteredStory],
+  // SB7 has broken subcomponent types due to dropping support for the feature
+  // https://github.com/storybookjs/storybook/issues/20782
+  // @ts-ignore
   subcomponents: { HorizontalGroup, VerticalGroup },
   parameters: {
     docs: {

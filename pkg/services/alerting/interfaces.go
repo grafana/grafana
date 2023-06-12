@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -56,6 +56,7 @@ type ConditionResult struct {
 	NoDataFound bool
 	Operator    string
 	EvalMatches []*EvalMatch
+	AllMatches  []*EvalMatch
 }
 
 // Condition is responsible for evaluating an alert condition.

@@ -2,22 +2,43 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { Team, TeamGroup, TeamMember, TeamsState, TeamState } from 'app/types';
 
-export const initialTeamsState: TeamsState = { teams: [], searchQuery: '', hasFetched: false };
+export const initialTeamsState: TeamsState = {
+  teams: [],
+  page: 1,
+  query: '',
+  perPage: 30,
+  totalPages: 0,
+  noTeams: false,
+  hasFetched: false,
+};
+
+type TeamsFetched = {
+  teams: Team[];
+  page: number;
+  perPage: number;
+  noTeams: boolean;
+  totalCount: number;
+};
 
 const teamsSlice = createSlice({
   name: 'teams',
   initialState: initialTeamsState,
   reducers: {
-    teamsLoaded: (state, action: PayloadAction<Team[]>): TeamsState => {
-      return { ...state, hasFetched: true, teams: action.payload };
+    teamsLoaded: (state, action: PayloadAction<TeamsFetched>): TeamsState => {
+      const { totalCount, perPage, ...rest } = action.payload;
+      const totalPages = Math.ceil(totalCount / perPage);
+      return { ...state, ...rest, totalPages, perPage, hasFetched: true };
     },
-    setSearchQuery: (state, action: PayloadAction<string>): TeamsState => {
-      return { ...state, searchQuery: action.payload };
+    queryChanged: (state, action: PayloadAction<string>): TeamsState => {
+      return { ...state, page: 1, query: action.payload };
+    },
+    pageChanged: (state, action: PayloadAction<number>): TeamsState => {
+      return { ...state, page: action.payload };
     },
   },
 });
 
-export const { teamsLoaded, setSearchQuery } = teamsSlice.actions;
+export const { teamsLoaded, queryChanged, pageChanged } = teamsSlice.actions;
 
 export const teamsReducer = teamsSlice.reducer;
 

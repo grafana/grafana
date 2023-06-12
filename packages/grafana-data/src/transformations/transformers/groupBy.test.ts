@@ -1,12 +1,11 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions } from './groupBy';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { transformDataFrame } from '../transformDataFrame';
-import { Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
-import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
-import { DataTransformerConfig } from '@grafana/data';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { GroupByOperationID, groupByTransformer, GroupByTransformerOptions } from './groupBy';
+import { DataTransformerID } from './ids';
 
 describe('GroupBy transformer', () => {
   beforeAll(() => {
@@ -69,7 +68,7 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
       ];
@@ -110,13 +109,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -161,25 +160,25 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'time (count)',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3]),
+          values: [1, 2, 3],
           config: {},
         },
         {
           name: 'time (last)',
           type: FieldType.time,
-          values: new ArrayVector([3000, 5000, 8000]),
+          values: [3000, 5000, 8000],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -230,13 +229,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 9]),
+          values: [1, 4, 9],
           config: {},
         },
       ];
@@ -245,13 +244,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['one', 'two', 'three']),
+          values: ['one', 'two', 'three'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([0, 7, 8]),
+          values: [0, 7, 8],
           config: {},
         },
       ];
@@ -292,13 +291,13 @@ describe('GroupBy transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
-          values: new ArrayVector(['500', '404', 'one', 'two', '200']),
+          values: ['500', '404', 'one', 'two', '200'],
           config: {},
         },
         {
           name: 'values (sum)',
           type: FieldType.number,
-          values: new ArrayVector([1, 4, 6, 3, 4]),
+          values: [1, 4, 6, 3, 4],
           config: {},
         },
       ];

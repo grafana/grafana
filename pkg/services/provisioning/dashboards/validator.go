@@ -56,61 +56,75 @@ func newDuplicateValidator(logger log.Logger, readers []*FileReader) duplicateVa
 	return duplicateValidator{logger: logger, readers: readers}
 }
 
-func (c *duplicateValidator) getDuplicates() *duplicateEntries {
-	duplicates := duplicateEntries{
-		Titles: make(map[dashboardIdentity]*duplicate),
-		UIDs:   make(map[string]*duplicate),
-	}
+func (c *duplicateValidator) getDuplicates() map[int64]duplicateEntries {
+	duplicatesByOrg := map[int64]duplicateEntries{}
 
 	for _, reader := range c.readers {
 		readerName := reader.Cfg.Name
+		orgID := reader.Cfg.OrgID
 		tracker := reader.getUsageTracker()
 
-		for uid, times := range tracker.uidUsage {
-			if _, ok := duplicates.UIDs[uid]; !ok {
-				duplicates.UIDs[uid] = newDuplicate()
+		if _, exists := duplicatesByOrg[orgID]; !exists {
+			duplicatesByOrg[orgID] = duplicateEntries{
+				Titles: make(map[dashboardIdentity]*duplicate),
+				UIDs:   make(map[string]*duplicate),
 			}
-			duplicates.UIDs[uid].Sum += times
-			duplicates.UIDs[uid].InvolvedReaders[readerName] = struct{}{}
+		}
+
+		for uid, times := range tracker.uidUsage {
+			if _, ok := duplicatesByOrg[orgID].UIDs[uid]; !ok {
+				duplicatesByOrg[orgID].UIDs[uid] = newDuplicate()
+			}
+			duplicatesByOrg[orgID].UIDs[uid].Sum += times
+			duplicatesByOrg[orgID].UIDs[uid].InvolvedReaders[readerName] = struct{}{}
 		}
 
 		for id, times := range tracker.titleUsage {
-			if _, ok := duplicates.Titles[id]; !ok {
-				duplicates.Titles[id] = newDuplicate()
+			if _, ok := duplicatesByOrg[orgID].Titles[id]; !ok {
+				duplicatesByOrg[orgID].Titles[id] = newDuplicate()
 			}
-			duplicates.Titles[id].Sum += times
-			duplicates.Titles[id].InvolvedReaders[readerName] = struct{}{}
+			duplicatesByOrg[orgID].Titles[id].Sum += times
+			duplicatesByOrg[orgID].Titles[id].InvolvedReaders[readerName] = struct{}{}
 		}
 	}
 
-	return &duplicates
+	return duplicatesByOrg
 }
 
-func (c *duplicateValidator) logWarnings(duplicates *duplicateEntries) {
-	for uid, usage := range duplicates.UIDs {
-		if usage.Sum > 1 {
-			c.logger.Warn("the same UID is used more than once", "uid", uid, "times", usage.Sum, "providers",
-				keysToSlice(usage.InvolvedReaders))
+func (c *duplicateValidator) logWarnings(duplicatesByOrg map[int64]duplicateEntries) {
+	for orgID, duplicates := range duplicatesByOrg {
+		for uid, usage := range duplicates.UIDs {
+			if usage.Sum > 1 {
+				c.logger.Warn("the same UID is used more than once", "orgId", orgID, "uid", uid, "times", usage.Sum, "providers",
+					keysToSlice(usage.InvolvedReaders))
+			}
 		}
-	}
 
-	for id, usage := range duplicates.Titles {
-		if usage.Sum > 1 {
-			c.logger.Warn("dashboard title is not unique in folder", "title", id.title, "folderID", id.folderID, "times",
-				usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+		for id, usage := range duplicates.Titles {
+			if usage.Sum > 1 {
+				c.logger.Warn("dashboard title is not unique in folder", "orgId", orgID, "title", id.title, "folderID", id.folderID, "times",
+					usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
+			}
 		}
 	}
 }
 
-func (c *duplicateValidator) takeAwayWritePermissions(duplicates *duplicateEntries) {
-	involvedReaders := duplicates.InvolvedReaders()
+func (c *duplicateValidator) takeAwayWritePermissions(duplicatesByOrg map[int64]duplicateEntries) {
+	// reset write permissions for all readers
 	for _, reader := range c.readers {
-		_, isReaderWithDuplicates := involvedReaders[reader.Cfg.Name]
-		// We restrict reader permissions to write to the database here to prevent overloading
-		reader.changeWritePermissions(isReaderWithDuplicates)
+		reader.changeWritePermissions(false)
+	}
 
-		if isReaderWithDuplicates {
-			c.logger.Warn("dashboards provisioning provider has no database write permissions because of duplicates", "provider", reader.Cfg.Name)
+	for orgID, duplicates := range duplicatesByOrg {
+		involvedReaders := duplicates.InvolvedReaders()
+		for _, reader := range c.readers {
+			_, exists := involvedReaders[reader.Cfg.Name]
+
+			if exists {
+				// We restrict reader permissions to write to the database here to prevent overloading
+				reader.changeWritePermissions(true)
+				c.logger.Warn("dashboards provisioning provider has no database write permissions because of duplicates", "provider", reader.Cfg.Name, "orgId", orgID)
+			}
 		}
 	}
 }

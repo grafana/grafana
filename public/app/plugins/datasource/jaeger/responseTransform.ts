@@ -6,7 +6,8 @@ import {
   TraceLog,
   TraceSpanRow,
 } from '@grafana/data';
-import { transformTraceData } from '@jaegertracing/jaeger-ui-components';
+import { transformTraceData } from 'app/features/explore/TraceView/components';
+
 import { JaegerResponse, Span, TraceProcess, TraceResponse } from './types';
 
 export function createTraceFrame(data: TraceResponse): DataFrame {
@@ -70,6 +71,7 @@ export function createTableFrame(data: TraceResponse[], instanceSettings: DataSo
         name: 'traceID',
         type: FieldType.string,
         config: {
+          unit: 'string',
           displayNameFromDS: 'Trace ID',
           links: [
             {

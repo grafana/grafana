@@ -1,3 +1,5 @@
+import { DataTransformerConfig } from '@grafana/schema';
+
 import { FieldConfigSource } from './fieldOverrides';
 import { DataQuery, DataSourceRef } from './query';
 
@@ -13,6 +15,9 @@ export enum DashboardCursorSync {
 export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
   /** ID of the panel within the current dashboard */
   id: number;
+
+  /** The panel type */
+  type: string;
 
   /** Panel title */
   title?: string;
@@ -34,6 +39,9 @@ export interface PanelModel<TOptions = any, TCustomFieldConfig = any> {
 
   /** The queries in a panel */
   targets?: DataQuery[];
+
+  /** Optionally process data after query */
+  transformations?: DataTransformerConfig[];
 
   /** alerting v1 object */
   alert?: any;

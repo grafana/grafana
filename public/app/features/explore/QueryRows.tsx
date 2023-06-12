@@ -1,12 +1,17 @@
-import React, { useCallback, useMemo } from 'react';
-import { ExploreId } from 'app/types/explore';
-import { useDispatch, useSelector } from 'react-redux';
-import { getDatasourceSrv } from '../plugins/datasource_srv';
-import { runQueries, changeQueriesAction } from './state/query';
-import { CoreApp, DataQuery } from '@grafana/data';
-import { getNextRefIdChar } from 'app/core/utils/query';
-import { QueryEditorRows } from '../query/components/QueryEditorRows';
 import { createSelector } from '@reduxjs/toolkit';
+import React, { useCallback, useMemo } from 'react';
+
+import { CoreApp } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
+import { getNextRefIdChar } from 'app/core/utils/query';
+import { useDispatch, useSelector } from 'app/types';
+import { ExploreId } from 'app/types/explore';
+
+import { getDatasourceSrv } from '../plugins/datasource_srv';
+import { QueryEditorRows } from '../query/components/QueryEditorRows';
+
+import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
@@ -34,26 +39,21 @@ export const QueryRows = ({ exploreId }: Props) => {
     [exploreId]
   );
 
-  const queries = useSelector(getQueries)!;
-  const dsSettings = useSelector(getDatasourceInstanceSettings)!;
-  const queryResponse = useSelector(getQueryResponse)!;
+  const queries = useSelector(getQueries);
+  const dsSettings = useSelector(getDatasourceInstanceSettings);
+  const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 
   const onRunQueries = useCallback(() => {
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
     (newQueries: DataQuery[]) => {
-      dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
-
-      // if we are removing a query we want to run the remaining ones
-      if (newQueries.length < queries.length) {
-        onRunQueries();
-      }
+      dispatch(changeQueries({ exploreId, queries: newQueries }));
     },
-    [dispatch, exploreId, onRunQueries, queries]
+    [dispatch, exploreId]
   );
 
   const onAddQuery = useCallback(
@@ -63,6 +63,18 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
+  const onQueryCopied = () => {
+    reportInteraction('grafana_explore_query_row_copy');
+  };
+
+  const onQueryRemoved = () => {
+    reportInteraction('grafana_explore_query_row_remove');
+  };
+
+  const onQueryToggled = (queryStatus?: boolean) => {
+    reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
+  };
+
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
@@ -70,6 +82,9 @@ export const QueryRows = ({ exploreId }: Props) => {
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
       onRunQueries={onRunQueries}
+      onQueryCopied={onQueryCopied}
+      onQueryRemoved={onQueryRemoved}
+      onQueryToggled={onQueryToggled}
       data={queryResponse}
       app={CoreApp.Explore}
       history={history}

@@ -2,10 +2,12 @@ package models
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +30,7 @@ func TestAlertQuery(t *testing.T) {
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 			},
 			expectedIsExpression: true,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
@@ -110,7 +112,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"queryType": "metricQuery",
 					"intervalMs": "invalid",
-					"extraParam": "some text"	
+					"extraParam": "some text"
 				}`),
 			},
 			expectedIsExpression: false,
@@ -243,5 +245,40 @@ func TestAlertQueryMarshalling(t *testing.T) {
 			assert.Equal(t, tc.expectedFrom, aq.RelativeTimeRange.From)
 			assert.Equal(t, tc.expectedTo, aq.RelativeTimeRange.To)
 		}
+	}
+}
+
+func TestAlertQuery_GetQuery(t *testing.T) {
+	tc := []struct {
+		name       string
+		alertQuery AlertQuery
+		expected   string
+		err        error
+	}{
+		{
+			name:       "when a query is present",
+			alertQuery: AlertQuery{Model: json.RawMessage(`{"expr": "sum by (job) (up)"}`)},
+			expected:   "sum by (job) (up)",
+		},
+		{
+			name:       "when no query is found",
+			alertQuery: AlertQuery{Model: json.RawMessage(`{"exprisnot": "sum by (job) (up)"}`)},
+			err:        ErrNoQuery,
+		},
+		{
+			name:       "when we're unable to cast the query to a string",
+			alertQuery: AlertQuery{Model: json.RawMessage(`{"expr": {"key": 1}}`)},
+			err:        errors.New("failed to cast query to string: map[key:1]"),
+		},
+	}
+
+	for _, tt := range tc {
+		t.Run(tt.name, func(t *testing.T) {
+			expected, err := tt.alertQuery.GetQuery()
+			if err != nil {
+				require.Equal(t, tt.err, err)
+			}
+			require.Equal(t, tt.expected, expected)
+		})
 	}
 }

@@ -1,6 +1,7 @@
 import { Field, FieldType } from '../../../types/dataFrame';
 import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
+
 import { RangeValueMatcherOptions } from './types';
 
 const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions<number>> = {
@@ -9,7 +10,7 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions<number>> 
   description: 'Match when field value is between given option values.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       if (isNaN(value)) {
         return false;
       }

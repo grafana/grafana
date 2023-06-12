@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { Select } from '../Select/Select';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { Select } from '../Select/Select';
 
 export interface Props {
   onChange: (weekStart: string) => void;
@@ -9,7 +11,6 @@ export interface Props {
   width?: number;
   autoFocus?: boolean;
   onBlur?: () => void;
-  includeInternal?: boolean;
   disabled?: boolean;
   inputId?: string;
 }
@@ -21,7 +22,7 @@ const weekStarts: Array<SelectableValue<string>> = [
   { value: 'monday', label: 'Monday' },
 ];
 
-export const WeekStartPicker: React.FC<Props> = (props) => {
+export const WeekStartPicker = (props: Props) => {
   const { onChange, width, autoFocus = false, onBlur, value, disabled = false, inputId } = props;
 
   const onChangeWeekStart = useCallback(
@@ -45,7 +46,6 @@ export const WeekStartPicker: React.FC<Props> = (props) => {
       onChange={onChangeWeekStart}
       onBlur={onBlur}
       disabled={disabled}
-      menuShouldPortal={true}
     />
   );
 };

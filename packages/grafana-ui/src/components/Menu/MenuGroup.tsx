@@ -1,9 +1,12 @@
-import React from 'react';
 import { css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '../../themes';
-import { MenuItemProps } from './MenuItem';
 import { uniqueId } from 'lodash';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
+
+import { MenuItemProps } from './MenuItem';
 
 /** @internal */
 export interface MenuItemsGroup<T = any> {
@@ -22,7 +25,7 @@ export interface MenuGroupProps extends Partial<MenuItemsGroup> {
 }
 
 /** @internal */
-export const MenuGroup: React.FC<MenuGroupProps> = ({ label, ariaLabel, children }) => {
+export const MenuGroup = ({ label, ariaLabel, children }: MenuGroupProps) => {
   const styles = useStyles2(getStyles);
   const labelID = `group-label-${uniqueId()}`;
 

@@ -1,19 +1,22 @@
-import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
-import { PluginMeta } from './plugin';
-import { ScopedVars } from './ScopedVars';
-import { LoadingState, PreferredVisualisationType } from './data';
-import { DataFrame, FieldType } from './dataFrame';
-import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { defaultsDeep } from 'lodash';
+
 import { EventBus } from '../events';
-import { FieldConfigSource } from './fieldOverrides';
-import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
+import { Registry } from '../utils';
+
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
-import { OptionEditorConfig } from './options';
+import { ScopedVars } from './ScopedVars';
 import { AlertStateInfo } from './alerts';
 import { PanelModel } from './dashboard';
+import { LoadingState, PreferredVisualisationType } from './data';
+import { DataFrame, FieldType } from './dataFrame';
+import { DataQueryError, DataQueryRequest, DataQueryTimings } from './datasource';
+import { FieldConfigSource } from './fieldOverrides';
+import { IconName } from './icon';
+import { OptionEditorConfig } from './options';
+import { PluginMeta } from './plugin';
+import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
 import { DataTransformerConfig } from './transformations';
-import { defaultsDeep } from 'lodash';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -54,10 +57,18 @@ export interface PanelData {
   timings?: DataQueryTimings;
 
   /** Any query errors */
+  errors?: DataQueryError[];
+  /**
+   * Single error for legacy reasons
+   * @deprecated use errors instead -- will be removed in Grafana 10+
+   */
   error?: DataQueryError;
 
   /** Contains the range from the request or a shifted time range if a request uses relative time */
   timeRange: TimeRange;
+
+  /** traceIds collected during the processing of the requests */
+  traceIds?: string[];
 }
 
 export interface PanelProps<T = any> {
@@ -154,7 +165,7 @@ export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = an
 export interface PanelMenuItem {
   type?: 'submenu' | 'divider';
   text: string;
-  iconClassName?: string;
+  iconClassName?: IconName;
   onClick?: (event: React.MouseEvent<any>) => void;
   shortcut?: string;
   href?: string;

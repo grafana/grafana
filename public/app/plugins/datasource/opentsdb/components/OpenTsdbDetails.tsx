@@ -1,9 +1,11 @@
-import React, { SyntheticEvent } from 'react';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-const { Select, Input } = LegacyForms;
+import React, { SyntheticEvent, useId } from 'react';
+
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+
 import { OpenTsdbOptions } from '../types';
-import { useUniqueId } from '../../influxdb/components/useUniqueId';
+
+const { Select, Input } = LegacyForms;
 
 const tsdbVersions = [
   { label: '<=2.1', value: 1 },
@@ -24,7 +26,7 @@ interface Props {
 export const OpenTsdbDetails = (props: Props) => {
   const { onChange, value } = props;
 
-  const idSuffix = useUniqueId();
+  const idSuffix = useId();
 
   return (
     <>
@@ -35,7 +37,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-version-${idSuffix}`}
-          menuShouldPortal
           options={tsdbVersions}
           value={tsdbVersions.find((version) => version.value === value.jsonData.tsdbVersion) ?? tsdbVersions[0]}
           onChange={onSelectChangeHandler('tsdbVersion', value, onChange)}
@@ -47,7 +48,6 @@ export const OpenTsdbDetails = (props: Props) => {
         </InlineFormLabel>
         <Select
           inputId={`select-resolution-${idSuffix}`}
-          menuShouldPortal
           options={tsdbResolutions}
           value={
             tsdbResolutions.find((resolution) => resolution.value === value.jsonData.tsdbResolution) ??
@@ -71,26 +71,25 @@ export const OpenTsdbDetails = (props: Props) => {
   );
 };
 
-const onSelectChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  newValue: SelectableValue
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: newValue.value,
-    },
-  });
-};
+const onSelectChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (newValue: SelectableValue) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: newValue.value,
+      },
+    });
+  };
 
-const onInputChangeHandler = (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) => (
-  event: SyntheticEvent<HTMLInputElement>
-) => {
-  onChange({
-    ...value,
-    jsonData: {
-      ...value.jsonData,
-      [key]: event.currentTarget.value,
-    },
-  });
-};
+const onInputChangeHandler =
+  (key: keyof OpenTsdbOptions, value: Props['value'], onChange: Props['onChange']) =>
+  (event: SyntheticEvent<HTMLInputElement>) => {
+    onChange({
+      ...value,
+      jsonData: {
+        ...value.jsonData,
+        [key]: event.currentTarget.value,
+      },
+    });
+  };

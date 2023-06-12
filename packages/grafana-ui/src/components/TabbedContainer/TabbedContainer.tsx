@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
 
 import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '../../themes';
+
 import { IconName, TabsBar, Tab, IconButton, CustomScrollbar, TabContent } from '../..';
+import { stylesFactory, useTheme2 } from '../../themes';
 
 export interface TabConfig {
   label: string;
@@ -27,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     tabContent: css`
       padding: ${theme.spacing(2)};
       background-color: ${theme.colors.background.primary};
-      height: 100%;
+      height: calc(100% - ${theme.components.menuTabs.height}px);
     `,
     close: css`
       position: absolute;
@@ -71,7 +72,7 @@ export function TabbedContainer(props: TabbedContainerProps) {
             icon={t.icon}
           />
         ))}
-        <IconButton className={styles.close} onClick={onClose} name="times" title={closeIconTooltip ?? 'Close'} />
+        <IconButton className={styles.close} onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
       </TabsBar>
       <CustomScrollbar autoHeightMin="100%">
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>

@@ -1,11 +1,16 @@
-import React from 'react';
-import { PanelPlugin } from '@grafana/data';
-import { AlertGroupPanelOptions } from './types';
-import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import React, { useMemo } from 'react';
 
-export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).setPanelOptions((builder) => {
+import { PanelPlugin } from '@grafana/data';
+import { AlertManagerPicker } from 'app/features/alerting/unified/components/AlertManagerPicker';
+import {
+  getAllAlertManagerDataSources,
+  GRAFANA_RULES_SOURCE_NAME,
+} from 'app/features/alerting/unified/utils/datasource';
+
+import { AlertGroupsPanel } from './AlertGroupsPanel';
+import { Options } from './panelcfg.gen';
+
+export const plugin = new PanelPlugin<Options>(AlertGroupsPanel).setPanelOptions((builder) => {
   return builder
     .addCustomEditor({
       name: 'Alertmanager',
@@ -14,12 +19,15 @@ export const plugin = new PanelPlugin<AlertGroupPanelOptions>(AlertGroupsPanel).
       defaultValue: GRAFANA_RULES_SOURCE_NAME,
       category: ['Options'],
       editor: function RenderAlertmanagerPicker(props) {
+        const alertManagers = useMemo(getAllAlertManagerDataSources, []);
+
         return (
           <AlertManagerPicker
             current={props.value}
             onChange={(alertManagerSourceName) => {
               return props.onChange(alertManagerSourceName);
             }}
+            dataSources={alertManagers}
           />
         );
       },

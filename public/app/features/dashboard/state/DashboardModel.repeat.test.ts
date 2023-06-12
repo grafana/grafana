@@ -1,8 +1,9 @@
 import { compact, flattenDeep, map, uniq } from 'lodash';
-import { DashboardModel } from '../state/DashboardModel';
-import { expect } from 'test/lib/common';
+
+import { DashboardPanelsChangedEvent } from 'app/types/events';
+
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
-import { PanelModel } from './PanelModel';
+import { DashboardModel } from '../state/DashboardModel';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -533,7 +534,7 @@ describe('given dashboard with row repeat', () => {
 });
 
 describe('given dashboard with row and panel repeat', () => {
-  let dashboard: any, dashboardJSON: any;
+  let dashboard: DashboardModel, dashboardJSON: any;
 
   beforeEach(() => {
     dashboardJSON = {
@@ -586,6 +587,14 @@ describe('given dashboard with row and panel repeat', () => {
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
   });
 
+  it('Row repeat should create new panel keys every repeat cycle', () => {
+    // This is the first repeated panel inside the second repeated row
+    // Since we create a new panel model every time (and new panel events bus) we need to create a new key here to trigger a re-mount & re-subscribe
+    const key1 = dashboard.panels[3].key;
+    dashboard.processRepeats();
+    expect(key1).not.toEqual(dashboard.panels[3].key);
+  });
+
   it('should clean up old repeated panels', () => {
     dashboardJSON.panels = [
       {
@@ -605,11 +614,16 @@ describe('given dashboard with row and panel repeat', () => {
       },
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
+
+    let panelChangedEvents: DashboardPanelsChangedEvent[] = [];
     dashboard = getDashboardModel(dashboardJSON);
+    dashboard.events.subscribe(DashboardPanelsChangedEvent, (evt) => panelChangedEvents.push(evt));
     dashboard.processRepeats();
 
     const panelTypes = map(dashboard.panels, 'type');
     expect(panelTypes).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
+    // Make sure only a single DashboardPanelsChangedEvent event is emitted when processing repeats
+    expect(panelChangedEvents.length).toBe(1);
   });
 
   it('should set scopedVars for each row', () => {
@@ -784,63 +798,5 @@ describe('given dashboard with row and repeats on same row', () => {
     expect(dashboard.panels[13].gridPos).toEqual({ x: x2, y: 21, w: w2, h: h2 });
     expect(dashboard.panels[15].gridPos).toEqual({ x: x2, y: 26, w: w2, h: h2 });
     expect(dashboard.panels[17].gridPos).toEqual({ x: x2, y: 31, w: w2, h: h2 });
-  });
-});
-
-describe('given panel is in view mode', () => {
-  let dashboard: any;
-
-  beforeEach(() => {
-    const dashboardJSON = {
-      panels: [
-        {
-          id: 1,
-          repeat: 'apps',
-          repeatDirection: 'h',
-          gridPos: { x: 0, y: 0, h: 2, w: 24 },
-        },
-      ],
-      templating: {
-        list: [
-          {
-            name: 'apps',
-            type: 'custom',
-            current: {
-              text: 'se1, se2, se3',
-              value: ['se1', 'se2', 'se3'],
-            },
-            options: [
-              { text: 'se1', value: 'se1', selected: true },
-              { text: 'se2', value: 'se2', selected: true },
-              { text: 'se3', value: 'se3', selected: true },
-              { text: 'se4', value: 'se4', selected: false },
-            ],
-          },
-        ],
-      },
-    };
-
-    dashboard = getDashboardModel(dashboardJSON);
-    dashboard.initViewPanel(
-      new PanelModel({
-        id: 2,
-        repeat: undefined,
-        repeatDirection: 'h',
-        panels: [
-          {
-            id: 2,
-            repeat: 'apps',
-            repeatDirection: 'h',
-            gridPos: { x: 0, y: 0, h: 2, w: 24 },
-          },
-        ],
-        repeatPanelId: 2,
-      })
-    );
-    dashboard.processRepeats();
-  });
-
-  it('should set correct repeated panel to be in view', () => {
-    expect(dashboard.panels[1].isViewing).toBeTruthy();
   });
 });

@@ -1,21 +1,41 @@
+import { css } from '@emotion/css';
 import React from 'react';
 import { Redirect } from 'react-router-dom';
-import { css } from '@emotion/css';
+import { useLocation } from 'react-use';
+
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useCombinedRulesMatching } from './hooks/useCombinedRule';
-import { createViewLink } from './utils/misc';
-import { getRulesSourceByName } from './utils/datasource';
-import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+
 import { AlertLabels } from './components/AlertLabels';
+import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
+import { useCombinedRulesMatching } from './hooks/useCombinedRule';
+import { getRulesSourceByName } from './utils/datasource';
+import { createViewLink } from './utils/misc';
 
-type RedirectToRuleViewerProps = GrafanaRouteComponentProps<{ name?: string; sourceName?: string }>;
-const pageTitle = 'Alerting / Find rule';
+const pageTitle = 'Find rule';
+const subUrl = config.appSubUrl;
 
-export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Element | null {
-  const { name, sourceName } = props.match.params;
+function useRuleFindParams() {
+  // DO NOT USE REACT-ROUTER HOOKS FOR THIS CODE
+  // React-router's useLocation/useParams/props.match are broken and don't preserve original param values when parsing location
+  // so, they cannot be used to parse name and sourceName path params
+  // React-router messes the pathname up resulting in a string that is neither encoded nor decoded
+  // Relevant issue: https://github.com/remix-run/history/issues/505#issuecomment-453175833
+  // It was probably fixed in React-Router v6
+  const location = useLocation();
+  const segments = location.pathname?.replace(subUrl, '').split('/') ?? []; // ["", "alerting", "{sourceName}", "{name}]
+
+  const name = decodeURIComponent(segments[3]);
+  const sourceName = decodeURIComponent(segments[2]);
+
+  return { name, sourceName };
+}
+
+export function RedirectToRuleViewer(): JSX.Element | null {
   const styles = useStyles2(getStyles);
+
+  const { name, sourceName } = useRuleFindParams();
   const { error, loading, result: rules, dispatched } = useCombinedRulesMatching(name, sourceName);
 
   if (error) {
@@ -58,7 +78,8 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
 
   if (rules.length === 1) {
     const [rule] = rules;
-    return <Redirect to={createViewLink(rulesSource, rule, '/alerting/list')} />;
+    const to = createViewLink(rulesSource, rule, '/alerting/list').replace(subUrl, '');
+    return <Redirect to={to} />;
   }
 
   return (
@@ -70,11 +91,8 @@ export function RedirectToRuleViewer(props: RedirectToRuleViewerProps): JSX.Elem
       <div className={styles.rules}>
         {rules.map((rule, index) => {
           return (
-            <Card
-              key={`${rule.name}-${index}`}
-              heading={rule.name}
-              href={createViewLink(rulesSource, rule, '/alerting/list')}
-            >
+            <Card key={`${rule.name}-${index}`} href={createViewLink(rulesSource, rule, '/alerting/list')}>
+              <Card.Heading>{rule.name}</Card.Heading>
               <Card.Meta separator={''}>
                 <Icon name="folder" />
                 <span className={styles.namespace}>{`${rule.namespace.name} / ${rule.group.name}`}</span>

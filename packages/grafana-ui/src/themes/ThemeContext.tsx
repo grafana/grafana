@@ -1,7 +1,10 @@
-import { createTheme, GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
 import hoistNonReactStatics from 'hoist-non-react-statics';
 import React, { useContext } from 'react';
+
+import { createTheme, GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+
 import { Themeable, Themeable2 } from '../types/theme';
+
 import { stylesFactory } from './stylesFactory';
 
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
@@ -80,6 +83,7 @@ export function useTheme2(): GrafanaTheme2 {
  * you pass in doesn't change, or only if it needs to. (i.e. declare
  * your style creator outside of a function component or use `useCallback()`.)
  * */
+/** @deprecated use useStyles2 */
 /** @public */
 export function useStyles<T>(getStyles: (theme: GrafanaTheme) => T) {
   const theme = useTheme();

@@ -1,21 +1,35 @@
 import React, { useMemo } from 'react';
-import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
 
-import { Histogram, getBucketSize } from './Histogram';
-import { PanelOptions } from './models.gen';
+import { PanelProps, buildHistogram, getHistogramFields } from '@grafana/data';
+import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
 import { useTheme2 } from '@grafana/ui';
 
-type Props = PanelProps<PanelOptions>;
+import { Histogram, getBucketSize } from './Histogram';
+import { Options } from './panelcfg.gen';
 
-import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transformers/histogram';
+type Props = PanelProps<Options>;
 
-export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }) => {
+export const HistogramPanel = ({ data, options, width, height }: Props) => {
   const theme = useTheme2();
 
   const histogram = useMemo(() => {
-    if (!data?.series?.length) {
+    if (!data.series.length) {
       return undefined;
     }
+
+    // stamp origins for legend's calcs (from raw values)
+    data.series.forEach((frame, frameIndex) => {
+      frame.fields.forEach((field, fieldIndex) => {
+        field.state = {
+          ...field.state,
+          origin: {
+            frameIndex,
+            fieldIndex,
+          },
+        };
+      });
+    });
+
     if (data.series.length === 1) {
       const info = getHistogramFields(data.series[0]);
       if (info) {
@@ -45,6 +59,7 @@ export const HistogramPanel: React.FC<Props> = ({ data, options, width, height }
       options={options}
       theme={theme}
       legend={options.legend}
+      rawSeries={data.series}
       structureRev={data.structureRev}
       width={width}
       height={height}

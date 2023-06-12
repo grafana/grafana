@@ -1,27 +1,29 @@
-import { AccessControlAction, ThunkResult } from '../../../types';
+import { debounce } from 'lodash';
+
 import { getBackendSrv } from '@grafana/runtime';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser } from 'app/types';
-import { inviteesLoaded, usersLoaded } from './reducers';
-import { contextSrv } from 'app/core/core';
-import { addAccessControlQueryParam } from 'app/core/utils/accessControl';
+
+import { ThunkResult } from '../../../types';
+
+import { usersLoaded, pageChanged, usersFetchBegin, usersFetchEnd, searchQueryChanged } from './reducers';
 
 export function loadUsers(): ThunkResult<void> {
-  return async (dispatch) => {
-    const users = await getBackendSrv().get(addAccessControlQueryParam('/api/org/users'));
-    dispatch(usersLoaded(users));
-  };
-}
-
-export function loadInvitees(): ThunkResult<void> {
-  return async (dispatch) => {
-    if (!contextSrv.hasPermission(AccessControlAction.UsersCreate)) {
-      return;
+  return async (dispatch, getState) => {
+    try {
+      const { perPage, page, searchQuery } = getState().users;
+      const users = await getBackendSrv().get(
+        `/api/org/users/search`,
+        accessControlQueryParam({ perpage: perPage, page, query: searchQuery })
+      );
+      dispatch(usersLoaded(users));
+    } catch (error) {
+      usersFetchEnd();
     }
-
-    const invitees = await getBackendSrv().get('/api/org/invites');
-    dispatch(inviteesLoaded(invitees));
   };
 }
+
+const fetchUsersWithDebounce = debounce((dispatch) => dispatch(loadUsers()), 300);
 
 export function updateUser(user: OrgUser): ThunkResult<void> {
   return async (dispatch) => {
@@ -37,9 +39,18 @@ export function removeUser(userId: number): ThunkResult<void> {
   };
 }
 
-export function revokeInvite(code: string): ThunkResult<void> {
+export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    await getBackendSrv().patch(`/api/org/invites/${code}/revoke`, {});
-    dispatch(loadInvitees());
+    dispatch(usersFetchBegin());
+    dispatch(pageChanged(page));
+    dispatch(loadUsers());
+  };
+}
+
+export function changeSearchQuery(query: string): ThunkResult<void> {
+  return async (dispatch) => {
+    dispatch(usersFetchBegin());
+    dispatch(searchQueryChanged(query));
+    fetchUsersWithDebounce(dispatch);
   };
 }

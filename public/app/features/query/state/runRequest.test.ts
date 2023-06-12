@@ -1,23 +1,26 @@
+import { Observable, Subscriber, Subscription } from 'rxjs';
+
 import {
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
+  DataTopic,
   dateTime,
   LoadingState,
   PanelData,
-  DataTopic,
 } from '@grafana/data';
-import { Observable, Subscriber, Subscription } from 'rxjs';
-import { runRequest } from './runRequest';
-import { deepFreeze } from '../../../../test/core/redux/reducerTester';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { setEchoSrv } from '@grafana/runtime';
+
+import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
+
+import { runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
 
-const dashboardModel = new DashboardModel({
+const dashboardModel = createDashboardModelFixture({
   panels: [{ id: 1, type: 'graph' }],
 });
 
@@ -109,6 +112,26 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
   });
 }
 
+function runRequestScenarioThatThrows(desc: string, fn: (ctx: ScenarioCtx) => void) {
+  describe(desc, () => {
+    const ctx = new ScenarioCtx();
+    let consoleSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      setEchoSrv(new Echo());
+      ctx.reset();
+      return ctx.setupFn();
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
+    });
+
+    fn(ctx);
+  });
+}
+
 describe('runRequest', () => {
   runRequestScenario('with no queries', (ctx) => {
     ctx.setup(() => {
@@ -136,7 +159,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('After tree responses, 2 with different keys', (ctx) => {
+  runRequestScenario('After three responses, 2 with different keys', (ctx) => {
     ctx.setup(() => {
       ctx.start();
       ctx.emitPacket({
@@ -163,6 +186,83 @@ describe('runRequest', () => {
 
     it('should have loading state Done', () => {
       expect(ctx.results[2].state).toEqual(LoadingState.Done);
+    });
+  });
+
+  runRequestScenario('When the key is defined in refId', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'DataX-1', refId: 'X' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataY-1', refId: 'Y' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'DataY-2', refId: 'Y' } as DataFrame],
+      });
+    });
+
+    it('should emit 3 separate results', () => {
+      expect(ctx.results.length).toBe(3);
+    });
+
+    it('should keep data for X and Y', () => {
+      expect(ctx.results[2].series).toMatchInlineSnapshot(`
+        [
+          {
+            "name": "DataX-1",
+            "refId": "X",
+          },
+          {
+            "name": "DataY-2",
+            "refId": "Y",
+          },
+        ]
+      `);
+    });
+  });
+
+  runRequestScenario('When the response contains traceIds', (ctx) => {
+    ctx.setup(() => {
+      ctx.start();
+      ctx.emitPacket({
+        data: [{ name: 'data-a', refId: 'A' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-b', refId: 'B' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-c', refId: 'C' } as DataFrame],
+        traceIds: ['t1', 't2'],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-d', refId: 'D' } as DataFrame],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-e', refId: 'E' } as DataFrame],
+        traceIds: ['t3', 't4'],
+      });
+      ctx.emitPacket({
+        data: [{ name: 'data-e', refId: 'E' } as DataFrame],
+        traceIds: ['t4', 't4'],
+      });
+    });
+    it('should collect traceIds correctly', () => {
+      const { results } = ctx;
+      expect(results).toHaveLength(6);
+      expect(results[0].traceIds).toBeUndefined();
+
+      // this is the result of adding no-traces data to no-traces state
+      expect(results[1].traceIds).toBeUndefined();
+      // this is the result of adding with-traces data to no-traces state
+      expect(results[2].traceIds).toStrictEqual(['t1', 't2']);
+      // this is the result of adding no-traces data to with-traces state
+      expect(results[3].traceIds).toStrictEqual(['t1', 't2']);
+      // this is the result of adding with-traces data to with-traces state
+      expect(results[4].traceIds).toStrictEqual(['t1', 't2', 't3', 't4']);
+      // this is the result of adding with-traces data to with-traces state with duplicate traceIds
+      expect(results[5].traceIds).toStrictEqual(['t1', 't2', 't3', 't4']);
     });
   });
 
@@ -197,7 +297,7 @@ describe('runRequest', () => {
     });
   });
 
-  runRequestScenario('on thrown error', (ctx) => {
+  runRequestScenarioThatThrows('on thrown error', (ctx) => {
     ctx.setup(() => {
       ctx.error = new Error('Ohh no');
       ctx.start();

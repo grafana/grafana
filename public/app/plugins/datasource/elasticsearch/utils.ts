@@ -1,10 +1,8 @@
-import {
-  isMetricAggregationWithField,
-  MetricAggregation,
-  MetricAggregationWithInlineScript,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { gte, SemVer } from 'semver';
+
+import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { valid } from 'semver';
+import { MetricAggregation, MetricAggregationWithInlineScript } from './types';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {
@@ -21,7 +19,7 @@ export const describeMetric = (metric: MetricAggregation) => {
  * recursing over nested objects (not arrays).
  * @param obj
  */
-export const removeEmpty = <T>(obj: T): Partial<T> =>
+export const removeEmpty = <T extends {}>(obj: T): Partial<T> =>
   Object.entries(obj).reduce((acc, [key, value]) => {
     // Removing nullish values (null & undefined)
     if (value == null) {
@@ -34,7 +32,7 @@ export const removeEmpty = <T>(obj: T): Partial<T> =>
     }
 
     // Removing empty strings
-    if (value?.length === 0) {
+    if (typeof value === 'string' && value.length === 0) {
       return { ...acc };
     }
 
@@ -93,27 +91,13 @@ export const convertOrderByToMetricId = (orderBy: string): string | undefined =>
 export const getScriptValue = (metric: MetricAggregationWithInlineScript) =>
   (typeof metric.settings?.script === 'object' ? metric.settings?.script?.inline : metric.settings?.script) || '';
 
-/**
- * Coerces the a version string/number to a valid semver string.
- * It takes care of also converting from the legacy format (numeric) to the new one.
- * @param version
- */
-export const coerceESVersion = (version: string | number): string => {
-  if (typeof version === 'string') {
-    return valid(version) || '5.0.0';
+export const isSupportedVersion = (version: SemVer): boolean => {
+  if (gte(version, '7.16.0')) {
+    return true;
   }
 
-  switch (version) {
-    case 2:
-      return '2.0.0';
-    case 56:
-      return '5.6.0';
-    case 60:
-      return '6.0.0';
-    case 70:
-      return '7.0.0';
-    case 5:
-    default:
-      return '5.0.0';
-  }
+  return false;
 };
+
+export const unsupportedVersionMessage =
+  'Support for Elasticsearch versions after their end-of-life (currently versions < 7.16) was removed. Using unsupported version of Elasticsearch may lead to unexpected and incorrect results.';

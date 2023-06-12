@@ -1,8 +1,11 @@
 import React, { memo } from 'react';
+
 import { CoreApp } from '@grafana/data';
-import { PromQueryEditorProps } from './types';
-import { PromQueryEditor } from './PromQueryEditor';
+
+import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEditorSelector';
+
 import { PromQueryEditorForAlerting } from './PromQueryEditorForAlerting';
+import { PromQueryEditorProps } from './types';
 
 export function PromQueryEditorByApp(props: PromQueryEditorProps) {
   const { app } = props;
@@ -11,7 +14,7 @@ export function PromQueryEditorByApp(props: PromQueryEditorProps) {
     case CoreApp.CloudAlerting:
       return <PromQueryEditorForAlerting {...props} />;
     default:
-      return <PromQueryEditor {...props} />;
+      return <PromQueryEditorSelector {...props} />;
   }
 }
 

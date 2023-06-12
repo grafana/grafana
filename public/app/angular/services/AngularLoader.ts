@@ -1,12 +1,13 @@
 import angular from 'angular';
-import coreModule from 'app/angular/core_module';
 import { assign } from 'lodash';
 
 import { AngularComponent, AngularLoader as AngularLoaderInterface } from '@grafana/runtime';
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
+import coreModule from 'app/angular/core_module';
 
 export class AngularLoader implements AngularLoaderInterface {
-  /** @ngInject */
+  static $inject = ['$compile', '$rootScope'];
+
   constructor(private $compile: any, private $rootScope: GrafanaRootScope) {}
 
   load(elem: any, scopeProps: any, template: string): AngularComponent {

@@ -1,12 +1,13 @@
 import { screen } from '@testing-library/react';
-import { ElasticsearchQuery } from '../../../../types';
 import React from 'react';
-import { renderWithESProvider } from '../../../../test-helpers/render';
-import { Average, Derivative, TopMetrics } from '../../MetricAggregationsEditor/aggregations';
-import { Terms } from '../aggregations';
-import { TermsSettingsEditor } from './TermsSettingsEditor';
 import selectEvent from 'react-select-event';
+
 import { describeMetric } from 'app/plugins/datasource/elasticsearch/utils';
+
+import { renderWithESProvider } from '../../../../test-helpers/render';
+import { ElasticsearchQuery, Terms, Average, Derivative, TopMetrics } from '../../../../types';
+
+import { TermsSettingsEditor } from './TermsSettingsEditor';
 
 describe('Terms Settings Editor', () => {
   it('Pipeline aggregations should not be in "order by" options', () => {

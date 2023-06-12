@@ -1,7 +1,9 @@
 import { each, isString, map } from 'lodash';
+
 import coreModule from '../core_module';
 
-/** @ngInject */
+coreModule.service('uiSegmentSrv', ['$sce', 'templateSrv', uiSegmentSrv]);
+
 export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
   const self = this;
 
@@ -118,5 +120,3 @@ export function uiSegmentSrv(this: any, $sce: any, templateSrv: any) {
     });
   };
 }
-
-coreModule.service('uiSegmentSrv', uiSegmentSrv);

@@ -1,14 +1,18 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { mount } from 'enzyme';
-import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
-import { createDimension, ArrayVector, FieldType, DisplayProcessor } from '@grafana/data';
-import { GraphDimensions } from './types';
+
+import { createDimension, createTheme, FieldType, DisplayProcessor } from '@grafana/data';
+
 import { ActiveDimensions } from '../../VizTooltip';
+
+import { MultiModeGraphTooltip } from './MultiModeGraphTooltip';
+import { GraphDimensions } from './types';
 
 let dimensions: GraphDimensions;
 
 describe('MultiModeGraphTooltip', () => {
-  const display: DisplayProcessor = (v) => ({ numeric: v, text: String(v), color: 'red' });
+  const display: DisplayProcessor = (v) => ({ numeric: Number(v), text: String(v), color: 'red' });
+  const theme = createTheme();
 
   describe('when shown when hovering over a datapoint', () => {
     beforeEach(() => {
@@ -16,14 +20,14 @@ describe('MultiModeGraphTooltip', () => {
         xAxis: createDimension('xAxis', [
           {
             config: {},
-            values: new ArrayVector([0, 100, 200]),
+            values: [0, 100, 200],
             name: 'A-series time',
             type: FieldType.time,
             display,
           },
           {
             config: {},
-            values: new ArrayVector([0, 100, 200]),
+            values: [0, 100, 200],
             name: 'B-series time',
             type: FieldType.time,
             display,
@@ -32,14 +36,14 @@ describe('MultiModeGraphTooltip', () => {
         yAxis: createDimension('yAxis', [
           {
             config: {},
-            values: new ArrayVector([10, 20, 10]),
+            values: [10, 20, 10],
             name: 'A-series values',
             type: FieldType.number,
             display,
           },
           {
             config: {},
-            values: new ArrayVector([20, 30, 40]),
+            values: [20, 30, 40],
             name: 'B-series values',
             type: FieldType.number,
             display,
@@ -54,7 +58,7 @@ describe('MultiModeGraphTooltip', () => {
         xAxis: [0, 1], // column, row
         yAxis: [0, 1], // column, row
       };
-      const container = mount(
+      render(
         <MultiModeGraphTooltip
           dimensions={dimensions}
           activeDimensions={activeDimensions}
@@ -64,12 +68,13 @@ describe('MultiModeGraphTooltip', () => {
       );
 
       // We rendered two series rows
-      const rows = container.find('SeriesTableRow');
+      const rows = screen.getAllByTestId('SeriesTableRow');
+      expect(rows.length).toEqual(2);
 
-      // We expect A-series(1st row) to be highlighted
-      expect(rows.get(0).props.isActive).toBeTruthy();
+      // We expect A-series(1st row) not to be highlighted
+      expect(rows[0]).toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
       // We expect B-series(2nd row) not to be highlighted
-      expect(rows.get(1).props.isActive).toBeFalsy();
+      expect(rows[1]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
     });
 
     it("doesn't highlight series when not hovering over datapoint", () => {
@@ -79,7 +84,7 @@ describe('MultiModeGraphTooltip', () => {
         yAxis: null, // no active series
       };
 
-      const container = mount(
+      render(
         <MultiModeGraphTooltip
           dimensions={dimensions}
           activeDimensions={activeDimensions}
@@ -89,12 +94,13 @@ describe('MultiModeGraphTooltip', () => {
       );
 
       // We rendered two series rows
-      const rows = container.find('SeriesTableRow');
+      const rows = screen.getAllByTestId('SeriesTableRow');
+      expect(rows.length).toEqual(2);
 
       // We expect A-series(1st row) not to be highlighted
-      expect(rows.get(0).props.isActive).toBeFalsy();
+      expect(rows[0]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
       // We expect B-series(2nd row) not to be highlighted
-      expect(rows.get(1).props.isActive).toBeFalsy();
+      expect(rows[1]).not.toHaveStyle(`font-weight: ${theme.typography.fontWeightMedium}`);
     });
   });
 });

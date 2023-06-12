@@ -1,7 +1,13 @@
+import { css } from '@emotion/css';
 import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
-import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { LegendPlacement } from '@grafana/schema';
+
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { getFocusStyles } from '../../themes/mixins';
+import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
 /**
  * @beta
@@ -24,6 +30,8 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
  * @beta
  */
 export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getVizStyles);
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
@@ -32,16 +40,24 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   const [legendRef, legendMeasure] = useMeasure<HTMLDivElement>();
 
   if (!legend) {
-    return <div style={containerStyle}>{children(width, height)}</div>;
+    return (
+      <>
+        {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+        <div tabIndex={0} style={containerStyle} className={styles.viz}>
+          {children(width, height)}
+        </div>
+      </>
+    );
   }
 
-  const { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
+  let { placement, maxHeight = '35%', maxWidth = '60%' } = legend.props;
+
+  if (document.body.clientWidth < theme.breakpoints.values.lg) {
+    placement = 'bottom';
+  }
 
   let size: VizSize | null = null;
-
-  const vizStyle: CSSProperties = {
-    flexGrow: 2,
-  };
 
   const legendStyle: CSSProperties = {};
 
@@ -50,7 +66,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
 
-      if (legendMeasure) {
+      if (legendMeasure.height) {
         size = { width, height: height - legendMeasure.height };
       }
       break;
@@ -58,8 +74,13 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       containerStyle.flexDirection = 'row';
       legendStyle.maxWidth = maxWidth;
 
-      if (legendMeasure) {
+      if (legendMeasure.width) {
         size = { width: width - legendMeasure.width, height };
+      }
+
+      if (legend.props.width) {
+        legendStyle.width = legend.props.width;
+        size = { width: width - legend.props.width, height };
       }
       break;
   }
@@ -76,7 +97,11 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
 
   return (
     <div style={containerStyle}>
-      <div style={vizStyle}>{size && children(size.width, size.height)}</div>
+      {/* tabIndex={0} is needed for keyboard accessibility in the plot area */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      <div tabIndex={0} className={styles.viz}>
+        {size && children(size.width, size.height)}
+      </div>
       <div style={legendStyle} ref={legendRef}>
         <CustomScrollbar hideHorizontalTrack>{legend}</CustomScrollbar>
       </div>
@@ -84,6 +109,15 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   );
 };
 
+export const getVizStyles = (theme: GrafanaTheme2) => {
+  return {
+    viz: css({
+      flexGrow: 2,
+      borderRadius: theme.shape.borderRadius(1),
+      '&:focus-visible': getFocusStyles(theme),
+    }),
+  };
+};
 interface VizSize {
   width: number;
   height: number;
@@ -97,6 +131,7 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
   maxHeight?: string;
   maxWidth?: string;
+  width?: number;
 }
 
 /**

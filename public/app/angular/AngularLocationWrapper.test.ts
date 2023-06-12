@@ -1,5 +1,13 @@
-import { AngularLocationWrapper } from './AngularLocationWrapper';
 import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+
+import { AngularLocationWrapper } from './AngularLocationWrapper';
+
+// The methods in this file are deprecated
+// Stub the deprecation warning here to prevent polluting the test output
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  deprecationWarning: () => {},
+}));
 
 describe('AngularLocationWrapper', () => {
   const { location } = window;
@@ -92,7 +100,7 @@ describe('AngularLocationWrapper', () => {
 
     it('should copy object', function () {
       locationService.push('/path/b');
-      const obj: Record<string, any> = { one: '1', two: true, three: null };
+      const obj: Record<string, unknown> = { one: '1', two: true, three: null };
       wrapper.search(obj);
       expect(obj).toEqual({ one: '1', two: true, three: null });
       obj.one = 'changed';

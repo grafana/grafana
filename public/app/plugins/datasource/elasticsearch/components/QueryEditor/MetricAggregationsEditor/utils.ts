@@ -1,18 +1,15 @@
-import { MetricsConfiguration } from '../../../types';
-import {
-  isMetricAggregationWithField,
-  isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  PipelineMetricAggregationType,
-} from './aggregations';
+import { MetricsConfiguration, MetricAggregation, PipelineMetricAggregationType } from '../../../types';
+
 import {
   defaultPipelineVariable,
   generatePipelineVariableName,
 } from './SettingsEditor/BucketScriptSettingsEditor/utils';
+import { isMetricAggregationWithField, isPipelineAggregationWithMultipleBucketPaths } from './aggregations';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
+    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -24,6 +21,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   avg: {
     label: 'Average',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -35,6 +33,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   sum: {
     label: 'Sum',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -46,6 +45,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   max: {
     label: 'Max',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -57,6 +57,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   min: {
     label: 'Min',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsInlineScript: true,
     supportsMissing: true,
@@ -68,6 +69,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   extended_stats: {
     label: 'Extended Stats',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -84,6 +86,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   percentiles: {
     label: 'Percentiles',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     supportsInlineScript: true,
@@ -99,6 +102,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cardinality: {
     label: 'Unique Count',
+    impliedQueryType: 'metrics',
     requiresField: true,
     supportsMissing: true,
     isPipelineAgg: false,
@@ -109,10 +113,13 @@ export const metricAggregationConfig: MetricsConfiguration = {
     defaults: {},
   },
   moving_avg: {
+    // deprecated in 6.4.0, removed in 8.0.0,
+    // recommended replacement is moving_fn
     label: 'Moving Average',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
-    versionRange: '>=2.0.0 <8.0.0',
+    versionRange: '<8.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -128,6 +135,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   moving_fn: {
     // TODO: Check this
     label: 'Moving Function',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
     supportsMultipleBucketPaths: false,
@@ -135,14 +143,13 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     hasMeta: false,
     hasSettings: true,
-    versionRange: '>=7.0.0',
     defaults: {},
   },
   derivative: {
     label: 'Derivative',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
-    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -152,9 +159,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   serial_diff: {
     label: 'Serial Difference',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
-    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -168,9 +175,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: true,
-    versionRange: '>=2.0.0',
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
@@ -180,11 +187,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   bucket_script: {
     label: 'Bucket Script',
+    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: true,
     supportsMissing: false,
     supportsMultipleBucketPaths: true,
-    versionRange: '>=2.0.0',
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
@@ -193,9 +200,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
     },
   },
   raw_document: {
-    label: 'Raw Document (legacy)',
+    label: 'Raw Document (deprecated)',
     requiresField: false,
-    isSingleMetric: true,
+    impliedQueryType: 'raw_document',
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
@@ -211,7 +218,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   raw_data: {
     label: 'Raw Data',
     requiresField: false,
-    isSingleMetric: true,
+    impliedQueryType: 'raw_data',
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
@@ -231,7 +238,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
-    isSingleMetric: true,
+    impliedQueryType: 'logs',
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {
@@ -242,14 +249,13 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   top_metrics: {
     label: 'Top Metrics',
-    xpack: true,
+    impliedQueryType: 'metrics',
     requiresField: false,
     isPipelineAgg: false,
     supportsMissing: false,
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     supportsInlineScript: false,
-    versionRange: '>=7.7.0',
     hasMeta: false,
     defaults: {
       settings: {
@@ -259,8 +265,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
   },
   rate: {
     label: 'Rate',
-    xpack: true,
-    versionRange: '>=7.10.0',
+    impliedQueryType: 'metrics',
     requiresField: true,
     isPipelineAgg: false,
     supportsMissing: false,
@@ -297,8 +302,8 @@ export const pipelineOptions: PipelineOptions = {
 
 /**
  * Given a metric `MetricA` and an array of metrics, returns all children of `MetricA`.
- * `MetricB` is considered a child of `MetricA` if `MetricA` is referenced by `MetricB` in it's `field` attribute
- * (`MetricA.id === MetricB.field`) or in it's pipeline aggregation variables (for bucket_scripts).
+ * `MetricB` is considered a child of `MetricA` if `MetricA` is referenced by `MetricB` in its `field` attribute
+ * (`MetricA.id === MetricB.field`) or in its pipeline aggregation variables (for bucket_scripts).
  * @param metric
  * @param metrics
  */

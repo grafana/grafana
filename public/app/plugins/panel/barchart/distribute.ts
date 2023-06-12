@@ -1,12 +1,10 @@
-function roundDec(val: number, dec: number) {
-  return Math.round(val * (dec = 10 ** dec)) / dec;
-}
+import { roundDecimals } from '@grafana/data';
 
 export const SPACE_BETWEEN = 1;
 export const SPACE_AROUND = 2;
 export const SPACE_EVENLY = 3;
 
-const coord = (i: number, offs: number, iwid: number, gap: number) => roundDec(offs + i * (iwid + gap), 6);
+const coord = (i: number, offs: number, iwid: number, gap: number) => roundDecimals(offs + i * (iwid + gap), 6);
 
 export type Each = (idx: number, offPct: number, dimPct: number) => void;
 
@@ -37,7 +35,7 @@ export function distribute(numItems: number, sizeFactor: number, justify: number
   /* eslint-enable */
 
   let iwid = sizeFactor / numItems;
-  let _iwid = roundDec(iwid, 6);
+  let _iwid = roundDecimals(iwid, 6);
 
   if (onlyIdx == null) {
     for (let i = 0; i < numItems; i++) {

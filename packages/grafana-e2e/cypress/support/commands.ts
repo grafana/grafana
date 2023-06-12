@@ -31,3 +31,11 @@ Cypress.Commands.add('getJSONFilesFromDir', (dirPath: string) => {
     relativePath: dirPath,
   });
 });
+
+Cypress.Commands.add('startBenchmarking', (testName: string) => {
+  return cy.task('startBenchmarking', { testName });
+});
+
+Cypress.Commands.add('stopBenchmarking', (testName: string, appStats: Record<string, unknown>) => {
+  return cy.task('stopBenchmarking', { testName, appStats });
+});

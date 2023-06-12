@@ -5,7 +5,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/dataplane/sdata/timeseries"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
@@ -131,10 +133,48 @@ func NewSeries(refID string, labels data.Labels, size int) Series {
 	fields := make([]*data.Field, 2)
 	fields[seriesTypeTimeIdx] = data.NewField("Time", nil, make([]time.Time, size))
 	fields[seriesTypeValIdx] = data.NewField(refID, labels, make([]*float64, size))
+	frame := data.NewFrame("", fields...)
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
 
 	return Series{
-		Frame: data.NewFrame("", fields...),
+		Frame: frame,
 	}
+}
+
+// NewSeries returns a dataframe of type Series.
+func NewSeriesFromRef(refID string, s timeseries.MetricRef) (Series, error) {
+	frame := data.NewFrame("")
+	frame.RefID = refID
+	frame.Meta = &data.FrameMeta{
+		Type:        data.FrameTypeTimeSeriesMulti,
+		TypeVersion: data.FrameTypeVersion{0, 1},
+	}
+
+	valField := s.ValueField
+	if valField.Type() != data.FieldTypeNullableFloat64 {
+		convertedField := data.NewFieldFromFieldType(data.FieldTypeNullableFloat64, valField.Len())
+		convertedField.Name = valField.Name
+		convertedField.Labels = valField.Labels
+		convertedField.Config = valField.Config
+		for j := 0; j < valField.Len(); j++ {
+			ff, err := valField.NullableFloatAt(j)
+			if err != nil {
+				break
+			}
+
+			convertedField.Set(j, ff)
+		}
+		valField = convertedField
+	}
+	frame.Fields = []*data.Field{s.TimeField, valField}
+
+	return Series{
+		Frame: frame, // No Data Frame
+	}, nil
 }
 
 // Type returns the Value type and allows it to fulfill the Value interface.
@@ -154,7 +194,21 @@ func (s Series) GetMeta() interface{} {
 }
 
 func (s Series) SetMeta(v interface{}) {
-	s.Frame.SetMeta(&data.FrameMeta{Custom: v})
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Custom = v
+}
+
+func (s Series) AddNotice(notice data.Notice) {
+	m := s.Frame.Meta
+	if m == nil {
+		m = &data.FrameMeta{}
+		s.Frame.SetMeta(m)
+	}
+	m.Notices = append(m.Notices, notice)
 }
 
 // AsDataFrame returns the underlying *data.Frame.
@@ -166,17 +220,15 @@ func (s Series) GetPoint(pointIdx int) (time.Time, *float64) {
 }
 
 // SetPoint sets the time and value on the corresponding vectors at the specified index.
-func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) (err error) {
+func (s Series) SetPoint(pointIdx int, t time.Time, f *float64) {
 	s.Frame.Fields[seriesTypeTimeIdx].Set(pointIdx, t)
 	s.Frame.Fields[seriesTypeValIdx].Set(pointIdx, f)
-	return
 }
 
 // AppendPoint appends a point (time/value).
-func (s Series) AppendPoint(pointIdx int, t time.Time, f *float64) (err error) {
+func (s Series) AppendPoint(t time.Time, f *float64) {
 	s.Frame.Fields[seriesTypeTimeIdx].Append(t)
 	s.Frame.Fields[seriesTypeValIdx].Append(f)
-	return
 }
 
 // Len returns the length of the series.
@@ -214,8 +266,8 @@ func (ss SortSeriesByTime) Len() int { return Series(ss).Len() }
 func (ss SortSeriesByTime) Swap(i, j int) {
 	iTimeVal, iFVal := Series(ss).GetPoint(i)
 	jTimeVal, jFVal := Series(ss).GetPoint(j)
-	_ = Series(ss).SetPoint(j, iTimeVal, iFVal)
-	_ = Series(ss).SetPoint(i, jTimeVal, jFVal)
+	Series(ss).SetPoint(j, iTimeVal, iFVal)
+	Series(ss).SetPoint(i, jTimeVal, jFVal)
 }
 
 func (ss SortSeriesByTime) Less(i, j int) bool {

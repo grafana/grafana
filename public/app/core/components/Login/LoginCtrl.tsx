@@ -1,8 +1,11 @@
 import React, { PureComponent } from 'react';
-import config from 'app/core/config';
+
+import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
+import config from 'app/core/config';
+
+import { LoginDTO } from './types';
 
 const isOauthEnabled = () => {
   return !!config.oauth && Object.keys(config.oauth).length > 0;
@@ -24,28 +27,29 @@ interface Props {
     skipPasswordChange: Function;
     login: (data: FormModel) => void;
     disableLoginForm: boolean;
-    ldapEnabled: boolean;
-    authProxyEnabled: boolean;
     disableUserSignUp: boolean;
     isOauthEnabled: boolean;
     loginHint: string;
     passwordHint: string;
+    showDefaultPasswordWarning: boolean;
   }) => JSX.Element;
 }
 
 interface State {
   isLoggingIn: boolean;
   isChangingPassword: boolean;
+  showDefaultPasswordWarning: boolean;
 }
 
 export class LoginCtrl extends PureComponent<Props, State> {
-  result: any = {};
+  result: LoginDTO | undefined;
 
   constructor(props: Props) {
     super(props);
     this.state = {
       isLoggingIn: false,
       isChangingPassword: false,
+      showDefaultPasswordWarning: false,
     };
 
     if (config.loginError) {
@@ -60,26 +64,26 @@ export class LoginCtrl extends PureComponent<Props, State> {
       oldPassword: 'admin',
     };
 
-    if (!this.props.resetCode) {
+    if (this.props.resetCode) {
+      const resetModel = {
+        code: this.props.resetCode,
+        newPassword: password,
+        confirmPassword: password,
+      };
+
+      getBackendSrv()
+        .post('/api/user/password/reset', resetModel)
+        .then(() => {
+          this.toGrafana();
+        });
+    } else {
       getBackendSrv()
         .put('/api/user/password', pw)
         .then(() => {
           this.toGrafana();
         })
-        .catch((err: any) => console.error(err));
+        .catch((err) => console.error(err));
     }
-
-    const resetModel = {
-      code: this.props.resetCode,
-      newPassword: password,
-      confirmPassword: password,
-    };
-
-    getBackendSrv()
-      .post('/api/user/password/reset', resetModel)
-      .then(() => {
-        this.toGrafana();
-      });
   };
 
   login = (formModel: FormModel) => {
@@ -88,14 +92,14 @@ export class LoginCtrl extends PureComponent<Props, State> {
     });
 
     getBackendSrv()
-      .post('/login', formModel)
-      .then((result: any) => {
+      .post<LoginDTO>('/login', formModel)
+      .then((result) => {
         this.result = result;
         if (formModel.password !== 'admin' || config.ldapEnabled || config.authProxyEnabled) {
           this.toGrafana();
           return;
         } else {
-          this.changeView();
+          this.changeView(formModel.password === 'admin');
         }
       })
       .catch(() => {
@@ -105,15 +109,16 @@ export class LoginCtrl extends PureComponent<Props, State> {
       });
   };
 
-  changeView = () => {
+  changeView = (showDefaultPasswordWarning: boolean) => {
     this.setState({
       isChangingPassword: true,
+      showDefaultPasswordWarning,
     });
   };
 
   toGrafana = () => {
     // Use window.location.href to force page reload
-    if (this.result.redirectUrl) {
+    if (this.result?.redirectUrl) {
       if (config.appSubUrl !== '' && !this.result.redirectUrl.startsWith(config.appSubUrl)) {
         window.location.assign(config.appSubUrl + this.result.redirectUrl);
       } else {
@@ -126,9 +131,9 @@ export class LoginCtrl extends PureComponent<Props, State> {
 
   render() {
     const { children } = this.props;
-    const { isLoggingIn, isChangingPassword } = this.state;
+    const { isLoggingIn, isChangingPassword, showDefaultPasswordWarning } = this.state;
     const { login, toGrafana, changePassword } = this;
-    const { loginHint, passwordHint, disableLoginForm, ldapEnabled, authProxyEnabled, disableUserSignUp } = config;
+    const { loginHint, passwordHint, disableLoginForm, disableUserSignUp } = config;
 
     return (
       <>
@@ -137,14 +142,13 @@ export class LoginCtrl extends PureComponent<Props, State> {
           loginHint,
           passwordHint,
           disableLoginForm,
-          ldapEnabled,
-          authProxyEnabled,
           disableUserSignUp,
           login,
           isLoggingIn,
           changePassword,
           skipPasswordChange: toGrafana,
           isChangingPassword,
+          showDefaultPasswordWarning,
         })}
       </>
     );

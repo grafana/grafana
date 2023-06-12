@@ -1,15 +1,17 @@
-import React from 'react';
-import { isArray, isObject, isUndefined } from 'lodash';
-import { useStyles2, Icon } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import { isArray, isObject, isUndefined } from 'lodash';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2, Icon } from '@grafana/ui';
+
 import { Diff } from './utils';
 
 type DiffProps = {
   diff: Diff;
 };
 
-export const DiffValues: React.FC<DiffProps> = ({ diff }) => {
+export const DiffValues = ({ diff }: DiffProps) => {
   const styles = useStyles2(getStyles);
   const hasLeftValue =
     !isUndefined(diff.originalValue) && !isArray(diff.originalValue) && !isObject(diff.originalValue);

@@ -1,21 +1,19 @@
-import {
-  ApplyFieldOverrideOptions,
-  DataTransformerConfig,
-  dateMath,
-  FieldColorModeId,
-  NavModelItem,
-  PanelData,
-} from '@grafana/data';
-import { Table } from '@grafana/ui';
-import { config } from 'app/core/config';
-import React, { FC, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
+import AutoSizer from 'react-virtualized-auto-sizer';
+
+import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
+import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
+import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { config } from 'app/core/config';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { QueryGroupOptions } from 'app/types';
+
+import { PanelRenderer } from '../panel/components/PanelRenderer';
 import { QueryGroup } from '../query/components/QueryGroup';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from 'app/types';
-import Page from '../../core/components/Page/Page';
-import AutoSizer from 'react-virtualized-auto-sizer';
-import { PanelRenderer } from '../panel/components/PanelRenderer';
 
 interface State {
   queryRunner: PanelQueryRunner;
@@ -23,7 +21,7 @@ interface State {
   data?: PanelData;
 }
 
-export const TestStuffPage: FC = () => {
+export const TestStuffPage = () => {
   const [state, setState] = useState<State>(getDefaultState());
   const { queryOptions, queryRunner } = state;
 
@@ -58,9 +56,14 @@ export const TestStuffPage: FC = () => {
     url: 'sandbox/test',
   };
 
+  const notifyApp = useAppNotification();
+
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
+        <HorizontalGroup>
+          <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
+        </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
             {({ width }) => {
@@ -89,6 +92,23 @@ export const TestStuffPage: FC = () => {
             onRunQueries={onRunQueries}
             onOptionsChange={onOptionsChange}
           />
+        </div>
+        <div style={{ display: 'flex', gap: '1em' }}>
+          <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
+            Success
+          </Button>
+          <Button
+            onClick={() => notifyApp.warning('Warning toast', 'some more text goes here', 'bogus-trace-99999')}
+            variant="secondary"
+          >
+            Warning
+          </Button>
+          <Button
+            onClick={() => notifyApp.error('Error toast', 'some more text goes here', 'bogus-trace-fdsfdfsfds')}
+            variant="destructive"
+          >
+            Error
+          </Button>
         </div>
       </Page.Contents>
     </Page>
@@ -125,6 +145,29 @@ export function getDefaultState(): State {
       maxDataPoints: 100,
     },
   };
+}
+
+function LinkToBasicApp({ extensionPointId }: { extensionPointId: string }) {
+  const { extensions } = getPluginExtensions({ extensionPointId });
+
+  if (extensions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      {extensions.map((extension, i) => {
+        if (!isPluginExtensionLink(extension)) {
+          return null;
+        }
+        return (
+          <LinkButton href={extension.path} title={extension.description} key={extension.id}>
+            {extension.title}
+          </LinkButton>
+        );
+      })}
+    </div>
+  );
 }
 
 export default TestStuffPage;

@@ -1,9 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Field, Input, InputControl, Select } from '@grafana/ui';
-import { NotificationChannelOptions } from './NotificationChannelOptions';
-import { NotificationSettingsProps } from './NotificationChannelForm';
+
 import { NotificationChannelSecureFields, NotificationChannelType } from '../../../types';
+
+import { NotificationSettingsProps } from './NotificationChannelForm';
+import { NotificationChannelOptions } from './NotificationChannelOptions';
 
 interface Props extends NotificationSettingsProps {
   selectedChannel: NotificationChannelType;
@@ -12,7 +15,7 @@ interface Props extends NotificationSettingsProps {
   resetSecureField: (key: string) => void;
 }
 
-export const BasicSettings: FC<Props> = ({
+export const BasicSettings = ({
   control,
   currentFormValues,
   errors,
@@ -21,7 +24,7 @@ export const BasicSettings: FC<Props> = ({
   channels,
   register,
   resetSecureField,
-}) => {
+}: Props) => {
   return (
     <>
       <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
@@ -30,7 +33,7 @@ export const BasicSettings: FC<Props> = ({
       <Field label="Type">
         <InputControl
           name="type"
-          render={({ field: { ref, ...field } }) => <Select menuShouldPortal {...field} options={channels} />}
+          render={({ field: { ref, ...field } }) => <Select {...field} options={channels} />}
           control={control}
           rules={{ required: true }}
         />

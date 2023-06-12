@@ -1,6 +1,8 @@
 import { Action } from '@reduxjs/toolkit';
-import { PipelineVariable } from '../../../aggregations';
+
+import { PipelineVariable } from '../../../../../../types';
 import { defaultPipelineVariable, generatePipelineVariableName } from '../utils';
+
 import {
   addPipelineVariable,
   changePipelineVariableMetric,

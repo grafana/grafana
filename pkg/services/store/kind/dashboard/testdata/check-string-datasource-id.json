@@ -1,0 +1,67 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations \u0026 Alerts",
+                "type": "dashboard"
+            }
+        ]
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": 250,
+    "links": [],
+    "panels": [
+        {
+            "datasource": "-- Grafana --",
+            "fieldConfig": {},
+            "gridPos": {},
+            "id": 3,
+            "options": {
+                "graph": {},
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom"
+                },
+                "tooltipOptions": {
+                    "mode": "single"
+                }
+            },
+            "pluginVersion": "7.5.0-pre",
+            "targets": [
+                {
+                    "channel": "stream/telegraf/cpu",
+                    "filter": {
+                        "fields": []
+                    },
+                    "queryType": "measurements",
+                    "refId": "A"
+                }
+            ],
+            "title": "Panel Title",
+            "type": "timeseries"
+        }
+    ],
+    "schemaVersion": 27,
+    "style": "dark",
+    "tags": [],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-30s",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "fast streaming",
+    "uid": "K2X7hzwGk",
+    "version": 8
+}

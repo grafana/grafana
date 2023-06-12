@@ -1,5 +1,12 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { reducer } from './reducer';
+
+import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
+
+import { defaultMetricAgg } from '../../../../queryDef';
+import { Derivative, ExtendedStats, MetricAggregation } from '../../../../types';
+import { initQuery } from '../../state';
+import { metricAggregationConfig } from '../utils';
+
 import {
   addMetric,
   changeMetricAttribute,
@@ -10,11 +17,7 @@ import {
   removeMetric,
   toggleMetricVisibility,
 } from './actions';
-import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
-import { defaultMetricAgg } from '../../../../query_def';
-import { metricAggregationConfig } from '../utils';
-import { initQuery } from '../../state';
-import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
+import { reducer } from './reducer';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -81,7 +84,7 @@ describe('Metric Aggregations Reducer', () => {
         .thenStateShouldEqual([firstAggregation, { ...secondAggregation, type: expectedSecondAggregation.type }]);
     });
 
-    it('Should remove all other aggregations when the newly selected one is `isSingleMetric`', () => {
+    it('Should remove all other aggregations when the newly selected one is not metric', () => {
       const firstAggregation: MetricAggregation = {
         id: '1',
         type: 'count',
@@ -167,7 +170,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedSettings: typeof firstAggregation['settings'] = {
+    const expectedSettings: (typeof firstAggregation)['settings'] = {
       unit: 'Changed unit',
     };
 
@@ -192,7 +195,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedMeta: typeof firstAggregation['meta'] = {
+    const expectedMeta: (typeof firstAggregation)['meta'] = {
       avg: false,
     };
 
@@ -212,7 +215,7 @@ describe('Metric Aggregations Reducer', () => {
       type: 'count',
     };
 
-    const expectedHide: typeof firstAggregation['hide'] = false;
+    const expectedHide: (typeof firstAggregation)['hide'] = false;
 
     reducerTester<ElasticsearchQuery['metrics']>()
       .givenReducer(reducer, [firstAggregation, secondAggregation])

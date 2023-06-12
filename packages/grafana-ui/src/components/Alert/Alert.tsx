@@ -1,12 +1,14 @@
-import React, { HTMLAttributes, ReactNode } from 'react';
 import { css, cx } from '@emotion/css';
+import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
+import tinycolor2 from 'tinycolor2';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
 import { useTheme2 } from '../../themes';
-import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
-import { IconButton } from '../IconButton/IconButton';
 import { Button } from '../Button/Button';
+import { Icon } from '../Icon/Icon';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -19,50 +21,69 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
-}
-
-function getIconFromSeverity(severity: AlertVariant): string {
-  switch (severity) {
-    case 'error':
-    case 'warning':
-      return 'exclamation-triangle';
-    case 'info':
-      return 'info-circle';
-    case 'success':
-      return 'check';
-    default:
-      return '';
-  }
+  topSpacing?: number;
 }
 
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
   (
-    { title, onRemove, children, buttonContent, elevated, bottomSpacing, className, severity = 'error', ...restProps },
+    {
+      title,
+      onRemove,
+      children,
+      buttonContent,
+      elevated,
+      bottomSpacing,
+      topSpacing,
+      className,
+      severity = 'error',
+      ...restProps
+    },
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing);
+    const hasTitle = Boolean(title);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+      error: 'alert',
+      warning: 'alert',
+      info: 'status',
+      success: 'status',
+    };
+    const role = restProps['role'] || rolesBySeverity[severity];
+    const ariaLabel = restProps['aria-label'] || title;
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
+        role={role}
+        aria-label={ariaLabel}
         {...restProps}
       >
         <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
+          <Icon size="xl" name={getIconFromSeverity(severity)} />
         </div>
-        <div className={styles.body} role="alert">
+
+        <div className={styles.body}>
           <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
+
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
           <div className={styles.close}>
-            <IconButton aria-label="Close alert" name="times" onClick={onRemove} size="lg" type="button" />
+            <Button
+              aria-label="Close alert"
+              icon="times"
+              onClick={onRemove}
+              type="button"
+              fill="text"
+              variant="secondary"
+            />
           </div>
         )}
+
         {onRemove && buttonContent && (
           <div className={styles.buttonWrapper}>
             <Button aria-label="Close alert" variant="secondary" onClick={onRemove} type="button">
@@ -77,9 +98,29 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
 Alert.displayName = 'Alert';
 
-const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: boolean, bottomSpacing?: number) => {
+export const getIconFromSeverity = (severity: AlertVariant): IconName => {
+  switch (severity) {
+    case 'error':
+    case 'warning':
+      return 'exclamation-triangle';
+    case 'info':
+      return 'info-circle';
+    case 'success':
+      return 'check';
+  }
+};
+
+const getStyles = (
+  theme: GrafanaTheme2,
+  severity: AlertVariant,
+  hasTitle: boolean,
+  elevated?: boolean,
+  bottomSpacing?: number,
+  topSpacing?: number
+) => {
   const color = theme.colors[severity];
   const borderRadius = theme.shape.borderRadius();
+  const borderColor = tinycolor2(color.border).setAlpha(0.2).toString();
 
   return {
     alert: css`
@@ -89,9 +130,12 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       display: flex;
       flex-direction: row;
       align-items: stretch;
-      background: ${theme.colors.background.secondary};
-      box-shadow: ${elevated ? theme.shadows.z3 : theme.shadows.z1};
+      background: ${color.transparent};
+      box-shadow: ${elevated ? theme.shadows.z3 : 'none'};
+      padding: ${theme.spacing(1, 2)};
+      border: 1px solid ${borderColor};
       margin-bottom: ${theme.spacing(bottomSpacing ?? 2)};
+      margin-top: ${theme.spacing(topSpacing ?? 0)};
 
       &:before {
         content: '';
@@ -105,21 +149,15 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       }
     `,
     icon: css`
-      padding: ${theme.spacing(2, 3)};
-      background: ${color.main};
-      border-radius: ${borderRadius} 0 0 ${borderRadius};
-      color: ${color.contrastText};
+      padding: ${theme.spacing(1, 2, 0, 0)};
+      color: ${color.text};
       display: flex;
-      align-items: center;
-      justify-content: center;
     `,
-    title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      color: ${theme.colors.text.primary};
-    `,
+    title: css({
+      fontWeight: theme.typography.fontWeightMedium,
+    }),
     body: css`
-      color: ${theme.colors.text.secondary};
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(1, 0)};
       flex-grow: 1;
       display: flex;
       flex-direction: column;
@@ -128,21 +166,23 @@ const getStyles = (theme: GrafanaTheme2, severity: AlertVariant, elevated?: bool
       word-break: break-word;
     `,
     content: css`
-      color: ${theme.colors.text.secondary};
-      padding-top: ${theme.spacing(1)};
+      padding-top: ${hasTitle ? theme.spacing(0.5) : 0};
       max-height: 50vh;
-      overflow-y: scroll;
+      overflow-y: auto;
     `,
     buttonWrapper: css`
-      padding: ${theme.spacing(1)};
-      background: none;
+      margin-left: ${theme.spacing(1)};
       display: flex;
       align-items: center;
+      align-self: center;
     `,
     close: css`
-      padding: ${theme.spacing(2, 1)};
+      position: relative;
+      color: ${theme.colors.text.secondary};
       background: none;
       display: flex;
+      top: -6px;
+      right: -14px;
     `,
   };
 };

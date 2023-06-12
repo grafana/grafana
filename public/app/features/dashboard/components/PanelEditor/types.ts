@@ -1,4 +1,5 @@
 import { DataFrame, FieldConfigSource, PanelData, PanelPlugin } from '@grafana/data';
+
 import { DashboardModel, PanelModel } from '../../state';
 
 export interface PanelEditorTab {
@@ -55,8 +56,8 @@ export interface OptionPaneRenderProps {
   data?: PanelData;
   dashboard: DashboardModel;
   instanceState: any;
-  onPanelConfigChange: (configKey: keyof PanelModel, value: any) => void;
-  onPanelOptionsChanged: (options: any) => void;
+  onPanelConfigChange: (configKey: keyof PanelModel, value: unknown) => void;
+  onPanelOptionsChanged: (options: PanelModel['options']) => void;
   onFieldConfigsChange: (config: FieldConfigSource) => void;
 }
 

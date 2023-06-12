@@ -3,21 +3,18 @@ package setting
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestExpandVar_EnvSuccessful(t *testing.T) {
 	const key = "GF_TEST_SETTING_EXPANDER_ENV"
 	const expected = "aurora borealis"
-	err := os.Setenv(key, expected)
-	require.NoError(t, err)
+	t.Setenv(key, expected)
 
 	// expanded format
 	{
@@ -35,7 +32,7 @@ func TestExpandVar_EnvSuccessful(t *testing.T) {
 }
 
 func TestExpandVar_FileSuccessful(t *testing.T) {
-	f, err := ioutil.TempFile(os.TempDir(), "file expansion *")
+	f, err := os.CreateTemp(os.TempDir(), "file expansion *")
 	require.NoError(t, err)
 	file := f.Name()
 

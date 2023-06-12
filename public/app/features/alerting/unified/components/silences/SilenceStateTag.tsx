@@ -1,5 +1,7 @@
+import React from 'react';
+
 import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
-import React, { FC } from 'react';
+
 import { State, StateTag } from '../StateTag';
 
 const silenceStateToState: Record<SilenceState, State> = {
@@ -12,6 +14,4 @@ interface Props {
   state: SilenceState;
 }
 
-export const SilenceStateTag: FC<Props> = ({ state }) => (
-  <StateTag state={silenceStateToState[state]}>{state}</StateTag>
-);
+export const SilenceStateTag = ({ state }: Props) => <StateTag state={silenceStateToState[state]}>{state}</StateTag>;

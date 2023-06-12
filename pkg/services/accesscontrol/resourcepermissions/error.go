@@ -3,6 +3,6 @@ package resourcepermissions
 import "errors"
 
 var (
-	ErrInvalidActions    = errors.New("invalid actions")
+	ErrInvalidPermission = errors.New("invalid permission")
 	ErrInvalidAssignment = errors.New("invalid assignment")
 )

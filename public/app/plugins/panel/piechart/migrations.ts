@@ -1,16 +1,17 @@
 import { FieldColorModeId, FieldConfigProperty, FieldMatcherID, PanelModel } from '@grafana/data';
 import { LegendDisplayMode } from '@grafana/schema';
-import { PieChartOptions, PieChartLabels, PieChartLegendValues, PieChartType } from './types';
+
+import { Options, PieChartLabels, PieChartLegendValues, PieChartType } from './panelcfg.gen';
 
 export const PieChartPanelChangedHandler = (
-  panel: PanelModel<Partial<PieChartOptions>> | any,
+  panel: PanelModel<Partial<Options>> | any,
   prevPluginId: string,
   prevOptions: any
 ) => {
   if (prevPluginId === 'grafana-piechart-panel' && prevOptions.angular) {
     const angular = prevOptions.angular;
     const overrides = [];
-    let options: PieChartOptions = panel.options;
+    let options: Options = panel.options;
 
     // Migrate color overrides for series
     if (angular.aliasColors) {
@@ -44,7 +45,13 @@ export const PieChartPanelChangedHandler = (
       },
     };
 
-    options.legend = { placement: 'right', values: [], displayMode: LegendDisplayMode.Table, calcs: [] };
+    options.legend = {
+      placement: 'right',
+      values: [],
+      displayMode: LegendDisplayMode.Table,
+      showLegend: true,
+      calcs: [],
+    };
 
     if (angular.valueName) {
       options.reduceOptions = { calcs: [] };
@@ -87,7 +94,7 @@ export const PieChartPanelChangedHandler = (
 
     if (angular.legend) {
       if (!angular.legend.show) {
-        options.legend.displayMode = LegendDisplayMode.Hidden;
+        options.legend.showLegend = false;
       }
       if (angular.legend.values) {
         options.legend.values.push(PieChartLegendValues.Value);
@@ -95,15 +102,11 @@ export const PieChartPanelChangedHandler = (
       if (angular.legend.percentage) {
         options.legend.values.push(PieChartLegendValues.Percent);
       }
-      if (!angular.legend.percentage && !angular.legend.values) {
-        // If you deselect both value and percentage in the old pie chart plugin, the legend is hidden.
-        options.legend.displayMode = LegendDisplayMode.Hidden;
-      }
     }
 
     // Set up labels when the old piechart is using 'on graph', for the legend option.
     if (angular.legendType === 'On graph') {
-      options.legend.displayMode = LegendDisplayMode.Hidden;
+      options.legend.showLegend = false;
       options.displayLabels = [PieChartLabels.Name];
       if (angular.legend.values) {
         options.displayLabels.push(PieChartLabels.Value);

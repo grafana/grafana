@@ -1,9 +1,11 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
+
+import { MetricAggregation } from '../types';
 import { describeMetric } from '../utils';
-import { MetricAggregation } from './QueryEditor/MetricAggregationsEditor/aggregations';
 
 const noWrap = css`
   white-space: nowrap;

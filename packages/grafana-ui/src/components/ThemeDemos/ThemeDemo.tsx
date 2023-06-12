@@ -1,19 +1,21 @@
-import React, { FC, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import { useTheme2 } from '../../themes/ThemeContext';
-import { Icon } from '../Icon/Icon';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import React, { useState } from 'react';
+
 import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+
+import { useTheme2 } from '../../themes/ThemeContext';
+import { allButtonVariants, Button } from '../Button';
+import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
 import { Field } from '../Forms/Field';
-import { Input } from '../Input/Input';
-import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
-import { Switch } from '../Switch/Switch';
-import { allButtonVariants, Button } from '../Button';
 import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
-import { Card } from '../Card/Card';
+import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
+import { Icon } from '../Icon/Icon';
+import { Input } from '../Input/Input';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { Select } from '../Select/Select';
+import { Switch } from '../Switch/Switch';
 
 interface DemoBoxProps {
   bg?: string;
@@ -21,7 +23,7 @@ interface DemoBoxProps {
   textColor?: string;
 }
 
-const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
+const DemoBox = ({ bg, border, children }: React.PropsWithChildren<DemoBoxProps>) => {
   const style = cx(
     css`
       padding: 16px;
@@ -38,7 +40,12 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   return <div className={style}>{children}</div>;
 };
 
-const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color, bold, size, children }) => {
+const DemoText = ({
+  color,
+  bold,
+  size,
+  children,
+}: React.PropsWithChildren<{ color?: string; bold?: boolean; size?: number }>) => {
   const style = css`
     padding: 4px;
     color: ${color ?? 'inherit'};
@@ -114,6 +121,7 @@ export const ThemeDemo = () => {
                   <td>name</td>
                   <td>main</td>
                   <td>shade (used for hover)</td>
+                  <td>transparent</td>
                   <td>border & text</td>
                 </tr>
               </thead>
@@ -134,12 +142,7 @@ export const ThemeDemo = () => {
               <Input placeholder="Placeholder" value="Disabled value" />
             </Field>
             <Field label="Select">
-              <Select
-                menuShouldPortal
-                options={selectOptions}
-                value={selectValue}
-                onChange={(v) => setSelectValue(v?.value!)}
-              />
+              <Select options={selectOptions} value={selectValue} onChange={(v) => setSelectValue(v?.value!)} />
             </Field>
             <Field label="Radio label">
               <RadioButtonGroup options={radioOptions} value={radioValue} onChange={setRadioValue} />
@@ -190,18 +193,17 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </HorizontalGroup>
-              <Card heading="Button inside card">
+              <Card>
+                <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
-                  <>
-                    {allButtonVariants.map((variant) => (
-                      <Button variant={variant} key={variant}>
-                        {variant}
-                      </Button>
-                    ))}
-                    <Button variant="primary" disabled>
-                      Disabled
+                  {allButtonVariants.map((variant) => (
+                    <Button variant={variant} key={variant}>
+                      {variant}
                     </Button>
-                  </>
+                  ))}
+                  <Button variant="primary" disabled>
+                    Disabled
+                  </Button>
                 </Card.Actions>
               </Card>
             </VerticalGroup>
@@ -242,6 +244,17 @@ export function RichColorDemo({ theme, color }: RichColorDemoProps) {
           className={css`
             background: ${color.shade};
             color: ${color.contrastText};
+            border-radius: 4px;
+            padding: 8px;
+          `}
+        >
+          {color.shade}
+        </div>
+      </td>
+      <td>
+        <div
+          className={css`
+            background: ${color.transparent};
             border-radius: 4px;
             padding: 8px;
           `}

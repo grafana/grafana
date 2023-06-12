@@ -1,8 +1,10 @@
-import React, { PureComponent } from 'react';
 import { css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import { ConfirmButton, ConfirmModal, Button } from '@grafana/ui';
-import { AccessControlAction, UserSession } from 'app/types';
 import { contextSrv } from 'app/core/core';
+import { i18nDate } from 'app/core/internationalization';
+import { AccessControlAction, UserSession } from 'app/types';
 
 interface Props {
   sessions: UserSession[];
@@ -15,7 +17,7 @@ interface State {
   showLogoutModal: boolean;
 }
 
-export class UserSessions extends PureComponent<Props, State> {
+class BaseUserSessions extends PureComponent<Props, State> {
   forceAllLogoutButton = React.createRef<HTMLButtonElement>();
   state: State = {
     showLogoutModal: false,
@@ -71,7 +73,7 @@ export class UserSessions extends PureComponent<Props, State> {
                   sessions.map((session, index) => (
                     <tr key={`${session.id}-${index}`}>
                       <td>{session.isActive ? 'Now' : session.seenAt}</td>
-                      <td>{session.createdAt}</td>
+                      <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
                       <td>{session.clientIp}</td>
                       <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>
                       <td>
@@ -113,3 +115,5 @@ export class UserSessions extends PureComponent<Props, State> {
     );
   }
 }
+
+export const UserSessions = BaseUserSessions;

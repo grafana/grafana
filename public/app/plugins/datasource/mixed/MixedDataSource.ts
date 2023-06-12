@@ -1,15 +1,17 @@
+import { cloneDeep, groupBy } from 'lodash';
+import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
+import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
+
 import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceInstanceSettings,
   LoadingState,
 } from '@grafana/data';
 import { getDataSourceSrv, toDataQueryError } from '@grafana/runtime';
-import { cloneDeep, groupBy } from 'lodash';
-import { forkJoin, from, Observable, of, OperatorFunction } from 'rxjs';
-import { catchError, map, mergeAll, mergeMap, reduce, toArray } from 'rxjs/operators';
 
 export const MIXED_DATASOURCE_NAME = '-- Mixed --';
 
@@ -26,11 +28,11 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
-      return t.datasource?.type !== MIXED_DATASOURCE_NAME;
+      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
     });
 
     if (!queries.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
+      return of({ data: [] }); // nothing
     }
 
     // Build groups of queries to run in parallel
@@ -48,7 +50,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     // Missing UIDs?
     if (!mixed.length) {
-      return of({ data: [] } as DataQueryResponse); // nothing
+      return of({ data: [] }); // nothing
     }
 
     return this.batchQueries(mixed, request);
@@ -69,7 +71,7 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                 data: response.data || [],
                 state: LoadingState.Loading,
                 key: `mixed-${i}-${response.key || ''}`,
-              } as DataQueryResponse;
+              };
             }),
             toArray(),
             catchError((err) => {
@@ -93,8 +95,8 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
     return forkJoin(runningQueries).pipe(flattenResponses(), map(this.finalizeResponses), mergeAll());
   }
 
-  testDatasource() {
-    return Promise.resolve({});
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 
   private isQueryable(query: BatchedQueries): boolean {

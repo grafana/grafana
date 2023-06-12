@@ -1,6 +1,6 @@
-import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
-import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
-import { appEvents, contextSrv } from 'app/core/core';
+import { Unsubscribable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
+
 import {
   AppEvents,
   isLiveChannelMessageEvent,
@@ -10,11 +10,18 @@ import {
   LiveChannelEvent,
   LiveChannelScope,
 } from '@grafana/data';
+import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { appEvents, contextSrv } from 'app/core/core';
+
+import { ShowModalReactEvent } from '../../../types/events';
+import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
+
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
-import { sessionId } from 'app/features/live';
-import { ShowModalReactEvent } from '../../../types/events';
-import { Unsubscribable } from 'rxjs';
+
+// sessionId is not a security-sensitive value.
+// It is used for filtering out dashboard edit events from the same browsing session
+const sessionId = uuidv4();
 
 class DashboardWatcher {
   channel?: LiveChannelAddress; // path to the channel

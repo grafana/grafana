@@ -1,14 +1,15 @@
-import React, { FC, useState } from 'react';
-import { AccessControlAction, Organization } from 'app/types';
+import React, { useState } from 'react';
+
 import { Button, ConfirmModal } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { AccessControlAction, Organization } from 'app/types';
 
 interface Props {
   orgs: Organization[];
   onDelete: (orgId: number) => void;
 }
 
-export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
+export function AdminOrgsTable({ orgs, onDelete }: Props) {
   const canDeleteOrgs = contextSrv.hasPermission(AccessControlAction.OrgsDelete);
 
   const [deleteOrg, setDeleteOrg] = useState<Organization>();
@@ -64,4 +65,4 @@ export const AdminOrgsTable: FC<Props> = ({ orgs, onDelete }) => {
       )}
     </table>
   );
-};
+}

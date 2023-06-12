@@ -1,15 +1,18 @@
 // Libraries
 import $ from 'jquery';
-import React, { PureComponent } from 'react';
 import { uniqBy } from 'lodash';
+import React, { PureComponent } from 'react';
+
 // Types
-import { TooltipDisplayMode } from '@grafana/schema';
 import { TimeRange, GraphSeriesXY, TimeZone, createDimension } from '@grafana/data';
-import { FlotPosition, FlotItem } from './types';
+import { TooltipDisplayMode } from '@grafana/schema';
+
 import { VizTooltipProps, VizTooltipContentProps, ActiveDimensions, VizTooltip } from '../VizTooltip';
-import { GraphTooltip } from './GraphTooltip/GraphTooltip';
+
 import { GraphContextMenu, GraphContextMenuProps, ContextDimensions } from './GraphContextMenu';
+import { GraphTooltip } from './GraphTooltip/GraphTooltip';
 import { GraphDimensions } from './GraphTooltip/types';
+import { FlotPosition, FlotItem } from './types';
 import { graphTimeFormat, graphTickFormatter } from './utils';
 
 export interface GraphProps {
@@ -37,6 +40,13 @@ interface GraphState {
   contextItem?: FlotItem<GraphSeriesXY>;
 }
 
+/**
+ * This is a react wrapper for the angular, flot based graph visualization.
+ * Rather than using this component, you should use the `<PanelRender .../> with
+ * timeseries panel configs.
+ *
+ * @deprecated
+ */
 export class Graph extends PureComponent<GraphProps, GraphState> {
   static defaultProps = {
     showLines: true,
@@ -107,8 +117,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     return uniqBy(
       series.map((s) => {
         const index = s.yAxis ? s.yAxis.index : 1;
-        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
-        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
+        const min = s.yAxis && s.yAxis.min && !isNaN(s.yAxis.min) ? s.yAxis.min : null;
+        const tickDecimals =
+          s.yAxis && s.yAxis.tickDecimals && !isNaN(s.yAxis.tickDecimals) ? s.yAxis.tickDecimals : null;
         return {
           show: true,
           index,
@@ -124,7 +135,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
   renderTooltip = () => {
     const { children, series, timeZone } = this.props;
     const { pos, activeItem, isTooltipVisible } = this.state;
-    let tooltipElement: React.ReactElement<VizTooltipProps> | null = null;
+    let tooltipElement: React.ReactElement<VizTooltipProps> | undefined;
 
     if (!isTooltipVisible || !pos || series.length === 0) {
       return null;
@@ -136,18 +147,17 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
       if (tooltipElement) {
         return;
       }
-      // @ts-ignore
       const childType = c && c.type && (c.type.displayName || c.type.name);
 
       if (childType === VizTooltip.displayName) {
-        tooltipElement = c as React.ReactElement<VizTooltipProps>;
+        tooltipElement = c;
       }
     });
     // If no tooltip provided, skip rendering
     if (!tooltipElement) {
       return null;
     }
-    const tooltipElementProps = (tooltipElement as React.ReactElement<VizTooltipProps>).props;
+    const tooltipElementProps = tooltipElement.props;
 
     const tooltipMode = tooltipElementProps.mode || 'single';
 
@@ -192,7 +202,7 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
 
     const tooltipContent = React.createElement(tooltipContentRenderer, { ...tooltipContentProps });
 
-    return React.cloneElement<VizTooltipProps>(tooltipElement as React.ReactElement<VizTooltipProps>, {
+    return React.cloneElement(tooltipElement, {
       content: tooltipContent,
       position: { x: pos.pageX, y: pos.pageY },
       offset: { x: 10, y: 10 },

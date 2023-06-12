@@ -1,20 +1,22 @@
+import { set } from 'lodash';
+import { ComponentClass, ComponentType } from 'react';
+
+import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import {
+  FieldConfigProperty,
   FieldConfigSource,
   GrafanaPlugin,
   PanelEditorProps,
   PanelMigrationHandler,
+  PanelPluginDataSupport,
   PanelPluginMeta,
   PanelProps,
   PanelTypeChangedHandler,
-  FieldConfigProperty,
-  PanelPluginDataSupport,
   VisualizationSuggestionsSupplier,
 } from '../types';
-import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
-import { ComponentClass, ComponentType } from 'react';
-import { set } from 'lodash';
 import { deprecationWarning } from '../utils';
-import { FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
+import { FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
+
 import { createFieldConfigRegistry } from './registryFactories';
 
 /** @beta */
@@ -118,7 +120,7 @@ export class PanelPlugin<
   };
 
   /**
-   * Legacy angular ctrl.  If this exists it will be used instead of the panel
+   * Legacy angular ctrl. If this exists it will be used instead of the panel
    */
   angularPanelCtrl?: any;
 
@@ -372,5 +374,9 @@ export class PanelPlugin<
    */
   getSuggestionsSupplier(): VisualizationSuggestionsSupplier | undefined {
     return this.suggestionsSupplier;
+  }
+
+  hasPluginId(pluginId: string) {
+    return this.meta.id === pluginId;
   }
 }

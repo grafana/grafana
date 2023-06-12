@@ -7,7 +7,6 @@ export * from './dashboard';
 export * from './query';
 export * from './annotations';
 export * from './logs';
-export * from './logsVolume';
 export * from './navModel';
 export * from './select';
 export * from './time';
@@ -36,7 +35,32 @@ export * from './live';
 export * from './variables';
 export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
-export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo, PreloadPlugin } from './config';
+export type {
+  CurrentUserDTO,
+  AnalyticsSettings,
+  BootData,
+  OAuth,
+  OAuthSettings,
+  AuthSettings,
+  GrafanaConfig,
+  BuildInfo,
+  LicenseInfo,
+} from './config';
+export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
+export * from './icon';
+export {
+  PluginExtensionTypes,
+  PluginExtensionPoints,
+  type PluginExtension,
+  type PluginExtensionLink,
+  type PluginExtensionComponent,
+  type PluginExtensionConfig,
+  type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
+  type PluginExtensionEventHelpers,
+  type PluginExtensionPanelContext,
+  type PluginExtensionDataSourceConfigContext,
+} from './pluginExtensions';

@@ -1,6 +1,18 @@
 package definitions
 
-import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+import (
+	v1 "github.com/prometheus/client_golang/api/prometheus/v1"
+)
+
+// swagger:route GET /api/v1/ngalert configuration RouteGetStatus
+//
+//  Get the status of the alerting engine
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//		 200: AlertingStatus
 
 // swagger:route GET /api/v1/ngalert/alertmanagers configuration RouteGetAlertmanagers
 //
@@ -26,7 +38,7 @@ import v1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 // swagger:route POST /api/v1/ngalert/admin_config configuration RoutePostNGalertConfig
 //
-// Creates or updates the NGalert configuration of the user's organization.
+// Creates or updates the NGalert configuration of the user's organization. If no value is sent for alertmanagersChoice, it defaults to "all".
 //
 //     Consumes:
 //     - application/json
@@ -52,18 +64,34 @@ type NGalertConfig struct {
 	Body PostableNGalertConfig
 }
 
+// swagger:enum AlertmanagersChoice
+type AlertmanagersChoice string
+
+const (
+	AllAlertmanagers           AlertmanagersChoice = "all"
+	InternalAlertmanager       AlertmanagersChoice = "internal"
+	ExternalAlertmanagers      AlertmanagersChoice = "external"
+	HandleGrafanaManagedAlerts                     = "handleGrafanaManagedAlerts"
+)
+
 // swagger:model
 type PostableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
-	Alertmanagers []string `json:"alertmanagers"`
+	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
 }
 
 // swagger:model
 type GettableAlertmanagers struct {
 	Status string                 `json:"status"`
 	Data   v1.AlertManagersResult `json:"data"`
+}
+
+// swagger:model
+type AlertingStatus struct {
+	AlertmanagersChoice      AlertmanagersChoice `json:"alertmanagersChoice"`
+	NumExternalAlertmanagers int                 `json:"numExternalAlertmanagers"`
 }

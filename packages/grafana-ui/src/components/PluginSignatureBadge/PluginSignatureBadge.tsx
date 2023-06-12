@@ -1,5 +1,7 @@
 import React, { HTMLAttributes } from 'react';
+
 import { PluginSignatureStatus } from '@grafana/data';
+
 import { Badge, BadgeProps } from '../Badge/Badge';
 
 /**
@@ -12,16 +14,10 @@ export interface PluginSignatureBadgeProps extends HTMLAttributes<HTMLDivElement
 /**
  * @public
  */
-export const PluginSignatureBadge: React.FC<PluginSignatureBadgeProps> = ({ status, ...otherProps }) => {
+export const PluginSignatureBadge = ({ status, color, ...otherProps }: PluginSignatureBadgeProps) => {
   const display = getSignatureDisplayModel(status);
   return (
-    <Badge
-      text={display.text}
-      color={display.color as any}
-      icon={display.icon}
-      tooltip={display.tooltip}
-      {...otherProps}
-    />
+    <Badge text={display.text} color={display.color} icon={display.icon} tooltip={display.tooltip} {...otherProps} />
   );
 };
 

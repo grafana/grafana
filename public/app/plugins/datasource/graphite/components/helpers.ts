@@ -1,8 +1,11 @@
-import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
 import { forEach, sortBy } from 'lodash';
+
 import { SelectableValue } from '@grafana/data';
+
+import { FuncDefs, FuncInstance, ParamDef } from '../gfunc';
+import { GraphiteQuery, GraphiteQueryType, GraphiteSegment } from '../types';
+
 import { EditableParam } from './FunctionParamEditor';
-import { GraphiteSegment } from '../types';
 
 export function mapStringsToSelectables<T extends string>(values: T[]): Array<SelectableValue<T>> {
   return values.map((value) => ({
@@ -74,4 +77,15 @@ export function mapFuncInstanceToParams(func: FuncInstance): EditableParam[] {
   }
 
   return params;
+}
+
+export function convertToGraphiteQueryObject(query: string | GraphiteQuery): GraphiteQuery {
+  if (typeof query === 'string') {
+    return {
+      refId: 'A',
+      target: query,
+      queryType: GraphiteQueryType.Default.toString(),
+    };
+  }
+  return query;
 }

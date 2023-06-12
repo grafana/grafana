@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestCorePlugin(t *testing.T) {
 		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
-		_, err = p.CollectMetrics(context.Background())
+		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
 		_, err = p.CheckHealth(context.Background(), nil)
@@ -55,7 +55,7 @@ func TestCorePlugin(t *testing.T) {
 		require.True(t, p.IsManaged())
 		require.False(t, p.Exited())
 
-		_, err = p.CollectMetrics(context.Background())
+		_, err = p.CollectMetrics(context.Background(), &backend.CollectMetricsRequest{})
 		require.Equal(t, backendplugin.ErrMethodNotImplemented, err)
 
 		_, err = p.CheckHealth(context.Background(), &backend.CheckHealthRequest{})

@@ -1,8 +1,10 @@
+import React, { useState } from 'react';
+
 import { DataFrame, DataLink, VariableSuggestion } from '@grafana/data';
-import React, { FC, useState } from 'react';
-import { DataLinkEditor } from '../DataLinkEditor';
+
 import { Button } from '../../Button';
 import { Modal } from '../../Modal/Modal';
+import { DataLinkEditor } from '../DataLinkEditor';
 
 interface DataLinkEditorModalContentProps {
   link: DataLink;
@@ -13,13 +15,13 @@ interface DataLinkEditorModalContentProps {
   onCancel: (index: number) => void;
 }
 
-export const DataLinkEditorModalContent: FC<DataLinkEditorModalContentProps> = ({
+export const DataLinkEditorModalContent = ({
   link,
   index,
   getSuggestions,
   onSave,
   onCancel,
-}) => {
+}: DataLinkEditorModalContentProps) => {
   const [dirtyLink, setDirtyLink] = useState(link);
   return (
     <>

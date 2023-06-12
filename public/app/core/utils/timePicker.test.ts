@@ -1,8 +1,8 @@
-import { toUtc, AbsoluteTimeRange } from '@grafana/data';
+import { toUtc, AbsoluteTimeRange, TimeRange } from '@grafana/data';
 
 import { getShiftedTimeRange, getZoomedTimeRange } from './timePicker';
 
-export const setup = (options?: any) => {
+export const setup = (options?: { direction?: number; range?: TimeRange }) => {
   const defaultOptions = {
     range: {
       from: toUtc('2019-01-01 10:00:00'),
@@ -69,6 +69,26 @@ describe('getZoomedTimeRange', () => {
       const expectedRange: AbsoluteTimeRange = {
         from: toUtc('2019-01-01 07:00:00').valueOf(),
         to: toUtc('2019-01-01 19:00:00').valueOf(),
+      };
+
+      const result = getZoomedTimeRange(range, 2);
+
+      expect(result).toEqual(expectedRange);
+    });
+  });
+  describe('when called with a timespan of 0', () => {
+    it('then it should return a timespan of 30s', () => {
+      const range = {
+        from: toUtc('2019-01-01 10:00:00'),
+        to: toUtc('2019-01-01 10:00:00'),
+        raw: {
+          from: 'now',
+          to: 'now',
+        },
+      };
+      const expectedRange: AbsoluteTimeRange = {
+        from: toUtc('2019-01-01 09:59:45').valueOf(),
+        to: toUtc('2019-01-01 10:00:15').valueOf(),
       };
 
       const result = getZoomedTimeRange(range, 2);

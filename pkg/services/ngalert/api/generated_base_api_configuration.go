@@ -4,7 +4,6 @@
  *
  *Do not manually edit these files, please find ngalert/api/swagger-codegen/ for commands on how to generate them.
  */
-
 package api
 
 import (
@@ -13,81 +12,90 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-type ConfigurationApiForkingService interface {
-	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
-	RouteGetAlertmanagers(*models.ReqContext) response.Response
-	RouteGetNGalertConfig(*models.ReqContext) response.Response
-	RoutePostNGalertConfig(*models.ReqContext) response.Response
+type ConfigurationApi interface {
+	RouteDeleteNGalertConfig(*contextmodel.ReqContext) response.Response
+	RouteGetAlertmanagers(*contextmodel.ReqContext) response.Response
+	RouteGetNGalertConfig(*contextmodel.ReqContext) response.Response
+	RouteGetStatus(*contextmodel.ReqContext) response.Response
+	RoutePostNGalertConfig(*contextmodel.ReqContext) response.Response
 }
 
-type ConfigurationApiService interface {
-	RouteDeleteNGalertConfig(*models.ReqContext) response.Response
-	RouteGetAlertmanagers(*models.ReqContext) response.Response
-	RouteGetNGalertConfig(*models.ReqContext) response.Response
-	RoutePostNGalertConfig(*models.ReqContext, apimodels.PostableNGalertConfig) response.Response
+func (f *ConfigurationApiHandler) RouteDeleteNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteDeleteNGalertConfig(ctx)
 }
-
-func (f *ForkedConfigurationApi) RouteDeleteNGalertConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteDeleteNGalertConfig(ctx)
+func (f *ConfigurationApiHandler) RouteGetAlertmanagers(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetAlertmanagers(ctx)
 }
-
-func (f *ForkedConfigurationApi) RouteGetAlertmanagers(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetAlertmanagers(ctx)
+func (f *ConfigurationApiHandler) RouteGetNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetNGalertConfig(ctx)
 }
-
-func (f *ForkedConfigurationApi) RouteGetNGalertConfig(ctx *models.ReqContext) response.Response {
-	return f.forkRouteGetNGalertConfig(ctx)
+func (f *ConfigurationApiHandler) RouteGetStatus(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteGetStatus(ctx)
 }
-
-func (f *ForkedConfigurationApi) RoutePostNGalertConfig(ctx *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.forkRoutePostNGalertConfig(ctx, conf)
+	return f.handleRoutePostNGalertConfig(ctx, conf)
 }
 
-func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApiForkingService, m *metrics.API) {
+func (api *API) RegisterConfigurationApiEndpoints(srv ConfigurationApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Delete(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodDelete, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodDelete,
 				"/api/v1/ngalert/admin_config",
-				srv.RouteDeleteNGalertConfig,
+				api.Hooks.Wrap(srv.RouteDeleteNGalertConfig),
 				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/alertmanagers"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert/alertmanagers"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/alertmanagers",
-				srv.RouteGetAlertmanagers,
+				api.Hooks.Wrap(srv.RouteGetAlertmanagers),
 				m,
 			),
 		)
 		group.Get(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodGet,
 				"/api/v1/ngalert/admin_config",
-				srv.RouteGetNGalertConfig,
+				api.Hooks.Wrap(srv.RouteGetNGalertConfig),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/ngalert"),
+			api.authorize(http.MethodGet, "/api/v1/ngalert"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/ngalert",
+				api.Hooks.Wrap(srv.RouteGetStatus),
 				m,
 			),
 		)
 		group.Post(
 			toMacaronPath("/api/v1/ngalert/admin_config"),
+			api.authorize(http.MethodPost, "/api/v1/ngalert/admin_config"),
 			metrics.Instrument(
 				http.MethodPost,
 				"/api/v1/ngalert/admin_config",
-				srv.RoutePostNGalertConfig,
+				api.Hooks.Wrap(srv.RoutePostNGalertConfig),
 				m,
 			),
 		)

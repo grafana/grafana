@@ -1,3 +1,10 @@
+export enum TeamPermissionLevel {
+  Admin = 4,
+  Editor = 2,
+  Member = 0,
+  Viewer = 1,
+}
+
 export enum OrgRole {
   Viewer = 'Viewer',
   Editor = 'Editor',
@@ -69,6 +76,12 @@ export enum PermissionLevelString {
   Admin = 'Admin',
 }
 
+export enum SearchQueryType {
+  Folder = 'dash-folder',
+  Dashboard = 'dash-db',
+  AlertFolder = 'dash-folder-alerting',
+}
+
 export enum DataSourcePermissionLevel {
   Query = 1,
   Admin = 2,
@@ -110,11 +123,6 @@ export const dashboardPermissionLevels: DashboardPermissionInfo[] = [
     description: 'Can add/remove permissions and can add, edit and delete dashboards.',
   },
 ];
-
-export enum TeamPermissionLevel {
-  Member = 0,
-  Admin = 4,
-}
 
 export interface TeamPermissionInfo {
   value: TeamPermissionLevel;

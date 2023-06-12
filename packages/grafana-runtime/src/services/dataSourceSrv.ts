@@ -28,6 +28,11 @@ export interface DataSourceSrv {
     ref?: DataSourceRef | string | null,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined;
+
+  /**
+   * Reloads the DataSourceSrv
+   */
+  reload(): void;
 }
 
 /** @public */
@@ -40,6 +45,9 @@ export interface GetDataSourceListFilters {
 
   /** Only return data sources that support tracing response */
   tracing?: boolean;
+
+  /** Only return data sources that support logging response */
+  logs?: boolean;
 
   /** Only return data sources that support annotations */
   annotations?: boolean;

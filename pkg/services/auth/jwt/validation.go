@@ -6,8 +6,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v3/jwt"
 )
 
 func (s *AuthService) initClaimExpectations() error {
@@ -35,8 +34,8 @@ func (s *AuthService) initClaimExpectations() error {
 			switch value := value.(type) {
 			case []interface{}:
 				for _, val := range value {
-					if val, ok := val.(string); ok {
-						s.expectRegistered.Audience = append(s.expectRegistered.Audience, val)
+					if v, ok := val.(string); ok {
+						s.expectRegistered.Audience = append(s.expectRegistered.Audience, v)
 					} else {
 						return fmt.Errorf("%q expectation contains value with invalid type %T, string expected", key, val)
 					}
@@ -53,7 +52,7 @@ func (s *AuthService) initClaimExpectations() error {
 	return nil
 }
 
-func (s *AuthService) validateClaims(claims models.JWTClaims) error {
+func (s *AuthService) validateClaims(claims JWTClaims) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
@@ -73,8 +72,8 @@ func (s *AuthService) validateClaims(claims models.JWTClaims) error {
 			switch value := value.(type) {
 			case []interface{}:
 				for _, val := range value {
-					if val, ok := val.(string); ok {
-						registeredClaims.Audience = append(registeredClaims.Audience, val)
+					if v, ok := val.(string); ok {
+						registeredClaims.Audience = append(registeredClaims.Audience, v)
 					} else {
 						return fmt.Errorf("%q claim contains value with invalid type %T, string expected", key, val)
 					}

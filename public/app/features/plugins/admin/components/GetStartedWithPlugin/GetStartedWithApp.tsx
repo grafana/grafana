@@ -1,8 +1,13 @@
+import React from 'react';
+
 import { PluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { usePluginConfig } from '../../hooks/usePluginConfig';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction } from 'app/types';
+
 import { updatePluginSettings } from '../../api';
-import React from 'react';
+import { usePluginConfig } from '../../hooks/usePluginConfig';
+import { isOrgAdmin } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
 type Props = {
@@ -13,6 +18,11 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
   const { value: pluginConfig } = usePluginConfig(plugin);
 
   if (!pluginConfig) {
+    return null;
+  }
+
+  // Enforce RBAC
+  if (!contextSrv.hasAccessInMetadata(AccessControlAction.PluginsWrite, plugin, isOrgAdmin())) {
     return null;
   }
 

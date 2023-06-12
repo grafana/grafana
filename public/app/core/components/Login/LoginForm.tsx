@@ -1,10 +1,12 @@
-import React, { FC, ReactElement } from 'react';
+import { css } from '@emotion/css';
+import React, { ReactElement } from 'react';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Form, Input, Field } from '@grafana/ui';
+
+import { PasswordField } from '../PasswordField/PasswordField';
 
 import { FormModel } from './LoginCtrl';
-import { Button, Form, Input, Field } from '@grafana/ui';
-import { css } from '@emotion/css';
-import { PasswordField } from '../PasswordField/PasswordField';
 
 interface Props {
   children: ReactElement;
@@ -24,7 +26,7 @@ export const submitButton = css`
   width: 100%;
 `;
 
-export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }) => {
+export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, loginHint }: Props) => {
   return (
     <div className={wrapperStyles}>
       <Form onSubmit={onSubmit} validateOn="onChange">
@@ -47,7 +49,12 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
                 {...register('password', { required: 'Password is required' })}
               />
             </Field>
-            <Button aria-label={selectors.pages.Login.submit} className={submitButton} disabled={isLoggingIn}>
+            <Button
+              type="submit"
+              aria-label={selectors.pages.Login.submit}
+              className={submitButton}
+              disabled={isLoggingIn}
+            >
               {isLoggingIn ? 'Logging in...' : 'Log in'}
             </Button>
             {children}

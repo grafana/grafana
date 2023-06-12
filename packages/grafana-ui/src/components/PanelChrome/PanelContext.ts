@@ -1,3 +1,5 @@
+import React from 'react';
+
 import {
   EventBusSrv,
   EventBus,
@@ -6,8 +8,11 @@ import {
   ThresholdsConfig,
   SplitOpen,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
-import React from 'react';
+
+import { AdHocFilterItem } from '../Table/types';
+
 import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */
@@ -15,7 +20,7 @@ export interface PanelContext {
   eventBus: EventBus;
 
   /** Dashboard panels sync */
-  sync?: DashboardCursorSync;
+  sync?: () => DashboardCursorSync;
 
   /** Information on what the outer container is */
   app?: CoreApp | 'string';
@@ -30,9 +35,16 @@ export interface PanelContext {
   onToggleSeriesVisibility?: (label: string, mode: SeriesVisibilityChangeMode) => void;
 
   canAddAnnotations?: () => boolean;
+  canEditAnnotations?: (dashboardUID?: string) => boolean;
+  canDeleteAnnotations?: (dashboardUID?: string) => boolean;
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
+
+  /**
+   * Used from visualizations like Table to add ad-hoc filters from cell values
+   */
+  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
   /**
    * Enables modifying thresholds directly from the panel
@@ -40,6 +52,13 @@ export interface PanelContext {
    * @alpha -- experimental
    */
   canEditThresholds?: boolean;
+
+  /**
+   * Shows threshold indicators on the right-hand side of the panel
+   *
+   * @alpha -- experimental
+   */
+  showThresholds?: boolean;
 
   /**
    * Called when a panel wants to change default thresholds configuration
@@ -64,6 +83,12 @@ export interface PanelContext {
    * Called when a panel is changing the sort order of the legends.
    */
   onToggleLegendSort?: (sortBy: string) => void;
+
+  /**
+   * Optional, only some contexts support this. This action can be cancelled by user which will result
+   * in a the Promise resolving to a false value.
+   */
+  onUpdateData?: (frames: DataFrame[]) => Promise<boolean>;
 }
 
 export const PanelContextRoot = React.createContext<PanelContext>({

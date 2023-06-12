@@ -2,37 +2,13 @@ package es
 
 import (
 	"encoding/json"
-	"net/http"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"time"
 )
-
-type response struct {
-	httpResponse *http.Response
-	reqInfo      *SearchRequestInfo
-}
-
-type SearchRequestInfo struct {
-	Method string `json:"method"`
-	Url    string `json:"url"`
-	Data   string `json:"data"`
-}
-
-type SearchResponseInfo struct {
-	Status int              `json:"status"`
-	Data   *simplejson.Json `json:"data"`
-}
-
-type SearchDebugInfo struct {
-	Request  *SearchRequestInfo  `json:"request"`
-	Response *SearchResponseInfo `json:"response"`
-}
 
 // SearchRequest represents a search request
 type SearchRequest struct {
 	Index       string
-	Interval    intervalv2.Interval
+	Interval    time.Duration
 	Size        int
 	Sort        map[string]interface{}
 	Query       *Query
@@ -83,7 +59,6 @@ type MultiSearchRequest struct {
 type MultiSearchResponse struct {
 	Status    int               `json:"status,omitempty"`
 	Responses []*SearchResponse `json:"responses"`
-	DebugInfo *SearchDebugInfo  `json:"-"`
 }
 
 // Query represents a query
@@ -136,8 +111,8 @@ func (f *QueryStringFilter) MarshalJSON() ([]byte, error) {
 type RangeFilter struct {
 	Filter
 	Key    string
-	Gte    string
-	Lte    string
+	Gte    int64
+	Lte    int64
 	Format string
 }
 
@@ -238,7 +213,6 @@ type HistogramAgg struct {
 // DateHistogramAgg represents a date histogram aggregation
 type DateHistogramAgg struct {
 	Field          string          `json:"field"`
-	Interval       string          `json:"interval,omitempty"`
 	FixedInterval  string          `json:"fixed_interval,omitempty"`
 	MinDocCount    int             `json:"min_doc_count"`
 	Missing        *string         `json:"missing,omitempty"`
@@ -262,10 +236,15 @@ type TermsAggregation struct {
 	Missing     *string                `json:"missing,omitempty"`
 }
 
+// NestedAggregation represents a nested aggregation
+type NestedAggregation struct {
+	Path string `json:"path"`
+}
+
 // ExtendedBounds represents extended bounds
 type ExtendedBounds struct {
-	Min string `json:"min"`
-	Max string `json:"max"`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 // GeoHashGridAggregation represents a geo hash grid aggregation

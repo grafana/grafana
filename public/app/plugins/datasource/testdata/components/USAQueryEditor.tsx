@@ -1,7 +1,9 @@
 import React from 'react';
-import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
+
 import { SelectableValue } from '@grafana/data';
-import { USAQuery } from '../types';
+import { InlineFieldRow, InlineField, Select, MultiSelect, Input } from '@grafana/ui';
+
+import { USAQuery } from '../dataquery.gen';
 
 export interface Props {
   onChange: (value: USAQuery) => void;
@@ -14,7 +16,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Mode">
           <Select
-            menuShouldPortal
             options={usaQueryModes}
             onChange={(v) => {
               onChange({ ...query, mode: v.value });
@@ -36,7 +37,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
       <InlineFieldRow>
         <InlineField labelWidth={14} label="Fields">
           <MultiSelect
-            menuShouldPortal
             options={fieldNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, fields: vals.map((v) => v.value) });
@@ -48,7 +48,6 @@ export function USAQueryEditor({ query, onChange }: Props) {
         </InlineField>
         <InlineField label="States" grow>
           <MultiSelect
-            menuShouldPortal
             options={stateNames}
             onChange={(vals: SelectableValue[]) => {
               onChange({ ...query, states: vals.map((v) => v.value) });

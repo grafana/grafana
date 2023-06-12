@@ -3,11 +3,12 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourcePluginMeta } 
 export function getDataSourceInstanceSetting(name: string, meta: DataSourcePluginMeta): DataSourceInstanceSettings {
   return {
     id: 1,
-    uid: '',
+    uid: name,
     type: '',
     name,
     meta,
     access: 'proxy',
-    jsonData: ({} as unknown) as DataSourceJsonData,
+    jsonData: {} as unknown as DataSourceJsonData,
+    readOnly: false,
   };
 }

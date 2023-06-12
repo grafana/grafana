@@ -1,27 +1,16 @@
+import React from 'react';
+
 import {
   FieldConfigEditorBuilder,
   FieldOverrideEditorProps,
   FieldType,
   identityOverrideProcessor,
 } from '@grafana/data';
-import React from 'react';
-import {
-  GraphFieldConfig,
-  graphFieldOptions,
-  HorizontalGroup,
-  IconButton,
-  Input,
-  RadioButtonGroup,
-  Tooltip,
-} from '../..';
 import { StackingConfig, StackingMode } from '@grafana/schema';
 
-export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, any>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+import { GraphFieldConfig, graphFieldOptions, HorizontalGroup, IconButton, Input, RadioButtonGroup } from '../..';
+
+export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (
     <HorizontalGroup>
       <RadioButtonGroup
@@ -38,11 +27,7 @@ export const StackingEditor: React.FC<FieldOverrideEditorProps<StackingConfig, a
         <Input
           type="text"
           placeholder="Group"
-          suffix={
-            <Tooltip content="Name of the stacking group" placement="top">
-              <IconButton name="question-circle" />
-            </Tooltip>
-          }
+          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({

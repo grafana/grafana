@@ -4,13 +4,14 @@ on:
     types: [labeled, unlabeled]
   issue_comment:
     types: [created]
-
+concurrency:
+  group: issue-commands-${{ github.event.issue.number }}
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
@@ -21,5 +22,5 @@ jobs:
         uses: ./actions/commands
         with:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          token: ${{secrets.ISSUE_COMMANDS_TOKEN}}
           configPath: commands

@@ -1,5 +1,8 @@
+import React from 'react';
+
 import { Alert } from 'app/types/unified-alerting';
-import React, { FC } from 'react';
+
+import { useAnnotationLinks, useCleanAnnotations } from '../../utils/annotations';
 import { AnnotationDetailsField } from '../AnnotationDetailsField';
 import { DetailsField } from '../DetailsField';
 
@@ -7,8 +10,9 @@ interface Props {
   instance: Alert;
 }
 
-export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
-  const annotations = (Object.entries(instance.annotations || {}) || []).filter(([_, value]) => !!value.trim());
+export const AlertInstanceDetails = ({ instance }: Props) => {
+  const annotations = useCleanAnnotations(instance.annotations);
+  const annotationLinks = useAnnotationLinks(annotations);
 
   return (
     <div>
@@ -17,9 +21,11 @@ export const AlertInstanceDetails: FC<Props> = ({ instance }) => {
           {instance.value}
         </DetailsField>
       )}
-      {annotations.map(([key, value]) => (
-        <AnnotationDetailsField key={key} annotationKey={key} value={value} />
-      ))}
+      {annotations.map(([key, value]) => {
+        return (
+          <AnnotationDetailsField key={key} annotationKey={key} value={value} valueLink={annotationLinks.get(key)} />
+        );
+      })}
     </div>
   );
 };

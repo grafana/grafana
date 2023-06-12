@@ -1,4 +1,11 @@
-import { FieldConfig, FieldConfigSource, PanelPlugin, standardFieldConfigEditorRegistry } from '@grafana/data';
+import {
+  FieldConfig,
+  FieldConfigSource,
+  PanelPlugin,
+  standardFieldConfigEditorRegistry,
+  ThresholdsMode,
+} from '@grafana/data';
+
 import { setOptionImmutably, supportsDataQuery, updateDefaultFieldConfigValue } from './utils';
 
 describe('standardFieldConfigEditorRegistry', () => {
@@ -7,10 +14,13 @@ describe('standardFieldConfigEditorRegistry', () => {
     min: 10,
     max: 10,
     decimals: 10,
-    thresholds: {} as any,
+    thresholds: {
+      mode: ThresholdsMode.Absolute,
+      steps: [],
+    },
     noValue: 'no value',
     unit: 'km/s',
-    links: {} as any,
+    links: [],
   };
 
   it('make sure all fields have a valid name', () => {
@@ -25,21 +35,21 @@ describe('standardFieldConfigEditorRegistry', () => {
 describe('supportsDataQuery', () => {
   describe('when called with plugin that supports queries', () => {
     it('then it should return true', () => {
-      const plugin = ({ meta: { skipDataQuery: false } } as unknown) as PanelPlugin;
+      const plugin = { meta: { skipDataQuery: false } } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(true);
     });
   });
 
   describe('when called with plugin that does not support queries', () => {
     it('then it should return false', () => {
-      const plugin = ({ meta: { skipDataQuery: true } } as unknown) as PanelPlugin;
+      const plugin = { meta: { skipDataQuery: true } } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(false);
     });
   });
 
   describe('when called without skipDataQuery', () => {
     it('then it should return false', () => {
-      const plugin = ({ meta: {} } as unknown) as PanelPlugin;
+      const plugin = { meta: {} } as unknown as PanelPlugin;
       expect(supportsDataQuery(plugin)).toBe(false);
     });
   });

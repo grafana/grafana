@@ -1,0 +1,32 @@
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${elastic_version}
+    environment:
+      - "discovery.type=single-node"
+      - "xpack.license.self_generated.type=basic"
+      - "xpack.security.enabled=false"
+    ports:
+      - 9200:9200
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${elastic_version}
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - 5601:5601
+
+  metricbeat-host:
+    image: docker.elastic.co/beats/metricbeat-oss:${elastic_version}
+    command: metricbeat -e -strict.perms=false
+    user: root
+    volumes:
+      - ./docker/blocks/elasticstack/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  filebeat-host:
+    image: docker.elastic.co/beats/filebeat-oss:${elastic_version}
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./docker/blocks/elasticstack/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      # - /var/log:/var/log:ro
+      - ../data/log:/var/log/grafana:ro

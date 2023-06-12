@@ -1,24 +1,42 @@
+import { StoryFn } from '@storybook/react';
 import React from 'react';
-import { Story, Meta } from '@storybook/react';
+
+import { ComponentSize } from '../../types';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { Card } from '../Card/Card';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+
 import { allButtonVariants, allButtonFills, Button, ButtonProps } from './Button';
 import mdx from './Button.mdx';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { ButtonGroup } from './ButtonGroup';
-import { ComponentSize } from '../../types/size';
-import { Card } from '../Card/Card';
+
+const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
 
 export default {
   title: 'Buttons/Button',
   component: Button,
+  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
   },
-} as Meta;
+  argTypes: {
+    size: {
+      options: sizes,
+    },
+    tooltip: {
+      control: 'text',
+    },
+    className: {
+      table: {
+        disable: true,
+      },
+    },
+  },
+};
 
-export const Variants: Story<ButtonProps> = () => {
-  const sizes: ComponentSize[] = ['lg', 'md', 'sm'];
+export const Examples: StoryFn<typeof Button> = () => {
   return (
     <VerticalGroup>
       {allButtonFills.map((buttonFill) => (
@@ -51,12 +69,6 @@ export const Variants: Story<ButtonProps> = () => {
         </Button>
       </HorizontalGroup>
       <div />
-      <HorizontalGroup spacing="lg">
-        <div>With icon only</div>
-        <Button icon="cloud" size="sm" />
-        <Button icon="cloud" size="md" />
-        <Button icon="cloud" size="lg" />
-      </HorizontalGroup>
       <div />
       <Button icon="plus" fullWidth>
         Button with fullWidth
@@ -69,20 +81,29 @@ export const Variants: Story<ButtonProps> = () => {
           <Button icon="angle-down" />
         </ButtonGroup>
       </HorizontalGroup>
-      <Card heading="Button inside card">
+      <Card>
+        <Card.Heading>Button inside card</Card.Heading>
         <Card.Actions>
-          <>
-            {allButtonVariants.map((variant) => (
-              <Button variant={variant} key={variant}>
-                {variant}
-              </Button>
-            ))}
-            <Button variant="primary" disabled>
-              Disabled
+          {allButtonVariants.map((variant) => (
+            <Button variant={variant} key={variant}>
+              {variant}
             </Button>
-          </>
+          ))}
+          <Button variant="primary" disabled>
+            Disabled
+          </Button>
         </Card.Actions>
       </Card>
     </VerticalGroup>
   );
+};
+
+export const Basic: StoryFn<typeof Button> = (args: ButtonProps) => <Button {...args} />;
+
+Basic.args = {
+  children: 'Example button',
+  size: 'md',
+  variant: 'primary',
+  fill: 'solid',
+  type: 'button',
 };

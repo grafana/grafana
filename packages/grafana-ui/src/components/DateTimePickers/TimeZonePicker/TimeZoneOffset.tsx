@@ -1,8 +1,10 @@
-import React, { PropsWithChildren } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme, TimeZone, dateTimeFormat } from '@grafana/data';
-import { useTheme, stylesFactory } from '../../../themes';
 import { isString } from 'lodash';
+import React from 'react';
+
+import { GrafanaTheme2, TimeZone, dateTimeFormat } from '@grafana/data';
+
+import { useStyles2 } from '../../../themes';
 
 interface Props {
   timestamp: number;
@@ -10,10 +12,9 @@ interface Props {
   className?: string;
 }
 
-export const TimeZoneOffset: React.FC<PropsWithChildren<Props>> = (props) => {
-  const theme = useTheme();
+export const TimeZoneOffset = (props: Props) => {
   const { timestamp, timeZone, className } = props;
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   if (!isString(timeZone)) {
     return null;
@@ -38,22 +39,22 @@ export const formatUtcOffset = (timestamp: number, timeZone: TimeZone): string =
   return `UTC${offset}`;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const textBase = css`
     font-weight: normal;
     font-size: ${theme.typography.size.sm};
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     white-space: normal;
   `;
 
   return {
     offset: css`
       ${textBase};
-      color: ${theme.colors.text};
-      background: ${theme.colors.bg2};
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
       padding: 2px 5px;
       border-radius: 2px;
       margin-left: 4px;
     `,
   };
-});
+};

@@ -1,6 +1,10 @@
 package accesscontrol
 
-import "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
+
+const CodeMigrationSQL = "code migration"
 
 func AddMigration(mg *migrator.Migrator) {
 	permissionV1 := migrator.Table{
@@ -162,4 +166,8 @@ func AddMigration(mg *migrator.Migrator) {
 
 	//-------  indexes ------------------
 	mg.AddMigration("add unique index builtin_role_role_name", migrator.NewAddIndexMigration(seedAssignmentV1, seedAssignmentV1.Indices[0]))
+
+	mg.AddMigration("add column hidden to role table", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
+		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
+	}))
 }

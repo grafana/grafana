@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/web"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 
 	// DefBuckets are histogram buckets for the response time (in seconds)
 	// of a network service, including one that is responding very slowly.
-	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5}
+	defBuckets = []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25}
 )
 
 func init() {
@@ -45,51 +47,60 @@ func init() {
 }
 
 // RequestMetrics is a middleware handler that instruments the request.
-func RequestMetrics(cfg *setting.Cfg) func(handler string) web.Handler {
-	return func(handler string) web.Handler {
-		return func(res http.ResponseWriter, req *http.Request, c *web.Context) {
-			rw := res.(web.ResponseWriter)
+func RequestMetrics(features featuremgmt.FeatureToggles) web.Middleware {
+	log := log.New("middleware.request-metrics")
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			rw := web.Rw(w, r)
 			now := time.Now()
 			httpRequestsInFlight.Inc()
 			defer httpRequestsInFlight.Dec()
-			c.Next()
+			next.ServeHTTP(w, r)
 
 			status := rw.Status()
-
 			code := sanitizeCode(status)
-			method := sanitizeMethod(req.Method)
 
-			// enable histogram and disable summaries + counters for http requests.
-			if cfg.IsHTTPRequestHistogramDisabled() {
-				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
-				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+			handler := "unknown"
+			// TODO: do not depend on web.Context from the future
+			if routeOperation, exists := RouteOperationName(web.FromContext(r.Context()).Req); exists {
+				handler = routeOperation
 			} else {
-				// avoiding the sanitize functions for in the new instrumentation
-				// since they dont make much sense. We should remove them later.
-				histogram := httpRequestDurationHistogram.
-					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
-				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
-					// Need to type-convert the Observer to an
-					// ExemplarObserver. This will always work for a
-					// HistogramVec.
-					histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
-						time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
-					)
-					return
+				// if grafana does not recognize the handler and returns 404 we should register it as `notfound`
+				if status == http.StatusNotFound {
+					handler = "notfound"
+				} else {
+					// log requests where we could not identify handler so we can register them.
+					if features.IsEnabled(featuremgmt.FlagLogRequestsInstrumentedAsUnknown) {
+						log.Warn("request instrumented as unknown", "path", r.URL.Path, "status_code", status)
+					}
 				}
-				histogram.Observe(time.Since(now).Seconds())
 			}
 
+			// avoiding the sanitize functions for in the new instrumentation
+			// since they dont make much sense. We should remove them later.
+			histogram := httpRequestDurationHistogram.
+				WithLabelValues(handler, code, r.Method)
+			if traceID := tracing.TraceIDFromContext(r.Context(), true); traceID != "" {
+				// Need to type-convert the Observer to an
+				// ExemplarObserver. This will always work for a
+				// HistogramVec.
+				histogram.(prometheus.ExemplarObserver).ObserveWithExemplar(
+					time.Since(now).Seconds(), prometheus.Labels{"traceID": traceID},
+				)
+				return
+			}
+			histogram.Observe(time.Since(now).Seconds())
+
 			switch {
-			case strings.HasPrefix(req.RequestURI, "/api/datasources/proxy"):
+			case strings.HasPrefix(r.RequestURI, "/api/datasources/proxy"):
 				countProxyRequests(status)
-			case strings.HasPrefix(req.RequestURI, "/api/"):
+			case strings.HasPrefix(r.RequestURI, "/api/"):
 				countApiRequests(status)
 			default:
 				countPageRequests(status)
 			}
-		}
+		})
 	}
 }
 
@@ -130,10 +141,6 @@ func countProxyRequests(status int) {
 	default:
 		metrics.MProxyStatus.WithLabelValues("unknown").Inc()
 	}
-}
-
-func sanitizeMethod(m string) string {
-	return strings.ToLower(m)
 }
 
 // If the wrapped http.Handler has not set a status code, i.e. the value is

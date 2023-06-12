@@ -1,0 +1,146 @@
+<!-- Image from external service -->
+<mj-raw>{{ if .ImageURL }}</mj-raw>
+<mj-section padding="0">
+  <mj-column border-bottom="1px solid #2f3037">
+    <mj-image href="{{ .ImageURL }}" src="{{ .ImageURL }}" padding="0" />
+  </mj-column>
+</mj-section>
+<mj-raw>{{ end }}</mj-raw>
+
+<!-- Embedded Image -->
+<mj-raw>{{ if .EmbeddedImage }}</mj-raw>
+<mj-section padding="0">
+  <mj-column border-bottom="1px solid #2f3037">
+    <mj-image src="cid:{{ .EmbeddedImage }}" padding="0" />
+  </mj-column>
+</mj-section>
+<mj-raw>{{ end }}</mj-raw>
+
+<mj-section padding="0" text-align="left">
+  <mj-column>
+    <!-- Summary -->
+    <mj-raw>{{ if .Annotations.summary }}</mj-raw>
+    <mj-text>
+      <strong>Summary</strong>
+    </mj-text>
+    <mj-text> {{- .Annotations.summary -}} </mj-text>
+    <mj-raw>{{ end }}</mj-raw>
+
+    <!-- Description -->
+    <mj-raw>{{ if .Annotations.description }}</mj-raw>
+    <mj-text>
+      <strong>Description</strong>
+    </mj-text>
+    <mj-text>
+      <mj-raw>{{ range $line := (splitList "\n" .Annotations.description) }}</mj-raw>
+      {{ $line }}<br />
+      <mj-raw>{{ end }}</mj-raw>
+    </mj-text>
+    <mj-raw>{{ end }}</mj-raw>
+  </mj-column>
+</mj-section>
+
+<!-- Values -->
+<mj-raw>{{ if .Values }}</mj-raw>
+<mj-section padding="0" text-align="left">
+  <mj-column>
+    <mj-text>
+      <strong>Values</strong>
+    </mj-text>
+  </mj-column>
+</mj-section>
+<mj-section padding="0 25px" text-align="left">
+  <mj-column padding="10px" background-color="#111217" border="1px solid #2f3037">
+    <mj-text>
+      <mj-raw>{{ range $refID, $value := .Values }}</mj-raw>
+      {{ $refID }}={{ $value }}&nbsp;
+      <mj-raw>{{ end }}</mj-raw>
+    </mj-text>
+  </mj-column>
+</mj-section>
+<mj-raw>{{ end }}</mj-raw>
+
+<!-- Labels and annotations -->
+<mj-section>
+  <mj-column>
+    <!-- Labels -->
+    <mj-raw>{{ if .Labels.SortedPairs }}</mj-raw>
+    <mj-text>
+      <strong>Labels</strong>
+    </mj-text>
+
+    <mj-table color="white">
+      <mj-raw>{{ range .Labels.SortedPairs }}</mj-raw>
+      <tr>
+        <td>
+          <strong>{{ .Name }}</strong>
+        </td>
+        <td>{{ .Value }}</td>
+      </tr>
+      <mj-raw>{{ end }}</mj-raw>
+    </mj-table>
+
+    <mj-raw>{{ end }}</mj-raw>
+
+    <!-- Annotations, we exclude "description" and "summary" because those have their own dedicated section -->
+    <mj-raw>{{ if (without .Annotations.SortedPairs.Names "description" "summary") }}</mj-raw>
+    <mj-text>
+      <strong>Annotations</strong>
+    </mj-text>
+
+    <mj-table color="white">
+      <mj-raw>{{ range .Annotations.SortedPairs }}</mj-raw>
+      <mj-raw>{{ if and (ne .Name "description") (ne .Name "summary") }}</mj-raw>
+      <tr>
+        <td>
+          <strong>{{ .Name }}</strong>
+        </td>
+        <td>{{ .Value }}</td>
+      </tr>
+      <mj-raw>{{ end }}</mj-raw>
+      <mj-raw>{{ end }}</mj-raw>
+    </mj-table>
+
+    <mj-raw>{{ end }}</mj-raw>
+  </mj-column>
+</mj-section>
+
+<!-- actions -->
+<mj-section text-align="left" border-top="1px solid #2f3037" padding="15px 0px">
+  <mj-raw>{{ if .SilenceURL }}</mj-raw>
+  <mj-column>
+    <mj-button align="center" vertical-align="middle" href="{{ .SilenceURL }}" padding="0" inner-padding="5px 12px">
+      Silence
+    </mj-button>
+  </mj-column>
+  <mj-raw>{{ end }}</mj-raw>
+  <mj-raw>{{ if .Annotations.runbook_url }}</mj-raw>
+  <mj-column>
+    <mj-button align="center" href="{{ .Annotations.runbook_url }}" padding="0" inner-padding="5px 12px">
+      View runbook
+    </mj-button>
+  </mj-column>
+  <mj-raw>{{ end }}</mj-raw>
+  <mj-raw>{{ if .DashboardURL }}</mj-raw>
+  <mj-column>
+    <mj-button align="center" href="{{ .DashboardURL }}" padding="0" inner-padding="5px 12px">
+      View dashboard
+    </mj-button>
+  </mj-column>
+  <mj-raw>{{ end }}</mj-raw>
+  <mj-raw>{{ if .PanelURL }}</mj-raw>
+  <mj-column>
+    <mj-button align="center" href="{{ .PanelURL }}" padding="0" inner-padding="5px 12px"> View panel </mj-button>
+  </mj-column>
+  <mj-raw>{{ end }}</mj-raw>
+</mj-section>
+
+<!-- Observed -->
+<mj-section border-top="1px solid #2f3037" padding="5px 0">
+  <mj-column>
+    <mj-text color="#91929e">
+      Observed <strong>{{ ago .StartsAt }}</strong> before this notification was delivered, at
+      <strong>{{ .StartsAt }}</strong>
+    </mj-text>
+  </mj-column>
+</mj-section>

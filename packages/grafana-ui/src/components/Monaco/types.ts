@@ -1,6 +1,6 @@
 // We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
-import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 import type { EditorProps } from '@monaco-editor/react';
+import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 // we do not allow customizing the theme.
 // (theme is complicated in Monaco, right now there is
@@ -42,6 +42,9 @@ export interface CodeEditorProps {
   /** Handler to be performed when editor is blurred */
   onBlur?: CodeEditorChangeHandler;
 
+  /** Handler to be performed whenever the text inside the editor changes */
+  onChange?: CodeEditorChangeHandler;
+
   /** Handler to be performed when Cmd/Ctrl+S is pressed */
   onSave?: CodeEditorChangeHandler;
 
@@ -49,6 +52,8 @@ export interface CodeEditorProps {
    * Language agnostic suggestion completions -- typically for template variables
    */
   getSuggestions?: CodeEditorSuggestionProvider;
+
+  containerStyles?: string;
 }
 
 /**

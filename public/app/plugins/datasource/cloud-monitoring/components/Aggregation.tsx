@@ -1,12 +1,15 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
-import { QueryEditorField } from '.';
+
 import { getAggregationOptionsByMetric } from '../functions';
-import { MetricDescriptor, ValueTypes, MetricKind } from '../types';
+import { MetricKind, ValueTypes } from '../types/query';
+import { MetricDescriptor } from '../types/types';
 
 export interface Props {
+  refId: string;
   onChange: (metricDescriptor: string) => void;
   metricDescriptor?: MetricDescriptor;
   crossSeriesReducer: string;
@@ -14,15 +17,14 @@ export interface Props {
   templateVariableOptions: Array<SelectableValue<string>>;
 }
 
-export const Aggregation: FC<Props> = (props) => {
+export const Aggregation = (props: Props) => {
   const aggOptions = useAggregationOptionsByMetric(props);
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <QueryEditorField labelWidth={18} label="Group by function" data-testid="cloud-monitoring-aggregation">
+    <EditorField label="Group by function" data-testid="cloud-monitoring-aggregation">
       <Select
-        menuShouldPortal
-        width={16}
+        width="auto"
         onChange={({ value }) => props.onChange(value!)}
         value={selected}
         options={[
@@ -37,8 +39,10 @@ export const Aggregation: FC<Props> = (props) => {
           },
         ]}
         placeholder="Select Reducer"
+        inputId={`${props.refId}-group-by-function`}
+        menuPlacement="top"
       />
-    </QueryEditorField>
+    </EditorField>
   );
 };
 

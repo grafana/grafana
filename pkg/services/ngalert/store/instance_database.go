@@ -3,58 +3,19 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
-
-type InstanceStore interface {
-	GetAlertInstance(cmd *models.GetAlertInstanceQuery) error
-	ListAlertInstances(cmd *models.ListAlertInstancesQuery) error
-	SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error
-	FetchOrgIds() ([]int64, error)
-	DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error
-}
-
-// GetAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
-// the hash of the labels.
-func (st DBstore) GetAlertInstance(cmd *models.GetAlertInstanceQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		instance := models.AlertInstance{}
-		s := strings.Builder{}
-		s.WriteString(`SELECT * FROM alert_instance
-			WHERE
-				rule_org_id=? AND
-				rule_uid=? AND
-				labels_hash=?
-		`)
-
-		_, hash, err := cmd.Labels.StringAndHash()
-		if err != nil {
-			return err
-		}
-
-		params := append(make([]interface{}, 0), cmd.RuleOrgID, cmd.RuleUID, hash)
-
-		has, err := sess.SQL(s.String(), params...).Get(&instance)
-		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert rule %v (org %v)", cmd.Labels, hash, cmd.RuleUID, cmd.RuleOrgID)
-		}
-		if err != nil {
-			return err
-		}
-
-		cmd.Result = &instance
-		return nil
-	})
-}
 
 // ListAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertInstances := make([]*models.ListAlertInstancesQueryResult, 0)
+func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertInstancesQuery) (result []*models.AlertInstance, err error) {
+	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		alertInstances := make([]*models.AlertInstance, 0)
 
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
@@ -64,54 +25,41 @@ func (st DBstore) ListAlertInstances(cmd *models.ListAlertInstancesQuery) error 
 			params = append(params, p...)
 		}
 
-		addToQuery("SELECT alert_instance.*, alert_rule.title AS rule_title FROM alert_instance LEFT JOIN alert_rule ON alert_instance.rule_org_id = alert_rule.org_id AND alert_instance.rule_uid = alert_rule.uid WHERE rule_org_id = ?", cmd.RuleOrgID)
+		addToQuery("SELECT * FROM alert_instance WHERE rule_org_id = ?", cmd.RuleOrgID)
 
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
-
-		if cmd.State != "" {
-			addToQuery(` AND current_state = ?`, cmd.State)
+		if st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
 		}
-
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
 			return err
 		}
 
-		cmd.Result = alertInstances
+		result = alertInstances
 		return nil
 	})
+	return result, err
 }
 
 // SaveAlertInstance is a handler for saving a new alert instance.
-func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
-		if err != nil {
-			return err
-		}
-
-		alertInstance := &models.AlertInstance{
-			RuleOrgID:         cmd.RuleOrgID,
-			RuleUID:           cmd.RuleUID,
-			Labels:            cmd.Labels,
-			LabelsHash:        labelsHash,
-			CurrentState:      cmd.State,
-			CurrentStateSince: cmd.CurrentStateSince,
-			CurrentStateEnd:   cmd.CurrentStateEnd,
-			LastEvalTime:      cmd.LastEvalTime,
-		}
-
+func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.AlertInstance) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := models.ValidateAlertInstance(alertInstance); err != nil {
 			return err
 		}
 
-		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
+		labelTupleJSON, err := alertInstance.Labels.StringKey()
+		if err != nil {
+			return err
+		}
+		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
-		upsertSQL := st.SQLStore.Dialect.UpsertSQL(
+		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_state_since", "current_state_end", "last_eval_time"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
@@ -121,10 +69,10 @@ func (st DBstore) SaveAlertInstance(cmd *models.SaveAlertInstanceCommand) error 
 	})
 }
 
-func (st DBstore) FetchOrgIds() ([]int64, error) {
+func (st DBstore) FetchOrgIds(ctx context.Context) ([]int64, error) {
 	orgIds := []int64{}
 
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
 
@@ -144,12 +92,108 @@ func (st DBstore) FetchOrgIds() ([]int64, error) {
 	return orgIds, err
 }
 
-func (st DBstore) DeleteAlertInstance(orgID int64, ruleUID, labelsHash string) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash = ?", orgID, ruleUID, labelsHash)
+// DeleteAlertInstances deletes instances with the provided keys in a single transaction.
+func (st DBstore) DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error {
+	if len(keys) == 0 {
+		return nil
+	}
+
+	type data struct {
+		ruleOrgID   int64
+		ruleUID     string
+		labelHashes []interface{}
+	}
+
+	// Sort by org and rule UID. Most callers will have grouped already, but it's
+	// cheap to verify and leads to more compact transactions.
+	sort.Slice(keys, func(i, j int) bool {
+		aye := keys[i]
+		jay := keys[j]
+
+		if aye.RuleOrgID < jay.RuleOrgID {
+			return true
+		}
+
+		if aye.RuleOrgID == jay.RuleOrgID && aye.RuleUID < jay.RuleUID {
+			return true
+		}
+		return false
+	})
+
+	maxRows := 200
+	rowData := data{
+		0, "", make([]interface{}, 0, maxRows),
+	}
+	placeholdersBuilder := strings.Builder{}
+	placeholdersBuilder.WriteString("(")
+
+	execQuery := func(s *db.Session, rd data, placeholders string) error {
+		if len(rd.labelHashes) == 0 {
+			return nil
+		}
+
+		placeholders = strings.TrimRight(placeholders, ", ")
+		placeholders = placeholders + ")"
+
+		queryString := fmt.Sprintf(
+			"DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ? AND labels_hash IN %s;",
+			placeholders,
+		)
+
+		execArgs := make([]interface{}, 0, 3+len(rd.labelHashes))
+		execArgs = append(execArgs, queryString, rd.ruleOrgID, rd.ruleUID)
+		execArgs = append(execArgs, rd.labelHashes...)
+		_, err := s.Exec(execArgs...)
 		if err != nil {
 			return err
 		}
+
 		return nil
+	}
+
+	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		counter := 0
+
+		// Create batches of up to 200 items and execute a new delete statement for each batch.
+		for _, k := range keys {
+			counter++
+			// When a rule ID changes or we hit 200 hashes, issue a statement.
+			if rowData.ruleOrgID != k.RuleOrgID || rowData.ruleUID != k.RuleUID || len(rowData.labelHashes) >= 200 {
+				err := execQuery(sess, rowData, placeholdersBuilder.String())
+				if err != nil {
+					return err
+				}
+
+				// reset our reused data.
+				rowData.ruleOrgID = k.RuleOrgID
+				rowData.ruleUID = k.RuleUID
+				rowData.labelHashes = rowData.labelHashes[:0]
+				placeholdersBuilder.Reset()
+				placeholdersBuilder.WriteString("(")
+			}
+
+			// Accumulate new values.
+			rowData.labelHashes = append(rowData.labelHashes, k.LabelsHash)
+			placeholdersBuilder.WriteString("?, ")
+		}
+
+		// Delete any remaining rows.
+		if len(rowData.labelHashes) != 0 {
+			err := execQuery(sess, rowData, placeholdersBuilder.String())
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (st DBstore) DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM alert_instance WHERE rule_org_id = ? AND rule_uid = ?", key.OrgID, key.UID)
+		return err
 	})
 }

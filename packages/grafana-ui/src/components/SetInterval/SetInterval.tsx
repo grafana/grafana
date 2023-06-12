@@ -1,9 +1,10 @@
+import { isEqual } from 'lodash';
 import { PureComponent } from 'react';
 import { interval, Subscription, Subject, of, NEVER } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
-import { isEqual } from 'lodash';
 
 import { stringToMs, SelectableValue } from '@grafana/data';
+
 import { RefreshPicker } from '../RefreshPicker/RefreshPicker';
 
 export function getIntervalFromString(strInterval: string): SelectableValue<number> {
@@ -14,7 +15,7 @@ export function getIntervalFromString(strInterval: string): SelectableValue<numb
 }
 
 interface Props {
-  func: () => any; // TODO
+  func: () => unknown;
   loading: boolean;
   interval: string;
 }
@@ -56,7 +57,7 @@ export class SetInterval extends PureComponent<Props> {
       )
       .subscribe();
 
-    // When component has mounted, propsSubject emits it's first value
+    // When component has mounted, propsSubject emits its first value
     this.propsSubject.next(this.props);
   }
 

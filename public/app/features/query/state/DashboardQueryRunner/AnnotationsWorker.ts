@@ -1,9 +1,17 @@
 import { cloneDeep } from 'lodash';
 import { from, merge, Observable, of } from 'rxjs';
 import { catchError, filter, finalize, map, mergeAll, mergeMap, reduce, takeUntil } from 'rxjs/operators';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { AnnotationQuery, DataSourceApi } from '@grafana/data';
 
+import { AnnotationQuery, DataSourceApi } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getConfig } from 'app/core/config';
+
+import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
+import { PUBLIC_DATASOURCE, PublicDashboardDataSource } from '../../../dashboard/services/PublicDashboardDataSource';
+
+import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
+import { getDashboardQueryRunner } from './DashboardQueryRunner';
+import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
 import {
   AnnotationQueryRunner,
   DashboardQueryRunnerOptions,
@@ -11,10 +19,6 @@ import {
   DashboardQueryRunnerWorkerResult,
 } from './types';
 import { emptyResult, handleDatasourceSrvError, translateQueryResult } from './utils';
-import { LegacyAnnotationQueryRunner } from './LegacyAnnotationQueryRunner';
-import { AnnotationsQueryRunner } from './AnnotationsQueryRunner';
-import { AnnotationQueryFinished, AnnotationQueryStarted } from '../../../../types/events';
-import { getDashboardQueryRunner } from './DashboardQueryRunner';
 
 export class AnnotationsWorker implements DashboardQueryRunnerWorker {
   constructor(
@@ -26,6 +30,7 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
 
   canWork({ dashboard }: DashboardQueryRunnerOptions): boolean {
     const annotations = dashboard.annotations.list.find(AnnotationsWorker.getAnnotationsToProcessFilter);
+
     return Boolean(annotations);
   }
 
@@ -35,11 +40,23 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
     }
 
     const { dashboard, range } = options;
-    const annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+    let annotations = dashboard.annotations.list.filter(AnnotationsWorker.getAnnotationsToProcessFilter);
+    // We only want to create a single PublicDashboardDatasource. This will get all annotations in one request.
+    if (dashboard.meta.publicDashboardAccessToken && annotations.length > 0) {
+      annotations = [annotations[0]];
+    }
     const observables = annotations.map((annotation) => {
-      const datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
-        catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
-      );
+      let datasourceObservable;
+
+      if (getConfig().isPublicDashboardView) {
+        const pubdashDatasource = new PublicDashboardDataSource(PUBLIC_DATASOURCE);
+        datasourceObservable = of(pubdashDatasource).pipe(catchError(handleDatasourceSrvError));
+      } else {
+        datasourceObservable = from(getDataSourceSrv().get(annotation.datasource)).pipe(
+          catchError(handleDatasourceSrvError) // because of the reduce all observables need to be completed, so an erroneous observable wont do
+        );
+      }
+
       return datasourceObservable.pipe(
         mergeMap((datasource?: DataSourceApi) => {
           const runner = this.runners.find((r) => r.canRun(datasource));
@@ -61,7 +78,11 @@ export class AnnotationsWorker implements DashboardQueryRunnerWorker {
                 annotation.snapshotData = cloneDeep(results);
               }
               // translate result
-              return translateQueryResult(annotation, results);
+              if (dashboard.meta.publicDashboardAccessToken) {
+                return results;
+              } else {
+                return translateQueryResult(annotation, results);
+              }
             }),
             finalize(() => {
               dashboard.events.publish(new AnnotationQueryFinished(annotation));

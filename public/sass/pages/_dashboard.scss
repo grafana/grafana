@@ -11,7 +11,7 @@
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
-  border-radius: 3px;
+  border-radius: 2px;
   height: 100%;
   width: 100%;
   display: flex;
@@ -46,6 +46,7 @@
   padding: $panel-padding;
   width: 100%;
   flex-grow: 1;
+  contain: strict;
   height: calc(100% - #{$panel-header-height});
 
   &--no-padding {

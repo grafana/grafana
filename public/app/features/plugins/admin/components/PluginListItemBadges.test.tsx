@@ -1,9 +1,12 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+
 import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
-import { PluginListItemBadges } from './PluginListItemBadges';
-import { CatalogPlugin } from '../types';
 import { config } from '@grafana/runtime';
+
+import { CatalogPlugin } from '../types';
+
+import { PluginListItemBadges } from './PluginListItemBadges';
 
 describe('PluginListItemBadges', () => {
   const plugin: CatalogPlugin = {
@@ -49,14 +52,14 @@ describe('PluginListItemBadges', () => {
   });
 
   it('renders an enterprise badge (when a license is valid)', () => {
-    config.licenseInfo.hasValidLicense = true;
+    config.licenseInfo.enabledFeatures = { 'enterprise.plugins': true };
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument();
   });
 
   it('renders an enterprise badge with icon and link (when a license is invalid)', () => {
-    config.licenseInfo.hasValidLicense = false;
+    config.licenseInfo.enabledFeatures = {};
     render(<PluginListItemBadges plugin={{ ...plugin, isEnterprise: true }} />);
     expect(screen.getByText(/enterprise/i)).toBeVisible();
     expect(screen.getByLabelText(/lock icon/i)).toBeInTheDocument();

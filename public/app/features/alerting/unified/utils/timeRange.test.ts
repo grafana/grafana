@@ -1,8 +1,9 @@
 import { ReducerID } from '@grafana/data';
-import { getTimeRangeForExpression } from './timeRange';
-import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+
+import { getTimeRangeForExpression } from './timeRange';
 
 describe('timeRange', () => {
   describe('getTimeRangeForExpression', () => {
@@ -11,7 +12,7 @@ describe('timeRange', () => {
         const expressionQuery: AlertQuery = {
           refId: 'B',
           queryType: 'expression',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             queryType: 'query',
             datasource: '__expr__',
@@ -39,7 +40,7 @@ describe('timeRange', () => {
         const expressionQuery: AlertQuery = {
           refId: 'C',
           queryType: 'expression',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             queryType: 'query',
             datasource: '__expr__',
@@ -79,7 +80,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -104,7 +105,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'C',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -141,7 +142,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -174,7 +175,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',

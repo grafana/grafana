@@ -1,15 +1,17 @@
-//go:build integration
-// +build integration
-
 package sqlstore
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"testing"
+	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStoreTest struct {
@@ -75,9 +77,18 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbURL: "://invalid.com/",
 		err:   &url.Error{Op: "parse", URL: "://invalid.com/", Err: errors.New("missing protocol scheme")},
 	},
+	{
+		name:          "Sql mode set to ANSI_QUOTES",
+		dbType:        "mysql",
+		dbHost:        "[::1]",
+		connStrValues: []string{"sql_mode='ANSI_QUOTES'"},
+	},
 }
 
-func TestSQLConnectionString(t *testing.T) {
+func TestIntegrationSQLConnectionString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	for _, testCase := range sqlStoreTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			sqlstore := &SQLStore{}
@@ -88,6 +99,54 @@ func TestSQLConnectionString(t *testing.T) {
 			for _, connSubStr := range testCase.connStrValues {
 				require.Contains(t, connStr, connSubStr)
 			}
+		})
+	}
+}
+
+func TestIntegrationIsUniqueConstraintViolation(t *testing.T) {
+	store := InitTestDB(t)
+
+	testCases := []struct {
+		desc string
+		f    func(*testing.T, *DBSession) error
+	}{
+		{
+			desc: "successfully detect primary key violations",
+			f: func(t *testing.T, sess *DBSession) error {
+				// Attempt to insert org with provided ID (primary key) twice
+				now := time.Now()
+				org := org.Org{Name: "test org primary key violation", Created: now, Updated: now, ID: 42}
+				err := sess.InsertId(&org, store.Dialect)
+				require.NoError(t, err)
+
+				// Provide a different name to avoid unique constraint violation
+				org.Name = "test org 2"
+				return sess.InsertId(&org, store.Dialect)
+			},
+		},
+		{
+			desc: "successfully detect unique constrain violations",
+			f: func(t *testing.T, sess *DBSession) error {
+				// Attempt to insert org with reserved name
+				now := time.Now()
+				org := org.Org{Name: "test org unique constrain violation", Created: now, Updated: now, ID: 43}
+				err := sess.InsertId(&org, store.Dialect)
+				require.NoError(t, err)
+
+				// Provide a different ID to avoid primary key violation
+				org.ID = 44
+				return sess.InsertId(&org, store.Dialect)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := store.WithDbSession(context.Background(), func(sess *DBSession) error {
+				return tc.f(t, sess)
+			})
+			require.Error(t, err)
+			assert.True(t, store.Dialect.IsUniqueConstraintViolation(err))
 		})
 	}
 }
@@ -111,6 +170,8 @@ func makeSQLStoreTestConfig(t *testing.T, dbType, host, dbURL string) *setting.C
 	require.NoError(t, err)
 	_, err = sec.NewKey("password", "pass")
 	require.NoError(t, err)
+
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return true }
 
 	return cfg
 }

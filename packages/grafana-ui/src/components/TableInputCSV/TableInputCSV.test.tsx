@@ -1,8 +1,9 @@
 import React from 'react';
-
 import renderer from 'react-test-renderer';
-import { TableInputCSV } from './TableInputCSV';
+
 import { DataFrame } from '@grafana/data';
+
+import { TableInputCSV } from './TableInputCSV';
 
 describe('TableInputCSV', () => {
   it('renders correctly', () => {

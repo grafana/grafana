@@ -1,5 +1,6 @@
 import React from 'react';
 import { components, NoticeProps, GroupBase } from 'react-select';
+
 import { SelectableValue } from '@grafana/data';
 
 export type Props<T> = NoticeProps<SelectableValue<T>, boolean, GroupBase<SelectableValue<T>>>;

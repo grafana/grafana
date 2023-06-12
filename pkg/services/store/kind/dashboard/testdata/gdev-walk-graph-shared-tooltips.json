@@ -1,0 +1,202 @@
+{
+  "name": "Panel Tests - shared tooltips",
+  "labels": {
+    "gdev": "",
+    "graph-ng": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": 28
+  },
+  "nested": [
+    {
+      "uid": "graph-shared-tooltips.json#4",
+      "kind": "panel",
+      "name": "two units",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "timeseries"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#13",
+      "kind": "panel",
+      "name": "Speed vs Temperature (XY)",
+      "fields": {
+        "type": "xychart"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "xychart"
+        },
+        {
+          "family": "runtime",
+          "type": "transformer",
+          "ID": "organize"
+        },
+        {
+          "family": "runtime",
+          "type": "transformer",
+          "ID": "seriesToColumns"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#2",
+      "kind": "panel",
+      "name": "Cursor info",
+      "fields": {
+        "type": "debug"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "debug"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#5",
+      "kind": "panel",
+      "name": "Only temperature",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "timeseries"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#9",
+      "kind": "panel",
+      "name": "Only Speed",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "timeseries"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#11",
+      "kind": "panel",
+      "name": "Panel Title",
+      "fields": {
+        "type": "timeseries"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "timeseries"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#8",
+      "kind": "panel",
+      "name": "flot panel (temperature)",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-shared-tooltips.json#10",
+      "kind": "panel",
+      "name": "flot panel (no units)",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "debug"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "graph"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "timeseries"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "xychart"
+    },
+    {
+      "family": "runtime",
+      "type": "transformer",
+      "ID": "organize"
+    },
+    {
+      "family": "runtime",
+      "type": "transformer",
+      "ID": "seriesToColumns"
+    }
+  ]
+}

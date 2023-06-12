@@ -5,6 +5,10 @@ import { DataSourceJsonData } from '@grafana/data';
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
   alertmanager_config: AlertmanagerConfig;
+  /** { [name]: provenance } */
+  template_file_provenances?: Record<string, string>;
+  last_applied?: string;
+  id?: number;
 };
 
 export type TLSConfig = {
@@ -72,6 +76,7 @@ export type GrafanaManagedReceiverConfig = {
   name: string;
   updated?: string;
   created?: string;
+  provenance?: string;
 };
 
 export type Receiver = {
@@ -89,7 +94,7 @@ export type Receiver = {
   [key: string]: any;
 };
 
-type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
+export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
   receiver?: string;
@@ -106,7 +111,14 @@ export type Route = {
   repeat_interval?: string;
   routes?: Route[];
   mute_time_intervals?: string[];
+  /** only the root policy might have a provenance field defined */
+  provenance?: string;
 };
+
+export interface RouteWithID extends Route {
+  id: string;
+  routes?: RouteWithID[];
+}
 
 export type InhibitRule = {
   target_match: Record<string, string>;
@@ -143,6 +155,9 @@ export type AlertmanagerConfig = {
   inhibit_rules?: InhibitRule[];
   receivers?: Receiver[];
   mute_time_intervals?: MuteTimeInterval[];
+  /** { [name]: provenance } */
+  muteTimeProvenances?: Record<string, string>;
+  last_applied?: boolean;
 };
 
 export type Matcher = {
@@ -237,6 +252,7 @@ export interface AlertmanagerStatus {
 }
 
 export type TestReceiversAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels'>;
+export type TestTemplateAlert = Pick<AlertmanagerAlert, 'annotations' | 'labels' | 'startsAt' | 'endsAt'>;
 
 export interface TestReceiversPayload {
   receivers?: Receiver[];
@@ -247,7 +263,7 @@ interface TestReceiversResultGrafanaReceiverConfig {
   name: string;
   uid?: string;
   error?: string;
-  status: 'failed';
+  status: 'ok' | 'failed';
 }
 
 interface TestReceiversResultReceiver {
@@ -270,10 +286,21 @@ export interface AlertmanagerUrl {
 
 export interface ExternalAlertmanagersResponse {
   data: ExternalAlertmanagers;
-  status: 'string';
 }
+
+export enum AlertmanagerChoice {
+  Internal = 'internal',
+  External = 'external',
+  All = 'all',
+}
+
+export interface ExternalAlertmanagerConfig {
+  alertmanagersChoice: AlertmanagerChoice;
+}
+
 export enum AlertManagerImplementation {
   cortex = 'cortex',
+  mimir = 'mimir',
   prometheus = 'prometheus',
 }
 
@@ -288,11 +315,17 @@ export interface TimeInterval {
   days_of_month?: string[];
   months?: string[];
   years?: string[];
+  /** IANA TZ identifier like "Europe/Brussels", also supports "Local" or "UTC" */
+  location?: string;
 }
 
 export type MuteTimeInterval = {
   name: string;
   time_intervals: TimeInterval[];
+  provenance?: string;
 };
 
-export type AlertManagerDataSourceJsonData = DataSourceJsonData & { implementation?: AlertManagerImplementation };
+export interface AlertManagerDataSourceJsonData extends DataSourceJsonData {
+  implementation?: AlertManagerImplementation;
+  handleGrafanaManagedAlerts?: boolean;
+}

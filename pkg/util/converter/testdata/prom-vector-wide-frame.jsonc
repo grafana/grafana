@@ -1,0 +1,163 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-wide",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "vector"
+//      }
+//  }
+//  Name: 
+//  Dimensions: 6 Fields by 2 Rows
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+------------------------------------+-----------------------------------+------------------------------------+
+//  | Name: Time                        | Name: Value                                                  | Name: Value                                            | Name: Value                        | Name: Value                       | Name: Value                        |
+//  | Labels:                           | Labels: __name__=up, instance=localhost:9090, job=prometheus | Labels: __name__=up, instance=localhost:9100, job=node | Labels: level=error, location=moon | Labels: level=info, location=moon | Labels: level=debug, location=moon |
+//  | Type: []time.Time                 | Type: []*float64                                             | Type: []*float64                                       | Type: []*float64                   | Type: []*float64                  | Type: []*float64                   |
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+------------------------------------+-----------------------------------+------------------------------------+
+//  | 2015-07-01 20:10:51.781 +0000 UTC | 1                                                            | 0                                                      | null                               | null                              | null                               |
+//  | 2022-02-16 16:41:39 +0000 UTC     | null                                                         | null                                                   | +Inf                               | -Inf                              | NaN                                |
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+------------------------------------+-----------------------------------+------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-wide",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "vector"
+          }
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9090",
+              "job": "prometheus"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9100",
+              "job": "node"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "level": "error",
+              "location": "moon"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "level": "info",
+              "location": "moon"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "level": "debug",
+              "location": "moon"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781451781,
+            1645029699000
+          ],
+          [
+            1,
+            null
+          ],
+          [
+            0,
+            null
+          ],
+          [
+            null,
+            null
+          ],
+          [
+            null,
+            null
+          ],
+          [
+            null,
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          null,
+          null,
+          {
+            "Inf": [
+              1
+            ]
+          },
+          {
+            "NegInf": [
+              1
+            ]
+          },
+          {
+            "NaN": [
+              1
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

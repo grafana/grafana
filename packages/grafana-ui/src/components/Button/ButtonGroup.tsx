@@ -1,7 +1,9 @@
-import React, { forwardRef, HTMLAttributes } from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '../../themes';
+import React, { forwardRef, HTMLAttributes } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   className?: string;

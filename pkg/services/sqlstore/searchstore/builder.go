@@ -44,6 +44,9 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 }
 
 func (b *Builder) buildSelect() {
+	var recQuery string
+	var recQueryParams []interface{}
+
 	b.sql.WriteString(
 		`SELECT
 			dashboard.id,
@@ -61,9 +64,25 @@ func (b *Builder) buildSelect() {
 		if f, ok := f.(FilterSelect); ok {
 			b.sql.WriteString(fmt.Sprintf(", %s", f.Select()))
 		}
+
+		if f, ok := f.(FilterWith); ok {
+			recQuery, recQueryParams = f.With()
+		}
 	}
 
 	b.sql.WriteString(` FROM `)
+
+	if recQuery == "" {
+		return
+	}
+
+	// prepend recursive queries
+	var bf bytes.Buffer
+	bf.WriteString(recQuery)
+	bf.WriteString(b.sql.String())
+
+	b.sql = bf
+	b.params = append(recQueryParams, b.params...)
 }
 
 func (b *Builder) applyFilters() (ordering string) {
@@ -115,16 +134,37 @@ func (b *Builder) applyFilters() (ordering string) {
 		b.params = append(b.params, whereParams...)
 	}
 
-	if len(groups) > 0 {
-		b.sql.WriteString(fmt.Sprintf(" GROUP BY %s", strings.Join(groups, ", ")))
-		b.params = append(b.params, groupParams...)
-	}
-
 	if len(orders) < 1 {
 		orders = append(orders, TitleSorter{}.OrderBy())
 	}
 
-	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orders, ", "))
+	if len(groups) > 0 {
+		cols := make([]string, 0, len(orders)+len(groups))
+		for _, o := range orders {
+			o := strings.TrimSuffix(o, " DESC")
+			o = strings.TrimSuffix(o, " ASC")
+			exists := false
+			for _, g := range groups {
+				if g == o {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				cols = append(cols, o)
+			}
+		}
+		cols = append(cols, groups...)
+		b.sql.WriteString(fmt.Sprintf(" GROUP BY %s", strings.Join(cols, ", ")))
+		b.params = append(b.params, groupParams...)
+	}
+
+	orderByCols := []string{}
+	for _, o := range orders {
+		orderByCols = append(orderByCols, b.Dialect.OrderBy(o))
+	}
+
+	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orderByCols, ", "))
 	b.sql.WriteString(orderBy)
 
 	order := strings.Join(orderJoins, "")

@@ -1,0 +1,77 @@
+{
+  "id": 221,
+  "title": "special ds",
+  "tags": null,
+  "datasource": [
+    {
+      "uid": "grafana",
+      "type": "datasource"
+    },
+    {
+      "uid": "dgd92lq7k",
+      "type": "frser-sqlite-datasource"
+    },
+    {
+      "uid": "PD8C576611E62080A",
+      "type": "testdata"
+    }
+  ],
+  "panels": [
+    {
+      "id": 10,
+      "title": "mixed ds with grafana ds",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "grafana",
+          "type": "datasource"
+        },
+        {
+          "uid": "dgd92lq7k",
+          "type": "frser-sqlite-datasource"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Row title",
+      "type": "row"
+    },
+    {
+      "id": 4,
+      "title": "dashboard ds",
+      "type": "timeseries"
+    },
+    {
+      "id": 6,
+      "title": "grafana ds",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "grafana",
+          "type": "datasource"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "mixed ds",
+      "type": "timeseries",
+      "datasource": [
+        {
+          "uid": "dgd92lq7k",
+          "type": "frser-sqlite-datasource"
+        },
+        {
+          "uid": "PD8C576611E62080A",
+          "type": "testdata"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 36,
+  "linkCount": 0,
+  "timeFrom": "now-6h",
+  "timeTo": "now",
+  "timezone": ""
+}

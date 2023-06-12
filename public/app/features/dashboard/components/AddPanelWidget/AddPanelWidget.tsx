@@ -1,27 +1,27 @@
-import React, { useMemo, useState } from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
 import { css, cx, keyframes } from '@emotion/css';
 import { chain, cloneDeep, defaults, find, sortBy } from 'lodash';
+import React, { useMemo, useState } from 'react';
+import { connect, MapDispatchToProps } from 'react-redux';
 import tinycolor from 'tinycolor2';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
-import { GrafanaTheme2 } from '@grafana/data';
-
+import { CardButton } from 'app/core/components/CardButton';
 import config from 'app/core/config';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import store from 'app/core/store';
 import { addPanel } from 'app/features/dashboard/state/reducers';
-import { DashboardModel, PanelModel } from '../../state';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
-import { LibraryElementDTO } from '../../../library-panels/types';
-import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
+
 import {
   LibraryPanelsSearch,
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
-import { CardButton } from 'app/core/components/CardButton';
+import { LibraryElementDTO } from '../../../library-panels/types';
+import { DashboardModel, PanelModel } from '../../state';
 
-export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
+export type PanelPluginInfo = { id: number; defaults: { gridPos: { w: number; h: number }; title: string } };
 
 export interface OwnProps {
   panel: PanelModel;
@@ -57,7 +57,7 @@ const getCopiedPanelPlugins = () => {
   return sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
+export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -75,7 +75,9 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
+      datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      isNew: true,
     };
 
     dashboard.addPanel(newPanel);
@@ -87,7 +89,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   const onPasteCopiedPanel = (panelPluginInfo: PanelPluginInfo) => {
     const { gridPos } = panel;
 
-    const newPanel: any = {
+    const newPanel = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
       gridPos: {
@@ -112,10 +114,10 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
-    const newPanel: PanelModel = {
+    const newPanel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      libraryPanel: panelInfo,
     };
 
     dashboard.addPanel(newPanel);
@@ -123,7 +125,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   };
 
   const onCreateNewRow = () => {
-    const newRow: any = {
+    const newRow = {
       type: 'row',
       title: 'Row title',
       gridPos: { x: 0, y: 0 },
@@ -206,22 +208,22 @@ interface AddPanelWidgetHandleProps {
   styles: AddPanelStyles;
 }
 
-const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ children, onBack, onCancel, styles }) => {
+const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWidgetHandleProps) => {
   return (
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} surface="header" size="xl" />
+          <IconButton name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
         </div>
       )}
       {!onBack && (
         <div className={styles.backButton}>
-          <Icon name="panel-add" size="md" />
+          <Icon name="panel-add" size="xl" />
         </div>
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} surface="header" />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} tooltip="Close widget" />
     </div>
   );
 };

@@ -32,8 +32,8 @@ func main() {
 	proxy := httputil.NewSingleHostReverseProxy(originURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		safeSleep := strings.Replace(sleep.String(), "\n", "", -1)
-		safeRequestUri := strings.Replace(r.RequestURI, "\n", "", -1)
+		safeSleep := strings.ReplaceAll(sleep.String(), "\n", "")
+		safeRequestUri := strings.ReplaceAll(r.RequestURI, "\n", "")
 		log.Printf("sleeping for %s then proxying request: url '%s'", safeSleep, safeRequestUri)
 
 		// This is commented out as CodeQL flags this as vulnerability CWE-117 (https://cwe.mitre.org/data/definitions/117.html)

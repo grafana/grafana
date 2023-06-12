@@ -1,13 +1,17 @@
-import { useEffect, useMemo } from 'react';
-import { useDispatch } from 'react-redux';
+import { useMemo } from 'react';
+import { useAsync } from 'react-use';
+
+import { useDispatch } from 'app/types';
 import { CombinedRule, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
-import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
-import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
-import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
-import { fetchPromRulesAction, fetchRulerRulesAction } from '../state/actions';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+
+import { fetchPromAndRulerRulesAction } from '../state/actions';
+import { AsyncRequestMapSlice, AsyncRequestState, initialAsyncRequestState } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { isRulerNotSupportedResponse } from '../utils/rules';
+
+import { useCombinedRuleNamespaces } from './useCombinedRuleNamespaces';
+import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
@@ -82,17 +86,16 @@ function useCombinedRulesLoader(rulesSourceName: string | undefined): AsyncReque
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const rulerRuleRequest = getRequestState(rulesSourceName, rulerRuleRequests);
 
-  useEffect(() => {
+  const { loading } = useAsync(async () => {
     if (!rulesSourceName) {
       return;
     }
 
-    dispatch(fetchPromRulesAction({ rulesSourceName }));
-    dispatch(fetchRulerRulesAction({ rulesSourceName }));
+    await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName }));
   }, [dispatch, rulesSourceName]);
 
   return {
-    loading: promRuleRequest.loading || rulerRuleRequest.loading,
+    loading,
     error: promRuleRequest.error ?? isRulerNotSupportedResponse(rulerRuleRequest) ? undefined : rulerRuleRequest.error,
     dispatched: promRuleRequest.dispatched && rulerRuleRequest.dispatched,
   };

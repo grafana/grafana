@@ -1,11 +1,14 @@
-import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
+
 import config from 'app/core/config';
+
+import { backendSrv } from '../../core/services/backend_srv';
+
 import { Props, ChangePasswordPage } from './ChangePasswordPage';
 import { initialUserState } from './state/reducers';
-import { getNavModel } from '../../core/selectors/navModel';
-import { backendSrv } from '../../core/services/backend_srv';
 
 const defaultProps: Props = {
   ...initialUserState,
@@ -19,23 +22,6 @@ const defaultProps: Props = {
     orgId: 0,
     authLabels: ['github'],
   },
-  navModel: getNavModel(
-    {
-      'profile-settings': {
-        icon: 'sliders-v-alt',
-        id: 'profile-settings',
-        parentItem: {
-          id: 'profile',
-          text: 'Test User',
-          img: '/avatar/46d229b033af06a191ff2267bca9ae56',
-          url: '/profile',
-        },
-        text: 'Preferences',
-        url: '/profile',
-      },
-    },
-    'profile-settings'
-  ),
   loadUser: jest.fn(),
   changePassword: jest.fn(),
 };
@@ -53,7 +39,11 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   });
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<ChangePasswordPage {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ChangePasswordPage {...props} />
+    </TestProvider>
+  );
 
   await waitFor(() => expect(props.loadUser).toHaveBeenCalledTimes(1));
 
@@ -69,7 +59,6 @@ describe('ChangePasswordPage', () => {
 
   it('should show change password form when user has loaded', async () => {
     await getTestContext();
-    expect(screen.getByText('Change Your Password')).toBeInTheDocument();
 
     expect(screen.getByLabelText('Old password')).toBeInTheDocument();
     expect(screen.getByLabelText('New password')).toBeInTheDocument();
@@ -80,12 +69,13 @@ describe('ChangePasswordPage', () => {
     expect(screen.getByRole('link', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cancel' })).toHaveAttribute('href', '/profile');
   });
+
   it('should call changePassword if change password is valid', async () => {
     const { props } = await getTestContext();
 
-    userEvent.type(screen.getByLabelText('Old password'), 'test');
-    userEvent.type(screen.getByLabelText('New password'), 'admin');
-    userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Old password'), 'test');
+    await userEvent.type(screen.getByLabelText('New password'), 'admin');
+    await userEvent.type(screen.getByLabelText('Confirm password'), 'admin');
     fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));
     await waitFor(() => {
       expect(props.changePassword).toHaveBeenCalledTimes(1);
@@ -99,19 +89,19 @@ describe('ChangePasswordPage', () => {
       );
     });
   });
-  it('should cannot change password form if ldap or authProxy enabled', async () => {
-    config.ldapEnabled = true;
-    const { rerender } = await getTestContext();
-    expect(
-      screen.getByText('You cannot change password when LDAP or auth proxy authentication is enabled.')
-    ).toBeInTheDocument();
-    config.ldapEnabled = false;
-    config.authProxyEnabled = true;
-    rerender(<ChangePasswordPage {...defaultProps} />);
-    expect(
-      screen.getByText('You cannot change password when LDAP or auth proxy authentication is enabled.')
-    ).toBeInTheDocument();
-    config.authProxyEnabled = false;
+  it('should cannot change password form if user signed in with LDAP', async () => {
+    await getTestContext({
+      user: { ...defaultProps.user!, authLabels: ['LDAP'] },
+    });
+
+    expect(screen.getByText('You cannot change password when signed in with LDAP or auth proxy.')).toBeInTheDocument();
+  });
+  it('should cannot change password form if user signed in with auth proxy', async () => {
+    await getTestContext({
+      user: { ...defaultProps.user!, authLabels: ['Auth Proxy'] },
+    });
+
+    expect(screen.getByText('You cannot change password when signed in with LDAP or auth proxy.')).toBeInTheDocument();
   });
   it('should show cannot change password if disableLoginForm is true and auth', async () => {
     config.disableLoginForm = true;

@@ -2,27 +2,31 @@
 // with some extra renderers passed to the <TimeSeries> component
 
 import React, { useMemo } from 'react';
-import { Field, getDisplayProcessor, PanelProps } from '@grafana/data';
+import uPlot from 'uplot';
+
+import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { usePanelContext, TimeSeries, TooltipPlugin, ZoomPlugin, UPlotConfigBuilder, useTheme2 } from '@grafana/ui';
+import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
+import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+
+import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
-import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
+import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
-import { config } from 'app/core/config';
-import { drawMarkers, FieldIndices } from './utils';
-import { defaultColors, CandlestickOptions, VizDisplayMode } from './models.gen';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
+
 import { prepareCandlestickFields } from './fields';
-import uPlot from 'uplot';
-import { PanelDataErrorView } from '@grafana/runtime';
+import { CandlestickOptions, defaultColors, VizDisplayMode } from './models.gen';
+import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel = ({
   data,
   id,
   timeRange,
@@ -33,8 +37,9 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-}) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, onSplitOpen } = usePanelContext();
+}: CandlestickPanelProps) => {
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
+    usePanelContext();
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
@@ -42,9 +47,11 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   const theme = useTheme2();
 
-  const info = useMemo(() => prepareCandlestickFields(data?.series, options, theme), [data, options, theme]);
+  const info = useMemo(() => {
+    return prepareCandlestickFields(data.series, options, theme, timeRange);
+  }, [data.series, options, theme, timeRange]);
 
-  const { renderers, tweakScale, tweakAxis } = useMemo(() => {
+  const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
     let tweakAxis = (opts: AxisProps, forField: Field) => opts;
 
@@ -52,6 +59,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       renderers: [],
       tweakScale,
       tweakAxis,
+      shouldRenderPrice: false,
     };
 
     if (!info) {
@@ -152,18 +160,6 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
     if (shouldRenderPrice) {
       fields = { open, high: high!, low: low!, close };
-
-      // hide series from legend that are rendered as composite markers
-      for (let key in fields) {
-        let field = (info as any)[key] as Field;
-        field.config = {
-          ...field.config,
-          custom: {
-            ...field.config.custom,
-            hideFrom: { legend: true, tooltip: false, viz: false },
-          },
-        };
-      }
     } else {
       // these fields should not be omitted from normal rendering if they arent rendered
       // as part of price markers. they're only here so we can get back their indicies in the
@@ -178,6 +174,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
     }
 
     return {
+      shouldRenderPrice,
       renderers: [
         {
           fieldMap: fields,
@@ -206,10 +203,32 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev]);
+  }, [options, data.structureRev, data.series.length]);
 
   if (!info) {
-    return <PanelDataErrorView panelId={id} data={data} needsTimeField={true} needsNumberField={true} />;
+    return (
+      <PanelDataErrorView
+        panelId={id}
+        fieldConfig={fieldConfig}
+        data={data}
+        needsTimeField={true}
+        needsNumberField={true}
+      />
+    );
+  }
+
+  if (shouldRenderPrice) {
+    // hide series from legend that are rendered as composite markers
+    for (let key in renderers[0].fieldMap) {
+      let field = (info as any)[key] as Field;
+      field.config = {
+        ...field.config,
+        custom: {
+          ...field.config.custom,
+          hideFrom: { legend: true, tooltip: false, viz: false },
+        },
+      };
+    }
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -229,6 +248,16 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
       options={options}
     >
       {(config, alignedDataFrame) => {
+        alignedDataFrame.fields.forEach((field) => {
+          field.getLinks = getLinksSupplier(
+            alignedDataFrame,
+            field,
+            field.state!.scopedVars!,
+            replaceVariables,
+            timeZone
+          );
+        });
+
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
@@ -244,39 +273,49 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-              {({ startAnnotating }) => {
-                return (
-                  <ContextMenuPlugin
-                    data={alignedDataFrame}
-                    config={config}
-                    timeZone={timeZone}
-                    replaceVariables={replaceVariables}
-                    defaultItems={
-                      enableAnnotationCreation
-                        ? [
-                            {
-                              items: [
-                                {
-                                  label: 'Add annotation',
-                                  ariaLabel: 'Add annotation',
-                                  icon: 'comment-alt',
-                                  onClick: (e, p) => {
-                                    if (!p) {
-                                      return;
-                                    }
-                                    startAnnotating({ coords: p.coords });
+            {enableAnnotationCreation ? (
+              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
+                {({ startAnnotating }) => {
+                  return (
+                    <ContextMenuPlugin
+                      data={alignedDataFrame}
+                      config={config}
+                      timeZone={timeZone}
+                      replaceVariables={replaceVariables}
+                      defaultItems={
+                        enableAnnotationCreation
+                          ? [
+                              {
+                                items: [
+                                  {
+                                    label: 'Add annotation',
+                                    ariaLabel: 'Add annotation',
+                                    icon: 'comment-alt',
+                                    onClick: (e, p) => {
+                                      if (!p) {
+                                        return;
+                                      }
+                                      startAnnotating({ coords: p.coords });
+                                    },
                                   },
-                                },
-                              ],
-                            },
-                          ]
-                        : []
-                    }
-                  />
-                );
-              }}
-            </AnnotationEditorPlugin>
+                                ],
+                              },
+                            ]
+                          : []
+                      }
+                    />
+                  );
+                }}
+              </AnnotationEditorPlugin>
+            ) : (
+              <ContextMenuPlugin
+                data={alignedDataFrame}
+                config={config}
+                timeZone={timeZone}
+                replaceVariables={replaceVariables}
+                defaultItems={[]}
+              />
+            )}
             {data.annotations && (
               <ExemplarsPlugin
                 config={config}
@@ -286,13 +325,15 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               />
             )}
 
-            {canEditThresholds && onThresholdsChange && (
+            {((canEditThresholds && onThresholdsChange) || showThresholds) && (
               <ThresholdControlsPlugin
                 config={config}
                 fieldConfig={fieldConfig}
-                onThresholdsChange={onThresholdsChange}
+                onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
               />
             )}
+
+            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

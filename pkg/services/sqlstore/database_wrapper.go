@@ -10,15 +10,15 @@ import (
 
 	"github.com/gchaincl/sqlhooks"
 	"github.com/go-sql-driver/mysql"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
-	"github.com/opentracing/opentracing-go"
-	ol "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
-	cw "github.com/weaveworks/common/tracing"
+	"go.opentelemetry.io/otel/trace"
 	"xorm.io/core"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 var (
@@ -39,7 +39,7 @@ func init() {
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
 // database queries. It also registers the metrics.
-func WrapDatabaseDriverWithHooks(dbType string) string {
+func WrapDatabaseDriverWithHooks(dbType string, tracer tracing.Tracer) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
@@ -52,7 +52,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	}
 
 	driverWithHooks := dbType + "WithHooks"
-	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
+	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics"), tracer: tracer}))
 	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
@@ -60,7 +60,8 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 // databaseQueryWrapper satisfies the sqlhook.databaseQueryWrapper interface
 // which allow us to wrap all SQL queries with a `Before` & `After` hook.
 type databaseQueryWrapper struct {
-	log log.Logger
+	log    log.Logger
+	tracer tracing.Tracer
 }
 
 // databaseQueryWrapperKey is used as key to save values in `context.Context`
@@ -83,7 +84,7 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 	elapsed := time.Since(begin)
 
 	histogram := databaseQueryHistogram.WithLabelValues(status)
-	if traceID, ok := cw.ExtractSampledTraceID(ctx); ok {
+	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		// Need to type-convert the Observer to an
 		// ExemplarObserver. This will always work for a
 		// HistogramVec.
@@ -94,25 +95,34 @@ func (h *databaseQueryWrapper) instrument(ctx context.Context, status string, qu
 		histogram.Observe(elapsed.Seconds())
 	}
 
-	span, _ := opentracing.StartSpanFromContext(ctx, "database query")
-	defer span.Finish()
+	ctx = log.IncDBCallCounter(ctx)
 
-	span.LogFields(
-		ol.String("query", query),
-		ol.String("status", status))
+	_, span := h.tracer.Start(ctx, "database query", trace.WithTimestamp(begin))
+	defer span.End()
+
+	span.AddEvents([]string{"query", "status"}, []tracing.EventValue{{Str: query}, {Str: status}})
 
 	if err != nil {
-		span.LogFields(ol.String("error", err.Error()))
+		span.AddEvents([]string{"error"}, []tracing.EventValue{{Str: err.Error()}})
 	}
 
-	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
+	ctxLogger := h.log.FromContext(ctx)
+	ctxLogger.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 }
 
 // OnError will be called if any error happens
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
-	status := "error"
+	// Not a user error: driver is telling sql package that an
+	// optional interface method is not implemented. There is
+	// nothing to instrument here.
 	// https://golang.org/pkg/database/sql/driver/#ErrSkip
-	if err == nil || errors.Is(err, driver.ErrSkip) {
+	// https://github.com/DataDog/dd-trace-go/issues/270
+	if errors.Is(err, driver.ErrSkip) {
+		return nil
+	}
+
+	status := "error"
+	if err == nil {
 		status = "success"
 	}
 

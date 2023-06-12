@@ -1,6 +1,8 @@
-import { debounce, each, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
+import { debounce, each, map, partial, escape, unescape } from 'lodash';
+
 import coreModule from 'app/angular/core_module';
+
 import { promiseToDigest } from '../promiseToDigest';
 
 const template = `
@@ -14,7 +16,8 @@ const template = `
 </ul>
 `;
 
-/** @ngInject */
+coreModule.directive('queryPartEditor', ['templateSrv', queryPartEditorDirective]);
+
 export function queryPartEditorDirective(templateSrv: any) {
   const paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
 
@@ -181,5 +184,3 @@ export function queryPartEditorDirective(templateSrv: any) {
     },
   };
 }
-
-coreModule.directive('queryPartEditor', queryPartEditorDirective);

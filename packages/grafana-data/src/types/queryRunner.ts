@@ -1,8 +1,9 @@
 import { Observable } from 'rxjs';
-import { DataQuery, DataSourceRef } from './query';
+
+import { ScopedVars } from './ScopedVars';
 import { DataSourceApi } from './datasource';
 import { PanelData } from './panel';
-import { ScopedVars } from './ScopedVars';
+import { DataQuery, DataSourceRef } from './query';
 import { TimeRange, TimeZone } from './time';
 
 /**
@@ -14,7 +15,7 @@ export interface QueryRunnerOptions {
   datasource: DataSourceRef | DataSourceApi | null;
   queries: DataQuery[];
   panelId?: number;
-  dashboardId?: number;
+  dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
@@ -22,6 +23,7 @@ export interface QueryRunnerOptions {
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string;
+  queryCachingTTL?: number;
   app?: string;
 }
 

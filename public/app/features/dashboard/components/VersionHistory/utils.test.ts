@@ -125,7 +125,7 @@ describe('getDiffText', () => {
   test.each(cases)(
     'returns a semantic message based on the type of diff, the values and the location of the change',
     (diff: Partial<Diff>, expected: string) => {
-      expect(getDiffText((diff as unknown) as Diff)).toBe(expected);
+      expect(getDiffText(diff as unknown as Diff)).toBe(expected);
     }
   );
 });

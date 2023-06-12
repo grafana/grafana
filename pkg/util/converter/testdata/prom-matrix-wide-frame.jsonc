@@ -1,0 +1,99 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-wide",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "matrix"
+//      }
+//  }
+//  Name: 
+//  Dimensions: 3 Fields by 3 Rows
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+
+//  | Name: Time                        | Name: Value                                                  | Name: Value                                            |
+//  | Labels:                           | Labels: __name__=up, instance=localhost:9090, job=prometheus | Labels: __name__=up, instance=localhost:9091, job=node |
+//  | Type: []time.Time                 | Type: []*float64                                             | Type: []*float64                                       |
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+
+//  | 2015-07-01 20:10:30.781 +0000 UTC | 1                                                            | 0                                                      |
+//  | 2015-07-01 20:10:45.781 +0000 UTC | 1                                                            | 0                                                      |
+//  | 2015-07-01 20:11:00.781 +0000 UTC | 1                                                            | 1                                                      |
+//  +-----------------------------------+--------------------------------------------------------------+--------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-wide",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "matrix"
+          }
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9090",
+              "job": "prometheus"
+            }
+          },
+          {
+            "name": "Value",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "up",
+              "instance": "localhost:9091",
+              "job": "node"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1435781430781,
+            1435781445781,
+            1435781460781
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ]
+      }
+    }
+  ]
+}

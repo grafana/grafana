@@ -3,8 +3,6 @@
   "name": "Histogram",
   "id": "histogram",
 
-  "state": "beta",
-
   "info": {
     "author": {
       "name": "Grafana Labs",

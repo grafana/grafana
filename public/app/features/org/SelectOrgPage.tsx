@@ -1,15 +1,17 @@
-import React, { FC } from 'react';
-import Page from 'app/core/components/Page/Page';
-import { config } from '@grafana/runtime';
-import { StoreState, UserOrg } from 'app/types';
-import { useEffectOnce } from 'react-use';
-import { Button, HorizontalGroup } from '@grafana/ui';
-import { getUserOrganizations, setUserOrganization } from './state/actions';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useEffectOnce } from 'react-use';
+
+import { config } from '@grafana/runtime';
+import { Button, HorizontalGroup } from '@grafana/ui';
+import { Page } from 'app/core/components/Page/Page';
+import { StoreState, UserOrg } from 'app/types';
+
+import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
   main: {
-    icon: 'grafana',
+    icon: 'grafana' as const,
     subTitle: 'Preferences',
     text: 'Select active organization',
   },
@@ -33,7 +35,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = ConnectedProps<typeof connector>;
 
-export const SelectOrgPage: FC<Props> = ({ setUserOrganization, getUserOrganizations, userOrgs }) => {
+export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userOrgs }: Props) => {
   const setUserOrg = async (org: UserOrg) => {
     await setUserOrganization(org.orgId);
     window.location.href = config.appSubUrl + '/';

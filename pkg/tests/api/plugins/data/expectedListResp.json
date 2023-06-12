@@ -33,7 +33,50 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Alertmanager",
+    "type": "datasource",
+    "id": "alertmanager",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Prometheus alertmanager",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": [
+        {
+          "name": "Learn more",
+          "url": "https://prometheus.io/docs/alerting/latest/alertmanager/"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/alertmanager/img/logo.svg",
+        "large": "public/app/plugins/datasource/alertmanager/img/logo.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/alertmanager/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Annotations list",
@@ -69,7 +112,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Azure Monitor",
@@ -86,7 +130,7 @@
       "links": [
         {
           "name": "Learn more",
-          "url": "https://github.com/grafana/azure-monitor-datasource"
+          "url": "https://grafana.com/docs/grafana/latest/datasources/azuremonitor/"
         },
         {
           "name": "Apache License",
@@ -94,26 +138,26 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg",
-        "large": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg"
+        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "0.3.0",
-      "updated": "2018-12-06"
+      "version": "1.0.0",
+      "updated": ""
     },
     "dependencies": {
       "grafanaDependency": "",
@@ -127,7 +171,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Bar chart",
@@ -160,10 +205,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/barchart/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Bar gauge",
@@ -199,7 +245,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Candlestick",
@@ -232,10 +279,48 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/candlestick/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Canvas",
+    "type": "panel",
+    "id": "canvas",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Explicit element placement",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/canvas/img/icn-canvas.svg",
+        "large": "public/app/plugins/panel/canvas/img/icn-canvas.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/canvas/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "CloudWatch",
@@ -271,7 +356,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Dashboard list",
@@ -307,7 +393,45 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Datagrid",
+    "type": "panel",
+    "id": "datagrid",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg",
+        "large": "public/app/plugins/panel/datagrid/img/icn-table-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/datagrid/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Elasticsearch",
@@ -348,7 +472,45 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Flame Graph",
+    "type": "panel",
+    "id": "flamegraph",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg",
+        "large": "public/app/plugins/panel/flamegraph/img/icn-flamegraph.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/flamegraph/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Gauge",
@@ -384,7 +546,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Geomap",
@@ -417,10 +580,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/geomap/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Getting Started",
@@ -456,7 +620,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Google Cloud Monitoring",
@@ -492,7 +657,50 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Grafana Pyroscope",
+    "type": "datasource",
+    "id": "grafana-pyroscope-datasource",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Supports Phlare and Pyroscope backends, horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation systems.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/grafana/phlare"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg",
+        "large": "public/app/plugins/datasource/grafana-pyroscope-datasource/img/grafana_pyroscope_icon.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/grafana-pyroscope-datasource/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Graph (old)",
@@ -525,10 +733,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/graph/",
     "category": "",
-    "state": "",
+    "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Graphite",
@@ -573,7 +782,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Heatmap",
@@ -587,16 +797,7 @@
         "url": "https://grafana.com"
       },
       "description": "Like a histogram over time",
-      "links": [
-        {
-          "name": "Brendan Gregg - Heatmaps",
-          "url": "http://www.brendangregg.com/heatmaps.html"
-        },
-        {
-          "name": "Brendan Gregg - Latency Heatmaps",
-          "url": " http://www.brendangregg.com/HeatMaps/latency.html"
-        }
-      ],
+      "links": null,
       "logos": {
         "small": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg",
         "large": "public/app/plugins/panel/heatmap/img/icn-heatmap-panel.svg"
@@ -618,7 +819,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Histogram",
@@ -651,10 +853,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/histogram/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "InfluxDB",
@@ -690,7 +893,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Jaeger",
@@ -735,7 +939,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Logs",
@@ -771,7 +976,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Loki",
@@ -816,7 +1022,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Microsoft SQL Server",
@@ -852,7 +1059,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "MySQL",
@@ -888,7 +1096,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "News",
@@ -924,7 +1133,8 @@
     "state": "beta",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Node Graph",
@@ -957,10 +1167,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/nodeGraph/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "OpenTSDB",
@@ -996,7 +1207,50 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Parca",
+    "type": "datasource",
+    "id": "parca",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://www.grafana.com"
+      },
+      "description": "Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.",
+      "links": [
+        {
+          "name": "GitHub Project",
+          "url": "https://github.com/parca-dev/parca"
+        }
+      ],
+      "logos": {
+        "small": "public/app/plugins/datasource/parca/img/logo-small.svg",
+        "large": "public/app/plugins/datasource/parca/img/logo-small.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/parca/",
+    "category": "profiling",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Pie chart",
@@ -1032,43 +1286,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
-  },
-  {
-    "name": "Plugin list",
-    "type": "panel",
-    "id": "pluginlist",
-    "enabled": true,
-    "pinned": false,
-    "info": {
-      "author": {
-        "name": "Grafana Labs",
-        "url": "https://grafana.com"
-      },
-      "description": "Plugin List for Grafana",
-      "links": null,
-      "logos": {
-        "small": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg",
-        "large": "public/app/plugins/panel/pluginlist/img/icn-dashlist-panel.svg"
-      },
-      "build": {},
-      "screenshots": null,
-      "version": "",
-      "updated": ""
-    },
-    "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "*",
-      "plugins": []
-    },
-    "latestVersion": "",
-    "hasUpdate": false,
-    "defaultNavUrl": "/plugins/pluginlist/",
-    "category": "",
-    "state": "",
-    "signature": "internal",
-    "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "PostgreSQL",
@@ -1104,7 +1323,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Prometheus",
@@ -1145,7 +1365,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Stat",
@@ -1181,7 +1402,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "State timeline",
@@ -1214,10 +1436,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/state-timeline/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Status history",
@@ -1250,10 +1473,11 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/status-history/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Table",
@@ -1289,7 +1513,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Table (old)",
@@ -1325,7 +1550,8 @@
     "state": "deprecated",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Tempo",
@@ -1366,10 +1592,11 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
-    "name": "TestData DB",
+    "name": "TestData",
     "type": "datasource",
     "id": "testdata",
     "enabled": true,
@@ -1402,7 +1629,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Text",
@@ -1438,7 +1666,8 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Time series",
@@ -1474,7 +1703,82 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Traces",
+    "type": "panel",
+    "id": "traces",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/traces/img/traces-panel.svg",
+        "large": "public/app/plugins/panel/traces/img/traces-panel.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/traces/",
+    "category": "",
+    "state": "",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "Trend",
+    "type": "panel",
+    "id": "trend",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "Like timeseries, but when x != time",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/trend/img/trend.svg",
+        "large": "public/app/plugins/panel/trend/img/trend.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/trend/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Welcome",
@@ -1510,7 +1814,45 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
+  },
+  {
+    "name": "XY Chart",
+    "type": "panel",
+    "id": "xychart",
+    "enabled": true,
+    "pinned": false,
+    "info": {
+      "author": {
+        "name": "Grafana Labs",
+        "url": "https://grafana.com"
+      },
+      "description": "",
+      "links": null,
+      "logos": {
+        "small": "public/app/plugins/panel/xychart/img/icn-xychart.svg",
+        "large": "public/app/plugins/panel/xychart/img/icn-xychart.svg"
+      },
+      "build": {},
+      "screenshots": null,
+      "version": "",
+      "updated": ""
+    },
+    "dependencies": {
+      "grafanaDependency": "",
+      "grafanaVersion": "*",
+      "plugins": []
+    },
+    "latestVersion": "",
+    "hasUpdate": false,
+    "defaultNavUrl": "/plugins/xychart/",
+    "category": "",
+    "state": "beta",
+    "signature": "internal",
+    "signatureType": "",
+    "signatureOrg": "",
+    "angularDetected": false
   },
   {
     "name": "Zipkin",
@@ -1551,6 +1893,7 @@
     "state": "",
     "signature": "internal",
     "signatureType": "",
-    "signatureOrg": ""
+    "signatureOrg": "",
+    "angularDetected": false
   }
 ]

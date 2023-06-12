@@ -1,14 +1,16 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
+
 import { DataFrame, QueryResultMetaNotice } from '@grafana/data';
-import { PanelHeaderNotice } from './PanelHeaderNotice';
 import { locationService } from '@grafana/runtime';
+
+import { PanelHeaderNotice } from './PanelHeaderNotice';
 
 interface Props {
   panelId: number;
   frames: DataFrame[];
 }
 
-export const PanelHeaderNotices: FC<Props> = ({ frames, panelId }) => {
+export const PanelHeaderNotices = ({ frames, panelId }: Props) => {
   const openInspect = useCallback(
     (e: React.SyntheticEvent, tab: string) => {
       e.stopPropagation();

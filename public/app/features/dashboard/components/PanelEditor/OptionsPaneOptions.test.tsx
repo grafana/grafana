@@ -1,5 +1,8 @@
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import configureMockStore from 'redux-mock-store';
+
 import {
   FieldConfigSource,
   FieldType,
@@ -7,25 +10,26 @@ import {
   PanelData,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
-
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { selectors } from '@grafana/e2e-selectors';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+
+import { PanelModel } from '../../state';
+import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
+
 import { OptionsPaneOptions } from './OptionsPaneOptions';
-import { DashboardModel, PanelModel } from '../../state';
-import { Provider } from 'react-redux';
-import configureMockStore from 'redux-mock-store';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
-standardEditorsRegistry.setInit(getStandardOptionEditors);
-standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
-const mockStore = configureMockStore<any, any>();
+const mockStore = configureMockStore();
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 jest.mock('react-router-dom', () => ({
-  ...(jest.requireActual('react-router-dom') as any),
+  ...jest.requireActual('react-router-dom'),
   useLocation: () => ({
     pathname: 'localhost:3000/example/path',
   }),
@@ -39,7 +43,7 @@ class OptionsPaneOptionsTestScenario {
   panelData: PanelData = {
     series: [],
     state: LoadingState.Done,
-    timeRange: {} as any,
+    timeRange: {} as TimeRange,
   };
 
   plugin = getPanelPlugin({
@@ -86,7 +90,7 @@ class OptionsPaneOptionsTestScenario {
     options: {},
   });
 
-  dashboard = new DashboardModel({});
+  dashboard = createDashboardModelFixture();
   store = mockStore({
     dashboard: { panels: [] },
     templating: {
@@ -126,6 +130,7 @@ describe('OptionsPaneOptions', () => {
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Value mappings/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Thresholds/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
   });

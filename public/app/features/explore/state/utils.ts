@@ -2,23 +2,27 @@ import {
   AbsoluteTimeRange,
   DataSourceApi,
   EventBusExtended,
-  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
+  RawTimeRange,
+  TimeFragment,
+  TimeRange,
+  dateMath,
+  DateTime,
+  isDateTime,
+  toUtc,
 } from '@grafana/data';
-
+import { DataSourceRef, TimeZone } from '@grafana/schema';
+import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
+
 import store from '../../../core/store';
-import {
-  clearQueryKeys,
-  ExploreGraphStyle,
-  lastUsedDatasourceKeyForOrgId,
-  toGraphStyle,
-} from '../../../core/utils/explore';
-import { toRawTimeRange } from '../utils/time';
+import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -30,18 +34,12 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
-};
-
 /**
  * Returns a fresh Explore area state
  */
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  datasourceMissing: false,
   history: [],
   queries: [],
   initialized: false,
@@ -63,26 +61,40 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
-  eventBridge: (null as unknown) as EventBusExtended,
+  clearedAtIndex: null,
+  rawPrometheusResult: null,
+  eventBridge: null as unknown as EventBusExtended,
   cache: [],
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
+  richHistory: [],
+  supplementaryQueries: loadSupplementaryQueries(),
+  panelsState: {},
 });
 
-export const createEmptyQueryResponse = (): PanelData => ({
+export const createEmptyQueryResponse = (): ExplorePanelData => ({
   state: LoadingState.NotStarted,
   series: [],
   timeRange: getDefaultTimeRange(),
+  graphFrames: [],
+  logsFrames: [],
+  traceFrames: [],
+  nodeGraphFrames: [],
+  flameGraphFrames: [],
+  tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
+  graphResult: null,
+  logsResult: null,
+  tableResult: null,
 });
 
 export async function loadAndInitDatasource(
   orgId: number,
-  datasourceUid?: string
+  datasource: DataSourceRef | string
 ): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
   let instance;
   try {
-    instance = await getDatasourceSrv().get(datasourceUid);
+    // let datasource be a ref if we have the info, otherwise a name or uid will do for lookup
+    instance = await getDatasourceSrv().get(datasource);
   } catch (error) {
     // Falling back to the default data source in case the provided data source was not found.
     // It may happen if last used data source or the data source provided in the URL has been
@@ -99,21 +111,11 @@ export async function loadAndInitDatasource(
   }
 
   const historyKey = `grafana.explore.history.${instance.meta?.id}`;
-  const history = store.getObject(historyKey, []);
+  const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
+  setLastUsedDatasourceUID(orgId, instance.uid);
   return { history, instance };
-}
-
-export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
-    // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.name || '',
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-  };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {
@@ -137,3 +139,70 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
+  const raw = {
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
+    raw,
+  };
+}
+
+function parseRawTime(value: string | DateTime): TimeFragment | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
+  }
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return toUtc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return toUtc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
+    const epoch = parseInt(value, 10);
+    return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
+  }
+
+  return null;
+}
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};

@@ -1,10 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+
 import { getAppRoutes } from '../../routes/routes';
 import { PageContents } from '../components/Page/PageContents';
+
 import { RouteDescriptor } from './types';
 
-export const RouterDebugger: React.FC<any> = () => {
+export const RouterDebugger = () => {
   const manualRoutes: RouteDescriptor[] = [];
   return (
     <PageContents>

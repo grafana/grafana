@@ -1,6 +1,6 @@
 import { FormattedValue } from '../valueFormats';
 
-export type DisplayProcessor = (value: any) => DisplayValue;
+export type DisplayProcessor = (value: unknown, decimals?: DecimalCount) => DisplayValue;
 
 export interface DisplayValue extends FormattedValue {
   /**
@@ -12,9 +12,13 @@ export interface DisplayValue extends FormattedValue {
    */
   percent?: number;
   /**
-   *  Color based on configs or Threshold
+   *  Color based on mappings or threshold
    */
   color?: string;
+  /**
+   *  Icon based on mappings or threshold
+   */
+  icon?: string;
   title?: string;
 
   /**
@@ -28,7 +32,7 @@ export interface DisplayValue extends FormattedValue {
  * Used to align widths and heights when displaying multiple DisplayValues
  */
 export interface DisplayValueAlignmentFactors extends FormattedValue {
-  title: string;
+  title?: string;
 }
 
 export type DecimalCount = number | null | undefined;

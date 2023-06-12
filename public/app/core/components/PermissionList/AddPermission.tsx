@@ -1,10 +1,11 @@
-import React, { Component } from 'react';
 import { css } from '@emotion/css';
-import config from 'app/core/config';
-import { UserPicker } from 'app/core/components/Select/UserPicker';
-import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import React, { Component } from 'react';
+
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, Form, HorizontalGroup, Select, stylesFactory } from '@grafana/ui';
-import { GrafanaTheme, SelectableValue } from '@grafana/data';
+import { TeamPicker } from 'app/core/components/Select/TeamPicker';
+import { UserPicker } from 'app/core/components/Select/UserPicker';
+import config from 'app/core/config';
 import { OrgUser, Team } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -14,6 +15,7 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
+
 import { CloseButton } from '../CloseButton/CloseButton';
 
 export interface Props {
@@ -41,8 +43,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = (item: any) => {
-    const type = item.value as AclTarget;
+  onTypeChanged = (item: SelectableValue<AclTarget>) => {
+    const type = item.value;
 
     switch (type) {
       case AclTarget.User:
@@ -90,7 +92,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     return (
       <div className="cta-form">
@@ -105,7 +107,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
                 value={this.state.type}
                 options={dashboardAclTargets}
                 onChange={this.onTypeChanged}
-                menuShouldPortal
               />
 
               {newItem.type === AclTarget.User ? (
@@ -125,7 +126,6 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
                 options={dashboardPermissionLevels}
                 onChange={this.onPermissionChanged}
                 width={25}
-                menuShouldPortal
               />
               <Button data-save-permission type="submit" disabled={!isValid}>
                 Save
@@ -138,9 +138,9 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   label: css`
-    color: ${theme.colors.textBlue};
+    color: ${theme.colors.primary.text};
     font-weight: bold;
   `,
 }));

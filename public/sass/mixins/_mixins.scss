@@ -245,7 +245,7 @@
 
 // Opacity
 @mixin opacity($opacity) {
-  opacity: $opacity / 100;
+  opacity: calc($opacity / 100);
 }
 
 // BACKGROUNDS

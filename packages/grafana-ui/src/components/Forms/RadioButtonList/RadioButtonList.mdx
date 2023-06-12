@@ -1,0 +1,72 @@
+import { Meta, Story, Preview, ArgTypes } from '@storybook/blocks';
+import { RadioButtonList } from './RadioButtonList';
+
+<Meta title="MDX|RadioButtonList" component={RadioButtonList} />
+
+# RadioButtonList
+
+`RadioButtonList` is used to select a single value from multiple mutually exclusive options usually in a vertical manner.
+
+## When to use
+
+Use `RadioButtonList` for mutually exclusive selections.
+Contrary to the [RadioButtonGroup](?path=/docs/forms-radiobuttongroup--radio-buttons) component, `RadioButtonList` can contain more than four options because by default it lays out the items vertically.
+
+This component should be used instead of [Select](?path=/docs/forms-select--basic) when there is a need for the user to see all of the options available without clicking and scrolling the dropdown.
+
+## Usage
+
+### Basic radio group
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+<RadioButtonGroup options={...} value={...} onChange={...} />
+
+```
+
+### Disabled options
+
+You can disable some options by passing them to the `disabledOptions` prop.
+Keep in mind the `disabledOptions` are compared with options' values by the `===` operator.
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+const options = [
+  { label: 'Prometheus', value: 'prometheus' },
+  { label: 'Graphite', value: 'graphite' },
+  { label: 'Elastic', value: 'elastic' },
+  { label: 'InfluxDB', value: 'influx' },
+];
+
+const disabledOptions = ['prometheus', 'elastic'];
+
+
+<RadioButtonGroup
+  options={options}
+  disabledOptions={disabledOptions}
+  value={...}
+  onChange={...}
+/>
+```
+
+### Changing layout
+
+The `RadioButtonList` layout uses CSS Grid, so it is effortless to split the list into multiple columns
+
+```jsx
+import { RadioButtonList } from '@grafana/ui';
+
+<RadioButtonGroup
+  options={...}
+  value={...}
+  onChange={...}
+  className={css`
+    grid-template-columns: 1fr 1fr 1fr;
+  `}
+/>
+
+```
+
+<ArgTypes of={RadioButtonList} />

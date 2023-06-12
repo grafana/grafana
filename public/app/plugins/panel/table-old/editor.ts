@@ -1,4 +1,5 @@
 import { find, map, without } from 'lodash';
+
 import { transformers } from './transformers';
 import { ColumnStyle } from './types';
 
@@ -12,7 +13,8 @@ export class TablePanelEditorCtrl {
   canSetColumns = false;
   columnsHelpMessage = '';
 
-  /** @ngInject */
+  static $inject = ['$scope', 'uiSegmentSrv'];
+
   constructor($scope: any, private uiSegmentSrv: any) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;

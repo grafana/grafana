@@ -2,8 +2,9 @@ package licensing
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -14,10 +15,6 @@ const (
 type OSSLicensingService struct {
 	Cfg          *setting.Cfg
 	HooksService *hooks.HooksService
-}
-
-func (*OSSLicensingService) HasLicense() bool {
-	return false
 }
 
 func (*OSSLicensingService) Expiry() int64 {
@@ -44,7 +41,11 @@ func (l *OSSLicensingService) LicenseURL(showAdminLicensingPage bool) string {
 	return "https://grafana.com/oss/grafana?utm_source=grafana_footer"
 }
 
-func (*OSSLicensingService) HasValidLicense() bool {
+func (*OSSLicensingService) EnabledFeatures() map[string]bool {
+	return map[string]bool{}
+}
+
+func (*OSSLicensingService) FeatureEnabled(feature string) bool {
 	return false
 }
 
@@ -53,17 +54,20 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 		Cfg:          cfg,
 		HooksService: hooksService,
 	}
-	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *models.ReqContext) {
-		for _, node := range indexData.NavTree {
-			if node.Id == "admin" {
-				node.Children = append(node.Children, &dtos.NavLink{
-					Text: "Stats and license",
-					Id:   "upgrading",
-					Url:  l.LicenseURL(req.IsGrafanaAdmin),
-					Icon: "unlock",
-				})
-			}
+	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *contextmodel.ReqContext) {
+		if !req.IsGrafanaAdmin {
+			return
+		}
+
+		if adminNode := indexData.NavTree.FindById(navtree.NavIDCfg); adminNode != nil {
+			adminNode.Children = append(adminNode.Children, &navtree.NavLink{
+				Text: "Stats and license",
+				Id:   "upgrading",
+				Url:  l.LicenseURL(req.IsGrafanaAdmin),
+				Icon: "unlock",
+			})
 		}
 	})
+
 	return l
 }

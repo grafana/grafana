@@ -1,22 +1,19 @@
-import React, { useRef } from 'react';
-import { InlineField, Select, Input } from '@grafana/ui';
-import { Terms } from '../aggregations';
-import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { inlineFieldProps } from '.';
-import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
-import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
-import { changeBucketAggregationSetting } from '../state/actions';
-import { useQuery } from '../../ElasticsearchQueryContext';
-import { SelectableValue } from '@grafana/data';
-import { describeMetric } from '../../../../utils';
-import {
-  ExtendedStatMetaType,
-  ExtendedStats,
-  isPipelineAggregation,
-  MetricAggregation,
-  Percentiles,
-} from '../../MetricAggregationsEditor/aggregations';
 import { uniqueId } from 'lodash';
+import React, { useRef } from 'react';
+
+import { SelectableValue } from '@grafana/data';
+import { InlineField, Select, Input } from '@grafana/ui';
+
+import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { MetricAggregation, Percentiles, ExtendedStatMetaType, ExtendedStats, Terms } from '../../../../types';
+import { describeMetric } from '../../../../utils';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
+import { useQuery } from '../../ElasticsearchQueryContext';
+import { isPipelineAggregation } from '../../MetricAggregationsEditor/aggregations';
+import { changeBucketAggregationSetting } from '../state/actions';
+import { bucketAggregationConfig, orderByOptions, orderOptions, sizeOptions } from '../utils';
+
+import { inlineFieldProps } from '.';
 
 interface Props {
   bucketAgg: Terms;
@@ -34,7 +31,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-order`}
-          menuShouldPortal
           onChange={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'order', newValue: e.value }))
           }
@@ -46,7 +42,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Size" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-size`}
-          menuShouldPortal
           // TODO: isValidNewOption should only allow numbers & template variables
           {...useCreatableSelectPersistedBehaviour({
             options: sizeOptions,
@@ -75,7 +70,6 @@ export const TermsSettingsEditor = ({ bucketAgg }: Props) => {
       <InlineField label="Order By" {...inlineFieldProps}>
         <Select
           inputId={`${baseId}-order_by`}
-          menuShouldPortal
           onChange={(e) =>
             dispatch(changeBucketAggregationSetting({ bucketAgg, settingName: 'orderBy', newValue: e.value }))
           }

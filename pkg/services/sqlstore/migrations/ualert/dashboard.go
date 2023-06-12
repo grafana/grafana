@@ -1,13 +1,10 @@
 package ualert
 
 import (
-	"encoding/base64"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	"github.com/gosimple/slug"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 )
 
 type dashboard struct {
@@ -26,7 +23,7 @@ type dashboard struct {
 	CreatedBy int64
 	FolderId  int64
 	IsFolder  bool
-	HasAcl    bool
+	HasACL    bool `xorm:"has_acl"`
 
 	Title string
 	Data  *simplejson.Json
@@ -45,22 +42,7 @@ func (d *dashboard) setVersion(version int) {
 // UpdateSlug updates the slug
 func (d *dashboard) updateSlug() {
 	title := d.Data.Get("title").MustString()
-	d.Slug = slugifyTitle(title)
-}
-
-func slugifyTitle(title string) string {
-	s := slug.Make(strings.ToLower(title))
-	if s == "" {
-		// If the dashboard name is only characters outside of the
-		// sluggable characters, the slug creation will return an
-		// empty string which will mess up URLs. This failsafe picks
-		// that up and creates the slug as a base64 identifier instead.
-		s = base64.RawURLEncoding.EncodeToString([]byte(title))
-		if slug.MaxLength != 0 && len(s) > slug.MaxLength {
-			s = s[:slug.MaxLength]
-		}
-	}
-	return s
+	d.Slug = slugify.Slugify(title)
 }
 
 func newDashboardFromJson(data *simplejson.Json) *dashboard {
@@ -105,8 +87,6 @@ type saveFolderCommand struct {
 	PluginId     string           `json:"-"`
 	FolderId     int64            `json:"folderId"`
 	IsFolder     bool             `json:"isFolder"`
-
-	Result *dashboard
 }
 
 // GetDashboardModel turns the command into the saveable model

@@ -1,9 +1,12 @@
-import React, { FC } from 'react';
+import React from 'react';
+
 import { SelectableValue } from '@grafana/data';
 import { Button, Checkbox, Field, Input } from '@grafana/ui';
-import { OptionElement } from './OptionElement';
+
 import { NotificationChannelDTO, NotificationChannelOption, NotificationChannelSecureFields } from '../../../types';
+
 import { NotificationSettingsProps } from './NotificationChannelForm';
+import { OptionElement } from './OptionElement';
 
 interface Props extends NotificationSettingsProps {
   selectedChannelOptions: NotificationChannelOption[];
@@ -13,7 +16,7 @@ interface Props extends NotificationSettingsProps {
   onResetSecureField: (key: string) => void;
 }
 
-export const NotificationChannelOptions: FC<Props> = ({
+export const NotificationChannelOptions = ({
   control,
   currentFormValues,
   errors,
@@ -21,7 +24,7 @@ export const NotificationChannelOptions: FC<Props> = ({
   register,
   onResetSecureField,
   secureFields,
-}) => {
+}: Props) => {
   return (
     <>
       {selectedChannelOptions.map((option: NotificationChannelOption, index: number) => {

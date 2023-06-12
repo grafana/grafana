@@ -2,56 +2,95 @@ package plugins
 
 import (
 	"context"
+	"io/fs"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the storage for plugins.
+// Store is the publicly accessible storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
+}
 
-	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string) error
-	// AddWithFactory adds a plugin to the store.
-	AddWithFactory(ctx context.Context, pluginID string, factory backendplugin.PluginFactoryFunc, resolver PluginPathResolver) error
-	// Remove removes a plugin from the store.
+type Installer interface {
+	// Add adds a new plugin.
+	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
+	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID string) error
 }
 
-type PluginPathResolver func() (string, error)
-
-type AddOpts struct {
-	PluginInstallDir, PluginZipURL, PluginRepoURL string
+type PluginSource interface {
+	PluginClass(ctx context.Context) Class
+	PluginURIs(ctx context.Context) []string
+	DefaultSignature(ctx context.Context) (Signature, bool)
 }
 
-// Loader is responsible for loading plugins from the file system.
-type Loader interface {
-	// Load will return a list of plugins found in the provided file system paths.
-	Load(paths []string, ignore map[string]struct{}) ([]*Plugin, error)
-	// LoadWithFactory will return a plugin found in the provided file system path and use the provided factory to
-	// construct the plugin backend client.
-	LoadWithFactory(path string, factory backendplugin.PluginFactoryFunc) (*Plugin, error)
+type FileStore interface {
+	// File retrieves a plugin file.
+	File(ctx context.Context, pluginID, filename string) (*File, error)
 }
 
-// Installer is responsible for managing plugins (add / remove) on the file system.
-type Installer interface {
-	// Install downloads the requested plugin in the provided file system location.
-	Install(ctx context.Context, pluginID, version, pluginsDir, pluginZipURL, pluginRepoURL string) error
-	// Uninstall removes the requested plugin from the provided file system location.
-	Uninstall(ctx context.Context, pluginDir string) error
-	// GetUpdateInfo provides update information for the requested plugin.
-	GetUpdateInfo(ctx context.Context, pluginID, version, pluginRepoURL string) (UpdateInfo, error)
+type File struct {
+	Content []byte
+	ModTime time.Time
+}
+
+type CompatOpts struct {
+	grafanaVersion string
+
+	os   string
+	arch string
+}
+
+func (co CompatOpts) GrafanaVersion() string {
+	return co.grafanaVersion
+}
+
+func (co CompatOpts) OS() string {
+	return co.os
+}
+
+func (co CompatOpts) Arch() string {
+	return co.arch
+}
+
+func NewCompatOpts(grafanaVersion, os, arch string) CompatOpts {
+	return CompatOpts{grafanaVersion: grafanaVersion, arch: arch, os: os}
+}
+
+func NewSystemCompatOpts(os, arch string) CompatOpts {
+	return CompatOpts{arch: arch, os: os}
 }
 
 type UpdateInfo struct {
 	PluginZipURL string
+}
+
+type FS interface {
+	fs.FS
+
+	Base() string
+	Files() ([]string, error)
+}
+
+type FSRemover interface {
+	Remove() error
+}
+
+type FoundBundle struct {
+	Primary  FoundPlugin
+	Children []*FoundPlugin
+}
+
+type FoundPlugin struct {
+	JSONData JSONData
+	FS       FS
 }
 
 // Client is used to communicate with backend plugin implementations.
@@ -60,14 +99,22 @@ type Client interface {
 	backend.CheckHealthHandler
 	backend.StreamHandler
 	backend.CallResourceHandler
+	backend.CollectMetricsHandler
+}
 
-	// CollectMetrics collects metrics from a plugin.
-	CollectMetrics(ctx context.Context, pluginID string) (*backend.CollectMetricsResult, error)
+// BackendFactoryProvider provides a backend factory for a provided plugin.
+type BackendFactoryProvider interface {
+	BackendFactory(ctx context.Context, p *Plugin) backendplugin.PluginFactoryFunc
 }
 
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
+	Renderer(ctx context.Context) *Plugin
+}
+
+type SecretsPluginManager interface {
+	// SecretsManager returns a secretsmanager plugin
+	SecretsManager(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {
@@ -83,20 +130,55 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
-type PluginDashboardManager interface {
-	// GetPluginDashboards gets dashboards for a certain org/plugin.
-	GetPluginDashboards(ctx context.Context, orgID int64, pluginID string) ([]*PluginDashboardInfoDTO, error)
-	// LoadPluginDashboard loads a plugin dashboard.
-	LoadPluginDashboard(ctx context.Context, pluginID, path string) (*models.Dashboard, error)
-	// ImportDashboard imports a dashboard.
-	ImportDashboard(ctx context.Context, pluginID, path string, orgID, folderID int64, dashboardModel *simplejson.Json,
-		overwrite bool, inputs []ImportDashboardInput, user *models.SignedInUser) (PluginDashboardInfoDTO,
-		*models.Dashboard, error)
+type Licensing interface {
+	Environment() []string
+
+	Edition() string
+
+	Path() string
+
+	AppURL() string
 }
 
-type ImportDashboardInput struct {
-	Type     string `json:"type"`
-	PluginId string `json:"pluginId"`
-	Name     string `json:"name"`
-	Value    string `json:"value"`
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
+}
+
+// ClientMiddleware is an interface representing the ability to create a middleware
+// that implements the Client interface.
+type ClientMiddleware interface {
+	// CreateClientMiddleware creates a new client middleware.
+	CreateClientMiddleware(next Client) Client
+}
+
+// The ClientMiddlewareFunc type is an adapter to allow the use of ordinary
+// functions as ClientMiddleware's. If f is a function with the appropriate
+// signature, ClientMiddlewareFunc(f) is a ClientMiddleware that calls f.
+type ClientMiddlewareFunc func(next Client) Client
+
+// CreateClientMiddleware implements the ClientMiddleware interface.
+func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
+	return fn(next)
+}
+
+type FeatureToggles interface {
+	IsEnabled(flag string) bool
+}
+
+type SignatureCalculator interface {
+	Calculate(ctx context.Context, src PluginSource, plugin FoundPlugin) (Signature, error)
+}
+
+type KeyStore interface {
+	Get(ctx context.Context, key string) (string, bool, error)
+	Set(ctx context.Context, key string, value string) error
+	Del(ctx context.Context, key string) error
+	ListKeys(ctx context.Context) ([]string, error)
+	GetLastUpdated(ctx context.Context) (*time.Time, error)
+	SetLastUpdated(ctx context.Context) error
+}
+
+type KeyRetriever interface {
+	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }

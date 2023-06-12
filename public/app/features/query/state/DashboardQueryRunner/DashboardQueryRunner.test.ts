@@ -1,23 +1,26 @@
 import { throwError } from 'rxjs';
-import { delay } from 'rxjs/operators';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { AlertState, AlertStateInfo } from '@grafana/data';
+import { delay, first } from 'rxjs/operators';
 
-import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
-import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
-import { backendSrv } from '../../../../core/services/backend_srv';
-import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
+import { AlertState, AlertStateInfo } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
+import { backendSrv } from '../../../../core/services/backend_srv';
+import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
+
 import { createDashboardQueryRunner } from './DashboardQueryRunner';
+import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
+import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
 function getTestContext() {
   jest.clearAllMocks();
-  const timeSrvMock: any = { timeRange: jest.fn() };
+  const timeSrvMock = { timeRange: jest.fn() } as unknown as TimeSrv;
   const options = getDefaultOptions();
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
@@ -31,7 +34,7 @@ function getTestContext() {
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
     .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
-  const dataSourceSrvMock: any = {
+  const dataSourceSrvMock = {
     get: async (name: string) => {
       if (name === LEGACY_DS_NAME) {
         return {
@@ -47,7 +50,7 @@ function getTestContext() {
 
       return {};
     },
-  };
+  } as DataSourceSrv;
   setDataSourceSrv(dataSourceSrvMock);
 
   return { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock };
@@ -60,18 +63,19 @@ function expectOnResults(args: {
   expect: (results: DashboardQueryRunnerResult) => void;
 }) {
   const { runner, done, panelId, expect: expectCallback } = args;
-  const subscription = runner.getResult(panelId).subscribe({
-    next: (value) => {
-      try {
-        expectCallback(value);
-        subscription?.unsubscribe();
-        done();
-      } catch (err) {
-        subscription?.unsubscribe();
-        done.fail(err);
-      }
-    },
-  });
+  runner
+    .getResult(panelId)
+    .pipe(first())
+    .subscribe({
+      next: (value) => {
+        try {
+          expectCallback(value);
+          done();
+        } catch (err) {
+          done(err);
+        }
+      },
+    });
 }
 
 describe('DashboardQueryRunnerImpl', () => {

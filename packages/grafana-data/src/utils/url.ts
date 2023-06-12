@@ -32,7 +32,10 @@ function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
     .replace(/%24/g, '$')
     .replace(/%2C/gi, ',')
     .replace(/%3B/gi, ';')
-    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+');
+    .replace(/%20/g, pctEncodeSpaces ? '%20' : '+')
+    .replace(/[!'()*]/g, function (c) {
+      return '%' + c.charCodeAt(0).toString(16).toUpperCase();
+    });
 }
 
 function toUrlParams(a: any) {
@@ -136,7 +139,7 @@ function getUrlSearchParams(): UrlQueryMap {
  * @returns {Object.<string,boolean|Array>}
  */
 export function parseKeyValue(keyValue: string) {
-  var obj: any = {};
+  const obj: any = {};
   const parts = (keyValue || '').split('&');
 
   for (let keyValue of parts) {
@@ -195,9 +198,16 @@ export const urlUtil = {
   parseKeyValue,
 };
 
+/**
+ * Create an string that is used in URL to represent the Explore state. This is basically just a stringified json
+ * that is that used as a state of a single Explore pane so it does not represent full Explore URL.
+ *
+ * @param urlState
+ * @param compact this parameter is deprecated and will be removed in a future release.
+ */
 export function serializeStateToUrlParam(urlState: ExploreUrlState, compact?: boolean): string {
-  if (compact) {
-    return JSON.stringify([urlState.range.from, urlState.range.to, urlState.datasource, ...urlState.queries]);
+  if (compact !== undefined) {
+    console.warn('`compact` parameter is deprecated and will be removed in a future release');
   }
   return JSON.stringify(urlState);
 }

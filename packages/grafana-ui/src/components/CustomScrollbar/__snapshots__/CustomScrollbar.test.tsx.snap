@@ -4,7 +4,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
 <div
   className="css-12b7m5k"
   style={
-    Object {
+    {
       "height": "auto",
       "maxHeight": "100%",
       "minHeight": "0",
@@ -17,8 +17,8 @@ exports[`CustomScrollbar renders correctly 1`] = `
   <div
     className="scrollbar-view"
     style={
-      Object {
-        "WebkitOverflowScrolling": "touch",
+      {
+        "WebkitOverflowScrolling": "auto",
         "bottom": undefined,
         "left": undefined,
         "marginBottom": 0,
@@ -39,7 +39,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
   <div
     className="track-horizontal"
     style={
-      Object {
+      {
         "display": "none",
         "height": 6,
         "position": "absolute",
@@ -49,7 +49,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     <div
       className="thumb-horizontal"
       style={
-        Object {
+        {
           "display": "block",
           "height": "100%",
           "position": "relative",
@@ -60,7 +60,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
   <div
     className="track-vertical"
     style={
-      Object {
+      {
         "display": "none",
         "position": "absolute",
         "width": 6,
@@ -70,7 +70,7 @@ exports[`CustomScrollbar renders correctly 1`] = `
     <div
       className="thumb-vertical"
       style={
-        Object {
+        {
           "display": "block",
           "position": "relative",
           "width": "100%",

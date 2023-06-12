@@ -1,24 +1,26 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // NOTE: This file will be auto generated from models.cue
-// It is currenty hand written but will serve as the target for cuetsy
+// It is currently hand written but will serve as the target for cuetsy
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-import { CanvasGroupOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 
 export const modelVersion = Object.freeze([1, 0]);
 
-export interface PanelOptions {
+export interface Options {
   inlineEditing: boolean;
-  root: CanvasGroupOptions;
+  showAdvancedTypes: boolean;
+  root: CanvasFrameOptions;
 }
 
-export const defaultPanelOptions: PanelOptions = {
+export const defaultOptions: Options = {
   inlineEditing: true,
-  root: ({
+  showAdvancedTypes: false,
+  root: {
     elements: [
       {
         ...DEFAULT_CANVAS_ELEMENT_CONFIG,
       },
     ],
-  } as unknown) as CanvasGroupOptions,
+  } as unknown as CanvasFrameOptions,
 };

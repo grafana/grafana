@@ -1,5 +1,6 @@
-import React from 'react';
 import { cx, css } from '@emotion/css';
+import React, { PureComponent } from 'react';
+
 import { stylesFactory } from '../../themes';
 
 export interface ListProps<T> {
@@ -25,7 +26,7 @@ const getStyles = stylesFactory((inlineList = false) => ({
   `,
 }));
 
-export class AbstractList<T> extends React.PureComponent<AbstractListProps<T>> {
+export class AbstractList<T> extends PureComponent<AbstractListProps<T>> {
   constructor(props: AbstractListProps<T>) {
     super(props);
   }

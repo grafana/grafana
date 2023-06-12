@@ -1,12 +1,16 @@
 package azuremonitor
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/metrics"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,7 +71,7 @@ func Test_proxyRequest(t *testing.T) {
 				t.Errorf("Unexpected headers: %v", res.Header())
 			}
 			result := rw.Result()
-			body, err := ioutil.ReadAll(result.Body)
+			body, err := io.ReadAll(result.Body)
 			if err != nil {
 				t.Error(err)
 			}
@@ -91,21 +95,20 @@ func (s *fakeProxy) Do(rw http.ResponseWriter, req *http.Request, cli *http.Clie
 	return nil
 }
 
-func Test_resourceHandler(t *testing.T) {
+func Test_handleResourceReq(t *testing.T) {
 	proxy := &fakeProxy{}
 	s := Service{
 		im: &fakeInstance{
-			services: map[string]datasourceService{
+			services: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[setting.AzurePublic][azureMonitor].URL,
+					URL:        routes[azsettings.AzurePublic][azureMonitor].URL,
 					HTTPClient: &http.Client{},
 				},
 			},
 		},
-		Cfg: &setting.Cfg{},
 		executors: map[string]azDatasourceExecutor{
-			azureMonitor: &AzureMonitorDatasource{
-				proxy: proxy,
+			azureMonitor: &metrics.AzureMonitorDatasource{
+				Proxy: proxy,
 			},
 		},
 	}
@@ -114,7 +117,7 @@ func Test_resourceHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	s.resourceHandler(azureMonitor)(rw, req)
+	s.handleResourceReq(azureMonitor)(rw, req)
 	expectedURL := "https://management.azure.com/subscriptions/44693801"
 	if proxy.requestedURL != expectedURL {
 		t.Errorf("Unexpected result URL. Got %s, expecting %s", proxy.requestedURL, expectedURL)

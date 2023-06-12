@@ -1,0 +1,26 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { ToolbarButton } from './ToolbarButton';
+
+# ToolbarButton
+
+Multiple buttons that form a toolbar. Each button can contain an icon, image and text.
+There are three variants of the `ToolbarButton`: default, primary and destructive.
+
+## Usage
+
+This example shows how to use several buttons in a `ToolbarButtonRow`.
+
+```jsx
+<ToolbarButtonRow>
+  <ToolbarButton variant="default" iconOnly={false} isOpen={false}>
+    Last 6 hours
+  </ToolbarButton>
+  <ButtonGroup>
+    <ToolbarButton icon="search-minus" variant="default" />
+    <ToolbarButton icon="search-plus" variant="default" />
+  </ButtonGroup>
+  <ToolbarButton icon="sync" isOpen={false} variant="primary" />
+</ToolbarButtonRow>
+```
+
+<ArgTypes of={ToolbarButton} />

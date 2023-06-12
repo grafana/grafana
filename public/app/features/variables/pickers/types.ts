@@ -2,6 +2,7 @@ import { VariableModel } from '../types';
 
 export interface VariablePickerProps<Model extends VariableModel = VariableModel> {
   variable: Model;
+  readOnly: boolean;
   onVariableChange?: (variable: Model) => void;
 }
 

@@ -1,0 +1,110 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-wide",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "matrix"
+//      },
+//      "executedQueryString": "Expr: \nStep: 1s"
+//  }
+//  Name: 
+//  Dimensions: 3 Fields by 4 Rows
+//  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+//  | Name: Time                        | Name: prometheus_http_requests_total{code="200", handler="/api/v1/query_range", job="prometheus"}      | Name: prometheus_http_requests_total{code="400", handler="/api/v1/query_range", job="prometheus"}      |
+//  | Labels:                           | Labels: __name__=prometheus_http_requests_total, code=200, handler=/api/v1/query_range, job=prometheus | Labels: __name__=prometheus_http_requests_total, code=400, handler=/api/v1/query_range, job=prometheus |
+//  | Type: []time.Time                 | Type: []*float64                                                                                       | Type: []*float64                                                                                       |
+//  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+//  | 2022-01-11 08:25:29.123 +0000 UTC | null                                                                                                   | 54                                                                                                     |
+//  | 2022-01-11 08:25:30.123 +0000 UTC | 21                                                                                                     | null                                                                                                   |
+//  | 2022-01-11 08:25:31.123 +0000 UTC | 32                                                                                                     | null                                                                                                   |
+//  | 2022-01-11 08:25:32.123 +0000 UTC | 43                                                                                                     | 76                                                                                                     |
+//  +-----------------------------------+--------------------------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-wide",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "matrix"
+          },
+          "executedQueryString": "Expr: \nStep: 1s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 1000
+            }
+          },
+          {
+            "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "prometheus_http_requests_total",
+              "code": "200",
+              "handler": "/api/v1/query_range",
+              "job": "prometheus"
+            }
+          },
+          {
+            "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {
+              "__name__": "prometheus_http_requests_total",
+              "code": "400",
+              "handler": "/api/v1/query_range",
+              "job": "prometheus"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1641889529123,
+            1641889530123,
+            1641889531123,
+            1641889532123
+          ],
+          [
+            null,
+            21,
+            32,
+            43
+          ],
+          [
+            54,
+            null,
+            null,
+            76
+          ]
+        ]
+      }
+    }
+  ]
+}

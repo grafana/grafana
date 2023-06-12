@@ -3,20 +3,36 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"io/fs"
+	"path"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	ErrFileNotExist              = errors.New("file does not exist")
+	ErrPluginFileRead            = errors.New("file could not be read")
+	ErrUninstallInvalidPluginDir = errors.New("cannot recognize as plugin folder")
+	ErrInvalidPluginJSON         = errors.New("did not find valid type or id properties in plugin.json")
 )
 
 type Plugin struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	FS    FS
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -29,27 +45,31 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
-
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	Renderer pluginextensionv2.RendererPlugin
-	client   backendplugin.Plugin
-	log      log.Logger
+	AngularDetected bool
+
+	Renderer       pluginextensionv2.RendererPlugin
+	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
+	client         backendplugin.Plugin
+	log            log.Logger
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 type PluginDTO struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	fs                FS
+	logger            log.Logger
+	supportsStreaming bool
+
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -60,48 +80,32 @@ type PluginDTO struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
-
-	// GCOM update checker fields
-	GrafanaComVersion   string
-	GrafanaComHasUpdate bool
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
 
-	// temporary
-	backend.StreamHandler
+	AngularDetected bool
+
+	// This will be moved to plugin.json when we have general support in gcom
+	Alias string `json:"alias,omitempty"`
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
+}
+
+func (p PluginDTO) Base() string {
+	return p.fs.Base()
 }
 
 func (p PluginDTO) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == TypeApp
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
-	return p.Class == Core
-}
-
-func (p PluginDTO) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
-	}
-
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
-	}
-
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
-	}
-	return true
+	return p.Class == ClassCore
 }
 
 // JSONData represents the plugin's plugin.json
@@ -110,6 +114,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
+	Alias        string       `json:"alias,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -119,6 +124,9 @@ type JSONData struct {
 	Preload      bool         `json:"preload"`
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
+
+	// AccessControl settings
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -140,8 +148,63 @@ type JSONData struct {
 	Streaming    bool            `json:"streaming"`
 	SDK          bool            `json:"sdk,omitempty"`
 
-	// Backend (Datasource + Renderer)
+	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+}
+
+func ReadPluginJSON(reader io.Reader) (JSONData, error) {
+	plugin := JSONData{}
+	if err := json.NewDecoder(reader).Decode(&plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	if err := validatePluginJSON(plugin); err != nil {
+		return JSONData{}, err
+	}
+
+	// Hardcoded changes
+	switch plugin.ID {
+	case "grafana-piechart-panel":
+		plugin.Name = "Pie Chart (old)"
+	case "grafana-pyroscope-datasource": // rebranding
+		plugin.Alias = "phlare"
+	case "debug": // panel plugin used for testing
+		plugin.Alias = "debugX"
+	}
+
+	if len(plugin.Dependencies.Plugins) == 0 {
+		plugin.Dependencies.Plugins = []Dependency{}
+	}
+
+	if plugin.Dependencies.GrafanaVersion == "" {
+		plugin.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range plugin.Includes {
+		if include.Role == "" {
+			include.Role = org.RoleViewer
+		}
+	}
+
+	return plugin, nil
+}
+
+func validatePluginJSON(data JSONData) error {
+	if data.ID == "" || !data.Type.IsValid() {
+		return ErrInvalidPluginJSON
+	}
+	return nil
+}
+
+func (d JSONData) DashboardIncludes() []*Includes {
+	result := []*Includes{}
+	for _, include := range d.Includes {
+		if include.Type == TypeDashboard {
+			result = append(result, include)
+		}
+	}
+
+	return result
 }
 
 // Route describes a plugin route that is defined in
@@ -149,7 +212,7 @@ type JSONData struct {
 type Route struct {
 	Path         string          `json:"path"`
 	Method       string          `json:"method"`
-	ReqRole      models.RoleType `json:"reqRole"`
+	ReqRole      org.RoleType    `json:"reqRole"`
 	URL          string          `json:"url"`
 	URLParams    []URLParam      `json:"urlParams"`
 	Headers      []Header        `json:"headers"`
@@ -197,7 +260,6 @@ func (p *Plugin) Start(ctx context.Context) error {
 	if p.client == nil {
 		return fmt.Errorf("could not start plugin %s as no plugin client exists", p.ID)
 	}
-
 	return p.client.Start(ctx)
 }
 
@@ -236,6 +298,16 @@ func (p *Plugin) Exited() bool {
 	return false
 }
 
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
+}
+
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -260,12 +332,12 @@ func (p *Plugin) CheckHealth(ctx context.Context, req *backend.CheckHealthReques
 	return pluginClient.CheckHealth(ctx, req)
 }
 
-func (p *Plugin) CollectMetrics(ctx context.Context) (*backend.CollectMetricsResult, error) {
+func (p *Plugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
 		return nil, backendplugin.ErrPluginUnavailable
 	}
-	return pluginClient.CollectMetrics(ctx)
+	return pluginClient.CollectMetrics(ctx, req)
 }
 
 func (p *Plugin) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -292,6 +364,25 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
+func (p *Plugin) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
+	}
+
+	if p.FS == nil {
+		return nil, ErrFileNotExist
+	}
+
+	f, err := p.FS.Open(cleanPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}
+
 func (p *Plugin) RegisterClient(c backendplugin.Plugin) {
 	p.client = c
 }
@@ -303,6 +394,29 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+func (p *Plugin) ExecutablePath() string {
+	if p.IsRenderer() {
+		return p.executablePath("plugin_start")
+	}
+
+	if p.IsSecretsManager() {
+		return p.executablePath("secrets_plugin_start")
+	}
+
+	return p.executablePath(p.Executable)
+}
+
+func (p *Plugin) executablePath(f string) string {
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
+	}
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+}
+
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -312,25 +426,23 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		JSONData:            p.JSONData,
-		PluginDir:           p.PluginDir,
-		Class:               p.Class,
-		IncludedInAppID:     p.IncludedInAppID,
-		DefaultNavURL:       p.DefaultNavURL,
-		Pinned:              p.Pinned,
-		Signature:           p.Signature,
-		SignatureType:       p.SignatureType,
-		SignatureOrg:        p.SignatureOrg,
-		SignedFiles:         p.SignedFiles,
-		SignatureError:      p.SignatureError,
-		GrafanaComVersion:   p.GrafanaComVersion,
-		GrafanaComHasUpdate: p.GrafanaComHasUpdate,
-		Module:              p.Module,
-		BaseURL:             p.BaseURL,
-		StreamHandler:       c,
+		logger:            p.Logger(),
+		fs:                p.FS,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
+		Class:             p.Class,
+		JSONData:          p.JSONData,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
+		AngularDetected:   p.AngularDetected,
+		Alias:             p.Alias,
 	}
 }
 
@@ -339,64 +451,70 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+	if p.FS == nil {
+		return nil
+	}
+
+	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == TypeRenderer
 }
 
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+func (p *Plugin) IsSecretsManager() bool {
+	return p.Type == TypeSecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == TypeApp
 }
 
 func (p *Plugin) IsCorePlugin() bool {
-	return p.Class == Core
+	return p.Class == ClassCore
 }
 
 func (p *Plugin) IsBundledPlugin() bool {
-	return p.Class == Bundled
+	return p.Class == ClassBundled
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == External
+	return p.Class == ClassExternal
 }
 
 type Class string
 
 const (
-	Core     Class = "core"
-	Bundled  Class = "bundled"
-	External Class = "external"
+	ClassCore     Class = "core"
+	ClassBundled  Class = "bundled"
+	ClassExternal Class = "external"
 )
 
+func (c Class) String() string {
+	return string(c)
+}
+
 var PluginTypes = []Type{
-	DataSource,
-	Panel,
-	App,
-	Renderer,
+	TypeDataSource,
+	TypePanel,
+	TypeApp,
+	TypeRenderer,
+	TypeSecretsManager,
 }
 
 type Type string
 
 const (
-	DataSource Type = "datasource"
-	Panel      Type = "panel"
-	App        Type = "app"
-	Renderer   Type = "renderer"
+	TypeDataSource     Type = "datasource"
+	TypePanel          Type = "panel"
+	TypeApp            Type = "app"
+	TypeRenderer       Type = "renderer"
+	TypeSecretsManager Type = "secretsmanager"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer:
+	case TypeDataSource, TypePanel, TypeApp, TypeRenderer, TypeSecretsManager:
 		return true
 	}
 	return false

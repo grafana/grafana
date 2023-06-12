@@ -1,5 +1,6 @@
-import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
 import $ from 'jquery';
+import { debounce, each, indexOf, map, partial, escape, unescape } from 'lodash';
+
 import coreModule from 'app/angular/core_module';
 
 const template = `
@@ -13,7 +14,8 @@ const template = `
 </ul>
 `;
 
-/** @ngInject */
+coreModule.directive('sqlPartEditor', ['templateSrv', sqlPartEditorDirective]);
+
 export function sqlPartEditorDirective(templateSrv: any) {
   const paramTemplate = '<input type="text" class="hide input-mini"></input>';
 
@@ -192,5 +194,3 @@ export function sqlPartEditorDirective(templateSrv: any) {
     },
   };
 }
-
-coreModule.directive('sqlPartEditor', sqlPartEditorDirective);

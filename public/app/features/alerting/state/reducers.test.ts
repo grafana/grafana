@@ -1,4 +1,8 @@
 import { dateTime } from '@grafana/data';
+import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types';
+
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+
 import {
   alertRulesReducer,
   initialChannelState,
@@ -9,8 +13,6 @@ import {
   setSearchQuery,
   notificationChannelLoaded,
 } from './reducers';
-import { AlertRuleDTO, AlertRulesState, NotificationChannelState, NotifierDTO } from 'app/types';
-import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 describe('Alert rules', () => {
   const realDateNow = Date.now.bind(global.Date);
@@ -255,6 +257,7 @@ describe('Notification channel', () => {
           required: true,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'select',
@@ -271,6 +274,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'input',
@@ -283,6 +287,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: false,
+          dependsOn: '',
         },
         {
           element: 'input',
@@ -295,6 +300,7 @@ describe('Notification channel', () => {
           required: false,
           validationRule: '',
           secure: true,
+          dependsOn: '',
         },
       ],
     },

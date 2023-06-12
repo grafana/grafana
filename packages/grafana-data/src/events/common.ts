@@ -1,4 +1,5 @@
 import { AnnotationEvent, DataFrame } from '../types';
+
 import { BusEventBase, BusEventWithPayload } from './types';
 
 /**
@@ -38,4 +39,22 @@ export class DataSelectEvent extends BusEventWithPayload<DataHoverPayload> {
 /** @alpha */
 export class AnnotationChangeEvent extends BusEventWithPayload<Partial<AnnotationEvent>> {
   static type = 'annotation-event';
+}
+
+// Loaded the first time a dashboard is loaded (not on every render)
+export type DashboardLoadedEventPayload<T> = {
+  dashboardId: string; // eeep, this should be UID
+  orgId?: number;
+  userId?: number;
+  grafanaVersion?: string;
+  queries: Record<string, T[]>;
+};
+
+/** @alpha */
+export class DashboardLoadedEvent<T> extends BusEventWithPayload<DashboardLoadedEventPayload<T>> {
+  static type = 'dashboard-loaded';
+}
+
+export class DataSourceUpdatedSuccessfully extends BusEventBase {
+  static type = 'datasource-updated-successfully';
 }

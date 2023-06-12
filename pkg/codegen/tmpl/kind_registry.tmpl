@@ -1,0 +1,61 @@
+package {{ .PackageName }}
+
+import (
+	"fmt"
+	"sync"
+
+	{{range .Kinds }}
+	"{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}"{{end}}
+	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/kindsys"
+	"github.com/grafana/thema"
+)
+
+// Base is a registry of all Grafana core kinds. It is designed for use both inside
+// of Grafana itself, and for import by external Go programs wanting to work with Grafana's
+// kind system.
+//
+// The registry provides two modes for accessing core kinds:
+//  * Per-kind methods, which return the kind-specific type, e.g. Dashboard() returns [dashboard.Dashboard].
+//  * All(), which returns a slice of [kindsys.Core].
+//
+// Prefer the individual named methods for use cases where the particular kind(s) that
+// are needed are known to the caller. For example, a dashboard linter can know that it
+// specifically wants the dashboard kind.
+//
+// Prefer All() when performing operations generically across all kinds. For example,
+// a generic HTTP middleware for validating request bodies expected to contain some
+// kind-schematized type.
+type Base struct {
+	all []kindsys.Core
+	{{- range .Kinds }}
+	{{ .Props.MachineName }} *{{ .Props.MachineName }}.Kind{{end}}
+}
+
+// type guards
+var (
+{{- range .Kinds }}
+	_ kindsys.Core = &{{ .Props.MachineName }}.Kind{}{{end}}
+)
+
+{{range .Kinds }}
+// {{ .Props.Name }} returns the [kindsys.Interface] implementation for the {{ .Props.MachineName }} kind.
+func (b *Base) {{ .Props.Name }}() *{{ .Props.MachineName }}.Kind {
+	return b.{{ .Props.MachineName }}
+}
+{{end}}
+
+func doNewBase(rt *thema.Runtime) *Base {
+	var err error
+	reg := &Base{}
+
+{{range .Kinds }}
+	reg.{{ .Props.MachineName }}, err = {{ .Props.MachineName }}.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the {{ .Props.MachineName }} Kind: %s", err))
+	}
+  reg.all = append(reg.all, reg.{{ .Props.MachineName }})
+{{end}}
+
+	return reg
+}

@@ -1,8 +1,8 @@
-import { each, reduce } from 'lodash';
 import $ from 'jquery';
+import { each, reduce } from 'lodash';
+
 import coreModule from './core_module';
 
-/** @ngInject */
 export function dropdownTypeahead($compile: any) {
   const inputTemplate =
     '<input type="text"' +
@@ -135,7 +135,6 @@ export function dropdownTypeahead($compile: any) {
   };
 }
 
-/** @ngInject */
 export function dropdownTypeahead2($compile: any) {
   const inputTemplate =
     '<input type="text"' + ' class="gf-form-input"' + ' spellcheck="false" style="display:none"></input>';
@@ -270,5 +269,5 @@ export function dropdownTypeahead2($compile: any) {
   };
 }
 
-coreModule.directive('dropdownTypeahead', dropdownTypeahead);
-coreModule.directive('dropdownTypeahead2', dropdownTypeahead2);
+coreModule.directive('dropdownTypeahead', ['$compile', dropdownTypeahead]);
+coreModule.directive('dropdownTypeahead2', ['$compile', dropdownTypeahead2]);

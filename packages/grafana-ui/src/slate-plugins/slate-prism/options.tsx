@@ -1,7 +1,7 @@
+import { Record } from 'immutable';
 import React from 'react';
 import { Mark, Node, Decoration } from 'slate';
-import { Editor } from '@grafana/slate-react';
-import { Record } from 'immutable';
+import { Editor } from 'slate-react';
 
 import TOKEN_MARK from './TOKEN_MARK';
 
@@ -54,7 +54,8 @@ class Options
     getSyntax: defaultGetSyntax,
     renderDecoration: defaultRenderDecoration,
   })
-  implements OptionsFormat {
+  implements OptionsFormat
+{
   declare readonly onlyIn: (node: Node) => boolean;
   declare readonly getSyntax: (node: Node) => string;
   declare readonly renderDecoration: (

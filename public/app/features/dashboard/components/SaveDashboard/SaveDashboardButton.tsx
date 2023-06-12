@@ -1,23 +1,27 @@
 import React from 'react';
-import { Button, ButtonVariant, ModalsController, FullWidthButtonContainer } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
-import { SaveDashboardAsModal } from './SaveDashboardAsModal';
-import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
+
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, ButtonVariant, ComponentSize, ModalsController } from '@grafana/ui';
+import { DashboardModel } from 'app/features/dashboard/state';
+
+import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
   onSaveSuccess?: () => void;
+  size?: ComponentSize;
 }
 
-export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashboard, onSaveSuccess }) => {
+export const SaveDashboardButton = ({ dashboard, onSaveSuccess, size }: SaveDashboardButtonProps) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
           <Button
+            size={size}
             onClick={() => {
-              showModal(SaveDashboardModalProxy, {
+              showModal(SaveDashboardDrawer, {
                 dashboard,
                 onSaveSuccess,
                 onDismiss: hideModal,
@@ -33,30 +37,29 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
   );
 };
 
-export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { variant?: ButtonVariant }> = ({
-  dashboard,
-  onSaveSuccess,
-  variant,
-}) => {
+type Props = SaveDashboardButtonProps & { variant?: ButtonVariant };
+
+export const SaveDashboardAsButton = ({ dashboard, onSaveSuccess, variant, size }: Props) => {
   return (
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
-          <FullWidthButtonContainer>
-            <Button
-              onClick={() => {
-                showModal(SaveDashboardAsModal, {
-                  dashboard,
-                  onSaveSuccess,
-                  onDismiss: hideModal,
-                });
-              }}
-              variant={variant}
-              aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
-            >
-              Save As...
-            </Button>
-          </FullWidthButtonContainer>
+          <Button
+            size={size}
+            onClick={() => {
+              reportInteraction('grafana_dashboard_save_as_clicked');
+              showModal(SaveDashboardDrawer, {
+                dashboard,
+                onSaveSuccess,
+                onDismiss: hideModal,
+                isCopy: true,
+              });
+            }}
+            variant={variant}
+            aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
+          >
+            Save as
+          </Button>
         );
       }}
     </ModalsController>

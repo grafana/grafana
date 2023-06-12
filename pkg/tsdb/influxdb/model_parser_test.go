@@ -36,6 +36,9 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
         ],
         "measurement": "logins.count",
         "tz": "Europe/Paris",
+        "limit": "1",
+        "slimit": "1",
+        "orderByTime": "ASC",
         "policy": "default",
         "refId": "B",
         "resultFormat": "time_series",
@@ -113,6 +116,9 @@ func TestInfluxdbQueryParser_Parse(t *testing.T) {
 		require.Len(t, res.Selects, 3)
 		require.Len(t, res.Tags, 2)
 		require.Equal(t, "Europe/Paris", res.Tz)
+		require.Equal(t, "1", res.Limit)
+		require.Equal(t, "1", res.Slimit)
+		require.Equal(t, "ASC", res.OrderByTime)
 		require.Equal(t, time.Second*20, res.Interval)
 		require.Equal(t, "series alias", res.Alias)
 	})

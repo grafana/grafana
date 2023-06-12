@@ -1,4 +1,4 @@
-import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { Meta, ArgTypes } from '@storybook/blocks';
 import { Form } from './Form';
 
 <Meta title="MDX|Form" component={Form} />
@@ -232,11 +232,13 @@ Consider this function that simulates a call to some service. Remember, if you w
 ```jsx
 validateAsync = (newValue: string) => {
   try {
-    await new Promise<ValidateResult>((resolve, reject) => {
-      setTimeout(() => {
-        reject('Something went wrong...');
-      }, 2000);
-    });
+    (await new Promise()) <
+      ValidateResult >
+      ((resolve, reject) => {
+        setTimeout(() => {
+          reject('Something went wrong...');
+        }, 2000);
+      });
     return true;
   } catch (e) {
     return false;
@@ -289,4 +291,4 @@ In a nutshell, the two most important changes are:
 
 ### Props
 
-<Props of={Form} />
+<ArgTypes of={Form} />

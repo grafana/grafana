@@ -1,7 +1,8 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode } from '@grafana/ui';
+import { BigValueColorMode, BigValueGraphMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
-import { StatPanelOptions } from './types';
+
+import { Options } from './panelcfg.gen';
 
 export class StatSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -11,7 +12,7 @@ export class StatSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<StatPanelOptions, {}>({
+    const list = builder.getListAppender<Options, {}>({
       name: SuggestionName.Stat,
       pluginId: 'stat',
       options: {},

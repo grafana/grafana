@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	cortex_util "github.com/cortexproject/cortex/pkg/util"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/prometheus/prometheus/pkg/labels"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -92,7 +92,7 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 		return eval.Results{{
 			Instance:    map[string]string{},
 			State:       eval.Alerting,
-			EvaluatedAt: cortex_util.TimeFromMillis(resp.Data.scalar.T),
+			EvaluatedAt: TimeFromMillis(resp.Data.scalar.T),
 			EvaluationString: extractEvalStringFromProm(sample{
 				Value: resp.Data.scalar,
 			}),
@@ -103,7 +103,7 @@ func instantQueryResults(resp instantQueryResponse) (eval.Results, error) {
 			results = append(results, eval.Result{
 				Instance:         s.Metric.Map(),
 				State:            eval.Alerting,
-				EvaluatedAt:      cortex_util.TimeFromMillis(s.Value.T),
+				EvaluatedAt:      TimeFromMillis(s.Value.T),
 				EvaluationString: extractEvalStringFromProm(s),
 			})
 		}
@@ -147,4 +147,10 @@ func extractEvalStringFromProm(s sample) string {
 	sb.WriteString(fmt.Sprintf("value=%v ", fmt.Sprintf("%v", s.Value.V)))
 	sb.WriteString("]")
 	return sb.String()
+}
+
+// TimeFromMillis Copied from https://github.com/grafana/mimir/blob/main/pkg/util/time.go as it doesn't seem worth it to import Mimir.
+// TimeFromMillis is a helper to turn milliseconds -> time.Time
+func TimeFromMillis(ms int64) time.Time {
+	return time.Unix(ms/1000, (ms%1000)*int64(time.Millisecond)).UTC()
 }

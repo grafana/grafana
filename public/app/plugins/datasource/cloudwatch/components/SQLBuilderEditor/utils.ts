@@ -1,5 +1,5 @@
-import { SelectableValue } from './../../../../../../../packages/grafana-data/src/types/select';
-import { SCHEMA } from '../../cloudwatch-sql/language';
+import { SelectableValue } from '@grafana/data';
+
 import {
   QueryEditorExpressionType,
   QueryEditorPropertyType,
@@ -8,6 +8,7 @@ import {
   QueryEditorOperatorExpression,
   QueryEditorGroupByExpression,
 } from '../../expressions';
+import { SCHEMA } from '../../language/cloudwatch-sql/language';
 import { SQLExpression, CloudWatchMetricsQuery, Dimensions } from '../../types';
 
 export function getMetricNameFromExpression(selectExpression: SQLExpression['select']): string | undefined {
@@ -146,6 +147,8 @@ export function setSql(query: CloudWatchMetricsQuery, sql: SQLExpression): Cloud
 
 export function setNamespace(query: CloudWatchMetricsQuery, namespace: string | undefined): CloudWatchMetricsQuery {
   const sql = query.sql ?? {};
+  //updating `namespace` props for CloudWatchMetricsQuery
+  query.namespace = namespace ? namespace : '';
 
   if (namespace === undefined) {
     return setSql(query, {
@@ -228,6 +231,13 @@ export function setMetricName(query: CloudWatchMetricsQuery, metricName: string)
       parameters: [param],
     },
   });
+}
+
+export function removeMetricName(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
+  const queryWithNoParams = { ...query };
+  delete queryWithNoParams.sql?.select?.parameters;
+
+  return queryWithNoParams;
 }
 
 export function setAggregation(query: CloudWatchMetricsQuery, aggregation: string): CloudWatchMetricsQuery {

@@ -20,22 +20,29 @@ export const Pages = {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
     readOnly: 'Data source settings page read only message',
-    saveAndTest: 'Data source settings page Save and Test button',
+    saveAndTest: 'data-testid Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },
   DataSources: {
     url: '/datasources',
     dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
   },
+  EditDataSource: {
+    url: (dataSourceUid: string) => `/datasources/edit/${dataSourceUid}`,
+    settings: 'Datasource settings page basic settings',
+  },
   AddDataSource: {
     url: '/datasources/new',
+    /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
-    delete: 'Confirm Modal Danger Button',
+    delete: 'data-testid Confirm Modal Danger Button',
   },
   AddDashboard: {
     url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
     addNewPanel: 'Add new panel',
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
@@ -48,6 +55,7 @@ export const Pages = {
        */
       nav: 'Dashboard navigation',
       navV2: 'data-testid Dashboard navigation',
+      publicDashboardTag: 'data-testid public dashboard tag',
     },
     SubMenu: {
       submenu: 'Dashboard submenu',
@@ -58,8 +66,16 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
+      Annotations: {
+        annotationsWrapper: 'data-testid annotation-wrapper',
+        annotationLabel: (label: string) => `data-testid Dashboard annotations submenu Label ${label}`,
+        annotationToggle: (label: string) => `data-testid Dashboard annotations submenu Toggle ${label}`,
+      },
     },
     Settings: {
+      Actions: {
+        close: 'data-testid dashboard-settings-close',
+      },
       General: {
         deleteDashBoard: 'Dashboard settings page delete dashboard button',
         sectionItems: (item: string) => `Dashboard settings section item ${item}`,
@@ -69,7 +85,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Dashboard settings page title',
+        title: 'Tab General',
       },
       Annotations: {
         List: {
@@ -82,6 +98,11 @@ export const Pages = {
         Settings: {
           name: 'Annotations settings name input',
         },
+        NewAnnotation: {
+          panelFilterSelect: 'data-testid annotations-panel-filter',
+          showInLabel: 'show-in-label',
+          previewInDashboard: 'data-testid annotations-preview',
+        },
       },
       Variables: {
         List: {
@@ -93,7 +114,8 @@ export const Pages = {
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
-          tableRowDefinitionFields: (variableName: string) => `Variable editor Table Definition field ${variableName}`,
+          tableRowDescriptionFields: (variableName: string) =>
+            `Variable editor Table Description field ${variableName}`,
           tableRowArrowUpButtons: (variableName: string) => `Variable editor Table ArrowUp button ${variableName}`,
           tableRowArrowDownButtons: (variableName: string) => `Variable editor Table ArrowDown button ${variableName}`,
           tableRowDuplicateButtons: (variableName: string) => `Variable editor Table Duplicate button ${variableName}`,
@@ -108,20 +130,29 @@ export const Pages = {
              */
             modeLabelEdit: 'Variable editor Header mode Edit',
             generalNameInput: 'Variable editor Form Name field',
+            generalNameInputV2: 'data-testid Variable editor Form Name field',
             generalTypeSelect: 'Variable editor Form Type select',
+            generalTypeSelectV2: 'data-testid Variable editor Form Type select',
             generalLabelInput: 'Variable editor Form Label field',
+            generalLabelInputV2: 'data-testid Variable editor Form Label field',
             generalHideSelect: 'Variable editor Form Hide select',
+            generalHideSelectV2: 'data-testid Variable editor Form Hide select',
             selectionOptionsMultiSwitch: 'Variable editor Form Multi switch',
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
+            selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
+            applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
+            queryOptionsRefreshSelectV2: 'data-testid Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
+            queryOptionsRegExInputV2: 'data-testid Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
+            queryOptionsSortSelectV2: 'data-testid Variable editor Form Query Sort select',
             queryOptionsQueryInput: 'Variable editor Form Default Variable Query Editor textarea',
             valueGroupsTagsEnabledSwitch: 'Variable editor Form Query UseTags switch',
             valueGroupsTagsTagsQueryInput: 'Variable editor Form Query TagsQuery field',
@@ -129,12 +160,26 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+            constantOptionsQueryInputV2: 'data-testid Variable editor Form Constant Query field',
+          },
+          DatasourceVariable: {
+            datasourceSelect: 'data-testid datasource variable datasource type',
           },
           TextBoxVariable: {
             textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
+            textBoxOptionsQueryInputV2: 'data-testid Variable editor Form TextBox Query field',
+          },
+          CustomVariable: {
+            customValueInput: 'data-testid custom-variable-input',
+          },
+          IntervalVariable: {
+            intervalsValueInput: 'data-testid interval variable intervals input',
           },
         },
       },
+    },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
     },
   },
   Dashboards: {
@@ -156,13 +201,54 @@ export const Pages = {
   SharePanelModal: {
     linkToRenderedImage: 'Link to rendered image',
   },
+  ShareDashboardModal: {
+    shareButton: 'Share dashboard or panel',
+    PublicDashboard: {
+      Tab: 'Tab Public dashboard',
+      WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
+      LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
+      CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
+      PauseSwitch: 'data-testid public dashboard pause switch',
+      EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
+      CreateButton: 'data-testid public dashboard create button',
+      DeleteButton: 'data-testid public dashboard delete button',
+      CopyUrlInput: 'data-testid public dashboard copy url input',
+      CopyUrlButton: 'data-testid public dashboard copy url button',
+      TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+      UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources alert',
+      NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
+      EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
+      EmailSharingConfiguration: {
+        Container: 'data-testid email sharing config container',
+        ShareType: 'data-testid public dashboard share type',
+        EmailSharingInput: 'data-testid public dashboard email sharing input',
+        EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
+        EmailSharingList: 'data-testid public dashboard email sharing list',
+        DeleteEmail: 'data-testid public dashboard delete email button',
+        ReshareLink: 'data-testid public dashboard reshare link button',
+      },
+    },
+  },
+  PublicDashboard: {
+    page: 'public-dashboard-page',
+    NotAvailable: {
+      container: 'public-dashboard-not-available',
+      title: 'public-dashboard-title',
+      pausedDescription: 'public-dashboard-paused-description',
+    },
+  },
+  RequestViewAccess: {
+    form: 'request-view-access-form',
+    recipientInput: 'request-view-access-recipient-input',
+    submitButton: 'request-view-access-submit-button',
+  },
   Explore: {
     url: '/explore',
     General: {
       container: 'data-testid Explore',
       graph: 'Explore Graph',
       table: 'Explore Table',
-      scrollBar: () => '.scrollbar-view',
+      scrollView: 'data-testid explorer scroll view',
     },
   },
   SoloPanel: {
@@ -182,11 +268,55 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemRow: 'Playlist item row',
-    itemIdType: 'Playlist item dashboard by ID type',
-    itemTagType: 'Playlist item dashboard by Tag type',
-    itemMoveUp: 'Move playlist item order up',
-    itemMoveDown: 'Move playlist item order down',
     itemDelete: 'Delete playlist item',
+  },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+  },
+  Search: {
+    url: '/?search=openn',
+    FolderView: {
+      url: '/?search=open&layout=folders',
+    },
+  },
+  PublicDashboards: {
+    ListItem: {
+      linkButton: 'public-dashboard-link-button',
+      configButton: 'public-dashboard-configuration-button',
+      trashcanButton: 'public-dashboard-remove-button',
+      pauseSwitch: 'data-testid public dashboard pause switch',
+    },
+  },
+  UserListPage: {
+    tabs: {
+      allUsers: 'data-testid all-users-tab',
+      orgUsers: 'data-testid org-users-tab',
+      publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
+      users: 'data-testid users-tab',
+    },
+    org: {
+      url: '/org/users',
+    },
+    admin: {
+      url: '/admin/users',
+    },
+    publicDashboards: {
+      container: 'data-testid public-dashboards-users-list',
+    },
+    UserListAdminPage: {
+      container: 'data-testid user-list-admin-page',
+    },
+    UsersListPage: {
+      container: 'data-testid users-list-page',
+    },
+    UsersListPublicDashboardsPage: {
+      container: 'data-testid users-list-public-dashboards-page',
+      DashboardsListModal: {
+        listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
+      },
+    },
   },
 };

@@ -1,5 +1,7 @@
 import React, { PureComponent, CSSProperties } from 'react';
+
 import { VizOrientation } from '@grafana/data';
+
 import { calculateGridDimensions } from '../../utils/squares';
 
 interface Props<V, D> {
@@ -17,13 +19,14 @@ interface Props<V, D> {
   renderValue: (props: VizRepeaterRenderValueProps<V, D>) => JSX.Element;
   height: number;
   width: number;
-  source: any; // If this changes, new values will be requested
+  source: unknown; // If this changes, new values will be requested
   getValues: () => V[];
   renderCounter: number; // force update of values & render
   orientation: VizOrientation;
   itemSpacing?: number;
   /** When orientation is set to auto layout items in a grid */
   autoGrid?: boolean;
+  minVizWidth?: number;
   minVizHeight?: number;
 }
 
@@ -138,8 +141,17 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
   }
 
   render() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, autoGrid, orientation, minVizHeight } = this
-      .props as PropsWithDefaults<V, D>;
+    const {
+      renderValue,
+      height,
+      width,
+      itemSpacing,
+      getAlignmentFactors,
+      autoGrid,
+      orientation,
+      minVizWidth,
+      minVizHeight,
+    } = this.props as PropsWithDefaults<V, D>;
     const { values } = this.state;
 
     if (autoGrid && orientation === VizOrientation.Auto) {
@@ -152,7 +164,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
 
     const repeaterStyle: React.CSSProperties = {
       display: 'flex',
-      overflow: minVizHeight ? 'hidden auto' : 'hidden',
+      overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
     };
 
     let vizHeight = height;
@@ -173,7 +185,7 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
         repeaterStyle.justifyContent = 'space-between';
         itemStyles.marginRight = `${itemSpacing}px`;
         vizHeight = height;
-        vizWidth = width / values.length - itemSpacing + itemSpacing / values.length;
+        vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);
     }
 
     itemStyles.width = `${vizWidth}px`;

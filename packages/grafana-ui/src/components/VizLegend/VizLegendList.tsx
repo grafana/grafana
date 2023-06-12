@@ -1,11 +1,14 @@
+import { css, cx } from '@emotion/css';
 import React from 'react';
-import { VizLegendBaseProps, VizLegendItem } from './types';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
-import { css, cx } from '@emotion/css';
-import { useStyles } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+
 import { VizLegendListItem } from './VizLegendListItem';
+import { VizLegendBaseProps, VizLegendItem } from './types';
 
 export interface Props<T> extends VizLegendBaseProps<T> {}
 
@@ -15,14 +18,14 @@ export interface Props<T> extends VizLegendBaseProps<T> {}
 export const VizLegendList = <T extends unknown>({
   items,
   itemRenderer,
-  onLabelMouseEnter,
+  onLabelMouseOver,
   onLabelMouseOut,
   onLabelClick,
   placement,
   className,
   readonly,
 }: Props<T>) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -30,7 +33,7 @@ export const VizLegendList = <T extends unknown>({
       <VizLegendListItem
         item={item}
         onLabelClick={onLabelClick}
-        onLabelMouseEnter={onLabelMouseEnter}
+        onLabelMouseOver={onLabelMouseOver}
         onLabelMouseOut={onLabelMouseOut}
         readonly={readonly}
       />
@@ -81,11 +84,11 @@ export const VizLegendList = <T extends unknown>({
 
 VizLegendList.displayName = 'VizLegendList';
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const itemStyles = css`
     padding-right: 10px;
     display: flex;
-    font-size: ${theme.typography.size.sm};
+    font-size: ${theme.typography.bodySmall.fontSize};
     white-space: nowrap;
   `;
 
@@ -94,18 +97,18 @@ const getStyles = (theme: GrafanaTheme) => {
     itemRight: cx(
       itemStyles,
       css`
-        margin-bottom: ${theme.spacing.xs};
+        margin-bottom: ${theme.spacing(0.5)};
       `
     ),
     rightWrapper: css`
-      padding-left: ${theme.spacing.sm};
+      padding-left: ${theme.spacing(0.5)};
     `,
     bottomWrapper: css`
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       width: 100%;
-      padding-left: ${theme.spacing.md};
+      padding-left: ${theme.spacing(0.5)};
     `,
     section: css`
       display: flex;

@@ -1,8 +1,11 @@
-import { DataFrame, Field, FieldMatcher, FieldType, Vector } from '../../types';
-import { ArrayVector } from '../../vector';
+import intersect from 'fast_array_intersect';
+
+import { getTimeField, sortDataFrame } from '../../dataframe';
+import { DataFrame, Field, FieldMatcher, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../../types';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
-import { getTimeField, sortDataFrame } from '../../dataframe';
+
+import { JoinMode } from './joinByField';
 
 export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
   const { timeField } = getTimeField(data[0]);
@@ -30,7 +33,7 @@ export function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface JoinOptions {
   /**
@@ -39,7 +42,7 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * The field to join -- frames that do not have this field will be droppped
+   * The field to join -- frames that do not have this field will be dropped
    */
   joinBy?: FieldMatcher;
 
@@ -49,16 +52,14 @@ export interface JoinOptions {
   keep?: FieldMatcher;
 
   /**
-   * When the result is a single frame, this will to a quick check to see if the values are sorted,
-   * and sort if necessary.  If the first/last values are in order the whole vector is assumed to be
-   * sorted
-   */
-  enforceSort?: boolean;
-
-  /**
    * @internal -- used when we need to keep a reference to the original frame/field index
    */
   keepOriginIndices?: boolean;
+
+  /**
+   * @internal -- Optionally specify a join mode (outer or inner)
+   */
+  mode?: JoinMode;
 }
 
 function getJoinMatcher(options: JoinOptions): FieldMatcher {
@@ -66,10 +67,25 @@ function getJoinMatcher(options: JoinOptions): FieldMatcher {
 }
 
 /**
+ * @internal
+ */
+export function maybeSortFrame(frame: DataFrame, fieldIdx: number) {
+  if (fieldIdx >= 0) {
+    let sortByField = frame.fields[fieldIdx];
+
+    if (sortByField.type !== FieldType.string && !isLikelyAscendingVector(sortByField.values)) {
+      frame = sortDataFrame(frame, fieldIdx);
+    }
+  }
+
+  return frame;
+}
+
+/**
  * This will return a single frame joined by the first matching field.  When a join field is not specified,
  * the default will use the first time field
  */
-export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined {
+export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
   if (!options.frames?.length) {
     return;
   }
@@ -109,12 +125,8 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
       }
     }
 
-    if (options.enforceSort) {
-      if (joinIndex >= 0) {
-        if (!isLikelyAscendingVector(frameCopy.fields[joinIndex].values)) {
-          frameCopy = sortDataFrame(frameCopy, joinIndex);
-        }
-      }
+    if (joinIndex >= 0) {
+      frameCopy = maybeSortFrame(frameCopy, joinIndex);
     }
 
     if (options.keep) {
@@ -168,12 +180,18 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
         nullModesFrame.push(spanNulls === true ? NULL_REMOVE : spanNulls === -1 ? NULL_RETAIN : NULL_EXPAND);
 
         let labels = field.labels ?? {};
+        let name = field.name;
         if (frame.name) {
-          labels = { ...labels, name: frame.name };
+          if (field.name === TIME_SERIES_VALUE_FIELD_NAME) {
+            name = frame.name;
+          } else {
+            labels = { ...labels, name: frame.name };
+          }
         }
 
         fields.push({
           ...field,
+          name,
           labels, // add the name label from frame
         });
       }
@@ -195,10 +213,10 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     }
 
     nullModes.push(nullModesFrame);
-    const a: AlignedData = [join.values.toArray()]; //
+    const a: AlignedData = [join.values]; //
 
     for (const field of fields) {
-      a.push(field.values.toArray());
+      a.push(field.values);
       originalFields.push(field);
       // clear field displayName state
       delete field.state?.displayName;
@@ -207,14 +225,14 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
     allData.push(a);
   }
 
-  const joined = join(allData, nullModes);
+  const joined = join(allData, nullModes, options.mode);
 
   return {
     // ...options.data[0], // keep name, meta?
     length: joined[0].length,
     fields: originalFields.map((f, index) => ({
       ...f,
-      values: new ArrayVector(joined[index]),
+      values: joined[index],
     })),
   };
 }
@@ -226,7 +244,20 @@ export function outerJoinDataFrames(options: JoinOptions): DataFrame | undefined
 //--------------------------------------------------------------------------------
 
 // Copied from uplot
-export type AlignedData = [number[], ...Array<Array<number | null | undefined>>];
+export type TypedArray =
+  | Int8Array
+  | Uint8Array
+  | Int16Array
+  | Uint16Array
+  | Int32Array
+  | Uint32Array
+  | Uint8ClampedArray
+  | Float32Array
+  | Float64Array;
+
+export type AlignedData =
+  | TypedArray[]
+  | [xValues: number[] | TypedArray, ...yValues: Array<Array<number | null | undefined> | TypedArray>];
 
 // nullModes
 const NULL_REMOVE = 0; // nulls are converted to undefined (e.g. for spanGaps: true)
@@ -255,16 +286,23 @@ function nullExpand(yVals: Array<number | null>, nullIdxs: number[], alignedLen:
 }
 
 // nullModes is a tables-matched array indicating how to treat nulls in each series
-export function join(tables: AlignedData[], nullModes?: number[][]) {
-  const xVals = new Set<number>();
+export function join(tables: AlignedData[], nullModes?: number[][], mode: JoinMode = JoinMode.outer) {
+  let xVals: Set<number>;
 
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
+  if (mode === JoinMode.inner) {
+    // @ts-ignore
+    xVals = new Set(intersect(tables.map((t) => t[0])));
+  } else {
+    xVals = new Set();
 
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
+    for (let ti = 0; ti < tables.length; ti++) {
+      let t = tables[ti];
+      let xs = t[0];
+      let len = xs.length;
+
+      for (let i = 0; i < len; i++) {
+        xVals.add(xs[i]);
+      }
     }
   }
 
@@ -317,34 +355,46 @@ export function join(tables: AlignedData[], nullModes?: number[][]) {
   return data;
 }
 
-// Quick test if the first and last points look to be ascending
+// Test a few samples to see if the values are ascending
 // Only exported for tests
-export function isLikelyAscendingVector(data: Vector): boolean {
-  let first: any = undefined;
+export function isLikelyAscendingVector(data: any[], samples = 50) {
+  const len = data.length;
 
-  for (let idx = 0; idx < data.length; idx++) {
-    const v = data.get(idx);
-    if (v != null) {
-      if (first != null) {
-        if (first > v) {
-          return false; // descending
-        }
-        break;
-      }
-      first = v;
-    }
+  // empty or single value
+  if (len <= 1) {
+    return true;
   }
 
-  let idx = data.length - 1;
-  while (idx >= 0) {
-    const v = data.get(idx--);
+  // skip leading & trailing nullish
+  let firstIdx = 0;
+  let lastIdx = len - 1;
+
+  while (firstIdx <= lastIdx && data[firstIdx] == null) {
+    firstIdx++;
+  }
+
+  while (lastIdx >= firstIdx && data[lastIdx] == null) {
+    lastIdx--;
+  }
+
+  // all nullish or one value surrounded by nullish
+  if (lastIdx <= firstIdx) {
+    return true;
+  }
+
+  const stride = Math.max(1, Math.floor((lastIdx - firstIdx + 1) / samples));
+
+  for (let prevVal = data[firstIdx], i = firstIdx + stride; i <= lastIdx; i += stride) {
+    const v = data[i];
+
     if (v != null) {
-      if (first > v) {
+      if (v <= prevVal) {
         return false;
       }
-      return true;
+
+      prevVal = v;
     }
   }
 
-  return true; // only one non-null point
+  return true;
 }

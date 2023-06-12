@@ -1,37 +1,60 @@
 import React, { FormEvent, PureComponent } from 'react';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
-import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { VariableEditorState } from '../editor/reducer';
-import { DataSourceVariableEditorState } from './reducer';
-import { initDataSourceVariableEditor } from './actions';
-import { StoreState } from '../../../types';
-import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
-import { changeVariableMultiValue } from '../state/actions';
-import { VariableSectionHeader } from '../editor/VariableSectionHeader';
-import { VariableSelectField } from '../editor/VariableSelectField';
 import { SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+
+import { StoreState } from '../../../types';
+import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
+import { VariableLegend } from '../editor/VariableLegend';
+import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
+import { initialVariableEditorState } from '../editor/reducer';
+import { getDatasourceVariableEditorState } from '../editor/selectors';
+import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
+import { changeVariableMultiValue } from '../state/actions';
+import { getVariablesState } from '../state/selectors';
+import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
+
+import { initDataSourceVariableEditor } from './actions';
+
+const mapStateToProps = (state: StoreState, ownProps: OwnProps) => {
+  const {
+    variable: { rootStateKey },
+  } = ownProps;
+  if (!rootStateKey) {
+    console.error('DataSourceVariableEditor: variable has no rootStateKey');
+    return {
+      extended: getDatasourceVariableEditorState(initialVariableEditorState),
+    };
+  }
+
+  const { editor } = getVariablesState(rootStateKey, state);
+  return {
+    extended: getDatasourceVariableEditorState(editor),
+  };
+};
+
+const mapDispatchToProps = {
+  initDataSourceVariableEditor,
+  changeVariableMultiValue,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
-interface ConnectedProps {
-  editor: VariableEditorState<DataSourceVariableEditorState>;
-}
-
-interface DispatchProps {
-  initDataSourceVariableEditor: typeof initDataSourceVariableEditor;
-  changeVariableMultiValue: typeof changeVariableMultiValue;
-}
-
-type Props = OwnProps & ConnectedProps & DispatchProps;
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   componentDidMount() {
-    this.props.initDataSourceVariableEditor();
+    const { rootStateKey } = this.props.variable;
+    if (!rootStateKey) {
+      console.error('DataSourceVariableEditor: variable has no rootStateKey');
+      return;
+    }
+
+    this.props.initDataSourceVariableEditor(rootStateKey);
   }
 
   onRegExChange = (event: FormEvent<HTMLInputElement>) => {
@@ -54,11 +77,14 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   };
 
   getSelectedDataSourceTypeValue = (): string => {
-    if (!this.props.editor.extended?.dataSourceTypes?.length) {
+    const { extended } = this.props;
+
+    if (!extended?.dataSourceTypes.length) {
       return '';
     }
-    const foundItem = this.props.editor.extended?.dataSourceTypes.find((ds) => ds.value === this.props.variable.query);
-    const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSourceTypes[0].value;
+
+    const foundItem = extended.dataSourceTypes.find((ds) => ds.value === this.props.variable.query);
+    const value = foundItem ? foundItem.value : extended.dataSourceTypes[0].value;
     return value ?? '';
   };
 
@@ -67,68 +93,51 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const typeOptions = this.props.editor.extended?.dataSourceTypes?.length
-      ? this.props.editor.extended?.dataSourceTypes?.map((ds) => ({ value: ds.value ?? '', label: ds.text }))
+    const { variable, extended, changeVariableMultiValue } = this.props;
+
+    const typeOptions = extended?.dataSourceTypes?.length
+      ? extended.dataSourceTypes?.map((ds) => ({ value: ds.value ?? '', label: ds.text }))
       : [];
-    const typeValue = typeOptions.find((o) => o.value === this.props.variable.query) ?? typeOptions[0];
+
+    const typeValue = typeOptions.find((o) => o.value === variable.query) ?? typeOptions[0];
 
     return (
-      <VerticalGroup spacing="xs">
-        <VariableSectionHeader name="Data source options" />
-        <VerticalGroup spacing="md">
-          <VerticalGroup spacing="xs">
-            <InlineFieldRow>
-              <VariableSelectField
-                name="Type"
-                value={typeValue}
-                options={typeOptions}
-                onChange={this.onDataSourceTypeChanged}
-                labelWidth={10}
-              />
-            </InlineFieldRow>
-            <InlineFieldRow>
-              <VariableTextField
-                value={this.props.variable.regex}
-                name="Instance name filter"
-                placeholder="/.*-(.*)-.*/"
-                onChange={this.onRegExChange}
-                onBlur={this.onRegExBlur}
-                labelWidth={20}
-                tooltip={
-                  <div>
-                    Regex filter for which data source instances to choose from in the variable value list. Leave empty
-                    for all.
-                    <br />
-                    <br />
-                    Example: <code>/^prod/</code>
-                  </div>
-                }
-              />
-            </InlineFieldRow>
-          </VerticalGroup>
+      <>
+        <VariableLegend>Data source options</VariableLegend>
+        <VariableSelectField
+          name="Type"
+          value={typeValue}
+          options={typeOptions}
+          onChange={this.onDataSourceTypeChanged}
+          testId={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
+        />
 
-          <SelectionOptionsEditor
-            variable={this.props.variable}
-            onPropChange={this.onSelectionOptionsChange}
-            onMultiChanged={this.props.changeVariableMultiValue}
-          />
-        </VerticalGroup>
-      </VerticalGroup>
+        <VariableTextField
+          value={this.props.variable.regex}
+          name="Instance name filter"
+          placeholder="/.*-(.*)-.*/"
+          onChange={this.onRegExChange}
+          onBlur={this.onRegExBlur}
+          description={
+            <div>
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+              <br />
+              <br />
+              Example: <code>/^prod/</code>
+            </div>
+          }
+        />
+
+        <VariableLegend>Selection options</VariableLegend>
+        <SelectionOptionsEditor
+          variable={variable}
+          onPropChange={this.onSelectionOptionsChange}
+          onMultiChanged={changeVariableMultiValue}
+        />
+      </>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => ({
-  editor: state.templating.editor as VariableEditorState<DataSourceVariableEditorState>,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  initDataSourceVariableEditor,
-  changeVariableMultiValue,
-};
-
-export const DataSourceVariableEditor = connectWithStore(
-  DataSourceVariableEditorUnConnected,
-  mapStateToProps,
-  mapDispatchToProps
-);
+export const DataSourceVariableEditor = connector(DataSourceVariableEditorUnConnected);

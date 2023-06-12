@@ -1,6 +1,6 @@
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useLayoutEffect, useState } from 'react';
-import { css } from '@emotion/css';
-import { LogRows, CustomScrollbar, LogLabels, useStyles2, usePanelContext } from '@grafana/ui';
+
 import {
   PanelProps,
   Field,
@@ -10,18 +10,24 @@ import {
   LogRowModel,
   DataHoverClearEvent,
   DataHoverEvent,
+  CoreApp,
 } from '@grafana/data';
-import { Options } from './types';
-import { dataFrameToLogsModel, dedupLogRows } from 'app/core/logs_model';
+import { CustomScrollbar, useStyles2, usePanelContext } from '@grafana/ui';
+import { dataFrameToLogsModel, dedupLogRows, COMMON_LABELS } from 'app/core/logsModel';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
-import { COMMON_LABELS } from '../../../core/logs_model';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+
+import { LogLabels } from '../../../features/logs/components/LogLabels';
+import { LogRows } from '../../../features/logs/components/LogRows';
+
+import { Options } from './types';
 
 interface LogsPanelProps extends PanelProps<Options> {}
 
-export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
+export const LogsPanel = ({
   data,
   timeZone,
+  fieldConfig,
   options: {
     showLabels,
     showTime,
@@ -34,9 +40,9 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   },
   title,
   id,
-}) => {
+}: LogsPanelProps) => {
   const isAscending = sortOrder === LogsSortOrder.Ascending;
-  const style = useStyles2(getStyles(title, isAscending));
+  const style = useStyles2(getStyles);
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
 
@@ -60,9 +66,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
 
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
-    const newResults = data ? dataFrameToLogsModel(data.series, data.request?.intervalMs) : null;
-    const logRows = newResults?.rows || [];
-    const commonLabels = newResults?.meta?.find((m) => m.label === COMMON_LABELS);
+    const logs = data
+      ? dataFrameToLogsModel(data.series, data.request?.intervalMs, undefined, data.request?.targets)
+      : null;
+    const logRows = logs?.rows || [];
+    const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data, dedupStrategy]);
@@ -83,11 +91,11 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 
   if (!data || logRows.length === 0) {
-    return <PanelDataErrorView panelId={id} data={data} needsStringField />;
+    return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
   }
 
   const renderCommonLabels = () => (
-    <div className={style.labelContainer}>
+    <div className={cx(style.labelContainer, isAscending && style.labelContainerAscending)}>
       <span className={style.label}>Common labels:</span>
       <LogLabels labels={commonLabels ? (commonLabels.value as Labels) : { labels: '(no common labels)' }} />
     </div>
@@ -111,6 +119,7 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
           enableLogDetails={enableLogDetails}
           previewLimit={isAscending ? logRows.length : undefined}
           onLogRowHover={onLogRowHover}
+          app={CoreApp.Dashboard}
         />
         {showCommonLabels && isAscending && renderCommonLabels()}
       </div>
@@ -118,20 +127,21 @@ export const LogsPanel: React.FunctionComponent<LogsPanelProps> = ({
   );
 };
 
-const getStyles = (title: string, isAscending: boolean) => (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-bottom: ${theme.spacing(1.5)};
-    //We can remove this hot-fix when we fix panel menu with no title overflowing top of all panels
-    margin-top: ${theme.spacing(!title ? 2.5 : 0)};
-  `,
-  labelContainer: css`
-    margin: ${isAscending ? theme.spacing(0.5, 0, 0.5, 0) : theme.spacing(0, 0, 0.5, 0.5)};
-    display: flex;
-    align-items: center;
-  `,
-  label: css`
-    margin-right: ${theme.spacing(0.5)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    font-weight: ${theme.typography.fontWeightMedium};
-  `,
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    marginBottom: theme.spacing(1.5),
+  }),
+  labelContainer: css({
+    margin: theme.spacing(0, 0, 0.5, 0.5),
+    display: 'flex',
+    alignItems: 'center',
+  }),
+  labelContainerAscending: css({
+    margin: theme.spacing(0.5, 0, 0.5, 0),
+  }),
+  label: css({
+    marginRight: theme.spacing(0.5),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+  }),
 });

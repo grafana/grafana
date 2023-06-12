@@ -2,24 +2,24 @@ package api
 
 import (
 	"errors"
-	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/getsentry/sentry-go"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/frontendlogging"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
-	log "github.com/inconshreveable/log15"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type SourceMapReadRecord struct {
@@ -27,23 +27,28 @@ type SourceMapReadRecord struct {
 	path string
 }
 
-type logScenarioFunc func(c *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord)
+type logScenarioFunc func(c *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord)
 
-func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.FrontendSentryEvent, fn logScenarioFunc) {
+func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event frontendlogging.FrontendGrafanaJavascriptAgentEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		logs := []*log.Record{}
-		sourceMapReads := []SourceMapReadRecord{}
-
-		origHandler := frontendLogger.GetHandler()
-		frontendLogger.SetHandler(log.FuncHandler(func(r *log.Record) error {
-			logs = append(logs, r)
+		var logcontent = make(map[string]interface{})
+		logcontent["logger"] = "frontend"
+		newfrontendLogger := log.Logger(log.LoggerFunc(func(keyvals ...interface{}) error {
+			for i := 0; i < len(keyvals); i += 2 {
+				logcontent[keyvals[i].(string)] = keyvals[i+1]
+			}
 			return nil
 		}))
+
+		origHandler := frontendLogger.GetLogger()
+		frontendLogger.Swap(level.NewFilter(newfrontendLogger, level.AllowInfo()))
+		sourceMapReads := []SourceMapReadRecord{}
+
 		t.Cleanup(func() {
-			frontendLogger.SetHandler(origHandler)
+			frontendLogger.Swap(origHandler)
 		})
 
-		sc := setupScenarioContext(t, "/log")
+		sc := setupScenarioContext(t, "/log-grafana-javascript-agent")
 
 		cdnRootURL, e := url.Parse("https://storage.googleapis.com/grafana-static-assets")
 		require.NoError(t, e)
@@ -62,7 +67,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 				return nil, errors.New("epic hard drive failure")
 			}
 			if strings.HasSuffix(path, "foo.js.map") {
-				f, err := ioutil.ReadFile("./frontendlogging/test-data/foo.js.map")
+				f, err := os.ReadFile("./frontendlogging/test-data/foo.js.map")
 				require.NoError(t, err)
 				return f, nil
 			}
@@ -81,207 +86,172 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		sourceMapStore := frontendlogging.NewSourceMapStore(cfg, &pm, readSourceMap)
 
-		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
+		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(c *models.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
-			return loggingHandler(c)
+			c.Req.Header.Add("Content-Type", "application/json")
+			loggingHandler(nil, c.Context)
+			return response.Success("OK")
 		})
 
 		sc.m.Post(sc.url, handler)
 		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-		fn(sc, logs, sourceMapReads)
+		fn(sc, logcontent, sourceMapReads)
 	})
 }
 
-func TestFrontendLoggingEndpoint(t *testing.T) {
+func TestFrontendLoggingEndpointGrafanaJavascriptAgent(t *testing.T) {
 	ts, err := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
 	require.NoError(t, err)
-
-	t.Run("FrontendLoggingEndpoint", func(t *testing.T) {
-		request := sentry.Request{
-			URL: "http://localhost:3000/",
-			Headers: map[string]string{
-				"User-Agent": "Chrome",
-			},
-		}
-
-		user := sentry.User{
-			Email: "geralt@kaermorhen.com",
+	t.Run("FrontendLoggingEndpointGrafanaJavascriptAgent", func(t *testing.T) {
+		user := frontendlogging.User{
+			Email: "test@example.com",
 			ID:    "45",
 		}
-
-		event := sentry.Event{
-			EventID:   "123",
-			Level:     sentry.LevelError,
-			Request:   &request,
-			Timestamp: ts,
+		meta := frontendlogging.Meta{
+			User: user,
+			Page: frontendlogging.Page{
+				URL: "http://localhost:3000/dashboard/db/test",
+			},
 		}
 
-		errorEvent := frontendlogging.FrontendSentryEvent{
-			Event: &event,
-			Exception: &frontendlogging.FrontendSentryException{
-				Values: []frontendlogging.FrontendSentryExceptionValue{
-					{
-						Type:  "UserError",
-						Value: "Please replace user and try again",
-						Stacktrace: sentry.Stacktrace{
-							Frames: []sentry.Frame{
-								{
-									Function: "foofn",
-									Filename: "foo.js",
-									Lineno:   123,
-									Colno:    23,
-								},
-								{
-									Function: "barfn",
-									Filename: "bar.js",
-									Lineno:   113,
-									Colno:    231,
-								},
-							},
+		errorEvent := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
+			Meta: meta,
+			Exceptions: []frontendlogging.Exception{
+				{
+					Type:  "UserError",
+					Value: "Please replace user and try again\n  at foofn (foo.js:123:23)\n  at barfn (bar.js:113:231)",
+					Stacktrace: &frontendlogging.Stacktrace{
+						Frames: []frontendlogging.Frame{{
+							Function: "bla",
+							Filename: "http://localhost:3000/public/build/foo.js",
+							Lineno:   20,
+							Colno:    30,
+						},
 						},
 					},
+					Timestamp: ts,
 				},
 			},
 		}
 
-		logSentryEventScenario(t, "Should log received error event", errorEvent,
-			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
-				assertContextContains(t, logs[0], "logger", "frontend")
-				assertContextContains(t, logs[0], "url", errorEvent.Request.URL)
-				assertContextContains(t, logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
-				assertContextContains(t, logs[0], "event_id", errorEvent.EventID)
-				assertContextContains(t, logs[0], "original_timestamp", errorEvent.Timestamp)
-				assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
+		logGrafanaJavascriptAgentEventScenario(t, "Should log received error event", errorEvent,
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
+				assertContextContains(t, logs, "logger", "frontend")
+				assertContextContains(t, logs, "page_url", errorEvent.Meta.Page.URL)
+				assertContextContains(t, logs, "user_email", errorEvent.Meta.User.Email)
+				assertContextContains(t, logs, "user_id", errorEvent.Meta.User.ID)
+				assertContextContains(t, logs, "original_timestamp", errorEvent.Exceptions[0].Timestamp)
+				assertContextContains(t, logs, "msg", `UserError: Please replace user and try again
   at foofn (foo.js:123:23)
   at barfn (bar.js:113:231)`)
-				assert.NotContains(t, logs[0].Ctx, "context")
+				assert.NotContains(t, logs, "context")
 			})
 
-		messageEvent := frontendlogging.FrontendSentryEvent{
-			Event: &sentry.Event{
-				EventID:   "123",
-				Level:     sentry.LevelInfo,
-				Request:   &request,
+		logEvent := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
+			Meta: meta,
+			Logs: []frontendlogging.Log{{
+				Message:   "This is a test log message",
 				Timestamp: ts,
-				Message:   "hello world",
-				User:      user,
-			},
-			Exception: nil,
+				LogLevel:  "info",
+			}},
 		}
 
-		logSentryEventScenario(t, "Should log received message event", messageEvent,
-			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
-				assert.Equal(t, "hello world", logs[0].Msg)
-				assert.Equal(t, log.LvlInfo, logs[0].Lvl)
-				assertContextContains(t, logs[0], "logger", "frontend")
-				assertContextContains(t, logs[0], "url", messageEvent.Request.URL)
-				assertContextContains(t, logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
-				assertContextContains(t, logs[0], "event_id", messageEvent.EventID)
-				assertContextContains(t, logs[0], "original_timestamp", messageEvent.Timestamp)
-				assert.NotContains(t, logs[0].Ctx, "stacktrace")
-				assert.NotContains(t, logs[0].Ctx, "context")
-				assertContextContains(t, logs[0], "user_email", user.Email)
-				assertContextContains(t, logs[0], "user_id", user.ID)
+		logGrafanaJavascriptAgentEventScenario(t, "Should log received log event", logEvent,
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
+				assert.Len(t, logs, 11)
+				assertContextContains(t, logs, "logger", "frontend")
+				assertContextContains(t, logs, "msg", "This is a test log message")
+				assertContextContains(t, logs, "original_log_level", frontendlogging.LogLevel("info"))
+				assertContextContains(t, logs, "original_timestamp", ts)
+				assert.NotContains(t, logs, "stacktrace")
+				assert.NotContains(t, logs, "context")
 			})
 
-		eventWithContext := frontendlogging.FrontendSentryEvent{
-			Event: &sentry.Event{
-				EventID:   "123",
-				Level:     sentry.LevelInfo,
-				Request:   &request,
+		logEventWithContext := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
+			Meta: meta,
+			Logs: []frontendlogging.Log{{
+				Message:   "This is a test log message",
 				Timestamp: ts,
-				Message:   "hello world",
-				User:      user,
-				Contexts: map[string]interface{}{
-					"foo": map[string]interface{}{
-						"one":   "two",
-						"three": 4,
-					},
+				LogLevel:  "info",
+				Context: map[string]string{
+					"one": "two",
 					"bar": "baz",
 				},
-			},
-			Exception: nil,
+			}},
 		}
 
-		logSentryEventScenario(t, "Should log event context", eventWithContext,
-			func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
-				assertContextContains(t, logs[0], "context_foo_one", "two")
-				assertContextContains(t, logs[0], "context_foo_three", "4")
-				assertContextContains(t, logs[0], "context_bar", "baz")
+		logGrafanaJavascriptAgentEventScenario(t, "Should log received log context", logEventWithContext,
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
+				assertContextContains(t, logs, "context_one", "two")
+				assertContextContains(t, logs, "context_bar", "baz")
 			})
-
-		errorEventForSourceMapping := frontendlogging.FrontendSentryEvent{
-			Event: &event,
-			Exception: &frontendlogging.FrontendSentryException{
-				Values: []frontendlogging.FrontendSentryExceptionValue{
-					{
-						Type:  "UserError",
-						Value: "Please replace user and try again",
-						Stacktrace: sentry.Stacktrace{
-							Frames: []sentry.Frame{
-								{
-									Function: "foofn",
-									Filename: "http://localhost:3000/public/build/moo/foo.js", // source map found and mapped, core
-									Lineno:   2,
-									Colno:    5,
-								},
-								{
-									Function: "foofn",
-									Filename: "http://localhost:3000/public/plugins/telepathic/foo.js", // plugin, source map found and mapped
-									Lineno:   3,
-									Colno:    10,
-								},
-								{
-									Function: "explode",
-									Filename: "http://localhost:3000/public/build/error.js", // reading source map throws error
-									Lineno:   3,
-									Colno:    10,
-								},
-								{
-									Function: "wat",
-									Filename: "http://localhost:3000/public/build/bar.js", // core, but source map not found on fs
-									Lineno:   3,
-									Colno:    10,
-								},
-								{
-									Function: "nope",
-									Filename: "http://localhost:3000/baz.js", // not core or plugin, wont even attempt to get source map
-									Lineno:   3,
-									Colno:    10,
-								},
-								{
-									Function: "fake",
-									Filename: "http://localhost:3000/public/build/../../secrets.txt", // path will be sanitized
-									Lineno:   3,
-									Colno:    10,
-								},
-								{
-									Function: "cdn",
-									Filename: "https://storage.googleapis.com/grafana-static-assets/grafana-oss/pre-releases/7.5.0-11925pre/public/build/foo.js", // source map found and mapped
-									Lineno:   3,
-									Colno:    10,
-								},
+		errorEventForSourceMapping := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
+			Meta: meta,
+			Exceptions: []frontendlogging.Exception{
+				{
+					Type:  "UserError",
+					Value: "Please replace user and try again",
+					Stacktrace: &frontendlogging.Stacktrace{
+						Frames: []frontendlogging.Frame{
+							{
+								Function: "foofn",
+								Filename: "http://localhost:3000/public/build/moo/foo.js", // source map found and mapped, core
+								Lineno:   2,
+								Colno:    5,
+							},
+							{
+								Function: "foofn",
+								Filename: "http://localhost:3000/public/plugins/telepathic/foo.js", // plugin, source map found and mapped
+								Lineno:   3,
+								Colno:    10,
+							},
+							{
+								Function: "explode",
+								Filename: "http://localhost:3000/public/build/error.js", // reading source map throws error
+								Lineno:   3,
+								Colno:    10,
+							},
+							{
+								Function: "wat",
+								Filename: "http://localhost:3000/public/build/bar.js", // core, but source map not found on fs
+								Lineno:   3,
+								Colno:    10,
+							},
+							{
+								Function: "nope",
+								Filename: "http://localhost:3000/baz.js", // not core or plugin, wont even attempt to get source map
+								Lineno:   3,
+								Colno:    10,
+							},
+							{
+								Function: "fake",
+								Filename: "http://localhost:3000/public/build/../../secrets.txt", // path will be sanitized
+								Lineno:   3,
+								Colno:    10,
+							},
+							{
+								Function: "cdn",
+								Filename: "https://storage.googleapis.com/grafana-static-assets/grafana-oss/pre-releases/7.5.0-11925pre/public/build/foo.js", // source map found and mapped
+								Lineno:   3,
+								Colno:    10,
 							},
 						},
 					},
+					Timestamp: ts,
 				},
 			},
 		}
 
-		logSentryEventScenario(t, "Should load sourcemap and transform stacktrace line when possible",
-			errorEventForSourceMapping, func(sc *scenarioContext, logs []*log.Record, sourceMapReads []SourceMapReadRecord) {
-				assert.Equal(t, 200, sc.resp.Code)
-				assert.Len(t, logs, 1)
-				assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
+		logGrafanaJavascriptAgentEventScenario(t, "Should load sourcemap and transform stacktrace line when possible", errorEventForSourceMapping,
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
+				assertContextContains(t, logs, "stacktrace", `UserError: Please replace user and try again
   at ? (core|webpack:///./some_source.ts:2:2)
   at ? (telepathic|webpack:///./some_source.ts:3:2)
   at explode (http://localhost:3000/public/build/error.js:3:10)
@@ -303,20 +273,26 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 				assert.Equal(t, "/staticroot", sourceMapReads[5].dir)
 				assert.Equal(t, "build/foo.js.map", sourceMapReads[5].path)
 			})
+
+		logWebVitals := frontendlogging.FrontendGrafanaJavascriptAgentEvent{
+			Meta: meta,
+			Measurements: []frontendlogging.Measurement{{
+				Values: map[string]float64{
+					"CLS": 1.0,
+				},
+			},
+			},
+		}
+
+		logGrafanaJavascriptAgentEventScenario(t, "Should log web vitals as context", logWebVitals,
+			func(sc *scenarioContext, logs map[string]interface{}, sourceMapReads []SourceMapReadRecord) {
+				assert.Equal(t, http.StatusAccepted, sc.resp.Code)
+				assertContextContains(t, logs, "CLS", float64(1))
+			})
 	})
 }
 
-func indexOf(arr []interface{}, item string) int {
-	for i, elem := range arr {
-		if elem == item {
-			return i
-		}
-	}
-	return -1
-}
-
-func assertContextContains(t *testing.T, logRecord *log.Record, label string, value interface{}) {
-	assert.Contains(t, logRecord.Ctx, label)
-	labelIdx := indexOf(logRecord.Ctx, label)
-	assert.Equal(t, value, logRecord.Ctx[labelIdx+1])
+func assertContextContains(t *testing.T, logRecord map[string]interface{}, label string, value interface{}) {
+	assert.Contains(t, logRecord, label)
+	assert.Equal(t, value, logRecord[label])
 }

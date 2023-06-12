@@ -1,4 +1,8 @@
+import { LoadingState } from '@grafana/data';
+
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { LibraryElementDTO } from '../../library-panels/types';
+
 import {
   clearDashboard,
   DashboardSource,
@@ -14,8 +18,6 @@ import {
   setJsonDashboard,
   setLibraryPanelInputs,
 } from './reducers';
-import { LibraryElementDTO } from '../../library-panels/types';
-import { LoadingState } from '@grafana/data';
 
 describe('importDashboardReducer', () => {
   describe('when setGcomDashboard action is dispatched', () => {
@@ -113,7 +115,7 @@ describe('importDashboardReducer', () => {
           setLibraryPanelInputs([
             {
               model: { uid: 'sadjahsdk', name: 'A name', type: 'text' } as LibraryElementDTO,
-              state: LibraryPanelInputState.Exits,
+              state: LibraryPanelInputState.Exists,
             },
           ])
         )
@@ -125,7 +127,7 @@ describe('importDashboardReducer', () => {
             libraryPanels: [
               {
                 model: { uid: 'sadjahsdk', name: 'A name', type: 'text' } as LibraryElementDTO,
-                state: LibraryPanelInputState.Exits,
+                state: LibraryPanelInputState.Exists,
               },
             ],
           },

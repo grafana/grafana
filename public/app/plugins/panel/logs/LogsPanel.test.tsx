@@ -1,6 +1,8 @@
-import React, { ComponentProps } from 'react';
 import { render, screen } from '@testing-library/react';
-import { LoadingState, MutableDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
+import React, { ComponentProps } from 'react';
+
+import { LoadingState, createDataFrame, FieldType, LogsSortOrder } from '@grafana/data';
+
 import { LogsPanel } from './LogsPanel';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
@@ -8,7 +10,7 @@ type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 describe('LogsPanel', () => {
   describe('when returned series include common labels', () => {
     const seriesWithCommonLabels = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -64,7 +66,7 @@ describe('LogsPanel', () => {
   });
   describe('when returned series does not include common labels', () => {
     const seriesWithoutCommonLabels = [
-      new MutableDataFrame({
+      createDataFrame({
         fields: [
           {
             name: 'time',
@@ -96,7 +98,7 @@ describe('LogsPanel', () => {
 });
 
 const setup = (propsOverrides?: {}) => {
-  const props = ({
+  const props = {
     data: {
       error: undefined,
       request: {
@@ -119,7 +121,7 @@ const setup = (propsOverrides?: {}) => {
     title: 'Logs panel',
     id: 1,
     ...propsOverrides,
-  } as unknown) as LogsPanelProps;
+  } as unknown as LogsPanelProps;
 
   return render(<LogsPanel {...props} />);
 };

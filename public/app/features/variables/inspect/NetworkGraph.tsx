@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
+
 import { GraphEdge, GraphNode } from './utils';
 
 interface OwnProps {
@@ -16,7 +17,7 @@ interface DispatchProps {}
 
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
-export const NetworkGraph: FC<Props> = ({ nodes, edges, direction, width, height, onDoubleClick }) => {
+export const NetworkGraph = ({ nodes, edges, direction, width, height, onDoubleClick }: Props) => {
   const network = useRef<any>(null);
   const ref = useRef(null);
 

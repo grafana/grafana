@@ -8,13 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/orgchannel"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/live/model"
+	"github.com/grafana/grafana/pkg/services/live/orgchannel"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var (
@@ -38,7 +39,7 @@ var (
 type Runner struct {
 	mu             sync.RWMutex
 	streams        map[int64]map[string]*NamespaceStream
-	publisher      models.ChannelPublisher
+	publisher      model.ChannelPublisher
 	localPublisher LocalPublisher
 	frameCache     FrameCache
 }
@@ -48,7 +49,7 @@ type LocalPublisher interface {
 }
 
 // NewRunner creates new Runner.
-func NewRunner(publisher models.ChannelPublisher, localPublisher LocalPublisher, frameCache FrameCache) *Runner {
+func NewRunner(publisher model.ChannelPublisher, localPublisher LocalPublisher, frameCache FrameCache) *Runner {
 	return &Runner{
 		publisher:      publisher,
 		localPublisher: localPublisher,
@@ -135,7 +136,7 @@ type NamespaceStream struct {
 	orgID          int64
 	scope          string
 	namespace      string
-	publisher      models.ChannelPublisher
+	publisher      model.ChannelPublisher
 	localPublisher LocalPublisher
 	frameCache     FrameCache
 	rateMu         sync.RWMutex
@@ -155,7 +156,7 @@ type ManagedChannel struct {
 }
 
 // NewNamespaceStream creates new NamespaceStream.
-func NewNamespaceStream(orgID int64, scope string, namespace string, publisher models.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
+func NewNamespaceStream(orgID int64, scope string, namespace string, publisher model.ChannelPublisher, localPublisher LocalPublisher, schemaUpdater FrameCache) *NamespaceStream {
 	return &NamespaceStream{
 		orgID:          orgID,
 		scope:          scope,
@@ -234,13 +235,13 @@ func (s *NamespaceStream) minuteRate(path string) int64 {
 	return total
 }
 
-func (s *NamespaceStream) GetHandlerForPath(_ string) (models.ChannelHandler, error) {
+func (s *NamespaceStream) GetHandlerForPath(_ string) (model.ChannelHandler, error) {
 	return s, nil
 }
 
-func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *models.SignedInUser, e models.SubscribeEvent) (models.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	reply := models.SubscribeReply{}
-	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.OrgId, e.Channel)
+func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *user.SignedInUser, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
+	reply := model.SubscribeReply{}
+	frameJSON, ok, err := s.frameCache.GetFrame(ctx, u.OrgID, e.Channel)
 	if err != nil {
 		return reply, 0, err
 	}
@@ -250,6 +251,6 @@ func (s *NamespaceStream) OnSubscribe(ctx context.Context, u *models.SignedInUse
 	return reply, backend.SubscribeStreamStatusOK, nil
 }
 
-func (s *NamespaceStream) OnPublish(_ context.Context, _ *models.SignedInUser, _ models.PublishEvent) (models.PublishReply, backend.PublishStreamStatus, error) {
-	return models.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
+func (s *NamespaceStream) OnPublish(_ context.Context, _ *user.SignedInUser, _ model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
+	return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 }

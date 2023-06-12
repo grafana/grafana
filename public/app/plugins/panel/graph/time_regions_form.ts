@@ -1,4 +1,5 @@
 import coreModule from 'app/angular/core_module';
+
 import { getColorModes } from './time_region_manager';
 
 export class TimeRegionFormCtrl {
@@ -7,7 +8,8 @@ export class TimeRegionFormCtrl {
   disabled = false;
   colorModes: any;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor(private $scope: any) {}
 
   $onInit() {

@@ -4,15 +4,19 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestQueryInterval(t *testing.T) {
@@ -126,27 +130,31 @@ type fakeIntervalTestReqHandler struct {
 	verifier queryIntervalVerifier
 }
 
-//nolint: staticcheck // legacydata.DataResponse deprecated
-func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *models.DataSource, query legacydata.DataQuery) (
+//nolint:staticcheck // legacydata.DataResponse deprecated
+func (rh fakeIntervalTestReqHandler) HandleRequest(ctx context.Context, dsInfo *datasources.DataSource, query legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	q := query.Queries[0]
 	rh.verifier(q)
 	return rh.response, nil
 }
 
-//nolint: staticcheck // legacydata.DataResponse deprecated
+//nolint:staticcheck // legacydata.DataResponse deprecated
 func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejson.Json, queryModel string, verifier func(query legacydata.DataSubQuery)) {
 	t.Run("desc", func(t *testing.T) {
-		bus.AddHandler("test", func(ctx context.Context, query *models.GetDataSourceQuery) error {
-			query.Result = &models.DataSource{Id: 1, Type: "graphite", JsonData: dataSourceJsonData}
-			return nil
-		})
+		db := dbtest.NewFakeDB()
+		store := alerting.ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil, featuremgmt.WithFeatures())
 
 		ctx := &queryIntervalTestContext{}
 		ctx.result = &alerting.EvalContext{
 			Ctx:              context.Background(),
 			Rule:             &alerting.Rule{},
 			RequestValidator: &validations.OSSPluginRequestValidator{},
+			Store:            store,
+			DatasourceService: &fd.FakeDataSourceService{
+				DataSources: []*datasources.DataSource{
+					{ID: 1, Type: datasources.DS_GRAPHITE, JsonData: dataSourceJsonData},
+				},
+			},
 		}
 
 		jsonModel, err := simplejson.NewJson([]byte(`{
@@ -176,7 +184,6 @@ func applyScenario(t *testing.T, timeRange string, dataSourceJsonData *simplejso
 			},
 			verifier: verifier,
 		}
-
 		_, err = condition.Eval(ctx.result, reqHandler)
 
 		require.Nil(t, err)

@@ -1,11 +1,12 @@
-import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 import { cx, css } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '../../themes';
-// @ts-ignore
+import React, { forwardRef, HTMLAttributes, useCallback } from 'react';
 import Highlighter from 'react-highlight-words';
-import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
+
+import { GrafanaTheme2 } from '@grafana/data';
+
+import { useTheme2 } from '../../themes';
 import { HighlightPart } from '../../types';
+import { PartialHighlighter } from '../Typeahead/PartialHighlighter';
 
 type OnLabelClick = (name: string, value: string | undefined, event: React.MouseEvent<HTMLElement>) => void;
 
@@ -24,7 +25,7 @@ interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
 /**
  * @internal
  */
-export const Label = forwardRef<HTMLElement, Props>(
+export const Label = forwardRef<HTMLButtonElement, Props>(
   (
     {
       name,
@@ -63,12 +64,13 @@ export const Label = forwardRef<HTMLElement, Props>(
     }
 
     return (
-      <span
+      <button
         key={text}
         ref={ref}
         onClick={onLabelClick}
         style={style}
         title={title || text}
+        type="button"
         role="option"
         aria-selected={!!active}
         className={cx(
@@ -91,7 +93,7 @@ export const Label = forwardRef<HTMLElement, Props>(
             highlightClassName={styles.matchHighLight}
           />
         )}
-      </span>
+      </button>
     );
   }
 );
@@ -105,11 +107,12 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.size.sm};
     line-height: ${theme.typography.bodySmall.lineHeight};
     background-color: ${theme.colors.background.secondary};
-    color: ${theme.colors.text};
+    color: ${theme.colors.text.primary};
     white-space: nowrap;
     text-shadow: none;
     padding: ${theme.spacing(0.5)};
     border-radius: ${theme.shape.borderRadius()};
+    border: none;
     margin-right: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(0.5)};
   `,
@@ -137,8 +140,8 @@ const getLabelStyles = (theme: GrafanaTheme2) => ({
   `,
   matchHighLight: css`
     background: inherit;
-    color: ${theme.colors.primary.text};
-    background-color: ${theme.colors.primary.transparent};
+    color: ${theme.components.textHighlight.text};
+    background-color: ${theme.components.textHighlight.background};
   `,
   hidden: css`
     opacity: 0.6;

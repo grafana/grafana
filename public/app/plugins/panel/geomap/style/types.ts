@@ -1,14 +1,15 @@
+import { Style } from 'ol/style';
+
 import {
   ColorDimensionConfig,
-  DimensionSupplier,
   ResourceDimensionConfig,
   ResourceDimensionMode,
   ScaleDimensionConfig,
   ScalarDimensionConfig,
   ScalarDimensionMode,
   TextDimensionConfig,
-} from 'app/features/dimensions';
-import { Style } from 'ol/style';
+} from '@grafana/schema';
+import { DimensionSupplier } from 'app/features/dimensions';
 
 export enum GeometryTypeId {
   Point = 'point',

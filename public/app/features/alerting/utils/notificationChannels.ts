@@ -1,4 +1,5 @@
 import memoizeOne from 'memoize-one';
+
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { NotificationChannelDTO, NotificationChannelType } from 'app/types';

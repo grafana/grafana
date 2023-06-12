@@ -1,0 +1,506 @@
+import { css } from '@emotion/css';
+import { Meta } from '@storybook/addon-docs/blocks';
+import { PanelChrome } from './PanelChrome';
+
+import { action } from '@storybook/addon-actions';
+import { HorizontalGroup } from '../Layout/Layout';
+import { LoadingState } from '@grafana/data';
+import { Button } from '../Button';
+import { Menu } from '../Menu/Menu';
+import { IconButton } from '../IconButton/IconButton';
+
+<Meta title="MDX|PanelChrome" component={PanelChrome} />
+
+# PanelChrome
+
+Component used for rendering content wrapped in the same style as grafana panels
+
+### Basic Usage: Title, Description and Content
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  description="Here I will put a description that explains a bit more this panel"
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+  <PanelChrome
+    title="My awesome panel title"
+    description="Here I will put a description that explains a bit more this panel"
+    width={400}
+    height={200}
+  >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>
+
+### Menu: Standard & Hover
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  hoverHeader={<true || false>}
+  menu={() => (
+    <Menu>
+      <Menu.Item label="View" icon="eye" />
+      <Menu.Item label="Edit" icon="edit" />
+      <Menu.Item label="Share" icon="share-alt" />
+      <Menu.Divider />
+      <Menu.Item label="Remove" icon="trash-alt" />
+    </Menu>
+  )}
+  description="Here I will put a description that explains a bit more this panel"
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+
+  <HorizontalGroup spacing="md" align="flex-start" wrap>
+  <PanelChrome
+    title="My awesome panel title"
+    menu={() => (
+       <Menu>
+          <Menu.Item label="View" icon="eye" />
+          <Menu.Item label="Edit" icon="edit" />
+          <Menu.Item label="Share" icon="share-alt" />
+          <Menu.Divider />
+          <Menu.Item label="Remove" icon="trash-alt" />
+        </Menu>
+       )}
+    description="Here I will put a description that explains a bit more this panel"
+    width={400}
+    height={200}
+
+>
+
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content with fixed header
+        </div>
+      );
+    }}
+
+  </PanelChrome>
+
+  <PanelChrome
+    title="My awesome panel title"
+    menu={() => (
+       <Menu>
+          <Menu.Item label="View" icon="eye" />
+          <Menu.Item label="Edit" icon="edit" />
+          <Menu.Item label="Share" icon="share-alt" />
+          <Menu.Divider />
+          <Menu.Item label="Remove" icon="trash-alt" />
+        </Menu>
+       )}
+    hoverHeader={true}
+    description="Here I will put a description that explains a bit more this panel"
+    width={400}
+    height={200}
+
+>
+
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content with hoverHeader=true
+        </div>
+      );
+    }}
+
+  </PanelChrome>
+</HorizontalGroup>
+</Preview>
+
+### States: Loading , Streaming, Error
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  loadingState={<Loading.Loading || Loading.Streaming>}
+  statusMessage='Error text'
+  statusMessageOnClick={action('ErrorIndicator: onClick fired')}
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'rgba(230,0,0,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+
+  <HorizontalGroup spacing="md" align="flex-start" wrap>
+  <PanelChrome
+    title="My awesome panel title"
+    loadingState={LoadingState.Loading}
+    width={400}
+    height={200}
+
+>
+
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Data is loading
+        </div>
+      );
+    }}
+
+  </PanelChrome>
+
+  <PanelChrome
+    title="My awesome panel title"
+    loadingState={LoadingState.Streaming}
+    width={400}
+    height={200}
+  >
+
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Data is Streaming
+        </div>
+      );
+    }}
+
+  </PanelChrome>
+
+  <PanelChrome
+    title="My awesome panel title"
+    statusMessage='Error text'
+    statusMessageOnClick={action('ErrorIndicator: onClick fired')}
+    width={400}
+    height={200}
+  >
+
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          There is an error
+        </div>
+      );
+    }}
+
+  </PanelChrome>
+</HorizontalGroup>
+</Preview>
+
+### Extra options? Title items and actions
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  titleItems={
+    <>
+      <IconButton
+        className={css`
+          margin-right: 10px;
+        `}
+        name="github"
+        variant="secondary"
+        tooltip="extra content to render"
+      />
+      <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
+    </>
+  }
+  actions={
+    <Button size="sm" variant="secondary" key="A">
+      Breakdown
+    </Button>
+  }
+  width={500}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'rgba(230,0,0,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+  <PanelChrome
+    title="My awesome panel title"
+    titleItems={
+      <>
+        <IconButton
+          className={css`
+            margin-right: 10px;
+          `}
+          name="github"
+          variant="secondary"
+          tooltip="extra content to render"
+        />
+        <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content to render" />
+      </>
+    }
+    actions={
+      <Button size="sm" variant="secondary" key="A">
+        Breakdown
+      </Button>
+    }
+    width={500}
+    height={200}
+  >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>
+
+### Migration from old PanelChrome (before v9.4.0)
+
+#### Before
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  leftItems={[<PanelChrome.LoadingIndicator loading={isRefreshing} onCancel={onCancelQuery} key="loading-indicator" />]}
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+  <PanelChrome
+    title="My awesome panel title"
+    leftItems={[
+      <PanelChrome.LoadingIndicator
+        loading={true}
+        onCancel={action('CancelQuery: onClick fired')}
+        key="loading-indicator"
+      />,
+    ]}
+    width={400}
+    height={200}
+  >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>
+#### After
+
+```tsx
+<PanelChrome
+  title="My awesome panel title"
+  loadingState={LoadingState.Loading}
+  onCancelQuery={onCancelQuery}
+  width={400}
+  height={200}
+>
+  {(innerwidth, innerheight) => {
+    return (
+      <div
+        style={{
+          width: innerwidth,
+          height: innerheight,
+          background: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        New panel with old API
+      </div>
+    );
+  }}
+</PanelChrome>
+```
+
+<Preview>
+  <PanelChrome
+    title="My awesome panel title"
+    loadingState={LoadingState.Loading}
+    onCancelQuery={action('CancelQuery: onClick fired')}
+    width={400}
+    height={200}
+  >
+    {(innerwidth, innerheight) => {
+      return (
+        <div
+          style={{
+            width: innerwidth,
+            height: innerheight,
+            background: 'rgba(230,0,0,0.05)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          Content
+        </div>
+      );
+    }}
+  </PanelChrome>
+</Preview>

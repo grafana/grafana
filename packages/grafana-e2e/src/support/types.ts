@@ -1,5 +1,7 @@
 import { CssSelector, FunctionSelector, Selectors, StringSelector, UrlSelector } from '@grafana/e2e-selectors';
+
 import { e2e } from '../index';
+
 import { Selector } from './selector';
 import { fromBaseUrl } from './url';
 
@@ -80,7 +82,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
       e2eObjects[key] = function (textOrOptions?: string | CypressOptions, options?: CypressOptions) {
         // the input can only be ()
         if (arguments.length === 0) {
-          const selector = value((undefined as unknown) as string);
+          const selector = value(undefined as unknown as string);
 
           logOutput(selector);
           return e2e().get(selector);
@@ -97,7 +99,7 @@ const processSelectors = <S extends Selectors>(e2eObjects: E2EFunctions<S>, sele
             logOutput(selector);
             return e2e().get(selector);
           }
-          const selector = value((undefined as unknown) as string);
+          const selector = value(undefined as unknown as string);
 
           logOutput(selector);
           return e2e().get(selector, textOrOptions);

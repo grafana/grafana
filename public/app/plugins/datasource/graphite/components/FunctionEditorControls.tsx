@@ -1,5 +1,7 @@
 import React, { Suspense } from 'react';
+
 import { Icon, Tooltip } from '@grafana/ui';
+
 import { FuncInstance } from '../gfunc';
 
 export interface FunctionEditorControlsProps {
@@ -9,11 +11,9 @@ export interface FunctionEditorControlsProps {
 }
 
 const FunctionDescription = React.lazy(async () => {
-  // @ts-ignore
-  const { default: rst2html } = await import(/* webpackChunkName: "rst2html" */ 'rst2html');
   return {
     default(props: { description?: string }) {
-      return <div dangerouslySetInnerHTML={{ __html: rst2html(props.description ?? '') }} />;
+      return <div>{props.description}</div>;
     },
   };
 });

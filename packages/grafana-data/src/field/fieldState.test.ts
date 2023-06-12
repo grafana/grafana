@@ -1,6 +1,7 @@
-import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType } from '../types';
-import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 import { toDataFrame } from '../dataframe';
+import { DataFrame, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
+
+import { getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -41,7 +42,8 @@ describe('getFrameDisplayName', () => {
     const frame = toDataFrame({
       fields: [{ name: 'value', labels: { server: 'A' } }],
     });
-    expect(getFrameDisplayName(frame)).toBe('{server="A"}');
+
+    expect(getFrameDisplayName(frame)).toBe('value A');
   });
 
   it('Should return field names when labels object exist but has no keys', () => {
@@ -49,6 +51,24 @@ describe('getFrameDisplayName', () => {
       fields: [{ name: 'value', labels: {} }],
     });
     expect(getFrameDisplayName(frame)).toBe('value');
+  });
+
+  it('Should return value field name if single value field', () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: TIME_SERIES_TIME_FIELD_NAME, values: [1, 2, 3], type: FieldType.time },
+        {
+          name: TIME_SERIES_VALUE_FIELD_NAME,
+          values: [1, 2, 3],
+          type: FieldType.number,
+          config: {
+            displayName: 'ServerA',
+          },
+        },
+      ],
+    });
+
+    expect(getFrameDisplayName(frame, 1)).toBe('ServerA');
   });
 });
 

@@ -1,0 +1,103 @@
+{
+  "took": 5,
+  "responses": [
+    {
+      "took": 5,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 188,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": []
+      },
+      "aggregations": {
+        "2": {
+          "buckets": [
+            {
+              "key_as_string": "1669633140000",
+              "key": 1669633140000,
+              "doc_count": 34,
+              "1": {
+                "value": 97.96025848388672
+              }
+            },
+            {
+              "key_as_string": "1669633200000",
+              "key": 1669633200000,
+              "doc_count": 74,
+              "1": {
+                "value": 98.74357604980469
+              }
+            },
+            {
+              "key_as_string": "1669633260000",
+              "key": 1669633260000,
+              "doc_count": 80,
+              "1": {
+                "value": 99.94505310058594
+              }
+            }
+          ]
+        }
+      },
+      "status": 200
+    },
+    {
+      "took": 4,
+      "timed_out": false,
+      "_shards": {
+        "total": 1,
+        "successful": 1,
+        "skipped": 0,
+        "failed": 0
+      },
+      "hits": {
+        "total": {
+          "value": 188,
+          "relation": "eq"
+        },
+        "max_score": null,
+        "hits": []
+      },
+      "aggregations": {
+        "2": {
+          "buckets": [
+            {
+              "key_as_string": "1669633140000",
+              "key": 1669633140000,
+              "doc_count": 34,
+              "1": {
+                "value": 1.8121581077575684
+              }
+            },
+            {
+              "key_as_string": "1669633200000",
+              "key": 1669633200000,
+              "doc_count": 74,
+              "1": {
+                "value": 0.776007354259491
+              }
+            },
+            {
+              "key_as_string": "1669633260000",
+              "key": 1669633260000,
+              "doc_count": 80,
+              "1": {
+                "value": 0.26452451944351196
+              }
+            }
+          ]
+        }
+      },
+      "status": 200
+    }
+  ]
+}

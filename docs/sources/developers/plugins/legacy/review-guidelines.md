@@ -1,7 +1,8 @@
-+++
-title = "Legacy review guidelines"
-aliases = ["/docs/grafana/latest/plugins/developing/plugin-review-guidelines/"]
-+++
+---
+aliases:
+  - ../../../plugins/developing/plugin-review-guidelines/
+title: Legacy review guidelines
+---
 
 # Legacy review guidelines
 
@@ -160,7 +161,7 @@ For more information about data sources, refer to the [basic guide for data sour
 
 If possible, any passwords or secrets should be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
 
-Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins.md" >}}) works.
+Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins/" >}}) works.
 
 If using the proxy feature, the Configuration page should use the `secureJsonData` blob like this:
 

@@ -1,10 +1,13 @@
-import React, { FC, useCallback } from 'react';
+import { css } from '@emotion/css';
+import React, { useCallback } from 'react';
+
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { ScalarDimensionConfig, ScalarDimensionMode, ScalarDimensionOptions } from '../types';
+import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
-import { NumberInput } from './NumberInput';
-import { css } from '@emotion/css';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+
+import { ScalarDimensionOptions } from '../types';
 
 const fixedValueOption: SelectableValue<string> = {
   label: 'Fixed value',
@@ -16,10 +19,9 @@ const scalarOptions = [
   { label: 'Clamped', value: ScalarDimensionMode.Clamped, description: 'Use field values, clamped to max and min' },
 ];
 
-export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>> = (
-  props
-) => {
-  const { value, context, onChange, item } = props;
+type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions>;
+
+export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;
 
   const DEFAULT_VALUE = 0;
@@ -52,7 +54,7 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
   );
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ScalarDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -84,7 +86,6 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
           </InlineField>
         </InlineFieldRow>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

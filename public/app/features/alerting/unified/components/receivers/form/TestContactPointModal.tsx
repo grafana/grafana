@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { Modal, Button, Label, useStyles2, RadioButtonGroup } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
-import { useForm, FormProvider } from 'react-hook-form';
-import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
 import { css } from '@emotion/css';
+import React, { useState } from 'react';
+import { useForm, FormProvider } from 'react-hook-form';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Modal, Button, Label, useStyles2, RadioButtonGroup } from '@grafana/ui';
+import { TestReceiversAlert } from 'app/plugins/datasource/alertmanager/types';
+import { Annotations, Labels } from 'app/types/unified-alerting-dto';
+
 import AnnotationsField from '../../rule-editor/AnnotationsField';
 import LabelsField from '../../rule-editor/LabelsField';
-import { Annotations, Labels } from 'app/types/unified-alerting-dto';
 
 interface Props {
   isOpen: boolean;

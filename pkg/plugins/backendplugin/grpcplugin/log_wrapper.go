@@ -3,15 +3,15 @@ package grpcplugin
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 
-	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/hashicorp/go-hclog"
+
+	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type logWrapper struct {
-	Logger glog.Logger
+	Logger plog.Logger
 
 	name        string
 	impliedArgs []interface{}
@@ -159,5 +159,5 @@ func (lw logWrapper) StandardLogger(ops *hclog.StandardLoggerOptions) *log.Logge
 
 // Return a value that conforms to io.Writer, which can be passed into log.SetOutput()
 func (lw logWrapper) StandardWriter(opts *hclog.StandardLoggerOptions) io.Writer {
-	return ioutil.Discard
+	return io.Discard
 }

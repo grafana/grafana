@@ -10,15 +10,14 @@ import (
 	"strconv"
 	"strings"
 
-	mssql "github.com/denisenkom/go-mssqldb"
+	mssql "github.com/grafana/go-mssqldb"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
@@ -26,29 +25,18 @@ import (
 
 var logger = log.New("tsdb.mssql")
 
-const pluginID = "mssql"
-
 type Service struct {
 	im instancemgmt.InstanceManager
 }
 
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
-	s := &Service{
+func ProvideService(cfg *setting.Cfg) *Service {
+	return &Service{
 		im: datasource.NewInstanceManager(newInstanceSettings(cfg)),
 	}
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-	}
-	return s, nil
 }
 
-func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDataSourceHandler(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +45,7 @@ func (s *Service) getDataSourceHandler(pluginCtx backend.PluginContext) (*sqleng
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -67,21 +55,29 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
-			Encrypt:         "false",
+			MaxOpenConns:      cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:      cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:   cfg.SqlDatasourceMaxConnLifetimeDefault,
+			Encrypt:           "false",
+			ConnectionTimeout: 0,
+			SecureDSProxy:     false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -93,20 +89,27 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
+		}
+
+		driverName := "mssql"
+		// register a new proxy driver if the secure socks proxy is enabled
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createMSSQLProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "mssql",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := mssqlQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := mssqlQueryResultTransformer{}
 
 		return sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
@@ -158,8 +161,12 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		args = append(args, "port", addr.Port)
 	}
-
 	logger.Debug("Generating connection string", args...)
+
+	encrypt := dsInfo.JsonData.Encrypt
+	tlsSkipVerify := dsInfo.JsonData.TlsSkipVerify
+	hostNameInCertificate := dsInfo.JsonData.Servername
+	certificate := dsInfo.JsonData.RootCertFile
 	connStr := fmt.Sprintf("server=%s;database=%s;user id=%s;password=%s;",
 		addr.Host,
 		dsInfo.Database,
@@ -170,30 +177,53 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
 	if addr.Port != "0" {
 		connStr += fmt.Sprintf("port=%s;", addr.Port)
 	}
+	if encrypt == "true" {
+		connStr += fmt.Sprintf("encrypt=%s;TrustServerCertificate=%t;", encrypt, tlsSkipVerify)
+		if hostNameInCertificate != "" {
+			connStr += fmt.Sprintf("hostNameInCertificate=%s;", hostNameInCertificate)
+		}
 
-	if dsInfo.JsonData.Encrypt == "" {
-		dsInfo.JsonData.Encrypt = "false"
-	}
-
-	if dsInfo.JsonData.Encrypt != "false" {
+		if certificate != "" {
+			connStr += fmt.Sprintf("certificate=%s;", certificate)
+		}
+	} else if encrypt == "disable" {
 		connStr += fmt.Sprintf("encrypt=%s;", dsInfo.JsonData.Encrypt)
 	}
+
+	if dsInfo.JsonData.ConnectionTimeout != 0 {
+		connStr += fmt.Sprintf("connection timeout=%d;", dsInfo.JsonData.ConnectionTimeout)
+	}
+
 	return connStr, nil
 }
 
-type mssqlQueryResultTransformer struct {
-	log log.Logger
-}
+type mssqlQueryResultTransformer struct{}
 
-func (t *mssqlQueryResultTransformer) TransformQueryError(err error) error {
+func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err error) error {
 	// go-mssql overrides source error, so we currently match on string
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
-		t.log.Error("query error", "err", err)
+		logger.Error("Query error", "error", err)
 		return sqleng.ErrConnectionFailed
 	}
 
 	return err
+}
+
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDataSourceHandler(ctx, req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

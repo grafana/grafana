@@ -1,22 +1,26 @@
-import React, { FC } from 'react';
+import React from 'react';
 import { Cell } from 'react-table';
-import { Field } from '@grafana/data';
-import { TableFilterActionCallback } from './types';
+
+import { TimeRange } from '@grafana/data';
+
 import { TableStyles } from './styles';
+import { GrafanaTableColumn, TableFilterActionCallback } from './types';
 
 export interface Props {
   cell: Cell;
-  field: Field;
   tableStyles: TableStyles;
   onCellFilterAdded?: TableFilterActionCallback;
   columnIndex: number;
   columnCount: number;
+  timeRange?: TimeRange;
+  userProps?: object;
 }
 
-export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded, columnIndex, columnCount }) => {
+export const TableCell = ({ cell, tableStyles, onCellFilterAdded, timeRange, userProps }: Props) => {
   const cellProps = cell.getCellProps();
+  const field = (cell.column as unknown as GrafanaTableColumn).field;
 
-  if (!field.display) {
+  if (!field?.display) {
     return null;
   }
 
@@ -27,16 +31,13 @@ export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdd
 
   let innerWidth = ((cell.column.width as number) ?? 24) - tableStyles.cellPadding * 2;
 
-  // last child sometimes have extra padding if there is a non overlay scrollbar
-  if (columnIndex === columnCount - 1) {
-    innerWidth -= tableStyles.lastChildExtraPadding;
-  }
-
   return cell.render('Cell', {
     field,
     tableStyles,
     onCellFilterAdded,
     cellProps,
     innerWidth,
+    timeRange,
+    userProps,
   }) as React.ReactElement;
 };

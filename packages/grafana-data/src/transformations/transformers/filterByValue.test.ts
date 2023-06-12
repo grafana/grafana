@@ -1,8 +1,10 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, FieldType, MatcherConfig } from '../../types';
-import { ArrayVector } from '../../vector';
-import { transformDataFrame } from '../transformDataFrame';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { DataTransformerConfig, FieldType, MatcherConfig } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ValueMatcherID } from '../matchers/ids';
+import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
+import { transformDataFrame } from '../transformDataFrame';
+
 import {
   FilterByValueMatch,
   filterByValueTransformer,
@@ -10,15 +12,13 @@ import {
   FilterByValueType,
 } from './filterByValue';
 import { DataTransformerID } from './ids';
-import { ValueMatcherID } from '../matchers/ids';
-import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
   length: 7,
   fields: [
-    { name: 'time', type: FieldType.time, values: new ArrayVector([1000, 2000, 3000, 4000, 5000, 6000, 7000]) },
-    { name: 'numbers', type: FieldType.number, values: new ArrayVector([1, 2, 3, 4, 5, 6, 7]) },
+    { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000, 5000, 6000, 7000] },
+    { name: 'numbers', type: FieldType.number, values: [1, 2, 3, 4, 5, 6, 7] },
   ],
 });
 
@@ -55,13 +55,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([6000, 7000]),
+          values: [6000, 7000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([6, 7]),
+          values: [6, 7],
           state: {},
         },
       ]);
@@ -96,13 +96,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000, 5000]),
+          values: [1000, 2000, 3000, 4000, 5000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 5]),
+          values: [1, 2, 3, 4, 5],
           state: {},
         },
       ]);
@@ -146,13 +146,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([1000, 2000, 3000, 4000, 7000]),
+          values: [1000, 2000, 3000, 4000, 7000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([1, 2, 3, 4, 7]),
+          values: [1, 2, 3, 4, 7],
           state: {},
         },
       ]);
@@ -196,13 +196,13 @@ describe('FilterByValue transformer', () => {
         {
           name: 'time',
           type: FieldType.time,
-          values: new ArrayVector([4000, 5000]),
+          values: [4000, 5000],
           state: {},
         },
         {
           name: 'numbers',
           type: FieldType.number,
-          values: new ArrayVector([4, 5]),
+          values: [4, 5],
           state: {},
         },
       ]);

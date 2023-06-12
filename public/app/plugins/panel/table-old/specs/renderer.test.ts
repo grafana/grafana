@@ -1,9 +1,11 @@
 import { each } from 'lodash';
-import TableModel from 'app/core/table_model';
-import { TableRenderer } from '../renderer';
+
 import { ScopedVars, TimeZone } from '@grafana/data';
-import { ColumnRender } from '../types';
 import { getTheme } from '@grafana/ui';
+import TableModel from 'app/core/TableModel';
+
+import { TableRenderer } from '../renderer';
+import { ColumnRender } from '../types';
 
 const utc: TimeZone = 'utc';
 
@@ -16,7 +18,7 @@ const templateSrv = {
     if (scopedVars) {
       // For testing variables replacement in link
       each(scopedVars, (val, key) => {
-        value = value.replace('$' + key, val.value);
+        value = value.replace('$' + key, val?.value);
       });
     }
     return value;
@@ -248,7 +250,7 @@ describe('when rendering table', () => {
       expect(html).toBe('<td>1.23 kb/s</td>');
     });
 
-    it('number column should be formated', () => {
+    it('number column should be formatted', () => {
       const html = renderer.renderCell(1, 0, 1230);
       expect(html).toBe('<td>1.230 s</td>');
     });

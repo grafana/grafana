@@ -1,21 +1,19 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { SQLOptions } from 'app/features/plugins/sql/types';
 
-export interface MssqlQueryForInterpolation {
-  alias?: any;
-  format?: any;
-  rawSql?: any;
-  refId: any;
-  hide?: any;
+export enum MSSQLAuthenticationType {
+  sqlAuth = 'SQL Server Authentication',
+  windowsAuth = 'Windows Authentication',
 }
 
-export type ResultFormat = 'time_series' | 'table';
-
-export interface MssqlQuery extends DataQuery {
-  alias?: string;
-  format?: ResultFormat;
-  rawSql?: any;
+export enum MSSQLEncryptOptions {
+  disable = 'disable',
+  false = 'false',
+  true = 'true',
 }
-
-export interface MssqlOptions extends DataSourceJsonData {
-  timeInterval: string;
+export interface MssqlOptions extends SQLOptions {
+  authenticationType?: MSSQLAuthenticationType;
+  encrypt?: MSSQLEncryptOptions;
+  sslRootCertFile?: string;
+  serverName?: string;
+  connectionTimeout?: number;
 }

@@ -1,7 +1,5 @@
-import { KeyValue } from '.';
-
 /**
- * With FGAC, the backend will return additional access control metadata to objects.
+ * With RBAC, the backend will return additional access control metadata to objects.
  * These metadata will contain user permissions associated to a given resource.
  *
  * For example:
@@ -10,5 +8,5 @@ import { KeyValue } from '.';
  * }
  */
 export interface WithAccessControlMetadata {
-  accessControl?: KeyValue<boolean>;
+  accessControl?: Record<string, boolean>;
 }

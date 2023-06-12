@@ -1,7 +1,8 @@
-import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
-import { applyFieldOverrides } from './fieldOverrides';
-import { MutableDataFrame, toDataFrame } from '../dataframe';
+import { createDataFrame, toDataFrame } from '../dataframe';
 import { createTheme } from '../themes';
+
+import { applyFieldOverrides } from './fieldOverrides';
+import { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 
 describe('getFieldDisplayValuesProxy', () => {
   const shortTimeField = [{ name: 'Time', values: [1, 2, 3] }];
@@ -84,7 +85,7 @@ describe('getFieldDisplayValuesProxy', () => {
 
   it('should use default display processor if display is not defined', () => {
     const p = getFieldDisplayValuesProxy({
-      frame: new MutableDataFrame({ fields: [{ name: 'test', values: [1, 2] }] }),
+      frame: createDataFrame({ fields: [{ name: 'test', values: [1, 2] }] }),
       rowIndex: 0,
     });
     expect(p.test.text).toBe('1');

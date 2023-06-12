@@ -1,18 +1,14 @@
-import React, { FC, useCallback, useState } from 'react';
-import {
-  FieldNamePickerConfigSettings,
-  GrafanaTheme2,
-  StandardEditorProps,
-  StandardEditorsRegistryItem,
-} from '@grafana/data';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Button, Modal, Input, useStyles2 } from '@grafana/ui';
-import SVG from 'react-inlinesvg';
-import { css } from '@emotion/css';
+import React, { useCallback } from 'react';
 
-import { ResourceDimensionConfig, ResourceDimensionMode, ResourceDimensionOptions } from '../types';
-import { FieldNamePicker } from '../../../../../packages/grafana-ui/src/components/MatchersUI/FieldNamePicker';
-import { ResourcePicker } from './ResourcePicker';
+import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
+import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
+import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
+
+import { ResourcePicker } from './ResourcePicker';
 
 const resourceOptions = [
   { label: 'Fixed', value: ResourceDimensionMode.Fixed, description: 'Fixed value' },
@@ -24,16 +20,14 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
   settings: {},
 } as any;
 
-export const ResourceDimensionEditor: FC<
-  StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
-> = (props) => {
+export const ResourceDimensionEditor = (
+  props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
+) => {
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
-  const [isOpen, setOpen] = useState(false);
-  const styles = useStyles2(getStyles);
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ResourceDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -43,7 +37,7 @@ export const ResourceDimensionEditor: FC<
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field = '') => {
       onChange({
         ...value,
         field,
@@ -58,7 +52,6 @@ export const ResourceDimensionEditor: FC<
         ...value,
         fixed: fixed ?? '',
       });
-      setOpen(false);
     },
     [onChange, value]
   );
@@ -68,16 +61,12 @@ export const ResourceDimensionEditor: FC<
     onChange({ mode: ResourceDimensionMode.Fixed, fixed: '', field: '' });
   };
 
-  const openModal = useCallback(() => {
-    setOpen(true);
-  }, []);
-
   const mode = value?.mode ?? ResourceDimensionMode.Fixed;
   const showSourceRadio = item.settings?.showSourceRadio ?? true;
-  const mediaType = item.settings?.resourceType ?? 'icon';
+  const mediaType = item.settings?.resourceType ?? MediaType.Icon;
   const folderName = item.settings?.folderName ?? ResourceFolderName.Icon;
   let srcPath = '';
-  if (mediaType === 'icon') {
+  if (mediaType === MediaType.Icon) {
     if (value?.fixed) {
       srcPath = getPublicOrAbsoluteUrl(value.fixed);
     } else if (item.settings?.placeholderValue) {
@@ -87,17 +76,6 @@ export const ResourceDimensionEditor: FC<
 
   return (
     <>
-      {isOpen && (
-        <Modal isOpen={isOpen} title={`Select ${mediaType}`} onDismiss={() => setOpen(false)} closeOnEscape>
-          <ResourcePicker
-            onChange={onFixedChange}
-            value={value?.fixed}
-            mediaType={mediaType}
-            folderName={folderName}
-            setOpen={setOpen}
-          />
-        </Modal>
-      )}
       {showSourceRadio && (
         <InlineFieldRow>
           <InlineField label="Source" labelWidth={labelWidth} grow={true}>
@@ -118,17 +96,17 @@ export const ResourceDimensionEditor: FC<
         </InlineFieldRow>
       )}
       {mode === ResourceDimensionMode.Fixed && (
-        <InlineFieldRow onClick={openModal} className={styles.pointer}>
-          <InlineField label={null} grow>
-            <Input
-              value={niceName(value?.fixed) ?? ''}
-              placeholder={item.settings?.placeholderText ?? 'Select a value'}
-              readOnly={true}
-              prefix={srcPath && <SVG src={srcPath} className={styles.icon} />}
-              suffix={<Button icon="times" variant="secondary" fill="text" size="sm" onClick={onClear} />}
-            />
-          </InlineField>
-        </InlineFieldRow>
+        <ResourcePicker
+          onChange={onFixedChange}
+          onClear={onClear}
+          value={value?.fixed}
+          src={srcPath}
+          placeholder={item.settings?.placeholderText ?? 'Select a value'}
+          name={niceName(value?.fixed) ?? ''}
+          mediaType={mediaType}
+          folderName={folderName}
+          size={ResourcePickerSize.NORMAL}
+        />
       )}
       {mode === ResourceDimensionMode.Mapping && (
         <InlineFieldRow>
@@ -151,18 +129,3 @@ export function niceName(value?: string): string | undefined {
   }
   return value;
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  icon: css`
-    vertical-align: middle;
-    display: inline-block;
-    fill: currentColor;
-    max-width: 25px;
-  `,
-  pointer: css`
-    cursor: pointer;
-    input[readonly] {
-      cursor: pointer;
-    }
-  `,
-});

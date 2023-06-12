@@ -1,8 +1,9 @@
+import { escapeLabelValueInExactSelector } from '../../../language_utils';
+import { FUNCTIONS } from '../../../promql';
+
 import type { Situation, Label } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
-import { FUNCTIONS } from '../../../promql';
-import { escapeLabelValueInExactSelector } from '../../../language_utils';
 
 export type CompletionType = 'HISTORY' | 'FUNCTION' | 'METRIC_NAME' | 'DURATION' | 'LABEL_NAME' | 'LABEL_VALUE';
 
@@ -26,7 +27,8 @@ export type DataProvider = {
   getAllMetricNames: () => Promise<Metric[]>;
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
-  getSeries: (selector: string) => Promise<Record<string, string[]>>;
+  getSeriesValues: (name: string, match: string) => Promise<string[]>;
+  getSeriesLabels: (selector: string, otherLabels: Label[]) => Promise<string[]>;
 };
 
 // we order items like: history, functions, metrics
@@ -108,10 +110,7 @@ async function getLabelNames(
     return dataProvider.getAllLabelNames();
   } else {
     const selector = makeSelector(metric, otherLabels);
-    const data = await dataProvider.getSeries(selector);
-    const possibleLabelNames = Object.keys(data); // all names from prometheus
-    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
-    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+    return await dataProvider.getSeriesLabels(selector, otherLabels);
   }
 }
 
@@ -157,8 +156,7 @@ async function getLabelValues(
     return dataProvider.getLabelValues(labelName);
   } else {
     const selector = makeSelector(metric, otherLabels);
-    const data = await dataProvider.getSeries(selector);
-    return data[labelName] ?? [];
+    return await dataProvider.getSeriesValues(labelName, selector);
   }
 }
 

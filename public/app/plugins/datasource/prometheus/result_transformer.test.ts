@@ -1,5 +1,13 @@
-import { DataFrame, FieldType, DataQueryRequest, DataQueryResponse, MutableDataFrame } from '@grafana/data';
-import { transform, transformV2, transformDFToTable } from './result_transformer';
+import {
+  createDataFrame,
+  DataFrame,
+  DataQueryRequest,
+  DataQueryResponse,
+  FieldType,
+  PreferredVisualisationType,
+} from '@grafana/data';
+
+import { parseSampleValue, transform, transformDFToTable, transformV2 } from './result_transformer';
 import { PromQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -8,10 +16,16 @@ jest.mock('@grafana/runtime', () => ({
   }),
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: () => {
-        return { name: 'Tempo' };
+      getInstanceSettings: (uid: string) => {
+        const uids = ['Tempo', 'jaeger'];
+        return uids.find((u) => u === uid) ? { name: uid } : undefined;
       },
     };
+  },
+  config: {
+    featureToggles: {
+      prometheusDataplane: true,
+    },
   },
 }));
 
@@ -32,17 +46,54 @@ const matrixResponse = {
 };
 
 describe('Prometheus Result Transformer', () => {
+  describe('parse variants of "+Inf" and "-Inf" strings', () => {
+    it('+Inf', () => {
+      expect(parseSampleValue('+Inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('Inf', () => {
+      expect(parseSampleValue('Inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('inf', () => {
+      expect(parseSampleValue('inf')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('+Infinity', () => {
+      expect(parseSampleValue('+Infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('+infinity', () => {
+      expect(parseSampleValue('+infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+    it('infinity', () => {
+      expect(parseSampleValue('infinity')).toEqual(Number.POSITIVE_INFINITY);
+    });
+
+    it('-Inf', () => {
+      expect(parseSampleValue('-Inf')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-inf', () => {
+      expect(parseSampleValue('-inf')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-Infinity', () => {
+      expect(parseSampleValue('-Infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+
+    it('-infinity', () => {
+      expect(parseSampleValue('-infinity')).toEqual(Number.NEGATIVE_INFINITY);
+    });
+  });
+
   describe('transformV2', () => {
     it('results with time_series format should be enriched with preferredVisualisationType', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'time_series',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
           {
@@ -52,7 +103,7 @@ describe('Prometheus Result Transformer', () => {
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
       expect(series).toEqual({
         data: [{ fields: [], length: 2, meta: { preferredVisualisationType: 'graph' }, name: 'ALERTS', refId: 'A' }],
@@ -60,19 +111,87 @@ describe('Prometheus Result Transformer', () => {
       });
     });
 
+    it('dataplane handling, adds displayNameFromDs from calculateFieldDisplayName() when __name__ is the field name when legendFormat is auto', () => {
+      const request = {
+        targets: [
+          {
+            format: 'time_series',
+            refId: 'A',
+            legendFormat: '__auto',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                name: 'up',
+                labels: { __name__: 'up' },
+                config: {},
+                values: [1],
+              },
+            ],
+            length: 1,
+            refId: 'A',
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+            },
+          },
+        ],
+      } as unknown as DataQueryResponse;
+      const series = transformV2(response, request, {});
+      expect(series).toEqual({
+        data: [
+          {
+            fields: [
+              {
+                name: 'Time',
+                type: 'time',
+                values: [1],
+                typeInfo: { frame: 'time.Time' },
+              },
+              {
+                config: { displayNameFromDS: 'up' },
+                labels: { __name__: 'up' },
+                name: 'up',
+                values: [1],
+              },
+            ],
+            length: 1,
+            meta: {
+              type: 'timeseries-multi',
+              typeVersion: [0, 1],
+              preferredVisualisationType: 'graph',
+            },
+            refId: 'A',
+          },
+        ],
+        state: 'Done',
+      });
+    });
+
     it('results with table format should be transformed to table dataFrames', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'table',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -85,29 +204,29 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
 
       expect(series.data[0].fields[0].name).toEqual('Time');
       expect(series.data[0].fields[1].name).toEqual('label1');
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('Value');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus');
     });
 
     it('results with table format and multiple data frames should be transformed to 1 table dataFrame', () => {
-      const request = ({
+      const request = {
         targets: [
           {
             format: 'table',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -119,7 +238,7 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [2, 3, 7] },
@@ -132,7 +251,7 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, request, {});
 
       expect(series.data.length).toEqual(1);
@@ -141,12 +260,12 @@ describe('Prometheus Result Transformer', () => {
       expect(series.data[0].fields[2].name).toEqual('label2');
       expect(series.data[0].fields[3].name).toEqual('label3');
       expect(series.data[0].fields[4].name).toEqual('label4');
-      expect(series.data[0].fields[5].name).toEqual('Value #A');
-      expect(series.data[0].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[0].fields[5].name).toEqual('Value');
+      expect(series.data[0].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with table and time_series format should be correctly transformed', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'table',
@@ -157,11 +276,11 @@ describe('Prometheus Result Transformer', () => {
             refId: 'B',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -173,7 +292,7 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'B',
             fields: [
               { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -186,27 +305,27 @@ describe('Prometheus Result Transformer', () => {
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(2);
       expect(series.data[0].meta?.preferredVisualisationType).toEqual('graph');
       expect(series.data[1].fields.length).toEqual(4);
-      expect(series.data[1].meta?.preferredVisualisationType).toEqual('table');
+      expect(series.data[1].meta?.preferredVisualisationType).toEqual('rawPrometheus' as PreferredVisualisationType);
     });
 
     it('results with heatmap format should be correctly transformed', () => {
-      const options = ({
+      const options = {
         targets: [
           {
             format: 'heatmap',
             refId: 'A',
           },
         ],
-      } as unknown) as DataQueryRequest<PromQuery>;
-      const response = ({
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
         state: 'Done',
         data: [
-          new MutableDataFrame({
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
@@ -218,7 +337,19 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
@@ -230,7 +361,60 @@ describe('Prometheus Result Transformer', () => {
               },
             ],
           }),
-          new MutableDataFrame({
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+      expect(series.data[0].fields[1].name).toEqual('1');
+      expect(series.data[0].fields[2].name).toEqual('2');
+      expect(series.data[0].fields[3].name).toEqual('+Inf');
+    });
+
+    it('results with heatmap format from multiple queries should be correctly transformed', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+          {
+            format: 'heatmap',
+            refId: 'B',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+          createDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
@@ -238,23 +422,326 @@ describe('Prometheus Result Transformer', () => {
                 name: 'Value',
                 type: FieldType.number,
                 values: [30, 10, 40],
-                labels: { le: '3' },
+                labels: { le: '+Inf' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'B',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf' },
               },
             ],
           }),
         ],
-      } as unknown) as DataQueryResponse;
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+    });
+
+    it('results with heatmap format and multiple histograms should be grouped and de-accumulated by non-le labels', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          // 10
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1', additionalProperty: '10' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 30],
+                labels: { le: '2', additionalProperty: '10' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40],
+                labels: { le: '+Inf', additionalProperty: '10' },
+              },
+            ],
+          }),
+          // 20
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [0, 10, 10],
+                labels: { le: '1', additionalProperty: '20' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [20, 10, 40],
+                labels: { le: '2', additionalProperty: '20' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 60],
+                labels: { le: '+Inf', additionalProperty: '20' },
+              },
+            ],
+          }),
+          // 30
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 30, 60],
+                labels: { le: '1', additionalProperty: '30' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 40, 60],
+                labels: { le: '2', additionalProperty: '30' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [40, 40, 60],
+                labels: { le: '+Inf', additionalProperty: '30' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+
+      const series = transformV2(response, options, {});
+      expect(series.data[0].fields.length).toEqual(4);
+      expect(series.data[0].fields[1].values).toEqual([10, 10, 0]);
+      expect(series.data[0].fields[2].values).toEqual([10, 0, 30]);
+      expect(series.data[0].fields[3].values).toEqual([10, 0, 10]);
+
+      expect(series.data[1].fields[1].values).toEqual([0, 10, 10]);
+      expect(series.data[1].fields[2].values).toEqual([20, 0, 30]);
+      expect(series.data[1].fields[3].values).toEqual([10, 0, 20]);
+
+      expect(series.data[2].fields[1].values).toEqual([30, 30, 60]);
+      expect(series.data[2].fields[2].values).toEqual([0, 10, 0]);
+      expect(series.data[2].fields[3].values).toEqual([10, 0, 0]);
+    });
+
+    it('Retains exemplar frames when data returned is a heatmap', () => {
+      const options = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            name: 'exemplar',
+            meta: {
+              custom: {
+                resultType: 'exemplar',
+              },
+            },
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40, 90, 14, 21],
+                labels: { le: '6' },
+              },
+              {
+                name: 'Test',
+                type: FieldType.string,
+                values: ['hello', 'doctor', 'name', 'continue', 'yesterday', 'tomorrow'],
+                labels: { le: '6' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
 
       const series = transformV2(response, options, {});
       expect(series.data[0].fields.length).toEqual(2);
-      expect(series.data[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-      expect(series.data[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-      expect(series.data[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+      expect(series.data.length).toEqual(2);
+      expect(series.data[1].fields[2].values).toEqual(['hello', 'doctor', 'name', 'continue', 'yesterday', 'tomorrow']);
+      expect(series.data[1].fields.length).toEqual(3);
+    });
+
+    it('should not add a link with an error when exemplarTraceIdDestinations is not configured properly', () => {
+      const response = {
+        state: 'Done',
+        data: [
+          createDataFrame({
+            refId: 'A',
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [10, 10, 0],
+                labels: { le: '1' },
+              },
+            ],
+          }),
+          createDataFrame({
+            refId: 'A',
+            name: 'exemplar',
+            meta: {
+              custom: {
+                resultType: 'exemplar',
+              },
+            },
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [6, 5, 4, 3, 2, 1] },
+              {
+                name: 'Value',
+                type: FieldType.number,
+                values: [30, 10, 40, 90, 14, 21],
+                labels: { le: '6' },
+              },
+              {
+                name: 'traceID',
+                type: FieldType.string,
+                values: ['unknown'],
+                labels: { le: '6' },
+              },
+            ],
+          }),
+        ],
+      } as unknown as DataQueryResponse;
+      const request = {
+        targets: [
+          {
+            format: 'heatmap',
+            refId: 'A',
+          },
+        ],
+      } as unknown as DataQueryRequest<PromQuery>;
+      const testOptions: any = {
+        exemplarTraceIdDestinations: [
+          {
+            name: 'traceID',
+            datasourceUid: 'unknown',
+          },
+        ],
+      };
+
+      const series = transformV2(response, request, testOptions);
+      expect(series.data[1].fields.length).toEqual(3);
+      expect(series.data[1].name).toEqual('exemplar');
+      const traceField = series.data[1].fields.find((f) => f.name === 'traceID');
+      expect(traceField).toBeDefined();
+      expect(traceField!.config.links?.length).toBe(0);
     });
   });
+
   describe('transformDFToTable', () => {
     it('transforms dataFrame with response length 1 to table dataFrame', () => {
-      const df = new MutableDataFrame({
+      const df = createDataFrame({
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -271,14 +758,14 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
-      expect(tableDf.fields[1].values.get(0)).toBe('value1');
+      expect(tableDf.fields[1].values[0]).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
-      expect(tableDf.fields[2].values.get(0)).toBe('value2');
+      expect(tableDf.fields[2].values[0]).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
     });
 
     it('transforms dataFrame with response length 2 to table dataFrame', () => {
-      const df = new MutableDataFrame({
+      const df = createDataFrame({
         refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [6, 5, 4] },
@@ -295,10 +782,105 @@ describe('Prometheus Result Transformer', () => {
       expect(tableDf.fields.length).toBe(4);
       expect(tableDf.fields[0].name).toBe('Time');
       expect(tableDf.fields[1].name).toBe('label1');
-      expect(tableDf.fields[1].values.get(0)).toBe('value1');
+      expect(tableDf.fields[1].values[0]).toBe('value1');
       expect(tableDf.fields[2].name).toBe('label2');
-      expect(tableDf.fields[2].values.get(0)).toBe('value2');
+      expect(tableDf.fields[2].values[0]).toBe('value2');
       expect(tableDf.fields[3].name).toBe('Value');
+    });
+
+    // Queries do not always return results
+    it('transforms dataFrame and empty dataFrame mock responses to table dataFrames', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+
+      const dataframes = [
+        createDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        createDataFrame({
+          refId: 'B',
+          fields: [],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      // Expect the first query to still return valid results
+      expect(transformedTableDataFrames[0].fields.length).toBe(4);
+      expect(transformedTableDataFrames[0].fields[0].name).toBe('Time');
+      expect(transformedTableDataFrames[0].fields[1].name).toBe('label1');
+      expect(transformedTableDataFrames[0].fields[1].values[0]).toBe(value1);
+      expect(transformedTableDataFrames[0].fields[2].name).toBe('label2');
+      expect(transformedTableDataFrames[0].fields[2].values[0]).toBe(value2);
+      expect(transformedTableDataFrames[0].fields[3].name).toBe('Value #A');
+
+      // Expect the invalid/empty results not to throw an error and to return empty arrays
+      expect(transformedTableDataFrames[1].fields[1].labels).toBe(undefined);
+      expect(transformedTableDataFrames[1].fields[1].name).toBe('Value #B');
+      expect(transformedTableDataFrames[1].fields[1].values).toEqual([]);
+      expect(transformedTableDataFrames[1].fields[0].values).toEqual([]);
+    });
+
+    it('transforms dataframes with metadata resolving from their refIds', () => {
+      const value1 = 'value1';
+      const value2 = 'value2';
+      const executedQueryForRefA = 'Expr: avg_over_time(access_evaluation_duration_bucket[15s])\nStep: 15s';
+      const executedQueryForRefB = 'Expr: avg_over_time(access_evaluation_duration_bucket[5m])\nStep: 15s';
+
+      const dataframes = [
+        createDataFrame({
+          refId: 'A',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefA,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+        createDataFrame({
+          refId: 'B',
+          meta: {
+            typeVersion: [0, 1],
+            custom: {
+              resultType: 'vector',
+            },
+            executedQueryString: executedQueryForRefB,
+          },
+          fields: [
+            { name: 'time', type: FieldType.time, values: [6, 5, 4] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [6, 5, 4],
+              labels: { label1: value1, label2: value2 },
+            },
+          ],
+        }),
+      ];
+
+      const transformedTableDataFrames = transformDFToTable(dataframes);
+      expect(transformedTableDataFrames[0].meta).toBeTruthy();
+      expect(transformedTableDataFrames[1].meta).toBeTruthy();
+      expect(transformedTableDataFrames[0].meta?.executedQueryString).toEqual(executedQueryForRefA);
+      expect(transformedTableDataFrames[1].meta?.executedQueryString).toEqual(executedQueryForRefB);
     });
   });
 
@@ -366,25 +948,20 @@ describe('Prometheus Result Transformer', () => {
             format: 'table',
           },
         });
-        expect(result[0].fields[0].values.toArray()).toEqual([
-          1443454528000,
-          1443454530000,
-          1443454529000,
-          1443454531000,
-        ]);
+        expect(result[0].fields[0].values).toEqual([1443454528000, 1443454530000, 1443454529000, 1443454531000]);
         expect(result[0].fields[0].name).toBe('Time');
         expect(result[0].fields[0].type).toBe(FieldType.time);
-        expect(result[0].fields[1].values.toArray()).toEqual(['test', 'test', 'test2', 'test2']);
+        expect(result[0].fields[1].values).toEqual(['test', 'test', 'test2', 'test2']);
         expect(result[0].fields[1].name).toBe('__name__');
         expect(result[0].fields[1].config.filterable).toBe(true);
         expect(result[0].fields[1].type).toBe(FieldType.string);
-        expect(result[0].fields[2].values.toArray()).toEqual(['', '', 'localhost:8080', 'localhost:8080']);
+        expect(result[0].fields[2].values).toEqual(['', '', 'localhost:8080', 'localhost:8080']);
         expect(result[0].fields[2].name).toBe('instance');
         expect(result[0].fields[2].type).toBe(FieldType.string);
-        expect(result[0].fields[3].values.toArray()).toEqual(['testjob', 'testjob', 'otherjob', 'otherjob']);
+        expect(result[0].fields[3].values).toEqual(['testjob', 'testjob', 'otherjob', 'otherjob']);
         expect(result[0].fields[3].name).toBe('job');
         expect(result[0].fields[3].type).toBe(FieldType.string);
-        expect(result[0].fields[4].values.toArray()).toEqual([3846, 3848, 3847, 3849]);
+        expect(result[0].fields[4].values).toEqual([3846, 3848, 3847, 3849]);
         expect(result[0].fields[4].name).toEqual('Value');
         expect(result[0].fields[4].type).toBe(FieldType.number);
         expect(result[0].refId).toBe('A');
@@ -420,13 +997,13 @@ describe('Prometheus Result Transformer', () => {
 
       it('should return data frame', () => {
         const result = transform({ data: response } as any, { ...options, target: { format: 'table' } });
-        expect(result[0].fields[0].values.toArray()).toEqual([1443454528000]);
+        expect(result[0].fields[0].values).toEqual([1443454528000]);
         expect(result[0].fields[0].name).toBe('Time');
-        expect(result[0].fields[1].values.toArray()).toEqual(['test']);
+        expect(result[0].fields[1].values).toEqual(['test']);
         expect(result[0].fields[1].name).toBe('__name__');
-        expect(result[0].fields[2].values.toArray()).toEqual(['testjob']);
+        expect(result[0].fields[2].values).toEqual(['testjob']);
         expect(result[0].fields[2].name).toBe('job');
-        expect(result[0].fields[3].values.toArray()).toEqual([3846]);
+        expect(result[0].fields[3].values).toEqual([3846]);
         expect(result[0].fields[3].name).toEqual('Value');
       });
 
@@ -444,7 +1021,7 @@ describe('Prometheus Result Transformer', () => {
           },
         };
         const result = transform({ data: response } as any, { ...options, target: { format: 'table' } });
-        expect(result[0].fields[1].values.toArray()).toEqual([102]);
+        expect(result[0].fields[1].values).toEqual([102]);
         expect(result[0].fields[1].type).toEqual(FieldType.number);
       });
     });
@@ -514,12 +1091,10 @@ describe('Prometheus Result Transformer', () => {
         ]);
 
         const result = transform({ data: response } as any, { query: options, target: options } as any);
-        expect(result[0].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
-        expect(result[1].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[1].fields[1].values.toArray()).toEqual([10, 0, 30]);
-        expect(result[2].fields[0].values.toArray()).toEqual([1445000010000, 1445000020000, 1445000030000]);
-        expect(result[2].fields[1].values.toArray()).toEqual([10, 0, 10]);
+        expect(result[0].fields[0].values).toEqual([1445000010000, 1445000020000, 1445000030000]);
+        expect(result[0].fields[1].values).toEqual([10, 10, 0]);
+        expect(result[0].fields[2].values).toEqual([10, 0, 30]);
+        expect(result[0].fields[3].values).toEqual([10, 0, 10]);
       });
 
       it('should handle missing datapoints', () => {
@@ -548,9 +1123,9 @@ describe('Prometheus Result Transformer', () => {
           },
         ]);
         const result = transform({ data: response } as any, { query: options, target: options } as any);
-        expect(result[0].fields[1].values.toArray()).toEqual([1, 2]);
-        expect(result[1].fields[1].values.toArray()).toEqual([1, 3, 1]);
-        expect(result[2].fields[1].values.toArray()).toEqual([1, 2]);
+        expect(result[0].fields[1].values).toEqual([1, 2]);
+        expect(result[0].fields[2].values).toEqual([1, 3, 1]);
+        expect(result[0].fields[3].values).toEqual([1, 2]);
       });
     });
 
@@ -607,8 +1182,8 @@ describe('Prometheus Result Transformer', () => {
             end: 2,
           },
         });
-        expect(result[0].fields[0].values.toArray()).toEqual([0, 1000, 2000]);
-        expect(result[0].fields[1].values.toArray()).toEqual([10, 10, 0]);
+        expect(result[0].fields[0].values).toEqual([0, 1000, 2000]);
+        expect(result[0].fields[1].values).toEqual([10, 10, 0]);
         expect(result[0].name).toBe('test{job="testjob"}');
       });
 
@@ -618,8 +1193,8 @@ describe('Prometheus Result Transformer', () => {
           query: { step: 1, start: 0, end: 2 },
         });
 
-        expect(result[0].fields[0].values.toArray()).toEqual([0, 1000, 2000]);
-        expect(result[0].fields[1].values.toArray()).toEqual([null, 10, 0]);
+        expect(result[0].fields[0].values).toEqual([0, 1000, 2000]);
+        expect(result[0].fields[1].values).toEqual([null, 10, 0]);
       });
 
       it('should use __name__ label as series name', () => {
@@ -712,8 +1287,8 @@ describe('Prometheus Result Transformer', () => {
         };
 
         const result = transform({ data: response } as any, { ...options, query: { step: 2, start: 0, end: 8 } });
-        expect(result[0].fields[0].values.toArray()).toEqual([0, 2000, 4000, 6000, 8000]);
-        expect(result[0].fields[1].values.toArray()).toEqual([null, null, 10, null, 10]);
+        expect(result[0].fields[0].values).toEqual([0, 2000, 4000, 6000, 8000]);
+        expect(result[0].fields[1].values).toEqual([null, null, 10, null, 10]);
       });
     });
 
@@ -732,7 +1307,7 @@ describe('Prometheus Result Transformer', () => {
             ...options,
             target: { format: 'table' },
           });
-          expect(result[0].fields[1].values.toArray()).toEqual([Number.POSITIVE_INFINITY]);
+          expect(result[0].fields[1].values).toEqual([Number.POSITIVE_INFINITY]);
         });
       });
 
@@ -760,7 +1335,7 @@ describe('Prometheus Result Transformer', () => {
               ...options,
               target: { format: 'table' },
             });
-            expect(result[0].fields[3].values.toArray()).toEqual([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]);
+            expect(result[0].fields[3].values).toEqual([Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]);
           });
         });
       });
@@ -862,6 +1437,24 @@ describe('Prometheus Result Transformer', () => {
           const result = transform({ data: exemplarsResponse } as any, options);
 
           expect(result[0].fields.some((f) => f.config.links?.length)).toBe(false);
+        });
+
+        it('should not add a datalink with an error when exemplarTraceIdDestinations is not configured', () => {
+          const testOptions: any = {
+            target: {},
+            query: {},
+            exemplarTraceIdDestinations: [
+              {
+                name: 'traceID',
+                datasourceUid: 'unknown',
+              },
+            ],
+          };
+
+          const result = transform({ data: exemplarsResponse } as any, testOptions);
+          const traceField = result[0].fields.find((f) => f.name === 'traceID');
+          expect(traceField).toBeDefined();
+          expect(traceField!.config.links?.length).toBe(0);
         });
       });
     });

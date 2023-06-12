@@ -5,13 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
@@ -170,7 +171,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	for _, tc := range tcs {
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			State: tc.prevState,
-		}, &validations.OSSPluginRequestValidator{})
+		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		if tc.state == nil {
 			tc.state = &models.AlertNotificationState{}
@@ -188,7 +189,7 @@ func TestBaseNotifier(t *testing.T) {
 	bJSON := simplejson.New()
 
 	model := &models.AlertNotification{
-		Uid:      "1",
+		UID:      "1",
 		Name:     "name",
 		Type:     "email",
 		Settings: bJSON,
@@ -197,24 +198,24 @@ func TestBaseNotifier(t *testing.T) {
 	t.Run("can parse false value", func(t *testing.T) {
 		bJSON.Set("uploadImage", false)
 
-		base := NewNotifierBase(model)
+		base := NewNotifierBase(model, nil)
 		require.False(t, base.UploadImage)
 	})
 
 	t.Run("can parse true value", func(t *testing.T) {
 		bJSON.Set("uploadImage", true)
 
-		base := NewNotifierBase(model)
+		base := NewNotifierBase(model, nil)
 		require.True(t, base.UploadImage)
 	})
 
 	t.Run("default value should be true for backwards compatibility", func(t *testing.T) {
-		base := NewNotifierBase(model)
+		base := NewNotifierBase(model, nil)
 		require.True(t, base.UploadImage)
 	})
 
 	t.Run("default value should be false for backwards compatibility", func(t *testing.T) {
-		base := NewNotifierBase(model)
+		base := NewNotifierBase(model, nil)
 		require.False(t, base.DisableResolveMessage)
 	})
 }

@@ -1,7 +1,9 @@
-import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, InlineSegmentGroup, useTheme2 } from '@grafana/ui';
 import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren, useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, InlineSegmentGroup, useTheme2 } from '@grafana/ui';
+
 import { segmentStyles } from './styles';
 
 const getStyles = (theme: GrafanaTheme2, hidden: boolean) => {
@@ -45,6 +47,7 @@ export const SettingsEditorContainer = ({ label, children, hidden = false }: Pro
           className={cx('gf-form-label query-part', styles.button, segmentStyles)}
           onClick={() => setOpen(!open)}
           aria-expanded={open}
+          type="button"
         >
           <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
           {label}

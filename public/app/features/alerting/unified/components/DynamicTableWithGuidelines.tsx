@@ -1,7 +1,9 @@
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import React from 'react';
+
 import { DynamicTable, DynamicTableProps } from './DynamicTable';
 
 export type DynamicTableWithGuidelinesProps<T> = Omit<DynamicTableProps<T>, 'renderPrefixHeader, renderPrefixCell'>;
@@ -47,7 +49,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   guideline: css`
     left: -19px;
-    border-left: 1px solid ${theme.colors.border.medium};
+    border-left: 1px solid ${theme.colors.border.weak};
     position: absolute;
 
     ${theme.breakpoints.down('md')} {
@@ -70,7 +72,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     left: -49px !important;
   `,
   headerGuideline: css`
-    top: -25px;
+    top: -17px;
     bottom: 0;
   `,
 });

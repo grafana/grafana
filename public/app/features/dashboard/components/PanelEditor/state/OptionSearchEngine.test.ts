@@ -1,5 +1,6 @@
 import { OptionsPaneCategoryDescriptor } from '../OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from '../OptionsPaneItemDescriptor';
+
 import { OptionSearchEngine } from './OptionSearchEngine';
 
 describe('OptionSearchEngine', () => {

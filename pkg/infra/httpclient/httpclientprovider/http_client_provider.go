@@ -1,42 +1,46 @@
 package httpclientprovider
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/mwitkow/go-conntrack"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/infra/proxy"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/mwitkow/go-conntrack"
 )
 
 var newProviderFunc = sdkhttpclient.NewProvider
 
 // New creates a new HTTP client provider with pre-configured middlewares.
-func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
+func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
-	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
 	middlewares := []sdkhttpclient.Middleware{
-		TracingMiddleware(logger),
+		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
-		SetUserAgentMiddleware(userAgent),
+		sdkhttpclient.ContextualMiddleware(),
+		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),
+		RedirectLimitMiddleware(validator),
 	}
 
 	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, SigV4Middleware())
+		middlewares = append(middlewares, SigV4Middleware(cfg.SigV4VerboseLogging))
+	}
+
+	if httpLoggingEnabled(cfg.PluginSettings) {
+		middlewares = append(middlewares, HTTPLoggerMiddleware(cfg.PluginSettings))
 	}
 
 	setDefaultTimeoutOptions(cfg)
-
-	if cfg.FeatureToggles["httpclientprovider_azure_auth"] {
-		middlewares = append(middlewares, AzureMiddleware(cfg))
-	}
 
 	return newProviderFunc(sdkhttpclient.ProviderOptions{
 		Middlewares: middlewares,
@@ -46,10 +50,17 @@ func New(cfg *setting.Cfg) *sdkhttpclient.Provider {
 				return
 			}
 			datasourceLabelName, err := metricutil.SanitizeLabelName(datasourceName)
-
 			if err != nil {
 				return
 			}
+
+			if cfg.SecureSocksDSProxy.Enabled && proxy.SecureSocksProxyEnabledOnDS(opts) {
+				err = proxy.NewSecureSocksHTTPProxy(&cfg.SecureSocksDSProxy, transport)
+				if err != nil {
+					logger.Error("Failed to enable secure socks proxy", "error", err.Error(), "datasource", datasourceName)
+				}
+			}
+
 			newConntrackRoundTripper(datasourceLabelName, transport)
 		},
 	})

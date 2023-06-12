@@ -1,6 +1,7 @@
 import { Field, FieldType } from '../../../types/dataFrame';
 import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
+
 import { BasicValueMatcherOptions } from './types';
 
 const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = {
@@ -9,7 +10,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
   description: 'Match when field value is greater than option.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       if (isNaN(value)) {
         return false;
       }
@@ -29,7 +30,7 @@ const isGreaterOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<nu
   description: 'Match when field value is greater than or equal to option.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       if (isNaN(value)) {
         return false;
       }
@@ -49,7 +50,7 @@ const isLowerValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> = 
   description: 'Match when field value is lower than option.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       if (isNaN(value)) {
         return false;
       }
@@ -69,7 +70,7 @@ const isLowerOrEqualValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<numb
   description: 'Match when field value is lower or equal than option.',
   get: (options) => {
     return (valueIndex: number, field: Field) => {
-      const value = field.values.get(valueIndex);
+      const value = field.values[valueIndex];
       if (isNaN(value)) {
         return false;
       }

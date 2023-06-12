@@ -1,9 +1,10 @@
-import { omit } from 'lodash';
-import React, { InputHTMLAttributes, FunctionComponent } from 'react';
-import { FormField } from '../FormField/FormField';
-import { Button } from '../Button/Button';
 import { css, cx } from '@emotion/css';
-import { PopoverContent } from '../Tooltip/Tooltip';
+import { omit } from 'lodash';
+import React, { InputHTMLAttributes } from 'react';
+
+import { Button } from '../Button/Button';
+import { FormField } from '../FormField/FormField';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onReset'> {
   // Function to use when reset is clicked. Means you have to reset the input value yourself as this is  uncontrolled
@@ -17,6 +18,7 @@ export interface Props extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onRe
   inputWidth?: number;
   // Placeholder of the input field when in non configured state.
   placeholder?: string;
+  interactive?: boolean;
 }
 
 const getSecretFormFieldStyles = () => {
@@ -37,7 +39,7 @@ const getSecretFormFieldStyles = () => {
  * form field. This is used for passwords or anything that is encrypted on the server and is later returned encrypted
  * to the user (like datasource passwords).
  */
-export const SecretFormField: FunctionComponent<Props> = ({
+export const SecretFormField = ({
   label = 'Password',
   labelWidth,
   inputWidth = 12,
@@ -45,6 +47,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
   isConfigured,
   tooltip,
   placeholder = 'Password',
+  interactive,
   ...inputProps
 }: Props) => {
   const styles = getSecretFormFieldStyles();
@@ -52,6 +55,7 @@ export const SecretFormField: FunctionComponent<Props> = ({
     <FormField
       label={label!}
       tooltip={tooltip}
+      interactive={interactive}
       labelWidth={labelWidth}
       inputEl={
         isConfigured ? (

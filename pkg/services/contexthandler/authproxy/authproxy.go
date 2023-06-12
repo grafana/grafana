@@ -10,15 +10,19 @@ import (
 	"net/mail"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
-	"github.com/grafana/grafana/pkg/services/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -29,31 +33,33 @@ const (
 	CachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
-// getLDAPConfig gets LDAP config
-var getLDAPConfig = ldap.GetConfig
-
-// isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = func(cfg *setting.Cfg) bool {
-	if cfg != nil {
-		return cfg.LDAPEnabled
-	}
-
-	return setting.LDAPEnabled
-}
-
-// newLDAP creates multiple LDAP instance
-var newLDAP = multildap.New
-
 // supportedHeaders states the supported headers configuration fields
 var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
 
 // AuthProxy struct
 type AuthProxy struct {
-	cfg         *setting.Cfg
-	remoteCache *remotecache.RemoteCache
-	ctx         *models.ReqContext
-	orgID       int64
-	header      string
+	cfg          *setting.Cfg
+	remoteCache  *remotecache.RemoteCache
+	loginService login.Service
+	sqlStore     db.DB
+	userService  user.Service
+	ldapService  service.LDAP
+
+	logger log.Logger
+}
+
+func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache,
+	loginService login.Service, userService user.Service,
+	sqlStore db.DB, ldapService service.LDAP) *AuthProxy {
+	return &AuthProxy{
+		cfg:          cfg,
+		remoteCache:  remoteCache,
+		loginService: loginService,
+		sqlStore:     sqlStore,
+		userService:  userService,
+		logger:       log.New("auth.proxy"),
+		ldapService:  ldapService,
+	}
 }
 
 // Error auth proxy specific error
@@ -75,46 +81,26 @@ func (err Error) Error() string {
 	return err.Message
 }
 
-// Options for the AuthProxy
-type Options struct {
-	RemoteCache *remotecache.RemoteCache
-	Ctx         *models.ReqContext
-	OrgID       int64
-}
-
-// New instance of the AuthProxy.
-func New(cfg *setting.Cfg, options *Options) *AuthProxy {
-	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
-	return &AuthProxy{
-		remoteCache: options.RemoteCache,
-		cfg:         cfg,
-		ctx:         options.Ctx,
-		orgID:       options.OrgID,
-		header:      header,
-	}
-}
-
 // IsEnabled checks if the auth proxy is enabled.
 func (auth *AuthProxy) IsEnabled() bool {
 	// Bail if the setting is not enabled
 	return auth.cfg.AuthProxyEnabled
 }
 
-// HasHeader checks if the we have specified header
-func (auth *AuthProxy) HasHeader() bool {
-	return len(auth.header) != 0
+// HasHeader checks if we have specified header
+func (auth *AuthProxy) HasHeader(reqCtx *contextmodel.ReqContext) bool {
+	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
+	return len(header) != 0
 }
 
 // IsAllowedIP returns whether provided IP is allowed.
-func (auth *AuthProxy) IsAllowedIP() error {
-	ip := auth.ctx.Req.RemoteAddr
-
+func (auth *AuthProxy) IsAllowedIP(ip string) error {
 	if len(strings.TrimSpace(auth.cfg.AuthProxyWhitelist)) == 0 {
 		return nil
 	}
 
 	proxies := strings.Split(auth.cfg.AuthProxyWhitelist, ",")
-	var proxyObjs []*net.IPNet
+	proxyObjs := make([]*net.IPNet, 0, len(proxies))
 	for _, proxy := range proxies {
 		result, err := coerceProxyAddress(proxy)
 		if err != nil {
@@ -137,7 +123,7 @@ func (auth *AuthProxy) IsAllowedIP() error {
 	}
 
 	return newError("proxy authentication required", fmt.Errorf(
-		"request for user (%s) from %s is not from the authentication proxy", auth.header,
+		"request for user from %s is not from the authentication proxy",
 		sourceIP,
 	))
 }
@@ -153,10 +139,11 @@ func HashCacheKey(key string) (string, error) {
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
 // And the additional ones that allow us to specify extra attributes: Name, Email, Role, or Groups.
-func (auth *AuthProxy) getKey() (string, error) {
-	key := strings.TrimSpace(auth.header) // start the key with the main header
+func (auth *AuthProxy) getKey(reqCtx *contextmodel.ReqContext) (string, error) {
+	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
+	key := strings.TrimSpace(header) // start the key with the main header
 
-	auth.headersIterator(func(_, header string) {
+	auth.headersIterator(reqCtx, func(_, header string) {
 		key = strings.Join([]string{key, header}, "-") // compose the key with any additional headers
 	})
 
@@ -168,17 +155,17 @@ func (auth *AuthProxy) getKey() (string, error) {
 }
 
 // Login logs in user ID by whatever means possible.
-func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error) {
+func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) (int64, error) {
 	if !ignoreCache {
 		// Error here means absent cache - we don't need to handle that
-		id, err := auth.GetUserViaCache(logger)
+		id, err := auth.getUserViaCache(reqCtx)
 		if err == nil && id != 0 {
 			return id, nil
 		}
 	}
 
-	if isLDAPEnabled(auth.cfg) {
-		id, err := auth.LoginViaLDAP()
+	if auth.cfg.LDAPAuthEnabled {
+		id, err := auth.LoginViaLDAP(reqCtx)
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {
 				return 0, newError("proxy authentication required", ldap.ErrInvalidCredentials)
@@ -189,7 +176,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 		return id, nil
 	}
 
-	id, err := auth.LoginViaHeader()
+	id, err := auth.loginViaHeader(reqCtx)
 	if err != nil {
 		return 0, newError("failed to log in as user, specified in auth proxy header", err)
 	}
@@ -197,99 +184,107 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 	return id, nil
 }
 
-// GetUserViaCache gets user ID from cache.
-func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
-	cacheKey, err := auth.getKey()
+// getUserViaCache gets user ID from cache.
+func (auth *AuthProxy) getUserViaCache(reqCtx *contextmodel.ReqContext) (int64, error) {
+	cacheKey, err := auth.getKey(reqCtx)
 	if err != nil {
 		return 0, err
 	}
-	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.remoteCache.Get(auth.ctx.Req.Context(), cacheKey)
+	auth.logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
+	cachedValue, err := auth.remoteCache.Get(reqCtx.Req.Context(), cacheKey)
 	if err != nil {
-		logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
 	}
 
-	logger.Debug("Successfully got user ID via auth cache", "id", userID)
-	return userID.(int64), nil
+	userId, err := strconv.ParseInt(string(cachedValue), 10, 64)
+	if err != nil {
+		auth.logger.Debug("Failed getting user ID via auth cache", "error", err)
+		return 0, err
+	}
+
+	auth.logger.Debug("Successfully got user ID via auth cache", "id", cachedValue)
+	return userId, nil
 }
 
 // RemoveUserFromCache removes user from cache.
-func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
-	cacheKey, err := auth.getKey()
+func (auth *AuthProxy) RemoveUserFromCache(reqCtx *contextmodel.ReqContext) error {
+	cacheKey, err := auth.getKey(reqCtx)
 	if err != nil {
 		return err
 	}
-	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
-	if err := auth.remoteCache.Delete(auth.ctx.Req.Context(), cacheKey); err != nil {
+	auth.logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
+	if err := auth.remoteCache.Delete(reqCtx.Req.Context(), cacheKey); err != nil {
 		return err
 	}
 
-	logger.Debug("Successfully removed user from auth cache", "cacheKey", cacheKey)
+	auth.logger.Debug("Successfully removed user from auth cache", "cacheKey", cacheKey)
 	return nil
 }
 
 // LoginViaLDAP logs in user via LDAP request
-func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
-	config, err := getLDAPConfig(auth.cfg)
-	if err != nil {
-		return 0, newError("failed to get LDAP config", err)
-	}
+func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, error) {
+	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 
-	mldap := newLDAP(config.Servers)
-	extUser, _, err := mldap.User(auth.header)
+	extUser, err := auth.ldapService.User(header)
 	if err != nil {
 		return 0, err
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	upsert := &models.UpsertUserCommand{
-		ReqContext:    auth.ctx,
+	upsert := &login.UpsertUserCommand{
+		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
+		UserLookupParams: login.UserLookupParams{
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+			UserID: nil,
+		},
 	}
-	if err := bus.Dispatch(auth.ctx.Req.Context(), upsert); err != nil {
+	u, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
+	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return u.ID, nil
 }
 
-// LoginViaHeader logs in user from the header only
-func (auth *AuthProxy) LoginViaHeader() (int64, error) {
-	extUser := &models.ExternalUserInfo{
-		AuthModule: "authproxy",
-		AuthId:     auth.header,
+// loginViaHeader logs in user from the header only
+func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, error) {
+	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
+	extUser := &login.ExternalUserInfo{
+		AuthModule: login.AuthProxyAuthModule,
+		AuthId:     header,
 	}
 
 	switch auth.cfg.AuthProxyHeaderProperty {
 	case "username":
-		extUser.Login = auth.header
+		extUser.Login = header
 
-		emailAddr, emailErr := mail.ParseAddress(auth.header) // only set Email if it can be parsed as an email address
+		emailAddr, emailErr := mail.ParseAddress(header) // only set Email if it can be parsed as an email address
 		if emailErr == nil {
 			extUser.Email = emailAddr.Address
 		}
 	case "email":
-		extUser.Email = auth.header
-		extUser.Login = auth.header
+		extUser.Email = header
+		extUser.Login = header
 	default:
 		return 0, fmt.Errorf("auth proxy header property invalid")
 	}
 
-	auth.headersIterator(func(field string, header string) {
+	auth.headersIterator(reqCtx, func(field string, header string) {
 		switch field {
 		case "Groups":
 			extUser.Groups = util.SplitString(header)
 		case "Role":
 			// If Role header is specified, we update the user role of the default org
 			if header != "" {
-				rt := models.RoleType(header)
+				rt := org.RoleType(header)
 				if rt.IsValid() {
-					extUser.OrgRoles = map[int64]models.RoleType{}
+					extUser.OrgRoles = map[int64]org.RoleType{}
 					orgID := int64(1)
-					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-						orgID = int64(setting.AutoAssignOrgId)
+					if auth.cfg.AutoAssignOrg && auth.cfg.AutoAssignOrgId > 0 {
+						orgID = int64(auth.cfg.AutoAssignOrgId)
 					}
 					extUser.OrgRoles[orgID] = rt
 				}
@@ -299,64 +294,75 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		}
 	})
 
-	upsert := &models.UpsertUserCommand{
-		ReqContext:    auth.ctx,
+	upsert := &login.UpsertUserCommand{
+		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
+		UserLookupParams: login.UserLookupParams{
+			UserID: nil,
+			Login:  &extUser.Login,
+			Email:  &extUser.Email,
+		},
 	}
 
-	err := bus.Dispatch(auth.ctx.Req.Context(), upsert)
+	result, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.Id, nil
+	return result.ID, nil
+}
+
+// getDecodedHeader gets decoded value of a header with given headerName
+func (auth *AuthProxy) getDecodedHeader(reqCtx *contextmodel.ReqContext, headerName string) string {
+	headerValue := reqCtx.Req.Header.Get(headerName)
+
+	if auth.cfg.AuthProxyHeadersEncoded {
+		headerValue = util.DecodeQuotedPrintable(headerValue)
+	}
+
+	return headerValue
 }
 
 // headersIterator iterates over all non-empty supported additional headers
-func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
+func (auth *AuthProxy) headersIterator(reqCtx *contextmodel.ReqContext, fn func(field string, header string)) {
 	for _, field := range supportedHeaderFields {
 		h := auth.cfg.AuthProxyHeaders[field]
 		if h == "" {
 			continue
 		}
 
-		if value := auth.ctx.Req.Header.Get(h); value != "" {
+		if value := auth.getDecodedHeader(reqCtx, h); value != "" {
 			fn(field, strings.TrimSpace(value))
 		}
 	}
 }
 
-// GetSignedUser gets full signed in user info.
-func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, error) {
-	query := &models.GetSignedInUserQuery{
-		OrgId:  auth.orgID,
-		UserId: userID,
-	}
-
-	if err := bus.Dispatch(context.Background(), query); err != nil {
-		return nil, err
-	}
-
-	return query.Result, nil
+// GetSignedInUser gets full signed in user info.
+func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*user.SignedInUser, error) {
+	return auth.userService.GetSignedInUser(context.Background(), &user.GetSignedInUserQuery{
+		OrgID:  orgID,
+		UserID: userID,
+	})
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember(id int64) error {
-	key, err := auth.getKey()
+func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error {
+	key, err := auth.getKey(reqCtx)
 	if err != nil {
 		return err
 	}
 
 	// Check if user already in cache
-	userID, err := auth.remoteCache.Get(auth.ctx.Req.Context(), key)
-	if err == nil && userID != nil {
+	cachedValue, err := auth.remoteCache.Get(reqCtx.Req.Context(), key)
+	if err == nil && len(cachedValue) != 0 {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	if err := auth.remoteCache.Set(auth.ctx.Req.Context(), key, id, expiration); err != nil {
+	userIdPayload := []byte(strconv.FormatInt(id, 10))
+	if err := auth.remoteCache.Set(reqCtx.Req.Context(), key, userIdPayload, expiration); err != nil {
 		return err
 	}
 

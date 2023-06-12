@@ -1,6 +1,8 @@
 import { includes, isDate } from 'lodash';
-import { DateTime, dateTime, dateTimeForTimeZone, DurationUnit, isDateTime, ISO_8601 } from './moment_wrapper';
+
 import { TimeZone } from '../types/index';
+
+import { DateTime, dateTime, dateTimeForTimeZone, DurationUnit, isDateTime, ISO_8601 } from './moment_wrapper';
 
 const units: DurationUnit[] = ['y', 'M', 'w', 'd', 'h', 'm', 's', 'Q'];
 

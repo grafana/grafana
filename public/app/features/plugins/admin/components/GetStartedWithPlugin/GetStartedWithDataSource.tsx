@@ -1,8 +1,10 @@
+import React, { useCallback } from 'react';
+
 import { DataSourcePluginMeta } from '@grafana/data';
 import { Button } from '@grafana/ui';
-import { addDataSource } from 'app/features/datasources/state/actions';
-import React, { useCallback } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDataSourcesRoutes, addDataSource } from 'app/features/datasources/state';
+import { useDispatch } from 'app/types';
+
 import { isDataSourceEditor } from '../../permissions';
 import { CatalogPlugin } from '../../types';
 
@@ -12,14 +14,15 @@ type Props = {
 
 export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement | null {
   const dispatch = useDispatch();
+  const dataSourcesRoutes = useDataSourcesRoutes();
   const onAddDataSource = useCallback(() => {
     const meta = {
       name: plugin.name,
       id: plugin.id,
     } as DataSourcePluginMeta;
 
-    dispatch(addDataSource(meta));
-  }, [dispatch, plugin]);
+    dispatch(addDataSource(meta, dataSourcesRoutes.Edit));
+  }, [dispatch, plugin, dataSourcesRoutes]);
 
   if (!isDataSourceEditor()) {
     return null;
@@ -27,7 +30,7 @@ export function GetStartedWithDataSource({ plugin }: Props): React.ReactElement 
 
   return (
     <Button variant="primary" onClick={onAddDataSource}>
-      Create a {plugin.name} data source
+      Add new data source
     </Button>
   );
 }

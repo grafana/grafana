@@ -1,14 +1,3 @@
-// Services & Utils
-import { importDataSourcePlugin } from './plugin_loader';
-import {
-  GetDataSourceListFilters,
-  DataSourceSrv as DataSourceService,
-  getDataSourceSrv as getDataSourceService,
-  TemplateSrv,
-  getTemplateSrv,
-  getLegacyAngularInjector,
-} from '@grafana/runtime';
-// Types
 import {
   AppEvents,
   DataSourceApi,
@@ -17,15 +6,25 @@ import {
   DataSourceSelectItem,
   ScopedVars,
 } from '@grafana/data';
-// Pretend Datasource
+import {
+  DataSourceSrv as DataSourceService,
+  getBackendSrv,
+  GetDataSourceListFilters,
+  getDataSourceSrv as getDataSourceService,
+  getLegacyAngularInjector,
+  getTemplateSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
+import { ExpressionDatasourceRef, isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import appEvents from 'app/core/app_events';
+import config from 'app/core/config';
 import {
   dataSource as expressionDatasource,
-  ExpressionDatasourceUID,
   instanceSettings as expressionInstanceSettings,
 } from 'app/features/expressions/ExpressionDatasource';
-import { DataSourceVariableModel } from '../variables/types';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import appEvents from 'app/core/app_events';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+
+import { importDataSourcePlugin } from './plugin_loader';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {}; // UID
@@ -66,18 +65,16 @@ export class DatasourceSrv implements DataSourceService {
     ref: string | null | undefined | DataSourceRef,
     scopedVars?: ScopedVars
   ): DataSourceInstanceSettings | undefined {
-    const isstring = typeof ref === 'string';
-    let nameOrUid = isstring ? (ref as string) : ((ref as any)?.uid as string | undefined);
+    let nameOrUid = getNameOrUid(ref);
 
-    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
-      if (!isstring && ref) {
-        const type = (ref as any)?.type as string;
-        if (type === ExpressionDatasourceRef.type) {
-          return expressionDatasource.instanceSettings;
-        } else if (type) {
-          console.log('FIND Default instance for datasource type?', ref);
-        }
-      }
+    // Expressions has a new UID as __expr__ See: https://github.com/grafana/grafana/pull/62510/
+    // But we still have dashboards/panels with old expression UID (-100)
+    // To support both UIDs until we migrate them all to new one, this check is necessary
+    if (isExpressionReference(nameOrUid)) {
+      return expressionInstanceSettings;
+    }
+
+    if (nameOrUid === 'default' || nameOrUid == null) {
       return this.settingsMapByUid[this.defaultName] ?? this.settingsMapByName[this.defaultName];
     }
 
@@ -108,13 +105,17 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    let nameOrUid = typeof ref === 'string' ? (ref as string) : ((ref as any)?.uid as string | undefined);
+    let nameOrUid = getNameOrUid(ref);
     if (!nameOrUid) {
       return this.get(this.defaultName);
+    }
+
+    if (isExpressionReference(ref)) {
+      return Promise.resolve(this.datasources[ExpressionDatasourceUID]);
     }
 
     // Check if nameOrUid matches a uid and then get the name
@@ -148,7 +149,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // find the metadata
-    const instanceSettings = this.settingsMapByUid[key] ?? this.settingsMapByName[key] ?? this.settingsMapById[key];
+    const instanceSettings = this.getInstanceSettings(key);
     if (!instanceSettings) {
       return Promise.reject({ message: `Datasource ${key} was not found` });
     }
@@ -190,7 +191,9 @@ export class DatasourceSrv implements DataSourceService {
       this.datasources[instance.uid] = instance;
       return instance;
     } catch (err) {
-      appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      if (err instanceof Error) {
+        appEvents.emit(AppEvents.alertError, [instanceSettings.name + ' plugin failed', err.toString()]);
+      }
       return Promise.reject({ message: `Datasource: ${key} was not found` });
     }
   }
@@ -208,6 +211,9 @@ export class DatasourceSrv implements DataSourceService {
         return false;
       }
       if (filters.tracing && !x.meta.tracing) {
+        return false;
+      }
+      if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
         return false;
       }
       if (filters.annotations && !x.meta.annotations) {
@@ -239,11 +245,17 @@ export class DatasourceSrv implements DataSourceService {
     });
 
     if (filters.variables) {
-      for (const variable of this.templateSrv.getVariables().filter((variable) => variable.type === 'datasource')) {
-        const dsVar = variable as DataSourceVariableModel;
-        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
-        const dsName = (first as unknown) as string;
-        const dsSettings = this.settingsMapByName[dsName];
+      for (const variable of this.templateSrv.getVariables()) {
+        if (variable.type !== 'datasource') {
+          continue;
+        }
+        let dsValue = variable.current.value === 'default' ? this.defaultName : variable.current.value;
+        if (Array.isArray(dsValue) && dsValue.length === 1) {
+          // Support for multi-value variables with only one selected datasource
+          dsValue = dsValue[0];
+        }
+        const dsSettings =
+          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
@@ -268,15 +280,24 @@ export class DatasourceSrv implements DataSourceService {
 
     if (!filters.pluginId && !filters.alerting) {
       if (filters.mixed) {
-        base.push(this.getInstanceSettings('-- Mixed --')!);
+        const mixedInstanceSettings = this.getInstanceSettings('-- Mixed --');
+        if (mixedInstanceSettings) {
+          base.push(mixedInstanceSettings);
+        }
       }
 
       if (filters.dashboard) {
-        base.push(this.getInstanceSettings('-- Dashboard --')!);
+        const dashboardInstanceSettings = this.getInstanceSettings('-- Dashboard --');
+        if (dashboardInstanceSettings) {
+          base.push(dashboardInstanceSettings);
+        }
       }
 
       if (!filters.tracing) {
-        base.push(this.getInstanceSettings('-- Grafana --')!);
+        const grafanaInstanceSettings = this.getInstanceSettings('-- Grafana --');
+        if (grafanaInstanceSettings) {
+          base.push(grafanaInstanceSettings);
+        }
       }
     }
 
@@ -297,7 +318,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ annotations: true, variables: true }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
@@ -310,11 +331,27 @@ export class DatasourceSrv implements DataSourceService {
     return this.getList({ metrics: true, variables: !options?.skipVariables }).map((x) => {
       return {
         name: x.name,
-        value: x.isDefault ? null : x.name,
+        value: x.name,
         meta: x.meta,
       };
     });
   }
+
+  async reload() {
+    const settings = await getBackendSrv().get('/api/frontend/settings');
+    config.datasources = settings.datasources;
+    config.defaultDatasource = settings.defaultDatasource;
+    this.init(settings.datasources, settings.defaultDatasource);
+  }
+}
+
+export function getNameOrUid(ref?: string | DataSourceRef | null): string | undefined {
+  if (isExpressionReference(ref)) {
+    return ExpressionDatasourceRef.uid;
+  }
+
+  const isString = typeof ref === 'string';
+  return isString ? (ref as string) : ((ref as any)?.uid as string | undefined);
 }
 
 export function variableInterpolation(value: any[]) {
@@ -327,5 +364,3 @@ export function variableInterpolation(value: any[]) {
 export const getDatasourceSrv = (): DatasourceSrv => {
   return getDataSourceService() as DatasourceSrv;
 };
-
-export default DatasourceSrv;

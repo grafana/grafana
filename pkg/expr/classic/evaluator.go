@@ -6,21 +6,42 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
+type EvaluatorKind int
+
+const (
+	EvaluatorNoValue = iota
+	EvaluatorThreshold
+	EvaluatorRanged
+)
+
 type evaluator interface {
 	Eval(mathexp.Number) bool
+	Kind() EvaluatorKind
 }
 
 type noValueEvaluator struct{}
+
+func (noValueEvaluator) Kind() EvaluatorKind {
+	return EvaluatorNoValue
+}
 
 type thresholdEvaluator struct {
 	Type      string
 	Threshold float64
 }
 
+func (thresholdEvaluator) Kind() EvaluatorKind {
+	return EvaluatorThreshold
+}
+
 type rangedEvaluator struct {
 	Type  string
 	Lower float64
 	Upper float64
+}
+
+func (rangedEvaluator) Kind() EvaluatorKind {
+	return EvaluatorRanged
 }
 
 // newAlertEvaluator is a factory function for returning

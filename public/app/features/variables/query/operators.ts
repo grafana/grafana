@@ -1,14 +1,22 @@
 import { from, of, OperatorFunction } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
-import { QueryVariableModel } from '../types';
+import {
+  FieldType,
+  getFieldDisplayName,
+  getProcessedDataFrames,
+  isDataFrame,
+  MetricFindValue,
+  PanelData,
+} from '@grafana/data';
+
 import { ThunkDispatch } from '../../../types';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
 import { validateVariableSelectionState } from '../state/actions';
-import { FieldType, getFieldDisplayName, isDataFrame, MetricFindValue, PanelData } from '@grafana/data';
+import { toKeyedAction } from '../state/keyedVariablesReducer';
+import { QueryVariableModel } from '../types';
+import { getTemplatedRegex, toKeyedVariableIdentifier, toVariablePayload } from '../utils';
+
 import { updateVariableOptions } from './reducer';
-import { getTemplatedRegex } from '../utils';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValue[]> {
   return (source) =>
@@ -64,10 +72,10 @@ export function toMetricFindValues(): OperatorFunction<PanelData, MetricFindValu
 
         for (const frame of frames) {
           for (let index = 0; index < frame.length; index++) {
-            const expandable = expandableIndex !== -1 ? frame.fields[expandableIndex].values.get(index) : undefined;
-            const string = frame.fields[stringIndex].values.get(index);
-            const text = textIndex !== -1 ? frame.fields[textIndex].values.get(index) : null;
-            const value = valueIndex !== -1 ? frame.fields[valueIndex].values.get(index) : null;
+            const expandable = expandableIndex !== -1 ? frame.fields[expandableIndex].values[index] : undefined;
+            const string = frame.fields[stringIndex].values[index];
+            const text = textIndex !== -1 ? frame.fields[textIndex].values[index] : null;
+            const value = valueIndex !== -1 ? frame.fields[valueIndex].values[index] : null;
 
             if (valueIndex === -1 && textIndex === -1) {
               metrics.push({ text: string, value: string, expandable });
@@ -102,9 +110,13 @@ export function updateOptionsState(args: {
     source.pipe(
       map((results) => {
         const { variable, dispatch, getTemplatedRegexFunc } = args;
+        if (!variable.rootStateKey) {
+          console.error('updateOptionsState: variable.rootStateKey is not defined');
+          return;
+        }
         const templatedRegex = getTemplatedRegexFunc(variable);
         const payload = toVariablePayload(variable, { results, templatedRegex });
-        dispatch(updateVariableOptions(payload));
+        dispatch(toKeyedAction(variable.rootStateKey, updateVariableOptions(payload)));
       })
     );
 }
@@ -124,7 +136,7 @@ export function validateVariableSelection(args: {
         // So after search and selection the current value is already update so no setValue, refresh and URL update is performed
         // The if statement below fixes https://github.com/grafana/grafana/issues/25671
         if (!searchFilter) {
-          return from(dispatch(validateVariableSelectionState(toVariableIdentifier(variable))));
+          return from(dispatch(validateVariableSelectionState(toKeyedVariableIdentifier(variable))));
         }
 
         return of<void>();

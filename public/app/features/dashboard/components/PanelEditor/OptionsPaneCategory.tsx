@@ -1,11 +1,13 @@
-import React, { FC, ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
-import { Counter, Icon, useStyles2 } from '@grafana/ui';
-import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
+import React, { ReactNode, useCallback, useEffect, useState, useRef } from 'react';
 import { useLocalStorage } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Button, Counter, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+
+import { PANEL_EDITOR_UI_STATE_STORAGE_KEY } from './state/reducers';
 
 export interface OptionsPaneCategoryProps {
   id: string;
@@ -21,8 +23,18 @@ export interface OptionsPaneCategoryProps {
 
 const CATEGORY_PARAM_NAME = 'showCategory';
 
-export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
-  ({ id, title, children, forceOpen, isOpenDefault, renderTitle, className, itemsCount, isNested = false }) => {
+export const OptionsPaneCategory = React.memo(
+  ({
+    id,
+    title,
+    children,
+    forceOpen,
+    isOpenDefault,
+    renderTitle,
+    className,
+    itemsCount,
+    isNested = false,
+  }: OptionsPaneCategoryProps) => {
     const initialIsExpanded = isOpenDefault !== false;
     const [savedState, setSavedState] = useLocalStorage(getOptionGroupStorageKey(id), {
       isExpanded: initialIsExpanded,
@@ -54,9 +66,12 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
 
     const onToggle = useCallback(() => {
       manualClickTime.current = Date.now();
-      updateQueryParams({
-        [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
-      });
+      updateQueryParams(
+        {
+          [CATEGORY_PARAM_NAME]: isExpanded ? undefined : id,
+        },
+        true
+      );
       setSavedState({ isExpanded: !isExpanded });
       setIsExpanded(!isExpanded);
     }, [setSavedState, setIsExpanded, updateQueryParams, isExpanded, id]);
@@ -100,13 +115,30 @@ export const OptionsPaneCategory: FC<OptionsPaneCategoryProps> = React.memo(
         aria-label={selectors.components.OptionsGroup.group(id)}
         ref={ref}
       >
-        <div className={headerStyles} onClick={onToggle} aria-label={selectors.components.OptionsGroup.toggle(id)}>
-          <div className={cx(styles.toggle, 'editor-options-group-toggle')}>
-            <Icon name={isExpanded ? 'angle-down' : 'angle-right'} />
-          </div>
-          <h6 className={styles.title}>{renderTitle(isExpanded)}</h6>
+        {/* disabling a11y rules here because there's a Button that handles keyboard interaction */}
+        {/* this just provides a better experience for mouse users */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div className={headerStyles} onClick={onToggle}>
+          <Button
+            aria-label={selectors.components.OptionsGroup.toggle(id)}
+            type="button"
+            fill="text"
+            size="sm"
+            variant="secondary"
+            aria-expanded={isExpanded}
+            className={styles.toggleButton}
+            icon={isExpanded ? 'angle-down' : 'angle-right'}
+            onClick={onToggle}
+          />
+          <h6 id={`button-${id}`} className={styles.title}>
+            {renderTitle(isExpanded)}
+          </h6>
         </div>
-        {isExpanded && <div className={bodyStyles}>{children}</div>}
+        {isExpanded && (
+          <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
+            {children}
+          </div>
+        )}
       </div>
     );
   }
@@ -122,29 +154,29 @@ const getStyles = (theme: GrafanaTheme2) => {
     boxNestedExpanded: css`
       margin-bottom: ${theme.spacing(2)};
     `,
-    toggle: css`
-      color: ${theme.colors.text.secondary};
-      margin-right: ${theme.spacing(1)};
-    `,
     title: css`
       flex-grow: 1;
       overflow: hidden;
       line-height: 1.5;
       font-size: 1rem;
+      padding-left: 6px;
       font-weight: ${theme.typography.fontWeightMedium};
       margin: 0;
     `,
     header: css`
       display: flex;
       cursor: pointer;
-      align-items: baseline;
-      padding: ${theme.spacing(1)};
+      align-items: center;
+      padding: ${theme.spacing(0.5)};
       color: ${theme.colors.text.primary};
       font-weight: ${theme.typography.fontWeightMedium};
 
       &:hover {
         background: ${theme.colors.emphasize(theme.colors.background.primary, 0.03)};
       }
+    `,
+    toggleButton: css`
+      align-self: baseline;
     `,
     headerExpanded: css`
       color: ${theme.colors.text.primary};

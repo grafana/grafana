@@ -13,6 +13,10 @@ type Query struct {
 	Alias       string
 	Interval    time.Duration
 	Tz          string
+	Limit       string
+	Slimit      string
+	OrderByTime string
+	RefID       string
 }
 
 type Tag struct {

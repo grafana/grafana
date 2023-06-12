@@ -1,9 +1,9 @@
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
-import { ArrayVector } from '../../vector';
+
+import { DataTransformerID } from './ids';
 import { seriesToRowsTransformer, SeriesToRowsTransformerOptions } from './seriesToRows';
 
 describe('Series to rows', () => {
@@ -124,7 +124,7 @@ describe('Series to rows', () => {
     });
   });
 
-  it('combine two time series, where first serie fields has displayName, into one', async () => {
+  it('combine two time series, where first series fields has displayName, into one and displayNameFromDS overrides frame.name', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -156,7 +156,7 @@ describe('Series to rows', () => {
 
       const expected: Field[] = [
         createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
+        createField('Metric', FieldType.string, ['dsName', 'dsName', 'B', 'B', 'dsName', 'B']),
         createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
       ];
 
@@ -244,17 +244,10 @@ describe('Series to rows', () => {
   });
 });
 
-const createField = (name: string, type: FieldType, values: any[], config = {}): Field => {
-  return { name, type, values: new ArrayVector(values), config, labels: undefined };
+const createField = (name: string, type: FieldType, values: unknown[], config = {}): Field => {
+  return { name, type, values: values, config, labels: undefined };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
-  return fields.map((field) =>
-    createField(
-      field.name,
-      field.type,
-      field.values.toArray().map((value: any) => value),
-      field.config
-    )
-  );
+  return fields.map((field) => createField(field.name, field.type, field.values, field.config));
 };

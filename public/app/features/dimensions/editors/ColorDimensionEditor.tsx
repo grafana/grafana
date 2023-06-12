@@ -1,19 +1,17 @@
-import React, { FC, useCallback } from 'react';
-import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
-import { ColorDimensionConfig } from '../types';
-import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
-import {
-  useFieldDisplayNames,
-  useSelectOptions,
-} from '../../../../../packages/grafana-ui/src/components/MatchersUI/utils';
 import { css } from '@emotion/css';
+import React, { useCallback } from 'react';
+
+import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
+import { ColorDimensionConfig } from '@grafana/schema';
+import { Select, ColorPicker, useStyles2 } from '@grafana/ui';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
 
 const fixedColorOption: SelectableValue<string> = {
   label: 'Fixed color',
   value: '_____fixed_____',
 };
 
-export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, any, any>> = (props) => {
+export const ColorDimensionEditor = (props: StandardEditorProps<ColorDimensionConfig>) => {
   const { value, context, onChange } = props;
 
   const defaultColor = 'dark-green';
@@ -33,7 +31,7 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
           field,
         });
       } else {
-        const fixed = value.fixed ?? defaultColor;
+        const fixed = value?.fixed ?? defaultColor;
         onChange({
           ...value,
           field: undefined,
@@ -59,7 +57,6 @@ export const ColorDimensionEditor: FC<StandardEditorProps<ColorDimensionConfig, 
     <>
       <div className={styles.container}>
         <Select
-          menuShouldPortal
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

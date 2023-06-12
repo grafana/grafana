@@ -1,34 +1,41 @@
 import { of, throwError } from 'rxjs';
-import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
-
-import CloudMonitoringDataSource from '../datasource';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudMonitoringOptions } from '../types';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { CustomVariableModel } from '../../../../features/variables/types';
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
+import { DataQueryRequest, DataSourceInstanceSettings, toUtc } from '@grafana/data';
+import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
+import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { CustomVariableModel } from '../../../../features/variables/types';
+import CloudMonitoringDataSource from '../datasource';
+import { CloudMonitoringQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
+
 jest.mock('@grafana/runtime', () => ({
-  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
-type Args = { response?: any; throws?: boolean; templateSrv?: TemplateSrv };
+type Args = { response?: unknown; throws?: boolean; templateSrv?: TemplateSrv };
+
+const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
 function getTestcontext({ response = {}, throws = false, templateSrv = new TemplateSrv() }: Args = {}) {
   jest.clearAllMocks();
 
-  const instanceSettings = ({
+  const instanceSettings = {
     jsonData: {
       defaultProject: 'testproject',
     },
-  } as unknown) as DataSourceInstanceSettings<CloudMonitoringOptions>;
+  } as unknown as DataSourceInstanceSettings<CloudMonitoringOptions>;
 
-  const timeSrv = {} as TimeSrv;
-
-  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  const timeSrv = {
+    timeRange: () => ({
+      from: toUtc('2017-08-22T20:00:00Z'),
+      to: toUtc('2017-08-22T23:59:00Z'),
+    }),
+  } as TimeSrv;
 
   throws
     ? fetchMock.mockImplementation(() => throwError(response))
@@ -57,9 +64,9 @@ describe('CloudMonitoringDataSource', () => {
               refId: 'A',
             },
           ],
-        };
+        } as DataQueryRequest<CloudMonitoringQuery>;
 
-        const response: any = {
+        const response = {
           results: {
             A: {
               refId: 'A',
@@ -74,9 +81,44 @@ describe('CloudMonitoringDataSource', () => {
 
         const { ds } = getTestcontext({ response });
 
-        await expect(ds.query(options as any)).toEmitValuesWith((received) => {
+        await expect(ds.query(options)).toEmitValuesWith((received) => {
           const results = received[0];
           expect(results.data.length).toBe(0);
+        });
+      });
+    });
+  });
+
+  describe('When loading labels', () => {
+    describe('and no aggregation was specified', () => {
+      it('should use default values', async () => {
+        const { ds } = getTestcontext();
+        await ds.getLabels('cpu', 'a', 'default-proj');
+
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
+          crossSeriesReducer: 'REDUCE_NONE',
+          groupBys: [],
+          filters: ['metric.type', '=', 'cpu'],
+          projectName: 'default-proj',
+          view: 'HEADERS',
+        });
+      });
+    });
+
+    describe('and an aggregation was specified', () => {
+      it('should use the provided aggregation', async () => {
+        const { ds } = getTestcontext();
+        await ds.getLabels('sql', 'b', 'default-proj', {
+          crossSeriesReducer: 'REDUCE_MEAN',
+          groupBys: ['metadata.system_label.name'],
+        });
+
+        await expect(fetchMock.mock.calls[0][0].data.queries[0].timeSeriesList).toMatchObject({
+          crossSeriesReducer: 'REDUCE_MEAN',
+          groupBys: ['metadata.system_label.name'],
+          filters: ['metric.type', '=', 'sql'],
+          projectName: 'default-proj',
+          view: 'HEADERS',
         });
       });
     });
@@ -158,7 +200,7 @@ describe('CloudMonitoringDataSource', () => {
   });
 });
 
-function initTemplateSrv(values: any, multi = false) {
+function initTemplateSrv(values: string | string[], multi = false) {
   const templateSrv = new TemplateSrv();
   const test: CustomVariableModel = {
     ...initialCustomVariableModelState,

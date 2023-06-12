@@ -1,23 +1,19 @@
 import {
   DataFrame,
-  Field,
-  FieldDTO,
-  FieldType,
-  Labels,
-  QueryResultMeta,
   DataFrameJSON,
   decodeFieldValueEntities,
+  Field,
+  FieldDTO,
   FieldSchema,
+  FieldType,
   guessFieldTypeFromValue,
-  ArrayVector,
-  toFilteredDataFrameDTO,
+  Labels,
   parseLabels,
+  QueryResultMeta,
+  toFilteredDataFrameDTO,
 } from '@grafana/data';
 import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import {
-  StreamingFrameAction,
-  StreamingFrameOptions,
-} from '@grafana/runtime/src/services/live';
+import { StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
 import { renderLegendFormat } from 'app/plugins/datasource/prometheus/legend';
 import { AlignedData } from 'uplot';
 
@@ -63,7 +59,7 @@ export class StreamingDataFrame implements DataFrame {
   refId?: string;
   meta: QueryResultMeta = {};
 
-  fields: Array<Field<any, ArrayVector<any>>> = [];
+  fields: Field[] = [];
   length = 0;
 
   private schemaFields: FieldSchema[] = [];
@@ -93,14 +89,17 @@ export class StreamingDataFrame implements DataFrame {
 
   serialize = (
     fieldPredicate?: (f: Field) => boolean,
-    optionsOverride?: Partial<StreamingFrameOptions>
+    optionsOverride?: Partial<StreamingFrameOptions>,
+    trimValues?: {
+      maxLength?: number;
+    }
   ): SerializedStreamingDataFrame => {
     const options = optionsOverride ? Object.assign({}, { ...this.options, ...optionsOverride }) : this.options;
     const dataFrameDTO = toFilteredDataFrameDTO(this, fieldPredicate);
 
     const numberOfItemsToRemove = getNumberOfItemsToRemove(
       dataFrameDTO.fields.map((f) => f.values) as unknown[][],
-      options.maxLength,
+      typeof trimValues?.maxLength === 'number' ? Math.min(trimValues.maxLength, options.maxLength) : options.maxLength,
       this.timeFieldIndex,
       options.maxDelta
     );
@@ -109,6 +108,8 @@ export class StreamingDataFrame implements DataFrame {
       ...f,
       values: (f.values as unknown[]).slice(numberOfItemsToRemove),
     }));
+
+    const length = dataFrameDTO.fields[0]?.values?.length ?? 0
 
     return {
       ...dataFrameDTO,
@@ -119,7 +120,7 @@ export class StreamingDataFrame implements DataFrame {
       name: this.name,
       refId: this.refId,
       meta: this.meta,
-      length: this.length,
+      length,
       timeFieldIndex: this.timeFieldIndex,
       pushMode: this.pushMode,
       packetInfo: this.packetInfo,
@@ -144,11 +145,11 @@ export class StreamingDataFrame implements DataFrame {
       ...f,
       type: f.type ?? FieldType.other,
       config: f.config ?? {},
-      values: Array.isArray(f.values) ? new ArrayVector(f.values) : new ArrayVector(),
+      values: f.values ?? [],
     }));
 
     assureValuesAreWithinLengthLimit(
-      this.fields.map((f) => f.values.buffer),
+      this.fields.map((f) => f.values),
       this.options.maxLength,
       this.timeFieldIndex,
       this.options.maxDelta
@@ -209,7 +210,7 @@ export class StreamingDataFrame implements DataFrame {
       const firstField = schema.fields[0];
       if (
         this.timeFieldIndex === 1 &&
-        firstField.type === FieldType.string && 
+        firstField.type === FieldType.string &&
         (firstField.name === 'labels' || firstField.name === 'Labels')
       ) {
         this.pushMode = PushMode.labels;
@@ -230,10 +231,10 @@ export class StreamingDataFrame implements DataFrame {
           const sf = niceSchemaFields[idx % len];
           f.config = sf.config ?? {};
           f.labels = sf.labels;
-        });        
+        });
         if (displayNameFormat) {
           this.fields.forEach((f) => {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           });
         }
@@ -243,7 +244,7 @@ export class StreamingDataFrame implements DataFrame {
         this.fields = niceSchemaFields.map((f) => {
           const config = f.config ?? {};
           if (displayNameFormat) {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...f.labels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...f.labels };
             config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
           return {
@@ -254,8 +255,8 @@ export class StreamingDataFrame implements DataFrame {
             // transfer old values by type & name, unless we relied on labels to match fields
             values: isWide
               ? this.fields.find((of) => of.name === f.name && f.type === of.type)?.values ??
-                new ArrayVector(Array(this.length).fill(undefined))
-              : new ArrayVector(),
+                Array(this.length).fill(undefined)
+              : [],
           };
         });
       }
@@ -301,7 +302,7 @@ export class StreamingDataFrame implements DataFrame {
       if (values.length !== this.fields.length) {
         if (this.fields.length) {
           throw new Error(
-            `push message mismatch.  Expected: ${this.fields.length}, recieved: ${values.length} (labels=${
+            `push message mismatch.  Expected: ${this.fields.length}, received: ${values.length} (labels=${
               this.pushMode === PushMode.labels
             })`
           );
@@ -310,7 +311,7 @@ export class StreamingDataFrame implements DataFrame {
         this.fields = values.map((vals, idx) => {
           let name = `Field ${idx}`;
           let type = guessFieldTypeFromValue(vals[0]);
-          const isTime = idx === 0 && type === FieldType.number && vals[0] > 1600016688632;
+          const isTime = idx === 0 && type === FieldType.number && (vals as number[])[0] > 1600016688632;
           if (isTime) {
             type = FieldType.time;
             name = 'Time';
@@ -320,7 +321,7 @@ export class StreamingDataFrame implements DataFrame {
             name,
             type,
             config: {},
-            values: new ArrayVector([]),
+            values: [],
           };
         });
       }
@@ -334,13 +335,14 @@ export class StreamingDataFrame implements DataFrame {
         this.packetInfo.action = StreamingFrameAction.Append;
 
         // mutates appended
-        appended = this.fields.map((f) => f.values.buffer);
+        appended = this.fields.map((f) => f.values);
         circPush(appended, values, this.options.maxLength, this.timeFieldIndex, this.options.maxDelta);
       }
 
       appended.forEach((v, i) => {
-        const { state, values } = this.fields[i];
-        values.buffer = v;
+        const field = this.fields[i];
+        const { state } = field;
+        field.values = v;
         if (state) {
           state.calcs = undefined;
         }
@@ -360,18 +362,37 @@ export class StreamingDataFrame implements DataFrame {
       return;
     }
 
-    this.packetInfo.action = StreamingFrameAction.Append;
+    this.packetInfo.action = this.options.action;
     this.packetInfo.number++;
     this.packetInfo.length = values[0].length;
     this.packetInfo.schemaChanged = false;
 
-    circPush(
-      this.fields.map((f) => f.values.buffer),
-      values,
-      this.options.maxLength,
-      this.timeFieldIndex,
-      this.options.maxDelta
-    );
+    if (this.options.action === StreamingFrameAction.Append) {
+      circPush(
+        this.fields.map((f) => f.values),
+        values,
+        this.options.maxLength,
+        this.timeFieldIndex,
+        this.options.maxDelta
+      );
+    } else {
+      values.forEach((v, i) => {
+        if (this.fields[i]) {
+          this.fields[i].values = v;
+        }
+      });
+
+      assureValuesAreWithinLengthLimit(
+        this.fields.map((f) => f.values),
+        this.options.maxLength,
+        this.timeFieldIndex,
+        this.options.maxDelta
+      );
+    }
+    const newLength = this.fields?.[0]?.values.length;
+    if (newLength !== undefined) {
+      this.length = newLength;
+    }
   };
 
   resetStateCalculations = () => {
@@ -391,7 +412,7 @@ export class StreamingDataFrame implements DataFrame {
 
   getValuesFromLastPacket = (): unknown[][] =>
     this.fields.map((f) => {
-      const values = f.values.buffer;
+      const values = f.values;
       return values.slice(Math.max(values.length - this.packetInfo.length));
     });
 
@@ -411,7 +432,7 @@ export class StreamingDataFrame implements DataFrame {
         if (i > 0) {
           f.labels = parsedLabels;
           if (displayNameFormat) {
-            const labels = {[PROM_STYLE_METRIC_LABEL]:f.name, ...parsedLabels};
+            const labels = { [PROM_STYLE_METRIC_LABEL]: f.name, ...parsedLabels };
             f.config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
           }
         }
@@ -421,20 +442,20 @@ export class StreamingDataFrame implements DataFrame {
         let proto = this.schemaFields[i] as Field;
         const config = proto.config ?? {};
         if (displayNameFormat) {
-          const labels = {[PROM_STYLE_METRIC_LABEL]:proto.name, ...parsedLabels};
+          const labels = { [PROM_STYLE_METRIC_LABEL]: proto.name, ...parsedLabels };
           config.displayNameFromDS = renderLegendFormat(displayNameFormat, labels);
         }
         this.fields.push({
           ...proto,
           config,
           labels: parsedLabels,
-          values: new ArrayVector(Array(this.length).fill(undefined)),
+          values: Array(this.length).fill(undefined),
         });
       }
     }
 
     this.labels.add(label);
-  };
+  }
 
   getOptions = (): Readonly<StreamingFrameOptions> => this.options;
 }
@@ -473,7 +494,7 @@ export function transpose(vrecs: any[][]) {
 }
 
 // binary search for index of closest value
-function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
+export function closestIdx(num: number, arr: number[], lo?: number, hi?: number) {
   let mid;
   lo = lo || 0;
   hi = hi || arr.length - 1;

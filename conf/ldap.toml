@@ -11,6 +11,11 @@ port = 389
 use_ssl = false
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
+# The value of an accepted TLS cipher. By default, this value is empty. Example value: ["TLS_AES_256_GCM_SHA384"])
+# For a complete list of supported ciphers and TLS versions, refer to: https://go.dev/src/crypto/tls/cipher_suites.go
+tls_ciphers = []
+# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1, TLS1.2, TLS1.3.
+min_tls_version = ""
 # set to true if you want to skip ssl cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
@@ -24,6 +29,11 @@ bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with triple quotes. Ex """#password;"""
 bind_password = 'grafana'
+# We recommend using variable expansion for the bind_password, for more info https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#variable-expansion
+# bind_password = '$__env{LDAP_BIND_PASSWORD}'
+
+# Timeout in seconds (applies to each host specified in the 'host' entry (space separated))
+timeout = 10
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
 search_filter = "(cn=%s)"
@@ -55,7 +65,7 @@ org_role = "Admin"
 # org_id = 1
 
 [[servers.group_mappings]]
-group_dn = "cn=users,ou=groups,dc=grafana,dc=org"
+group_dn = "cn=editors,ou=groups,dc=grafana,dc=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]

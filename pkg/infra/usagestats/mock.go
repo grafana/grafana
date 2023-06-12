@@ -29,8 +29,4 @@ func (usm *UsageStatsMock) GetUsageReport(ctx context.Context) (Report, error) {
 	return Report{Metrics: all}, nil
 }
 
-func (usm *UsageStatsMock) ShouldBeReported(_ context.Context, _ string) bool {
-	return true
-}
-
 func (usm *UsageStatsMock) RegisterSendReportCallback(_ SendReportCallbackFunc) {}

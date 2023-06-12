@@ -1,13 +1,13 @@
-import { ReducerID } from '../fieldReducer';
-import { DataTransformerID } from './ids';
-import { toDataFrame } from '../../dataframe/processDataFrame';
-import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
-import { transformDataFrame } from '../transformDataFrame';
-import { DataTransformerConfig, Field, FieldType } from '../../types';
-import { ArrayVector } from '../../vector';
-import { notTimeFieldMatcher } from '../matchers/predicates';
 import { DataFrameView } from '../../dataframe';
+import { toDataFrame } from '../../dataframe/processDataFrame';
+import { DataTransformerConfig, Field, FieldType } from '../../types';
+import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { ReducerID } from '../fieldReducer';
+import { notTimeFieldMatcher } from '../matchers/predicates';
+import { transformDataFrame } from '../transformDataFrame';
+
+import { DataTransformerID } from './ids';
+import { reduceFields, reduceTransformer, ReduceTransformerOptions } from './reduce';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -63,31 +63,31 @@ describe('Reducer Transformer', () => {
           {
             name: 'Field',
             type: FieldType.string,
-            values: new ArrayVector(['A temperature', 'A humidity', 'B temperature', 'B humidity']),
+            values: ['A temperature', 'A humidity', 'B temperature', 'B humidity'],
             config: {},
           },
           {
             name: 'First',
             type: FieldType.number,
-            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            values: [3, 10000.3, 1, 11000.1],
             config: {},
           },
           {
             name: 'Min',
             type: FieldType.number,
-            values: new ArrayVector([3, 10000.3, 1, 11000.1]),
+            values: [3, 10000.3, 1, 11000.1],
             config: {},
           },
           {
             name: 'Max',
             type: FieldType.number,
-            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            values: [6, 10000.6, 7, 11000.7],
             config: {},
           },
           {
             name: 'Last',
             type: FieldType.number,
-            values: new ArrayVector([6, 10000.6, 7, 11000.7]),
+            values: [6, 10000.6, 7, 11000.7],
             config: {},
           },
         ];
@@ -114,31 +114,31 @@ describe('Reducer Transformer', () => {
           {
             name: 'Field',
             type: FieldType.string,
-            values: new ArrayVector(['A temperature', 'B temperature']),
+            values: ['A temperature', 'B temperature'],
             config: {},
           },
           {
             name: 'First',
             type: FieldType.number,
-            values: new ArrayVector([3, 1]),
+            values: [3, 1],
             config: {},
           },
           {
             name: 'Min',
             type: FieldType.number,
-            values: new ArrayVector([3, 1]),
+            values: [3, 1],
             config: {},
           },
           {
             name: 'Max',
             type: FieldType.number,
-            values: new ArrayVector([6, 7]),
+            values: [6, 7],
             config: {},
           },
           {
             name: 'Last',
             type: FieldType.number,
-            values: new ArrayVector([6, 7]),
+            values: [6, 7],
             config: {},
           },
         ];
@@ -164,31 +164,31 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['A temperature', 'A humidity']),
+          values: ['temperature', 'humidity'],
           config: {},
         },
         {
           name: 'First',
           type: FieldType.number,
-          values: new ArrayVector([3, 10000.3]),
+          values: [3, 10000.3],
           config: {},
         },
         {
           name: 'Min',
           type: FieldType.number,
-          values: new ArrayVector([3, 10000.3]),
+          values: [3, 10000.3],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10000.6]),
+          values: [6, 10000.6],
           config: {},
         },
         {
           name: 'Last',
           type: FieldType.number,
-          values: new ArrayVector([6, 10000.6]),
+          values: [6, 10000.6],
           config: {},
         },
       ];
@@ -213,31 +213,31 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['A temperature']),
+          values: ['temperature'],
           config: {},
         },
         {
           name: 'First',
           type: FieldType.number,
-          values: new ArrayVector([3]),
+          values: [3],
           config: {},
         },
         {
           name: 'Min',
           type: FieldType.number,
-          values: new ArrayVector([3]),
+          values: [3],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6]),
+          values: [6],
           config: {},
         },
         {
           name: 'Last',
           type: FieldType.number,
-          values: new ArrayVector([6]),
+          values: [6],
           config: {},
         },
       ];
@@ -260,15 +260,15 @@ describe('Reducer Transformer', () => {
     expect(frames[0].length).toEqual(1);
     expect(frames[1].length).toEqual(1);
 
-    const view0 = new DataFrameView<any>(frames[0]);
-    const view1 = new DataFrameView<any>(frames[1]);
+    const view0 = new DataFrameView(frames[0]);
+    const view1 = new DataFrameView(frames[1]);
     expect({ ...view0.get(0) }).toMatchInlineSnapshot(`
-      Object {
+      {
         "temperature": 6,
       }
     `);
     expect({ ...view1.get(0) }).toMatchInlineSnapshot(`
-      Object {
+      {
         "humidity": 10000.6,
         "temperature": 6,
       }
@@ -286,16 +286,16 @@ describe('Reducer Transformer', () => {
     const seriesA = toDataFrame({
       name: 'a',
       fields: [
-        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'value', type: FieldType.number, values: [3, 4, 5, 6], state: { displayName: 'a' } },
+        { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6] },
       ],
     });
 
     const seriesB = toDataFrame({
       name: '2021',
       fields: [
-        { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'value', type: FieldType.number, values: [7, 8, 9, 10], state: { displayName: '2021' } },
+        { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
+        { name: 'Value', type: FieldType.number, values: [7, 8, 9, 10] },
       ],
     });
 
@@ -305,13 +305,13 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['a', '2021']),
+          values: ['a', '2021'],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10]),
+          values: [6, 10],
           config: {},
         },
       ];
@@ -350,13 +350,13 @@ describe('Reducer Transformer', () => {
         {
           name: 'Field',
           type: FieldType.string,
-          values: new ArrayVector(['a', '2021']),
+          values: ['a', '2021'],
           config: {},
         },
         {
           name: 'Max',
           type: FieldType.number,
-          values: new ArrayVector([6, 10]),
+          values: [6, 10],
           config: {},
         },
       ];
@@ -397,45 +397,45 @@ describe('Reducer Transformer', () => {
 
       expect(processed.length).toEqual(1);
       expect(processed[0].fields).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "config": Object {},
+        [
+          {
+            "config": {},
             "name": "Field",
             "type": "string",
-            "values": Array [
+            "values": [
               "value",
               "value",
               "value",
               "value",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "state",
             "type": "string",
-            "values": Array [
+            "values": [
               "CA",
               "NY",
               "CA",
               ,
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "country",
             "type": "string",
-            "values": Array [
+            "values": [
               ,
               ,
               "USA",
               "USA",
             ],
           },
-          Object {
-            "config": Object {},
+          {
+            "config": {},
             "name": "Max",
             "type": "number",
-            "values": Array [
+            "values": [
               6,
               6,
               6,

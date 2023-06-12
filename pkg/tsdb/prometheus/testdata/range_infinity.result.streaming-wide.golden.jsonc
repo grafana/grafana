@@ -1,0 +1,92 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "type": "timeseries-wide",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "resultType": "matrix"
+//      },
+//      "executedQueryString": "Expr: 1 / 0\nStep: 1s"
+//  }
+//  Name: 
+//  Dimensions: 2 Fields by 3 Rows
+//  +-------------------------------+------------------+
+//  | Name: Time                    | Name: 1 / 0      |
+//  | Labels:                       | Labels:          |
+//  | Type: []time.Time             | Type: []*float64 |
+//  +-------------------------------+------------------+
+//  | 2022-01-11 08:25:30 +0000 UTC | +Inf             |
+//  | 2022-01-11 08:25:31 +0000 UTC | +Inf             |
+//  | 2022-01-11 08:25:32 +0000 UTC | +Inf             |
+//  +-------------------------------+------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "meta": {
+          "type": "timeseries-wide",
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "resultType": "matrix"
+          },
+          "executedQueryString": "Expr: 1 / 0\nStep: 1s"
+        },
+        "fields": [
+          {
+            "name": "Time",
+            "type": "time",
+            "typeInfo": {
+              "frame": "time.Time"
+            },
+            "config": {
+              "interval": 1000
+            }
+          },
+          {
+            "name": "1 / 0",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64",
+              "nullable": true
+            },
+            "labels": {}
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            1641889530000,
+            1641889531000,
+            1641889532000
+          ],
+          [
+            null,
+            null,
+            null
+          ]
+        ],
+        "entities": [
+          null,
+          {
+            "Inf": [
+              0,
+              1,
+              2
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

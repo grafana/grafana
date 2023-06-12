@@ -1,12 +1,14 @@
-import React, { ReactElement, useState } from 'react';
 import { css } from '@emotion/css';
+import React, { ReactElement, useState } from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Link, useStyles2 } from '@grafana/ui';
-import { LibraryElementDTO } from '../../types';
-import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
-import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 import { config } from '@grafana/runtime';
+import { Icon, Link, useStyles2 } from '@grafana/ui';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
+import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/PanelTypeCard';
+
+import { LibraryElementDTO } from '../../types';
+import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
 
 export interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;
@@ -15,12 +17,9 @@ export interface LibraryPanelCardProps {
   showSecondaryActions?: boolean;
 }
 
-export const LibraryPanelCard: React.FC<LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] }> = ({
-  libraryPanel,
-  onClick,
-  onDelete,
-  showSecondaryActions,
-}) => {
+type Props = LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] };
+
+export const LibraryPanelCard = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -60,7 +59,7 @@ interface FolderLinkProps {
 function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
   const styles = useStyles2(getStyles);
 
-  if (!libraryPanel.meta.folderUid && !libraryPanel.meta.folderName) {
+  if (!libraryPanel.meta?.folderUid && !libraryPanel.meta?.folderName) {
     return null;
   }
 

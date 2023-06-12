@@ -1,5 +1,7 @@
 import { DataFrame } from '@grafana/data';
-import { DimensionSupplier, ResourceDimensionConfig, ResourceDimensionMode } from './types';
+import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
+
+import { DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
 
 //---------------------------------------------------------
@@ -9,7 +11,7 @@ export function getPublicOrAbsoluteUrl(v: string): string {
   if (!v) {
     return '';
   }
-  return v.indexOf(':/') > 0 ? v : (window as any).__grafana_public_path__ + v;
+  return v.indexOf(':/') > 0 ? v : window.__grafana_public_path__ + v;
 }
 
 export function getResourceDimension(
@@ -18,7 +20,7 @@ export function getResourceDimension(
 ): DimensionSupplier<string> {
   const mode = config.mode ?? ResourceDimensionMode.Fixed;
   if (mode === ResourceDimensionMode.Fixed) {
-    const v = getPublicOrAbsoluteUrl(config.fixed!);
+    const v = getPublicOrAbsoluteUrl(config.fixed);
     return {
       isAssumed: !Boolean(v),
       fixed: v,
@@ -39,17 +41,27 @@ export function getResourceDimension(
   }
 
   if (mode === ResourceDimensionMode.Mapping) {
-    const mapper = (v: any) => getPublicOrAbsoluteUrl(`${v}`);
+    const mapper = (v: string) => getPublicOrAbsoluteUrl(`${v}`);
     return {
       field,
-      get: (i) => mapper(field.values.get(i)),
+      get: (i) => mapper(field.values[i]),
       value: () => mapper(getLastNotNullFieldValue(field)),
     };
   }
 
+  // mode === ResourceDimensionMode.Field case
+  const getIcon = (value: string): string => {
+    if (field && field.display) {
+      const icon = field.display(value).icon;
+      return getPublicOrAbsoluteUrl(icon ?? '');
+    }
+
+    return '';
+  };
+
   return {
     field,
-    get: field.values.get,
-    value: () => getLastNotNullFieldValue(field),
+    get: (index: number): string => getIcon(field.values[index]),
+    value: () => getIcon(getLastNotNullFieldValue(field)),
   };
 }

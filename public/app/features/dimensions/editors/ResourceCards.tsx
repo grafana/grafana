@@ -1,11 +1,13 @@
+import { css, cx } from '@emotion/css';
 import React, { memo, CSSProperties } from 'react';
-import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import { areEqual, FixedSizeGrid as Grid } from 'react-window';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
-import SVG from 'react-inlinesvg';
-import { css, cx } from '@emotion/css';
-import { ResourceItem } from './ResourcePicker';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+
+import { ResourceItem } from './FolderPickerTab';
 
 interface CellProps {
   columnIndex: number;
@@ -19,7 +21,7 @@ interface CellProps {
   };
 }
 
-function Cell(props: CellProps) {
+const MemoizedCell = memo(function Cell(props: CellProps) {
   const { columnIndex, rowIndex, style, data } = props;
   const { cards, columnCount, onChange, selected } = data;
   const singleColumnIndex = columnIndex + rowIndex * columnCount;
@@ -36,16 +38,16 @@ function Cell(props: CellProps) {
           onClick={() => onChange(card.value)}
         >
           {card.imgUrl.endsWith('.svg') ? (
-            <SVG src={card.imgUrl} className={styles.img} />
+            <SanitizedSVG src={card.imgUrl} className={styles.img} />
           ) : (
-            <img src={card.imgUrl} className={styles.img} />
+            <img src={card.imgUrl} alt="" className={styles.img} />
           )}
-          <h6 className={styles.text}>{card.label.substr(0, card.label.length - 4)}</h6>
+          <h6 className={styles.text}>{card.label.slice(0, -4)}</h6>
         </div>
       )}
     </div>
   );
-}
+}, areEqual);
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
@@ -123,7 +125,7 @@ export const ResourceCards = (props: CardProps) => {
             itemData={{ cards, columnCount, onChange, selected: value }}
             className={styles.grid}
           >
-            {memo(Cell, areEqual)}
+            {MemoizedCell}
           </Grid>
         );
       }}

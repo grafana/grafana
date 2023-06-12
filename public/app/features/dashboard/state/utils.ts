@@ -1,5 +1,6 @@
-import { PanelModel } from './PanelModel';
 import { REPEAT_DIR_HORIZONTAL } from '../../../core/constants';
+
+import { PanelModel } from './PanelModel';
 
 export function isOnTheSameGridRow(sourcePanel: PanelModel, otherPanel: PanelModel): boolean {
   if (sourcePanel.repeatDirection === REPEAT_DIR_HORIZONTAL) {

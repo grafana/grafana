@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["**/*.ts", "../../packages/grafana-e2e/cypress/support/index.d.ts"],
+  "resolveJsonModule": true
+}

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -26,6 +27,9 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 		res += query.renderWhereClause()
 		res += query.renderTimeFilter(queryContext)
 		res += query.renderGroupBy(queryContext)
+		res += query.renderOrderByTime()
+		res += query.renderLimit()
+		res += query.renderSlimit()
 		res += query.renderTz()
 	}
 
@@ -41,7 +45,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 }
 
 func (query *Query) renderTags() []string {
-	var res []string
+	res := make([]string, 0, len(query.Tags))
 	for i, tag := range query.Tags {
 		str := ""
 
@@ -56,7 +60,7 @@ func (query *Query) renderTags() []string {
 
 		// If the operator is missing we fall back to sensible defaults
 		if tag.Operator == "" {
-			if regexpOperatorPattern.Match([]byte(tag.Value)) {
+			if regexpOperatorPattern.MatchString(tag.Value) {
 				tag.Operator = "=~"
 			} else {
 				tag.Operator = "="
@@ -74,7 +78,17 @@ func (query *Query) renderTags() []string {
 			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 		}
 
-		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
+		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
+
+		if strings.HasSuffix(tag.Key, "::tag") {
+			escapedKey = fmt.Sprintf(`"%s"::tag`, strings.TrimSuffix(tag.Key, "::tag"))
+		}
+
+		if strings.HasSuffix(tag.Key, "::field") {
+			escapedKey = fmt.Sprintf(`"%s"::field`, strings.TrimSuffix(tag.Key, "::field"))
+		}
+
+		res = append(res, fmt.Sprintf(`%s%s %s %s`, str, escapedKey, tag.Operator, textValue))
 	}
 
 	return res
@@ -82,13 +96,13 @@ func (query *Query) renderTags() []string {
 
 func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) string {
 	from, to := epochMStoInfluxTime(&queryContext.Queries[0].TimeRange)
-	return fmt.Sprintf("time > %s and time < %s", from, to)
+	return fmt.Sprintf("time >= %s and time <= %s", from, to)
 }
 
 func (query *Query) renderSelectors(queryContext *backend.QueryDataRequest) string {
 	res := "SELECT "
 
-	var selectors []string
+	selectors := make([]string, 0, len(query.Selects))
 	for _, sel := range query.Selects {
 		stk := ""
 		for _, s := range *sel {
@@ -110,7 +124,7 @@ func (query *Query) renderMeasurement() string {
 
 	measurement := query.Measurement
 
-	if !regexpMeasurementPattern.Match([]byte(measurement)) {
+	if !regexpMeasurementPattern.MatchString(measurement) {
 		measurement = fmt.Sprintf(`"%s"`, measurement)
 	}
 
@@ -151,12 +165,36 @@ func (query *Query) renderGroupBy(queryContext *backend.QueryDataRequest) string
 	return groupBy
 }
 
+func (query *Query) renderOrderByTime() string {
+	orderByTime := query.OrderByTime
+	if orderByTime == "" {
+		return ""
+	}
+	return fmt.Sprintf(" ORDER BY time %s", orderByTime)
+}
+
 func (query *Query) renderTz() string {
 	tz := query.Tz
 	if tz == "" {
 		return ""
 	}
 	return fmt.Sprintf(" tz('%s')", tz)
+}
+
+func (query *Query) renderLimit() string {
+	limit := query.Limit
+	if limit == "" {
+		return ""
+	}
+	return fmt.Sprintf(" limit %s", limit)
+}
+
+func (query *Query) renderSlimit() string {
+	slimit := query.Slimit
+	if slimit == "" {
+		return ""
+	}
+	return fmt.Sprintf(" slimit %s", slimit)
 }
 
 func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {

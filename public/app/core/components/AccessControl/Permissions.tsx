@@ -1,9 +1,15 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import { getBackendSrv } from 'app/core/services/backend_srv';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Button } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
+
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
 import { PermissionTarget, ResourcePermission, SetPermission, Description } from './types';
@@ -19,15 +25,29 @@ const INITIAL_DESCRIPTION: Description = {
   },
 };
 
-export type Props = {
-  resource: string;
-  resourceId: number;
+type ResourceId = string | number;
+type Type = 'users' | 'teams' | 'builtInRoles';
 
-  canListUsers: boolean;
+export type Props = {
+  title?: string;
+  buttonLabel?: string;
+  emptyLabel?: string;
+  addPermissionTitle?: string;
+  resource: string;
+  resourceId: ResourceId;
   canSetPermissions: boolean;
 };
 
-export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissions }: Props) => {
+export const Permissions = ({
+  title = 'Permissions',
+  buttonLabel = 'Add a permission',
+  emptyLabel = 'There are no permissions',
+  resource,
+  resourceId,
+  canSetPermissions,
+  addPermissionTitle,
+}: Props) => {
+  const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
   const [items, setItems] = useState<ResourcePermission[]>([]);
   const [desc, setDesc] = useState(INITIAL_DESCRIPTION);
@@ -90,7 +110,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     () =>
       sortBy(
         items.filter((i) => i.teamId),
-        ['team']
+        ['team', 'isManaged']
       ),
     [items]
   );
@@ -98,7 +118,7 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     () =>
       sortBy(
         items.filter((i) => i.userId),
-        ['userLogin']
+        ['userLogin', 'isManaged']
       ),
     [items]
   );
@@ -106,58 +126,84 @@ export const Permissions = ({ resource, resourceId, canListUsers, canSetPermissi
     () =>
       sortBy(
         items.filter((i) => i.builtInRole),
-        ['builtInRole']
+        ['builtInRole', 'isManaged']
       ),
     [items]
   );
 
   return (
     <div>
-      <div className="page-action-bar">
-        <h3 className="page-sub-heading">Permissions</h3>
-        <div className="page-action-bar__spacer" />
-        {canSetPermissions && (
-          <Button variant={'primary'} key="add-permission" onClick={() => setIsAdding(true)}>
-            Add a permission
+      {canSetPermissions && (
+        <>
+          {config.featureToggles.nestedFolders && resource === 'folders' && (
+            <>
+              This will change permissions for this folder and all its descendants. In total, this will affect:
+              <DescendantCount
+                selectedItems={{
+                  folder: { [resourceId]: true },
+                  dashboard: {},
+                  panel: {},
+                  $all: false,
+                }}
+              />
+              <Space v={2} />
+            </>
+          )}
+          <Button
+            className={styles.addPermissionButton}
+            variant={'primary'}
+            key="add-permission"
+            onClick={() => setIsAdding(true)}
+          >
+            {buttonLabel}
           </Button>
-        )}
-      </div>
-
-      <div>
-        <SlideDown in={isAdding}>
-          <AddPermission
-            onAdd={onAdd}
-            permissions={desc.permissions}
-            assignments={desc.assignments}
-            canListUsers={canListUsers}
-            onCancel={() => setIsAdding(false)}
-          />
-        </SlideDown>
-        <PermissionList
-          title="Roles"
-          items={builtInRoles}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canRemove={canSetPermissions}
-        />
-        <PermissionList
-          title="Users"
-          items={users}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canRemove={canSetPermissions}
-        />
-        <PermissionList
-          title="Teams"
-          items={teams}
-          permissionLevels={desc.permissions}
-          onChange={onChange}
-          onRemove={onRemove}
-          canRemove={canSetPermissions}
-        />
-      </div>
+          <SlideDown in={isAdding}>
+            <AddPermission
+              title={addPermissionTitle}
+              onAdd={onAdd}
+              permissions={desc.permissions}
+              assignments={desc.assignments}
+              onCancel={() => setIsAdding(false)}
+            />
+          </SlideDown>
+        </>
+      )}
+      {items.length === 0 && (
+        <table className="filter-table gf-form-group">
+          <tbody>
+            <tr>
+              <th>{emptyLabel}</th>
+            </tr>
+          </tbody>
+        </table>
+      )}
+      <PermissionList
+        title="Role"
+        items={builtInRoles}
+        compareKey={'builtInRole'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
+      <PermissionList
+        title="User"
+        items={users}
+        compareKey={'userLogin'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
+      <PermissionList
+        title="Team"
+        items={teams}
+        compareKey={'team'}
+        permissionLevels={desc.permissions}
+        onChange={onChange}
+        onRemove={onRemove}
+        canSet={canSetPermissions}
+      />
     </div>
   );
 };
@@ -171,23 +217,34 @@ const getDescription = async (resource: string): Promise<Description> => {
   }
 };
 
-const getPermissions = (resource: string, datasourceId: number): Promise<ResourcePermission[]> =>
-  getBackendSrv().get(`/api/access-control/${resource}/${datasourceId}`);
+const getPermissions = (resource: string, resourceId: ResourceId): Promise<ResourcePermission[]> =>
+  getBackendSrv().get(`/api/access-control/${resource}/${resourceId}`);
 
-const setUserPermission = (resource: string, resourceId: number, userId: number, permission: string) =>
+const setUserPermission = (resource: string, resourceId: ResourceId, userId: number, permission: string) =>
   setPermission(resource, resourceId, 'users', userId, permission);
 
-const setTeamPermission = (resource: string, resourceId: number, teamId: number, permission: string) =>
+const setTeamPermission = (resource: string, resourceId: ResourceId, teamId: number, permission: string) =>
   setPermission(resource, resourceId, 'teams', teamId, permission);
 
-const setBuiltInRolePermission = (resource: string, resourceId: number, builtInRole: string, permission: string) =>
+const setBuiltInRolePermission = (resource: string, resourceId: ResourceId, builtInRole: string, permission: string) =>
   setPermission(resource, resourceId, 'builtInRoles', builtInRole, permission);
 
 const setPermission = (
   resource: string,
-  resourceId: number,
-  type: 'users' | 'teams' | 'builtInRoles',
+  resourceId: ResourceId,
+  type: Type,
   typeId: number | string,
   permission: string
 ): Promise<void> =>
-  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}/`, { permission });
+  getBackendSrv().post(`/api/access-control/${resource}/${resourceId}/${type}/${typeId}`, { permission });
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  breakdown: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing(2),
+  }),
+  addPermissionButton: css({
+    marginBottom: theme.spacing(2),
+  }),
+});

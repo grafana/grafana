@@ -1,13 +1,14 @@
 package loki
 
 import (
-	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -52,11 +53,64 @@ func interpolateVariables(expr string, interval time.Duration, timeRange time.Du
 	return expr
 }
 
+func parseQueryType(jsonPointerValue *string) (QueryType, error) {
+	if jsonPointerValue == nil {
+		// there are older queries stored in alerting that did not have queryType,
+		// those were range-queries
+		return QueryTypeRange, nil
+	} else {
+		jsonValue := *jsonPointerValue
+		switch jsonValue {
+		case "instant":
+			return QueryTypeInstant, nil
+		case "range":
+			return QueryTypeRange, nil
+		default:
+			return QueryTypeRange, fmt.Errorf("invalid queryType: %s", jsonValue)
+		}
+	}
+}
+
+func parseDirection(jsonPointerValue *string) (Direction, error) {
+	if jsonPointerValue == nil {
+		// there are older queries stored in alerting that did not have queryDirection,
+		// we default to "backward"
+		return DirectionBackward, nil
+	} else {
+		jsonValue := *jsonPointerValue
+		switch jsonValue {
+		case "backward":
+			return DirectionBackward, nil
+		case "forward":
+			return DirectionForward, nil
+		default:
+			return DirectionBackward, fmt.Errorf("invalid queryDirection: %s", jsonValue)
+		}
+	}
+}
+
+func parseSupportingQueryType(jsonPointerValue *string) (SupportingQueryType, error) {
+	if jsonPointerValue == nil {
+		return SupportingQueryNone, nil
+	} else {
+		jsonValue := *jsonPointerValue
+		switch jsonValue {
+		case "logsVolume":
+			return SupportingQueryLogsVolume, nil
+		case "logsSample":
+			return SupportingQueryLogsSample, nil
+		case "dataSample":
+			return SupportingQueryDataSample, nil
+		default:
+			return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
+		}
+	}
+}
+
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
-		model := &QueryModel{}
-		err := json.Unmarshal(query.JSON, model)
+		model, err := parseQueryModel(query.JSON)
 		if err != nil {
 			return nil, err
 		}
@@ -65,8 +119,8 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 		end := query.TimeRange.To
 
 		var resolution int64 = 1
-		if model.Resolution >= 1 && model.Resolution <= 5 || model.Resolution == 10 {
-			resolution = model.Resolution
+		if model.Resolution != nil && (*model.Resolution >= 1 && *model.Resolution <= 5 || *model.Resolution == 10) {
+			resolution = *model.Resolution
 		}
 
 		interval := query.Interval
@@ -76,13 +130,42 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 
 		expr := interpolateVariables(model.Expr, interval, timeRange)
 
+		queryType, err := parseQueryType(model.QueryType)
+		if err != nil {
+			return nil, err
+		}
+
+		direction, err := parseDirection(model.Direction)
+		if err != nil {
+			return nil, err
+		}
+
+		var maxLines int64
+		if model.MaxLines != nil {
+			maxLines = *model.MaxLines
+		}
+
+		var legendFormat string
+		if model.LegendFormat != nil {
+			legendFormat = *model.LegendFormat
+		}
+
+		supportingQueryType, err := parseSupportingQueryType(model.SupportingQueryType)
+		if err != nil {
+			return nil, err
+		}
+
 		qs = append(qs, &lokiQuery{
-			Expr:         expr,
-			Step:         step,
-			LegendFormat: model.LegendFormat,
-			Start:        start,
-			End:          end,
-			RefID:        query.RefID,
+			Expr:                expr,
+			QueryType:           queryType,
+			Direction:           direction,
+			Step:                step,
+			MaxLines:            int(maxLines),
+			LegendFormat:        legendFormat,
+			Start:               start,
+			End:                 end,
+			RefID:               query.RefID,
+			SupportingQueryType: supportingQueryType,
 		})
 	}
 

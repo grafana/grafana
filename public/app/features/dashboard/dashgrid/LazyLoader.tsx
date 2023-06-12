@@ -1,5 +1,4 @@
-import React, { useRef, useState } from 'react';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
+import React, { useId, useRef, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 export interface Props {
@@ -11,7 +10,7 @@ export interface Props {
 }
 
 export function LazyLoader({ children, width, height, onLoad, onChange }: Props) {
-  const id = useUniqueId();
+  const id = useId();
   const [loaded, setLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -49,12 +48,15 @@ export function LazyLoader({ children, width, height, onLoad, onChange }: Props)
   );
 }
 
-LazyLoader.callbacks = {} as Record<string, (e: IntersectionObserverEntry) => void>;
+const callbacks: Record<string, (e: IntersectionObserverEntry) => void> = {};
+LazyLoader.callbacks = callbacks;
 LazyLoader.addCallback = (id: string, c: (e: IntersectionObserverEntry) => void) => (LazyLoader.callbacks[id] = c);
 LazyLoader.observer = new IntersectionObserver(
   (entries) => {
     for (const entry of entries) {
-      LazyLoader.callbacks[entry.target.id](entry);
+      if (LazyLoader.callbacks[entry.target.id]) {
+        LazyLoader.callbacks[entry.target.id](entry);
+      }
     }
   },
   { rootMargin: '100px' }

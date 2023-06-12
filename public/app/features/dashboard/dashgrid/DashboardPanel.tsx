@@ -1,13 +1,15 @@
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { PanelChrome } from './PanelChrome';
-import { PanelChromeAngular } from './PanelChromeAngular';
-import { DashboardModel, PanelModel } from '../state';
+
 import { StoreState } from 'app/types';
-import { PanelPlugin } from '@grafana/data';
-import { cleanUpPanelState, setPanelInstanceState } from '../../panel/state/reducers';
+
 import { initPanelState } from '../../panel/state/actions';
+import { setPanelInstanceState } from '../../panel/state/reducers';
+import { DashboardModel, PanelModel } from '../state';
+
 import { LazyLoader } from './LazyLoader';
+import { PanelChromeAngular } from './PanelChromeAngular';
+import { PanelStateWrapper } from './PanelStateWrapper';
 
 export interface OwnProps {
   panel: PanelModel;
@@ -15,10 +17,12 @@ export interface OwnProps {
   dashboard: DashboardModel;
   isEditing: boolean;
   isViewing: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
-  skipStateCleanUp?: boolean;
   lazy?: boolean;
+  timezone?: string;
+  hideMenu?: boolean;
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
@@ -35,7 +39,6 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
 
 const mapDispatchToProps = {
   initPanelState,
-  cleanUpPanelState,
   setPanelInstanceState,
 };
 
@@ -48,19 +51,10 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     lazy: true,
   };
 
-  specialPanels: { [key: string]: Function } = {};
-
   componentDidMount() {
     this.props.panel.isInView = !this.props.lazy;
-    if (!this.props.plugin) {
-      this.props.initPanelState(this.props.panel);
-    }
-  }
-
-  componentWillUnmount() {
-    // Most of the time an unmount should result in cleanup but in PanelEdit it should not
-    if (!this.props.skipStateCleanUp) {
-      this.props.cleanUpPanelState({ key: this.props.stateKey });
+    if (!this.props.lazy) {
+      this.onPanelLoad();
     }
   }
 
@@ -72,11 +66,32 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
     this.props.panel.isInView = v;
   };
 
-  renderPanel(plugin: PanelPlugin) {
-    const { dashboard, panel, isViewing, isEditing, width, height, lazy } = this.props;
+  onPanelLoad = () => {
+    if (!this.props.plugin) {
+      this.props.initPanelState(this.props.panel);
+    }
+  };
 
-    const renderPanelChrome = (isInView: boolean) =>
-      plugin.angularPanelCtrl ? (
+  renderPanel = ({ isInView }: { isInView: boolean }) => {
+    const {
+      dashboard,
+      panel,
+      isViewing,
+      isEditing,
+      width,
+      height,
+      plugin,
+      timezone,
+      hideMenu,
+      isDraggable = true,
+    } = this.props;
+
+    if (!plugin) {
+      return null;
+    }
+
+    if (plugin && plugin.angularPanelCtrl) {
+      return (
         <PanelChromeAngular
           plugin={plugin}
           panel={panel}
@@ -84,41 +99,41 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
           isViewing={isViewing}
           isEditing={isEditing}
           isInView={isInView}
+          isDraggable={isDraggable}
           width={width}
           height={height}
-        />
-      ) : (
-        <PanelChrome
-          plugin={plugin}
-          panel={panel}
-          dashboard={dashboard}
-          isViewing={isViewing}
-          isEditing={isEditing}
-          isInView={isInView}
-          width={width}
-          height={height}
-          onInstanceStateChange={this.onInstanceStateChange}
         />
       );
-
-    return lazy ? (
-      <LazyLoader width={width} height={height} onChange={this.onVisibilityChange}>
-        {({ isInView }) => renderPanelChrome(isInView)}
-      </LazyLoader>
-    ) : (
-      renderPanelChrome(true)
-    );
-  }
-
-  render() {
-    const { plugin } = this.props;
-
-    // If we have not loaded plugin exports yet, wait
-    if (!plugin) {
-      return null;
     }
 
-    return this.renderPanel(plugin);
+    return (
+      <PanelStateWrapper
+        plugin={plugin}
+        panel={panel}
+        dashboard={dashboard}
+        isViewing={isViewing}
+        isEditing={isEditing}
+        isInView={isInView}
+        isDraggable={isDraggable}
+        width={width}
+        height={height}
+        onInstanceStateChange={this.onInstanceStateChange}
+        timezone={timezone}
+        hideMenu={hideMenu}
+      />
+    );
+  };
+
+  render() {
+    const { width, height, lazy } = this.props;
+
+    return lazy ? (
+      <LazyLoader width={width} height={height} onChange={this.onVisibilityChange} onLoad={this.onPanelLoad}>
+        {this.renderPanel}
+      </LazyLoader>
+    ) : (
+      this.renderPanel({ isInView: true })
+    );
   }
 }
 

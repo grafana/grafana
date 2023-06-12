@@ -1,10 +1,12 @@
-import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
 import { groupBy, capitalize } from 'lodash';
 import React, { useRef, useMemo } from 'react';
 import useClickAway from 'react-use/lib/useClickAway';
-import { List } from '../index';
+
+import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
+
 import { useStyles2 } from '../../themes';
+import { List } from '../index';
 
 interface DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
@@ -51,7 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ suggestions, ...otherProps }) => {
+export const DataLinkSuggestions = ({ suggestions, ...otherProps }: DataLinkSuggestionsProps) => {
   const ref = useRef(null);
 
   useClickAway(ref, () => {
@@ -67,7 +69,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   const styles = useStyles2(getStyles);
 
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div role="menu" ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
         const indexOffset =
           i === 0
@@ -102,8 +104,16 @@ interface DataLinkSuggestionsListProps extends DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
 }
 
-const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.memo(
-  ({ activeIndex, activeIndexOffset, label, onClose, onSuggestionSelect, suggestions, activeRef: selectedRef }) => {
+const DataLinkSuggestionsList = React.memo(
+  ({
+    activeIndex,
+    activeIndexOffset,
+    label,
+    onClose,
+    onSuggestionSelect,
+    suggestions,
+    activeRef: selectedRef,
+  }: DataLinkSuggestionsListProps) => {
     const styles = useStyles2(getStyles);
 
     return (
@@ -114,7 +124,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           renderItem={(item, index) => {
             const isActive = index + activeIndexOffset === activeIndex;
             return (
+              // key events are handled by DataLinkInput
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
+                role="menuitem"
+                tabIndex={0}
                 className={cx(styles.item, isActive && styles.activeItem)}
                 ref={isActive ? selectedRef : undefined}
                 onClick={() => {

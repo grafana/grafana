@@ -7,307 +7,413 @@ import (
 	"fmt"
 	"math/rand"
 	"net/url"
-	"runtime"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/prometheus/common/model"
+	prometheusModel "github.com/prometheus/common/model"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/annotations"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestSendingToExternalAlertmanager(t *testing.T) {
-	fakeAM := NewFakeExternalAlertmanager(t)
-	defer fakeAM.Close()
-	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := newFakeAdminConfigStore(t)
-
-	// create alert rule with one second interval
-	alertRule := CreateTestAlertRule(t, fakeRuleStore, 1, 1, eval.Alerting)
-
-	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
-
-	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
-	// when the first alert triggers.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 1, len(sched.senders))
-	require.Equal(t, 1, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
-
-	// Then, ensure we've discovered the Alertmanager.
-	require.Eventually(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 1 && len(sched.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(func() {
-		cancel()
-	})
-	go func() {
-		err := sched.Run(ctx)
-		require.NoError(t, err)
-	}()
-
-	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
-	mockedClock.Add(2 * time.Second)
-
-	// Eventually, our Alertmanager should have received at least one alert.
-	require.Eventually(t, func() bool {
-		return fakeAM.AlertsCount() >= 1 && fakeAM.AlertNamesCompare([]string{alertRule.Title})
-	}, 10*time.Second, 200*time.Millisecond)
-
-	// Now, let's remove the Alertmanager from the admin configuration.
-	adminConfig.Alertmanagers = []string{}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-
-	// Again, make sure we sync and verify the senders.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 0, len(sched.senders))
-	require.Equal(t, 0, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
-
-	// Then, ensure we've dropped the Alertmanager.
-	require.Eventually(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 0 && len(sched.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond)
+type evalAppliedInfo struct {
+	alertDefKey models.AlertRuleKey
+	now         time.Time
 }
 
-func TestSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T) {
-	fakeAM := NewFakeExternalAlertmanager(t)
-	defer fakeAM.Close()
-	fakeRuleStore := newFakeRuleStore(t)
-	fakeInstanceStore := &FakeInstanceStore{}
-	fakeAdminConfigStore := newFakeAdminConfigStore(t)
+func TestProcessTicks(t *testing.T) {
+	testTracer := tracing.InitializeTracerForTest()
+	reg := prometheus.NewPedanticRegistry()
+	testMetrics := metrics.NewNGAlert(reg)
+	ctx := context.Background()
+	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 
-	// First, let's create an admin configuration that holds an alertmanager.
-	adminConfig := &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{fakeAM.server.URL}}
-	cmd := store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+	ruleStore := newFakeRulesStore()
 
-	sched, mockedClock := setupScheduler(t, fakeRuleStore, fakeInstanceStore, fakeAdminConfigStore, nil)
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval:            1 * time.Second,
+		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
+	}
 
-	// Make sure we sync the configuration at least once before the evaluation happens to guarantee the sender is running
-	// when the first alert triggers.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 1, len(sched.senders))
-	require.Equal(t, 1, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	const mainOrgID int64 = 1
 
-	// Then, ensure we've discovered the Alertmanager.
-	require.Eventuallyf(t, func() bool {
-		return len(sched.AlertmanagersFor(1)) == 1 && len(sched.DroppedAlertmanagersFor(1)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 1 was never discovered")
+	mockedClock := clock.NewMock()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(func() {
-		cancel()
+	notifier := &AlertsSenderMock{}
+	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
+
+	appUrl := &url.URL{
+		Scheme: "http",
+		Host:   "localhost",
+	}
+
+	schedCfg := SchedulerCfg{
+		BaseInterval: cfg.BaseInterval,
+		C:            mockedClock,
+		AppURL:       appUrl,
+		RuleStore:    ruleStore,
+		Metrics:      testMetrics.GetSchedulerMetrics(),
+		AlertSender:  notifier,
+		Tracer:       testTracer,
+	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
+
+	sched := NewScheduler(schedCfg, st)
+
+	evalAppliedCh := make(chan evalAppliedInfo, 1)
+	stopAppliedCh := make(chan models.AlertRuleKey, 1)
+
+	sched.evalAppliedFunc = func(alertDefKey models.AlertRuleKey, now time.Time) {
+		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+	}
+	sched.stopAppliedFunc = func(alertDefKey models.AlertRuleKey) {
+		stopAppliedCh <- alertDefKey
+	}
+
+	tick := time.Time{}
+
+	// create alert rule under main org with one second interval
+	alertRule1 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-1"))()
+	ruleStore.PutRule(ctx, alertRule1)
+
+	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
-	go func() {
-		err := sched.Run(ctx)
+
+	t.Run("after 1st tick rule metrics should report one active alert rule", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
 		require.NoError(t, err)
-	}()
+	})
 
-	// 1. Now, let's assume a new org comes along.
-	adminConfig2 := &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+	// add alert rule under main org with three base intervals
+	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
+	ruleStore.PutRule(ctx, alertRule2)
 
-	// If we sync again, new senders must have spawned.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 2, len(sched.senders))
-	require.Equal(t, 2, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
-	// Then, ensure we've discovered the Alertmanager for the new organization.
-	require.Eventuallyf(t, func() bool {
-		return len(sched.AlertmanagersFor(2)) == 1 && len(sched.DroppedAlertmanagersFor(2)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 2 was never discovered")
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
 
-	// With everything up and running, let's advance the time to make sure we get at least one alert iteration.
-	mockedClock.Add(10 * time.Second)
+	t.Run("after 2nd tick rule metrics should report two active alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
 
-	// TODO(gotjosh): Disabling this assertion as for some reason even after advancing the clock the alert is not being delivered.
-	// the check previous to this assertion would ensure that the sender is up and running before sending the notification.
-	// However, sometimes this does not happen.
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
 
-	// Create two alert rules with one second interval.
-	// alertRuleOrgOne := CreateTestAlertRule(t, fakeRuleStore, 1, 1)
-	// alertRuleOrgTwo := CreateTestAlertRule(t, fakeRuleStore, 1, 2)
-	// Eventually, our Alertmanager should have received at least two alerts.
-	// var count int
-	// require.Eventuallyf(t, func() bool {
-	//	count := fakeAM.AlertsCount()
-	//	return count == 2 && fakeAM.AlertNamesCompare([]string{alertRuleOrgOne.Title, alertRuleOrgTwo.Title})
-	// }, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s' from org 1 or '%s' from org 2, the alert count was: %d", alertRuleOrgOne.Title, alertRuleOrgTwo.Title, count)
+	t.Run("on 3rd tick two alert rules should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+		require.Len(t, scheduled, 2)
+		var keys []models.AlertRuleKey
+		for _, item := range scheduled {
+			keys = append(keys, item.rule.GetKey())
+			require.Equal(t, tick, item.scheduledAt)
+		}
+		require.Contains(t, keys, alertRule1.GetKey())
+		require.Contains(t, keys, alertRule2.GetKey())
 
-	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := NewFakeExternalAlertmanager(t)
-	adminConfig2 = &models.AdminConfiguration{OrgID: 2, Alertmanagers: []string{fakeAM.server.URL, fakeAM2.server.URL}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, keys...)
+	})
 
-	// Before we sync, let's grab the existing hash of this particular org.
-	sched.sendersMtx.Lock()
-	currentHash := sched.sendersCfgHash[2]
-	sched.sendersMtx.Unlock()
+	t.Run("on 4th tick only one alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
-	// Now, sync again.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
 
-	// The hash for org two should not be the same and we should still have two senders.
-	sched.sendersMtx.Lock()
-	require.NotEqual(t, sched.sendersCfgHash[2], currentHash)
-	require.Equal(t, 2, len(sched.senders))
-	require.Equal(t, 2, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+	t.Run("on 5th tick an alert rule is paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
 
-	// Wait for the discovery of the new Alertmanager for orgID = 2.
-	require.Eventuallyf(t, func() bool {
-		return len(sched.AlertmanagersFor(2)) == 2 && len(sched.DroppedAlertmanagersFor(2)) == 0
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 2 was never re-discovered after fix")
+		alertRule1.IsPaused = true
 
-	// 3. Now, let's provide a configuration that fails for OrgID = 1.
-	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"123://invalid.org"}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
-	// Before we sync, let's get the current config hash.
-	sched.sendersMtx.Lock()
-	currentHash = sched.sendersCfgHash[1]
-	sched.sendersMtx.Unlock()
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
 
-	// Now, sync again.
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
+	t.Run("after 5th tick rule metrics should report one active and one paused alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 1
+				`, alertRule1.OrgID)
 
-	// The old configuration should still be running.
-	sched.sendersMtx.Lock()
-	require.Equal(t, sched.sendersCfgHash[1], currentHash)
-	sched.sendersMtx.Unlock()
-	require.Equal(t, 1, len(sched.AlertmanagersFor(1)))
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
 
-	// If we fix it - it should be applied.
-	adminConfig2 = &models.AdminConfiguration{OrgID: 1, Alertmanagers: []string{"notarealalertmanager:3030"}}
-	cmd = store.UpdateAdminConfigurationCmd{AdminConfiguration: adminConfig2}
-	require.NoError(t, fakeAdminConfigStore.UpdateAdminConfiguration(cmd))
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.NotEqual(t, sched.sendersCfgHash[1], currentHash)
-	sched.sendersMtx.Unlock()
+	t.Run("on 6th tick all alert rule are paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
 
-	// Finally, remove everything.
-	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(1))
-	require.NoError(t, fakeAdminConfigStore.DeleteAdminConfiguration(2))
-	require.NoError(t, sched.SyncAndApplyConfigFromDatabase())
-	sched.sendersMtx.Lock()
-	require.Equal(t, 0, len(sched.senders))
-	require.Equal(t, 0, len(sched.sendersCfgHash))
-	sched.sendersMtx.Unlock()
+		alertRule2.IsPaused = true
 
-	require.Eventuallyf(t, func() bool {
-		NoAlertmanagerOrgOne := len(sched.AlertmanagersFor(1)) == 0 && len(sched.DroppedAlertmanagersFor(1)) == 0
-		NoAlertmanagerOrgTwo := len(sched.AlertmanagersFor(2)) == 0 && len(sched.DroppedAlertmanagersFor(2)) == 0
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
-		return NoAlertmanagerOrgOne && NoAlertmanagerOrgTwo
-	}, 10*time.Second, 200*time.Millisecond, "Alertmanager for org 1 and 2 were never removed")
+		require.Len(t, scheduled, 2)
+		var keys []models.AlertRuleKey
+		for _, item := range scheduled {
+			keys = append(keys, item.rule.GetKey())
+			require.Equal(t, tick, item.scheduledAt)
+		}
+		require.Contains(t, keys, alertRule1.GetKey())
+		require.Contains(t, keys, alertRule2.GetKey())
+
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, keys...)
+	})
+
+	t.Run("after 6th tick rule metrics should report two paused alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 2
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 7th tick unpause all alert rules", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		alertRule1.IsPaused = false
+		alertRule2.IsPaused = false
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
+
+	t.Run("after 7th tick rule metrics should report two active alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 8th tick deleted rule should not be evaluated but stopped", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		ruleStore.DeleteRule(alertRule1)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Empty(t, scheduled)
+		require.Len(t, stopped, 1)
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		require.Contains(t, stopped, alertRule1.GetKey())
+
+		assertStopRun(t, stopAppliedCh, alertRule1.GetKey())
+	})
+
+	t.Run("after 8th tick rule metrics should report one active alert rule", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 9th tick one alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule2, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule2.GetKey())
+	})
+
+	// create alert rule with one base interval
+	alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
+	ruleStore.PutRule(ctx, alertRule3)
+
+	t.Run("on 10th tick a new alert rule should be evaluated", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule3, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, updated, "None rules are expected to be updated")
+		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
+	})
+	t.Run("on 11th tick rule2 should be updated", func(t *testing.T) {
+		newRule2 := models.CopyRule(alertRule2)
+		newRule2.Version++
+		expectedUpdated := models.AlertRuleKeyWithVersion{
+			Version:      newRule2.Version,
+			AlertRuleKey: newRule2.GetKey(),
+		}
+
+		ruleStore.PutRule(context.Background(), newRule2)
+
+		tick = tick.Add(cfg.BaseInterval)
+		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule3, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		require.Len(t, updated, 1)
+		require.Equal(t, expectedUpdated, updated[0])
+	})
 }
 
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-	) (*schedule, *fakeRuleStore, *FakeInstanceStore, *fakeAdminConfigStore, prometheus.Gatherer) {
-		ruleStore := newFakeRuleStore(t)
-		instanceStore := &FakeInstanceStore{}
-		adminConfigStore := newFakeAdminConfigStore(t)
+		senderMock *AlertsSenderMock,
+	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
+		ruleStore := newFakeRulesStore()
+		instanceStore := &state.FakeInstanceStore{}
 
 		registry := prometheus.NewPedanticRegistry()
-		sch, _ := setupScheduler(t, ruleStore, instanceStore, adminConfigStore, registry)
+		sch := setupScheduler(t, ruleStore, instanceStore, registry, senderMock, nil)
 		sch.evalAppliedFunc = func(key models.AlertRuleKey, t time.Time) {
 			evalAppliedChan <- t
 		}
-		return sch, ruleStore, instanceStore, adminConfigStore, registry
+		return sch, ruleStore, instanceStore, registry
 	}
 
 	// normal states do not include NoData and Error because currently it is not possible to perform any sensible test
 	normalStates := []eval.State{eval.Normal, eval.Alerting, eval.Pending}
-	randomNormalState := func() eval.State {
-		// pick only supported cases
-		return normalStates[rand.Intn(3)]
-	}
+	allStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.NoData, eval.Error}
 
 	for _, evalState := range normalStates {
 		// TODO rewrite when we are able to mock/fake state manager
 		t.Run(fmt.Sprintf("when rule evaluation happens (evaluation state %s)", evalState), func(t *testing.T) {
-			evalChan := make(chan *evalContext)
+			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
-			sch, ruleStore, instanceStore, _, reg := createSchedule(evalAppliedChan)
+			sch, ruleStore, instanceStore, reg := createSchedule(evalAppliedChan, nil)
 
-			rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), evalState)
-
+			rule := models.AlertRuleGen(withQueryForState(t, evalState))()
+			ruleStore.PutRule(context.Background(), rule)
+			folderTitle := ruleStore.getNamespaceTitle(rule.NamespaceUID)
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
 
-			evalChan <- &evalContext{
-				now:     expectedTime,
-				version: rule.Version,
+			evalChan <- &evaluation{
+				scheduledAt: expectedTime,
+				rule:        rule,
+				folderTitle: folderTitle,
 			}
 
 			actualTime := waitForTimeChannel(t, evalAppliedChan)
 			require.Equal(t, expectedTime, actualTime)
 
-			t.Run("it should get rule from database when run the first time", func(t *testing.T) {
-				queries := make([]models.GetAlertRuleByUIDQuery, 0)
-				for _, op := range ruleStore.recordedOps {
-					switch q := op.(type) {
-					case models.GetAlertRuleByUIDQuery:
-						queries = append(queries, q)
-					}
+			t.Run("it should add extra labels", func(t *testing.T) {
+				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+				for _, s := range states {
+					assert.Equal(t, rule.UID, s.Labels[alertingModels.RuleUIDLabel])
+					assert.Equal(t, rule.NamespaceUID, s.Labels[alertingModels.NamespaceUIDLabel])
+					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
+					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}
-				require.NotEmptyf(t, queries, "Expected a %T request to rule store but nothing was recorded", models.GetAlertRuleByUIDQuery{})
-				require.Len(t, queries, 1, "Expected exactly one request of %T but got %d", models.GetAlertRuleByUIDQuery{}, len(queries))
-				require.Equal(t, rule.UID, queries[0].UID)
-				require.Equal(t, rule.OrgID, queries[0].OrgID)
 			})
+
 			t.Run("it should process evaluation results via state manager", func(t *testing.T) {
 				// TODO rewrite when we are able to mock/fake state manager
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				require.Len(t, states, 1)
 				s := states[0]
-				t.Logf("State: %v", s)
 				require.Equal(t, rule.UID, s.AlertRuleUID)
 				require.Len(t, s.Results, 1)
 				var expectedStatus = evalState
@@ -323,10 +429,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				require.Len(t, states, 1)
 				s := states[0]
 
-				var cmd *models.SaveAlertInstanceCommand
-				for _, op := range instanceStore.recordedOps {
+				var cmd *models.AlertInstance
+				for _, op := range instanceStore.RecordedOps {
 					switch q := op.(type) {
-					case models.SaveAlertInstanceCommand:
+					case models.AlertInstance:
 						cmd = &q
 					}
 					if cmd != nil {
@@ -335,21 +441,34 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				}
 
 				require.NotNil(t, cmd)
-				t.Logf("Saved alert instance: %v", cmd)
+				t.Logf("Saved alert instances: %v", cmd)
 				require.Equal(t, rule.OrgID, cmd.RuleOrgID)
 				require.Equal(t, expectedTime, cmd.LastEvalTime)
-				require.Equal(t, cmd.RuleUID, cmd.RuleUID)
-				require.Equal(t, evalState.String(), string(cmd.State))
+				require.Equal(t, rule.UID, cmd.RuleUID)
+				require.Equal(t, evalState.String(), string(cmd.CurrentState))
 				require.Equal(t, s.Labels, data.Labels(cmd.Labels))
 			})
+
 			t.Run("it reports metrics", func(t *testing.T) {
 				// duration metric has 0 values because of mocked clock that do not advance
 				expectedMetric := fmt.Sprintf(
 					`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
-        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds summary
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.5"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.9"} 0
-        	            	grafana_alerting_rule_evaluation_duration_seconds{org="%[1]d",quantile="0.99"} 0
+        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
         	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
         	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
 							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
@@ -367,396 +486,449 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	t.Run("should exit", func(t *testing.T) {
-		t.Run("when context is cancelled", func(t *testing.T) {
+		t.Run("and not clear the state if parent context is cancelled", func(t *testing.T) {
 			stoppedChan := make(chan error)
-			sch, _, _, _, _ := createSchedule(make(chan time.Time))
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+
+			rule := models.AlertRuleGen()()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			expectedStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			require.NotEmpty(t, expectedStates)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evalContext))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
 				stoppedChan <- err
 			}()
 
 			cancel()
 			err := waitForErrChannel(t, stoppedChan)
 			require.NoError(t, err)
+			require.Equal(t, len(expectedStates), len(sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)))
+		})
+		t.Run("and clean up the state if delete is cancellation reason ", func(t *testing.T) {
+			stoppedChan := make(chan error)
+			sch, _, _, _ := createSchedule(make(chan time.Time), nil)
+
+			rule := models.AlertRuleGen()()
+			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, eval.GenerateResults(rand.Intn(5)+1, eval.ResultGen(eval.WithEvaluatedAt(sch.clock.Now()))), nil)
+			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+
+			ctx, cancel := util.WithCancelCause(context.Background())
+			go func() {
+				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
+				stoppedChan <- err
+			}()
+
+			cancel(errRuleDeleted)
+			err := waitForErrChannel(t, stoppedChan)
+			require.NoError(t, err)
+
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 		})
 	})
 
-	t.Run("should fetch rule from database only if new version is greater than current", func(t *testing.T) {
-		evalChan := make(chan *evalContext)
+	t.Run("when a message is sent to update channel", func(t *testing.T) {
+		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
+		folderTitle := "folderName"
+		ruleFp := ruleWithFolder{rule, folderTitle}.Fingerprint()
+
+		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
+		updateChan := make(chan ruleVersionAndPauseStatus)
 
-		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
+		sender := AlertsSenderMock{}
+		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
-		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		ruleStore.PutRule(context.Background(), rule)
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, updateChan)
 		}()
 
-		expectedTime := time.UnixMicro(rand.Int63())
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: rule.Version,
+		// init evaluation loop so it got the rule version
+		evalChan <- &evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
+			folderTitle: folderTitle,
 		}
 
-		actualTime := waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
+		waitForTimeChannel(t, evalAppliedChan)
 
-		// Now update the rule
-		newRule := *rule
-		newRule.Version++
-		ruleStore.putRule(&newRule)
-
-		// and call with new version
-		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: newRule.Version,
-		}
-
-		actualTime = waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
-
-		queries := make([]models.GetAlertRuleByUIDQuery, 0)
-		for _, op := range ruleStore.recordedOps {
-			switch q := op.(type) {
-			case models.GetAlertRuleByUIDQuery:
-				queries = append(queries, q)
+		// define some state
+		states := make([]*state.State, 0, len(allStates))
+		for _, s := range allStates {
+			for i := 0; i < 2; i++ {
+				states = append(states, &state.State{
+					AlertRuleUID: rule.UID,
+					CacheID:      util.GenerateShortUID(),
+					OrgID:        rule.OrgID,
+					State:        s,
+					StartsAt:     sch.clock.Now(),
+					EndsAt:       sch.clock.Now().Add(time.Duration(rand.Intn(25)+5) * time.Second),
+					Labels:       rule.Labels,
+				})
 			}
 		}
-		require.Len(t, queries, 2, "Expected exactly two request of %T", models.GetAlertRuleByUIDQuery{})
-		require.Equal(t, rule.UID, queries[0].UID)
-		require.Equal(t, rule.OrgID, queries[0].OrgID)
-		require.Equal(t, rule.UID, queries[1].UID)
-		require.Equal(t, rule.OrgID, queries[1].OrgID)
-	})
+		sch.stateManager.Put(states)
 
-	t.Run("should not fetch rule if version is equal or less than current", func(t *testing.T) {
-		evalChan := make(chan *evalContext)
-		evalAppliedChan := make(chan time.Time)
-
-		sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
-
-		rule := CreateTestAlertRule(t, ruleStore, 10, rand.Int63(), randomNormalState())
-
-		go func() {
-			ctx, cancel := context.WithCancel(context.Background())
-			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
-		}()
-
-		expectedTime := time.UnixMicro(rand.Int63())
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: rule.Version,
-		}
-
-		actualTime := waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
-
-		// try again with the same version
-		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: rule.Version,
-		}
-		actualTime = waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
-
-		expectedTime = expectedTime.Add(time.Duration(rand.Intn(10)) * time.Second)
-		evalChan <- &evalContext{
-			now:     expectedTime,
-			version: rule.Version - 1,
-		}
-		actualTime = waitForTimeChannel(t, evalAppliedChan)
-		require.Equal(t, expectedTime, actualTime)
-
-		queries := make([]models.GetAlertRuleByUIDQuery, 0)
-		for _, op := range ruleStore.recordedOps {
-			switch q := op.(type) {
-			case models.GetAlertRuleByUIDQuery:
-				queries = append(queries, q)
+		states = sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+		expectedToBeSent := 0
+		for _, s := range states {
+			if s.State == eval.Normal || s.State == eval.Pending {
+				continue
 			}
+			expectedToBeSent++
 		}
-		require.Len(t, queries, 1, "Expected exactly one request of %T", models.GetAlertRuleByUIDQuery{})
+		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
+
+		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false}
+			updateChan <- ruleVersionAndPauseStatus{ruleFp, false} // second time just to make sure that previous messages were handled
+
+			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
+			require.Len(t, actualStates, len(states))
+
+			sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
+		})
+
+		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
+			updateChan <- ruleVersionAndPauseStatus{ruleFp + 1, false}
+
+			require.Eventually(t, func() bool {
+				return len(sender.Calls) > 0
+			}, 5*time.Second, 100*time.Millisecond)
+
+			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
+			sender.AssertNumberOfCalls(t, "Send", 1)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+			require.Len(t, args.PostableAlerts, expectedToBeSent)
+		})
 	})
 
 	t.Run("when evaluation fails", func(t *testing.T) {
+		rule := models.AlertRuleGen(withQueryForState(t, eval.Error))()
+		rule.ExecErrState = models.ErrorErrState
+
+		evalChan := make(chan *evaluation)
+		evalAppliedChan := make(chan time.Time)
+
+		sender := AlertsSenderMock{}
+		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
+		ruleStore.PutRule(context.Background(), rule)
+
+		go func() {
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
+		}()
+
+		evalChan <- &evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
+		}
+
+		waitForTimeChannel(t, evalAppliedChan)
+
 		t.Run("it should increase failure counter", func(t *testing.T) {
-			t.Skip()
-			// TODO implement check for counter
+			// duration metric has 0 values because of mocked clock that do not advance
+			expectedMetric := fmt.Sprintf(
+				`# HELP grafana_alerting_rule_evaluation_duration_seconds The duration for a rule to execute.
+        	            	# TYPE grafana_alerting_rule_evaluation_duration_seconds histogram
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.005"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.01"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.025"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.05"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="0.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="1"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="2.5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="5"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="10"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="25"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="50"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="100"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_bucket{org="%[1]d",le="+Inf"} 1
+        	            	grafana_alerting_rule_evaluation_duration_seconds_sum{org="%[1]d"} 0
+        	            	grafana_alerting_rule_evaluation_duration_seconds_count{org="%[1]d"} 1
+							# HELP grafana_alerting_rule_evaluation_failures_total The total number of rule evaluation failures.
+        	            	# TYPE grafana_alerting_rule_evaluation_failures_total counter
+        	            	grafana_alerting_rule_evaluation_failures_total{org="%[1]d"} 1
+        	            	# HELP grafana_alerting_rule_evaluations_total The total number of rule evaluations.
+        	            	# TYPE grafana_alerting_rule_evaluations_total counter
+        	            	grafana_alerting_rule_evaluations_total{org="%[1]d"} 1
+				`, rule.OrgID)
+
+			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_evaluation_duration_seconds", "grafana_alerting_rule_evaluations_total", "grafana_alerting_rule_evaluation_failures_total")
+			require.NoError(t, err)
 		})
-		t.Run("it should retry up to configured times", func(t *testing.T) {
-			// TODO figure out how to simulate failure
-			t.Skip()
+
+		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
+			sender.AssertNumberOfCalls(t, "Send", 1)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+			assert.Len(t, args.PostableAlerts, 1)
+			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
 		})
 	})
 
 	t.Run("when there are alerts that should be firing", func(t *testing.T) {
-		t.Run("it should send to local alertmanager if configured for organization", func(t *testing.T) {
-			// TODO figure out how to simulate multiorg alertmanager
-			t.Skip()
-		})
-		t.Run("it should send to external alertmanager if configured for organization", func(t *testing.T) {
-			fakeAM := NewFakeExternalAlertmanager(t)
-			defer fakeAM.Close()
+		t.Run("it should call sender", func(t *testing.T) {
+			// eval.Alerting makes state manager to create notifications for alertmanagers
+			rule := models.AlertRuleGen(withQueryForState(t, eval.Alerting))()
 
-			orgID := rand.Int63()
-			s, err := sender.New(nil)
-			require.NoError(t, err)
-			adminConfig := &models.AdminConfiguration{OrgID: orgID, Alertmanagers: []string{fakeAM.server.URL}}
-			err = s.ApplyConfig(adminConfig)
-			require.NoError(t, err)
-			s.Run()
-			defer s.Stop()
-
-			require.Eventuallyf(t, func() bool {
-				return len(s.Alertmanagers()) == 1
-			}, 20*time.Second, 200*time.Millisecond, "external Alertmanager was not discovered.")
-
-			evalChan := make(chan *evalContext)
+			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 
-			sch, ruleStore, _, _, _ := createSchedule(evalAppliedChan)
-			sch.senders[orgID] = s
-			// eval.Alerting makes state manager to create notifications for alertmanagers
-			rule := CreateTestAlertRule(t, ruleStore, 10, orgID, eval.Alerting)
+			sender := AlertsSenderMock{}
+			sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+			ruleStore.PutRule(context.Background(), rule)
 
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan)
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 			}()
 
-			evalChan <- &evalContext{
-				now:     time.Now(),
-				version: rule.Version,
+			evalChan <- &evaluation{
+				scheduledAt: sch.clock.Now(),
+				rule:        rule,
 			}
+
 			waitForTimeChannel(t, evalAppliedChan)
 
-			var count int
-			require.Eventuallyf(t, func() bool {
-				count = fakeAM.AlertsCount()
-				return count == 1 && fakeAM.AlertNamesCompare([]string{rule.Title})
-			}, 20*time.Second, 200*time.Millisecond, "Alertmanager never received an '%s', received alerts count: %d", rule.Title, count)
+			sender.AssertNumberOfCalls(t, "Send", 1)
+			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
+
+			require.Len(t, args.PostableAlerts, 1)
 		})
 	})
 
 	t.Run("when there are no alerts to send it should not call notifiers", func(t *testing.T) {
-		// TODO needs some mocking/stubbing for Alertmanager and Sender to make sure it was not called
-		t.Skip()
-	})
-}
+		rule := models.AlertRuleGen(withQueryForState(t, eval.Normal))()
 
-func TestSchedule_alertRuleInfo(t *testing.T) {
-	t.Run("when rule evaluation is not stopped", func(t *testing.T) {
-		t.Run("eval should send to evalCh", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			expected := time.Now()
-			resultCh := make(chan bool)
-			version := rand.Int63()
-			go func() {
-				resultCh <- r.eval(expected, version)
-			}()
-			select {
-			case ctx := <-r.evalCh:
-				require.Equal(t, version, ctx.version)
-				require.Equal(t, expected, ctx.now)
-				require.True(t, <-resultCh)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on eval channel")
-			}
-		})
-		t.Run("eval should exit when context is cancelled", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			resultCh := make(chan bool)
-			go func() {
-				resultCh <- r.eval(time.Now(), rand.Int63())
-			}()
-			runtime.Gosched()
-			r.stop()
-			select {
-			case result := <-resultCh:
-				require.False(t, result)
-			case <-time.After(5 * time.Second):
-				t.Fatal("No message was received on eval channel")
-			}
-		})
-	})
-	t.Run("when rule evaluation is stopped", func(t *testing.T) {
-		t.Run("eval should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			require.False(t, r.eval(time.Now(), rand.Int63()))
-		})
-		t.Run("stop should do nothing", func(t *testing.T) {
-			r := newAlertRuleInfo(context.Background())
-			r.stop()
-			r.stop()
-		})
-	})
-	t.Run("should be thread-safe", func(t *testing.T) {
-		r := newAlertRuleInfo(context.Background())
-		wg := sync.WaitGroup{}
+		evalChan := make(chan *evaluation)
+		evalAppliedChan := make(chan time.Time)
+
+		sender := AlertsSenderMock{}
+		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
+
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		ruleStore.PutRule(context.Background(), rule)
+
 		go func() {
-			for {
-				select {
-				case <-r.evalCh:
-					time.Sleep(time.Millisecond)
-				case <-r.ctx.Done():
-					return
-				}
-			}
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(cancel)
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 		}()
 
-		for i := 0; i < 10; i++ {
-			wg.Add(1)
-			go func() {
-				for i := 0; i < 20; i++ {
-					max := 2
-					if i <= 10 {
-						max = 1
-					}
-					switch rand.Intn(max) + 1 {
-					case 1:
-						r.eval(time.Now(), rand.Int63())
-					case 2:
-						r.stop()
-					}
-				}
-				wg.Done()
-			}()
+		evalChan <- &evaluation{
+			scheduledAt: sch.clock.Now(),
+			rule:        rule,
 		}
 
-		wg.Wait()
+		waitForTimeChannel(t, evalAppliedChan)
+
+		sender.AssertNotCalled(t, "Send", mock.Anything, mock.Anything)
+
+		require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 	})
 }
 
-func setupScheduler(t *testing.T, rs store.RuleStore, is store.InstanceStore, acs store.AdminConfigurationStore, registry *prometheus.Registry) (*schedule, *clock.Mock) {
-	t.Helper()
+func TestSchedule_deleteAlertRule(t *testing.T) {
+	t.Run("when rule exists", func(t *testing.T) {
+		t.Run("it should stop evaluation loop and remove the controller from registry", func(t *testing.T) {
+			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			rule := models.AlertRuleGen()()
+			key := rule.GetKey()
+			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
+			sch.deleteAlertRule(key)
+			require.ErrorIs(t, info.ctx.Err(), errRuleDeleted)
+			require.False(t, sch.registry.exists(key))
+		})
+	})
+	t.Run("when rule does not exist", func(t *testing.T) {
+		t.Run("should exit", func(t *testing.T) {
+			sch := setupScheduler(t, nil, nil, nil, nil, nil)
+			key := models.GenerateRuleKey(rand.Int63())
+			sch.deleteAlertRule(key)
+		})
+	})
+}
 
-	fakeAnnoRepo := NewFakeAnnotationsRepo()
-	annotations.SetRepository(fakeAnnoRepo)
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
+	t.Helper()
+	testTracer := tracing.InitializeTracerForTest()
+
 	mockedClock := clock.NewMock()
-	logger := log.New("ngalert schedule test")
+
+	if rs == nil {
+		rs = newFakeRulesStore()
+	}
+
+	if is == nil {
+		is = &state.FakeInstanceStore{}
+	}
+
+	var evaluator = evalMock
+	if evalMock == nil {
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &plugins.FakePluginStore{})
+	}
+
 	if registry == nil {
 		registry = prometheus.NewPedanticRegistry()
 	}
 	m := metrics.NewNGAlert(registry)
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
-	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(&setting.Cfg{}, &notifier.FakeConfigStore{}, &notifier.FakeOrgStore{}, &notifier.FakeKVStore{}, decryptFn, nil, log.New("testlogger"))
-	require.NoError(t, err)
 
-	schedCfg := SchedulerCfg{
-		C:                       mockedClock,
-		BaseInterval:            time.Second,
-		MaxAttempts:             1,
-		Evaluator:               eval.Evaluator{Cfg: &setting.Cfg{ExpressionsEnabled: true}, Log: logger},
-		RuleStore:               rs,
-		InstanceStore:           is,
-		AdminConfigStore:        acs,
-		MultiOrgNotifier:        moa,
-		Logger:                  logger,
-		Metrics:                 m.GetSchedulerMetrics(),
-		AdminConfigPollInterval: 10 * time.Minute, // do not poll in unit tests.
-	}
-	st := state.NewManager(schedCfg.Logger, m.GetStateMetrics(), nil, rs, is)
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	return NewScheduler(schedCfg, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), appUrl, st), mockedClock
+
+	if senderMock == nil {
+		senderMock = &AlertsSenderMock{}
+		senderMock.EXPECT().Send(mock.Anything, mock.Anything).Return()
+	}
+
+	cfg := setting.UnifiedAlertingSettings{
+		BaseInterval: time.Second,
+		MaxAttempts:  1,
+	}
+
+	schedCfg := SchedulerCfg{
+		BaseInterval:     cfg.BaseInterval,
+		MaxAttempts:      cfg.MaxAttempts,
+		C:                mockedClock,
+		AppURL:           appUrl,
+		EvaluatorFactory: evaluator,
+		RuleStore:        rs,
+		Metrics:          m.GetSchedulerMetrics(),
+		AlertSender:      senderMock,
+		Tracer:           testTracer,
+	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       m.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: is,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
+
+	return NewScheduler(schedCfg, st)
 }
 
-// createTestAlertRule creates a dummy alert definition to be used by the tests.
-func CreateTestAlertRule(t *testing.T, dbstore *fakeRuleStore, intervalSeconds int64, orgID int64, evalResult eval.State) *models.AlertRule {
-	t.Helper()
-	records := make([]interface{}, 0, len(dbstore.recordedOps))
-	copy(records, dbstore.recordedOps)
-	defer func() {
-		// erase queries that were made by the testing suite
-		dbstore.recordedOps = records
-	}()
-	d := rand.Intn(1000)
-	ruleGroup := fmt.Sprintf("ruleGroup-%d", d)
-
+func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {
 	var expression string
-	var forDuration time.Duration
+	var forMultimplier int64 = 0
 	switch evalResult {
 	case eval.Normal:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 1 < 1"
 		}`
 	case eval.Pending, eval.Alerting:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 2 > 1"
 		}`
 		if evalResult == eval.Pending {
-			forDuration = 100 * time.Second
+			forMultimplier = rand.Int63n(9) + 1
 		}
 	case eval.Error:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"$A"
 		}`
-	case eval.NoData:
-		// TODO Implement support for NoData
-		require.Fail(t, "Alert rule with desired evaluation result NoData is not supported yet")
+	default:
+		require.Fail(t, fmt.Sprintf("Alert rule with desired evaluation result '%s' is not supported yet", evalResult))
 	}
 
-	err := dbstore.UpdateRuleGroup(store.UpdateRuleGroupCmd{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroupConfig: apimodels.PostableRuleGroupConfig{
-			Name:     ruleGroup,
-			Interval: model.Duration(time.Duration(intervalSeconds) * time.Second),
-			Rules: []apimodels.PostableExtendedRuleNode{
-				{
-					ApiRuleNode: &apimodels.ApiRuleNode{
-						Annotations: map[string]string{"testAnnoKey": "testAnnoValue"},
-						For:         model.Duration(forDuration),
-					},
-					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     fmt.Sprintf("an alert definition %d", d),
-						Condition: "A",
-						Data: []models.AlertQuery{
-							{
-								DatasourceUID: "-100",
-								Model:         json.RawMessage(expression),
-								RelativeTimeRange: models.RelativeTimeRange{
-									From: models.Duration(5 * time.Hour),
-									To:   models.Duration(3 * time.Hour),
-								},
-								RefID: "A",
-							},
-						},
-					},
+	return func(rule *models.AlertRule) {
+		rule.Condition = "A"
+		rule.Data = []models.AlertQuery{
+			{
+				DatasourceUID: expr.DatasourceUID,
+				Model:         json.RawMessage(expression),
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
 				},
+				RefID: "A",
 			},
-		},
-	})
-	require.NoError(t, err)
-
-	q := models.ListRuleGroupAlertRulesQuery{
-		OrgID:        orgID,
-		NamespaceUID: "namespace",
-		RuleGroup:    ruleGroup,
+		}
+		rule.For = time.Duration(rule.IntervalSeconds*forMultimplier) * time.Second
 	}
-	err = dbstore.GetRuleGroupAlertRules(&q)
-	require.NoError(t, err)
-	require.NotEmpty(t, q.Result)
+}
 
-	rule := q.Result[0]
-	t.Logf("alert definition: %v with interval: %d created", rule.GetKey(), rule.IntervalSeconds)
-	return rule
+func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...models.AlertRuleKey) {
+	timeout := time.After(time.Second)
+
+	expected := make(map[models.AlertRuleKey]struct{}, len(keys))
+	for _, k := range keys {
+		expected[k] = struct{}{}
+	}
+
+	for {
+		select {
+		case info := <-ch:
+			_, ok := expected[info.alertDefKey]
+			if !ok {
+				t.Fatalf("alert rule: %v should not have been evaluated at: %v", info.alertDefKey, info.now)
+			}
+			t.Logf("alert rule: %v evaluated at: %v", info.alertDefKey, info.now)
+			assert.Equal(t, tick, info.now)
+			delete(expected, info.alertDefKey)
+			if len(expected) == 0 {
+				return
+			}
+		case <-timeout:
+			if len(expected) == 0 {
+				return
+			}
+			t.Fatal("cycle has expired")
+		}
+	}
+}
+
+func assertStopRun(t *testing.T, ch <-chan models.AlertRuleKey, keys ...models.AlertRuleKey) {
+	timeout := time.After(time.Second)
+
+	expected := make(map[models.AlertRuleKey]struct{}, len(keys))
+	for _, k := range keys {
+		expected[k] = struct{}{}
+	}
+
+	for {
+		select {
+		case alertDefKey := <-ch:
+			_, ok := expected[alertDefKey]
+			t.Logf("alert rule: %v stopped", alertDefKey)
+			assert.True(t, ok)
+			delete(expected, alertDefKey)
+			if len(expected) == 0 {
+				return
+			}
+		case <-timeout:
+			if len(expected) == 0 {
+				return
+			}
+			t.Fatal("cycle has expired")
+		}
+	}
 }

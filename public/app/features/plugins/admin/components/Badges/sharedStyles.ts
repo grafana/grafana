@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+
 import { GrafanaTheme2 } from '@grafana/data';
 
 export const getBadgeColor = (theme: GrafanaTheme2) => css`

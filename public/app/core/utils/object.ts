@@ -1,9 +1,9 @@
 ﻿import { isArray, isPlainObject } from 'lodash';
 
 /** @returns a deep clone of the object, but with any null value removed */
-export function sortedDeepCloneWithoutNulls<T>(value: T): T {
+export function sortedDeepCloneWithoutNulls<T extends {}>(value: T): T {
   if (isArray(value)) {
-    return (value.map(sortedDeepCloneWithoutNulls) as unknown) as T;
+    return value.map(sortedDeepCloneWithoutNulls) as unknown as T;
   }
   if (isPlainObject(value)) {
     return Object.keys(value)

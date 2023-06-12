@@ -1,10 +1,12 @@
+import { css } from '@emotion/css';
 import React, { ReactElement } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { LibraryPanel } from '@grafana/schema';
 import { Field, useStyles2 } from '@grafana/ui';
 
-import { LibraryPanelInput, LibraryPanelInputState } from '../state/reducers';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
 import { LibraryPanelCard } from '../../library-panels/components/LibraryPanelCard/LibraryPanelCard';
+import { LibraryPanelInput, LibraryPanelInputState } from '../state/reducers';
 
 interface ImportDashboardLibraryPanelsListProps {
   inputs: LibraryPanelInput[];
@@ -35,9 +37,10 @@ export function ImportDashboardLibraryPanelsList({
               input.state === LibraryPanelInputState.New
                 ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'General' } }
                 : { ...input.model };
+
             return (
               <div className={styles.item} key={libraryPanelIndex}>
-                <LibraryPanelCard libraryPanel={libraryPanel} onClick={() => undefined} />
+                <LibraryPanelCard libraryPanel={libraryPanel as LibraryPanel} onClick={() => undefined} />
               </div>
             );
           })}

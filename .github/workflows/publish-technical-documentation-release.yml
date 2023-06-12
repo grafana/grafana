@@ -1,0 +1,68 @@
+name: "publish-technical-documentation-release"
+
+on:
+  push:
+    branches:
+      - v[0-9]+.[0-9]+.x
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+    paths:
+      - "docs/sources/**"
+  workflow_dispatch:
+jobs:
+  sync:
+    if: "github.repository == 'grafana/grafana'"
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v3"
+        with:
+          fetch-depth: 0
+
+      - name: "Checkout Actions library"
+        uses: "actions/checkout@v3"
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: "./actions"
+
+      - name: "Install Actions from library"
+        run: "npm install --production --prefix ./actions"
+
+      - name: "Determine if there is a matching release tag"
+        id: "has-matching-release-tag"
+        uses: "./actions/has-matching-release-tag"
+        with:
+          ref_name: "${{ github.ref_name }}"
+          release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
+
+      - name: "Determine technical documentation version"
+        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        uses: "./actions/docs-target"
+        id: "target"
+        with:
+          ref_name: "${{ github.ref_name }}"
+
+      - name: "Clone website-sync Action"
+        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+        # GitHub administrator to update the organization secret.
+        # The IT helpdesk can update the organization secret.
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+
+      - name: "Publish to website repository (release)"
+        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        uses: "./.github/actions/website-sync"
+        id: "publish-release"
+        with:
+          repository: "grafana/website"
+          branch: "master"
+          host: "github.com"
+          # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+          # GitHub administrator to update the organization secret.
+          # The IT helpdesk can update the organization secret.
+          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
+          source_folder: "docs/sources"
+          target_folder: "content/docs/grafana/${{ steps.target.outputs.target }}"

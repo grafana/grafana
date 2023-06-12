@@ -1,5 +1,6 @@
+import { getProcessedDataFrames } from '@grafana/data';
+
 import { DataProcessor } from '../data_processor';
-import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 describe('Graph DataProcessor', () => {
   const panel: any = {

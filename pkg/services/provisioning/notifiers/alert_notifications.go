@@ -1,32 +1,55 @@
 package notifiers
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
+	"context"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"golang.org/x/net/context"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
+type Manager interface {
+	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) (*models.AlertNotification, error)
+	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) (*models.AlertNotification, error)
+	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) (*models.AlertNotification, error)
+	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
+	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) ([]*models.AlertNotification, error)
+	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) (*models.AlertNotificationState, error)
+	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) (*models.AlertNotification, error)
+	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
+	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) ([]*models.AlertNotification, error)
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) (*models.AlertNotification, error)
+}
+
 // Provision alert notifiers
-func Provision(ctx context.Context, configDirectory string, encryptionService encryption.Internal) error {
-	dc := newNotificationProvisioner(encryptionService, log.New("provisioning.notifiers"))
+func Provision(ctx context.Context, configDirectory string, alertingService Manager, orgService org.Service, encryptionService encryption.Internal, notificationService *notifications.NotificationService) error {
+	dc := newNotificationProvisioner(orgService, alertingService, encryptionService, notificationService, log.New("provisioning.notifiers"))
 	return dc.applyChanges(ctx, configDirectory)
 }
 
 // NotificationProvisioner is responsible for provsioning alert notifiers
 type NotificationProvisioner struct {
-	log         log.Logger
-	cfgProvider *configReader
+	log             log.Logger
+	cfgProvider     *configReader
+	alertingManager Manager
+	orgService      org.Service
 }
 
-func newNotificationProvisioner(encryptionService encryption.Internal, log log.Logger) NotificationProvisioner {
+func newNotificationProvisioner(orgService org.Service, alertingManager Manager, encryptionService encryption.Internal, notifiationService *notifications.NotificationService, log log.Logger) NotificationProvisioner {
 	return NotificationProvisioner{
-		log: log,
+		log:             log,
+		alertingManager: alertingManager,
 		cfgProvider: &configReader{
-			encryptionService: encryptionService,
-			log:               log,
+			encryptionService:   encryptionService,
+			notificationService: notifiationService,
+			log:                 log,
+			orgService:          orgService,
 		},
+		orgService: orgService,
 	}
 }
 
@@ -47,24 +70,26 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 		dc.log.Info("Deleting alert notification", "name", notification.Name, "uid", notification.UID)
 
 		if notification.OrgID == 0 && notification.OrgName != "" {
-			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(ctx, getOrg); err != nil {
+			getOrg := org.GetOrgByNameQuery{Name: notification.OrgName}
+			res, err := dc.orgService.GetByName(ctx, &getOrg)
+			if err != nil {
 				return err
 			}
-			notification.OrgID = getOrg.Result.Id
+			notification.OrgID = res.ID
 		} else if notification.OrgID < 0 {
 			notification.OrgID = 1
 		}
 
-		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
+		getNotification := &models.GetAlertNotificationsWithUidQuery{UID: notification.UID, OrgID: notification.OrgID}
 
-		if err := bus.Dispatch(ctx, getNotification); err != nil {
+		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification)
+		if err != nil {
 			return err
 		}
 
-		if getNotification.Result != nil {
-			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
-			if err := bus.Dispatch(ctx, cmd); err != nil {
+		if res != nil {
+			cmd := &models.DeleteAlertNotificationWithUidCommand{UID: res.UID, OrgID: getNotification.OrgID}
+			if err := dc.alertingManager.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
 		}
@@ -76,55 +101,57 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notificationToMerge []*notificationFromConfig) error {
 	for _, notification := range notificationToMerge {
 		if notification.OrgID == 0 && notification.OrgName != "" {
-			getOrg := &models.GetOrgByNameQuery{Name: notification.OrgName}
-			if err := bus.Dispatch(ctx, getOrg); err != nil {
+			getOrg := org.GetOrgByNameQuery{Name: notification.OrgName}
+			res, err := dc.orgService.GetByName(ctx, &getOrg)
+			if err != nil {
 				return err
 			}
-			notification.OrgID = getOrg.Result.Id
+			notification.OrgID = res.ID
 		} else if notification.OrgID < 0 {
 			notification.OrgID = 1
 		}
 
-		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
-		err := bus.Dispatch(ctx, cmd)
+		cmd := &models.GetAlertNotificationsWithUidQuery{OrgID: notification.OrgID, UID: notification.UID}
+		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
 		}
 
-		if cmd.Result == nil {
+		if res == nil {
 			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
 			insertCmd := &models.CreateAlertNotificationCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(ctx, insertCmd); err != nil {
+			_, err := dc.alertingManager.CreateAlertNotificationCommand(ctx, insertCmd)
+			if err != nil {
 				return err
 			}
 		} else {
 			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
 			}
 
-			if err := bus.Dispatch(ctx, updateCmd); err != nil {
+			if _, err := dc.alertingManager.UpdateAlertNotificationWithUid(ctx, updateCmd); err != nil {
 				return err
 			}
 		}

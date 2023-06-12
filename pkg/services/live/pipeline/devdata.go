@@ -10,10 +10,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/live/managedstream"
-
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
+	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
 type Data struct {
@@ -32,7 +32,7 @@ type Data struct {
 func postTestData() {
 	i := 0
 	for {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(time.Second)
 		num1 := rand.Intn(10)
 		num2 := rand.Intn(10)
 		d := Data{
@@ -206,130 +206,6 @@ func (f *DevRuleBuilder) BuildRules(_ context.Context, _ int64) ([]*LiveChannelR
 			},
 			FrameOutputters: []FrameOutputter{
 				NewManagedStreamFrameOutput(f.ManagedStream),
-			},
-		},
-		{
-			OrgId:   1,
-			Pattern: "stream/json/exact",
-			Converter: NewExactJsonConverter(ExactJsonConverterConfig{
-				Fields: []Field{
-					{
-						Name:  "time",
-						Type:  data.FieldTypeTime,
-						Value: "#{now}",
-					},
-					{
-						Name:  "value1",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value1",
-					},
-					{
-						Name:  "value2",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value2",
-					},
-					{
-						Name:  "value3",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value3",
-						Labels: []Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "value4",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.value4",
-						Config: &data.FieldConfig{
-							Thresholds: &data.ThresholdsConfig{
-								Mode: data.ThresholdsModeAbsolute,
-								Steps: []data.Threshold{
-									{
-										Value: 2,
-										State: "normal",
-										Color: "green",
-									},
-									{
-										Value: 6,
-										State: "warning",
-										Color: "orange",
-									},
-									{
-										Value: 8,
-										State: "critical",
-										Color: "red",
-									},
-								},
-							},
-						},
-					},
-					{
-						Name:  "map.red",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "$.map.red",
-						Labels: []Label{
-							{
-								Name:  "host",
-								Value: "$.host",
-							},
-							{
-								Name:  "host2",
-								Value: "$.host",
-							},
-						},
-					},
-					{
-						Name:  "annotation",
-						Type:  data.FieldTypeNullableString,
-						Value: "$.annotation",
-					},
-					{
-						Name:  "running",
-						Type:  data.FieldTypeNullableBool,
-						Value: "{x.status === 'running'}",
-					},
-					{
-						Name:  "num_map_colors",
-						Type:  data.FieldTypeNullableFloat64,
-						Value: "{Object.keys(x.map).length}",
-					},
-				},
-			}),
-			FrameOutputters: []FrameOutputter{
-				NewManagedStreamFrameOutput(f.ManagedStream),
-				NewRemoteWriteFrameOutput(
-					os.Getenv("GF_LIVE_REMOTE_WRITE_ENDPOINT"),
-					&BasicAuth{
-						User:     os.Getenv("GF_LIVE_REMOTE_WRITE_USER"),
-						Password: os.Getenv("GF_LIVE_REMOTE_WRITE_PASSWORD"),
-					},
-					0,
-				),
-				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
-					FieldName: "value3",
-					Channel:   "stream/json/exact/value3/changes",
-				}),
-				NewChangeLogFrameOutput(f.FrameStorage, ChangeLogOutputConfig{
-					FieldName: "annotation",
-					Channel:   "stream/json/exact/annotation/changes",
-				}),
-				NewConditionalOutput(
-					NewMultipleFrameConditionChecker(
-						ConditionAll,
-						NewFrameNumberCompareCondition("value1", "gte", 3.0),
-						NewFrameNumberCompareCondition("value2", "gte", 3.0),
-					),
-					NewRedirectFrameOutput(RedirectOutputConfig{
-						Channel: "stream/json/exact/condition",
-					}),
-				),
-				NewThresholdOutput(f.FrameStorage, ThresholdOutputConfig{
-					FieldName: "value4",
-					Channel:   "stream/json/exact/value4/state",
-				}),
 			},
 		},
 		{

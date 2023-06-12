@@ -5,13 +5,22 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	// ContactLabel is a private label created during migration and used in notification policies.
+	// It stores a string array of all contact point names an alert rule should send to.
+	// It was created as a means to simplify post-migration notification policies.
+	ContactLabel = "__contacts__"
 )
 
 type alertRule struct {
+	ID              int64 `xorm:"pk autoincr 'id'"`
 	OrgID           int64 `xorm:"org_id"`
 	Title           string
 	Condition       string
@@ -21,12 +30,14 @@ type alertRule struct {
 	UID             string `xorm:"uid"`
 	NamespaceUID    string `xorm:"namespace_uid"`
 	RuleGroup       string
+	RuleGroupIndex  int `xorm:"rule_group_idx"`
 	NoDataState     string
 	ExecErrState    string
 	For             duration
 	Updated         time.Time
 	Annotations     map[string]string
-	Labels          map[string]string // (Labels are not Created in the migration)
+	Labels          map[string]string
+	IsPaused        bool
 }
 
 type alertRuleVersion struct {
@@ -34,6 +45,7 @@ type alertRuleVersion struct {
 	RuleUID          string `xorm:"rule_uid"`
 	RuleNamespaceUID string `xorm:"rule_namespace_uid"`
 	RuleGroup        string
+	RuleGroupIndex   int `xorm:"rule_group_idx"`
 	ParentVersion    int64
 	RestoredFrom     int64
 	Version          int64
@@ -50,6 +62,7 @@ type alertRuleVersion struct {
 	For         duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
@@ -58,6 +71,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		RuleUID:          a.UID,
 		RuleNamespaceUID: a.NamespaceUID,
 		RuleGroup:        a.RuleGroup,
+		RuleGroupIndex:   a.RuleGroupIndex,
 		ParentVersion:    0,
 		RestoredFrom:     0,
 		Version:          1,
@@ -72,13 +86,16 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		For:             a.For,
 		Annotations:     a.Annotations,
 		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
 	}
 }
 
 func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
-	lbls := da.ParsedSettings.AlertRuleTags
-	if lbls == nil {
-		lbls = make(map[string]string)
+	tagsMap := simplejson.NewFromAny(da.ParsedSettings.AlertRuleTags).MustMap()
+	lbls := make(map[string]string, len(tagsMap))
+
+	for k, v := range tagsMap {
+		lbls[k] = simplejson.NewFromAny(v).MustString()
 	}
 
 	annotations := make(map[string]string, 3)
@@ -89,13 +106,8 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	return lbls, annotations
 }
 
-func getMigrationString(da dashAlert) string {
-	return fmt.Sprintf(`{"dashboardUid": "%v", "panelId": %v, "alertId": %v}`, da.DashboardUID, da.PanelId, da.Id)
-}
-
-func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
+func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	lbls["alertname"] = da.Name
 	annotations["message"] = da.Message
 	var err error
 
@@ -104,34 +116,40 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		return nil, fmt.Errorf("failed to migrate alert rule queries: %w", err)
 	}
 
+	uid, err := m.seenUIDs.generateUid()
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate alert rule: %w", err)
+	}
+
+	name := normalizeRuleName(da.Name, uid)
+
+	isPaused := false
+	if da.State == "paused" {
+		isPaused = true
+	}
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
-		Title:           da.Name, // TODO: Make sure all names are unique, make new name on constraint insert error.
-		UID:             util.GenerateShortUID(),
+		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
+		UID:             uid,
 		Condition:       cond.Condition,
 		Data:            data,
 		IntervalSeconds: ruleAdjustInterval(da.Frequency),
 		Version:         1,
 		NamespaceUID:    folderUID, // Folder already created, comes from env var.
-		RuleGroup:       da.Name,
+		RuleGroup:       name,
 		For:             duration(da.For),
 		Updated:         time.Now().UTC(),
 		Annotations:     annotations,
 		Labels:          lbls,
-	}
-
-	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
-	if err != nil {
-		return nil, err
-	}
-
-	ar.ExecErrState, err = transExecErr(da.ParsedSettings.ExecutionErrorState)
-	if err != nil {
-		return nil, err
+		RuleGroupIndex:  1,
+		IsPaused:        isPaused,
+		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
+		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
 	}
 
 	// Label for routing and silences.
-	n, v := getLabelForRouteMatching(ar.UID)
+	n, v := getLabelForSilenceMatching(ar.UID)
 	ar.Labels[n] = v
 
 	if err := m.addSilence(da, ar); err != nil {
@@ -154,7 +172,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
-		if d.DatasourceUID == expr.OldDatasourceUID {
+		if d.DatasourceUID == expressionDatasourceUID {
 			result = append(result, d)
 			continue
 		}
@@ -163,6 +181,8 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 		if err != nil {
 			return nil, err
 		}
+		// remove hidden tag from the query (if exists)
+		delete(fixedData, "hide")
 		fixedData = fixGraphiteReferencedSubQueries(fixedData)
 		updatedModel, err := json.Marshal(fixedData)
 		if err != nil {
@@ -244,28 +264,62 @@ func ruleAdjustInterval(freq int64) int64 {
 	return freq - (freq % baseFreq)
 }
 
-func transNoData(s string) (string, error) {
-	switch s {
-	case "ok":
-		return "OK", nil // values from ngalert/models/rule
-	case "", "no_data":
-		return "NoData", nil
-	case "alerting":
-		return "Alerting", nil
-	case "keep_state":
-		return "NoData", nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+func transNoData(l log.Logger, s string) string {
+	switch legacymodels.NoDataOption(s) {
+	case legacymodels.NoDataSetOK:
+		return string(ngmodels.OK) // values from ngalert/models/rule
+	case "", legacymodels.NoDataSetNoData:
+		return string(ngmodels.NoData)
+	case legacymodels.NoDataSetAlerting:
+		return string(ngmodels.Alerting)
+	case legacymodels.NoDataKeepState:
+		return string(ngmodels.NoData) // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+	default:
+		l.Warn("Unable to translate execution of NoData state. Using default execution", "old", s, "new", ngmodels.NoData)
+		return string(ngmodels.NoData)
 	}
-	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
-func transExecErr(s string) (string, error) {
-	switch s {
-	case "", "alerting":
-		return "Alerting", nil
-	case "keep_state":
+func transExecErr(l log.Logger, s string) string {
+	switch legacymodels.ExecutionErrorOption(s) {
+	case "", legacymodels.ExecutionErrorSetAlerting:
+		return string(ngmodels.AlertingErrState)
+	case legacymodels.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
-		return "Error", nil
+		return string(ngmodels.ErrorErrState)
+	case legacymodels.ExecutionErrorSetOk:
+		return string(ngmodels.OkErrState)
+	default:
+		l.Warn("Unable to translate execution of Error state. Using default execution", "old", s, "new", ngmodels.ErrorErrState)
+		return string(ngmodels.ErrorErrState)
 	}
-	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
+}
+
+func normalizeRuleName(daName string, uid string) string {
+	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
+	// Append the UID to the suffix to forcibly break any collisions.
+	if len(daName) > DefaultFieldMaxLength {
+		trunc := DefaultFieldMaxLength - 1 - len(uid)
+		daName = daName[:trunc] + "_" + uid
+	}
+
+	return daName
+}
+
+func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
+	// Extracting channel UID/ID.
+	for _, ui := range d.ParsedSettings.Notifications {
+		if ui.UID != "" {
+			channelUids = append(channelUids, ui.UID)
+			continue
+		}
+		// In certain circumstances, id is used instead of uid.
+		// We add this if there was no uid.
+		if ui.ID > 0 {
+			channelUids = append(channelUids, ui.ID)
+		}
+	}
+
+	return channelUids
 }

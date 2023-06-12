@@ -1,5 +1,6 @@
-﻿import React from 'react';
-import { render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
+import React, { MutableRefObject } from 'react';
+
 import { Tooltip } from './Tooltip';
 
 describe('Tooltip', () => {
@@ -12,5 +13,29 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();
+  });
+
+  it('forwards the function ref', () => {
+    const refFn = jest.fn();
+
+    render(
+      <Tooltip content="Cooltip content" ref={refFn}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+
+    expect(refFn).toBeCalled();
+  });
+
+  it('forwards the mutable ref', () => {
+    const refObj: MutableRefObject<HTMLElement | null> = { current: null };
+
+    render(
+      <Tooltip content="Cooltip content" ref={refObj}>
+        <span>On the page</span>
+      </Tooltip>
+    );
+
+    expect(refObj.current).not.toBeNull();
   });
 });

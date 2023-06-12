@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
 )
 
@@ -22,6 +23,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 		for i, m := range evalMatches {
 			sb.WriteString("[ ")
+			sb.WriteString(fmt.Sprintf("var='%s%v' ", frame.RefID, i))
 			sb.WriteString(fmt.Sprintf("metric='%s' ", m.Metric))
 			sb.WriteString(fmt.Sprintf("labels={%s} ", m.Labels))
 
@@ -40,23 +42,23 @@ func extractEvalString(frame *data.Frame) (s string) {
 		return sb.String()
 	}
 
-	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		sb := strings.Builder{}
 
-		for i, c := range caps {
+		for i, capture := range captures {
 			sb.WriteString("[ ")
-			sb.WriteString(fmt.Sprintf("var='%s' ", c.Var))
-			sb.WriteString(fmt.Sprintf("labels={%s} ", c.Labels))
+			sb.WriteString(fmt.Sprintf("var='%s' ", capture.Var))
+			sb.WriteString(fmt.Sprintf("labels={%s} ", capture.Labels))
 
 			valString := "null"
-			if c.Value != nil {
-				valString = fmt.Sprintf("%v", *c.Value)
+			if capture.Value != nil {
+				valString = fmt.Sprintf("%v", *capture.Value)
 			}
 
 			sb.WriteString(fmt.Sprintf("value=%v ", valString))
 
 			sb.WriteString("]")
-			if i < len(caps)-1 {
+			if i < len(captures)-1 {
 				sb.WriteString(", ")
 			}
 		}
@@ -66,10 +68,10 @@ func extractEvalString(frame *data.Frame) (s string) {
 	return ""
 }
 
-// extractValues returns the RefID and value for all reduce and math expressions
-// in the frame. It does not return values for classic conditions as the values
-// in classic conditions do not have a RefID. It returns nil if there are
-// no results in the frame.
+// extractValues returns the RefID and value for all classic conditions, reduce, and math expressions in the frame.
+// For classic conditions the same refID can have multiple values due to multiple conditions, for them we use the index of
+// the condition in addition to the refID to distinguish between different values.
+// It returns nil if there are no results in the frame.
 func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame == nil {
 		return nil
@@ -77,10 +79,28 @@ func extractValues(frame *data.Frame) map[string]NumberValueCapture {
 	if frame.Meta == nil || frame.Meta.Custom == nil {
 		return nil
 	}
-	if caps, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
-		v := make(map[string]NumberValueCapture, len(caps))
-		for _, c := range caps {
-			v[c.Var] = c
+
+	if matches, ok := frame.Meta.Custom.([]classic.EvalMatch); ok {
+		// Classic evaluations only have a single match but it can contain multiple conditions.
+		// Conditions have a strict ordering which we can rely on to distinguish between values.
+		v := make(map[string]NumberValueCapture, len(matches))
+		for i, match := range matches {
+			// In classic conditions we use refID and the condition position as a way to distinguish between values.
+			// We can guarantee determinism as conditions are ordered and this order is preserved when marshaling.
+			refID := fmt.Sprintf("%s%d", frame.RefID, i)
+			v[refID] = NumberValueCapture{
+				Var:    frame.RefID,
+				Labels: match.Labels,
+				Value:  match.Value,
+			}
+		}
+		return v
+	}
+
+	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
+		v := make(map[string]NumberValueCapture, len(captures))
+		for _, capture := range captures {
+			v[capture.Var] = capture
 		}
 		return v
 	}

@@ -1,34 +1,63 @@
-import React, { FC } from 'react';
+import React, { useMemo } from 'react';
+
 import { SelectableValue } from '@grafana/data';
-import { SELECT_WIDTH } from '../constants';
-import { CustomMetaData, MetricQuery, SLOQuery } from '../types';
-import { AlignmentFunction, AlignmentPeriod, AlignmentPeriodLabel, QueryEditorField, QueryEditorRow } from '.';
+import { EditorField, EditorFieldGroup } from '@grafana/experimental';
+
+import { ALIGNMENT_PERIODS } from '../constants';
 import CloudMonitoringDatasource from '../datasource';
+import { alignmentPeriodLabel } from '../functions';
+import { PreprocessorType, TimeSeriesList } from '../types/query';
+import { CustomMetaData, MetricDescriptor } from '../types/types';
+
+import { AlignmentFunction } from './AlignmentFunction';
+import { PeriodSelect } from './PeriodSelect';
 
 export interface Props {
-  onChange: (query: MetricQuery | SLOQuery) => void;
-  query: MetricQuery;
+  refId: string;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
   templateVariableOptions: Array<SelectableValue<string>>;
   customMetaData: CustomMetaData;
   datasource: CloudMonitoringDatasource;
+  metricDescriptor?: MetricDescriptor;
+  preprocessor?: PreprocessorType;
 }
 
-export const Alignment: FC<Props> = ({ templateVariableOptions, onChange, query, customMetaData, datasource }) => {
+export const Alignment = ({
+  refId,
+  templateVariableOptions,
+  onChange,
+  query,
+  customMetaData,
+  datasource,
+  metricDescriptor,
+  preprocessor,
+}: Props) => {
+  const alignmentLabel = useMemo(() => alignmentPeriodLabel(customMetaData, datasource), [customMetaData, datasource]);
   return (
-    <QueryEditorRow
-      label="Alignment function"
-      tooltip="The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result."
-      fillComponent={<AlignmentPeriodLabel datasource={datasource} customMetaData={customMetaData} />}
-    >
-      <AlignmentFunction templateVariableOptions={templateVariableOptions} query={query} onChange={onChange} />
-      <QueryEditorField label="Alignment period">
-        <AlignmentPeriod
-          selectWidth={SELECT_WIDTH}
+    <EditorFieldGroup>
+      <EditorField
+        label="Alignment function"
+        tooltip="The process of alignment consists of collecting all data points received in a fixed length of time, applying a function to combine those data points, and assigning a timestamp to the result."
+      >
+        <AlignmentFunction
+          inputId={`${refId}-alignment-function`}
           templateVariableOptions={templateVariableOptions}
           query={query}
-          onChange={onChange}
+          onChange={(q) => onChange({ ...query, ...q })}
+          metricDescriptor={metricDescriptor}
+          preprocessor={preprocessor}
         />
-      </QueryEditorField>
-    </QueryEditorRow>
+      </EditorField>
+      <EditorField label="Alignment period" tooltip={alignmentLabel}>
+        <PeriodSelect
+          inputId={`${refId}-alignment-period`}
+          templateVariableOptions={templateVariableOptions}
+          current={query.alignmentPeriod}
+          onChange={(period) => onChange({ ...query, alignmentPeriod: period })}
+          aligmentPeriods={ALIGNMENT_PERIODS}
+        />
+      </EditorField>
+    </EditorFieldGroup>
   );
 };

@@ -1,25 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Graph DataProcessor getTimeSeries from LegacyResponseData Should return a new series for each field 1`] = `
-Array [
+[
   TimeSeries {
     "alias": "Value",
     "aliasEscaped": "Value",
-    "bars": Object {
+    "bars": {
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
     "dataFrameIndex": 0,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         1,
         1001,
       ],
-      Array [
+      [
         2,
         1002,
       ],
-      Array [
+      [
         3,
         1003,
       ],
@@ -29,28 +29,28 @@ Array [
     "id": "Value",
     "label": "Value",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": "watt",
     "valueFormater": [Function],
   },
   TimeSeries {
     "alias": "table_data v1",
     "aliasEscaped": "table_data v1",
-    "bars": Object {
+    "bars": {
       "fillColor": "#EAB839",
     },
     "color": "#EAB839",
     "dataFrameIndex": 1,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         0.1,
         1001,
       ],
-      Array [
+      [
         0.2,
         1002,
       ],
-      Array [
+      [
         0.3,
         1003,
       ],
@@ -60,28 +60,28 @@ Array [
     "id": "table_data v1",
     "label": "table_data v1",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": "ohm",
     "valueFormater": [Function],
   },
   TimeSeries {
     "alias": "table_data v2",
     "aliasEscaped": "table_data v2",
-    "bars": Object {
+    "bars": {
       "fillColor": "#6ED0E0",
     },
     "color": "#6ED0E0",
     "dataFrameIndex": 1,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         1.1,
         1001,
       ],
-      Array [
+      [
         2.2,
         1002,
       ],
-      Array [
+      [
         3.3,
         1003,
       ],
@@ -91,28 +91,28 @@ Array [
     "id": "table_data v2",
     "label": "table_data v2",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": undefined,
     "valueFormater": [Function],
   },
   TimeSeries {
     "alias": "series v1",
     "aliasEscaped": "series v1",
-    "bars": Object {
+    "bars": {
       "fillColor": "#EF843C",
     },
     "color": "#EF843C",
     "dataFrameIndex": 2,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         0.1,
         1001,
       ],
-      Array [
+      [
         0.2,
         1002,
       ],
-      Array [
+      [
         0.3,
         1003,
       ],
@@ -122,28 +122,28 @@ Array [
     "id": "series v1",
     "label": "series v1",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": undefined,
     "valueFormater": [Function],
   },
   TimeSeries {
     "alias": "series v2",
     "aliasEscaped": "series v2",
-    "bars": Object {
+    "bars": {
       "fillColor": "#E24D42",
     },
     "color": "#E24D42",
     "dataFrameIndex": 2,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         1.1,
         1001,
       ],
-      Array [
+      [
         2.2,
         1002,
       ],
-      Array [
+      [
         3.3,
         1003,
       ],
@@ -153,28 +153,28 @@ Array [
     "id": "series v2",
     "label": "series v2",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": undefined,
     "valueFormater": [Function],
   },
   TimeSeries {
     "alias": "series with time as strings v1",
     "aliasEscaped": "series with time as strings v1",
-    "bars": Object {
+    "bars": {
       "fillColor": "#1F78C1",
     },
     "color": "#1F78C1",
     "dataFrameIndex": 3,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         0.1,
         1609462800000,
       ],
-      Array [
+      [
         0.2,
         1609462800000,
       ],
-      Array [
+      [
         0.3,
         1609466400000,
       ],
@@ -184,7 +184,7 @@ Array [
     "id": "series with time as strings v1",
     "label": "series with time as strings v1",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": undefined,
     "valueFormater": [Function],
   },
@@ -192,85 +192,85 @@ Array [
 `;
 
 exports[`Graph DataProcessor getTimeSeries from LegacyResponseData Should return single histogram 1`] = `
-Array [
+[
   TimeSeries {
     "alias": "Count",
     "aliasEscaped": "Count",
-    "bars": Object {
+    "bars": {
       "fillColor": "#7EB26D",
     },
     "color": "#7EB26D",
     "dataFrameIndex": 0,
-    "datapoints": Array [
-      Array [
+    "datapoints": [
+      [
         1,
         1001,
       ],
-      Array [
+      [
         2,
         1002,
       ],
-      Array [
+      [
         3,
         1003,
       ],
-      Array [
+      [
         0.1,
         1001,
       ],
-      Array [
+      [
         0.2,
         1002,
       ],
-      Array [
+      [
         0.3,
         1003,
       ],
-      Array [
+      [
         1.1,
         1001,
       ],
-      Array [
+      [
         2.2,
         1002,
       ],
-      Array [
+      [
         3.3,
         1003,
       ],
-      Array [
+      [
         0.1,
         1001,
       ],
-      Array [
+      [
         0.2,
         1002,
       ],
-      Array [
+      [
         0.3,
         1003,
       ],
-      Array [
+      [
         1.1,
         1001,
       ],
-      Array [
+      [
         2.2,
         1002,
       ],
-      Array [
+      [
         3.3,
         1003,
       ],
-      Array [
+      [
         0.1,
         1609462800000,
       ],
-      Array [
+      [
         0.2,
         1609462800000,
       ],
-      Array [
+      [
         0.3,
         1609466400000,
       ],
@@ -280,7 +280,7 @@ Array [
     "id": "Value",
     "label": "Value",
     "legend": true,
-    "stats": Object {},
+    "stats": {},
     "unit": "watt",
     "valueFormater": [Function],
   },

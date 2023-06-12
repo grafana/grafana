@@ -1,16 +1,19 @@
 import React from 'react';
-import { SeriesTable } from '../../VizTooltip';
-import { GraphTooltipContentProps } from './types';
-import { getMultiSeriesGraphHoverInfo } from '../utils';
-import { FlotPosition } from '../types';
+
 import { getValueFromDimension } from '@grafana/data';
 
-export const MultiModeGraphTooltip: React.FC<
-  GraphTooltipContentProps & {
-    // We expect position to figure out correct values when not hovering over a datapoint
-    pos: FlotPosition;
-  }
-> = ({ dimensions, activeDimensions, pos, timeZone }) => {
+import { SeriesTable } from '../../VizTooltip';
+import { FlotPosition } from '../types';
+import { getMultiSeriesGraphHoverInfo } from '../utils';
+
+import { GraphTooltipContentProps } from './types';
+
+type Props = GraphTooltipContentProps & {
+  // We expect position to figure out correct values when not hovering over a datapoint
+  pos: FlotPosition;
+};
+
+export const MultiModeGraphTooltip = ({ dimensions, activeDimensions, pos, timeZone }: Props) => {
   let activeSeriesIndex: number | null = null;
   // when no x-axis provided, skip rendering
   if (activeDimensions.xAxis === null) {

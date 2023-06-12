@@ -1,14 +1,17 @@
-import { GraphiteQueryEditorState } from './store';
 import { eachRight, map, remove } from 'lodash';
+
+import { SelectableValue } from '@grafana/data';
+
+import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components/helpers';
+import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
+
 import {
   TAG_PREFIX,
   GRAPHITE_TAG_OPERATORS,
   handleMetricsAutoCompleteError,
   handleTagsAutoCompleteError,
 } from './helpers';
-import { GraphiteSegment, GraphiteTag, GraphiteTagOperator } from '../types';
-import { mapSegmentsToSelectables, mapStringsToSelectables } from '../components/helpers';
-import { SelectableValue } from '@grafana/data';
+import { GraphiteQueryEditorState } from './store';
 
 /**
  * All auto-complete lists are updated while typing. To avoid performance issues we do not render more
@@ -93,7 +96,9 @@ async function getAltSegments(
       return altSegments;
     }
   } catch (err) {
-    handleMetricsAutoCompleteError(state, err);
+    if (err instanceof Error) {
+      handleMetricsAutoCompleteError(state, err);
+    }
   }
 
   return [];
@@ -130,7 +135,9 @@ async function getTags(state: GraphiteQueryEditorState, index: number, tagPrefix
     altTags.splice(0, 0, state.removeTagValue);
     return altTags;
   } catch (err) {
-    handleTagsAutoCompleteError(state, err);
+    if (err instanceof Error) {
+      handleTagsAutoCompleteError(state, err);
+    }
   }
 
   return [];
@@ -165,7 +172,9 @@ async function getTagsAsSegments(state: GraphiteQueryEditorState, tagPrefix: str
     });
   } catch (err) {
     tagsAsSegments = [];
-    handleTagsAutoCompleteError(state, err);
+    if (err instanceof Error) {
+      handleTagsAutoCompleteError(state, err);
+    }
   }
 
   return tagsAsSegments;

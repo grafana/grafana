@@ -4,20 +4,37 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/loginservice"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
+
+const userID = int64(1)
+const orgID = int64(4)
 
 // Test initContextWithAuthProxy with a cached user ID that is no longer valid.
 //
@@ -25,39 +42,12 @@ import (
 // in without cache.
 func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	const name = "markelog"
-	const userID = int64(1)
-	const orgID = int64(4)
 
 	svc := getContextHandler(t)
 
-	// XXX: These handlers have to be injected AFTER calling getContextHandler, since the latter
-	// creates a SQLStore which installs its own handlers.
-	upsertHandler := func(ctx context.Context, cmd *models.UpsertUserCommand) error {
-		require.Equal(t, name, cmd.ExternalUser.Login)
-		cmd.Result = &models.User{Id: userID}
-		return nil
-	}
-	getUserHandler := func(ctx context.Context, query *models.GetSignedInUserQuery) error {
-		// Simulate that the cached user ID is stale
-		if query.UserId != userID {
-			return models.ErrUserNotFound
-		}
-
-		query.Result = &models.SignedInUser{
-			UserId: userID,
-			OrgId:  orgID,
-		}
-		return nil
-	}
-	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getUserHandler)
-	t.Cleanup(func() {
-		bus.ClearBusHandlers()
-	})
-
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("Test"),
 	}
@@ -67,18 +57,23 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
+	userIdPayload := []byte(strconv.FormatInt(int64(33), 10))
+	err = svc.RemoteCache.Set(context.Background(), key, userIdPayload, 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 
-	require.Equal(t, userID, ctx.SignedInUser.UserId)
+	require.Equal(t, userID, ctx.SignedInUser.UserID)
 	require.True(t, ctx.IsSignedIn)
 
-	i, err := svc.RemoteCache.Get(context.Background(), key)
+	cachedByteArray, err := svc.RemoteCache.Get(context.Background(), key)
 	require.NoError(t, err)
-	require.Equal(t, userID, i.(int64))
+
+	cacheUserId, err := strconv.ParseInt(string(cachedByteArray), 10, 64)
+
+	require.NoError(t, err)
+	require.Equal(t, userID, cacheUserId)
 }
 
 type fakeRenderService struct {
@@ -88,7 +83,7 @@ type fakeRenderService struct {
 func getContextHandler(t *testing.T) *ContextHandler {
 	t.Helper()
 
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
@@ -97,11 +92,38 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
 	require.NoError(t, err)
-	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
+	tracer := tracing.InitializeTracerForTest()
 
-	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, sqlStore)
+	loginService := loginservice.LoginServiceMock{ExpectedUser: &user.User{ID: userID}}
+	userService := usertest.FakeUserService{
+		GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+			if query.UserID != userID {
+				return &user.SignedInUser{}, user.ErrUserNotFound
+			}
+			return &user.SignedInUser{
+				UserID: userID,
+				OrgID:  orgID,
+			}, nil
+		},
+	}
+	orgService := orgtest.NewOrgServiceFake()
+
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, nil, service.NewLDAPFakeService())
+	authenticator := &fakeAuthenticator{}
+
+	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
+		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
+		&userService, orgService, nil, featuremgmt.WithFeatures(),
+		&authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
+}
+
+type fakeAuthenticator struct{}
+
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *login.LoginUserQuery) error {
+	return nil
 }

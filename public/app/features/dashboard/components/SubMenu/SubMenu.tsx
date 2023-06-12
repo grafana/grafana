@@ -1,17 +1,21 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
+
+import { AnnotationQuery, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { stylesFactory, Themeable2, withTheme2 } from '@grafana/ui';
+
 import { StoreState } from '../../../../types';
-import { getSubMenuVariables } from '../../../variables/state/selectors';
+import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
 import { VariableModel } from '../../../variables/types';
 import { DashboardModel } from '../../state';
-import { DashboardLinks } from './DashboardLinks';
-import { Annotations } from './Annotations';
-import { SubMenuItems } from './SubMenuItems';
 import { DashboardLink } from '../../state/DashboardModel';
-import { AnnotationQuery } from '@grafana/data';
-import { css } from '@emotion/css';
 
-interface OwnProps {
+import { Annotations } from './Annotations';
+import { DashboardLinks } from './DashboardLinks';
+import { SubMenuItems } from './SubMenuItems';
+
+interface OwnProps extends Themeable2 {
   dashboard: DashboardModel;
   links: DashboardLink[];
   annotations: AnnotationQuery[];
@@ -26,7 +30,7 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
-  onAnnotationStateChanged = (updatedAnnotation: any) => {
+  onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
       const annotation = this.props.dashboard.annotations.list[index];
@@ -40,42 +44,63 @@ class SubMenuUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, variables, links, annotations } = this.props;
+    const { dashboard, variables, links, annotations, theme } = this.props;
+
+    const styles = getStyles(theme);
 
     if (!dashboard.isSubMenuVisible()) {
       return null;
     }
 
+    const readOnlyVariables = dashboard.meta.isSnapshot ?? false;
+
     return (
-      <div className="submenu-controls">
-        <form aria-label="Template variables" className={styles}>
-          <SubMenuItems variables={variables} />
+      <div className={styles.submenu}>
+        <form aria-label="Template variables" className={styles.formStyles}>
+          <SubMenuItems variables={variables} readOnly={readOnlyVariables} />
         </form>
         <Annotations
           annotations={annotations}
           onAnnotationChanged={this.onAnnotationStateChanged}
           events={dashboard.events}
         />
-        <div className="gf-form gf-form--grow" />
+        <div className={styles.spacer} />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
-        <div className="clearfix" />
       </div>
     );
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state) => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, ownProps) => {
+  const { uid } = ownProps.dashboard;
+  const templatingState = getVariablesState(uid, state);
   return {
-    variables: getSubMenuVariables(state.templating.variables),
+    variables: getSubMenuVariables(uid, templatingState.variables),
   };
 };
 
-const styles = css`
-  display: flex;
-  flex-wrap: wrap;
-  display: contents;
-`;
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+  return {
+    formStyles: css`
+      display: flex;
+      flex-wrap: wrap;
+      display: contents;
+    `,
+    submenu: css`
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      align-items: flex-start;
+      gap: ${theme.spacing(1)} ${theme.spacing(2)};
+      padding: 0 0 ${theme.spacing(1)} 0;
+    `,
+    spacer: css({
+      flexGrow: 1,
+    }),
+  };
+});
 
-export const SubMenu = connect(mapStateToProps)(SubMenuUnConnected);
+export const SubMenu = withTheme2(connect(mapStateToProps)(SubMenuUnConnected));
 
 SubMenu.displayName = 'SubMenu';

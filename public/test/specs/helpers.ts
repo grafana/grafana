@@ -1,10 +1,12 @@
 import { each, template } from 'lodash';
 
-import config from 'app/core/config';
-import { angularMocks, sinon } from '../lib/common';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { RawTimeRange, PanelPluginMeta, dateMath } from '@grafana/data';
 import { GrafanaRootScope } from 'app/angular/GrafanaCtrl';
+import config from 'app/core/config';
+import { ContextSrv } from 'app/core/services/context_srv';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
+
+import { angularMocks, sinon } from '../lib/common';
 
 export function ControllerTestContext(this: any) {
   const self = this;
@@ -132,7 +134,7 @@ export class TimeSrvStub {
   }
 }
 
-export class ContextSrvStub {
+export class ContextSrvStub extends ContextSrv {
   isGrafanaVisible = jest.fn();
 
   getValidInterval() {
@@ -164,7 +166,7 @@ export function TemplateSrvStub(this: any) {
   };
   this.fillVariableValuesForUrl = () => {};
   this.updateIndex = () => {};
-  this.variableExists = () => {
+  this.containsTemplate = () => {
     return false;
   };
   this.variableInitialized = () => {};

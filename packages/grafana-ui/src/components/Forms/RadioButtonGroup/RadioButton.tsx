@@ -1,10 +1,12 @@
-import React from 'react';
-import { useTheme2, stylesFactory } from '../../../themes';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
-import { getPropertiesForButtonSize } from '../commonStyles';
-import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { StringSelector } from '@grafana/e2e-selectors';
+
+import { useTheme2, stylesFactory } from '../../../themes';
+import { getFocusStyles, getMouseFocusStyles } from '../../../themes/mixins';
+import { getPropertiesForButtonSize } from '../commonStyles';
 
 export type RadioButtonSize = 'sm' | 'md';
 
@@ -53,10 +55,10 @@ export const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
           id={id}
           checked={active}
           name={name}
-          aria-label={ariaLabel}
+          aria-label={ariaLabel || description}
           ref={ref}
         />
-        <label className={styles.radioLabel} htmlFor={id} title={description}>
+        <label className={styles.radioLabel} htmlFor={id} title={description || ariaLabel}>
           {children}
         </label>
       </>

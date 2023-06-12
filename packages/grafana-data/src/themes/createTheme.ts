@@ -1,15 +1,15 @@
 import { createBreakpoints } from './breakpoints';
-import { createComponents } from './createComponents';
 import { createColors, ThemeColorsInput } from './createColors';
+import { createComponents } from './createComponents';
 import { createShadows } from './createShadows';
 import { createShape, ThemeShapeInput } from './createShape';
 import { createSpacing, ThemeSpacingOptions } from './createSpacing';
 import { createTransitions } from './createTransitions';
 import { createTypography, ThemeTypographyInput } from './createTypography';
 import { createV1Theme } from './createV1Theme';
+import { createVisualizationColors } from './createVisualizationColors';
 import { GrafanaTheme2 } from './types';
 import { zIndex } from './zIndex';
-import { createVisualizationColors } from './createVisualizationColors';
 
 /** @internal */
 export interface NewThemeOptions {
@@ -23,7 +23,6 @@ export interface NewThemeOptions {
 /** @internal */
 export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const {
-    name = 'Dark',
     colors: colorsInput = {},
     spacing: spacingInput = {},
     shape: shapeInput = {},
@@ -41,7 +40,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
   const visualization = createVisualizationColors(colors);
 
   const theme = {
-    name,
+    name: colors.mode === 'dark' ? 'Dark' : 'Light',
     isDark: colors.mode === 'dark',
     isLight: colors.mode === 'light',
     colors,
@@ -56,6 +55,7 @@ export function createTheme(options: NewThemeOptions = {}): GrafanaTheme2 {
     zIndex: {
       ...zIndex,
     },
+    flags: {},
   };
 
   return {

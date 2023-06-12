@@ -1,11 +1,13 @@
-import React, { ComponentProps, useState } from 'react';
-import { InlineField, Input } from '@grafana/ui';
-import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { changeMetricSetting } from '../state/actions';
-import { SettingKeyOf } from '../../../types';
-import { MetricAggregationWithInlineScript, MetricAggregationWithSettings } from '../aggregations';
 import { uniqueId } from 'lodash';
+import React, { ComponentProps, useState } from 'react';
+
+import { InlineField, Input } from '@grafana/ui';
 import { getScriptValue } from 'app/plugins/datasource/elasticsearch/utils';
+
+import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { MetricAggregationWithInlineScript, MetricAggregationWithSettings } from '../../../../types';
+import { SettingKeyOf } from '../../../types';
+import { changeMetricSetting } from '../state/actions';
 
 interface Props<T extends MetricAggregationWithSettings, K extends SettingKeyOf<T>> {
   label: string;

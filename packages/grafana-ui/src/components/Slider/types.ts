@@ -1,4 +1,5 @@
 import { SliderMarks } from '@grafana/data';
+
 import { Orientation } from '../../types/orientation';
 
 interface CommonSliderProps {

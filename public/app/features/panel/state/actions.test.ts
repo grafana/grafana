@@ -1,11 +1,13 @@
+import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { mockStandardFieldConfigOptions } from '@grafana/data/test/helpers/fieldConfig';
 import { PanelModel } from 'app/features/dashboard/state';
+import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
+
 import { thunkTester } from '../../../../test/core/thunk/thunkTester';
+
 import { changePanelPlugin } from './actions';
 import { panelModelAndPluginReady } from './reducers';
-import { getPanelPlugin } from 'app/features/plugins/__mocks__/pluginMocks';
-import { panelPluginLoaded } from 'app/features/plugins/admin/state/actions';
-import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '@grafana/data';
-import { mockStandardFieldConfigOptions } from 'test/helpers/fieldConfig';
 
 jest.mock('app/features/plugins/importPanelPlugin', () => {
   return {
@@ -18,6 +20,14 @@ jest.mock('app/features/plugins/importPanelPlugin', () => {
     },
   };
 });
+
+jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
+  getDashboardSrv: () => {
+    return {
+      getCurrent: () => undefined,
+    };
+  },
+}));
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
 standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());

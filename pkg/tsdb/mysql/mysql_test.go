@@ -1,6 +1,3 @@
-//go:build integration
-// +build integration
-
 package mysql
 
 import (
@@ -13,11 +10,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 // To run this test, set runMySqlTests=true
@@ -28,12 +26,15 @@ import (
 // There is also a datasource and dashboard provisioned by devenv scripts that you can
 // use to verify that the generated data are visualized as expected, see
 // devenv/README.md for setup instructions.
-func TestMySQL(t *testing.T) {
+func TestIntegrationMySQL(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	// change to true to run the MySQL tests
 	runMySQLTests := false
 	// runMySqlTests := true
 
-	if !(sqlstore.IsTestDbMySQL() || runMySQLTests) {
+	if !(db.IsTestDbMySQL() || runMySQLTests) {
 		t.Skip()
 	}
 
@@ -71,9 +72,7 @@ func TestMySQL(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
+	rowTransformer := mysqlQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 
@@ -451,9 +450,9 @@ func TestMySQL(t *testing.T) {
 		err = sess.CreateTable(metric_values{})
 		require.NoError(t, err)
 
-		rand.Seed(time.Now().Unix())
+		rng := rand.New(rand.NewSource(time.Now().Unix()))
 		rnd := func(min, max int64) int64 {
-			return rand.Int63n(max-min) + min
+			return rng.Int63n(max-min) + min
 		}
 
 		var tInitial time.Time
@@ -906,7 +905,7 @@ func TestMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -1164,9 +1163,7 @@ func TestMySQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := mysqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mysqlQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
 			require.NoError(t, err)
@@ -1230,6 +1227,50 @@ func TestMySQL(t *testing.T) {
 				require.Len(t, frames[0].Meta.Notices, 1)
 				require.Equal(t, data.NoticeSeverityWarning, frames[0].Meta.Notices[0].Severity)
 			})
+		})
+	})
+
+	t.Run("Given an empty table", func(t *testing.T) {
+		type emptyObj struct {
+			EmptyKey string
+			EmptyVal int64
+		}
+
+		exists, err := sess.IsTableExist(emptyObj{})
+		require.NoError(t, err)
+		if exists {
+			err := sess.DropTable(emptyObj{})
+			require.NoError(t, err)
+		}
+		err = sess.CreateTable(emptyObj{})
+		require.NoError(t, err)
+
+		t.Run("When no rows are returned, should return an empty frame", func(t *testing.T) {
+			query := &backend.QueryDataRequest{
+				Queries: []backend.DataQuery{
+					{
+						JSON: []byte(`{
+							"rawSql": "SELECT * FROM empty_obj",
+							"format": "table"
+						}`),
+						RefID: "A",
+						TimeRange: backend.TimeRange{
+							From: time.Now(),
+							To:   time.Now().Add(1 * time.Minute),
+						},
+					},
+				},
+			}
+
+			resp, err := exe.QueryData(context.Background(), query)
+			require.NoError(t, err)
+			queryResult := resp.Responses["A"]
+
+			frames := queryResult.Frames
+			require.Len(t, frames, 1)
+			require.Equal(t, 0, frames[0].Rows())
+			require.NotNil(t, frames[0].Fields)
+			require.Empty(t, frames[0].Fields)
 		})
 	})
 }

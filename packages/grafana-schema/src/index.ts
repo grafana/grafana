@@ -3,4 +3,5 @@
  *
  * @packageDocumentation
  */
-export * from './schema/graph.gen';
+export * from './veneer/common.types';
+export * from './index.gen';

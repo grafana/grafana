@@ -1,13 +1,15 @@
-import React, { HTMLProps } from 'react';
 import { css, cx } from '@emotion/css';
-import { GrafanaTheme2 } from '@grafana/data';
+import React, { HTMLProps } from 'react';
+
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Icon } from '../Icon/Icon';
-import { IconName } from '../../types';
-import { stylesFactory, useTheme2 } from '../../themes';
-import { Counter } from './Counter';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { IconName } from '../../types';
+import { Icon } from '../Icon/Icon';
+
+import { Counter } from './Counter';
 
 export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   label: string;
@@ -18,88 +20,66 @@ export interface TabProps extends HTMLProps<HTMLAnchorElement> {
   onChangeTab?: (event?: React.MouseEvent<HTMLAnchorElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
+  /** Extra content, displayed after the tab label and counter */
+  suffix?: NavModelItem['tabSuffix'];
 }
 
 export const Tab = React.forwardRef<HTMLAnchorElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
-    const theme = useTheme2();
-    const tabsStyles = getTabStyles(theme);
+  ({ label, active, icon, onChangeTab, counter, suffix: Suffix, className, href, ...otherProps }, ref) => {
+    const tabsStyles = useStyles2(getStyles);
     const content = () => (
       <>
         {icon && <Icon name={icon} />}
         {label}
         {typeof counter === 'number' && <Counter value={counter} />}
+        {Suffix && <Suffix className={tabsStyles.suffix} />}
       </>
     );
 
     const linkClass = cx(tabsStyles.link, active ? tabsStyles.activeStyle : tabsStyles.notActive);
 
     return (
-      <li className={tabsStyles.item}>
+      <div className={tabsStyles.item}>
         <a
-          href={href}
+          // in case there is no href '#' is set in order to maintain a11y
+          href={href ? href : '#'}
           className={linkClass}
           {...otherProps}
           onClick={onChangeTab}
           aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
+          role="tab"
+          aria-selected={active}
           ref={ref}
         >
           {content()}
         </a>
-      </li>
+      </div>
     );
   }
 );
 
 Tab.displayName = 'Tab';
 
-const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css`
       list-style: none;
       position: relative;
       display: flex;
+      white-space: nowrap;
     `,
     link: css`
       color: ${theme.colors.text.secondary};
       padding: ${theme.spacing(1.5, 2, 1)};
       display: block;
       height: 100%;
+
       svg {
         margin-right: ${theme.spacing(1)};
       }
 
       &:focus-visible {
-+        ${getFocusStyles(theme)}
-      }
-    `,
-    notActive: css`
-      a:hover,
-      &:hover,
-      &:focus {
-        color: ${theme.colors.text.primary};
-
-        &::before {
-          display: block;
-          content: ' ';
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 4px;
-          border-radius: 2px;
-          bottom: 0px;
-          background: ${theme.colors.action.hover};
-        }
-      }
-    `,
-    activeStyle: css`
-      label: activeTabStyle;
-      color: ${theme.colors.text.primary};
-      overflow: hidden;
-      font-weight: ${theme.typography.fontWeightMedium};
-
-      a {
-        color: ${theme.colors.text.primary};
+        ${getFocusStyles(theme)}
       }
 
       &::before {
@@ -109,10 +89,36 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         left: 0;
         right: 0;
         height: 4px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.radius.default};
         bottom: 0px;
-        background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }
     `,
+    notActive: css`
+      a:hover,
+      &:hover,
+      &:focus {
+        color: ${theme.colors.text.primary};
+
+        &::before {
+          background-color: ${theme.colors.action.hover};
+        }
+      }
+    `,
+    activeStyle: css`
+      label: activeTabStyle;
+      color: ${theme.colors.text.primary};
+      overflow: hidden;
+
+      a {
+        color: ${theme.colors.text.primary};
+      }
+
+      &::before {
+        background-image: ${theme.colors.gradients.brandHorizontal};
+      }
+    `,
+    suffix: css`
+      margin-left: ${theme.spacing(1)};
+    `,
   };
-});
+};

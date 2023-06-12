@@ -27,13 +27,13 @@ The scheduler runs at a fixed interval, called its heartbeat, in which it does a
 
 1. Fetch the alert rules for all organizations (excluding disabled)
 2. Start a goroutine (if this is a new alert rule or the scheduler has just started) to evaluate the alert rule
-3. Send an `*evalContext` event to the goroutine for each alert rule if its interval has elapsed
+3. Send an `*evaluation` event to the goroutine for each alert rule if its interval has elapsed
 4. Stop the goroutines for all alert rules that have been deleted since the last heartbeat
 
-The function that evaluates each alert rule is called `ruleRoutine`. It waits for an `*evalContext` event (sent each
+The function that evaluates each alert rule is called `ruleRoutine`. It waits for an `*evaluation` event (sent each
 interval seconds elapsed and is configurable per alert rule) and then evaluates the alert rule. To ensure that the
 scheduler is evaluating the latest version of the alert rule it compares its local version of the alert rule with that
-in the `*evalContext` event, fetching the latest version of the alert rule from the database if the version numbers
+in the `*evaluation` event, fetching the latest version of the alert rule from the database if the version numbers
 mismatch. It then invokes the Evaluator which evaluates any queries, classic conditions or expressions in alert rule
 and passes the results of this evaluation to the State Manager. An evaluation can return no results in the case of
 NoData or Error, a single result in the case of classic conditions, or more than one result if the alert rule is
@@ -77,7 +77,7 @@ normalized, then the alerts are put in an in-memory structure. The dispatcher it
 it to a route in the configuration as explained [here](https://prometheus.io/docs/alerting/latest/configuration/#route).
 
 The alert is then matched to an alert group depending on the configuration in the route. The alert is then sent through
-a number of stages including silencing and inhibition and at last the receiver which can include wait, de-duplication,
+a number of stages including silencing and inhibition (which is currently not supported) and at last the receiver which can include wait, de-duplication,
 retry.
 
 ### What are notification channels?

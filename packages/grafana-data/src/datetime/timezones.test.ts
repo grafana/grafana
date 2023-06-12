@@ -1,5 +1,5 @@
-import { getTimeZoneInfo } from './timezones';
 import { setTimeZoneResolver } from './common';
+import { getTimeZoneInfo } from './timezones';
 
 describe('getTimeZoneInfo', () => {
   // global timezone is set to Pacific/Easter, see jest-config.js file

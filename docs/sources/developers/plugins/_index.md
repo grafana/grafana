@@ -1,85 +1,52 @@
-+++
-title = "Build a plugin"
-aliases = ["/docs/grafana/latest/plugins/developing/"]
-+++
+---
+aliases:
+  - ../plugins/developing/
+description: Resources for creating Grafana plugins
+title: Plugin developer's guide
+weight: 200
+---
 
-# Build a plugin
+# Grafana plugin developer's guide
 
-For more information on the types of plugins you can build, refer to the [Plugin Overview]({{< relref "../../plugins/_index.md" >}}).
+You can extend Grafana's built-in capabilities with plugins. Plugins enable Grafana to accomplish specialized tasks, custom-tailored to your requirements. By making a plugin for your organization, you can connect Grafana to other data sources, ticketing tools, and CI/CD tooling.
 
-## Get started
+You can create plugins for private use or contribute them to the open source community by publishing to the [Grafana plugin catalog](https://grafana.com/grafana/plugins/). This catalog has hundreds of other community and commercial plugins.
 
-The easiest way to start developing Grafana plugins is to use the [Grafana Toolkit](https://www.npmjs.com/package/@grafana/toolkit).
+If you are a Grafana plugin developer or want to become one, this plugin developer's guide contains the tutorials and reference materials to help you get started.
 
-Open the terminal, and run the following command in your [plugin directory]({{< relref "../../administration/configuration.md#plugins" >}}):
+## Plugin basics
 
-```bash
-npx @grafana/toolkit plugin:create my-grafana-plugin
-```
+You can create several types of plugins, including:
 
-If you want a more guided introduction to plugin development, check out our tutorials:
+- **Panel plugins** - Visualize data and navigate between dashboards.
+- **Data source plugins** - Link to new databases or other sources of data.
+- **App plugins** - Create rich applications for custom out-of-the-box experiences.
 
-- [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}})
+> **Note:** To learn more about the types of plugins you can build, refer to the [Plugin management]({{< relref "../../administration/plugin-management" >}}) documentation.
+
+## Contents of this developer's guide
+
+The following topics are covered in this guide:
+
+- **[Get started with plugins]({{< relref "./get-started-with-plugins" >}})** - Start developing Grafana plugins with the [Create-plugin](https://www.npmjs.com/package/@grafana/create-plugin) tool.
+- **[Introduction to plugin development]({{< relref "./introduction-to-plugin-development" >}})** - Learn the fundamentals of Grafana plugin development: frontend and backend development processes, data frames, error handling, and more.
+- **[Create a Grafana plugin]({{< relref "./create-a-grafana-plugin" >}})** - If you're familiar with plugin creation, use the tutorials for creating panel plugins, data source plugins, and more to deepen your knowledge.
+- **[Migrate a plugin]({{< relref "./migration-guide" >}})** - Learn how to upgrade from a previous version of a Grafana plugin, rewrite an old Angular plugin in React, or update to a newer version.
+- **[Publish a Grafana plugin]({{< relref "./publish-a-plugin" >}})** - Learn about publishing a plugin to the Grafana plugin catalog, including publishing criteria, packaging, and deployment.
+- **[Reference]({{< relref "metadata.md" >}})** - Description of the `plugin.json` schema and plugin metadata.
 
 ## Go further
 
-Learn more about specific areas of plugin development.
+Learn more about additional tools and see plugin type examples.
 
-### Tutorials
-
-If you're looking to build your first plugin, check out these introductory tutorials:
-
-- [Build a panel plugin]({{< relref "/tutorials/build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}})
-- [Build a data source backend plugin]({{< relref "/tutorials/build-a-data-source-backend-plugin.md" >}})
-
-Ready to learn more? Check out our other tutorials:
-
-- [Build a panel plugin with D3.js]({{< relref "/tutorials/build-a-panel-plugin-with-d3.md" >}})
-
-### Guides
-
-Improve an existing plugin with one of our guides:
-
-- [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins" >}})
-- [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
-- [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
-- [Add support for variables]({{< relref "add-support-for-variables.md" >}})
-- [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
-- [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
-- [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}})
-- [Error handling]({{< relref "error-handling.md" >}})
-- [Working with data frames]({{< relref "working-with-data-frames.md" >}})
-
-### Concepts
-
-Deepen your knowledge through a series of high-level overviews of plugin concepts:
-
-- [Data frames]({{< relref "data-frames.md" >}})
-
-### UI library
+### User interface creation
 
 Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 
-### Examples
+### Plugin examples
 
-For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
+Grafana Labs provides a number of best practice example plugins for different use cases to help you quickly get started. Browse our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
-### API reference
+### SDK
 
-Learn more about Grafana options and packages.
-
-#### Metadata
-
-- [Plugin metadata]({{< relref "metadata.md" >}})
-
-#### Typescript
-
-- Grafana Data
-- Grafana Runtime
-- Grafana UI
-
-#### Go
-
-- [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go" >}})
+Learn more about [Grafana Plugin SDK for Go]({{< relref "./backend/grafana-plugin-sdk-for-go" >}}).

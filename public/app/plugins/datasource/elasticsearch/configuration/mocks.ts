@@ -1,15 +1,20 @@
 import { DataSourceSettings } from '@grafana/data';
-import { ElasticsearchOptions } from '../types';
-import { createDatasourceSettings } from '../../../../features/datasources/mocks';
+import { getMockDataSource } from 'app/features/datasources/__mocks__';
 
-export function createDefaultConfigOptions(): DataSourceSettings<ElasticsearchOptions> {
-  return createDatasourceSettings<ElasticsearchOptions>({
-    timeField: '@time',
-    esVersion: '7.0.0',
-    interval: 'Hourly',
-    timeInterval: '10s',
-    maxConcurrentShardRequests: 300,
-    logMessageField: 'test.message',
-    logLevelField: 'test.level',
+import { ElasticsearchOptions } from '../types';
+
+export function createDefaultConfigOptions(
+  options?: Partial<ElasticsearchOptions>
+): DataSourceSettings<ElasticsearchOptions> {
+  return getMockDataSource<ElasticsearchOptions>({
+    jsonData: {
+      timeField: '@time',
+      interval: 'Hourly',
+      timeInterval: '10s',
+      maxConcurrentShardRequests: 300,
+      logMessageField: 'test.message',
+      logLevelField: 'test.level',
+      ...options,
+    },
   });
 }

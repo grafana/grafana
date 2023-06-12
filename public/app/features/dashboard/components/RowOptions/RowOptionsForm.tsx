@@ -1,4 +1,5 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+
 import { Button, Field, Form, Modal, Input } from '@grafana/ui';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
@@ -12,7 +13,7 @@ export interface Props {
   onCancel: () => void;
 }
 
-export const RowOptionsForm: FC<Props> = ({ repeat, title, onUpdate, onCancel }) => {
+export const RowOptionsForm = ({ repeat, title, onUpdate, onCancel }: Props) => {
   const [newRepeat, setNewRepeat] = useState<string | null | undefined>(repeat);
   const onChangeRepeat = useCallback((name?: string | null) => setNewRepeat(name), [setNewRepeat]);
 

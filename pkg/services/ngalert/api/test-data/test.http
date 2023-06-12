@@ -1,6 +1,6 @@
 @grafanaRecipient = grafana
-@lokiDatasourceID = 32
-@prometheusDatasourceID = 35
+@lokiDatasourceUID = 9w8X2zlMz
+@prometheusDatasourceUID = 7DEsN5_Mk
 
 POST http://admin:admin@localhost:3000/api/v1/rule/test/{{grafanaRecipient}}
 content-type: application/json
@@ -15,7 +15,7 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
                 "type":"math",
                 "expression":"1 < 2"
@@ -56,7 +56,7 @@ content-type: application/json
       "from": 18000,
       "to": 10800
     },
-    "datasourceUid": "-100",
+    "datasourceUid": "__expr__",
     "model": {
       "expression": "$A",
       "intervalMs": 2000,
@@ -72,7 +72,7 @@ content-type: application/json
 }
 
 ###
-POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceID}}
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
 content-type: application/json
 
 {
@@ -80,7 +80,7 @@ content-type: application/json
 }
 
 ###
-POST http://admin:admin@localhost:3000/api/v1/rule/test/{{prometheusDatasourceID}}
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{prometheusDatasourceUID}}
 content-type: application/json
 
 {
@@ -88,7 +88,7 @@ content-type: application/json
 }
 
 ### loki recipient - empty payload
-POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceID}}
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
 content-type: application/json
 
 {}
@@ -100,7 +100,7 @@ content-type: application/json
 {}
 
 ### loki recipient - grafana payload
-POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceID}}
+POST http://admin:admin@localhost:3000/api/v1/rule/test/{{lokiDatasourceUID}}
 content-type: application/json
 
 {
@@ -113,7 +113,7 @@ content-type: application/json
                 "from": 18000,
                 "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
                 "type":"math",
                 "expression":"1 < 2"
@@ -121,7 +121,7 @@ content-type: application/json
         }
     ]
   }
-}}
+}
 
 ### grafana recipient - lotex payload
 POST http://admin:admin@localhost:3000/api/v1/rule/test/{{grafanaRecipient}}

@@ -1,15 +1,19 @@
-import { variableQueryObserver } from './variableQueryObserver';
-import { LoadingState } from '@grafana/data';
-import { VariableIdentifier } from '../state/types';
-import { UpdateOptionsResults } from './VariableQueryRunner';
+import { Subscription } from 'rxjs';
 
-function getTestContext(args: { next?: UpdateOptionsResults; error?: any; complete?: boolean }) {
+import { LoadingState } from '@grafana/data';
+
+import { KeyedVariableIdentifier } from '../state/types';
+
+import { UpdateOptionsResults } from './VariableQueryRunner';
+import { variableQueryObserver } from './variableQueryObserver';
+
+function getTestContext(args: { next?: UpdateOptionsResults; error?: string; complete?: boolean }) {
   const { next, error, complete } = args;
   const resolve = jest.fn();
   const reject = jest.fn();
-  const subscription: any = {
+  const subscription = {
     unsubscribe: jest.fn(),
-  };
+  } as unknown as Subscription;
   const observer = variableQueryObserver(resolve, reject, subscription);
 
   if (next) {
@@ -27,7 +31,7 @@ function getTestContext(args: { next?: UpdateOptionsResults; error?: any; comple
   return { resolve, reject, subscription, observer };
 }
 
-const identifier: VariableIdentifier = { id: 'id', type: 'query' };
+const identifier: KeyedVariableIdentifier = { id: 'id', type: 'query', rootStateKey: 'uid' };
 
 describe('variableQueryObserver', () => {
   describe('when receiving a Done state', () => {

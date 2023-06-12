@@ -1,4 +1,4 @@
-const context = document.createElement('canvas').getContext('2d')!;
+let _context: CanvasRenderingContext2D;
 const cache = new Map<string, TextMetrics>();
 const cacheLimit = 500;
 let ctxFontStyle = '';
@@ -7,20 +7,25 @@ let ctxFontStyle = '';
  * @internal
  */
 export function getCanvasContext() {
-  return context;
+  if (!_context) {
+    _context = document.createElement('canvas').getContext('2d')!;
+  }
+  return _context;
 }
 
 /**
  * @beta
  */
-export function measureText(text: string, fontSize: number): TextMetrics {
-  const fontStyle = `${fontSize}px 'Roboto'`;
+export function measureText(text: string, fontSize: number, fontWeight = 400): TextMetrics {
+  const fontStyle = `${fontWeight} ${fontSize}px 'Inter'`;
   const cacheKey = text + fontStyle;
   const fromCache = cache.get(cacheKey);
 
   if (fromCache) {
     return fromCache;
   }
+
+  const context = getCanvasContext();
 
   if (ctxFontStyle !== fontStyle) {
     context.font = ctxFontStyle = fontStyle;
@@ -40,9 +45,16 @@ export function measureText(text: string, fontSize: number): TextMetrics {
 /**
  * @beta
  */
-export function calculateFontSize(text: string, width: number, height: number, lineHeight: number, maxSize?: number) {
+export function calculateFontSize(
+  text: string,
+  width: number,
+  height: number,
+  lineHeight: number,
+  maxSize?: number,
+  fontWeight?: number
+) {
   // calculate width in 14px
-  const textSize = measureText(text, 14);
+  const textSize = measureText(text, 14, fontWeight);
   // how much bigger than 14px can we make it while staying within our width constraints
   const fontSizeBasedOnWidth = (width / (textSize.width + 2)) * 14;
   const fontSizeBasedOnHeight = height / lineHeight;

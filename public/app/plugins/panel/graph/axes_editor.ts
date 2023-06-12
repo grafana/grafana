@@ -1,4 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
+
 import { GraphCtrl } from './module';
 
 export class AxesEditorCtrl {
@@ -10,7 +11,8 @@ export class AxesEditorCtrl {
   xNameSegment: any;
   selectors: typeof selectors.components.Panels.Visualization.Graph.VisualizationTab;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor(private $scope: any) {
     this.panelCtrl = $scope.ctrl as GraphCtrl;
     this.panel = this.panelCtrl.panel;
@@ -75,7 +77,6 @@ export class AxesEditorCtrl {
   }
 }
 
-/** @ngInject */
 export function axesEditorComponent() {
   'use strict';
   return {

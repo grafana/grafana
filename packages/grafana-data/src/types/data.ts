@@ -1,9 +1,10 @@
 import { DataFrameDTO, FieldConfig } from './dataFrame';
-import { DataTransformerConfig } from './transformations';
-import { ApplyFieldOverrideOptions } from './fieldOverrides';
-import { PanelPluginDataSupport } from '.';
-import { DataTopic } from './query';
 import { DataFrameType } from './dataFrameTypes';
+import { ApplyFieldOverrideOptions } from './fieldOverrides';
+import { DataTopic } from './query';
+import { DataTransformerConfig } from './transformations';
+
+import { PanelPluginDataSupport } from '.';
 
 export type KeyValue<T = any> = Record<string, T>;
 
@@ -20,13 +21,28 @@ export enum LoadingState {
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
-export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace' | 'nodeGraph';
+export const preferredVisualizationTypes = [
+  'graph',
+  'table',
+  'logs',
+  'trace',
+  'nodeGraph',
+  'flamegraph',
+  'rawPrometheus',
+] as const;
+export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
 /**
  * @public
  */
 export interface QueryResultMeta {
   type?: DataFrameType;
+
+  /**
+   * TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
+   * contract documentation https://github.com/grafana/grafana-plugin-sdk-go/tree/main/data/contract_docs.
+   */
+  typeVersion?: [number, number];
 
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -45,6 +61,9 @@ export interface QueryResultMeta {
 
   /** The path for live stream updates for this frame */
   channel?: string;
+
+  /** Did the query response come from the cache */
+  isCachedResponse?: boolean;
 
   /**
    * Optionally identify which topic the frame should be assigned to.
@@ -71,7 +90,6 @@ export interface QueryResultMeta {
   /**
    * Legacy data source specific, should be moved to custom
    * */
-  alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
@@ -128,6 +146,8 @@ export interface QueryResultBase {
 export interface Labels {
   [key: string]: string;
 }
+
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface Column {
   text: string; // For a Column, the 'text' is the field name
   filterable?: boolean;
@@ -135,6 +155,7 @@ export interface Column {
   custom?: Record<string, any>;
 }
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TableData extends QueryResultBase {
   name?: string;
   columns: Column[];
@@ -142,10 +163,13 @@ export interface TableData extends QueryResultBase {
   type?: string;
 }
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesValue = number | null;
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export type TimeSeriesPoints = TimeSeriesValue[][];
 
+/** @deprecated this is a very old (pre Grafana 7 + DataFrame) representation for tabular data  */
 export interface TimeSeries extends QueryResultBase {
   target: string;
   /**
@@ -173,3 +197,6 @@ export interface DataConfigSource {
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
   snapshotData?: DataFrameDTO[];
 }
+
+type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
+export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);

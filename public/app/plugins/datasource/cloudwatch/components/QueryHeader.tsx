@@ -1,26 +1,20 @@
-import React, { useCallback, useState } from 'react';
-import { pick } from 'lodash';
+import React from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
+import { CoreApp, LoadingState, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { EditorHeader, InlineSelect, FlexItem } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Badge, Button } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../datasource';
-import {
-  CloudWatchMetricsQuery,
-  CloudWatchQuery,
-  CloudWatchQueryMode,
-  MetricEditorMode,
-  MetricQueryType,
-} from '../types';
-import { useRegions } from '../hooks';
+import { DEFAULT_LOGS_QUERY_STRING } from '../defaultQueries';
+import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../guards';
+import { useIsMonitoringAccount, useRegions } from '../hooks';
+import { CloudWatchJsonData, CloudWatchQuery, CloudWatchQueryMode, MetricQueryType } from '../types';
 
-interface QueryHeaderProps {
-  query: CloudWatchMetricsQuery;
-  datasource: CloudWatchDatasource;
-  onChange: (query: CloudWatchQuery) => void;
-  onRunQuery: () => void;
-  sqlCodeEditorIsDirty: boolean;
+export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+  extraHeaderElementLeft?: JSX.Element;
+  extraHeaderElementRight?: JSX.Element;
+  dataIsStale: boolean;
 }
 
 const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
@@ -28,95 +22,100 @@ const apiModes: Array<SelectableValue<CloudWatchQueryMode>> = [
   { label: 'CloudWatch Logs', value: 'Logs' },
 ];
 
-const metricEditorModes: Array<SelectableValue<MetricQueryType>> = [
-  { label: 'Metric Search', value: MetricQueryType.Search },
-  { label: 'Metric Query', value: MetricQueryType.Query },
-];
-
-const editorModes = [
-  { label: 'Builder', value: MetricEditorMode.Builder },
-  { label: 'Code', value: MetricEditorMode.Code },
-];
-
-const QueryHeader: React.FC<QueryHeaderProps> = ({ query, sqlCodeEditorIsDirty, datasource, onChange, onRunQuery }) => {
-  const { metricEditorMode, metricQueryType, queryMode, region } = query;
-  const [showConfirm, setShowConfirm] = useState(false);
-
+const QueryHeader = ({
+  query,
+  onChange,
+  datasource,
+  extraHeaderElementLeft,
+  extraHeaderElementRight,
+  dataIsStale,
+  data,
+  onRunQuery,
+}: Props) => {
+  const { queryMode, region } = query;
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
   const [regions, regionIsLoading] = useRegions(datasource);
-
-  const onEditorModeChange = useCallback(
-    (newMetricEditorMode: MetricEditorMode) => {
-      if (
-        sqlCodeEditorIsDirty &&
-        metricQueryType === MetricQueryType.Query &&
-        metricEditorMode === MetricEditorMode.Code
-      ) {
-        setShowConfirm(true);
-        return;
-      }
-      onChange({ ...query, metricEditorMode: newMetricEditorMode });
-    },
-    [setShowConfirm, onChange, sqlCodeEditorIsDirty, query, metricEditorMode, metricQueryType]
-  );
+  const emptyLogsExpression = isCloudWatchLogsQuery(query) ? !query.expression : false;
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
-    if (value !== queryMode) {
-      const commonProps = pick(query, 'id', 'region', 'namespace', 'refId', 'hide', 'key', 'queryType', 'datasource');
-
+    if (value && value !== queryMode) {
+      // reset expression to a default string when the query mode changes
+      let expression = '';
+      if (value === 'Logs') {
+        expression = DEFAULT_LOGS_QUERY_STRING;
+      }
       onChange({
-        ...commonProps,
+        ...datasource.getDefaultQuery(CoreApp.Unknown),
+        ...query,
+        expression,
         queryMode: value,
       });
     }
   };
+  const onRegionChange = async (region: string) => {
+    if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
+      const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
+      onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
+    } else {
+      onChange({ ...query, region });
+    }
+  };
+
+  const shouldDisplayMonitoringBadge =
+    config.featureToggles.cloudWatchCrossAccountQuerying &&
+    isMonitoringAccount &&
+    (query.queryMode === 'Logs' ||
+      (isCloudWatchMetricsQuery(query) && query.metricQueryType === MetricQueryType.Search));
 
   return (
-    <EditorHeader>
-      <InlineSelect
-        label="Region"
-        value={regions.find((v) => v.value === region)}
-        placeholder="Select region"
-        allowCustomValue
-        onChange={({ value: region }) => region && onChange({ ...query, region: region })}
-        options={regions}
-        isLoading={regionIsLoading}
-      />
+    <>
+      <EditorHeader>
+        <InlineSelect
+          label="Region"
+          value={region}
+          placeholder="Select region"
+          allowCustomValue
+          onChange={({ value: region }) => region && onRegionChange(region)}
+          options={regions}
+          isLoading={regionIsLoading}
+        />
 
-      <InlineSelect aria-label="Query mode" value={queryMode} options={apiModes} onChange={onQueryModeChange} />
+        <InlineSelect
+          aria-label="Query mode"
+          value={queryMode}
+          options={apiModes}
+          onChange={onQueryModeChange}
+          inputId={`cloudwatch-query-mode-${query.refId}`}
+          id={`cloudwatch-query-mode-${query.refId}`}
+        />
 
-      <InlineSelect
-        aria-label="Metric editor mode"
-        value={metricEditorModes.find((m) => m.value === metricQueryType)}
-        options={metricEditorModes}
-        onChange={({ value }) => {
-          onChange({ ...query, metricQueryType: value });
-        }}
-      />
+        {extraHeaderElementLeft}
 
-      <FlexItem grow={1} />
+        <FlexItem grow={1} />
 
-      <RadioButtonGroup options={editorModes} size="sm" value={metricEditorMode} onChange={onEditorModeChange} />
+        {shouldDisplayMonitoringBadge && (
+          <>
+            <Badge
+              text="Monitoring account"
+              color="blue"
+              tooltip="AWS monitoring accounts view data from source accounts so you can centralize monitoring and troubleshoot activites"
+            ></Badge>
+          </>
+        )}
 
-      {query.metricQueryType === MetricQueryType.Query && query.metricEditorMode === MetricEditorMode.Code && (
-        <Button variant="secondary" size="sm" onClick={() => onRunQuery()}>
-          Run query
+        <Button
+          variant={dataIsStale ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={onRunQuery}
+          icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+          disabled={data?.state === LoadingState.Loading || emptyLogsExpression}
+        >
+          Run queries
         </Button>
-      )}
 
-      <ConfirmModal
-        isOpen={showConfirm}
-        title="Are you sure?"
-        body="You will lose manual changes done to the query if you go back to the visual builder."
-        confirmText="Yes, I am sure."
-        dismissText="No, continue editing the query manually."
-        icon="exclamation-triangle"
-        onConfirm={() => {
-          setShowConfirm(false);
-          onChange({ ...query, metricEditorMode: MetricEditorMode.Builder });
-        }}
-        onDismiss={() => setShowConfirm(false)}
-      />
-    </EditorHeader>
+        {extraHeaderElementRight}
+      </EditorHeader>
+    </>
   );
 };
 

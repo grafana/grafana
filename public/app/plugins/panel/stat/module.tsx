@@ -1,16 +1,14 @@
-import {
-  BigValueColorMode,
-  BigValueTextMode,
-  commonOptionsBuilder,
-  sharedSingleStatMigrationHandler,
-} from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { addOrientationOption, addStandardDataReduceOptions, StatPanelOptions } from './types';
-import { StatPanel } from './StatPanel';
+import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
+
 import { statPanelChangedHandler } from './StatMigrations';
+import { StatPanel } from './StatPanel';
+import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { defaultOptions, Options } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
+export const plugin = new PanelPlugin<Options>(StatPanel)
   .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
@@ -33,11 +31,11 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
           { value: BigValueTextMode.None, label: 'None' },
         ],
       },
-      defaultValue: 'auto',
+      defaultValue: defaultOptions.textMode,
     });
 
     builder
-      .addRadio({
+      .addSelect({
         path: 'colorMode',
         name: 'Color mode',
         defaultValue: BigValueColorMode.Value,
@@ -46,7 +44,8 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
           options: [
             { value: BigValueColorMode.None, label: 'None' },
             { value: BigValueColorMode.Value, label: 'Value' },
-            { value: BigValueColorMode.Background, label: 'Background' },
+            { value: BigValueColorMode.Background, label: 'Background Gradient' },
+            { value: BigValueColorMode.BackgroundSolid, label: 'Background Solid' },
           ],
         },
       })
@@ -55,23 +54,23 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         name: 'Graph mode',
         description: 'Stat panel graph / sparkline mode',
         category: mainCategory,
-        defaultValue: 'area',
+        defaultValue: defaultOptions.graphMode,
         settings: {
           options: [
-            { value: 'none', label: 'None' },
-            { value: 'area', label: 'Area' },
+            { value: BigValueGraphMode.None, label: 'None' },
+            { value: BigValueGraphMode.Area, label: 'Area' },
           ],
         },
       })
       .addRadio({
         path: 'justifyMode',
         name: 'Text alignment',
-        defaultValue: 'auto',
+        defaultValue: defaultOptions.justifyMode,
         category: mainCategory,
         settings: {
           options: [
-            { value: 'auto', label: 'Auto' },
-            { value: 'center', label: 'Center' },
+            { value: BigValueJustifyMode.Auto, label: 'Auto' },
+            { value: BigValueJustifyMode.Center, label: 'Center' },
           ],
         },
       });

@@ -1,0 +1,66 @@
+{
+  "docvalue_fields": [
+    "testtime"
+  ],
+  "query": {
+        "bool": {
+            "filter": {
+                "range": {
+                    "testtime": {
+                        "format": "epoch_millis",
+                        "gte": 1668422437218,
+                        "lte": 1668422625668
+                    }
+                }
+            }
+        }
+    },
+  "script_fields": {},
+  "size": 500,
+  "sort": 
+    {
+      "testtime": {
+        "order": "desc",
+        "unmapped_type": "boolean"
+      },
+      "_doc": {
+        "order": "desc"
+      }
+    },
+  "aggs": 
+    {
+      "1": {
+        "date_histogram": {
+          "field": "testtime",
+          "fixed_interval": "1000ms",
+          "format": "epoch_millis",
+          "min_doc_count": 0,
+          "extended_bounds": {
+            "min": 1668422437218,
+            "max": 1668422625668
+          }
+        }
+      }
+    },
+  "highlight": 
+    {
+      "pre_tags": [
+        "@HIGHLIGHT@"
+      ],
+      "post_tags": [
+        "@/HIGHLIGHT@"
+      ],
+      "fragment_size": 2147483647,
+      "fields": {
+        "*": {}
+      }
+
+    },
+  "fields": 
+    [ 
+      {
+        "field": "testtime",
+        "format": "strict_date_optional_time_nanos"
+      }
+    ]
+}

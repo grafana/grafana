@@ -3,9 +3,11 @@ package azuremonitor
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/azcredentials"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 // Azure cloud names specific to Azure Monitor
@@ -13,15 +15,15 @@ const (
 	azureMonitorPublic       = "azuremonitor"
 	azureMonitorChina        = "chinaazuremonitor"
 	azureMonitorUSGovernment = "govazuremonitor"
-	azureMonitorGermany      = "germanyazuremonitor"
+	azureMonitorCustomized   = "customizedazuremonitor"
 )
 
-func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
-	if azureAuthType := jsonData.Get("azureAuthType").MustString(); azureAuthType != "" {
+func getAuthType(cfg *setting.Cfg, jsonData *types.AzureClientSettings) string {
+	if azureAuthType := jsonData.AzureAuthType; azureAuthType != "" {
 		return azureAuthType
 	} else {
-		tenantId := jsonData.Get("tenantId").MustString()
-		clientId := jsonData.Get("clientId").MustString()
+		tenantId := jsonData.TenantId
+		clientId := jsonData.ClientId
 
 		// If authentication type isn't explicitly specified and datasource has client credentials,
 		// then this is existing datasource which is configured for app registration (client secret)
@@ -41,19 +43,22 @@ func getAuthType(cfg *setting.Cfg, jsonData *simplejson.Json) string {
 
 func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 	// Allow only known cloud names
-	cloudName := cfg.Azure.Cloud
+	cloudName := ""
+	if cfg != nil && cfg.Azure != nil {
+		cloudName = cfg.Azure.Cloud
+	}
 	switch cloudName {
-	case setting.AzurePublic:
-		return setting.AzurePublic, nil
-	case setting.AzureChina:
-		return setting.AzureChina, nil
-	case setting.AzureUSGovernment:
-		return setting.AzureUSGovernment, nil
-	case setting.AzureGermany:
-		return setting.AzureGermany, nil
+	case azsettings.AzurePublic:
+		return azsettings.AzurePublic, nil
+	case azsettings.AzureChina:
+		return azsettings.AzureChina, nil
+	case azsettings.AzureUSGovernment:
+		return azsettings.AzureUSGovernment, nil
+	case azsettings.AzureCustomized:
+		return azsettings.AzureCustomized, nil
 	case "":
 		// Not set cloud defaults to public
-		return setting.AzurePublic, nil
+		return azsettings.AzurePublic, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
@@ -63,27 +68,27 @@ func getDefaultAzureCloud(cfg *setting.Cfg) (string, error) {
 func normalizeAzureCloud(cloudName string) (string, error) {
 	switch cloudName {
 	case azureMonitorPublic:
-		return setting.AzurePublic, nil
+		return azsettings.AzurePublic, nil
 	case azureMonitorChina:
-		return setting.AzureChina, nil
+		return azsettings.AzureChina, nil
 	case azureMonitorUSGovernment:
-		return setting.AzureUSGovernment, nil
-	case azureMonitorGermany:
-		return setting.AzureGermany, nil
+		return azsettings.AzureUSGovernment, nil
+	case azureMonitorCustomized:
+		return azsettings.AzureCustomized, nil
 	default:
 		err := fmt.Errorf("the cloud '%s' not supported", cloudName)
 		return "", err
 	}
 }
 
-func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) {
+func getAzureCloud(cfg *setting.Cfg, jsonData *types.AzureClientSettings) (string, error) {
 	authType := getAuthType(cfg, jsonData)
 	switch authType {
 	case azcredentials.AzureAuthManagedIdentity:
 		// In case of managed identity, the cloud is always same as where Grafana is hosted
 		return getDefaultAzureCloud(cfg)
 	case azcredentials.AzureAuthClientSecret:
-		if cloud := jsonData.Get("cloudName").MustString(); cloud != "" {
+		if cloud := jsonData.CloudName; cloud != "" {
 			return normalizeAzureCloud(cloud)
 		} else {
 			return getDefaultAzureCloud(cfg)
@@ -94,7 +99,7 @@ func getAzureCloud(cfg *setting.Cfg, jsonData *simplejson.Json) (string, error) 
 	}
 }
 
-func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
+func getAzureCredentials(cfg *setting.Cfg, jsonData *types.AzureClientSettings, secureJsonData map[string]string) (azcredentials.AzureCredentials, error) {
 	authType := getAuthType(cfg, jsonData)
 
 	switch authType {
@@ -107,10 +112,13 @@ func getAzureCredentials(cfg *setting.Cfg, jsonData *simplejson.Json, secureJson
 		if err != nil {
 			return nil, err
 		}
+		if secureJsonData["clientSecret"] == "" {
+			return nil, fmt.Errorf("unable to instantiate credentials, clientSecret must be set")
+		}
 		credentials := &azcredentials.AzureClientSecretCredentials{
 			AzureCloud:   cloud,
-			TenantId:     jsonData.Get("tenantId").MustString(),
-			ClientId:     jsonData.Get("clientId").MustString(),
+			TenantId:     jsonData.TenantId,
+			ClientId:     jsonData.ClientId,
 			ClientSecret: secureJsonData["clientSecret"],
 		}
 		return credentials, nil

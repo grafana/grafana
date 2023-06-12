@@ -3,7 +3,7 @@ package definitions
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -808,10 +808,10 @@ alertmanager_config: |
 func Test_GettableUserConfigRoundtrip(t *testing.T) {
 	// raw contains secret fields. We'll unmarshal, re-marshal, and ensure
 	// the fields are not redacted.
-	yamlEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.yaml")
+	yamlEncoded, err := os.ReadFile("alertmanager_test_artifact.yaml")
 	require.Nil(t, err)
 
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	// test GettableUserConfig (yamlDecode -> jsonEncode)
@@ -888,59 +888,150 @@ func Test_ReceiverMatchesBackend(t *testing.T) {
 	for _, tc := range []struct {
 		desc string
 		rec  ReceiverType
-		b    Backend
-		err  bool
+		b    ReceiverType
+		ok   bool
 	}{
 		{
 			desc: "graf=graf",
 			rec:  GrafanaReceiverType,
-			b:    GrafanaBackend,
-			err:  false,
+			b:    GrafanaReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "empty=graf",
 			rec:  EmptyReceiverType,
-			b:    GrafanaBackend,
-			err:  false,
+			b:    GrafanaReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "am=am",
 			rec:  AlertmanagerReceiverType,
-			b:    AlertmanagerBackend,
-			err:  false,
+			b:    AlertmanagerReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "empty=am",
 			rec:  EmptyReceiverType,
-			b:    AlertmanagerBackend,
-			err:  false,
+			b:    AlertmanagerReceiverType,
+			ok:   true,
 		},
 		{
 			desc: "graf!=am",
 			rec:  GrafanaReceiverType,
-			b:    AlertmanagerBackend,
-			err:  true,
-		},
-		{
-			desc: "am!=ruler",
-			rec:  GrafanaReceiverType,
-			b:    LoTexRulerBackend,
-			err:  true,
+			b:    AlertmanagerReceiverType,
+			ok:   false,
 		},
 	} {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tc.rec.MatchesBackend(tc.b)
-			if tc.err {
-				require.NotNil(t, err)
-			} else {
-				require.Nil(t, err)
-			}
+			ok := tc.rec.Can(tc.b)
+			require.Equal(t, tc.ok, ok)
 		})
 	}
 }
 
+func TestObjectMatchers_UnmarshalJSON(t *testing.T) {
+	j := `{
+		"receiver": "autogen-contact-point-default",
+		"routes": [{
+			"receiver": "autogen-contact-point-1",
+			"object_matchers": [
+				[
+					"a",
+					"=",
+					"MFR3Gxrnk"
+				],
+				[
+					"b",
+					"=",
+					"\"MFR3Gxrnk\""
+				],
+				[
+					"c",
+					"=~",
+					"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"
+				],
+				[
+					"d",
+					"=~",
+					"\"^[a-z0-9-]{1}[a-z0-9-]{0,30}$\""
+				]
+			],
+			"group_interval": "3s",
+			"repeat_interval": "10s"
+		}]
+}`
+	var r Route
+	if err := json.Unmarshal([]byte(j), &r); err != nil {
+		require.NoError(t, err)
+	}
+
+	matchers := r.Routes[0].ObjectMatchers
+
+	// Without quotes.
+	require.Equal(t, matchers[0].Name, "a")
+	require.Equal(t, matchers[0].Value, "MFR3Gxrnk")
+
+	// With double quotes.
+	require.Equal(t, matchers[1].Name, "b")
+	require.Equal(t, matchers[1].Value, "MFR3Gxrnk")
+
+	// Regexp without quotes.
+	require.Equal(t, matchers[2].Name, "c")
+	require.Equal(t, matchers[2].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+
+	// Regexp with quotes.
+	require.Equal(t, matchers[3].Name, "d")
+	require.Equal(t, matchers[3].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+}
+
+func TestObjectMatchers_UnmarshalYAML(t *testing.T) {
+	y := `---
+receiver: autogen-contact-point-default
+routes:
+- receiver: autogen-contact-point-1
+  object_matchers:
+  - - a
+    - "="
+    - MFR3Gxrnk
+  - - b
+    - "="
+    - '"MFR3Gxrnk"'
+  - - c
+    - "=~"
+    - "^[a-z0-9-]{1}[a-z0-9-]{0,30}$"
+  - - d
+    - "=~"
+    - '"^[a-z0-9-]{1}[a-z0-9-]{0,30}$"'
+  group_interval: 3s
+  repeat_interval: 10s
+`
+
+	var r Route
+	if err := yaml.Unmarshal([]byte(y), &r); err != nil {
+		require.NoError(t, err)
+	}
+
+	matchers := r.Routes[0].ObjectMatchers
+
+	// Without quotes.
+	require.Equal(t, matchers[0].Name, "a")
+	require.Equal(t, matchers[0].Value, "MFR3Gxrnk")
+
+	// With double quotes.
+	require.Equal(t, matchers[1].Name, "b")
+	require.Equal(t, matchers[1].Value, "MFR3Gxrnk")
+
+	// Regexp without quotes.
+	require.Equal(t, matchers[2].Name, "c")
+	require.Equal(t, matchers[2].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+
+	// Regexp with quotes.
+	require.Equal(t, matchers[3].Name, "d")
+	require.Equal(t, matchers[3].Value, "^[a-z0-9-]{1}[a-z0-9-]{0,30}$")
+}
+
 func Test_Marshaling_Validation(t *testing.T) {
-	jsonEncoded, err := ioutil.ReadFile("alertmanager_test_artifact.json")
+	jsonEncoded, err := os.ReadFile("alertmanager_test_artifact.json")
 	require.Nil(t, err)
 
 	var tmp GettableUserConfig
@@ -948,4 +1039,50 @@ func Test_Marshaling_Validation(t *testing.T) {
 
 	expected := []model.LabelName{"alertname"}
 	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
+}
+
+func Test_RawMessageMarshaling(t *testing.T) {
+	type Data struct {
+		Field RawMessage `json:"field" yaml:"field"`
+	}
+
+	t.Run("should unmarshal nil", func(t *testing.T) {
+		v := Data{
+			Field: nil,
+		}
+		data, err := json.Marshal(v)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{ "field": null }`, string(data))
+
+		var n Data
+		require.NoError(t, json.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage("null"), n.Field)
+
+		data, err = yaml.Marshal(&v)
+		require.NoError(t, err)
+		assert.Equal(t, "field: null\n", string(data))
+
+		require.NoError(t, yaml.Unmarshal(data, &n))
+		assert.Nil(t, n.Field)
+	})
+
+	t.Run("should unmarshal value", func(t *testing.T) {
+		v := Data{
+			Field: RawMessage(`{ "data": "test"}`),
+		}
+		data, err := json.Marshal(v)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"field":{"data":"test"}}`, string(data))
+
+		var n Data
+		require.NoError(t, json.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
+
+		data, err = yaml.Marshal(&v)
+		require.NoError(t, err)
+		assert.Equal(t, "field:\n    data: test\n", string(data))
+
+		require.NoError(t, yaml.Unmarshal(data, &n))
+		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
+	})
 }

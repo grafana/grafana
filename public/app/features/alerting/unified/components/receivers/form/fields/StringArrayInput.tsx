@@ -1,7 +1,9 @@
-import React, { FC } from 'react';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css } from '@emotion/css';
+import React from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Input, useStyles2 } from '@grafana/ui';
+
 import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {
@@ -10,7 +12,7 @@ interface Props {
   onChange: (value: string[]) => void;
 }
 
-export const StringArrayInput: FC<Props> = ({ value, onChange, readOnly = false }) => {
+export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   const deleteItem = (index: number) => {

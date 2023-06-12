@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
-import { Field } from '@grafana/data';
-import { useNodeLimit } from './useNodeLimit';
-import useMountedState from 'react-use/lib/useMountedState';
-import { graphBounds } from './utils';
-import { createWorker } from './createLayoutWorker';
 import { useUnmount } from 'react-use';
+import useMountedState from 'react-use/lib/useMountedState';
+
+import { Field } from '@grafana/data';
+
+import { createWorker } from './createLayoutWorker';
+import { EdgeDatum, EdgeDatumLayout, NodeDatum } from './types';
+import { useNodeLimit } from './useNodeLimit';
+import { graphBounds } from './utils';
 
 export interface Config {
   linkDistance: number;
@@ -112,7 +114,11 @@ export function useLayout(
 
   // Limit the nodes so we don't show all for performance reasons. Here we don't compute both at the same time so
   // changing the layout can trash internal memoization at the moment.
-  const { nodes: nodesWithLimit, edges: edgesWithLimit, markers } = useNodeLimit(
+  const {
+    nodes: nodesWithLimit,
+    edges: edgesWithLimit,
+    markers,
+  } = useNodeLimit(
     config.gridLayout ? nodesGrid : nodesGraph,
     config.gridLayout ? edgesGrid : edgesGraph,
     nodeCountLimit,
@@ -121,10 +127,10 @@ export function useLayout(
   );
 
   // Get bounds based on current limited number of nodes.
-  const bounds = useMemo(() => graphBounds([...nodesWithLimit, ...(markers || []).map((m) => m.node)]), [
-    nodesWithLimit,
-    markers,
-  ]);
+  const bounds = useMemo(
+    () => graphBounds([...nodesWithLimit, ...(markers || []).map((m) => m.node)]),
+    [nodesWithLimit, markers]
+  );
 
   return {
     nodes: nodesWithLimit,
@@ -190,10 +196,10 @@ function gridLayout(
 
   if (sort) {
     nodes.sort((node1, node2) => {
-      const val1 = sort!.field.values.get(node1.dataFrameRowIndex);
-      const val2 = sort!.field.values.get(node2.dataFrameRowIndex);
+      const val1 = sort!.field.values[node1.dataFrameRowIndex];
+      const val2 = sort!.field.values[node2.dataFrameRowIndex];
 
-      // Lets pretend we don't care about type of the stats for a while (they can be strings)
+      // Let's pretend we don't care about type of the stats for a while (they can be strings)
       return sort!.ascending ? val1 - val2 : val2 - val1;
     });
   }

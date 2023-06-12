@@ -1,40 +1,53 @@
+import { PanelPlugin, PanelPluginMeta } from '@grafana/data';
 import config from 'app/core/config';
-import * as grafanaData from '@grafana/data';
-import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
-import { importPluginModule } from './plugin_loader';
-interface PanelCache {
-  [key: string]: Promise<grafanaData.PanelPlugin>;
-}
-const panelCache: PanelCache = {};
 
-export function importPanelPlugin(id: string): Promise<grafanaData.PanelPlugin> {
-  const loaded = panelCache[id];
+import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
+
+import { importPluginModule } from './plugin_loader';
+
+const promiseCache: Record<string, Promise<PanelPlugin>> = {};
+const panelPluginCache: Record<string, PanelPlugin> = {};
+
+export function importPanelPlugin(id: string): Promise<PanelPlugin> {
+  const loaded = promiseCache[id];
   if (loaded) {
     return loaded;
   }
 
-  const meta = config.panels[id];
+  const meta = config.panels[id] || Object.values(config.panels).find((p) => p.alias === id);
 
   if (!meta) {
     throw new Error(`Plugin ${id} not found`);
   }
 
-  panelCache[id] = getPanelPlugin(meta);
+  promiseCache[id] = getPanelPlugin(meta);
+  if (id !== meta.type) {
+    promiseCache[meta.type] = promiseCache[id];
+  }
 
-  return panelCache[id];
+  return promiseCache[id];
 }
 
-export function importPanelPluginFromMeta(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
+export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return getPanelPlugin(meta);
 }
 
-function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.PanelPlugin> {
-  return importPluginModule(meta.module, meta.info?.version)
+export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
+  return panelPluginCache[id];
+}
+
+function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
+  return importPluginModule({
+    path: meta.module,
+    version: meta.info?.version,
+    isAngular: meta.angularDetected,
+    pluginId: meta.id,
+  })
     .then((pluginExports) => {
       if (pluginExports.plugin) {
-        return pluginExports.plugin as grafanaData.PanelPlugin;
+        return pluginExports.plugin as PanelPlugin;
       } else if (pluginExports.PanelCtrl) {
-        const plugin = new grafanaData.PanelPlugin(null);
+        const plugin = new PanelPlugin(null);
         plugin.angularPanelCtrl = pluginExports.PanelCtrl;
         return plugin;
       }
@@ -42,6 +55,7 @@ function getPanelPlugin(meta: grafanaData.PanelPluginMeta): Promise<grafanaData.
     })
     .then((plugin) => {
       plugin.meta = meta;
+      panelPluginCache[meta.id] = plugin;
       return plugin;
     })
     .catch((err) => {

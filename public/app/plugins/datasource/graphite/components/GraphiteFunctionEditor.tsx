@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
-import { HorizontalGroup, InlineLabel, useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2 } from '@grafana/data';
 import { css, cx } from '@emotion/css';
+import React, { useState } from 'react';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { HorizontalGroup, InlineLabel, useStyles2 } from '@grafana/ui';
+
 import { FuncInstance } from '../gfunc';
-import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
 import { actions } from '../state/actions';
-import { FunctionEditor } from './FunctionEditor';
-import { mapFuncInstanceToParams } from './helpers';
 import { useDispatch } from '../state/context';
+
+import { FunctionEditor } from './FunctionEditor';
+import { EditableParam, FunctionParamEditor } from './FunctionParamEditor';
+import { mapFuncInstanceToParams } from './helpers';
 
 export type FunctionEditorProps = {
   func: FuncInstance;
@@ -34,8 +37,10 @@ export function GraphiteFunctionEditor({ func }: FunctionEditorProps) {
   return (
     <div
       className={cx(styles.container, { [styles.error]: func.def.unknown })}
+      onBlur={() => setIsMouseOver(false)}
+      onFocus={() => setIsMouseOver(true)}
       onMouseOver={() => setIsMouseOver(true)}
-      onMouseLeave={() => setIsMouseOver(false)}
+      onMouseOut={() => setIsMouseOver(false)}
     >
       <HorizontalGroup spacing="none">
         <FunctionEditor

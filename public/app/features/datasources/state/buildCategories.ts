@@ -1,12 +1,13 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
-import { config } from '../../../core/config';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
     { id: 'tsdb', title: 'Time series databases', plugins: [] },
     { id: 'logging', title: 'Logging & document databases', plugins: [] },
     { id: 'tracing', title: 'Distributed tracing', plugins: [] },
+    { id: 'profiling', title: 'Profiling', plugins: [] },
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
@@ -23,14 +24,12 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     categoryIndex[category.id] = category;
   }
 
-  const { edition, hasValidLicense } = config.licenseInfo;
-
   for (const plugin of plugins) {
     const enterprisePlugin = enterprisePlugins.find((item) => item.id === plugin.id);
     // Force category for enterprise plugins
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
-      plugin.unlicensed = edition !== 'Open Source' && !hasValidLicense;
+      plugin.unlicensed = !featureEnabled('enterprise.plugins');
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
@@ -90,7 +89,7 @@ function sortPlugins(plugins: DataSourcePluginMeta[]) {
       return 1;
     }
 
-    return a.name > b.name ? -1 : 1;
+    return a.name > b.name ? 1 : -1;
   });
 }
 
@@ -192,6 +191,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Splunk Infrastructure Monitoring',
       imgUrl: 'public/img/plugins/signalfx-logo.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-azuredevops-datasource',
+      description: 'Azure Devops datasource',
+      name: 'Azure Devops',
+      imgUrl: 'public/img/plugins/azure-devops.png',
+    }),
   ];
 }
 
@@ -239,8 +244,9 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: config.pluginCatalogURL + options.id,
+          url: '/plugins/' + options.id,
           name: 'Install now',
+          target: '_self',
         },
       ],
       screenshots: [],

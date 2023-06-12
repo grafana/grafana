@@ -1,15 +1,17 @@
-import { defaults } from 'lodash';
 import $ from 'jquery';
-import { MetricsPanelCtrl } from 'app/plugins/sdk';
-import config from 'app/core/config';
-import { transformDataToTable } from './transformers';
-import { tablePanelEditor } from './editor';
-import { columnOptionsTab } from './column_options';
-import { TableRenderer } from './renderer';
-import { isTableData, PanelEvents, PanelPlugin, PanelProps } from '@grafana/data';
-import { dispatch } from 'app/store/store';
+import { defaults } from 'lodash';
 import { ComponentType } from 'react';
+
+import { isTableData, PanelEvents, PanelPlugin, PanelProps } from '@grafana/data';
+import config from 'app/core/config';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { dispatch } from 'app/store/store';
+
+import { columnOptionsTab } from './column_options';
+import { tablePanelEditor } from './editor';
+import { TableRenderer } from './renderer';
+import { transformDataToTable } from './transformers';
 
 export class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -52,7 +54,8 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     sort: { col: 0, desc: true },
   };
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector', 'annotationsSrv', '$sanitize'];
+
   constructor($scope: any, $injector: any, private annotationsSrv: any, private $sanitize: any) {
     super($scope, $injector);
 
@@ -138,7 +141,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
       this.dashboard.getTimezone(),
       this.$sanitize,
       this.templateSrv,
-      config.theme
+      config.theme2
     );
 
     return super.render(this.table);
@@ -266,6 +269,6 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   }
 }
 
-export const plugin = new PanelPlugin((null as unknown) as ComponentType<PanelProps<any>>);
+export const plugin = new PanelPlugin(null as unknown as ComponentType<PanelProps<any>>);
 plugin.angularPanelCtrl = TablePanelCtrl;
 plugin.setNoPadding();

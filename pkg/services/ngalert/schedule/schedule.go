@@ -5,22 +5,24 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
+	"github.com/benbjohnson/clock"
+	"github.com/hashicorp/go-multierror"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/sender"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
-
-	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation
@@ -29,21 +31,19 @@ type ScheduleService interface {
 	// Run the scheduler until the context is canceled or the scheduler returns
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
-	Pause() error
-	Unpause() error
+}
 
-	// AlertmanagersFor returns all the discovered Alertmanager URLs for the
-	// organization.
-	AlertmanagersFor(orgID int64) []*url.URL
+// AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
+//
+//go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
+type AlertsSender interface {
+	Send(key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
+}
 
-	// DroppedAlertmanagersFor returns all the dropped Alertmanager URLs for the
-	// organization.
-	DroppedAlertmanagersFor(orgID int64) []*url.URL
-
-	// the following are used by tests only used for tests
-	evalApplied(models.AlertRuleKey, time.Time)
-	stopApplied(models.AlertRuleKey)
-	overrideCfg(cfg SchedulerCfg)
+// RulesStore is a store that provides alert rules for scheduling
+type RulesStore interface {
+	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
+	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
 }
 
 type schedule struct {
@@ -51,466 +51,396 @@ type schedule struct {
 	baseInterval time.Duration
 
 	// each alert rule gets its own channel and routine
-	registry alertRuleRegistry
+	registry alertRuleInfoRegistry
 
 	maxAttempts int64
 
 	clock clock.Clock
 
-	heartbeat *alerting.Ticker
-
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalAppliedFunc func(models.AlertRuleKey, time.Time)
+	evalAppliedFunc func(ngmodels.AlertRuleKey, time.Time)
 
 	// stopApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from stopApplied is handled.
-	stopAppliedFunc func(models.AlertRuleKey)
+	stopAppliedFunc func(ngmodels.AlertRuleKey)
 
 	log log.Logger
 
-	evaluator eval.Evaluator
+	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore         store.RuleStore
-	instanceStore     store.InstanceStore
-	adminConfigStore  store.AdminConfigurationStore
-	orgStore          store.OrgStore
-	expressionService *expr.Service
+	ruleStore RulesStore
 
 	stateManager *state.Manager
 
-	appURL *url.URL
+	appURL               *url.URL
+	disableGrafanaFolder bool
 
-	multiOrgNotifier *notifier.MultiOrgAlertmanager
-	metrics          *metrics.Scheduler
+	metrics *metrics.Scheduler
 
-	// Senders help us send alerts to external Alertmanagers.
-	sendersMtx              sync.RWMutex
-	sendersCfgHash          map[int64]string
-	senders                 map[int64]*sender.Sender
-	adminConfigPollInterval time.Duration
-	disabledOrgs            map[int64]struct{}
-	minRuleInterval         time.Duration
+	alertsSender    AlertsSender
+	minRuleInterval time.Duration
+
+	// schedulableAlertRules contains the alert rules that are considered for
+	// evaluation in the current tick. The evaluation of an alert rule in the
+	// current tick depends on its evaluation interval and when it was
+	// last evaluated.
+	schedulableAlertRules alertRulesRegistry
+
+	tracer tracing.Tracer
 }
 
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
-	C                       clock.Clock
-	BaseInterval            time.Duration
-	Logger                  log.Logger
-	EvalAppliedFunc         func(models.AlertRuleKey, time.Time)
-	MaxAttempts             int64
-	StopAppliedFunc         func(models.AlertRuleKey)
-	Evaluator               eval.Evaluator
-	RuleStore               store.RuleStore
-	OrgStore                store.OrgStore
-	InstanceStore           store.InstanceStore
-	AdminConfigStore        store.AdminConfigurationStore
-	MultiOrgNotifier        *notifier.MultiOrgAlertmanager
-	Metrics                 *metrics.Scheduler
-	AdminConfigPollInterval time.Duration
-	DisabledOrgs            map[int64]struct{}
-	MinRuleInterval         time.Duration
+	MaxAttempts          int64
+	BaseInterval         time.Duration
+	C                    clock.Clock
+	MinRuleInterval      time.Duration
+	DisableGrafanaFolder bool
+	AppURL               *url.URL
+	EvaluatorFactory     eval.EvaluatorFactory
+	RuleStore            RulesStore
+	Metrics              *metrics.Scheduler
+	AlertSender          AlertsSender
+	Tracer               tracing.Tracer
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, expressionService *expr.Service, appURL *url.URL, stateManager *state.Manager) *schedule {
-	ticker := alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-
+func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	sch := schedule{
-		registry:                alertRuleRegistry{alertRuleInfo: make(map[models.AlertRuleKey]*alertRuleInfo)},
-		maxAttempts:             cfg.MaxAttempts,
-		clock:                   cfg.C,
-		baseInterval:            cfg.BaseInterval,
-		log:                     cfg.Logger,
-		heartbeat:               ticker,
-		evalAppliedFunc:         cfg.EvalAppliedFunc,
-		stopAppliedFunc:         cfg.StopAppliedFunc,
-		evaluator:               cfg.Evaluator,
-		ruleStore:               cfg.RuleStore,
-		instanceStore:           cfg.InstanceStore,
-		orgStore:                cfg.OrgStore,
-		expressionService:       expressionService,
-		adminConfigStore:        cfg.AdminConfigStore,
-		multiOrgNotifier:        cfg.MultiOrgNotifier,
-		metrics:                 cfg.Metrics,
-		appURL:                  appURL,
-		stateManager:            stateManager,
-		senders:                 map[int64]*sender.Sender{},
-		sendersCfgHash:          map[int64]string{},
-		adminConfigPollInterval: cfg.AdminConfigPollInterval,
-		disabledOrgs:            cfg.DisabledOrgs,
-		minRuleInterval:         cfg.MinRuleInterval,
+		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
+		maxAttempts:           cfg.MaxAttempts,
+		clock:                 cfg.C,
+		baseInterval:          cfg.BaseInterval,
+		log:                   log.New("ngalert.scheduler"),
+		evaluatorFactory:      cfg.EvaluatorFactory,
+		ruleStore:             cfg.RuleStore,
+		metrics:               cfg.Metrics,
+		appURL:                cfg.AppURL,
+		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		stateManager:          stateManager,
+		minRuleInterval:       cfg.MinRuleInterval,
+		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
+		alertsSender:          cfg.AlertSender,
+		tracer:                cfg.Tracer,
 	}
+
 	return &sch
 }
 
-func (sch *schedule) Pause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.heartbeat.Pause()
-	sch.log.Info("alert rule scheduler paused", "now", sch.clock.Now())
-	return nil
-}
-
-func (sch *schedule) Unpause() error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.heartbeat.Unpause()
-	sch.log.Info("alert rule scheduler unpaused", "now", sch.clock.Now())
-	return nil
-}
-
 func (sch *schedule) Run(ctx context.Context) error {
-	var wg sync.WaitGroup
-	wg.Add(2)
+	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
+	defer t.Stop()
 
-	go func() {
-		defer wg.Done()
-		if err := sch.ruleEvaluationLoop(ctx); err != nil {
-			sch.log.Error("failure while running the rule evaluation loop", "err", err)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := sch.adminConfigSync(ctx); err != nil {
-			sch.log.Error("failure while running the admin configuration sync", "err", err)
-		}
-	}()
-
-	wg.Wait()
+	if err := sch.schedulePeriodic(ctx, t); err != nil {
+		sch.log.Error("Failure while running the rule evaluation loop", "error", err)
+	}
 	return nil
 }
 
-// SyncAndApplyConfigFromDatabase looks for the admin configuration in the database and adjusts the sender(s) accordingly.
-func (sch *schedule) SyncAndApplyConfigFromDatabase() error {
-	sch.log.Debug("start of admin configuration sync")
-	cfgs, err := sch.adminConfigStore.GetAdminConfigurations()
-	if err != nil {
-		return err
+// deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
+func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
+	for _, key := range keys {
+		// It can happen that the scheduler has deleted the alert rule before the
+		// Ruler API has called DeleteAlertRule. This can happen as requests to
+		// the Ruler API do not hold an exclusive lock over all scheduler operations.
+		if _, ok := sch.schedulableAlertRules.del(key); !ok {
+			sch.log.Info("Alert rule cannot be removed from the scheduler as it is not scheduled", key.LogContext()...)
+		}
+		// Delete the rule routine
+		ruleInfo, ok := sch.registry.del(key)
+		if !ok {
+			sch.log.Info("Alert rule cannot be stopped as it is not running", key.LogContext()...)
+			continue
+		}
+		// stop rule evaluation
+		ruleInfo.stop(errRuleDeleted)
 	}
-
-	sch.log.Debug("found admin configurations", "count", len(cfgs))
-
-	orgsFound := make(map[int64]struct{}, len(cfgs))
-	sch.sendersMtx.Lock()
-	for _, cfg := range cfgs {
-		_, isDisabledOrg := sch.disabledOrgs[cfg.OrgID]
-		if isDisabledOrg {
-			sch.log.Debug("skipping starting sender for disabled org", "org", cfg.OrgID)
-			continue
-		}
-
-		orgsFound[cfg.OrgID] = struct{}{} // keep track of the which senders we need to keep.
-
-		existing, ok := sch.senders[cfg.OrgID]
-
-		// If the tenant has no Alertmanager(s) configured and no running sender no-op.
-		if !ok && len(cfg.Alertmanagers) == 0 {
-			sch.log.Debug("no external alertmanagers configured", "org", cfg.OrgID)
-			continue
-		}
-
-		// We have a running sender but no Alertmanager(s) configured, shut it down.
-		if ok && len(cfg.Alertmanagers) == 0 {
-			sch.log.Debug("no external alertmanager(s) configured, sender will be stopped", "org", cfg.OrgID)
-			delete(orgsFound, cfg.OrgID)
-			continue
-		}
-
-		// We have a running sender, check if we need to apply a new config.
-		if ok {
-			if sch.sendersCfgHash[cfg.OrgID] == cfg.AsSHA256() {
-				sch.log.Debug("sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
-				continue
-			}
-
-			sch.log.Debug("applying new configuration to sender", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
-			err := existing.ApplyConfig(cfg)
-			if err != nil {
-				sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
-				continue
-			}
-			sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
-			continue
-		}
-
-		// No sender and have Alertmanager(s) to send to - start a new one.
-		sch.log.Info("creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", cfg.Alertmanagers)
-		s, err := sender.New(sch.metrics)
-		if err != nil {
-			sch.log.Error("unable to start the sender", "err", err, "org", cfg.OrgID)
-			continue
-		}
-
-		sch.senders[cfg.OrgID] = s
-		s.Run()
-
-		err = s.ApplyConfig(cfg)
-		if err != nil {
-			sch.log.Error("failed to apply configuration", "err", err, "org", cfg.OrgID)
-			continue
-		}
-
-		sch.sendersCfgHash[cfg.OrgID] = cfg.AsSHA256()
-	}
-
-	sendersToStop := map[int64]*sender.Sender{}
-
-	for orgID, s := range sch.senders {
-		if _, exists := orgsFound[orgID]; !exists {
-			sendersToStop[orgID] = s
-			delete(sch.senders, orgID)
-			delete(sch.sendersCfgHash, orgID)
-		}
-	}
-	sch.sendersMtx.Unlock()
-
-	// We can now stop these senders w/o having to hold a lock.
-	for orgID, s := range sendersToStop {
-		sch.log.Info("stopping sender", "org", orgID)
-		s.Stop()
-		sch.log.Info("stopped sender", "org", orgID)
-	}
-
-	sch.log.Debug("finish of admin configuration sync")
-
-	return nil
+	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
+	alertRules, _ := sch.schedulableAlertRules.all()
+	sch.updateRulesMetrics(alertRules)
 }
 
-// AlertmanagersFor returns all the discovered Alertmanager(s) for a particular organization.
-func (sch *schedule) AlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.RLock()
-	defer sch.sendersMtx.RUnlock()
-	s, ok := sch.senders[orgID]
-	if !ok {
-		return []*url.URL{}
-	}
-
-	return s.Alertmanagers()
-}
-
-// DroppedAlertmanagersFor returns all the dropped Alertmanager(s) for a particular organization.
-func (sch *schedule) DroppedAlertmanagersFor(orgID int64) []*url.URL {
-	sch.sendersMtx.RLock()
-	defer sch.sendersMtx.RUnlock()
-	s, ok := sch.senders[orgID]
-	if !ok {
-		return []*url.URL{}
-	}
-
-	return s.DroppedAlertmanagers()
-}
-
-func (sch *schedule) adminConfigSync(ctx context.Context) error {
-	for {
-		select {
-		case <-time.After(sch.adminConfigPollInterval):
-			if err := sch.SyncAndApplyConfigFromDatabase(); err != nil {
-				sch.log.Error("unable to sync admin configuration", "err", err)
-			}
-		case <-ctx.Done():
-			// Stop sending alerts to all external Alertmanager(s).
-			sch.sendersMtx.Lock()
-			for orgID, s := range sch.senders {
-				delete(sch.senders, orgID) // delete before we stop to make sure we don't accept any more alerts.
-				s.Stop()
-			}
-			sch.sendersMtx.Unlock()
-
-			return nil
-		}
-	}
-}
-
-func (sch *schedule) ruleEvaluationLoop(ctx context.Context) error {
+func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 	for {
 		select {
-		case tick := <-sch.heartbeat.C:
-			tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
-			disabledOrgs := make([]int64, 0, len(sch.disabledOrgs))
-			for disabledOrg := range sch.disabledOrgs {
-				disabledOrgs = append(disabledOrgs, disabledOrg)
-			}
-			alertRules := sch.fetchAllDetails(disabledOrgs)
-			sch.log.Debug("alert rules fetched", "count", len(alertRules), "disabled_orgs", disabledOrgs)
+		case tick := <-t.C:
+			// We use Round(0) on the start time to remove the monotonic clock.
+			// This is required as ticks from the ticker and time.Now() can have
+			// a monotonic clock that when subtracted do not represent the delta
+			// in wall clock time.
+			start := time.Now().Round(0)
+			sch.metrics.BehindSeconds.Set(start.Sub(tick).Seconds())
 
-			// registeredDefinitions is a map used for finding deleted alert rules
-			// initially it is assigned to all known alert rules from the previous cycle
-			// each alert rule found also in this cycle is removed
-			// so, at the end, the remaining registered alert rules are the deleted ones
-			registeredDefinitions := sch.registry.keyMap()
+			sch.processTick(ctx, dispatcherGroup, tick)
 
-			type readyToRunItem struct {
-				key      models.AlertRuleKey
-				ruleInfo *alertRuleInfo
-				version  int64
-			}
-
-			readyToRun := make([]readyToRunItem, 0)
-			for _, item := range alertRules {
-				key := item.GetKey()
-				itemVersion := item.Version
-				ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
-
-				// enforce minimum evaluation interval
-				if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
-					sch.log.Debug("interval adjusted", "rule_interval_seconds", item.IntervalSeconds, "min_interval_seconds", sch.minRuleInterval.Seconds(), "key", key)
-					item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
-				}
-
-				invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
-
-				if newRoutine && !invalidInterval {
-					dispatcherGroup.Go(func() error {
-						return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh)
-					})
-				}
-
-				if invalidInterval {
-					// this is expected to be always false
-					// given that we validate interval during alert rule updates
-					sch.log.Debug("alert rule with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "key", key, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", sch.baseInterval)
-					continue
-				}
-
-				itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{key: key, ruleInfo: ruleInfo, version: itemVersion})
-				}
-
-				// remove the alert rule from the registered alert rules
-				delete(registeredDefinitions, key)
-			}
-
-			var step int64 = 0
-			if len(readyToRun) > 0 {
-				step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-			}
-
-			for i := range readyToRun {
-				item := readyToRun[i]
-
-				time.AfterFunc(time.Duration(int64(i)*step), func() {
-					success := item.ruleInfo.eval(tick, item.version)
-					if !success {
-						sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", "uid", item.key.UID, "org", item.key.OrgID, "time", tick)
-					}
-				})
-			}
-
-			// unregister and stop routines of the deleted alert rules
-			for key := range registeredDefinitions {
-				ruleInfo, ok := sch.registry.del(key)
-				if !ok {
-					sch.log.Error("unable to delete alert rule routine information because it did not exist", "uid", key.UID, "org_id", key.OrgID)
-					continue
-				}
-				ruleInfo.stop()
-			}
+			sch.metrics.SchedulePeriodicDuration.Observe(time.Since(start).Seconds())
 		case <-ctx.Done():
+			// waiting for all rule evaluation routines to stop
 			waitErr := dispatcherGroup.Wait()
-
-			orgIds, err := sch.instanceStore.FetchOrgIds()
-			if err != nil {
-				sch.log.Error("unable to fetch orgIds", "msg", err.Error())
-			}
-
-			for _, v := range orgIds {
-				sch.saveAlertStates(sch.stateManager.GetAll(v))
-			}
-
-			sch.stateManager.Close()
 			return waitErr
 		}
 	}
 }
 
-func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRuleKey, evalCh <-chan *evalContext) error {
-	logger := sch.log.New("uid", key.UID, "org", key.OrgID)
-	logger.Debug("alert rule routine started")
+type readyToRunItem struct {
+	ruleInfo *alertRuleInfo
+	evaluation
+}
+
+func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
+	orgs := make(map[int64]int64, len(alertRules))
+	orgsPaused := make(map[int64]int64, len(alertRules))
+	for _, rule := range alertRules {
+		orgs[rule.OrgID]++
+		if rule.IsPaused {
+			orgsPaused[rule.OrgID]++
+		}
+	}
+
+	for orgID, numRules := range orgs {
+		numRulesPaused := orgsPaused[orgID]
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+	}
+
+	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+	// scheduled as rules could be removed before we get a chance to evaluate them.
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+}
+
+// TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
+// Returns a slice of rules that were scheduled for evaluation, map of stopped rules, and a slice of updated rules
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []ngmodels.AlertRuleKeyWithVersion) {
+	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
+
+	// update the local registry. If there was a difference between the previous state and the current new state, rulesDiff will contains keys of rules that were updated.
+	rulesDiff, err := sch.updateSchedulableAlertRules(ctx)
+	updated := rulesDiff.updated
+	if updated == nil { // make sure map is not nil
+		updated = map[ngmodels.AlertRuleKey]struct{}{}
+	}
+	if err != nil {
+		sch.log.Error("Failed to update alert rules", "error", err)
+	}
+
+	// this is the new current state. rulesDiff contains the previously existing rules that were different between this state and the previous state.
+	alertRules, folderTitles := sch.schedulableAlertRules.all()
+
+	// registeredDefinitions is a map used for finding deleted alert rules
+	// initially it is assigned to all known alert rules from the previous cycle
+	// each alert rule found also in this cycle is removed
+	// so, at the end, the remaining registered alert rules are the deleted ones
+	registeredDefinitions := sch.registry.keyMap()
+
+	sch.updateRulesMetrics(alertRules)
+
+	readyToRun := make([]readyToRunItem, 0)
+	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
+	missingFolder := make(map[string][]string)
+	for _, item := range alertRules {
+		key := item.GetKey()
+		ruleInfo, newRoutine := sch.registry.getOrCreateInfo(ctx, key)
+
+		// enforce minimum evaluation interval
+		if item.IntervalSeconds < int64(sch.minRuleInterval.Seconds()) {
+			sch.log.Debug("Interval adjusted", append(key.LogContext(), "originalInterval", item.IntervalSeconds, "adjustedInterval", sch.minRuleInterval.Seconds())...)
+			item.IntervalSeconds = int64(sch.minRuleInterval.Seconds())
+		}
+
+		invalidInterval := item.IntervalSeconds%int64(sch.baseInterval.Seconds()) != 0
+
+		if newRoutine && !invalidInterval {
+			dispatcherGroup.Go(func() error {
+				return sch.ruleRoutine(ruleInfo.ctx, key, ruleInfo.evalCh, ruleInfo.updateCh)
+			})
+		}
+
+		if invalidInterval {
+			// this is expected to be always false
+			// given that we validate interval during alert rule updates
+			sch.log.Warn("Rule has an invalid interval and will be ignored. Interval should be divided exactly by scheduler interval", append(key.LogContext(), "ruleInterval", time.Duration(item.IntervalSeconds)*time.Second, "schedulerInterval", sch.baseInterval)...)
+			continue
+		}
+
+		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
+		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
+
+		var folderTitle string
+		if !sch.disableGrafanaFolder {
+			title, ok := folderTitles[item.NamespaceUID]
+			if ok {
+				folderTitle = title
+			} else {
+				missingFolder[item.NamespaceUID] = append(missingFolder[item.NamespaceUID], item.UID)
+			}
+		}
+
+		if isReadyToRun {
+			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
+				scheduledAt: tick,
+				rule:        item,
+				folderTitle: folderTitle,
+			}})
+		}
+		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
+			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
+			sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
+			go func(ri *alertRuleInfo, rule *ngmodels.AlertRule) {
+				ri.update(ruleVersionAndPauseStatus{
+					Fingerprint: ruleWithFolder{rule: rule, folderTitle: folderTitle}.Fingerprint(),
+					IsPaused:    rule.IsPaused,
+				})
+			}(ruleInfo, item)
+			updatedRules = append(updatedRules, ngmodels.AlertRuleKeyWithVersion{
+				Version:      item.Version,
+				AlertRuleKey: item.GetKey(),
+			})
+		}
+
+		// remove the alert rule from the registered alert rules
+		delete(registeredDefinitions, key)
+	}
+
+	if len(missingFolder) > 0 { // if this happens then there can be problems with fetching folders from the database.
+		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
+	}
+
+	var step int64 = 0
+	if len(readyToRun) > 0 {
+		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
+	}
+
+	for i := range readyToRun {
+		item := readyToRun[i]
+
+		time.AfterFunc(time.Duration(int64(i)*step), func() {
+			key := item.rule.GetKey()
+			success, dropped := item.ruleInfo.eval(&item.evaluation)
+			if !success {
+				sch.log.Debug("Scheduled evaluation was canceled because evaluation routine was stopped", append(key.LogContext(), "time", tick)...)
+				return
+			}
+			if dropped != nil {
+				sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", tick)...)
+				orgID := fmt.Sprint(key.OrgID)
+				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
+			}
+		})
+	}
+
+	// unregister and stop routines of the deleted alert rules
+	toDelete := make([]ngmodels.AlertRuleKey, 0, len(registeredDefinitions))
+	for key := range registeredDefinitions {
+		toDelete = append(toDelete, key)
+	}
+	sch.deleteAlertRule(toDelete...)
+	return readyToRun, registeredDefinitions, updatedRules
+}
+
+func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersionAndPauseStatus) error {
+	grafanaCtx = ngmodels.WithRuleKey(grafanaCtx, key)
+	logger := sch.log.FromContext(grafanaCtx)
+	logger.Debug("Alert rule routine started")
 
 	orgID := fmt.Sprint(key.OrgID)
 	evalTotal := sch.metrics.EvalTotal.WithLabelValues(orgID)
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	updateRule := func() (*models.AlertRule, error) {
-		q := models.GetAlertRuleByUIDQuery{OrgID: key.OrgID, UID: key.UID}
-		err := sch.ruleStore.GetAlertRuleByUID(&q)
-		if err != nil {
-			logger.Error("failed to fetch alert rule", "err", err)
-			return nil, err
+	notify := func(states []state.StateTransition) {
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		if len(expiredAlerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(key, expiredAlerts)
 		}
-		return q.Result, nil
 	}
 
-	evaluate := func(alertRule *models.AlertRule, attempt int64, ctx *evalContext) error {
-		logger := logger.New("version", alertRule.Version, "attempt", attempt, "now", ctx.now)
+	resetState := func(ctx context.Context, isPaused bool) {
+		rule := sch.schedulableAlertRules.get(key)
+		reason := ngmodels.StateReasonUpdated
+		if isPaused {
+			reason = ngmodels.StateReasonPaused
+		}
+		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+		notify(states)
+	}
+
+	evaluate := func(ctx context.Context, f fingerprint, attempt int64, e *evaluation, span tracing.Span) {
+		logger := logger.New("version", e.rule.Version, "fingerprint", f, "attempt", attempt, "now", e.scheduledAt)
 		start := sch.clock.Now()
 
-		condition := models.Condition{
-			Condition: alertRule.Condition,
-			OrgID:     alertRule.OrgID,
-			Data:      alertRule.Data,
+		evalCtx := eval.NewContext(ctx, SchedulerUserFor(e.rule.OrgID))
+		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
+		var results eval.Results
+		var dur time.Duration
+		if err != nil {
+			dur = sch.clock.Now().Sub(start)
+			logger.Error("Failed to build rule evaluator", "error", err)
+		} else {
+			results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
+			dur = sch.clock.Now().Sub(start)
+			if err != nil {
+				logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
+			}
 		}
-		results, err := sch.evaluator.ConditionEval(&condition, ctx.now, sch.expressionService)
-		dur := sch.clock.Now().Sub(start)
+
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
-		if err != nil {
+
+		if err != nil || results.HasErrors() {
 			evalTotalFailures.Inc()
-			// consider saving alert instance on error
-			logger.Error("failed to evaluate alert rule", "duration", dur, "err", err)
-			return err
-		}
-		logger.Debug("alert rule evaluated", "results", results, "duration", dur)
-
-		processedStates := sch.stateManager.ProcessEvalResults(context.Background(), alertRule, results)
-		sch.saveAlertStates(processedStates)
-		alerts := FromAlertStateToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
-
-		if len(alerts.PostableAlerts) == 0 {
-			logger.Debug("no alerts to put in the notifier")
-			return nil
-		}
-
-		var localNotifierExist, externalNotifierExist bool
-		logger.Debug("sending alerts to notifier", "count", len(alerts.PostableAlerts), "alerts", alerts.PostableAlerts)
-		n, err := sch.multiOrgNotifier.AlertmanagerFor(alertRule.OrgID)
-		if err == nil {
-			localNotifierExist = true
-			if err := n.PutAlerts(alerts); err != nil {
-				logger.Error("failed to put alerts in the local notifier", "count", len(alerts.PostableAlerts), "err", err)
+			if results == nil {
+				results = append(results, eval.NewResultFromError(err, e.scheduledAt, dur))
 			}
+			if err == nil {
+				for _, result := range results {
+					if result.Error != nil {
+						err = multierror.Append(err, result.Error)
+					}
+				}
+			}
+			span.RecordError(err)
+			span.AddEvents(
+				[]string{"error", "message"},
+				[]tracing.EventValue{
+					{Str: fmt.Sprintf("%v", err)},
+					{Str: "rule evaluation failed"},
+				})
 		} else {
-			if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-				logger.Debug("local notifier was not found")
-			} else {
-				logger.Error("local notifier is not available", "err", err)
-			}
+			logger.Debug("Alert rule evaluated", "results", results, "duration", dur)
+			span.AddEvents(
+				[]string{"message", "results"},
+				[]tracing.EventValue{
+					{Str: "rule evaluated"},
+					{Num: int64(len(results))},
+				})
 		}
-
-		// Send alerts to external Alertmanager(s) if we have a sender for this organization.
-		sch.sendersMtx.RLock()
-		defer sch.sendersMtx.RUnlock()
-		s, ok := sch.senders[alertRule.OrgID]
-		if ok {
-			logger.Debug("sending alerts to external notifier", "count", len(alerts.PostableAlerts))
-			s.SendAlerts(alerts)
-			externalNotifierExist = true
+		if ctx.Err() != nil { // check if the context is not cancelled. The evaluation can be a long-running task.
+			logger.Debug("Skip updating the state because the context has been cancelled")
+			return
 		}
-
-		if !localNotifierExist && !externalNotifierExist {
-			logger.Error("no external or internal notifier - alerts not delivered!", "count", len(alerts.PostableAlerts))
+		processedStates := sch.stateManager.ProcessEvalResults(
+			ctx,
+			e.scheduledAt,
+			e.rule,
+			results,
+			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+		)
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		span.AddEvents(
+			[]string{"message", "state_transitions", "alerts_to_send"},
+			[]tracing.EventValue{
+				{Str: "results processed"},
+				{Num: int64(len(processedStates))},
+				{Num: int64(len(alerts.PostableAlerts))},
+			})
+		if len(alerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(key, alerts)
 		}
-		return nil
 	}
 
 	retryIfError := func(f func(attempt int64) error) error {
@@ -526,10 +456,22 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 	}
 
 	evalRunning := false
-	var currentRule *models.AlertRule
+	var currentFingerprint fingerprint
 	defer sch.stopApplied(key)
 	for {
 		select {
+		// used by external services (API) to notify that rule is updated.
+		case ctx := <-updateCh:
+			if currentFingerprint == ctx.Fingerprint {
+				logger.Info("Rule's fingerprint has not changed. Skip resetting the state", "currentFingerprint", currentFingerprint)
+				continue
+			}
+
+			logger.Info("Clearing the state of the rule because it was updated", "isPaused", ctx.IsPaused, "fingerprint", ctx.Fingerprint)
+			// clear the state. So the next evaluation will start from the scratch.
+			resetState(grafanaCtx, ctx.IsPaused)
+			currentFingerprint = ctx.Fingerprint
+		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
 				logger.Debug("Evaluation channel has been closed. Exiting")
@@ -543,148 +485,67 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key models.AlertRul
 				evalRunning = true
 				defer func() {
 					evalRunning = false
-					sch.evalApplied(key, ctx.now)
+					sch.evalApplied(key, ctx.scheduledAt)
 				}()
 
 				err := retryIfError(func(attempt int64) error {
-					// fetch latest alert rule version
-					if currentRule == nil || currentRule.Version < ctx.version {
-						newRule, err := updateRule()
-						if err != nil {
-							return err
-						}
-						currentRule = newRule
-						logger.Debug("new alert rule version fetched", "title", newRule.Title, "version", newRule.Version)
+					isPaused := ctx.rule.IsPaused
+					f := ruleWithFolder{ctx.rule, ctx.folderTitle}.Fingerprint()
+					// Do not clean up state if the eval loop has just started.
+					var needReset bool
+					if currentFingerprint != 0 && currentFingerprint != f {
+						logger.Debug("Got a new version of alert rule. Clear up the state", "fingerprint", f)
+						needReset = true
 					}
-					return evaluate(currentRule, attempt, ctx)
+					// We need to reset state if the loop has started and the alert is already paused. It can happen,
+					// if we have an alert with state and we do file provision with stateful Grafana, that state
+					// lingers in DB and won't be cleaned up until next alert rule update.
+					needReset = needReset || (currentFingerprint == 0 && isPaused)
+					if needReset {
+						resetState(grafanaCtx, isPaused)
+					}
+					currentFingerprint = f
+					if isPaused {
+						logger.Debug("Skip rule evaluation because it is paused")
+						return nil
+					}
+					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution")
+					defer span.End()
+
+					span.SetAttributes("rule_uid", ctx.rule.UID, attribute.String("rule_uid", ctx.rule.UID))
+					span.SetAttributes("org_id", ctx.rule.OrgID, attribute.Int64("org_id", ctx.rule.OrgID))
+					span.SetAttributes("rule_version", ctx.rule.Version, attribute.Int64("rule_version", ctx.rule.Version))
+					fpStr := currentFingerprint.String()
+					span.SetAttributes("rule_fingerprint", fpStr, attribute.String("rule_fingerprint", fpStr))
+					utcTick := ctx.scheduledAt.UTC().Format(time.RFC3339Nano)
+					span.SetAttributes("tick", utcTick, attribute.String("tick", utcTick))
+
+					evaluate(tracingCtx, f, attempt, ctx, span)
+					return nil
 				})
 				if err != nil {
-					logger.Error("evaluation failed after all retries", "err", err)
+					logger.Error("Evaluation failed after all retries", "error", err)
 				}
 			}()
 		case <-grafanaCtx.Done():
-			logger.Debug("stopping alert rule routine")
+			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
+			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
+				// We do not want a context to be unbounded which could potentially cause a go routine running
+				// indefinitely. 1 minute is an almost randomly chosen timeout, big enough to cover the majority of the
+				// cases.
+				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
+				defer cancelFunc()
+				states := sch.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
+				notify(states)
+			}
+			logger.Debug("Stopping alert rule routine")
 			return nil
 		}
 	}
 }
 
-func (sch *schedule) saveAlertStates(states []*state.State) {
-	sch.log.Debug("saving alert states", "count", len(states))
-	for _, s := range states {
-		cmd := models.SaveAlertInstanceCommand{
-			RuleOrgID:         s.OrgID,
-			RuleUID:           s.AlertRuleUID,
-			Labels:            models.InstanceLabels(s.Labels),
-			State:             models.InstanceStateType(s.State.String()),
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
-		}
-		err := sch.instanceStore.SaveAlertInstance(&cmd)
-		if err != nil {
-			sch.log.Error("failed to save alert state", "uid", s.AlertRuleUID, "orgId", s.OrgID, "labels", s.Labels.String(), "state", s.State.String(), "msg", err.Error())
-		}
-	}
-}
-
-type alertRuleRegistry struct {
-	mu            sync.Mutex
-	alertRuleInfo map[models.AlertRuleKey]*alertRuleInfo
-}
-
-// getOrCreateInfo gets rule routine information from registry by the key. If it does not exist, it creates a new one.
-// Returns a pointer to the rule routine information and a flag that indicates whether it is a new struct or not.
-func (r *alertRuleRegistry) getOrCreateInfo(context context.Context, key models.AlertRuleKey) (*alertRuleInfo, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	info, ok := r.alertRuleInfo[key]
-	if !ok {
-		info = newAlertRuleInfo(context)
-		r.alertRuleInfo[key] = info
-	}
-	return info, !ok
-}
-
-// del removes pair that has specific key from alertRuleInfo.
-// Returns 2-tuple where the first element is value of the removed pair
-// and the second element indicates whether element with the specified key existed.
-func (r *alertRuleRegistry) del(key models.AlertRuleKey) (*alertRuleInfo, bool) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	info, ok := r.alertRuleInfo[key]
-	if ok {
-		delete(r.alertRuleInfo, key)
-	}
-	return info, ok
-}
-
-func (r *alertRuleRegistry) iter() <-chan models.AlertRuleKey {
-	c := make(chan models.AlertRuleKey)
-
-	f := func() {
-		r.mu.Lock()
-		defer r.mu.Unlock()
-
-		for k := range r.alertRuleInfo {
-			c <- k
-		}
-		close(c)
-	}
-	go f()
-
-	return c
-}
-
-func (r *alertRuleRegistry) keyMap() map[models.AlertRuleKey]struct{} {
-	definitionsIDs := make(map[models.AlertRuleKey]struct{})
-	for k := range r.iter() {
-		definitionsIDs[k] = struct{}{}
-	}
-	return definitionsIDs
-}
-
-type alertRuleInfo struct {
-	evalCh chan *evalContext
-	ctx    context.Context
-	stop   context.CancelFunc
-}
-
-func newAlertRuleInfo(parent context.Context) *alertRuleInfo {
-	ctx, cancel := context.WithCancel(parent)
-	return &alertRuleInfo{evalCh: make(chan *evalContext), ctx: ctx, stop: cancel}
-}
-
-// eval signals the rule evaluation routine to perform the evaluation of the rule. Does nothing if the loop is stopped
-func (a *alertRuleInfo) eval(t time.Time, version int64) bool {
-	select {
-	case a.evalCh <- &evalContext{
-		now:     t,
-		version: version,
-	}:
-		return true
-	case <-a.ctx.Done():
-		return false
-	}
-}
-
-type evalContext struct {
-	now     time.Time
-	version int64
-}
-
-// overrideCfg is only used on tests.
-func (sch *schedule) overrideCfg(cfg SchedulerCfg) {
-	sch.clock = cfg.C
-	sch.baseInterval = cfg.BaseInterval
-	sch.heartbeat = alerting.NewTicker(cfg.C.Now(), time.Second*0, cfg.C, int64(cfg.BaseInterval.Seconds()))
-	sch.evalAppliedFunc = cfg.EvalAppliedFunc
-	sch.stopAppliedFunc = cfg.StopAppliedFunc
-}
-
 // evalApplied is only used on tests.
-func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time) {
+func (sch *schedule) evalApplied(alertDefKey ngmodels.AlertRuleKey, now time.Time) {
 	if sch.evalAppliedFunc == nil {
 		return
 	}
@@ -693,10 +554,27 @@ func (sch *schedule) evalApplied(alertDefKey models.AlertRuleKey, now time.Time)
 }
 
 // stopApplied is only used on tests.
-func (sch *schedule) stopApplied(alertDefKey models.AlertRuleKey) {
+func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	if sch.stopAppliedFunc == nil {
 		return
 	}
 
 	sch.stopAppliedFunc(alertDefKey)
+}
+
+func SchedulerUserFor(orgID int64) *user.SignedInUser {
+	return &user.SignedInUser{
+		UserID:           -1,
+		IsServiceAccount: true,
+		Login:            "grafana_scheduler",
+		OrgID:            orgID,
+		OrgRole:          org.RoleAdmin,
+		Permissions: map[int64]map[string][]string{
+			orgID: {
+				datasources.ActionQuery: []string{
+					datasources.ScopeAll,
+				},
+			},
+		},
+	}
 }

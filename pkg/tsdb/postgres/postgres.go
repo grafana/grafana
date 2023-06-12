@@ -13,32 +13,20 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var logger = log.New("tsdb.postgres")
 
-const pluginID = "postgres"
-
-func ProvideService(cfg *setting.Cfg, pluginStore plugins.Store) (*Service, error) {
+func ProvideService(cfg *setting.Cfg) *Service {
 	s := &Service{
 		tlsManager: newTLSManager(logger, cfg.DataPath),
 	}
 	s.im = datasource.NewInstanceManager(s.newInstanceSettings(cfg))
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		logger.Error("Failed to register plugin", "error", err)
-	}
-	return s, nil
+	return s
 }
 
 type Service struct {
@@ -46,8 +34,8 @@ type Service struct {
 	im         instancemgmt.InstanceManager
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*sqleng.DataSourceHandler, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +44,7 @@ func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*sqleng.DataSource
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -67,22 +55,29 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:        0,
-			MaxIdleConns:        2,
-			ConnMaxLifetime:     14400,
+			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:        cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime:     cfg.SqlDatasourceMaxConnLifetimeDefault,
 			Timescaledb:         false,
 			ConfigurationMethod: "file-path",
+			SecureDSProxy:       false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -95,20 +90,27 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 		}
 
 		if cfg.Env == setting.Dev {
-			logger.Debug("getEngine", "connection", cnnstr)
+			logger.Debug("GetEngine", "connection", cnnstr)
+		}
+
+		driverName := "postgres"
+		// register a proxy driver if the secure socks proxy is enabled
+		if cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			driverName, err = createPostgresProxyDriver(&cfg.SecureSocksDSProxy, cnnstr)
+			if err != nil {
+				return "", nil
+			}
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "postgres",
+			DriverName:        driverName,
 			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
 		}
 
-		queryResultTransformer := postgresQueryResultTransformer{
-			log: logger,
-		}
+		queryResultTransformer := postgresQueryResultTransformer{}
 
 		handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
 			logger)
@@ -134,18 +136,36 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 		host = dsInfo.URL
 		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
 	} else {
+		index := strings.LastIndex(dsInfo.URL, ":")
+		v6Index := strings.Index(dsInfo.URL, "]")
 		sp := strings.SplitN(dsInfo.URL, ":", 2)
 		host = sp[0]
-		if len(sp) > 1 {
-			var err error
-			port, err = strconv.Atoi(sp[1])
-			if err != nil {
-				return "", errutil.Wrapf(err, "invalid port in host specifier %q", sp[1])
-			}
+		if v6Index == -1 {
+			if len(sp) > 1 {
+				var err error
+				port, err = strconv.Atoi(sp[1])
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
+				}
 
-			logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
+			} else {
+				logger.Debug("Generating connection string with network host", "host", host)
+			}
 		} else {
-			logger.Debug("Generating connection string with network host", "host", host)
+			if index == v6Index+1 {
+				host = dsInfo.URL[1 : index-1]
+				var err error
+				port, err = strconv.Atoi(dsInfo.URL[index+1:])
+				if err != nil {
+					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
+				}
+
+				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
+			} else {
+				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
+				logger.Debug("Generating ipv6 connection string with network host", "host", host)
+			}
 		}
 	}
 
@@ -180,12 +200,27 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	return connStr, nil
 }
 
-type postgresQueryResultTransformer struct {
-	log log.Logger
+type postgresQueryResultTransformer struct{}
+
+func (t *postgresQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
+	return err
 }
 
-func (t *postgresQueryResultTransformer) TransformQueryError(err error) error {
-	return err
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDSInfo(ctx, req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		logger.Error("Check health failed", "error", err)
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (t *postgresQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

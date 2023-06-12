@@ -1,39 +1,33 @@
-import React from 'react';
-import { render, waitFor, fireEvent } from '@testing-library/react';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
-import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { typeAsJestMock } from 'test/helpers/typeAsJestMock';
-import { configureStore } from 'app/store/configureStore';
-
-import { mockDataSource, MockDataSourceSrv } from './mocks';
-import { DataSourceType } from './utils/datasource';
-import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { render, waitFor, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
+import { byRole, byTestId, byText } from 'testing-library-selector';
+
+import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { AlertManagerCortexConfig, MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
+
 import MuteTimings from './MuteTimings';
+import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
+import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
+import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
 
 const mocks = {
   api: {
-    fetchAlertManagerConfig: typeAsJestMock(fetchAlertManagerConfig),
-    updateAlertManagerConfig: typeAsJestMock(updateAlertManagerConfig),
+    fetchAlertManagerConfig: jest.mocked(fetchAlertManagerConfig),
+    updateAlertManagerConfig: jest.mocked(updateAlertManagerConfig),
   },
 };
 
 const renderMuteTimings = (location = '/alerting/routes/mute-timing/new') => {
-  const store = configureStore();
   locationService.push(location);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <MuteTimings />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <MuteTimings />
+    </TestProvider>
   );
 };
 
@@ -114,16 +108,17 @@ describe('Mute timings', () => {
   });
 
   it('creates a new mute timing', async () => {
-    await renderMuteTimings();
+    disableRBAC();
+    renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();
 
-    userEvent.type(ui.nameField.get(), 'maintenance period');
-    userEvent.type(ui.startsAt.get(), '22:00');
-    userEvent.type(ui.endsAt.get(), '24:00');
-    userEvent.type(ui.days.get(), '-1');
-    userEvent.type(ui.months.get(), 'january, july');
+    await userEvent.type(ui.nameField.get(), 'maintenance period');
+    await userEvent.type(ui.startsAt.get(), '22:00');
+    await userEvent.type(ui.endsAt.get(), '24:00');
+    await userEvent.type(ui.days.get(), '-1');
+    await userEvent.type(ui.months.get(), 'january, july');
 
     fireEvent.submit(ui.form.get());
 
@@ -154,27 +149,25 @@ describe('Mute timings', () => {
     });
   });
 
-  it('prepoluates the form when editing a mute timing', async () => {
-    await renderMuteTimings(
-      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
-    );
+  it('prepopulates the form when editing a mute timing', async () => {
+    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
     expect(ui.months.get()).toHaveValue(muteTimeInterval.time_intervals[0].months?.join(', '));
 
-    userEvent.clear(ui.startsAt.getAll()?.[0]);
-    userEvent.clear(ui.endsAt.getAll()?.[0]);
-    userEvent.clear(ui.weekdays.get());
-    userEvent.clear(ui.days.get());
-    userEvent.clear(ui.months.get());
-    userEvent.clear(ui.years.get());
+    await userEvent.clear(ui.startsAt.getAll()?.[0]);
+    await userEvent.clear(ui.endsAt.getAll()?.[0]);
+    await userEvent.clear(ui.days.get());
+    await userEvent.clear(ui.months.get());
+    await userEvent.clear(ui.years.get());
 
-    userEvent.type(ui.weekdays.get(), 'monday');
-    userEvent.type(ui.days.get(), '-7:-1');
-    userEvent.type(ui.months.get(), '3, 6, 9, 12');
-    userEvent.type(ui.years.get(), '2021:2024');
+    const monday = within(ui.weekdays.get()).getByText('Mon');
+    await userEvent.click(monday);
+    await userEvent.type(ui.days.get(), '-7:-1');
+    await userEvent.type(ui.months.get(), '3, 6, 9, 12');
+    await userEvent.type(ui.years.get(), '2021:2024');
 
     fireEvent.submit(ui.form.get());
 
@@ -220,7 +213,7 @@ describe('Mute timings', () => {
   });
 
   it('form is invalid with duplicate mute timing name', async () => {
-    await renderMuteTimings();
+    renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     await waitFor(() => expect(ui.nameField.get()).toBeInTheDocument());
@@ -236,16 +229,14 @@ describe('Mute timings', () => {
   });
 
   it('replaces mute timings in routes when the mute timing name is changed', async () => {
-    await renderMuteTimings(
-      '/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`
-    );
+    renderMuteTimings('/alerting/routes/mute-timing/edit' + `?muteName=${encodeURIComponent(muteTimeInterval.name)}`);
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
     expect(ui.nameField.get()).toBeInTheDocument();
     expect(ui.nameField.get()).toHaveValue(muteTimeInterval.name);
 
-    userEvent.clear(ui.nameField.get());
-    userEvent.type(ui.nameField.get(), 'Lunch breaks');
+    await userEvent.clear(ui.nameField.get());
+    await userEvent.type(ui.nameField.get(), 'Lunch breaks');
 
     fireEvent.submit(ui.form.get());
 

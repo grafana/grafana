@@ -1,14 +1,15 @@
+import { css } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-import { css } from '@emotion/css';
-import React, { FC } from 'react';
 
 type Props = {
   status: PromAlertingRuleState | 'neutral';
 };
 
-export const StateColoredText: FC<Props> = ({ children, status }) => {
+export const StateColoredText = ({ children, status }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
   return <span className={styles[status]}>{children || status}</span>;

@@ -6,9 +6,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,6 +21,7 @@ type EvalContext struct {
 	IsTestRun      bool
 	IsDebug        bool
 	EvalMatches    []*EvalMatch
+	AllMatches     []*EvalMatch
 	Logs           []*ResultLogEntry
 	Error          error
 	ConditionEvals string
@@ -26,29 +30,40 @@ type EvalContext struct {
 	Rule           *Rule
 	Log            log.Logger
 
-	dashboardRef *models.DashboardRef
+	dashboardRef *dashboards.DashboardRef
 
 	ImagePublicURL  string
 	ImageOnDiskPath string
 	NoDataFound     bool
-	PrevAlertState  models.AlertStateType
+	PrevAlertState  alertmodels.AlertStateType
 
-	RequestValidator models.PluginRequestValidator
+	RequestValidator validations.PluginRequestValidator
 
 	Ctx context.Context
+
+	Store             AlertStore
+	dashboardService  dashboards.DashboardService
+	DatasourceService datasources.DataSourceService
+	annotationRepo    annotations.Repository
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator validations.PluginRequestValidator,
+	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService, annotationRepo annotations.Repository) *EvalContext {
 	return &EvalContext{
-		Ctx:              alertCtx,
-		StartTime:        time.Now(),
-		Rule:             rule,
-		Logs:             make([]*ResultLogEntry, 0),
-		EvalMatches:      make([]*EvalMatch, 0),
-		Log:              log.New("alerting.evalContext"),
-		PrevAlertState:   rule.State,
-		RequestValidator: requestValidator,
+		Ctx:               alertCtx,
+		StartTime:         time.Now(),
+		Rule:              rule,
+		Logs:              make([]*ResultLogEntry, 0),
+		EvalMatches:       make([]*EvalMatch, 0),
+		AllMatches:        make([]*EvalMatch, 0),
+		Log:               log.New("alerting.evalContext"),
+		PrevAlertState:    rule.State,
+		RequestValidator:  requestValidator,
+		Store:             alertStore,
+		dashboardService:  dashboardService,
+		DatasourceService: dsService,
+		annotationRepo:    annotationRepo,
 	}
 }
 
@@ -62,22 +77,22 @@ type StateDescription struct {
 // GetStateModel returns the `StateDescription` based on current state.
 func (c *EvalContext) GetStateModel() *StateDescription {
 	switch c.Rule.State {
-	case models.AlertStateOK:
+	case alertmodels.AlertStateOK:
 		return &StateDescription{
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	case models.AlertStateNoData:
+	case alertmodels.AlertStateNoData:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "No Data",
 		}
-	case models.AlertStateAlerting:
+	case alertmodels.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
-	case models.AlertStateUnknown:
+	case alertmodels.AlertStateUnknown:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "Unknown",
@@ -93,7 +108,7 @@ func (c *EvalContext) shouldUpdateAlertState() bool {
 
 // GetDurationMs returns the duration of the alert evaluation.
 func (c *EvalContext) GetDurationMs() float64 {
-	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
+	return float64(c.EndTime.Sub(c.StartTime).Nanoseconds()) / float64(time.Millisecond)
 }
 
 // GetNotificationTitle returns the title of the alert rule including alert state.
@@ -102,17 +117,18 @@ func (c *EvalContext) GetNotificationTitle() string {
 }
 
 // GetDashboardUID returns the dashboard uid for the alert rule.
-func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
+func (c *EvalContext) GetDashboardUID() (*dashboards.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := bus.Dispatch(c.Ctx, uidQuery); err != nil {
+	uidQuery := &dashboards.GetDashboardRefByIDQuery{ID: c.Rule.DashboardID}
+	uidQueryResult, err := c.dashboardService.GetDashboardUIDByID(c.Ctx, uidQuery)
+	if err != nil {
 		return nil, err
 	}
 
-	c.dashboardRef = uidQuery.Result
+	c.dashboardRef = uidQueryResult
 	return c.dashboardRef, nil
 }
 
@@ -128,29 +144,29 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
+	return fmt.Sprintf(urlFormat, dashboards.GetFullDashboardURL(ref.UID, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.
-func (c *EvalContext) GetNewState() models.AlertStateType {
+func (c *EvalContext) GetNewState() alertmodels.AlertStateType {
 	ns := getNewStateInternal(c)
-	if ns != models.AlertStateAlerting || c.Rule.For == 0 {
+	if ns != alertmodels.AlertStateAlerting || c.Rule.For == 0 {
 		return ns
 	}
 
 	since := time.Since(c.Rule.LastStateChange)
-	if c.PrevAlertState == models.AlertStatePending && since > c.Rule.For {
-		return models.AlertStateAlerting
+	if c.PrevAlertState == alertmodels.AlertStatePending && since > c.Rule.For {
+		return alertmodels.AlertStateAlerting
 	}
 
-	if c.PrevAlertState == models.AlertStateAlerting {
-		return models.AlertStateAlerting
+	if c.PrevAlertState == alertmodels.AlertStateAlerting {
+		return alertmodels.AlertStateAlerting
 	}
 
-	return models.AlertStatePending
+	return alertmodels.AlertStatePending
 }
 
-func getNewStateInternal(c *EvalContext) models.AlertStateType {
+func getNewStateInternal(c *EvalContext) alertmodels.AlertStateType {
 	if c.Error != nil {
 		c.Log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.ID,
@@ -158,14 +174,14 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 			"error", c.Error,
 			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
 
-		if c.Rule.ExecutionErrorState == models.ExecutionErrorKeepState {
+		if c.Rule.ExecutionErrorState == alertmodels.ExecutionErrorKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
 	}
 
 	if c.Firing {
-		return models.AlertStateAlerting
+		return alertmodels.AlertStateAlerting
 	}
 
 	if c.NoDataFound {
@@ -174,23 +190,25 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
 
-		if c.Rule.NoDataState == models.NoDataKeepState {
+		if c.Rule.NoDataState == alertmodels.NoDataKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.NoDataState.ToAlertState()
 	}
 
-	return models.AlertStateOK
+	return alertmodels.AlertStateOK
 }
 
 // evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as
 // templates, and evaluate the templates using data from the alert evaluation's tags
 func (c *EvalContext) evaluateNotificationTemplateFields() error {
-	if len(c.EvalMatches) < 1 {
+	matches := c.getTemplateMatches()
+	if len(matches) < 1 {
+		// if there are no series to parse the templates with, return
 		return nil
 	}
 
-	templateDataMap, err := buildTemplateDataMap(c.EvalMatches)
+	templateDataMap, err := buildTemplateDataMap(matches)
 	if err != nil {
 		return err
 	}
@@ -208,6 +226,22 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	c.Rule.Name = ruleName
 
 	return nil
+}
+
+func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return c.DatasourceService.GetDataSource(ctx, q)
+}
+
+// getTemplateMatches returns the values we should use to parse the templates
+func (c *EvalContext) getTemplateMatches() []*EvalMatch {
+	// EvalMatches represent series violating the rule threshold,
+	// if we have any, this means the alert is firing and we should use this data to parse the templates.
+	if len(c.EvalMatches) > 0 {
+		return c.EvalMatches
+	}
+
+	// If we don't have any alerting values, use all values to parse the templates.
+	return c.AllMatches
 }
 
 func evaluateTemplate(s string, m map[string]string) (string, error) {

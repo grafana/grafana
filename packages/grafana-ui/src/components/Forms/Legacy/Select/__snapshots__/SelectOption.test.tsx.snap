@@ -3,7 +3,7 @@
 exports[`SelectOption renders correctly 1`] = `
 <div
   aria-disabled={false}
-  className="css-o8533i-Option"
+  className="css-0"
   id=""
   onClick={[MockFunction]}
   onMouseMove={[MockFunction]}
@@ -14,6 +14,7 @@ exports[`SelectOption renders correctly 1`] = `
     className="gf-form-select-box__desc-option"
   >
     <img
+      alt=""
       className="gf-form-select-box__desc-option__img"
       src="url/to/avatar"
     />

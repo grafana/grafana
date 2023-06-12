@@ -1,5 +1,6 @@
-import { DispatchResult, LibraryElementDTO } from '../../types';
 import { getConnectedDashboards as apiGetConnectedDashboards } from '../../state/api';
+import { DispatchResult, LibraryElementDTO } from '../../types';
+
 import { searchCompleted } from './reducer';
 
 export function getConnectedDashboards(libraryPanel: LibraryElementDTO): DispatchResult {

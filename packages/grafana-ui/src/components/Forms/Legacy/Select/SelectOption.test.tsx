@@ -1,13 +1,15 @@
 import React from 'react';
-import renderer from 'react-test-renderer';
-import SelectOption from './SelectOption';
 import { OptionProps } from 'react-select';
+import renderer from 'react-test-renderer';
 
-const model: OptionProps<any> = {
+import SelectOption from './SelectOption';
+
+const model: OptionProps = {
   data: jest.fn(),
   cx: jest.fn(),
   clearValue: jest.fn(),
   getStyles: jest.fn(),
+  getClassNames: jest.fn(),
   getValue: jest.fn(),
   hasValue: true,
   isMulti: false,

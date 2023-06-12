@@ -1,7 +1,9 @@
 import { sortBy as _sortBy } from 'lodash';
 import React, { PureComponent } from 'react';
-import { TimeSeries } from 'app/core/core';
+
 import { CustomScrollbar, Icon } from '@grafana/ui';
+import { TimeSeries } from 'app/core/core';
+
 import { LegendStat, LegendItem, LEGEND_STATS } from './LegendSeriesItem';
 
 interface LegendProps {
@@ -30,6 +32,7 @@ interface LegendDisplayProps {
   alignAsTable?: boolean;
   rightSide?: boolean;
   sideWidth?: number;
+  renderCallback?: () => void;
 }
 
 interface LegendValuesProps {
@@ -174,6 +177,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
       avg,
       current,
       total,
+      renderCallback,
     } = this.props;
     const seriesValuesProps = { values, min, max, avg, current, total };
     const hiddenSeries = this.state.hiddenSeries;
@@ -203,7 +207,7 @@ export class GraphLegend extends PureComponent<GraphLegendProps, LegendState> {
     };
 
     return (
-      <div className={`graph-legend-content ${legendClass}`} style={legendStyle}>
+      <div className={`graph-legend-content ${legendClass}`} ref={renderCallback} style={legendStyle}>
         {this.props.alignAsTable ? <LegendTable {...legendProps} /> : <LegendSeriesList {...legendProps} />}
       </div>
     );
@@ -263,7 +267,7 @@ class LegendTable extends PureComponent<Partial<LegendComponentProps>> {
     }
 
     return (
-      <table>
+      <table role="grid">
         <colgroup>
           <col style={{ width: '100%' }} />
         </colgroup>

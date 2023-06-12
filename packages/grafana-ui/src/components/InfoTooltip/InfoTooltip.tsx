@@ -1,6 +1,7 @@
 import React from 'react';
-import { PopoverContent, TooltipProps } from '../Tooltip/Tooltip';
+
 import { IconButton } from '../IconButton/IconButton';
+import { TooltipProps, PopoverContent } from '../Tooltip';
 
 interface InfoTooltipProps extends Omit<TooltipProps, 'children' | 'content'> {
   children: PopoverContent;

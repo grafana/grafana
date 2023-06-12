@@ -1,35 +1,36 @@
 import React from 'react';
+
 import { PanelModel, PanelPlugin } from '@grafana/data';
 import { TagsInput } from '@grafana/ui';
-import { AnnoListPanel } from './AnnoListPanel';
-import { AnnoOptions } from './types';
-import { truncate } from '@sentry/utils';
 
-export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
+import { AnnoListPanel } from './AnnoListPanel';
+import { defaultOptions, Options } from './panelcfg.gen';
+
+export const plugin = new PanelPlugin<Options>(AnnoListPanel)
   .setPanelOptions((builder) => {
     builder
       .addRadio({
         category: ['Annotation query'],
         path: 'onlyFromThisDashboard',
         name: 'Query filter',
-        defaultValue: false,
+        defaultValue: defaultOptions.onlyFromThisDashboard,
         settings: {
           options: [
             { value: false, label: 'All dashboards' },
             { value: true, label: 'This dashboard' },
-          ] as any, // does not like boolean, but works fine!
+          ],
         },
       })
       .addRadio({
         category: ['Annotation query'],
         path: 'onlyInTimeRange',
         name: 'Time range',
-        defaultValue: false,
+        defaultValue: defaultOptions.onlyInTimeRange,
         settings: {
           options: [
             { value: false, label: 'None' },
             { value: true, label: 'This dashboard' },
-          ] as any, // does not like boolean, but works fine!
+          ],
         },
       })
       .addCustomEditor({
@@ -46,57 +47,58 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         category: ['Annotation query'],
         path: 'limit',
         name: 'Limit',
-        defaultValue: 10,
+        defaultValue: defaultOptions.limit,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showUser',
         name: 'Show user',
-        defaultValue: true,
+        defaultValue: defaultOptions.showUser,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showTime',
         name: 'Show time',
-        defaultValue: true,
+        defaultValue: defaultOptions.showTime,
       })
       .addBooleanSwitch({
         category: ['Display'],
         path: 'showTags',
         name: 'Show tags',
-        defaultValue: true,
+        defaultValue: defaultOptions.showTags,
       })
       .addRadio({
         category: ['Link behavior'],
         path: 'navigateToPanel',
         name: 'Link target',
-        defaultValue: truncate,
+        defaultValue: defaultOptions.navigateToPanel,
         settings: {
           options: [
             { value: true, label: 'Panel' },
             { value: false, label: 'Dashboard' },
-          ] as any, // does not like boolean, but works fine!
+          ],
         },
       })
       .addTextInput({
         category: ['Link behavior'],
         path: 'navigateBefore',
         name: 'Time before',
-        defaultValue: '10m',
+        defaultValue: defaultOptions.navigateBefore,
         description: '',
       })
       .addTextInput({
         category: ['Link behavior'],
         path: 'navigateAfter',
         name: 'Time after',
-        defaultValue: '10m',
+        defaultValue: defaultOptions.navigateAfter,
         description: '',
       });
   })
   // TODO, we should support this directly in the plugin infrastructure
-  .setPanelChangeHandler((panel: PanelModel<AnnoOptions>, prevPluginId: string, prevOptions: any) => {
+  .setPanelChangeHandler((panel: PanelModel<Options>, prevPluginId: string, prevOptions: unknown) => {
     if (prevPluginId === 'ryantxu-annolist-panel') {
-      return prevOptions as AnnoOptions;
+      return prevOptions as Options;
     }
+
     return panel.options;
   });

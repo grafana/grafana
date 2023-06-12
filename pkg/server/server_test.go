@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 type testService struct {
@@ -47,7 +48,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &ossaccesscontrol.OSSAccessControlService{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...))
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), &MockModuleService{})
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.
@@ -60,7 +61,6 @@ func TestServer_Run_Error(t *testing.T) {
 	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
 	err := s.Run()
 	require.ErrorIs(t, err, testErr)
-	require.NotZero(t, s.ExitCode(err))
 }
 
 func TestServer_Shutdown(t *testing.T) {
@@ -86,8 +86,34 @@ func TestServer_Shutdown(t *testing.T) {
 	}()
 	err := s.Run()
 	require.NoError(t, err)
-	require.Zero(t, s.ExitCode(err))
 
 	err = <-ch
 	require.NoError(t, err)
+}
+
+type MockModuleService struct {
+	initFunc     func(context.Context) error
+	runFunc      func(context.Context) error
+	shutdownFunc func(context.Context) error
+}
+
+func (m *MockModuleService) Init(ctx context.Context) error {
+	if m.initFunc != nil {
+		return m.initFunc(ctx)
+	}
+	return nil
+}
+
+func (m *MockModuleService) Run(ctx context.Context) error {
+	if m.runFunc != nil {
+		return m.runFunc(ctx)
+	}
+	return nil
+}
+
+func (m *MockModuleService) Shutdown(ctx context.Context) error {
+	if m.shutdownFunc != nil {
+		return m.shutdownFunc(ctx)
+	}
+	return nil
 }

@@ -1,6 +1,8 @@
 package migrations
 
-import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+import (
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+)
 
 func addPreferencesMigrations(mg *Migrator) {
 	mg.AddMigration("drop preferences table v2", NewDropTableMigration("preferences"))
@@ -46,4 +48,14 @@ func addPreferencesMigrations(mg *Migrator) {
 	mg.AddMigration("Add column week_start in preferences", NewAddColumnMigration(preferencesV2, &Column{
 		Name: "week_start", Type: DB_NVarchar, Length: 10, Nullable: true,
 	}))
+
+	mg.AddMigration("Add column preferences.json_data", NewAddColumnMigration(preferencesV2, &Column{
+		Name: "json_data", Type: DB_Text, Nullable: true,
+	}))
+	// change column type of preferences.json_data
+	mg.AddMigration("alter preferences.json_data to mediumtext v1", NewRawSQLMigration("").
+		Mysql("ALTER TABLE preferences MODIFY json_data MEDIUMTEXT;"))
+
+	mg.AddMigration("Add preferences index org_id", NewAddIndexMigration(preferencesV2, preferencesV2.Indices[0]))
+	mg.AddMigration("Add preferences index user_id", NewAddIndexMigration(preferencesV2, preferencesV2.Indices[1]))
 }

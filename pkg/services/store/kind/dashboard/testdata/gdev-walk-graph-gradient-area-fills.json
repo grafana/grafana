@@ -1,0 +1,95 @@
+{
+  "name": "Panel Tests - Graph - Gradient Area Fills",
+  "labels": {
+    "gdev": "",
+    "graph": "",
+    "panel-tests": ""
+  },
+  "fields": {
+    "schemaVersion": 18
+  },
+  "nested": [
+    {
+      "uid": "graph-gradient-area-fills.json#2",
+      "kind": "panel",
+      "name": "Req/s",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-gradient-area-fills.json#11",
+      "kind": "panel",
+      "name": "Req/s",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-gradient-area-fills.json#7",
+      "kind": "panel",
+      "name": "Memory",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    },
+    {
+      "uid": "graph-gradient-area-fills.json#10",
+      "kind": "panel",
+      "name": "Req/s",
+      "fields": {
+        "type": "graph"
+      },
+      "references": [
+        {
+          "family": "ds"
+        },
+        {
+          "family": "plugin",
+          "type": "panel",
+          "ID": "graph"
+        }
+      ]
+    }
+  ],
+  "references": [
+    {
+      "family": "ds"
+    },
+    {
+      "family": "plugin",
+      "type": "panel",
+      "ID": "graph"
+    }
+  ]
+}

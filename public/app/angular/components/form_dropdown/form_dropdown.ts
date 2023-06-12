@@ -1,6 +1,7 @@
-import { debounce, find, indexOf, map, isObject, escape, unescape } from 'lodash';
-import coreModule from '../../core_module';
 import { ISCEService } from 'angular';
+import { debounce, find, indexOf, map, isObject, escape, unescape } from 'lodash';
+
+import coreModule from '../../core_module';
 import { promiseToDigest } from '../../promiseToDigest';
 
 function typeaheadMatcher(this: any, item: string) {
@@ -38,7 +39,8 @@ export class FormDropdownCtrl {
   startOpen: any;
   debounce: boolean;
 
-  /** @ngInject */
+  static $inject = ['$scope', '$element', '$sce', 'templateSrv'];
+
   constructor(private $scope: any, $element: JQLite, private $sce: ISCEService, private templateSrv: any) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();

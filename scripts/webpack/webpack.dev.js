@@ -1,18 +1,28 @@
 'use strict';
 
-const { merge } = require('webpack-merge');
-const common = require('./webpack.common.js');
-const path = require('path');
-const { DefinePlugin } = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const browserslist = require('browserslist');
+const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const path = require('path');
+const { DefinePlugin } = require('webpack');
+const { merge } = require('webpack-merge');
 
-module.exports = (env = {}) =>
-  merge(common, {
-    devtool: 'inline-source-map',
+const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
+const common = require('./webpack.common.js');
+const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
+// esbuild-loader 3.0.0+ requires format to be set to prevent it
+// from defaulting to 'iife' which breaks monaco/loader once minified.
+const esbuildOptions = {
+  target: esbuildTargets,
+  format: undefined,
+};
+
+module.exports = (env = {}) => {
+  return merge(common, {
+    devtool: 'eval-source-map',
     mode: 'development',
 
     entry: {
@@ -31,14 +41,11 @@ module.exports = (env = {}) =>
       rules: [
         {
           test: /\.tsx?$/,
-          use: {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true,
-              cacheCompression: false,
-            },
-          },
           exclude: /node_modules/,
+          use: {
+            loader: 'esbuild-loader',
+            options: esbuildOptions,
+          },
         },
         require('./sass.rule.js')({
           sourceMap: false,
@@ -50,11 +57,11 @@ module.exports = (env = {}) =>
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
       pathinfo: false,
-      filename: '[name].js',
     },
 
     // https://webpack.js.org/guides/build-performance/#avoid-extra-optimization-steps
     optimization: {
+      moduleIds: 'named',
       runtimeChunk: true,
       removeAvailableModules: false,
       removeEmptyChunks: false,
@@ -84,13 +91,13 @@ module.exports = (env = {}) =>
               },
             },
           }),
-      // next major version of ForkTsChecker is dropping support for ESLint
       new ESLintPlugin({
+        cache: true,
         lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
         extensions: ['.ts', '.tsx'],
       }),
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[fullhash].css',
+        filename: 'grafana.[name].[contenthash].css',
       }),
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/error.html'),
@@ -102,18 +109,16 @@ module.exports = (env = {}) =>
       new HtmlWebpackPlugin({
         filename: path.resolve(__dirname, '../../public/views/index.html'),
         template: path.resolve(__dirname, '../../public/views/index-template.html'),
-        hash: true,
         inject: false,
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
       }),
+      new HTMLWebpackCSSChunks(),
       new DefinePlugin({
         'process.env': {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      // new BundleAnalyzerPlugin({
-      //   analyzerPort: 8889
-      // })
     ],
   });
+};

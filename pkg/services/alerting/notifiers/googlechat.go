@@ -3,12 +3,13 @@ package notifiers
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -32,14 +33,14 @@ func init() {
 	})
 }
 
-func newGoogleChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn) (alerting.Notifier, error) {
+func newGoogleChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &GoogleChatNotifier{
-		NotifierBase: NewNotifierBase(model),
+		NotifierBase: NewNotifierBase(model, ns),
 		URL:          url,
 		log:          log.New("alerting.notifier.googlechat"),
 	}, nil
@@ -53,7 +54,8 @@ type GoogleChatNotifier struct {
 	log log.Logger
 }
 
-/**
+/*
+*
 Structs used to build a custom Google Hangouts Chat message card.
 See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
 */
@@ -142,6 +144,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	// add a text paragraph widget for the fields
+	//nolint:prealloc // break block
 	var fields []textParagraphWidget
 	fieldLimitCount := 4
 	for index, evt := range evalContext.EvalMatches {
@@ -171,21 +174,25 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 
-	// add a button widget (link to Grafana)
-	widgets = append(widgets, buttonWidget{
-		Buttons: []button{
-			{
-				TextButton: textButton{
-					Text: "OPEN IN GRAFANA",
-					OnClick: onClick{
-						OpenLink: openLink{
-							URL: ruleURL,
+	if gcn.isUrlAbsolute(ruleURL) {
+		// add a button widget (link to Grafana)
+		widgets = append(widgets, buttonWidget{
+			Buttons: []button{
+				{
+					TextButton: textButton{
+						Text: "OPEN IN GRAFANA",
+						OnClick: onClick{
+							OpenLink: openLink{
+								URL: ruleURL,
+							},
 						},
 					},
 				},
 			},
-		},
-	})
+		})
+	} else {
+		gcn.log.Warn("Grafana External URL setting is missing or invalid. Skipping 'open in grafana' button to prevent google from displaying empty alerts.", "ruleURL", ruleURL)
+	}
 
 	// add text paragraph widget for the build version and timestamp
 	widgets = append(widgets, textParagraphWidget{
@@ -213,17 +220,27 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	body, _ := json.Marshal(res1D)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        gcn.URL,
 		HttpMethod: "POST",
 		HttpHeader: headers,
 		Body:       string(body),
 	}
 
-	if err := bus.Dispatch(evalContext.Ctx, cmd); err != nil {
+	if err := gcn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
 		return err
 	}
 
 	return nil
+}
+
+func (gcn *GoogleChatNotifier) isUrlAbsolute(urlToCheck string) bool {
+	parsed, err := url.Parse(urlToCheck)
+	if err != nil {
+		gcn.log.Warn("Could not parse URL", "urlToCheck", urlToCheck)
+		return false
+	}
+
+	return parsed.IsAbs()
 }

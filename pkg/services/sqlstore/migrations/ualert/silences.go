@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/matttproud/golang_protobuf_extensions/pbutil"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"github.com/prometheus/common/model"
@@ -31,12 +31,12 @@ func (m *migration) addSilence(da dashAlert, rule *alertRule) error {
 		return nil
 	}
 
-	uid, err := uuid.NewV4()
+	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
 
-	n, v := getLabelForRouteMatching(rule.UID)
+	n, v := getLabelForSilenceMatching(rule.UID)
 	s := &pb.MeshSilence{
 		Silence: &pb.Silence{
 			Id: uid.String(),
@@ -68,7 +68,7 @@ func (m *migration) addErrorSilence(da dashAlert, rule *alertRule) error {
 		return nil
 	}
 
-	uid, err := uuid.NewV4()
+	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
@@ -107,7 +107,7 @@ func (m *migration) addNoDataSilence(da dashAlert, rule *alertRule) error {
 		return nil
 	}
 
-	uid, err := uuid.NewV4()
+	uid, err := uuid.NewRandom()
 	if err != nil {
 		return errors.New("failed to create uuid for silence")
 	}
@@ -199,6 +199,7 @@ func openReplace(filename string) (*replaceFile, error) {
 		return nil, err
 	}
 
+	//nolint:gosec
 	f, err := os.Create(tmpFilename)
 	if err != nil {
 		return nil, err
@@ -209,4 +210,8 @@ func openReplace(filename string) (*replaceFile, error) {
 		filename: filename,
 	}
 	return rf, nil
+}
+
+func getLabelForSilenceMatching(ruleUID string) (string, string) {
+	return "rule_uid", ruleUID
 }

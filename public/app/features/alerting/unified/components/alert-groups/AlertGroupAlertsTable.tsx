@@ -1,12 +1,15 @@
-import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
-import React, { useMemo } from 'react';
-import { useStyles2 } from '@grafana/ui';
-import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { css } from '@emotion/css';
-import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { AmAlertStateTag } from '../silences/AmAlertStateTag';
+import React, { useMemo } from 'react';
+
+import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+
 import { AlertLabels } from '../AlertLabels';
+import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
+import { AmAlertStateTag } from '../silences/AmAlertStateTag';
+
 import { AlertDetails } from './AlertDetails';
 
 interface Props {
@@ -44,7 +47,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
         id: 'labels',
         label: 'Labels',
         // eslint-disable-next-line react/display-name
-        renderCell: ({ data: { labels } }) => <AlertLabels className={styles.labels} labels={labels} />,
+        renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} />,
         size: 1,
       },
     ],
@@ -84,8 +87,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   duration: css`
     margin-left: ${theme.spacing(1)};
     font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-  labels: css`
-    padding-bottom: 0;
   `,
 });

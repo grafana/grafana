@@ -1,7 +1,9 @@
-import React from 'react';
 import { css, cx } from '@emotion/css';
-import { useStyles2 } from '../../themes/ThemeContext';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 
 export interface CallToActionCardProps {
   message?: string | JSX.Element;
@@ -10,12 +12,7 @@ export interface CallToActionCardProps {
   className?: string;
 }
 
-export const CallToActionCard: React.FunctionComponent<CallToActionCardProps> = ({
-  message,
-  callToActionElement,
-  footer,
-  className,
-}) => {
+export const CallToActionCard = ({ message, callToActionElement, footer, className }: CallToActionCardProps) => {
   const css = useStyles2(getStyles);
 
   return (
@@ -32,7 +29,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: call-to-action-card;
     padding: ${theme.spacing(3)};
     background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.radius.default};
     display: flex;
     flex-direction: column;
     align-items: center;

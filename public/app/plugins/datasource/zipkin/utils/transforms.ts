@@ -1,6 +1,8 @@
 import { identity } from 'lodash';
-import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
+
 import { DataFrame, FieldType, MutableDataFrame, TraceKeyValuePair, TraceLog, TraceSpanRow } from '@grafana/data';
+
+import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
 
 /**
  * Transforms response to Grafana trace data frame.

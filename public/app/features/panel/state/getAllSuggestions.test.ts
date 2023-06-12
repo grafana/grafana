@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { config } from 'app/core/config';
 import { SuggestionName } from 'app/types/suggestions';
+
 import { getAllSuggestions, panelsToCheckFirst } from './getAllSuggestions';
 
 jest.unmock('app/core/core');
@@ -18,7 +19,7 @@ jest.unmock('app/features/plugins/plugin_loader');
 for (const pluginId of panelsToCheckFirst) {
   config.panels[pluginId] = {
     module: `app/plugins/panel/${pluginId}/module`,
-  } as any;
+  } as PanelPluginMeta;
 }
 
 config.panels['text'] = {

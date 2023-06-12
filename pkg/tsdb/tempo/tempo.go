@@ -4,56 +4,36 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/collector/model/otlp"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
-	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/collector/model/otlp"
 )
-
-const pluginID = "tempo"
 
 type Service struct {
 	im   instancemgmt.InstanceManager
 	tlog log.Logger
 }
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider, pluginStore plugins.Store) (*Service, error) {
-	im := datasource.NewInstanceManager(newInstanceSettings(httpClientProvider))
-
-	s := &Service{
+func ProvideService(httpClientProvider httpclient.Provider) *Service {
+	return &Service{
 		tlog: log.New("tsdb.tempo"),
-		im:   im,
+		im:   datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 	}
-
-	factory := coreplugin.New(backend.ServeOpts{
-		QueryDataHandler: s,
-	})
-
-	resolver := plugins.CoreDataSourcePathResolver(cfg, pluginID)
-	if err := pluginStore.AddWithFactory(context.Background(), pluginID, factory, resolver); err != nil {
-		s.tlog.Error("Failed to register plugin", "error", err)
-		return nil, err
-	}
-
-	return s, nil
 }
 
 type datasourceInfo struct {
 	HTTPClient *http.Client
 	URL        string
-}
-
-type QueryModel struct {
-	TraceID string `json:"query"`
 }
 
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
@@ -81,18 +61,18 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	queryRes := backend.DataResponse{}
 	refID := req.Queries[0].RefID
 
-	model := &QueryModel{}
+	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
 	if err != nil {
 		return result, err
 	}
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, model.TraceID)
+	request, err := s.createRequest(ctx, dsInfo, model.Query, req.Queries[0].TimeRange.From.Unix(), req.Queries[0].TimeRange.To.Unix())
 	if err != nil {
 		return result, err
 	}
@@ -104,17 +84,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.tlog.Warn("failed to close response body", "err", err)
+			s.tlog.FromContext(ctx).Warn("failed to close response body", "err", err)
 		}
 	}()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.TraceID, resp.Status, string(body))
+		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.Query, resp.Status, string(body))
 		result.Responses[refID] = queryRes
 		return result, nil
 	}
@@ -127,7 +107,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.TraceID, err)
+		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 	}
 	frame.RefID = refID
 	frames := []*data.Frame{frame}
@@ -136,20 +116,27 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return result, nil
 }
 
-func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, traceID string) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", dsInfo.URL+"/api/traces/"+traceID, nil)
+func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, traceID string, start int64, end int64) (*http.Request, error) {
+	var tempoQuery string
+	if start == 0 || end == 0 {
+		tempoQuery = fmt.Sprintf("%s/api/traces/%s", dsInfo.URL, traceID)
+	} else {
+		tempoQuery = fmt.Sprintf("%s/api/traces/%s?start=%d&end=%d", dsInfo.URL, traceID, start, end)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", tempoQuery, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Accept", "application/protobuf")
 
-	s.tlog.Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
+	s.tlog.FromContext(ctx).Debug("Tempo request", "url", req.URL.String(), "headers", req.Header)
 	return req, nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

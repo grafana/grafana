@@ -54,6 +54,8 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 			default:
 				return s, fmt.Errorf("upsampling %v not implemented", upsampler)
 			}
+		} else if len(vals) == 1 {
+			value = vals[0]
 		} else { // downsampling
 			fVec := data.NewField("", s.GetLabels(), vals)
 			ff := Float64Field(*fVec)
@@ -67,14 +69,14 @@ func (s Series) Resample(refID string, interval time.Duration, downsampler strin
 				tmp = Min(&ff)
 			case "max":
 				tmp = Max(&ff)
+			case "last":
+				tmp = Last(&ff)
 			default:
 				return s, fmt.Errorf("downsampling %v not implemented", downsampler)
 			}
 			value = tmp
 		}
-		if err := resampled.SetPoint(idx, t, value); err != nil {
-			return resampled, err
-		}
+		resampled.SetPoint(idx, t, value)
 		t = t.Add(interval)
 		idx++
 	}

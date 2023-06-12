@@ -1,10 +1,9 @@
 import angular from 'angular';
-import Clipboard from 'clipboard';
-import coreModule from './core_module';
-import { appEvents } from 'app/core/core';
-import { AppEvents } from '@grafana/data';
 
-/** @ngInject */
+import coreModule from './core_module';
+
+coreModule.directive('tip', ['$compile', tip]);
+
 function tip($compile: any) {
   return {
     restrict: 'E',
@@ -23,32 +22,8 @@ function tip($compile: any) {
   };
 }
 
-function clipboardButton() {
-  return {
-    scope: {
-      getText: '&clipboardButton',
-    },
-    link: (scope: any, elem: any) => {
-      scope.clipboard = new Clipboard(elem[0], {
-        text: () => {
-          return scope.getText();
-        },
-      });
+coreModule.directive('compile', ['$compile', compile]);
 
-      scope.clipboard.on('success', () => {
-        appEvents.emit(AppEvents.alertSuccess, ['Content copied to clipboard']);
-      });
-
-      scope.$on('$destroy', () => {
-        if (scope.clipboard) {
-          scope.clipboard.destroy();
-        }
-      });
-    },
-  };
-}
-
-/** @ngInject */
 function compile($compile: any) {
   return {
     restrict: 'A',
@@ -66,6 +41,8 @@ function compile($compile: any) {
   };
 }
 
+coreModule.directive('watchChange', watchChange);
+
 function watchChange() {
   return {
     scope: { onchange: '&watchChange' },
@@ -79,7 +56,8 @@ function watchChange() {
   };
 }
 
-/** @ngInject */
+coreModule.directive('editorOptBool', ['$compile', editorOptBool]);
+
 function editorOptBool($compile: any) {
   return {
     restrict: 'E',
@@ -116,7 +94,8 @@ function editorOptBool($compile: any) {
   };
 }
 
-/** @ngInject */
+coreModule.directive('editorCheckbox', ['$compile, $interpolate', editorCheckbox]);
+
 function editorCheckbox($compile: any, $interpolate: any) {
   return {
     restrict: 'E',
@@ -151,7 +130,8 @@ function editorCheckbox($compile: any, $interpolate: any) {
   };
 }
 
-/** @ngInject */
+coreModule.directive('gfDropdown', ['$parse', '$compile', '$timeout', gfDropdown]);
+
 function gfDropdown($parse: any, $compile: any, $timeout: any) {
   function buildTemplate(items: any, placement?: any) {
     const upclass = placement === 'top' ? 'dropup' : '';
@@ -207,11 +187,3 @@ function gfDropdown($parse: any, $compile: any, $timeout: any) {
     },
   };
 }
-
-coreModule.directive('tip', tip);
-coreModule.directive('clipboardButton', clipboardButton);
-coreModule.directive('compile', compile);
-coreModule.directive('watchChange', watchChange);
-coreModule.directive('editorOptBool', editorOptBool);
-coreModule.directive('editorCheckbox', editorCheckbox);
-coreModule.directive('gfDropdown', gfDropdown);

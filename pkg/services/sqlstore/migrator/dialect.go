@@ -7,6 +7,11 @@ import (
 	"xorm.io/xorm"
 )
 
+var (
+	ErrLockDB        = fmt.Errorf("failed to obtain lock")
+	ErrReleaseLockDB = fmt.Errorf("failed to release lock")
+)
+
 type Dialect interface {
 	DriverName() string
 	Quote(string) string
@@ -21,6 +26,9 @@ type Dialect interface {
 	Default(col *Column) string
 	BooleanStr(bool) string
 	DateTimeFunc(string) string
+	BatchSize() int
+
+	OrderBy(order string) string
 
 	CreateIndexSQL(tableName string, index *Index) string
 	CreateTableSQL(table *Table) string
@@ -29,13 +37,20 @@ type Dialect interface {
 	DropTable(tableName string) string
 	DropIndexSQL(tableName string, index *Index) string
 
+	// RenameTable is deprecated, its use cause breaking changes
+	// so, it should no longer be used. Kept for legacy reasons.
 	RenameTable(oldName string, newName string) string
+	// RenameColumn is deprecated, its use cause breaking changes
+	// so, it should no longer be used. Kept for legacy reasons.
+	RenameColumn(table Table, column *Column, newName string) string
+
 	UpdateTableSQL(tableName string, columns []*Column) string
 
 	IndexCheckSQL(tableName, indexName string) (string, []interface{})
 	ColumnCheckSQL(tableName, columnName string) (string, []interface{})
 	// UpsertSQL returns the upsert sql statement for a dialect
 	UpsertSQL(tableName string, keyCols, updateCols []string) string
+	UpsertMultipleSQL(tableName string, keyCols, updateCols []string, count int) (string, error)
 
 	ColString(*Column) string
 	ColStringNoPk(*Column) string
@@ -53,6 +68,13 @@ type Dialect interface {
 	IsUniqueConstraintViolation(err error) bool
 	ErrorMessage(err error) string
 	IsDeadlock(err error) bool
+	Lock(LockCfg) error
+	Unlock(LockCfg) error
+}
+
+type LockCfg struct {
+	Session *xorm.Session
+	Timeout int
 }
 
 type dialectFunc func(*xorm.Engine) Dialect
@@ -195,6 +217,14 @@ func (b *BaseDialect) RenameTable(oldName string, newName string) string {
 	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
 }
 
+func (b *BaseDialect) RenameColumn(table Table, column *Column, newName string) string {
+	quote := b.dialect.Quote
+	return fmt.Sprintf(
+		"ALTER TABLE %s RENAME COLUMN %s TO %s",
+		quote(table.Name), quote(column.Name), quote(newName),
+	)
+}
+
 func (b *BaseDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {
 	return "", nil
 }
@@ -284,7 +314,19 @@ func (b *BaseDialect) TruncateDBTables() error {
 	return nil
 }
 
-//UpsertSQL returns empty string
+// UpsertSQL returns empty string
 func (b *BaseDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	return ""
+}
+
+func (b *BaseDialect) Lock(_ LockCfg) error {
+	return nil
+}
+
+func (b *BaseDialect) Unlock(_ LockCfg) error {
+	return nil
+}
+
+func (b *BaseDialect) OrderBy(order string) string {
+	return order
 }

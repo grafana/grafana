@@ -1,26 +1,28 @@
-import { SelectableValue } from '@grafana/data';
-import { InlineSegmentGroup, Segment, SegmentAsync, useTheme2 } from '@grafana/ui';
 import { cx } from '@emotion/css';
 import React, { useCallback } from 'react';
-import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
+import { satisfies, SemVer } from 'semver';
+
+import { SelectableValue } from '@grafana/data';
+import { InlineSegmentGroup, SegmentAsync, useTheme2 } from '@grafana/ui';
+
+import { useFields } from '../../../hooks/useFields';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
-import { getStyles } from './styles';
-import { SettingsEditor } from './SettingsEditor';
-import { metricAggregationConfig } from './utils';
-import { changeMetricField, changeMetricType } from './state/actions';
+import { MetricAggregation, MetricAggregationType } from '../../../types';
 import { MetricPicker } from '../../MetricPicker';
+import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { segmentStyles } from '../styles';
+
+import { SettingsEditor } from './SettingsEditor';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithInlineScript,
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  MetricAggregationType,
 } from './aggregations';
-import { useFields } from '../../../hooks/useFields';
-import { satisfies } from 'semver';
+import { changeMetricField, changeMetricType } from './state/actions';
+import { getStyles } from './styles';
+import { metricAggregationConfig } from './utils';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,
@@ -39,20 +41,19 @@ const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConf
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
-  esVersion: string,
-  xpack = false
+  esVersion: SemVer | null
 ): Array<SelectableValue<MetricAggregationType>> => {
   // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
   const includePipelineAggregations = previousMetrics.some(isBasicAggregation);
 
   return (
     Object.entries(metricAggregationConfig)
-      // Only showing metrics type supported by the configured version of ES
-      .filter(([_, { versionRange = '*' }]) => satisfies(esVersion, versionRange))
+      .filter(([_, config]) => config.impliedQueryType === 'metrics')
+      // Only showing metrics type supported by the version of ES.
+      // if we cannot determine the version, we assume it is suitable.
+      .filter(([_, { versionRange = '*' }]) => (esVersion != null ? satisfies(esVersion, versionRange) : true))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
-      // Filtering out X-Pack plugins if X-Pack is disabled
-      .filter(([_, config]) => (config.xpack ? xpack : true))
       .map(([key, { label }]) => ({
         label,
         value: key as MetricAggregationType,
@@ -66,6 +67,11 @@ export const MetricEditor = ({ value }: Props) => {
   const query = useQuery();
   const dispatch = useDispatch();
   const getFields = useFields(value.type);
+
+  const getTypeOptionsAsync = async (previousMetrics: MetricAggregation[]) => {
+    const dbVersion = await datasource.getDatabaseVersion();
+    return getTypeOptions(previousMetrics, dbVersion);
+  };
 
   const loadOptions = useCallback(async () => {
     const remoteFields = await getFields();
@@ -86,9 +92,9 @@ export const MetricEditor = ({ value }: Props) => {
   return (
     <>
       <InlineSegmentGroup>
-        <Segment
+        <SegmentAsync
           className={cx(styles.color, segmentStyles)}
-          options={getTypeOptions(previousMetrics, datasource.esVersion, datasource.xpack)}
+          loadOptions={() => getTypeOptionsAsync(previousMetrics)}
           onChange={(e) => dispatch(changeMetricType({ id: value.id, type: e.value! }))}
           value={toOption(value)}
         />

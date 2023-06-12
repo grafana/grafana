@@ -1,4 +1,5 @@
 import React, { MouseEvent, memo } from 'react';
+
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
@@ -29,7 +30,7 @@ export const Edge = memo(function Edge(props: Props) {
     <g
       onClick={(event) => onClick(event, edge)}
       style={{ cursor: 'pointer' }}
-      aria-label={`Edge from: ${(edge.source as NodeDatum).id} to: ${(edge.target as NodeDatum).id}`}
+      aria-label={`Edge from: ${source.id} to: ${target.id}`}
     >
       <line
         strokeWidth={hovering ? 2 : 1}

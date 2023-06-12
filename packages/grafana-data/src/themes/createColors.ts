@@ -1,4 +1,5 @@
 import { merge } from 'lodash';
+
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
 import { DeepPartial, ThemeRichColor } from './types';
@@ -88,9 +89,9 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   whiteBase = '204, 204, 220';
 
   border = {
-    weak: `rgba(${this.whiteBase}, 0.07)`,
-    medium: `rgba(${this.whiteBase}, 0.15)`,
-    strong: `rgba(${this.whiteBase}, 0.25)`,
+    weak: `rgba(${this.whiteBase}, 0.12)`,
+    medium: `rgba(${this.whiteBase}, 0.20)`,
+    strong: `rgba(${this.whiteBase}, 0.30)`,
   };
 
   text = {
@@ -108,11 +109,12 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.whiteBase}, 0.16)`,
-    shade: `rgba(${this.whiteBase}, 0.20)`,
+    main: `rgba(${this.whiteBase}, 0.10)`,
+    shade: `rgba(${this.whiteBase}, 0.14)`,
+    transparent: `rgba(${this.whiteBase}, 0.08)`,
     text: this.text.primary,
     contrastText: `rgb(${this.whiteBase})`,
-    border: this.border.strong,
+    border: `rgba(${this.whiteBase}, 0.08)`,
   };
 
   info = this.primary;
@@ -149,8 +151,8 @@ class DarkColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   gradients = {
-    brandHorizontal: ' linear-gradient(270deg, #F55F3E 0%, #FF8833 100%);',
-    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%);',
+    brandHorizontal: 'linear-gradient(270deg, #F55F3E 0%, #FF8833 100%)',
+    brandVertical: 'linear-gradient(0.01deg, #F55F3E 0.01%, #FF8833 99.99%)',
   };
 
   contrastThreshold = 3;
@@ -184,11 +186,12 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   secondary = {
-    main: `rgba(${this.blackBase}, 0.16)`,
-    shade: `rgba(${this.blackBase}, 0.20)`,
+    main: `rgba(${this.blackBase}, 0.08)`,
+    shade: `rgba(${this.blackBase}, 0.15)`,
+    transparent: `rgba(${this.blackBase}, 0.08)`,
     contrastText: `rgba(${this.blackBase},  1)`,
     text: this.text.primary,
-    border: this.border.strong,
+    border: this.border.weak,
   };
 
   info = {
@@ -229,8 +232,8 @@ class LightColors implements ThemeColorsBase<Partial<ThemeRichColor>> {
   };
 
   gradients = {
-    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%);',
-    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%);',
+    brandHorizontal: 'linear-gradient(90deg, #FF8833 0%, #F53E4C 100%)',
+    brandVertical: 'linear-gradient(0.01deg, #F53E4C -31.2%, #FF8833 113.07%)',
   };
 
   contrastThreshold = 3;
@@ -279,7 +282,7 @@ export function createColors(colors: ThemeColorsInput): ThemeColors {
       color.shade = base.mode === 'light' ? darken(color.main, tonalOffset) : lighten(color.main, tonalOffset);
     }
     if (!color.transparent) {
-      color.transparent = base.mode === 'light' ? alpha(color.main, 0.08) : alpha(color.main, 0.15);
+      color.transparent = alpha(color.main, 0.15);
     }
     if (!color.contrastText) {
       color.contrastText = getContrastText(color.main);
