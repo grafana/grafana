@@ -41,6 +41,7 @@ func getFiles(importName string) ([]string, error) {
 					log.Printf("Failed to unquote import path %s: %v\n", imp.Path.Value, err)
 					continue
 				}
+				fmt.Printf("importPath is %s, importName is %s", importPath, importName)
 				if strings.Contains(importPath, importName) {
 					importingFiles = append(importingFiles, fset.Position(file.Pos()).Filename)
 					break
