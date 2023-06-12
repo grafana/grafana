@@ -5,7 +5,13 @@ import { getBackendSrv } from '@grafana/runtime';
 
 import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
 
-import { CorrelationData, CorrelationsData, CorrelationsResponse, getData, toEnrichedCorrelationsData } from './useCorrelations';
+import {
+  CorrelationData,
+  CorrelationsData,
+  CorrelationsResponse,
+  getData,
+  toEnrichedCorrelationsData,
+} from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
 
@@ -62,15 +68,15 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
   });
 };
 
-export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {  
+export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise<CorrelationsData> => {
   return lastValueFrom(
     getBackendSrv().fetch<CorrelationsResponse>({
       url: `/api/datasources/correlations`,
       method: 'GET',
       showErrorAlert: false,
       params: {
-        sourceuid: sourceUIDs
-      }
+        sourceuid: sourceUIDs,
+      },
     })
   )
     .then(getData)

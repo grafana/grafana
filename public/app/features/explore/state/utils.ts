@@ -69,7 +69,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   richHistory: [],
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
-  correlations: undefined
+  correlations: undefined,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -211,8 +211,7 @@ export const filterLogRowsByIndex = (
 
 export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
   if (datasourceUID === MIXED_DATASOURCE_NAME) {
-    return queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid)
-    
+    return queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid);
   } else {
     return [datasourceUID];
   }

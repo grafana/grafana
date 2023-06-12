@@ -22,7 +22,13 @@ import { historyReducer } from './history';
 import { richHistorySearchFiltersUpdatedAction, richHistoryUpdatedAction } from './main';
 import { queryReducer, runQueries } from './query';
 import { timeReducer, updateTime } from './time';
-import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse, getRange, getDatasourceUIDs } from './utils';
+import {
+  makeExplorePaneState,
+  loadAndInitDatasource,
+  createEmptyQueryResponse,
+  getRange,
+  getDatasourceUIDs,
+} from './utils';
 // Types
 
 //
@@ -203,7 +209,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   if (saveCorrelationsAction.match(action)) {
     return {
       ...state,
-      correlations: action.payload.correlations
+      correlations: action.payload.correlations,
     };
   }
 
@@ -220,7 +226,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       history,
       queryResponse: createEmptyQueryResponse(),
       cache: [],
-      correlations: []
+      correlations: [],
     };
   }
 
