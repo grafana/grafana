@@ -55,7 +55,7 @@ func (s *Service) RelatedMetadata(ctx context.Context, datasourceType, datasourc
 	if err != nil {
 		return nil, fmt.Errorf("get embeddings: %w", err)
 	}
-	qdrantClient, cancel, err := NewQdrantClient(s.cfg.LLM.VectorDB.Host)
+	qdrantClient, cancel, err := NewQdrantClient(s.cfg.LLM.VectorDB.Address)
 	if err != nil {
 		return nil, fmt.Errorf("create vector store client: %s", err)
 	}

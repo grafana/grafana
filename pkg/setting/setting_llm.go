@@ -18,13 +18,13 @@ func (cfg *Cfg) readLLMSettings(iniFile *ini.File) {
 		Enabled:      section.Key("enabled").MustBool(false),
 		OpenAIAPIKey: section.Key("openai_api_key").MustString(""),
 		VectorDB: VectorDBSettings{
-			Type: vectorDBSection.Key("type").MustString(""),
-			Host: vectorDBSection.Key("host").MustString(""),
+			Type:    vectorDBSection.Key("type").MustString(""),
+			Address: vectorDBSection.Key("address").MustString(""),
 		},
 	}
 }
 
 type VectorDBSettings struct {
-	Type string
-	Host string
+	Type    string
+	Address string
 }

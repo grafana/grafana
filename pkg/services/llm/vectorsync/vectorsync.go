@@ -50,8 +50,8 @@ func ProvideService(
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	if s.cfg.LLM.VectorDB.Host == "" {
-		logger.Info("no vector db host configured")
+	if s.cfg.LLM.VectorDB.Address == "" {
+		logger.Info("no vector db address configured")
 		return nil
 	}
 
