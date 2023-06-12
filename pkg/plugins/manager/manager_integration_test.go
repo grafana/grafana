@@ -228,7 +228,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"test-app": {},
 	}
 
-	panels := ps.Plugins(ctx, plugins.Panel)
+	panels := ps.Plugins(ctx, plugins.TypePanel)
 	require.Equal(t, len(expPanels), len(panels))
 	for _, p := range panels {
 		p, exists := ps.Plugin(ctx, p.ID)
@@ -237,7 +237,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		require.Contains(t, expPanels, p.ID)
 	}
 
-	dataSources := ps.Plugins(ctx, plugins.DataSource)
+	dataSources := ps.Plugins(ctx, plugins.TypeDataSource)
 	require.Equal(t, len(expDataSources), len(dataSources))
 	for _, ds := range dataSources {
 		p, exists := ps.Plugin(ctx, ds.ID)
@@ -246,7 +246,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		require.Contains(t, expDataSources, ds.ID)
 	}
 
-	apps := ps.Plugins(ctx, plugins.App)
+	apps := ps.Plugins(ctx, plugins.TypeApp)
 	require.Equal(t, len(expApps), len(apps))
 	for _, app := range apps {
 		p, exists := ps.Plugin(ctx, app.ID)
@@ -262,7 +262,7 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 	t.Helper()
 
 	dsPlugins := make(map[string]struct{})
-	for _, p := range ps.Plugins(ctx, plugins.DataSource) {
+	for _, p := range ps.Plugins(ctx, plugins.TypeDataSource) {
 		dsPlugins[p.ID] = struct{}{}
 	}
 

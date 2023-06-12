@@ -408,8 +408,8 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New Dashboard",
-      "new-folder": "New Folder"
+      "new-dashboard": "New dashboard",
+      "new-folder": "New folder"
     },
     "folder-view": {
       "go-to-folder": "Go to folder",
