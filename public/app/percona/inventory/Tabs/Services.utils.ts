@@ -1,4 +1,5 @@
 import { BadgeColor, IconName } from '@grafana/ui';
+import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { DbAgent, ServiceStatus } from 'app/percona/shared/services/services/Services.types';
 
 import { MonitoringStatus, ServiceAgentStatus } from '../Inventory.types';
@@ -29,6 +30,14 @@ export const getBadgeIconForServiceStatus = (status: ServiceStatus) => {
   const icon = SERVICE_STATUS_TO_BADGE_ICON[status];
 
   return icon || SERVICE_STATUS_TO_BADGE_ICON[ServiceStatus.UNKNOWN];
+};
+
+export const getBadgeTextForServiceStatus = (status: ServiceStatus): string => {
+  if (status === ServiceStatus.NA) {
+    return 'N/A';
+  }
+
+  return capitalizeText(status);
 };
 
 export const getAgentsMonitoringStatus = (agents: DbAgent[]) => {

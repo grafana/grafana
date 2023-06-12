@@ -81,5 +81,8 @@ export const getStyles = (theme: GrafanaTheme) => {
       text-overflow: ${noHiddenOverflow ? 'clip' : 'ellipsis'};
       white-space: ${noHiddenOverflow ? 'normal' : 'nowrap'};
     `,
+    infoIcon: css`
+      margin-left: ${spacing.sm};
+    `,
   };
 };

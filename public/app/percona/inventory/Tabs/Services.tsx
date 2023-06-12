@@ -24,7 +24,6 @@ import {
 } from 'app/percona/shared/core/reducers/services';
 import { getServices } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
-import { capitalizeText } from 'app/percona/shared/helpers/capitalizeText';
 import { getDashboardLinkForService } from 'app/percona/shared/helpers/getDashboardLinkForService';
 import { getExpandAndActionsCol } from 'app/percona/shared/helpers/getExpandAndActionsCol';
 import { logger } from 'app/percona/shared/helpers/logger';
@@ -37,12 +36,14 @@ import { GET_SERVICES_CANCEL_TOKEN } from '../Inventory.constants';
 import { Messages } from '../Inventory.messages';
 import { FlattenService, MonitoringStatus } from '../Inventory.types';
 import { StatusBadge } from '../components/StatusBadge/StatusBadge';
+import { StatusInfo } from '../components/StatusInfo/StatusInfo';
 import { StatusLink } from '../components/StatusLink/StatusLink';
 
 import {
-  getAgentsMonitoringStatus,
   getBadgeColorForServiceStatus,
   getBadgeIconForServiceStatus,
+  getBadgeTextForServiceStatus,
+  getAgentsMonitoringStatus,
 } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
@@ -104,11 +105,12 @@ export const Services = () => {
         accessor: 'status',
         Cell: ({ value }: { value: ServiceStatus }) => (
           <Badge
-            text={value === ServiceStatus.NA ? ServiceStatus.NA : capitalizeText(value)}
+            text={getBadgeTextForServiceStatus(value)}
             color={getBadgeColorForServiceStatus(value)}
             icon={getBadgeIconForServiceStatus(value)}
           />
         ),
+        tooltipInfo: <StatusInfo />,
         type: FilterFieldTypes.DROPDOWN,
         options: [
           {

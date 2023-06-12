@@ -14,6 +14,7 @@ import {
 } from 'react-table';
 
 import { SelectableValue } from '@grafana/data';
+import { PopoverContent } from '@grafana/ui';
 
 export interface ExtendedTableRowProps extends TableRowProps {
   onClick?: () => void;
@@ -32,6 +33,7 @@ export type ExtendedColumn<D extends object = {}> = Column<D> & {
   options?: Array<SelectableValue<any>>;
   label?: string;
   noHiddenOverflow?: boolean;
+  tooltipInfo?: PopoverContent;
 };
 
 export enum FilterFieldTypes {

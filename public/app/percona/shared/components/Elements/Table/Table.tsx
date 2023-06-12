@@ -13,7 +13,7 @@ import {
   useTable,
 } from 'react-table';
 
-import { useStyles } from '@grafana/ui';
+import { Icon, Tooltip, useStyles } from '@grafana/ui';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay';
 
 import { Filter } from './Filter/Filter';
@@ -192,6 +192,11 @@ export const Table: FC<TableProps> = ({
                           ])}
                         >
                           {column.render('Header')}
+                          {!!column.tooltipInfo && (
+                            <Tooltip interactive content={column.tooltipInfo} placement="bottom-end">
+                              <Icon tabIndex={0} name="info-circle" size="sm" className={style.infoIcon} />
+                            </Tooltip>
+                          )}
                         </th>
                       ))}
                     </tr>
