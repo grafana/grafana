@@ -15,6 +15,9 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - name: Run update changelog (manually invoked)
         uses: grafana/grafana-github-actions-go/update-changelog@main
         with:
