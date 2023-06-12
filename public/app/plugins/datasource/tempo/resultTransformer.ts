@@ -192,7 +192,7 @@ function getIntrinsics(
     if (span.status.code !== undefined) {
       intrinsics.push({
         key: 'otel.status_code',
-        value: SpanStatusCode[span.status.code],
+        value: span.status.code,
       });
       if (span.status.message) {
         intrinsics.push({ key: 'otel.status_description', value: span.status.message });
@@ -206,7 +206,7 @@ function getIntrinsics(
   if (span.kind !== undefined) {
     const split = span.kind.toString().toLowerCase().split('_');
     intrinsics.push({
-      key: 'span.kind',
+      key: 'kind',
       value: split.length ? split[split.length - 1] : span.kind.toString(),
     });
   }
@@ -373,7 +373,7 @@ export function transformToOTLP(data: MutableDataFrame): {
       droppedAttributesCount: 0,
       droppedEventsCount: 0,
       droppedLinksCount: 0,
-      status: getOTLPStatus(span.intrinsics) || getStatus(span.intrinsics),
+      status: getOTLPStatus(span.intrinsics),
       events: getOTLPEvents(span.logs),
       links: getOTLPReferences(span.references),
     });
@@ -384,7 +384,7 @@ export function transformToOTLP(data: MutableDataFrame): {
 
 function getOTLPSpanKind(tags: TraceKeyValuePair[]): string | undefined {
   let spanKind = undefined;
-  const spanKindTagValue = tags.find((t) => t.key === 'span.kind')?.value;
+  const spanKindTagValue = tags.find((t) => t.key === 'kind')?.value;
   switch (spanKindTagValue) {
     case 'server':
       spanKind = 'SPAN_KIND_SERVER';
@@ -410,21 +410,10 @@ function getOTLPSpanKind(tags: TraceKeyValuePair[]): string | undefined {
  * Converts key-value tags to OTLP attributes and removes tags added by Grafana
  */
 function tagsToAttributes(tags: TraceKeyValuePair[]): collectorTypes.opentelemetryProto.common.v1.KeyValue[] {
-  return tags
-    .filter(
-      (t) =>
-        ![
-          'span.kind',
-          'otel.library.name',
-          'otel.libary.version',
-          'otel.status_description',
-          'otel.status_code',
-        ].includes(t.key)
-    )
-    .reduce<collectorTypes.opentelemetryProto.common.v1.KeyValue[]>(
-      (attributes, tag) => [...attributes, { key: tag.key, value: toAttributeValue(tag) }],
-      []
-    );
+  return tags.reduce<collectorTypes.opentelemetryProto.common.v1.KeyValue[]>(
+    (attributes, tag) => [...attributes, { key: tag.key, value: toAttributeValue(tag) }],
+    []
+  );
 }
 
 /**
@@ -454,26 +443,13 @@ function toAttributeValue(tag: TraceKeyValuePair): collectorTypes.opentelemetryP
   return { stringValue: tag.value };
 }
 
-function getOTLPStatus(tags: TraceKeyValuePair[]): SpanStatus | undefined {
+function getOTLPStatus(intrinsics: TraceKeyValuePair[]): SpanStatus | undefined {
   let status = undefined;
-  const statusCodeTag = tags.find((t) => t.key === 'otel.status_code');
+  const statusCodeTag = intrinsics.find((t) => t.key === 'otel.status_code');
   if (statusCodeTag) {
     status = {
       code: statusCodeTag.value,
-      message: tags.find((t) => t.key === 'otel_status_description')?.value,
-    };
-  }
-
-  return status;
-}
-
-function getStatus(tags: TraceKeyValuePair[]): SpanStatus | undefined {
-  let status = undefined;
-  const statusCodeTag = tags.find((t) => t.key === 'status.code');
-  if (statusCodeTag) {
-    status = {
-      code: statusCodeTag.value,
-      message: tags.find((t) => t.key === 'status.message')?.value,
+      message: intrinsics.find((t) => t.key === 'otel_status_description')?.value,
     };
   }
 

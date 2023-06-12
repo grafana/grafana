@@ -270,14 +270,14 @@ func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
 	}
 
 	return &KeyValue{
-		Key:   tracetranslator.TagSpanKind,
+		Key:   "kind",
 		Value: tagStr,
 	}
 }
 
 func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusCode,
+		Key:   "otel.status_code",
 		Value: int64(statusCode),
 	}
 }
@@ -297,7 +297,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 		return nil
 	}
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusMsg,
+		Key:   "otel.status_message",
 		Value: statusMsg,
 	}
 }

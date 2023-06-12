@@ -51,7 +51,7 @@ describe('<SpanDetail>', () => {
 
   span.intrinsics = [
     {
-      key: 'span.kind',
+      key: 'kind',
       type: 'String',
       value: 'producer',
     },

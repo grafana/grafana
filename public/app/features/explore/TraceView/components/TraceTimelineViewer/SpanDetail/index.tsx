@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import cx from 'classnames';
 import React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone, toPascalCase } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
@@ -171,7 +171,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTraces,
   } = span;
   const { timeZone } = props;
-  const overviewItems = [
+  let overviewItems = [
     {
       key: 'svc',
       label: 'Service:',
@@ -197,6 +197,37 @@ export default function SpanDetail(props: SpanDetailProps) {
         ]
       : []),
   ];
+
+  const getLabel = (key: string) => {
+    switch (key) {
+      case 'otel.library.name':
+        return 'Library';
+      case 'otel.library.version':
+        return 'Library Version';
+      case 'otel.status_code':
+        return 'Status';
+      case 'otel.status_message':
+        return 'Status Message';
+      default:
+        return toPascalCase(key);
+    }
+  };
+
+  const intrinsicItems = intrinsics
+    ?.filter((intrinsic) => {
+      return intrinsic.key !== 'error';
+    })
+    .map((intrinsic) => {
+      return {
+        key: intrinsic.key,
+        label: `${getLabel(intrinsic.key)}:`,
+        value: intrinsic.value,
+      };
+    });
+  if (intrinsicItems) {
+    overviewItems = overviewItems.concat(intrinsicItems);
+  }
+
   const styles = useStyles2(getStyles);
 
   let logLinkButton: JSX.Element | undefined = undefined;

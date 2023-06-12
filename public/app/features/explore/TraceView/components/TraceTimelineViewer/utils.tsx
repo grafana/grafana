@@ -63,8 +63,8 @@ export function spanHasIntrinsic(key: string, value: unknown, span: TraceSpan) {
   return span.intrinsics.some((tag) => tag.key === key && tag.value === value);
 }
 
-export const isClientSpan = spanHasIntrinsic.bind(null, 'span.kind', 'client');
-export const isServerSpan = spanHasIntrinsic.bind(null, 'span.kind', 'server');
+export const isClientSpan = spanHasIntrinsic.bind(null, 'kind', 'client');
+export const isServerSpan = spanHasIntrinsic.bind(null, 'kind', 'server');
 
 const isErrorBool = spanHasIntrinsic.bind(null, 'error', true);
 const isErrorStr = spanHasIntrinsic.bind(null, 'error', 'true');
