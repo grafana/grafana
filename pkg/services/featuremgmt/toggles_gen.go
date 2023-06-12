@@ -335,6 +335,10 @@ const (
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
 
+	// FlagCloudWatchLogsMonacoEditor
+	// Enables the Monaco editor for CloudWatch Logs queries
+	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
 	// FlagPluginsRemoteAngularDetectionPatterns
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
 	FlagPluginsRemoteAngularDetectionPatterns = "pluginsRemoteAngularDetectionPatterns"

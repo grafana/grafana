@@ -290,7 +290,11 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
+    return this.runQuery(fixedRequest).pipe(
+      tap((response) =>
+        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
+      )
+    );
   }
 
   runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {

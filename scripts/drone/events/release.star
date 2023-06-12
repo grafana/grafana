@@ -9,11 +9,9 @@ load(
     "build_docker_images_step",
     "build_frontend_package_step",
     "build_frontend_step",
-    "build_image",
     "build_plugins_step",
     "build_storybook_step",
     "clone_enterprise_step",
-    "cloudsdk_image",
     "compile_build_cmd",
     "copy_packages_for_docker_step",
     "download_grabpl_step",
@@ -29,7 +27,6 @@ load(
     "package_step",
     "postgres_integration_tests_step",
     "publish_grafanacom_step",
-    "publish_image",
     "publish_images_step",
     "publish_linux_packages_step",
     "redis_integration_tests_step",
@@ -63,6 +60,10 @@ load(
     "test_backend_enterprise",
 )
 load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
 
 ver_mode = "release"
 release_trigger = {
@@ -84,7 +85,7 @@ release_trigger = {
 def store_npm_packages_step():
     return {
         "name": "store-npm-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
             "build-frontend-packages",
@@ -99,7 +100,7 @@ def store_npm_packages_step():
 def retrieve_npm_packages_step():
     return {
         "name": "retrieve-npm-packages",
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": [
             "compile-build-cmd",
             "yarn-install",
@@ -115,7 +116,7 @@ def retrieve_npm_packages_step():
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
             "retrieve-npm-packages",
@@ -554,7 +555,7 @@ def publish_artifacts_step(mode):
         security = "--security "
     return {
         "name": "publish-artifacts",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -572,7 +573,7 @@ def publish_artifacts_step(mode):
 def publish_static_assets_step():
     return {
         "name": "publish-static-assets",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -587,7 +588,7 @@ def publish_static_assets_step():
 def publish_storybook_step():
     return {
         "name": "publish-storybook",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -817,7 +818,7 @@ def verify_release_pipeline(
     step = {
         "name": "gsutil-stat",
         "depends_on": ["clone"],
-        "image": cloudsdk_image,
+        "image": images["cloudsdk_image"],
         "environment": {
             "BUCKET": bucket,
             "GCP_KEY": gcp_key,

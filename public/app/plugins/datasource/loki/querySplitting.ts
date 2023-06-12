@@ -281,7 +281,9 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
   return runSplitGroupedQueries(datasource, requests).pipe(
     tap((response) => {
       if (response.state === LoadingState.Done) {
-        trackGroupedQueries(response, requests, request, startTime);
+        trackGroupedQueries(response, requests, request, startTime, {
+          predefinedOperations: datasource.predefinedOperations,
+        });
       }
     })
   );

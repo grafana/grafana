@@ -558,6 +558,13 @@ var (
 			Owner:        grafanaBiSquad,
 		},
 		{
+			Name:         "cloudWatchLogsMonacoEditor",
+			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
+		},
+		{
 			Name:         "pluginsRemoteAngularDetectionPatterns",
 			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
 			Stage:        FeatureStageExperimental,
