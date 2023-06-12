@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2, HorizontalGroup, IconButton, Tooltip, Icon } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
@@ -32,6 +33,8 @@ export function LokiQueryCodeEditor({
   setQueryStats,
 }: Props) {
   const styles = useStyles2(getStyles);
+
+  const lokiFormatQuery = config.featureToggles.lokiFormatQuery;
   const onClickFormatQueryButtonTS = async () => onChange({ ...query, expr: formatLokiQuery(query.expr) });
 
   return (
@@ -51,21 +54,25 @@ export function LokiQueryCodeEditor({
           setQueryStats(stats);
         }}
         ExtraFieldElement={
-          <div className={styles.buttonGroup}>
-            <div>
-              <HorizontalGroup spacing="sm">
-                <IconButton
-                  onClick={onClickFormatQueryButtonTS}
-                  name="brackets-curly"
-                  size="xs"
-                  tooltip="Format query (TypeScript)"
-                />
-                <Tooltip content={`Use ${getModKey()}+z to undo`}>
-                  <Icon className={styles.hint} name="keyboard" />
-                </Tooltip>
-              </HorizontalGroup>
-            </div>
-          </div>
+          <>
+            {lokiFormatQuery && (
+              <div className={styles.buttonGroup}>
+                <div>
+                  <HorizontalGroup spacing="sm">
+                    <IconButton
+                      onClick={onClickFormatQueryButtonTS}
+                      name="brackets-curly"
+                      size="xs"
+                      tooltip="Format query (TypeScript)"
+                    />
+                    <Tooltip content={`Use ${getModKey()}+z to undo`}>
+                      <Icon className={styles.hint} name="keyboard" />
+                    </Tooltip>
+                  </HorizontalGroup>
+                </div>
+              </div>
+            )}
+          </>
         }
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}

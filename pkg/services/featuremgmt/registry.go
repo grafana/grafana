@@ -557,5 +557,12 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "lokiFormatQuery",
+			Description:  "Enables the ability to format Loki queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
