@@ -1,3 +1,5 @@
+import { uniq } from 'lodash';
+
 import {
   AbsoluteTimeRange,
   DataSourceApi,
@@ -211,7 +213,7 @@ export const filterLogRowsByIndex = (
 
 export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): string[] => {
   if (datasourceUID === MIXED_DATASOURCE_NAME) {
-    return queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid);
+    return uniq(queries.map((query) => query.datasource?.uid).filter((uid): uid is string => !!uid));
   } else {
     return [datasourceUID];
   }
