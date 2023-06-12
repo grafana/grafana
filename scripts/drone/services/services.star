@@ -29,7 +29,7 @@ def integration_test_services():
             ],
         },
         {
-            "name": "mysql57",
+            "name": "mysql",
             "image": images["mysql5_image"],
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
