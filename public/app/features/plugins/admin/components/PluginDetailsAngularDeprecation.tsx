@@ -17,10 +17,7 @@ export function PluginDetailsAngularDeprecation({ plugin, className }: Props): R
   }
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
-      <p>
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Sit natus, corrupti officia velit quidem culpa, impedit
-        ut illum labore recusandae molestiae aliquid iusto accusantium sed quisquam vel saepe, ipsa nisi.
-      </p>
+      <p>This plugin is using deprecated plugin APIs.</p>
 
       <a
         href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
