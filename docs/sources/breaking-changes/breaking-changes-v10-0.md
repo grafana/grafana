@@ -204,7 +204,7 @@ Grafana v10.0.0 ships with the new React 18 upgrade. In turn, changes in the bat
 
 Update the plugin to version 1.8.3 or higher in your Grafana instance management console. This will ensure your plugin query editor works as intended.
 
-### Required update to Official Grafana BigQuery plugin; DoiT International BigQuery plugin no longer supported
+### DoiT International BigQuery plugin no longer supported
 
 #### You are affected if:
 
