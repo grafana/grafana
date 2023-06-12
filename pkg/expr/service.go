@@ -47,6 +47,9 @@ func NodeTypeFromDatasourceUID(uid string) NodeType {
 	if IsDataSource(uid) {
 		return TypeCMDNode
 	}
+	if uid == MLDatasourceUID {
+		return TypeMLNode
+	}
 	return TypeDatasourceNode
 }
 
@@ -114,6 +117,15 @@ func DataSourceModelFromNodeType(kind NodeType) (*datasources.DataSource, error)
 			UID:            DatasourceUID,
 			Name:           DatasourceUID,
 			Type:           DatasourceType,
+			JsonData:       simplejson.New(),
+			SecureJsonData: make(map[string][]byte),
+		}, nil
+	case TypeMLNode:
+		return &datasources.DataSource{
+			ID:             mlDatasourceID,
+			UID:            MLDatasourceUID,
+			Name:           DatasourceUID,
+			Type:           mlPluginID,
 			JsonData:       simplejson.New(),
 			SecureJsonData: make(map[string][]byte),
 		}, nil

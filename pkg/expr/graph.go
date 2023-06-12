@@ -21,6 +21,8 @@ const (
 	TypeCMDNode NodeType = iota
 	// TypeDatasourceNode is a NodeType for datasource queries.
 	TypeDatasourceNode
+	// TypeMLNode is a NodeType for Machine Learning queries.
+	TypeMLNode
 )
 
 func (nt NodeType) String() string {
@@ -29,6 +31,8 @@ func (nt NodeType) String() string {
 		return "Expression"
 	case TypeDatasourceNode:
 		return "Datasource"
+	case TypeMLNode:
+		return "Machine Learning"
 	default:
 		return "Unknown"
 	}
@@ -171,6 +175,11 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 			node, err = s.buildDSNode(dp, rn, req)
 		case TypeCMDNode:
 			node, err = buildCMDNode(dp, rn)
+		case TypeMLNode:
+			node, err = s.buildMLNode(dp, rn, req)
+			if err != nil {
+				err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
+			}
 		default:
 			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
 		}
