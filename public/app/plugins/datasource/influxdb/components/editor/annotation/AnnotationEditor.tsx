@@ -18,6 +18,7 @@ export const AnnotationEditor = (props: QueryEditorProps<InfluxDatasource, Influ
     onChange({
       ...query,
       [key]: val,
+      rawQuery: true,
       fromAnnotations: true,
       textEditor: true,
     });
