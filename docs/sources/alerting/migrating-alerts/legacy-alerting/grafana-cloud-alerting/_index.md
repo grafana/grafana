@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/
+description: Grafana Cloud Alerting
 title: Grafana Cloud Alerting
 weight: 100
 ---

@@ -5,6 +5,7 @@ aliases:
   - /docs/grafana-cloud/legacy-alerting/alerts-rules/
   - /docs/grafana-cloud/metrics/prometheus/alerts_rules/
   - /docs/hosted-metrics/prometheus/alerts_rules/
+description: Prometheus rules with mimirtool
 title: Prometheus rules with mimirtool
 weight: 100
 ---
