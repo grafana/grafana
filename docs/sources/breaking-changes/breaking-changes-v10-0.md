@@ -204,6 +204,24 @@ Grafana v10.0.0 ships with the new React 18 upgrade. In turn, changes in the bat
 
 Update the plugin to version 1.8.3 or higher in your Grafana instance management console. This will ensure your plugin query editor works as intended.
 
+### DoiT International BigQuery plugin no longer supported
+
+#### You are affected if:
+
+You've installed and are using the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana).
+
+#### Description
+
+In v10.0.0, Grafana no longer supports the use of the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana), which was moved to a "retired" state in the latter half of 2022, and for which the GitHub repository was archived in December 2022. For BigQuery data sources to continue functioning, you're required to migrate to the [Official Grafana BigQuery data source plugin](https://github.com/grafana/google-bigquery-datasource/).
+
+#### Migration path
+
+For everyone using Grafana v8.5+, it’s possible to import queries created with the DoiT International BigQuery community plugin by simply changing the data source to Grafana BigQuery in the data source selector in the affected panel. Please note that [queries will be imported](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin) as raw SQL queries.
+
+#### Learn more
+
+- [Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
+
 ## For Plugin Developers
 
 ### Upgrading to React 18
