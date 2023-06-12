@@ -31,7 +31,10 @@ export function FolderActionsButton({ folder }: Props) {
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID });
     reportInteraction('grafana_manage_dashboards_item_moved', {
-      item_type: 'folder',
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
       source: 'folder_actions',
     });
     dispatch(refetchChildren({ parentUID: destinationUID, pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
@@ -46,7 +49,10 @@ export function FolderActionsButton({ folder }: Props) {
   const onDelete = async () => {
     await dispatch(deleteFolder(folder.uid));
     reportInteraction('grafana_manage_dashboards_item_deleted', {
-      item_type: 'folder',
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
       source: 'folder_actions',
     });
     if (folder.parentUid) {

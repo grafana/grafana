@@ -155,15 +155,11 @@ const actionMap: Record<actionType, string> = {
 };
 
 function trackAction(action: actionType, selectedDashboards: string[], selectedFolders: string[]) {
-  const itemTypes = [];
-  if (selectedFolders.length > 0) {
-    itemTypes.push('folder');
-  }
-  if (selectedDashboards.length > 0) {
-    itemTypes.push('dashboard');
-  }
   reportInteraction(actionMap[action], {
-    item_type: itemTypes.join(','),
+    item_counts: {
+      folder: selectedFolders.length,
+      dashboard: selectedDashboards.length,
+    },
     source: 'tree_actions',
   });
 }
