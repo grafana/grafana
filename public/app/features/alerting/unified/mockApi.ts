@@ -45,6 +45,9 @@ class AlertmanagerRouteBuilder {
     this.route.receiver = receiver;
     return this;
   }
+  withoutReceiver(): AlertmanagerRouteBuilder {
+    return this;
+  }
 
   addRoute(configure: (builder: AlertmanagerRouteBuilder) => void): AlertmanagerRouteBuilder {
     const routeBuilder = new AlertmanagerRouteBuilder();

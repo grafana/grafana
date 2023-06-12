@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
@@ -59,8 +59,12 @@ function NotificationPreviewByAlertManager({
         {Array.from(matchingMap.entries()).map(([routeId, instanceMatches]) => {
           const route = routesByIdMap.get(routeId);
           const receiver = route?.receiver && receiversByName.get(route.receiver);
-          if (!route || !receiver) {
+
+          if (!route) {
             return null;
+          }
+          if (!receiver) {
+            throw new Error('Receiver not found');
           }
           return (
             <NotificationRoute
@@ -80,7 +84,7 @@ function NotificationPreviewByAlertManager({
 
 // export default because we want to load the component dynamically using React.lazy
 // Due to loading of the web worker we don't want to load this component when not necessary
-export default NotificationPreviewByAlertManager;
+export default withErrorBoundary(NotificationPreviewByAlertManager);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   alertManagerRow: css`

@@ -306,4 +306,59 @@ describe('NotificationPreviewByAlertmanager', () => {
     expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
     expect(matchingInstances1).toHaveTextContent(/severity=warning/);
   });
+  it('should render route matching preview for alertmanager without errors if receiver is inherited from parent route ', async () => {
+    const potentialInstances: Labels[] = [
+      { foo: 'bar', severity: 'critical' },
+      { job: 'prometheus', severity: 'warning' },
+    ];
+
+    mockApi(server).getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, (amConfigBuilder) =>
+      amConfigBuilder
+        .withRoute((routeBuilder) =>
+          routeBuilder
+            .withReceiver('email')
+            .addRoute((rb) => {
+              rb.addRoute((rb) => rb.withoutReceiver().addMatcher('foo', MatcherOperator.equal, 'bar'));
+              return rb.withReceiver('slack').addMatcher('severity', MatcherOperator.equal, 'critical');
+            })
+            .addRoute((rb) => rb.withReceiver('opsgenie').addMatcher('team', MatcherOperator.equal, 'operations'))
+        )
+        .addReceivers((b) => b.withName('email').addEmailConfig((eb) => eb.withTo('test@example.com')))
+        .addReceivers((b) => b.withName('slack'))
+        .addReceivers((b) => b.withName('opsgenie'))
+    );
+
+    const user = userEvent.setup();
+
+    render(
+      <NotificationPreviewByAlertManager
+        alertManagerSource={{ name: GRAFANA_RULES_SOURCE_NAME, img: '' }}
+        potentialInstances={potentialInstances}
+        onlyOneAM={true}
+      />,
+      { wrapper: TestProvider }
+    );
+
+    await waitFor(() => {
+      expect(ui.loadingIndicator.query()).not.toBeInTheDocument();
+    });
+
+    const routeElements = ui.route.getAll();
+
+    expect(routeElements).toHaveLength(2);
+    expect(routeElements[0]).toHaveTextContent(/slack/);
+    expect(routeElements[1]).toHaveTextContent(/email/);
+
+    await user.click(ui.routeButton.get(routeElements[0]));
+    await user.click(ui.routeButton.get(routeElements[1]));
+
+    const matchingInstances0 = ui.routeMatchingInstances.get(routeElements[0]);
+    const matchingInstances1 = ui.routeMatchingInstances.get(routeElements[1]);
+
+    expect(matchingInstances0).toHaveTextContent(/severity=critical/);
+    expect(matchingInstances0).toHaveTextContent(/foo=bar/);
+
+    expect(matchingInstances1).toHaveTextContent(/job=prometheus/);
+    expect(matchingInstances1).toHaveTextContent(/severity=warning/);
+  });
 });
