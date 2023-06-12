@@ -23,7 +23,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * Assume the stored value is standard model.
    */
-  prepareAnnotation: (json: AnnotationQuery) => {
+  prepareAnnotation: (json: any) => {
     if (isString(json?.query)) {
       const { query, ...rest } = json;
       return {
