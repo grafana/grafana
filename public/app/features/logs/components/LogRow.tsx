@@ -42,8 +42,8 @@ interface Props extends Themeable2 {
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
-  isFilterLabelActive?: (key: string, value: string) => boolean;
-  isFilterOutLabelActive?: (key: string, value: string) => boolean;
+  isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  isFilterOutLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {

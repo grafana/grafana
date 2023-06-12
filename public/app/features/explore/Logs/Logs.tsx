@@ -93,8 +93,8 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
-  isFilterLabelActive: (key: string, value: string) => boolean;
-  isFilterOutLabelActive: (key: string, value: string) => boolean;
+  isFilterLabelActive: (key: string, value: string) => Promise<boolean>;
+  isFilterOutLabelActive: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
