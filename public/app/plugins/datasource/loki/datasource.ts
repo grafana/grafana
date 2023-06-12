@@ -51,7 +51,6 @@ import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { transformForFormatting, revertTransformations } from './formatter';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -475,25 +474,6 @@ export class LokiDatasource
     }
 
     return statsForAll;
-  }
-
-  async formatQuery(query: string) {
-    const transformedQuery = transformForFormatting(query, this.interpolateString.bind(this));
-    let formatted = query;
-
-    if (!isValidQuery(transformedQuery.query)) {
-      return query;
-    }
-
-    try {
-      // Try because this might error
-      formatted = await this.metadataRequest('format_query', { query: transformedQuery.query });
-    } catch (error) {
-      console.log(error);
-      return formatted;
-    }
-
-    return revertTransformations(formatted, transformedQuery.transformations);
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
