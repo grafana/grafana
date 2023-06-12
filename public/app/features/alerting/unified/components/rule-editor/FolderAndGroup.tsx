@@ -35,23 +35,23 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
   const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
-  // we include provisioned folders, but disable the option to select them
-  const isProvisionedGroup = (group: CombinedRuleGroup) => {
-    return group.rules.some(
-      (rule) => isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance) === true
-    );
-  };
-
   const groupOptions = folderGroups
     .map<SelectableValue<string>>((group) => ({
       label: group.name,
       value: group.name,
       description: group.interval ?? MINUTE,
+      // we include provisioned folders, but disable the option to select them
       isDisabled: isProvisionedGroup(group),
     }))
     .sort(sortByLabel);
 
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
+};
+
+const isProvisionedGroup = (group: CombinedRuleGroup) => {
+  return group.rules.some(
+    (rule) => isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance) === true
+  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
