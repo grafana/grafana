@@ -82,7 +82,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       padding: theme.spacing(0, 1, 0, 2),
       alignItems: 'center',
-      justifyContent: 'space-between',
     }),
     menuButton: css({
       display: 'flex',
@@ -90,6 +89,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginRight: theme.spacing(1),
     }),
     actions: css({
+      label: 'NavToolbar-actions',
       display: 'flex',
       alignItems: 'center',
       flexWrap: 'nowrap',
@@ -98,6 +98,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexGrow: 1,
       gap: theme.spacing(0.5),
       minWidth: 0,
+
+      '.body-drawer-open &': {
+        display: 'none',
+      },
     }),
   };
 };

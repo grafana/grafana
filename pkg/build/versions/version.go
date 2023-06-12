@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	reGrafanaTag       = regexp.MustCompile(`^v(\d+\.\d+\.\d+$)`)
-	reGrafanaTagBeta   = regexp.MustCompile(`^v(\d+\.\d+\.\d+-beta)`)
-	reGrafanaTagCustom = regexp.MustCompile(`^v(\d+\.\d+\.\d+-\w+)`)
+	reGrafanaTag        = regexp.MustCompile(`^v(\d+\.\d+\.\d+$)`)
+	reGrafanaTagPreview = regexp.MustCompile(`^v(\d+\.\d+\.\d+-preview)`)
+	reGrafanaTagCustom  = regexp.MustCompile(`^v(\d+\.\d+\.\d+-\w+)`)
 )
 
 const (
@@ -142,9 +142,9 @@ func GetVersion(tag string) (*Version, error) {
 			Version: reGrafanaTag.FindStringSubmatch(tag)[1],
 			Channel: Latest,
 		}
-	case reGrafanaTagBeta.MatchString(tag):
+	case reGrafanaTagPreview.MatchString(tag):
 		version = Version{
-			Version: reGrafanaTagBeta.FindStringSubmatch(tag)[1],
+			Version: reGrafanaTagPreview.FindStringSubmatch(tag)[1],
 			Channel: Next,
 		}
 	case reGrafanaTagCustom.MatchString(tag):

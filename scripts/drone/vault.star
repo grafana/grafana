@@ -119,4 +119,20 @@ def secrets():
             "infra/data/ci/grafana-release-eng/enterprise2",
             "security_prefix",
         ),
+        # grafana-delivery-bot secrets
+        vault_secret(
+            "delivery-bot-app-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-installation-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-installation-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-private-key",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-private-key",
+        ),
     ]

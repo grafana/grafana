@@ -3,7 +3,7 @@
   "license": "AGPL-3.0-only",
   "private": true,
   "name": "grafana",
-  "version": "10.0.0-pre",
+  "version": "10.0.0",
   "repository": "github:grafana/grafana",
   "scripts": {
     "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
@@ -264,7 +264,7 @@
     "@grafana/scenes": "^0.6.0",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "@kusto/monaco-kusto": "5.3.6",
+    "@kusto/monaco-kusto": "^7.4.0",
     "@leeoniya/ufuzzy": "1.0.6",
     "@lezer/common": "1.0.2",
     "@lezer/highlight": "1.1.3",

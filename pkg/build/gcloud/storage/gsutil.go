@@ -48,14 +48,25 @@ type File struct {
 
 // New creates a new Client by checking for the Google Cloud SDK auth key and/or environment variable.
 func New() (*Client, error) {
-	client, err := newClient()
+	storageClient, err := newClient()
 	if err != nil {
 		return nil, err
 	}
 
-	return &Client{
-		Client: *client,
-	}, nil
+	client := &Client{
+		Client: *storageClient,
+	}
+	client.SetRetryer()
+
+	return client, nil
+}
+
+// SetRetryer adds a retry strategy for the googleapi client calls that fail.
+func (client *Client) SetRetryer() {
+	client.SetRetry([]storage.RetryOption{
+		storage.WithPolicy(storage.RetryAlways),
+		storage.WithErrorFunc(storage.ShouldRetry),
+	}...)
 }
 
 // newClient initializes the google-cloud-storage (GCS) client.
@@ -147,8 +158,6 @@ func (client *Client) Copy(ctx context.Context, file File, bucket *storage.Bucke
 	if _, err = io.Copy(wc, localFile); err != nil {
 		return fmt.Errorf("failed to copy to Cloud Storage: %w", err)
 	}
-
-	log.Printf("Successfully uploaded tarball to Google Cloud Storage, path: %s/%s\n", remote, file.FullPath)
 
 	return nil
 }
@@ -258,7 +267,6 @@ func (client *Client) Delete(ctx context.Context, bucket *storage.BucketHandle, 
 	if err := object.Delete(ctx); err != nil {
 		return fmt.Errorf("cannot delete %s, err: %w", path, err)
 	}
-	log.Printf("Successfully deleted tarball to Google Cloud Storage, path: %s", path)
 	return nil
 }
 

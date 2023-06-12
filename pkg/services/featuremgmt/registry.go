@@ -285,12 +285,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "datasourceOnboarding",
-			Description: "Enable data source onboarding page",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaDashboardsSquad,
-		},
-		{
 			Name:         "emptyDashboardPage",
 			Description:  "Enable the redesigned user interface of a dashboard page that includes no panels",
 			State:        FeatureStateStable,
@@ -486,6 +480,12 @@ var (
 			Owner:           grafanaAuthnzSquad,
 		},
 		{
+			Name:        "refactorVariablesTimeRange",
+			Description: "Refactor time range variables flow to reduce number of API calls made when query variables are chained",
+			State:       FeatureStateBeta,
+			Owner:       grafanaDashboardsSquad,
+		},
+		{
 			Name:            "useCachingService",
 			Description:     "When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation",
 			State:           FeatureStateStable,
@@ -501,7 +501,8 @@ var (
 		{
 			Name:        "authenticationConfigUI",
 			Description: "Enables authentication configuration UI",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateStable,
+			Expression:  "true",
 			Owner:       grafanaAuthnzSquad,
 		},
 		{
@@ -512,9 +513,10 @@ var (
 		},
 		{
 			Name:         "advancedDataSourcePicker",
-			Description:  "Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode",
-			State:        FeatureStateAlpha,
+			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
+			State:        FeatureStateStable,
 			FrontendOnly: true,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDashboardsSquad,
 		},
 		{

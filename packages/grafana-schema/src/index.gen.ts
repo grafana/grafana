@@ -11,22 +11,18 @@
 export type {
   AnnotationTarget,
   AnnotationPanelFilter,
+  VariableOption,
   DashboardLink,
   DashboardLinkType,
   VariableType,
   FieldColorSeriesByMode,
   FieldColor,
   GridPos,
-  Threshold,
-  ThresholdsConfig,
-  ValueMapping,
   ValueMap,
-  RangeMap,
   RegexMap,
   SpecialValueMap,
   ValueMappingResult,
   LibraryPanelRef,
-  RowPanel,
   GraphPanel,
   HeatmapPanel
 } from './raw/dashboard/x/dashboard_types.gen';
@@ -35,17 +31,17 @@ export type {
 export {
   defaultAnnotationTarget,
   defaultAnnotationPanelFilter,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
   defaultGridPos,
   ThresholdsMode,
-  defaultThresholdsConfig,
   MappingType,
   SpecialValueMatch,
   DashboardCursorSync,
-  defaultDashboardCursorSync,
-  defaultRowPanel
+  defaultDashboardCursorSync
 } from './raw/dashboard/x/dashboard_types.gen';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -63,11 +59,16 @@ export type {
   AnnotationQuery,
   VariableModel,
   DataSourceRef,
+  Threshold,
+  ThresholdsConfig,
+  ValueMapping,
+  RangeMap,
   DataTransformerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
-  FieldConfig
+  FieldConfig,
+  RowPanel
 } from './veneer/dashboard.types';
 
 // The following exported declarations correspond to types in the dashboard@0.0 kind's
@@ -85,10 +86,12 @@ export {
   defaultAnnotationQuery,
   defaultVariableModel,
   VariableHide,
+  defaultThresholdsConfig,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,
-  defaultFieldConfig
+  defaultFieldConfig,
+  defaultRowPanel
 } from './veneer/dashboard.types';
 
 // Raw generated types from LibraryPanel kind.

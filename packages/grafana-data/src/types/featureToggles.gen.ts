@@ -60,7 +60,6 @@ export interface FeatureToggles {
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
-  datasourceOnboarding?: boolean;
   emptyDashboardPage?: boolean;
   authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
@@ -90,6 +89,7 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
+  refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
