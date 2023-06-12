@@ -813,7 +813,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -1800,7 +1800,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -4832,7 +4832,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -5465,7 +5465,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -5959,7 +5959,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -6068,7 +6068,7 @@ services:
     MYSQL_ROOT_PASSWORD: rootpass
     MYSQL_USER: grafana
   image: mysql:5.7.39
-  name: mysql57
+  name: mysql
   volumes:
   - name: mysql
     path: /var/lib/mysql
@@ -6627,6 +6627,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 37bb672e51a789edfbd859a709524987f7d6dd47fc926353b721d4b67478c5ca
+hmac: 31923e4a5a95efec4aa79d86cdddaa28a879b8016f0df1b71db4116857bb4196
 
 ...
