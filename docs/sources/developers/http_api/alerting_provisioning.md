@@ -13,7 +13,7 @@ keywords:
 title: 'Alerting Provisioning HTTP API '
 ---
 
-# Alerting provisioning API
+# Alerting provisioning HTTP API
 
 ## Information
 
@@ -51,6 +51,10 @@ title: 'Alerting Provisioning HTTP API '
 | PUT    | /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}        | [route put alert rule group](#route-put-alert-rule-group)               | Update the interval of a rule group.                    |
 
 ### Contact points
+
+**Note:**
+
+Contact point provisioning is for Grafana-managed alerts only.
 
 | Method | URI                                       | Name                                                      | Summary                           |
 | ------ | ----------------------------------------- | --------------------------------------------------------- | --------------------------------- |
@@ -96,10 +100,12 @@ DELETE /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name                 | Source   | Type   | Go type  | Separator | Required | Default | Description    |
+{{% responsive-table %}}
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
 | -------------------- | -------- | ------ | -------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string | `string` |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string | `string` |           |          |         |                |
+| UID | `path` | string | `string` | | ✓ | | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` | | | | |
+{{% /responsive-table %}}
 
 #### All responses
 

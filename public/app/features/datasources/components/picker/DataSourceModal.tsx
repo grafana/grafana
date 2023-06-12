@@ -28,8 +28,9 @@ import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/t
 import { useDatasource } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
-import { matchDataSourceWithSearch } from './utils';
+import { fileDropHandler, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
@@ -77,29 +78,11 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
 
   const grafanaDS = useDatasource('-- Grafana --');
 
-  const onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+  const onFileDrop = fileDropHandler((query, fileRejections) => {
     if (!grafanaDS) {
       return;
     }
-    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
-      const snapshot: DataFrameJSON[] = [];
-      next.dataFrames.forEach((df: DataFrame) => {
-        const dataframeJson = dataFrameToJSON(df);
-        snapshot.push(dataframeJson);
-      });
-      await onChange(grafanaDS, [
-        {
-          refId: 'A',
-          datasource: {
-            type: 'grafana',
-            uid: 'grafana',
-          },
-          queryType: GrafanaQueryType.Snapshot,
-          snapshot: snapshot,
-          file: next.file,
-        },
-      ]);
-    });
+    onChange(grafanaDS, [query]);
 
     reportInteraction(INTERACTION_EVENT_NAME, {
       item: INTERACTION_ITEM.UPLOAD_FILE,
@@ -109,7 +92,7 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
     if (fileRejections.length < 1) {
       onDismiss();
     }
-  };
+  });
 
   return (
     <Modal
@@ -136,7 +119,6 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
         />
         <CustomScrollbar>
           <DataSourceList
-            className={styles.dataSourceList}
             dashboard={false}
             mixed={false}
             variables
@@ -150,18 +132,18 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
               })
             }
           />
+          <BuiltInDataSourceList
+            className={styles.appendBuiltInDataSourcesList}
+            onChange={onChangeDataSource}
+            current={current}
+          />
         </CustomScrollbar>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <DataSourceList
-            className={styles.builtInDataSourceList}
-            filter={(ds) => !!ds.meta.builtIn}
-            dashboard
-            mixed
-            onChange={onChangeDataSource}
-            current={current}
-          />
+          <CustomScrollbar className={styles.builtInDataSourcesList}>
+            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+          </CustomScrollbar>
           {config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
@@ -177,7 +159,8 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
             </FileDropzone>
           )}
         </div>
-        <div className={styles.dsCTAs}>
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
@@ -225,11 +208,10 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 47%;
         border-right: 0;
         padding-right: 0;
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        padding-bottom: ${theme.spacing(4)};
+        flex: 1;
+        overflow-y: auto;
       }
     `,
     rightColumn: css`
@@ -243,30 +225,44 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 53%;
         padding-left: 0;
-        padding-top: ${theme.spacing(4)};
+        flex: 0;
       }
     `,
     builtInDataSources: css`
-      flex: 1;
+      flex: 1 1;
+      margin-bottom: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        flex: 0;
+      }
+    `,
+    builtInDataSourcesList: css`
+      ${theme.breakpoints.down('md')} {
+        display: none;
+        margin-bottom: 0;
+      }
+
       margin-bottom: ${theme.spacing(4)};
     `,
-    dataSourceList: css`
-      height: 100%;
+    appendBuiltInDataSourcesList: css`
+      ${theme.breakpoints.up('md')} {
+        display: none;
+      }
     `,
-    builtInDataSourceList: css`
-      margin-bottom: ${theme.spacing(4)};
-    `,
-    dsCTAs: css`
+    newDSSection: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: flex-end;
-
-      ${theme.breakpoints.down('md')} {
-        padding-bottom: ${theme.spacing(3)};
-      }
+      justify-content: space-between;
+      align-items: center;
+    `,
+    newDSDescription: css`
+      flex: 1 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      color: ${theme.colors.text.secondary};
     `,
     searchInput: css`
       width: 100%;

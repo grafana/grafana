@@ -24,6 +24,7 @@ export interface SelectCommonProps<T> {
   autoFocus?: boolean;
   backspaceRemovesValue?: boolean;
   blurInputOnSelect?: boolean;
+  captureMenuScroll?: boolean;
   className?: string;
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
@@ -37,7 +38,7 @@ export interface SelectCommonProps<T> {
   /** Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
-  getOptionValue?: (item: SelectableValue<T>) => string;
+  getOptionValue?: (item: SelectableValue<T>) => T | undefined;
   hideSelectedOptions?: boolean;
   inputValue?: string;
   invalid?: boolean;
@@ -70,6 +71,10 @@ export interface SelectCommonProps<T> {
   onCreateOption?: (value: string) => void;
   onInputChange?: (value: string, actionMeta: InputActionMeta) => void;
   onKeyDown?: (event: React.KeyboardEvent) => void;
+  /** Callback which fires when the user scrolls to the bottom of the menu */
+  onMenuScrollToBottom?: (event: WheelEvent | TouchEvent) => void;
+  /** Callback which fires when the user scrolls to the top of the menu */
+  onMenuScrollToTop?: (event: WheelEvent | TouchEvent) => void;
   onOpenMenu?: () => void;
   onFocus?: () => void;
   openMenuOnFocus?: boolean;

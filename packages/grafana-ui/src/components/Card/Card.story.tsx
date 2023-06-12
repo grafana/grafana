@@ -1,4 +1,4 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
@@ -12,7 +12,7 @@ import mdx from './Card.mdx';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
-const meta: ComponentMeta<typeof Card> = {
+const meta: Meta<typeof Card> = {
   title: 'General/Card',
   component: Card,
   decorators: [withCenteredStory],
@@ -26,7 +26,7 @@ const meta: ComponentMeta<typeof Card> = {
   },
 };
 
-export const Basic: ComponentStory<typeof Card> = ({ disabled }) => {
+export const Basic: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Filter by name</Card.Heading>
@@ -38,7 +38,7 @@ export const Basic: ComponentStory<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const AsLink: ComponentStory<typeof Card> = ({ disabled }) => {
+export const AsLink: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <VerticalGroup>
       <Card href="https://grafana.com" disabled={disabled}>
@@ -63,7 +63,7 @@ export const AsLink: ComponentStory<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const WithTags: ComponentStory<typeof Card> = ({ disabled }) => {
+export const WithTags: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Elasticsearch – Custom Templated Query</Card.Heading>
@@ -75,7 +75,7 @@ export const WithTags: ComponentStory<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const WithMedia: ComponentStory<typeof Card> = ({ disabled }) => {
+export const WithMedia: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
@@ -91,7 +91,7 @@ export const WithMedia: ComponentStory<typeof Card> = ({ disabled }) => {
     </Card>
   );
 };
-export const WithActions: ComponentStory<typeof Card> = ({ disabled }) => {
+export const WithActions: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
@@ -120,7 +120,7 @@ export const WithActions: ComponentStory<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const Full: ComponentStory<typeof Card> = ({ disabled }) => {
+export const Full: StoryFn<typeof Card> = ({ disabled }) => {
   return (
     <Card disabled={disabled}>
       <Card.Heading>Card title</Card.Heading>
@@ -157,7 +157,7 @@ export const Full: ComponentStory<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const Selected: ComponentStory<typeof Card> = () => {
+export const Selected: StoryFn<typeof Card> = () => {
   return (
     <Card isSelected>
       <Card.Heading>Spaces</Card.Heading>
@@ -169,7 +169,7 @@ export const Selected: ComponentStory<typeof Card> = () => {
   );
 };
 
-export const NotSelected: ComponentStory<typeof Card> = () => {
+export const NotSelected: StoryFn<typeof Card> = () => {
   return (
     <Card isSelected={false}>
       <Card.Heading>Tabs</Card.Heading>

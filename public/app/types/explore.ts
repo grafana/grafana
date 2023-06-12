@@ -26,8 +26,8 @@ export enum ExploreId {
 }
 
 export type ExploreQueryParams = {
-  left: string;
-  right: string;
+  left?: string;
+  right?: string;
 };
 
 /**
@@ -82,7 +82,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -93,10 +93,6 @@ export interface ExploreItemState {
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance?: DataSourceApi | null;
-  /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
@@ -211,8 +207,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -265,7 +259,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
+export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;

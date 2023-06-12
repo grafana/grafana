@@ -22,7 +22,7 @@ describe('MetricsModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Browse metrics')).toBeInTheDocument();
+      expect(screen.getByText('Metrics explorer')).toBeInTheDocument();
     });
   });
 
@@ -86,20 +86,6 @@ describe('MetricsModal', () => {
       const selectType = screen.getByText('Filter by type');
       expect(selectType).toBeInTheDocument();
     });
-  });
-
-  it('filters by alphebetical letter choice', async () => {
-    setup(defaultQuery, listOfMetrics);
-    // pick the letter J
-    const letterJ = screen.getByTestId('letter-J');
-    await userEvent.click(letterJ);
-
-    // check metrics that start with J
-    const metricStartingWithJ = screen.getByText('j');
-    expect(metricStartingWithJ).toBeInTheDocument();
-    // check metrics that don't start with J
-    const metricStartingWithSomethingElse = screen.queryByText('a');
-    expect(metricStartingWithSomethingElse).toBeNull();
   });
 
   // Pagination
@@ -173,7 +159,7 @@ describe('MetricsModal', () => {
     });
   });
 
-  it('searches by all metric metadata with a fuzzy search', async () => {
+  it('searches by name and description with a fuzzy search when setting is turned on', async () => {
     // search for a_bucket by metadata type counter but only type countt
     setup(defaultQuery, listOfMetrics);
     let metricABucket: HTMLElement | null;
@@ -193,7 +179,7 @@ describe('MetricsModal', () => {
 
     const searchMetric = screen.getByTestId(testIds.searchMetric);
     expect(searchMetric).toBeInTheDocument();
-    await userEvent.type(searchMetric, 'countt');
+    await userEvent.type(searchMetric, 'functions');
 
     await waitFor(() => {
       metricABucket = screen.getByText('a_bucket');

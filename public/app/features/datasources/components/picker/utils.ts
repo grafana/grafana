@@ -1,4 +1,15 @@
-import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
+import { DropEvent, FileRejection } from 'react-dropzone';
+
+import {
+  DataFrame,
+  DataFrameJSON,
+  dataFrameToJSON,
+  DataSourceInstanceSettings,
+  DataSourceJsonData,
+  DataSourceRef,
+} from '@grafana/data';
+import * as DFImport from 'app/features/dataframe-import';
+import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -97,4 +108,17 @@ export function getDataSourceCompareFn(
  */
 export function matchDataSourceWithSearch(ds: DataSourceInstanceSettings, searchTerm = '') {
   return ds.name.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+export function fileDropHandler(cb: (query: GrafanaQuery, fileRejections: FileRejection[]) => void) {
+  return (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df: DataFrame) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      cb({ ...defaultFileUploadQuery, ...{ snapshot: snapshot, file: next.file } }, fileRejections);
+    });
+  };
 }

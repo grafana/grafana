@@ -5,18 +5,20 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, DataSourceJsonData } from '@grafana/schema';
-import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { defaultFileUploadQuery, GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
+import { applyMaxSize, maxSize } from './popperModifiers';
 import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
@@ -74,17 +76,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       return;
     }
 
-    onChange(grafanaDS, [
-      {
-        refId: 'A',
-        datasource: {
-          type: 'grafana',
-          uid: 'grafana',
-        },
-        queryType: GrafanaQueryType.Snapshot,
-        snapshot: [],
-      },
-    ]);
+    onChange(grafanaDS, [defaultFileUploadQuery]);
   };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
@@ -98,6 +90,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           offset: [0, 4],
         },
       },
+      maxSize,
+      applyMaxSize,
     ],
   });
 
@@ -123,12 +117,13 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2(getStylesDropdown);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
         <Input
           className={inputHasFocus ? undefined : styles.input}
+          data-testid={selectors.components.DataSourcePicker.inputV2}
           prefix={
             filterTerm && isOpen ? (
               <DataSourceLogoPlaceHolder />
@@ -183,7 +178,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               onClickAddCSV={onClickAddCSV}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
@@ -230,25 +226,22 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <DataSourceList
-        {...props}
-        enableKeyboardNavigation
-        className={styles.dataSourceList}
-        current={current}
-        onChange={changeCallback}
-        filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
-        onClickEmptyStateCTA={() =>
-          reportInteraction(INTERACTION_EVENT_NAME, {
-            item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
-          })
-        }
-      ></DataSourceList>
+      <CustomScrollbar>
+        <DataSourceList
+          {...props}
+          enableKeyboardNavigation
+          className={styles.dataSourceList}
+          current={current}
+          onChange={changeCallback}
+          filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+          onClickEmptyStateCTA={() =>
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+            })
+          }
+        ></DataSourceList>
+      </CustomScrollbar>
       <div className={styles.footer}>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
-          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
-            Add csv or spreadsheet
-          </Button>
-        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
@@ -274,6 +267,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -285,8 +283,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 412px;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -295,11 +292,11 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     `,
     dataSourceList: css`
       flex: 1;
-      overflow: scroll;
     `,
     footer: css`
       flex: 0;
       display: flex;
+      flex-direction: row-reverse;
       justify-content: space-between;
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};
