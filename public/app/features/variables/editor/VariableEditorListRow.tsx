@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { hasOptions, isAdHoc, isQuery } from '../guard';
+import { isAdHoc } from '../guard';
 import { VariableUsagesButton } from '../inspect/VariableUsagesButton';
 import { getVariableUsages, UsagesToNetwork, VariableUsageTree } from '../inspect/utils';
 import { KeyedVariableIdentifier } from '../state/types';
@@ -35,7 +35,6 @@ export function VariableEditorListRow({
 }: VariableEditorListRowProps): ReactElement {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const definition = getDefinition(variable);
   const usages = getVariableUsages(variable.id, usageTree);
   const passed = usages > 0 || isAdHoc(variable);
   const identifier = toKeyedVariableIdentifier(variable);
@@ -68,14 +67,14 @@ export function VariableEditorListRow({
           </td>
           <td
             role="gridcell"
-            className={styles.definitionColumn}
+            className={styles.descriptionColumn}
             onClick={(event) => {
               event.preventDefault();
               propsOnEdit(identifier);
             }}
-            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDefinitionFields(variable.name)}
+            aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDescriptionFields(variable.name)}
           >
-            {definition}
+            {variable.description}
           </td>
 
           <td role="gridcell" className={styles.column}>
@@ -94,7 +93,7 @@ export function VariableEditorListRow({
                 propsOnDuplicate(identifier);
               }}
               name="copy"
-              title="Duplicate variable"
+              tooltip="Duplicate variable"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowDuplicateButtons(variable.name)}
             />
           </td>
@@ -107,7 +106,7 @@ export function VariableEditorListRow({
                 propsOnDelete(identifier);
               }}
               name="trash-alt"
-              title="Remove variable"
+              tooltip="Remove variable"
               aria-label={selectors.pages.Dashboard.Settings.Variables.List.tableRowRemoveButtons(variable.name)}
             />
           </td>
@@ -120,21 +119,6 @@ export function VariableEditorListRow({
       )}
     </Draggable>
   );
-}
-
-function getDefinition(model: VariableModel): string {
-  let definition = '';
-  if (isQuery(model)) {
-    if (model.definition) {
-      definition = model.definition;
-    } else if (typeof model.query === 'string') {
-      definition = model.query;
-    }
-  } else if (hasOptions(model)) {
-    definition = model.query;
-  }
-
-  return definition;
 }
 
 interface VariableCheckIndicatorProps {
@@ -174,7 +158,7 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: pointer;
       color: ${theme.colors.primary.text};
     `,
-    definitionColumn: css`
+    descriptionColumn: css`
       width: 100%;
       max-width: 200px;
       cursor: pointer;

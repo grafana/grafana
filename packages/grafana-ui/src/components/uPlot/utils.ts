@@ -114,9 +114,8 @@ export function getStackingGroups(frame: DataFrame) {
     }
 
     // will this be stacked up or down after any transforms applied
-    let vals = values.toArray();
     let transform = custom.transform;
-    let stackDir = getStackDirection(transform, vals);
+    let stackDir = getStackDirection(transform, values);
 
     let drawStyle = custom.drawStyle as GraphDrawStyle;
     let drawStyle2 =
@@ -174,7 +173,7 @@ export function preparePlotData2(
         return;
       }
 
-      let vals = field.values.toArray();
+      let vals = field.values;
 
       for (let i = 0; i < dataLen; i++) {
         if (vals[i] != null) {
@@ -185,11 +184,11 @@ export function preparePlotData2(
   });
 
   frame.fields.forEach((field, i) => {
-    let vals = field.values.toArray();
+    let vals = field.values;
 
     if (i === 0) {
       if (field.type === FieldType.time) {
-        data[i] = ensureTimeField(field).values.toArray();
+        data[i] = ensureTimeField(field).values;
       } else {
         data[i] = vals;
       }

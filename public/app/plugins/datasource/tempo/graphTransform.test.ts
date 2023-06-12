@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrameView, dateTime, MutableDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, createDataFrame, FieldType } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -59,6 +59,26 @@ describe('createGraphFrames', () => {
   });
 });
 
+it('assigns correct field type even if values are numbers', async () => {
+  const range = {
+    from: dateTime('2000-01-01T00:00:00'),
+    to: dateTime('2000-01-01T00:01:00'),
+  };
+  const { nodes } = mapPromMetricsToServiceMap([{ data: [serverIsANumber, serverIsANumber] }], {
+    ...range,
+    raw: range,
+  });
+
+  expect(nodes.fields).toMatchObject([
+    { name: 'id', values: ['0', '1'], type: FieldType.string },
+    { name: 'title', values: ['0', '1'], type: FieldType.string },
+    { name: 'mainstat', values: [NaN, NaN], type: FieldType.number },
+    { name: 'secondarystat', values: [10, 20], type: FieldType.number },
+    { name: 'arc__success', values: [1, 1], type: FieldType.number },
+    { name: 'arc__failed', values: [0, 0], type: FieldType.number },
+  ]);
+});
+
 describe('mapPromMetricsToServiceMap', () => {
   it('transforms prom metrics to service graph', async () => {
     const range = {
@@ -74,19 +94,19 @@ describe('mapPromMetricsToServiceMap', () => {
     );
 
     expect(nodes.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
-      { name: 'arc__success', values: new ArrayVector([0.8, 0.25, 1]) },
-      { name: 'arc__failed', values: new ArrayVector([0.2, 0.75, 0]) },
+      { name: 'id', values: ['db', 'app', 'lb'] },
+      { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'mainstat', values: [1000, 2000, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
+      { name: 'arc__success', values: [0.8, 0.25, 1] },
+      { name: 'arc__failed', values: [0.2, 0.75, 0] },
     ]);
     expect(edges.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['app_db', 'lb_app']) },
-      { name: 'source', values: new ArrayVector(['app', 'lb']) },
-      { name: 'target', values: new ArrayVector(['db', 'app']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33]) },
+      { name: 'id', values: ['app_db', 'lb_app'] },
+      { name: 'source', values: ['app', 'lb'] },
+      { name: 'target', values: ['db', 'app'] },
+      { name: 'mainstat', values: [1000, 2000] },
+      { name: 'secondarystat', values: [10, 20] },
     ]);
   });
 
@@ -106,17 +126,17 @@ describe('mapPromMetricsToServiceMap', () => {
     );
 
     expect(nodes.fields).toMatchObject([
-      { name: 'id', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'title', values: new ArrayVector(['db', 'app', 'lb']) },
-      { name: 'mainstat', values: new ArrayVector([1000, 2000, NaN]) },
-      { name: 'secondarystat', values: new ArrayVector([0.17, 0.33, NaN]) },
-      { name: 'arc__success', values: new ArrayVector([0, 0, 1]) },
-      { name: 'arc__failed', values: new ArrayVector([1, 1, 0]) },
+      { name: 'id', values: ['db', 'app', 'lb'] },
+      { name: 'title', values: ['db', 'app', 'lb'] },
+      { name: 'mainstat', values: [1000, 2000, NaN] },
+      { name: 'secondarystat', values: [10, 20, NaN] },
+      { name: 'arc__success', values: [0, 0, 1] },
+      { name: 'arc__failed', values: [1, 1, 0] },
     ]);
   });
 });
 
-const singleSpanResponse = new MutableDataFrame({
+const singleSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335'] },
     { name: 'spanID', values: ['4322526419282105830'] },
@@ -128,7 +148,7 @@ const singleSpanResponse = new MutableDataFrame({
   ],
 });
 
-const missingSpanResponse = new MutableDataFrame({
+const missingSpanResponse = createDataFrame({
   fields: [
     { name: 'traceID', values: ['04450900759028499335', '04450900759028499335'] },
     { name: 'spanID', values: ['1', '2'] },
@@ -140,7 +160,7 @@ const missingSpanResponse = new MutableDataFrame({
   ],
 });
 
-const totalsPromMetric = new MutableDataFrame({
+const totalsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -153,7 +173,7 @@ const totalsPromMetric = new MutableDataFrame({
   ],
 });
 
-const secondsPromMetric = new MutableDataFrame({
+const secondsPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_server_seconds_sum',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -166,7 +186,7 @@ const secondsPromMetric = new MutableDataFrame({
   ],
 });
 
-const failedPromMetric = new MutableDataFrame({
+const failedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -179,7 +199,7 @@ const failedPromMetric = new MutableDataFrame({
   ],
 });
 
-const invalidFailedPromMetric = new MutableDataFrame({
+const invalidFailedPromMetric = createDataFrame({
   refId: 'traces_service_graph_request_failed_total',
   fields: [
     { name: 'Time', values: [1628169788000, 1628169788000] },
@@ -189,5 +209,18 @@ const invalidFailedPromMetric = new MutableDataFrame({
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
     { name: 'Value #traces_service_graph_request_failed_total', values: [20, 40] },
+  ],
+});
+
+const serverIsANumber = createDataFrame({
+  refId: 'traces_service_graph_request_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['0', '1'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['0', '1'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });

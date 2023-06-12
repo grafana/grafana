@@ -8,15 +8,14 @@ var (
 // SetAutoTimeGrain tries to find the closest interval to the query's intervalMs value
 // if the metric has a limited set of possible intervals/time grains then use those
 // instead of the default list of intervals
-func SetAutoTimeGrain(intervalMs int64, timeGrains []int64) (string, error) {
+func SetAutoTimeGrain(intervalMs int64, timeGrains []int64) (*string, error) {
 	autoInterval := FindClosestAllowedIntervalMS(intervalMs, timeGrains)
-	tg := &TimeGrain{}
-	autoTimeGrain, err := tg.createISO8601DurationFromIntervalMS(autoInterval)
+	autoTimeGrain, err := CreateISO8601DurationFromIntervalMS(autoInterval)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return autoTimeGrain, nil
+	return &autoTimeGrain, nil
 }
 
 // FindClosestAllowedIntervalMS is used for the auto time grain setting.

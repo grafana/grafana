@@ -50,7 +50,8 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		IsSignedIn:            rand.Int63()%2 == 1,
 		IsRenderCall:          rand.Int63()%2 == 1,
 		AllowAnonymous:        rand.Int63()%2 == 1,
-		SkipCache:             rand.Int63()%2 == 1,
+		SkipDSCache:           rand.Int63()%2 == 1,
+		SkipQueryCache:        rand.Int63()%2 == 1,
 		Logger:                log.New("test"),
 		RequestNonce:          util.GenerateShortUID(),
 		IsPublicDashboardView: rand.Int63()%2 == 1,
@@ -75,7 +76,8 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			require.Equal(t, ctx.IsSignedIn, newCtx.IsSignedIn)
 			require.Equal(t, ctx.IsRenderCall, newCtx.IsRenderCall)
 			require.Equal(t, ctx.AllowAnonymous, newCtx.AllowAnonymous)
-			require.Equal(t, ctx.SkipCache, newCtx.SkipCache)
+			require.Equal(t, ctx.SkipDSCache, newCtx.SkipDSCache)
+			require.Equal(t, ctx.SkipQueryCache, newCtx.SkipQueryCache)
 			require.Equal(t, ctx.Logger, newCtx.Logger)
 			require.Equal(t, ctx.RequestNonce, newCtx.RequestNonce)
 			require.Equal(t, ctx.IsPublicDashboardView, newCtx.IsPublicDashboardView)
@@ -134,26 +136,6 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 				}
 				newCtx := proxy.createProxyContext(&roleCtx, req, resp)
 				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if role is %s", roleType)
-			}
-		})
-	})
-	t.Run("if access control is disabled", func(t *testing.T) {
-		t.Run("should not alter user", func(t *testing.T) {
-			proxy := AlertingProxy{
-				DataProxy: nil,
-				ac:        accesscontrolmock.New().WithDisabled(),
-			}
-
-			req := &http.Request{}
-			resp := &response.NormalResponse{}
-
-			for _, roleType := range []org.RoleType{org.RoleViewer, org.RoleEditor, org.RoleAdmin} {
-				roleCtx := *ctx
-				roleCtx.SignedInUser = &user.SignedInUser{
-					OrgRole: roleType,
-				}
-				newCtx := proxy.createProxyContext(&roleCtx, req, resp)
-				require.Equalf(t, roleCtx.SignedInUser, newCtx.SignedInUser, "user should not be altered if access control is disabled and role is %s", roleType)
 			}
 		})
 	})

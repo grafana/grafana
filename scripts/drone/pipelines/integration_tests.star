@@ -8,8 +8,10 @@ load(
     "download_grabpl_step",
     "enterprise_setup_step",
     "identify_runner_step",
+    "memcached_integration_tests_step",
     "mysql_integration_tests_step",
     "postgres_integration_tests_step",
+    "redis_integration_tests_step",
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
@@ -37,7 +39,7 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
     """
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = []
@@ -65,7 +67,10 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     test_steps = [
         postgres_integration_tests_step(),
-        mysql_integration_tests_step(),
+        mysql_integration_tests_step("mysql57", "5.7"),
+        mysql_integration_tests_step("mysql80", "8.0"),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     return pipeline(

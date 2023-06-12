@@ -112,7 +112,7 @@ export interface TestData extends common.DataQuery {
   channel?: string;
   csvContent?: string;
   csvFileName?: string;
-  csvWave?: Array<CSVWave>;
+  csvWave?: Array<CSVWave>; // TODO can we prevent partial from being generated
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
   labels?: string;
   levelColumn?: boolean;

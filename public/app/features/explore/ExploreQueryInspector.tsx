@@ -68,7 +68,9 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Query',
     value: 'query',
     icon: 'info-circle',
-    content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
+    content: (
+      <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+    ),
   };
 
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
@@ -90,7 +92,7 @@ export function ExploreQueryInspector(props: Props) {
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const item: ExploreItemState = explore[exploreId]!;
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const { loading, queryResponse } = item;
 
   return {

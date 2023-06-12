@@ -20,7 +20,7 @@ export const Pages = {
     name: 'Data source settings page name input field',
     delete: 'Data source settings page Delete button',
     readOnly: 'Data source settings page read only message',
-    saveAndTest: 'Data source settings page Save and Test button',
+    saveAndTest: 'data-testid Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
   },
   DataSources: {
@@ -38,10 +38,11 @@ export const Pages = {
     dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
-    delete: 'Confirm Modal Danger Button',
+    delete: 'data-testid Confirm Modal Danger Button',
   },
   AddDashboard: {
     url: '/dashboard/new',
+    itemButton: (title: string) => `data-testid ${title}`,
     addNewPanel: 'Add new panel',
     addNewRow: 'Add new row',
     addNewPanelLibrary: 'Add new panel from panel library',
@@ -65,6 +66,11 @@ export const Pages = {
       submenuItemValueDropDownDropDown: 'Variable options',
       submenuItemValueDropDownOptionTexts: (item: string) =>
         `data-testid Dashboard template variables Variable Value DropDown option text ${item}`,
+      Annotations: {
+        annotationsWrapper: 'data-testid annotation-wrapper',
+        annotationLabel: (label: string) => `data-testid Dashboard annotations submenu Label ${label}`,
+        annotationToggle: (label: string) => `data-testid Dashboard annotations submenu Toggle ${label}`,
+      },
     },
     Settings: {
       Actions: {
@@ -92,6 +98,11 @@ export const Pages = {
         Settings: {
           name: 'Annotations settings name input',
         },
+        NewAnnotation: {
+          panelFilterSelect: 'data-testid annotations-panel-filter',
+          showInLabel: 'show-in-label',
+          previewInDashboard: 'data-testid annotations-preview',
+        },
       },
       Variables: {
         List: {
@@ -103,7 +114,8 @@ export const Pages = {
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
-          tableRowDefinitionFields: (variableName: string) => `Variable editor Table Definition field ${variableName}`,
+          tableRowDescriptionFields: (variableName: string) =>
+            `Variable editor Table Description field ${variableName}`,
           tableRowArrowUpButtons: (variableName: string) => `Variable editor Table ArrowUp button ${variableName}`,
           tableRowArrowDownButtons: (variableName: string) => `Variable editor Table ArrowDown button ${variableName}`,
           tableRowDuplicateButtons: (variableName: string) => `Variable editor Table Duplicate button ${variableName}`,
@@ -165,6 +177,9 @@ export const Pages = {
           },
         },
       },
+    },
+    Annotations: {
+      marker: 'data-testid annotation-marker',
     },
   },
   Dashboards: {
@@ -255,6 +270,12 @@ export const Pages = {
     interval: 'Playlist interval',
     itemDelete: 'Delete playlist item',
   },
+  BrowseDashbards: {
+    table: {
+      row: (uid: string) => `data-testid ${uid} row`,
+      checkbox: (uid: string) => `data-testid ${uid} checkbox`,
+    },
+  },
   Search: {
     url: '/?search=openn',
     FolderView: {
@@ -266,14 +287,36 @@ export const Pages = {
       linkButton: 'public-dashboard-link-button',
       configButton: 'public-dashboard-configuration-button',
       trashcanButton: 'public-dashboard-remove-button',
+      pauseSwitch: 'data-testid public dashboard pause switch',
     },
   },
   UserListPage: {
+    tabs: {
+      allUsers: 'data-testid all-users-tab',
+      orgUsers: 'data-testid org-users-tab',
+      publicDashboardsUsers: 'data-testid public-dashboards-users-tab',
+      users: 'data-testid users-tab',
+    },
     org: {
       url: '/org/users',
     },
     admin: {
       url: '/admin/users',
+    },
+    publicDashboards: {
+      container: 'data-testid public-dashboards-users-list',
+    },
+    UserListAdminPage: {
+      container: 'data-testid user-list-admin-page',
+    },
+    UsersListPage: {
+      container: 'data-testid users-list-page',
+    },
+    UsersListPublicDashboardsPage: {
+      container: 'data-testid users-list-public-dashboards-page',
+      DashboardsListModal: {
+        listItem: (uid: string) => `data-testid dashboards-list-item-${uid}`,
+      },
     },
   },
 };

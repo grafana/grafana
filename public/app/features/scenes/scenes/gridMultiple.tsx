@@ -4,6 +4,7 @@ import {
   SceneFlexLayout,
   SceneGridLayout,
   SceneTimeRange,
+  SceneRefreshPicker,
   SceneGridItem,
   SceneFlexItem,
 } from '@grafana/scenes';
@@ -135,6 +136,6 @@ export function getMultipleGridLayoutTest(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

@@ -3,6 +3,7 @@ aliases:
   - ../fundamentals/alertmanager/
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
+description: Intro to the different Alertmanagers
 title: Alertmanager
 weight: 100
 ---
@@ -43,4 +44,4 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 
 [Prometheus Alertmanager documentation](https://prometheus.io/docs/alerting/latest/alertmanager/)
 
-[Add an external Alertmanager](https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alertmanager/)
+[Add an external Alertmanager]({{< relref "../set-up/configure-alertmanager" >}})

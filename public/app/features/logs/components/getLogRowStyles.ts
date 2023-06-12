@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, LogLevel } from '@grafana/data';
+import { colorManipulator, GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
 export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
@@ -70,7 +70,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       font-family: ${theme.typography.fontFamilyMonospace};
       font-size: ${theme.typography.bodySmall.fontSize};
       width: 100%;
-      margin-bottom: ${theme.spacing(2.25)}; /* This is to make sure the last row's LogRowMenu is not cut off. */
     `,
     contextBackground: css`
       background: ${hoverBgColor};
@@ -138,6 +137,17 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       overflow-wrap: anywhere;
       width: 100%;
       text-align: left;
+    `,
+    copyLogButton: css`
+      padding: 0 0 0 ${theme.spacing(0.5)};
+      height: ${theme.spacing(3)};
+      width: ${theme.spacing(3.25)};
+      line-height: ${theme.spacing(2.5)};
+      overflow: hidden;
+      &:hover {
+          background-color: ${colorManipulator.alpha(theme.colors.text.primary, 0.12)};
+        }
+      }
     `,
     //Log details specific CSS
     logDetailsContainer: css`
@@ -230,16 +240,12 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       position: absolute;
       top: 0;
       bottom: auto;
-      height: ${theme.spacing(4.5)};
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      padding: ${theme.spacing(0.5, 0.5, 0.5, 1)};
       z-index: 100;
       visibility: hidden;
-      width: ${theme.spacing(5)};
-    `,
-    rowMenuWithContextButton: css`
-      width: ${theme.spacing(10)};
+      gap: ${theme.spacing(0.5)};
     `,
     logRowMenuCell: css`
       position: sticky;

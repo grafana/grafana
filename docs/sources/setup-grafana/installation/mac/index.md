@@ -41,7 +41,7 @@ To install Grafana on macOS using Homebrew, complete the following steps:
 
 To install Grafana on macOS using the standalone binaries, complete the following steps:
 
-1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
+1. Navigate to the [Grafana download page](/grafana/download).
 1. Select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
    - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
@@ -54,13 +54,9 @@ To install Grafana on macOS using the standalone binaries, complete the followin
 1. To start Grafana service, go to the directory and run the command:
 
    ```bash
-   ./bin/grafana-server
+   ./bin/grafana server
    ```
-
-## Upgrade Grafana
-
-While the process for upgrading Grafana is very similar to installing Grafana, there are important backup tasks you should perform. Refer to [Upgrade Grafana]({{< relref "../../../upgrade-guide/" >}}) for guidance on updating an existing installation.
 
 ## Next steps
 
-- [Start the Grafana server]({{< relref "../../start-restart-grafana/" >}})
+- [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})

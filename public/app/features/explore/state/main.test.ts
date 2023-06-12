@@ -9,7 +9,7 @@ import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
 
-import { exploreReducer, navigateToExplore, splitCloseAction } from './main';
+import { exploreReducer, navigateToExplore, splitClose } from './main';
 
 const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
   const url = '/explore';
@@ -117,7 +117,7 @@ describe('navigateToExplore', () => {
 describe('Explore reducer', () => {
   describe('split view', () => {
     describe('split close', () => {
-      it('should keep right pane as left when left is closed', () => {
+      it('should move right pane to left when left is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
         } as unknown as ExploreItemState;
@@ -127,20 +127,23 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            left: leftItemMock,
+            right: rightItemMock,
+          },
         } as unknown as ExploreState;
 
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
+          .whenActionIsDispatched(splitClose(ExploreId.left))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
-            left: rightItemMock,
+            panes: {
+              left: rightItemMock,
+            },
             maxedExploreId: undefined,
-            right: undefined,
             syncedTimes: false,
           } as unknown as ExploreState);
       });
@@ -154,20 +157,23 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: leftItemMock,
-          right: rightItemMock,
+          panes: {
+            left: leftItemMock,
+            right: rightItemMock,
+          },
         } as unknown as ExploreState;
 
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .whenActionIsDispatched(splitClose(ExploreId.right))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
-            left: leftItemMock,
+            panes: {
+              left: leftItemMock,
+            },
             maxedExploreId: undefined,
-            right: undefined,
             syncedTimes: false,
           } as unknown as ExploreState);
       });
@@ -178,18 +184,21 @@ describe('Explore reducer', () => {
         } as unknown as ExploreItemState;
 
         const initialState = {
-          left: itemMock,
-          right: itemMock,
+          panes: {
+            right: itemMock,
+            left: itemMock,
+          },
           syncedTimes: true,
         } as unknown as ExploreState;
 
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .whenActionIsDispatched(splitClose(ExploreId.right))
           .thenStateShouldEqual({
             evenSplitPanes: true,
-            left: itemMock,
-            right: undefined,
+            panes: {
+              left: itemMock,
+            },
             syncedTimes: false,
           } as unknown as ExploreState);
       });

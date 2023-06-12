@@ -1,13 +1,13 @@
-import { Meta, Canvas, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { css } from '@emotion/css';
+import { Meta } from '@storybook/addon-docs/blocks';
 import { PanelChrome } from './PanelChrome';
-import { LoadingIndicator } from './LoadingIndicator';
 
 import { action } from '@storybook/addon-actions';
-import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { HorizontalGroup } from '../Layout/Layout';
 import { LoadingState } from '@grafana/data';
-import { Button } from '../Button/Button.tsx';
+import { Button } from '../Button';
 import { Menu } from '../Menu/Menu';
+import { IconButton } from '../IconButton/IconButton';
 
 <Meta title="MDX|PanelChrome" component={PanelChrome} />
 
@@ -43,7 +43,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     description="Here I will put a description that explains a bit more this panel"
@@ -56,7 +56,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -67,7 +67,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Menu: Standard & Hover
 
@@ -107,7 +107,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -133,7 +133,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -170,7 +170,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -183,7 +183,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
 ### States: Loading , Streaming, Error
 
@@ -202,7 +202,7 @@ Component used for rendering content wrapped in the same style as grafana panels
         style={{
           width: innerwidth,
           height: innerheight,
-          background: 'white',
+          background: 'rgba(230,0,0,0.05)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -215,7 +215,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
 
   <HorizontalGroup spacing="md" align="flex-start" wrap>
   <PanelChrome
@@ -232,7 +232,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -258,7 +258,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -285,7 +285,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -298,21 +298,32 @@ Component used for rendering content wrapped in the same style as grafana panels
 
   </PanelChrome>
 </HorizontalGroup>
-</Canvas>
+</Preview>
 
-### Extra options? Title Items
+### Extra options? Title items and actions
 
 ```tsx
 <PanelChrome
   title="My awesome panel title"
   titleItems={
-    <div>
-      <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-      <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-    </div>
+    <>
+      <IconButton
+        className={css`
+          margin-right: 10px;
+        `}
+        name="github"
+        variant="secondary"
+        tooltip="extra content to render"
+      />
+      <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
+    </>
   }
-  description="Here I will put a description that explains a bit more this panel"
-  width={400}
+  actions={
+    <Button size="sm" variant="secondary" key="A">
+      Breakdown
+    </Button>
+  }
+  width={500}
   height={200}
 >
   {(innerwidth, innerheight) => {
@@ -321,7 +332,7 @@ Component used for rendering content wrapped in the same style as grafana panels
         style={{
           width: innerwidth,
           height: innerheight,
-          background: 'white',
+          background: 'rgba(230,0,0,0.05)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -334,17 +345,28 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
-    description="Here I will put a description that explains a bit more this panel"
     titleItems={
-      <div>
-        <Button fill="text" icon="github" variant="secondary" tooltip="extra content to render" />
-        <Button fill="text" icon="sliders-v-alt" variant="secondary" tooltip="extra content2 to render" />
-      </div>
+      <>
+        <IconButton
+          className={css`
+            margin-right: 10px;
+          `}
+          name="github"
+          variant="secondary"
+          tooltip="extra content to render"
+        />
+        <IconButton name="sliders-v-alt" variant="secondary" tooltip="extra content to render" />
+      </>
     }
-    width={400}
+    actions={
+      <Button size="sm" variant="secondary" key="A">
+        Breakdown
+      </Button>
+    }
+    width={500}
     height={200}
   >
     {(innerwidth, innerheight) => {
@@ -353,7 +375,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -364,7 +386,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 
 ### Migration from old PanelChrome (before v9.4.0)
 
@@ -396,7 +418,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     leftItems={[
@@ -415,7 +437,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -426,7 +448,7 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>
 #### After
 
 ```tsx
@@ -456,7 +478,7 @@ Component used for rendering content wrapped in the same style as grafana panels
 </PanelChrome>
 ```
 
-<Canvas>
+<Preview>
   <PanelChrome
     title="My awesome panel title"
     loadingState={LoadingState.Loading}
@@ -470,7 +492,7 @@ Component used for rendering content wrapped in the same style as grafana panels
           style={{
             width: innerwidth,
             height: innerheight,
-            background: 'gray',
+            background: 'rgba(230,0,0,0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -481,4 +503,4 @@ Component used for rendering content wrapped in the same style as grafana panels
       );
     }}
   </PanelChrome>
-</Canvas>
+</Preview>

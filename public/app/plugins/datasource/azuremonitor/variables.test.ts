@@ -38,7 +38,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(fakeSubscriptions);
+      expect(result.data[0].fields[0].values).toEqual(fakeSubscriptions);
     });
 
     it('can fetch resourceGroups with a subscriptionId arg', async () => {
@@ -62,7 +62,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can fetch metricNamespaces with a subscriptionId', async () => {
@@ -87,7 +87,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can fetch resourceNames with a subscriptionId', async () => {
@@ -113,7 +113,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can fetch a metricNamespace with a subscriptionId', async () => {
@@ -140,7 +140,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can fetch metricNames with a subscriptionId', async () => {
@@ -167,7 +167,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can fetch workspaces with a subscriptionId', async () => {
@@ -191,7 +191,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can handle legacy string queries with a default subscription', async () => {
@@ -213,7 +213,7 @@ describe('VariableSupport', () => {
         targets: ['Namespaces(resourceGroup)' as unknown as AzureMonitorQuery],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('can handle legacy string queries', async () => {
@@ -232,7 +232,7 @@ describe('VariableSupport', () => {
         targets: ['Namespaces(subscriptionId, resourceGroup)' as unknown as AzureMonitorQuery],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('returns an empty array for unknown queries', async () => {
@@ -301,7 +301,7 @@ describe('VariableSupport', () => {
       ],
     } as DataQueryRequest<AzureMonitorQuery>;
     const result = await lastValueFrom(variableSupport.query(mockRequest));
-    expect(result.data[0].source).toEqual(expectedResults);
+    expect(result.data[0].fields[0].values).toEqual(expectedResults);
   });
 
   it('passes on the query error for a log query', async () => {
@@ -374,7 +374,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(fakeSubscriptions);
+      expect(result.data[0].fields[0].values).toEqual(fakeSubscriptions);
     });
 
     it('can fetch resourceGroups', async () => {
@@ -394,7 +394,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('returns no data if calling resourceGroups but the subscription is a template variable with no value', async () => {
@@ -429,7 +429,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('returns no data if calling namespaces but the subscription is a template variable with no value', async () => {
@@ -464,7 +464,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('returns no data if calling resourceNames but the subscription is a template variable with no value', async () => {
@@ -502,7 +502,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
 
     it('returns no data if calling metric names but the subscription is a template variable with no value', async () => {
@@ -540,7 +540,7 @@ describe('VariableSupport', () => {
         ],
       } as DataQueryRequest<AzureMonitorQuery>;
       const result = await lastValueFrom(variableSupport.query(mockRequest));
-      expect(result.data[0].source).toEqual(expectedResults);
+      expect(result.data[0].fields[0].values).toEqual(expectedResults);
     });
   });
 });

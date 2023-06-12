@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version_input:
-        description: 'The version to be released please respect: major.minor.patch or major.minor.patch-beta<number> format. example: 7.4.3 or 7.4.3-beta1'
+        description: 'The version to be released please respect: major.minor.patch, major.minor.patch-preview or major.minor.patch-preview<number> format. example: 7.4.3, 7.4.3-preview or 7.4.3-preview1'
         required: true
 jobs:
   call-remove-milestone:

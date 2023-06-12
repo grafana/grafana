@@ -194,7 +194,7 @@ func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
-	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+	if hs.Cfg.AuthBrokerEnabled {
 		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 		if err != nil {
 			tokenErr := &auth.CreateTokenErr{}

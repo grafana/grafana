@@ -81,7 +81,7 @@ describe('Candlestick data', () => {
     expect(info.names.close).toMatchInlineSnapshot(`"Next open"`);
 
     // Close should be offset by one and dupliate last point
-    expect({ open: info.open!.values.toArray(), close: info.close!.values.toArray() }).toMatchInlineSnapshot(`
+    expect({ open: info.open!.values, close: info.close!.values }).toMatchInlineSnapshot(`
       {
         "close": [
           5,
@@ -117,8 +117,8 @@ describe('Candlestick data', () => {
       theme
     )!;
 
-    expect(info.open!.values.toArray()).toEqual([1, 1, 2, 3, 4]);
-    expect(info.close!.values.toArray()).toEqual([1, 2, 3, 4, 5]);
+    expect(info.open!.values).toEqual([1, 1, 2, 3, 4]);
+    expect(info.close!.values).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('will unmap high & low fields in volume-only mode', () => {

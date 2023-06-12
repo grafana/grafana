@@ -17,12 +17,10 @@ import (
 	"github.com/weaveworks/common/http/client"
 )
 
-const defaultClientTimeout = 30 * time.Second
+const defaultPageSize = 5000
 
 func NewRequester() client.Requester {
-	return &http.Client{
-		Timeout: defaultClientTimeout,
-	}
+	return &http.Client{}
 }
 
 // encoder serializes log streams to some byte format.
@@ -226,6 +224,7 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
+
 func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, end int64) (queryRes, error) {
 	// Run the pre-flight checks for the query.
 	if start > end {
@@ -238,6 +237,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 	values.Set("query", logQL)
 	values.Set("start", fmt.Sprintf("%d", start))
 	values.Set("end", fmt.Sprintf("%d", end))
+	values.Set("limit", fmt.Sprintf("%d", defaultPageSize))
 
 	queryURL.RawQuery = values.Encode()
 

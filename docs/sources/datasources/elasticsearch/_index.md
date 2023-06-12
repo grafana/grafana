@@ -30,27 +30,32 @@ Once you've added the Elasticsearch data source, you can [configure it]({{< relr
 
 This data source supports these versions of Elasticsearch:
 
-- v7.10+
+- v7.16+
 - v8.x
+
+Our maintenance policy for Elasticsearch data source is aligned with the [Elastic Product End of Life Dates](https://www.elastic.co/support/eol) and we ensure proper functionality for supported versions. If you are using an Elasticsearch with version that is past its end-of-life (EOL), you can still execute queries, but you will receive a notification in the query builder indicating that the version of Elasticsearch you are using is no longer supported. It's important to note that in such cases, we do not guarantee the correctness of the functionality, and we will not be addressing any related issues.
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Elasticsearch data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Elasticsearch` in the search bar.
+1. Click **Elasticsearch**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name        | Description                                                                |
-| ----------- | -------------------------------------------------------------------------- |
-| **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
-| **Default** | Sets the data source that's pre-selected for new panels.                   |
-| **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
-| **Access**  | Don't modify Access. Use "Server (default)" or the data source won't work. |
+1. Set the data source's basic configuration options:
 
-You must also configure settings specific to the Elasticsearch data source.
+   | Name        | Description                                                                |
+   | ----------- | -------------------------------------------------------------------------- |
+   | **Name**    | Sets the name you use to refer to the data source in panels and queries.   |
+   | **Default** | Sets the data source that's pre-selected for new panels.                   |
+   | **Url**     | Sets the HTTP protocol, IP, and port of your Elasticsearch server.         |
+   | **Access**  | Don't modify Access. Use `Server (default)` or the data source won't work. |
+
+You must also configure settings specific to the Elasticsearch data source. These options are described in the sections below.
 
 ### Index settings
 
@@ -89,7 +94,9 @@ Toggle this to enable `X-Pack`-specific features and options, which provide the 
 
 When the "X-Pack enabled" setting is active and the configured Elasticsearch version is higher than `6.6.0`, you can configure Grafana to not ignore [frozen indices](https://www.elastic.co/guide/en/elasticsearch/reference/7.13/frozen-indices.html) when performing search requests.
 
-> **Note:** Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
+{{% admonition type="note" %}}
+Frozen indices are [deprecated in Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/7.17/frozen-indices.html) since v7.14.
+{{% /admonition %}}
 
 ### Logs
 
@@ -123,7 +130,9 @@ For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amaz
 
 #### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3 and higher.
+{{% /admonition %}}
 
 To sign requests to your Amazon Elasticsearch Service domain, you can enable SigV4 in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/#sigv4_auth_enabled" >}}).
 
@@ -137,6 +146,12 @@ For more information about AWS authentication options, refer to [AWS authenticat
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
+{{% admonition type="note" %}}
+The previously used `database` field has now been [deprecated](https://github.com/grafana/grafana/pull/58647).
+You should now use the `index` field in `jsonData` to store the index name.
+Please see the examples below.
+{{% /admonition %}}
+
 #### Provisioning examples
 
 **Basic provisioning:**
@@ -148,9 +163,9 @@ datasources:
   - name: Elastic
     type: elasticsearch
     access: proxy
-    database: '[metrics-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[metrics-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
 ```
@@ -164,9 +179,9 @@ datasources:
   - name: elasticsearch-v7-filebeat
     type: elasticsearch
     access: proxy
-    database: '[filebeat-]YYYY.MM.DD'
     url: http://localhost:9200
     jsonData:
+      index: '[filebeat-]YYYY.MM.DD'
       interval: Daily
       timeField: '@timestamp'
       logMessageField: message

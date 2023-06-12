@@ -8,7 +8,7 @@ import {
   StandardEditorContext,
   StandardEditorsRegistryItem,
 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Field, useStyles2 } from '@grafana/ui';
 import { FrameSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 interface TransformationFilterProps {
@@ -27,14 +27,15 @@ export const TransformationFilter = ({ index, data, config, onChange }: Transfor
 
   return (
     <div className={styles.wrapper}>
-      <h5>Apply tranformation to</h5>
-      <FrameSelectionEditor
-        value={config.filter!}
-        context={context}
-        // eslint-disable-next-line
-        item={{} as StandardEditorsRegistryItem}
-        onChange={(filter) => onChange(index, { ...config, filter })}
-      />
+      <Field label="Apply transformation to">
+        <FrameSelectionEditor
+          value={config.filter!}
+          context={context}
+          // eslint-disable-next-line
+          item={{} as StandardEditorsRegistryItem}
+          onChange={(filter) => onChange(index, { ...config, filter })}
+        />
+      </Field>
     </div>
   );
 };

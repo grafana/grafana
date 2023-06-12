@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
@@ -50,6 +51,15 @@ type DataPipeline []Node
 func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (mathexp.Vars, error) {
 	vars := make(mathexp.Vars)
 	for _, node := range *dp {
+		c, span := s.tracer.Start(c, "SSE.ExecuteNode")
+		span.SetAttributes("node.refId", node.RefID(), attribute.Key("node.refId").String(node.RefID()))
+		if node.NodeType() == TypeCMDNode {
+			cmdNode := node.(*CMDNode)
+			inputRefIDs := cmdNode.Command.NeedsVars()
+			span.SetAttributes("node.inputRefIDs", inputRefIDs, attribute.Key("node.inputRefIDs").StringSlice(inputRefIDs))
+		}
+		defer span.End()
+
 		res, err := node.Execute(c, now, vars, s)
 		if err != nil {
 			return nil, err

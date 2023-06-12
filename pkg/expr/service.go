@@ -5,10 +5,14 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,16 +41,24 @@ func IsDataSource(uid string) bool {
 
 // Service is service representation for expression handling.
 type Service struct {
-	cfg               *setting.Cfg
-	dataService       backend.QueryDataHandler
-	dataSourceService datasources.DataSourceService
+	cfg          *setting.Cfg
+	dataService  backend.QueryDataHandler
+	pCtxProvider *plugincontext.Provider
+	features     featuremgmt.FeatureToggles
+
+	tracer  tracing.Tracer
+	metrics *metrics
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
 	return &Service{
-		cfg:               cfg,
-		dataService:       pluginClient,
-		dataSourceService: dataSourceService,
+		cfg:          cfg,
+		dataService:  pluginClient,
+		pCtxProvider: pCtxProvider,
+		features:     features,
+		tracer:       tracer,
+		metrics:      newMetrics(registerer),
 	}
 }
 
@@ -64,6 +76,8 @@ func (s *Service) BuildPipeline(req *Request) (DataPipeline, error) {
 
 // ExecutePipeline executes an expression pipeline and returns all the results.
 func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
+	ctx, span := s.tracer.Start(ctx, "SSE.ExecutePipeline")
+	defer span.End()
 	res := backend.NewQueryDataResponse()
 	vars, err := pipeline.execute(ctx, now, s)
 	if err != nil {

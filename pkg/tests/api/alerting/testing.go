@@ -10,10 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -75,7 +76,8 @@ func postRequest(t *testing.T, url string, body string, expStatusCode int) *http
 	if expStatusCode != resp.StatusCode {
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
-		t.Fatal(string(b))
+		t.Log(string(b))
+		require.Equal(t, expStatusCode, resp.StatusCode)
 	}
 	return resp
 }
@@ -322,6 +324,25 @@ func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.Backt
 	require.NoError(t, err)
 
 	u := fmt.Sprintf("%s/api/v1/rule/backtest", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) SubmitRuleForTesting(t *testing.T, config apimodels.PostableExtendedRuleNodeExtended) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(config)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/v1/rule/test/grafana", a.url)
 	// nolint:gosec
 	resp, err := http.Post(u, "application/json", &buf)
 	require.NoError(t, err)

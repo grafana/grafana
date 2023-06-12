@@ -12,7 +12,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector';
 
 import { DataTransformerID } from './ids';
 
@@ -39,7 +38,7 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         const dataFrame = new MutableDataFrame();
         const metricField: Field = {
           name: TIME_SERIES_METRIC_FIELD_NAME,
-          values: new ArrayVector(),
+          values: [],
           config: {},
           type: FieldType.string,
         };
@@ -71,14 +70,26 @@ export const seriesToRowsTransformer: DataTransformerInfo<SeriesToRowsTransforme
         for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
           const frame = data[frameIndex];
 
+          const firstNonTimeField = frame.fields[1];
+
+          // To support consistent naming for dataplane and prometheus
+          // displayNameFromDS > frameDisplayName
+          // This supports new naming and custom names (from the prom legend option)
+          // and supports the older pattern of getting the frame name.
+          // if neither of those return a name we use getFieldDisplayName which is good.
+          const displayNameFromDS = firstNonTimeField.config.displayNameFromDS;
+          const frameDisplayName = getFrameDisplayName(frame);
+
+          const displayName = displayNameFromDS ?? frameDisplayName;
+
           for (let valueIndex = 0; valueIndex < frame.length; valueIndex++) {
             const timeFieldIndex = timeFieldByIndex[frameIndex];
             const valueFieldIndex = timeFieldIndex === 0 ? 1 : 0;
 
             dataFrame.add({
-              [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values.get(valueIndex),
-              [TIME_SERIES_METRIC_FIELD_NAME]: getFrameDisplayName(frame),
-              [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values.get(valueIndex),
+              [TIME_SERIES_TIME_FIELD_NAME]: frame.fields[timeFieldIndex].values[valueIndex],
+              [TIME_SERIES_METRIC_FIELD_NAME]: displayName,
+              [TIME_SERIES_VALUE_FIELD_NAME]: frame.fields[valueFieldIndex].values[valueIndex],
             });
           }
         }
@@ -92,7 +103,7 @@ const copyFieldStructure = (field: Field, name: string): Field => {
   return {
     ...omit(field, ['values', 'state', 'labels', 'config', 'name']),
     name: name,
-    values: new ArrayVector(),
+    values: [],
     config: {
       ...omit(field.config, ['displayName', 'displayNameFromDS']),
     },

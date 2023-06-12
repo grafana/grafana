@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -14,10 +15,11 @@ type RepositoryImpl struct {
 	store store
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, tagService tag.Service) *RepositoryImpl {
+func ProvideService(db db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service) *RepositoryImpl {
 	return &RepositoryImpl{
 		store: &xormRepositoryImpl{
 			cfg:               cfg,
+			features:          features,
 			db:                db,
 			log:               log.New("annotations"),
 			tagService:        tagService,
