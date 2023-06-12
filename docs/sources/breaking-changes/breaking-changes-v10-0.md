@@ -216,7 +216,7 @@ Grafana v10.0.0 no longer supports the use of the [DoiT International BigQuery d
 
 #### Migration path
 
-For each BigQuery data source created with the DoiT International BigQuery data source plugin, a new data source must be created using the Official Grafana BigQuery data source plugin. Then, the `uid` for this newly-created data source must next be updated with the `uid` of the previously-created data source it was designed to mirror. This update can be accomplished through the use of the [Grafana Data Source HTTP API](https://grafana.com/docs/grafana-cloud/api-reference/http-api/data_source/). Simply query the 'old' data sources to obtain their `uid` values, and then update the `uid` property of the 'new' data source with the value from the 'old' data source.
+For everyone using Grafana 8.5+, it’s possible to import queries created with the DoiT International BigQuery community plugin by simply changing the data source to Grafana BigQuery in the data source selector in the affected panel. Please note that queries will be imported as raw SQL queries. More can be found [here](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
 
 **Note:**
 
