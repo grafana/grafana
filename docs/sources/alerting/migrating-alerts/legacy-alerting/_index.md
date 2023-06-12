@@ -29,9 +29,6 @@ You have two options to configure alerts within the Grafana Cloud GUI and a thir
   You can configure synthetic monitoring alerts separately using the UI in synthetic monitoring.
   Another option to create alerts for synthetic monitoring checks is to simply use Grafana Cloud alerting.
 
-Although Grafana alerts and Grafana Cloud Alerts share some common functionality, like the ability to integrate with external sources, they are two different systems that address different use cases.
-It is possible to use both methods in conjunction with each other.
-
 ## Using Grafana alerts in Grafana Cloud
 
 Grafana alerts are dashboard panel-driven and can only be created using the Graph panel.
