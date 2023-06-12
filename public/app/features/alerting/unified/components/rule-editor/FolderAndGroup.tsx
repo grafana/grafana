@@ -170,7 +170,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
         invalid={!!errors.group?.message}
       >
         <InputControl
-          render={({ field: { ref, ...field } }) =>
+          render={({ field: { ref, ...field }, fieldState }) =>
             loading ? (
               <LoadingPlaceholder text="Loading..." />
             ) : (
@@ -179,7 +179,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 inputId="group"
                 key={`my_unique_select_key__${selectedGroup?.title ?? ''}`}
                 {...field}
-                invalid={Boolean(folder) && !selectedGroup.title}
+                invalid={Boolean(folder) && !selectedGroup.title && Boolean(fieldState.error)}
                 loadOptions={debouncedSearch}
                 loadingMessage={'Loading groups...'}
                 defaultOptions={groupOptions}
