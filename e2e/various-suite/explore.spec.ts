@@ -33,7 +33,7 @@ e2e.scenario({
 
     // Both queries above should have been run and be shown in the query history
     e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
-    e2e.components.QueryHistory.queryText().should('have.length', 2).should('contain', 'csv_metric_values');
+    e2e.components.QueryHistory.queryText().should('have.length', 1).should('contain', 'csv_metric_values');
 
     // delete all queries
     cy.get('button[title="Delete query"]').each((button) => {
