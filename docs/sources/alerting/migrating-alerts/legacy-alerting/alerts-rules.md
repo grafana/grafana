@@ -14,7 +14,7 @@ weight: 100
 This page outlines the steps to use mimirtool and Prometheus-style rules with Grafana Cloud Alerting. You can load Prometheus alerting and recording rules that are evaluated entirely in Grafana Cloud. This allows for global rule evaluation over all of the metrics and logs stored in your Grafana Cloud stack.
 
 {{% admonition type="note" %}}
-`mimirtool` does _not_ support Loki. For more information, see [Loki documentation](/docs/loki/latest/rules/).
+`mimirtool` does _not_ support Loki.
 {{% /admonition %}}
 
 Prometheus-style alerting is driven by your Grafana Cloud Metrics, Grafana Cloud Logs, and Grafana Cloud Alerts instances. The Metrics and Logs instance holds the rules definition, while the Alerts instance is in charge of routing and managing the alerts that fire from the Metrics and Logs instance. These are separate systems that must be individually configured in order for alerting to work correctly.
@@ -25,7 +25,7 @@ The following sections cover all of these concepts:
 - How to upload alerting rules definition to your Grafana Cloud Logs instance
 - How to configure an Alertmanager for your Grafana Cloud Alerts instance, giving you access to the Alertmanager UI.
 
-**Note:** You need an API key with proper permissions. You can use the same API key for your Metric, Log, and Alerting instances. Refer to [Create a Grafana Cloud API key]({{< relref "../reference/create-api-key/" >}}) for instructions.
+**Note:** You need an API key with proper permissions. You can use the same API key for your Metric, Log, and Alerting instances.
 
 ## Download and install mimirtool
 

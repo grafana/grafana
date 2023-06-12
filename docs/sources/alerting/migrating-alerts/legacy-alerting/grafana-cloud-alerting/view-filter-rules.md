@@ -18,7 +18,7 @@ All members of an organization that have access to a particular data source can 
 1. Hover your cursor over the **Grafana Cloud Alerting** icon (alarm bell with Prometheus logo) and then click **Alerts and rules**.
 1. In the list at the top of the tab, select the data source for which you want to view rules.
 
-Grafana displays rules according to rule groups. If your instance has added namespaces and alert groups as described in [Prometheus-style rules]({{< relref "../alerts-rules/" >}}), then they will be ordered alphabetically. Otherwise, you will have one namespace called `default` and an alert group called `rules`.
+Grafana displays rules according to rule groups. If your instance has added namespaces and alert groups, then they will be ordered alphabetically. Otherwise, you will have one namespace called `default` and an alert group called `rules`.
 
 If an alert is firing, then click the down carrot arrow to see additional information. The Label and annotations section appears.
 
@@ -38,4 +38,4 @@ You can control which alerts you see and in what order they appear several ways.
 
 Click **View in Explore** or click the `expr` link to open the `expr` in [Explore](/docs/grafana/latest/explore/).
 
-> **Note:** Only users with Admin or Editor roles in an organization can use the Explore feature unless the [viewers_can_edit](/docs/grafana/latest/administration/configuration/#viewers_can_edit) configuration option is set.
+> **Note:** Only users with Admin or Editor roles in an organization can use the Explore feature unless the viewers can edit.

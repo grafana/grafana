@@ -13,7 +13,7 @@ By default, all alerting and recording rules created in Grafana Cloud Alerting w
 
 ## Managing namespaces
 
-While Grafana Cloud Alerting does support viewing multiple namespaces that have been added through the [mimirtool]({{< relref "../alerts-rules/" >}}), it is currently not possible to add new namespaces or to rename the existing ones.
+While Grafana Cloud Alerting does support viewing multiple namespaces that have been added through the mimirtool, it is currently not possible to add new namespaces or to rename the existing ones.
 
 ## Managing rule groups
 
