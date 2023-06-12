@@ -11,7 +11,7 @@ This component looks just like an icon but behaves like a button. It fulfils an 
 `IconButton` is best used when you only want an icon instead of a button with text, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the hamburger icon at the top left which opens the new navigation.
 When using `IconButton` right next to a text element consider wrapping both in a flex container and use `align-items: center;` to make them align properly.
 
-Always keep in mind to add text for a tooltip and an aria label.
+Always keep in mind to add text for a tooltip **or** an aria label. The tooltip will be used as the aria-label as well. In case there is an aria-label defined there will **not** be a tooltip.
 
 <Alert severity="warning" title={'Please note:'}>
   After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
