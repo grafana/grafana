@@ -846,7 +846,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -1943,7 +1945,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5243,7 +5247,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5969,7 +5975,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6509,7 +6517,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6686,7 +6696,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -7316,6 +7328,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 44f95e0e3d9eb3fc8891e94f7205c18e85adacab25b69906d3c5212875baa383
+hmac: 0f0ef4adadf108374b8f103b50cb77b94f54041553c978d4f917ce423189cc06
 
 ...
