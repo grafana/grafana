@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/create-edit-rules/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/create-edit-rules/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/create-edit-rules/
+description: Create and edit alert rules
 title: Create and edit alert rules
 weight: 200
 ---

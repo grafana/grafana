@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/namespaces-and-groups/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/namespaces-and-groups/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/namespaces-and-groups/
+description: Namespaces and rule groups
 title: Namespaces and rule groups
 weight: 400
 ---

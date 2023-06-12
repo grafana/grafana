@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/alertmanager/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/alertmanager/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/alertmanager/
+description: Alertmanager
 title: Alertmanager
 weight: 500
 ---

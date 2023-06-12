@@ -3,6 +3,7 @@ aliases:
   - /docs/grafana-cloud/alerts/grafana-cloud-alerting/view-filter-rules/
   - /docs/grafana-cloud/how-do-i/grafana-cloud-alerting/view-filter-alerts/
   - /docs/grafana-cloud/legacy-alerting/grafana-cloud-alerting/view-filter-rules/
+description: View and filter alert rules
 title: View and filter alert rules
 weight: 300
 ---
