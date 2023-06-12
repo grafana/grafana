@@ -212,7 +212,7 @@ You've installed and are using the [DoiT International BigQuery data source plug
 
 #### Description
 
-Grafana v10.0.0 no longer supports the use of the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana), which was moved to a "retired" state in the latter half of 2022, and whose GitHub repo was archived December 2022. For these BigQuery data sources to continue functioning, users are required to migrate to the [Official Grafana BigQuery data source plugin](https://github.com/grafana/google-bigquery-datasource/).
+In v10.0.0, Grafana no longer supports the use of the [DoiT International BigQuery data source plugin](https://github.com/doitintl/bigquery-grafana), which was moved to a "retired" state in the latter half of 2022, and for which the GitHub repo was archived in December 2022. For BigQuery data sources to continue functioning, you're required to migrate to the [Official Grafana BigQuery data source plugin](https://github.com/grafana/google-bigquery-datasource/).
 
 #### Migration path
 
