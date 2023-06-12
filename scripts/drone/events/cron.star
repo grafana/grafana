@@ -20,6 +20,7 @@ def cronjobs():
         scan_docker_image_pipeline("main"),
         scan_docker_image_pipeline("latest-ubuntu"),
         scan_docker_image_pipeline("main-ubuntu"),
+        scan_build_test_publish_docker_image_pipeline(),
         grafana_com_nightly_pipeline(),
     ]
 
@@ -63,22 +64,65 @@ def scan_docker_image_pipeline(tag):
         ],
     )
 
+def scan_build_test_publish_docker_image_pipeline():
+    """Generates a cronjob pipeline for nightly scans of grafana Docker images.
+
+    Returns:
+      Drone cronjob pipeline.
+    """
+
+    return cron_job_pipeline(
+        cronName = "nightly",
+        name = "scan-build-test-and-publish-docker-images",
+        steps = [
+            scan_docker_image_unknown_low_medium_vulnerabilities_step("all"),
+            scan_docker_image_high_critical_vulnerabilities_step("all"),
+            slack_job_failed_step("grafana-backend-ops", "build-images"),
+        ],
+    )
+
 def scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image):
+    """Generates a step for scans of Grafana Docker images.
+
+    Args:
+      docker_image: determines which image is scanned.
+
+    Returns:
+      Drone cronjob step .
+    """
+
+    cmds = []
+    if docker_image == "all":
+        for key in images:
+            cmds = cmds + ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + images[key]]
+    else:
+        cmds = ["trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image]
     return {
         "name": "scan-unknown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
-        "commands": [
-            "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image,
-        ],
+        "commands": cmds,
     }
 
 def scan_docker_image_high_critical_vulnerabilities_step(docker_image):
+    """Generates a step for scans of Grafana Docker images.
+
+    Args:
+      docker_image: determines which image is scanned.
+
+    Returns:
+      Drone cronjob step .
+    """
+
+    cmds = []
+    if docker_image == "all":
+        for key in images:
+            cmds = cmds + ["trivy --exit-code 1 --severity HIGH,CRITICAL " + images[key]]
+    else:
+        cmds = ["trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image]
     return {
         "name": "scan-high-critical-vulnerabilities",
         "image": aquasec_trivy_image,
-        "commands": [
-            "trivy --exit-code 1 --severity HIGH,CRITICAL " + docker_image,
-        ],
+        "commands": cmds,
     }
 
 def slack_job_failed_step(channel, image):
