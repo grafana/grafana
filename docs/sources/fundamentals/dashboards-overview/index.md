@@ -22,7 +22,7 @@ The following image illustrates a sample Grafana dashboard:
 
 A Grafana dashboard consists of panels displaying data in beautiful graphs, charts, and other visualizations. These panels are created using components that transform raw data from a data source into visualizations. The process involves passing data through three gates: a plugin, a query, and an optional transformation.
 
-The image below displays all the gates, followed by detailed explanations of their purpose, usage, and significance. The process of creating a visualization starts from the data source and progresses towards a Grafana dashboard.
+The image below displays all the gates, followed by detailed explanations of their purpose, usage, and significance.
 
 {{< figure src="/media/docs/grafana/dashboards-overview/dashboard-component-architecture.png" max-width="750px" caption="Dashboard component architecture" >}}
 
@@ -30,7 +30,7 @@ The image below displays all the gates, followed by detailed explanations of the
 
 A data source refers to any entity that consists of data. It can be an SQL database, Grafana Loki, Grafana Mimir, or a JSON-based API. It can even be a basic CSV file. The first step in creating a dashboard visualization is selecting the data source that contains the data you need.
 
-It can be difficult to understand the distinctions between different data sources as each possesses its own structure and requires different query methods. However, to streamline this complexity, Grafana Labs has created plugins that unify data sources into one coherent view.
+It can be difficult to understand the distinctions between different data sources as each possesses its own structure and requires different query methods. However, in dashboards, you can see different data sources visualized in one single view, making it easier to understand your data overall. 
 
 ## Plugins
 
