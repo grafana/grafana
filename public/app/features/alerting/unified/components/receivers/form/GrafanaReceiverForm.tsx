@@ -33,6 +33,7 @@ interface Props {
   alertManagerSourceName: string;
   config: AlertManagerCortexConfig;
   existing?: Receiver;
+  prefill?: Receiver;
 }
 
 const defaultChannelValues: GrafanaChannelValues = Object.freeze({
@@ -44,7 +45,7 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
   type: 'email',
 });
 
-export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
+export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName, config }: Props) => {
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 
@@ -66,6 +67,13 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     }
     return grafanaReceiverToFormValues(existing, grafanaNotifiers.result!);
   }, [existing, grafanaNotifiers.result]);
+
+  const [prefillValue] = useMemo(() => {
+    if (!prefill || !grafanaNotifiers.result) {
+      return [undefined, {}];
+    }
+    return grafanaReceiverToFormValues(prefill, grafanaNotifiers.result!);
+  }, [prefill, grafanaNotifiers.result]);
 
   const onSubmit = (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
@@ -131,7 +139,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
           isTestable={isTestable}
           config={config}
           onSubmit={onSubmit}
-          initialValues={existingValue}
+          initialValues={existingValue ?? prefillValue}
           onTestChannel={onTestChannel}
           notifiers={grafanaNotifiers.result}
           alertManagerSourceName={alertManagerSourceName}
