@@ -33,9 +33,13 @@ The following table shows all supported authentication providers and the feature
 
 ## Grafana Auth
 
-Grafana of course has a built in user authentication system with password authentication enabled by default. You can
-disable authentication by enabling anonymous access. You can also hide the login form and only allow login through an auth
-provider (listed above). There are also options for allowing self sign up.
+Grafana OSS and Grafana Enterprise, of course has a built in user authentication system with password authentication enabled 
+by default. For Grafana Cloud, the default authentication system uses your `grafana.com` account for authentication.  
+
+You can disable authentication by enabling anonymous access (not available on Grafana Cloud). 
+
+You can also hide the login form and only allow login through an auth provider (listed above). 
+There are also options for allowing self sign up (not available on Grafana Cloud).
 
 ### Login and short-lived tokens
 
@@ -95,6 +99,8 @@ org_role = Viewer
 
 If you change your organization name in the Grafana UI, this setting needs to be updated to match the new name.
 
+> Please Note: Anonymous authentication is not supported in Grafana Cloud.
+
 ### Basic authentication
 
 Basic auth is enabled by default and works with the built-in Grafana user-password authentication system and LDAP
@@ -107,6 +113,8 @@ To disable basic auth:
 enabled = false
 ```
 
+> Please Note: Basic authentication (or Local Grafana Authentication) is not supported in Grafana Cloud.
+
 ### Disable login form
 
 Hide the Grafana login form using the below configuration settings.
@@ -115,6 +123,8 @@ Hide the Grafana login form using the below configuration settings.
 [auth]
 disable_login_form = true
 ```
+
+> Please Note: For Grafana Cloud users, this option can only be configured under specific circumstances, e.g. when enabling LDAP Authentication, please contact Grafana Support for further assistance.
 
 ### Automatic OAuth login
 
