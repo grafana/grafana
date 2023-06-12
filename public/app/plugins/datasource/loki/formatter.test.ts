@@ -49,7 +49,7 @@ import {
   formatVectorExpr,
   formatDistinctFilter,
   formatDecolorizeExpr,
-} from './formatterTS';
+} from './formatter';
 
 describe('formats logql queries', () => {
   it('correctly formats a log query', () => {
