@@ -232,6 +232,14 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 	return pp, nil
 }
 
+// LoadComposableKindDef loads and validates a composable kind definition.
+// On success, it returns a [Def] which contains the entire contents of the kind definition.
+//
+// defpath is the path to the directory containing the composable kind definition,
+// relative to the root of the caller's repository.
+//
+// NOTE This function will be deprecated in favor of a more generic loader when kind
+// providers will be implemented.
 func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kindsys.Def[kindsys.ComposableProperties], error) {
 	pp := ParsedPlugin{
 		ComposableKinds: make(map[string]kindsys.Composable),
