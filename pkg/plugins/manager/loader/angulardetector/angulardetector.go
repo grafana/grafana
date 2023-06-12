@@ -53,7 +53,7 @@ func newHardcodedInspector() (Inspector, error) {
 }
 
 func ProvideInspector(cfg *config.Cfg) (Inspector, error) {
-	if cfg.Features.IsEnabled(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns) {
+	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns) {
 		return newRemoteInspector(cfg)
 	}
 	return newHardcodedInspector()
