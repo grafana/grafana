@@ -220,7 +220,7 @@ For everyone using Grafana v8.5+, it’s possible to import queries created with
 
 #### Learn more 
 
-[Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
+- [Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
 
 ## For Plugin Developers
 
