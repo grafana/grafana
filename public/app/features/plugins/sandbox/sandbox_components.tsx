@@ -7,13 +7,16 @@ import { isFunction, isSandboxedPluginObject } from './utils';
 
 /**
  * Plugins must render their components inside a div with a `data-plugin-sandbox` attribute
+ * that has their pluginId as value.
  * If they don't they won't work as expected because they won't be able to get DOM elements
+ * This affect all type of plugins.
  *
  * One could say this wrapping should occur inside the Panel,Datasource and App clases inside `@grafana/*`
  * packages like `@grafana/data` but this is not the case. Even though this code is less future-proof than
  * putting it there we have the following cases to cover:
  *
- * - plugins could start bundling grafana dependencies (thus not getting updates on sandboxing code)
+ * - plugins could start bundling grafana dependencies: thus not getting updates on sandboxing code or worse,
+ *   modifying the code to escape the sandbox
  * - we leak sandboxing code outside of the sandbox configuration. This mean some sandboxing leftover could be
  *   left in non-sandboxed code (e.g. sandbox wrappers showing up even if sandbox is disabled)
  *
