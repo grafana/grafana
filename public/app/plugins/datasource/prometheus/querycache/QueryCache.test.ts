@@ -61,7 +61,7 @@ const mockPromRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQu
 
 const getPromProfileData = (request: DataQueryRequest, targ: PromQuery): DatasourceProfileData => {
   return {
-    expr: targ.expr,
+    expr: targ.expr ?? '',
     interval: targ.interval ?? request.interval,
     datasource: 'prom',
   };

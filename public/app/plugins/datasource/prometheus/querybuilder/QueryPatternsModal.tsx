@@ -43,7 +43,7 @@ export const QueryPatternsModal = (props: Props) => {
   }, [query.expr]);
 
   const onPatternSelect = (pattern: PromQueryPattern, selectAsNewQuery = false) => {
-    const visualQuery = buildVisualQueryFromString(selectAsNewQuery ? '' : query.expr);
+    const visualQuery = buildVisualQueryFromString(selectAsNewQuery ? '' : query.expr ?? '');
     reportInteraction('grafana_prom_kickstart_your_query_selected', {
       app: app ?? '',
       editorMode: query.editorMode,

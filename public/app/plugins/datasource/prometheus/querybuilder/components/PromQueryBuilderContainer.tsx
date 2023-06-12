@@ -34,10 +34,10 @@ const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyc
  */
 export function PromQueryBuilderContainer(props: Props) {
   const { query, onChange, onRunQuery, datasource, data, showExplain } = props;
-  const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
+  const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr ?? '' });
   // Only rebuild visual query if expr changes from outside
   useEffect(() => {
-    dispatch(exprChanged(query.expr));
+    dispatch(exprChanged(query.expr ?? ''));
 
     if (prometheusMetricEncyclopedia) {
       dispatch(

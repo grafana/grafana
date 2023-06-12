@@ -13,7 +13,7 @@ import { PromVisualQuery } from '../types';
 export const EXPLAIN_LABEL_FILTER_CONTENT = 'Fetch all series matching metric name and label filters.';
 
 export interface Props {
-  query: string;
+  query?: string;
 }
 
 export const PromQueryBuilderExplained = React.memo<Props>(({ query }) => {

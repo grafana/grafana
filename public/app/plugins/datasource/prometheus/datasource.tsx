@@ -165,7 +165,7 @@ export class PrometheusDatasource
   };
 
   getQueryDisplayText(query: PromQuery) {
-    return query.expr;
+    return query.expr ?? '';
   }
 
   getPrometheusProfileData(request: DataQueryRequest<PromQuery>, targ: PromQuery) {
@@ -357,7 +357,7 @@ export class PrometheusDatasource
         continue;
       }
 
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr?.includes(m));
 
       // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
       if (options.app === CoreApp.Explore && target.range === target.instant) {
@@ -380,7 +380,7 @@ export class PrometheusDatasource
           // Only create exemplar target for different metric names
           if (
             !metricName ||
-            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
+            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr?.includes(metricName)))
           ) {
             const exemplarTarget = cloneDeep(target);
             exemplarTarget.instant = false;
@@ -408,7 +408,7 @@ export class PrometheusDatasource
         if (target.exemplar && !target.instant) {
           if (
             !metricName ||
-            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr.includes(metricName)))
+            (metricName && !activeTargets.some((activeTarget) => activeTarget.expr?.includes(metricName)))
           ) {
             const exemplarTarget = cloneDeep(target);
             queries.push(this.createQuery(exemplarTarget, options, start, end));
@@ -430,12 +430,12 @@ export class PrometheusDatasource
   shouldRunExemplarQuery(target: PromQuery, request: DataQueryRequest<PromQuery>): boolean {
     if (target.exemplar) {
       // We check all already processed targets and only create exemplar target for not used metric names
-      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr.includes(m));
+      const metricName = this.languageProvider.histogramMetrics.find((m) => target.expr?.includes(m));
       // Remove targets that weren't processed yet (in targets array they are after current target)
       const currentTargetIdx = request.targets.findIndex((t) => t.refId === target.refId);
       const targets = request.targets.slice(0, currentTargetIdx).filter((t) => !t.hide);
 
-      if (!metricName || (metricName && !targets.some((t) => t.expr.includes(metricName)))) {
+      if (!metricName || (metricName && !targets.some((t) => t.expr?.includes(metricName)))) {
         return true;
       }
       return false;
@@ -958,7 +958,7 @@ export class PrometheusDatasource
     const url = '/api/v1/query_exemplars';
     return this._request<PromDataSuccessResponse<PromExemplarData>>(
       url,
-      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
+      { query: query.expr ?? '', start: query.start.toString(), end: query.end.toString() },
       { requestId: query.requestId, headers: query.headers }
     );
   }
@@ -1219,7 +1219,7 @@ export class PrometheusDatasource
     return getOriginalMetricName(labelData);
   }
 
-  enhanceExprWithAdHocFilters(expr: string) {
+  enhanceExprWithAdHocFilters(expr?: string) {
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
     const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
@@ -1229,7 +1229,7 @@ export class PrometheusDatasource
         value = prometheusRegularEscape(value);
       }
       return addLabelToQuery(acc, key, value, operator);
-    }, expr);
+    }, expr ?? '');
     return finalQuery;
   }
 
@@ -1264,7 +1264,7 @@ export class PrometheusDatasource
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
 
-  interpolateString(string: string) {
+  interpolateString(string?: string) {
     return this.templateSrv.replace(string, undefined, this.interpolateQueryExpr);
   }
 

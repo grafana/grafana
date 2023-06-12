@@ -23,7 +23,7 @@ type Metric = {
 };
 
 export type DataProvider = {
-  getHistory: () => Promise<string[]>;
+  getHistory: () => Promise<Array<string | undefined>>;
   getAllMetricNames: () => Promise<Metric[]>;
   getAllLabelNames: () => Promise<string[]>;
   getLabelValues: (labelName: string) => Promise<string[]>;
@@ -80,8 +80,8 @@ async function getAllHistoryCompletions(dataProvider: DataProvider): Promise<Com
   // FIXME: find a better history-limit
   return allHistory.slice(0, 10).map((expr) => ({
     type: 'HISTORY',
-    label: expr,
-    insertText: expr,
+    label: expr ?? '',
+    insertText: expr ?? '',
   }));
 }
 

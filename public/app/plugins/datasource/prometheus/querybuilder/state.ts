@@ -43,7 +43,7 @@ export function getQueryWithDefaults(
   let result = query;
 
   if (!query.editorMode) {
-    result = { ...query, editorMode: getDefaultEditorMode(query.expr, defaultEditor) };
+    result = { ...query, editorMode: getDefaultEditorMode(query.expr ?? '', defaultEditor) };
   }
 
   // default query expr is now empty string, set in getDefaultQuery

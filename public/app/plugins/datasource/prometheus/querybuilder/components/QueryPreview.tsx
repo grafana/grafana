@@ -6,7 +6,7 @@ import promqlGrammar from '../../promql';
 import { RawQuery } from '../shared/RawQuery';
 
 export interface Props {
-  query: string;
+  query?: string;
 }
 
 export function QueryPreview({ query }: Props) {

@@ -278,7 +278,7 @@ export function transform(
     legendFormat: transformOptions.target.legendFormat,
     start: transformOptions.query.start,
     end: transformOptions.query.end,
-    query: transformOptions.query.expr,
+    query: transformOptions.query.expr ?? '',
     responseListLength: transformOptions.responseListLength,
     scopedVars: transformOptions.scopedVars,
     refId: transformOptions.target.refId,

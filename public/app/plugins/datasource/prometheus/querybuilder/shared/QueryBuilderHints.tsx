@@ -54,7 +54,7 @@ export const QueryBuilderHints = <T extends PromLokiVisualQuery>({
                     if (hint?.fix?.action) {
                       const query = { expr: queryModeller.renderQuery(visualQuery), refId: '' };
                       const newQuery = datasource.modifyQuery(query, hint.fix.action);
-                      const newVisualQuery = buildVisualQueryFromString(newQuery.expr);
+                      const newVisualQuery = buildVisualQueryFromString(newQuery.expr ?? '');
                       return onChange(newVisualQuery.query);
                     }
                   }}

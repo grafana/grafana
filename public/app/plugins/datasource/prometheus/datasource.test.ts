@@ -1831,7 +1831,7 @@ describe('PrometheusDatasource2', () => {
         interval: '60s',
       } as DataQueryRequest<PromQuery>;
       const urlExpected = `proxied/api/v1/query_range?query=${encodeURIComponent(
-        query.targets[0].expr
+        query.targets[0].expr as string
       )}&start=0&end=3600&step=60`;
 
       replaceMock.mockImplementation((str) => str);
