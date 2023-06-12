@@ -393,7 +393,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.OrgID)
 	if err != nil {
 		if errors.Is(err, plugincontext.ErrPluginNotFound) {
 			return response.Error(404, "Plugin not found", nil)
