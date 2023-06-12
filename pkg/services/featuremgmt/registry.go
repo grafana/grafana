@@ -554,7 +554,7 @@ var (
 			Name:         "dashboardEmbed",
 			Description:  "Allow embedding dashboard for external use in Code editors",
 			FrontendOnly: true,
-			State:        FeatureStateAlpha,
+			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAsCodeSquad,
 		},
 		{
