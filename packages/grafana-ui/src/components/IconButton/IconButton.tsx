@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, colorManipulator, deprecationWarning } from '@grafana/data';
 
@@ -27,32 +27,26 @@ interface BaseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 interface BasePropsWithTooltip extends BaseProps {
-  /** Tooltip content to display on hover */
+  /** Tooltip content to display on hover and as the aria-label */
   tooltip: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
-  /** Text available only for screen readers. Will use tooltip text as fallback. */
-  ariaLabel?: string;
 }
 
 interface BasePropsWithAriaLabel extends BaseProps {
-  /** Tooltip content to display on hover */
-  tooltip?: PopoverContent;
-  /** Position of the tooltip */
-  tooltipPlacement?: TooltipPlacement;
-  /** Text available only for screen readers. Will use tooltip text as fallback. */
+  /** Text available only for screen readers. No tooltip will be set in this case. */
   ariaLabel: string;
 }
 
 export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
 
-export const IconButton = React.forwardRef<HTMLButtonElement, BasePropsWithTooltip | BasePropsWithAriaLabel>(
+export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
   (
     {
       name,
       size = 'md',
       iconType,
-      tooltip,
+      tooltip = '',
       tooltipPlacement,
       ariaLabel,
       className,
@@ -72,17 +66,23 @@ export const IconButton = React.forwardRef<HTMLButtonElement, BasePropsWithToolt
       limitedIconSize = size;
     }
 
+    const [_, setTooltipShown] = useState(false);
+
     const styles = getStyles(theme, limitedIconSize, variant);
-    const tooltipString = typeof tooltip === 'string' ? tooltip : '';
+
+    const handleVisibleChange = useCallback((visible: boolean) => {
+      setTooltipShown(visible);
+    }, []);
 
     // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
     const button = (
       <button
         ref={tooltip ? undefined : ref}
-        aria-label={ariaLabel || tooltipString}
+        aria-label={ariaLabel || tooltip}
         {...restProps}
         className={cx(styles.button, className)}
         type="button"
+        aria-labelledby="tooltip-body"
       >
         <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
       </button>
@@ -90,7 +90,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, BasePropsWithToolt
 
     if (tooltip) {
       return (
-        <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
+        <Tooltip onTooltipVisible={handleVisibleChange} ref={ref} content={tooltip} placement={tooltipPlacement}>
           {button}
         </Tooltip>
       );
