@@ -77,17 +77,9 @@ const AnnotationsField = () => {
   };
 
   const handleDeleteDashboardAnnotation = () => {
-    const updatedAnnotations = produce(annotations, (draft) => {
-      const dashboardAnnotation = draft.find((a) => a.key === Annotation.dashboardUID);
-      const panelAnnotation = draft.find((a) => a.key === Annotation.panelID);
-
-      if (dashboardAnnotation) {
-        dashboardAnnotation.value = '';
-      }
-      if (panelAnnotation) {
-        panelAnnotation.value = '';
-      }
-    });
+    const updatedAnnotations = annotations.filter(
+      (a) => a.key !== Annotation.dashboardUID && a.key !== Annotation.panelID
+    );
     setValue('annotations', updatedAnnotations);
     setSelectedDashboard(undefined);
     setSelectedPanel(undefined);
