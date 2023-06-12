@@ -357,7 +357,7 @@ export function SelectBase<T>({
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
-            return <SingleValue {...props} disabled={disabled} />;
+            return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
