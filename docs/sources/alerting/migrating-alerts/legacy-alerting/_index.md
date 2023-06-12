@@ -16,11 +16,7 @@ Starting with Grafana v9.0.0, legacy alerting is deprecated. It is no longer act
 
 You have two options to configure alerts within the Grafana Cloud GUI and a third option that enables you to set Grafana Cloud Alerts using the command line.
 
-{{% admonition type="note" %}}
-The new [unified alerting](/blog/2021/06/14/the-new-unified-alerting-system-for-grafana-everything-you-need-to-know/) is currently being deployed to Grafana Cloud, it is enabled by default for new accounts since October 15, 2021.
-{{% /admonition %}}
-
-- **Grafana alerts** are the same as with [alerting](/docs/grafana/latest/alerting) in an on-prem instance of Grafana.
+- **Grafana alerts** are the same as in an on-prem instance of Grafana.
   These alerts are created from a graph panel within a Grafana dashboard.
   This is useful when you want to create a simple alert based on one metric from within a panel.
   It also has a much simpler learning curve when you are getting started.
@@ -30,7 +26,7 @@ The new [unified alerting](/blog/2021/06/14/the-new-unified-alerting-system-for-
 - **Grafana Cloud alerts - CLI** use `mimirtool` to create and upload the same types of Prometheus-style recording and alerting rules definitions to your Grafana Cloud Metrics instance.
   Once created, you will also be able to view these rules from within the Grafana Cloud Alerting page in the GUI.
 - **Synthetic Monitoring alerts** are built on Prometheus alerts, just like in Grafana Cloud alerting.
-  You can configure [Synthetic Monitoring alerts]({{< relref "../synthetic-monitoring/synthetic-monitoring-alerting" >}}) separately using the UI in synthetic monitoring.
+  You can configure synthetic monitoring alerts separately using the UI in synthetic monitoring.
   Another option to create alerts for synthetic monitoring checks is to simply use Grafana Cloud alerting.
 
 Although Grafana alerts and Grafana Cloud Alerts share some common functionality, like the ability to integrate with external sources, they are two different systems that address different use cases.
@@ -71,7 +67,7 @@ Because the metrics you collect and send to Grafana Cloud are centrally stored i
 You can also query across any logs you have sent using Loki.
 
 Grafana Cloud Alerts are directly tied to metrics and log data.
-They can be configured either through the [Grafana Cloud Alerting UI]({{< relref "./grafana-cloud-alerting/" >}}) or by uploading files containing [Prometheus and Loki rules with mimirtool]({{< relref "./alerts-rules" >}}).
+They can be configured either through the UI or by uploading files containing Prometheus and Loki alert rules with mimirtool.
 
 Grafana Cloud Alerting's Prometheus-style alerts are built by querying directly from the data source itself.
 Because these alerts are based on the data, they are not tied to a single panel.
@@ -96,11 +92,7 @@ In a traditional on-prem environment, Prometheus-style alert configuration is do
 With Grafana Cloud, you can still use this setup as well as more flexible architectures.
 
 - You can use `mimirtool` to upload your configuration files to be hosted and evaluated entirely in Grafana Cloud.
-- You can manage both alerting rules and Alertmanager configurations directly through the [Grafana Cloud Alerting interface]({{< relref "./grafana-cloud-alerting/" >}}).
+- You can manage both alerting rules and Alertmanager configurations directly through the UI.
   Configuration files are unnecessary with this setup.
 - You can use both methods concurrently to manage the alerts.
   For example, updates made using the `mimirtool` are automatically updated and visible within the Grafana Cloud Alerting interface in minutes.
-
-{{% admonition type="note" %}}
-Grafana Cloud Alerting is built off of Prometheus-style alerts and works well with [Grafana Agent]({{< relref "../data-configuration/agent" >}})!
-{{% /admonition %}}
