@@ -72,3 +72,25 @@ example, inspect all DOM elements access and generally speaking all objects that
 Currently the distortions implemented are in the distortion_map folder and mostly revolve around preventing plugins from
 creating forbidden elements (iframes) and to fix functionality that is otherwise broken inside the child realm (e.g. Web
 workers)
+
+## Diagram
+
+Here's an example of a distortion in an fetch call from inside a child realm upon an onClick event:
+
+```mermaid
+sequenceDiagram
+    participant blue as Incubator Realm
+    participant proxy as DistortionHandler
+    participant red as Child Window
+    blue ->> red: Handle (onClick)
+    red ->> red: run handleClick
+    Note right of red: handleClick tries to<br> run a fetch() request
+    red ->> proxy: get fetch function
+    Note over red, proxy: This is not the fetch call itself, this is<br>"give me the function object I'll use<br> when I call fetch"
+    proxy ->> blue: should distord [fetch] ?
+    blue ->> proxy: use [distortedFetch]
+    proxy ->> red: use [distortedFetch] (modified object)
+    Note over red, proxy: Returns a function that will<br> be called as the "fetch" function
+    red ->> red: run fetch
+    Note right of red: Code runs a fetch() request<br> using the distorted fetch function
+```
