@@ -126,6 +126,24 @@ When you are ready to create a query, you can choose the specific metric name fr
 The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
 
+#### Metrics Explorer
+
+{{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+
+If you would like to explore your metrics further, you can open the **Metrics Explorer** by clicking the first option in the metric select.
+
+{{< figure src="/static/img/docs/prometheus/metrics-explorer-option.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+
+The metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type and description for each metric. You can enter text into the search input to filter results.
+You can also filter by type.
+
+There are also additional settings for the following items:
+
+- Include description in search. Search by name **and** description
+- Include results with no metadata. Many prometheus metrics have no metadata. This allows users to include metrics with undefined type and descrition.
+- Disable text wrap.
+- Enable regex search. This uses the prometheus API to enable regex search for the metric name.
+
 ### Label filters
 
 Select desired labels and their values from the dropdown list.
