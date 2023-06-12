@@ -4,9 +4,11 @@ import Skeleton from 'react-loading-skeleton';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Span } from '@grafana/ui/src/unstable';
+import { SearchLayout } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
@@ -82,7 +84,20 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
       )}
       <Span variant="body" truncate>
         {item.url ? (
-          <Link href={item.url} className={styles.link}>
+          <Link
+            onClick={() => {
+              reportInteraction('manage_dashboards_result_clicked', {
+                layout: SearchLayout.Folders,
+                starred: false,
+                sortValue: undefined,
+                query: '',
+                tagCount: 0,
+                includePanels: false,
+              });
+            }}
+            href={item.url}
+            className={styles.link}
+          >
             {item.title}
           </Link>
         ) : (
