@@ -148,9 +148,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-function trackAction(action: 'move' | 'delete', selectedDashboards: string[], selectedFolders: string[]) {
-  const interactionIdentifier =
-    action === 'move' ? 'grafana_manage_dashboards_item_moved' : 'grafana_manage_dashboards_item_deleted';
+type actionType = 'move' | 'delete';
+const actionMap: Record<actionType, string> = {
+  move: 'grafana_manage_dashboards_item_moved',
+  delete: 'grafana_manage_dashboards_item_deleted',
+};
+
+function trackAction(action: actionType, selectedDashboards: string[], selectedFolders: string[]) {
   const itemTypes = [];
   if (selectedFolders.length > 0) {
     itemTypes.push('folder');
@@ -158,7 +162,7 @@ function trackAction(action: 'move' | 'delete', selectedDashboards: string[], se
   if (selectedDashboards.length > 0) {
     itemTypes.push('dashboard');
   }
-  reportInteraction(interactionIdentifier, {
+  reportInteraction(actionMap[action], {
     item_type: itemTypes.join(','),
     source: 'tree_actions',
   });

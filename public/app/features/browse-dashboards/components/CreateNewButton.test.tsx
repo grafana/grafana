@@ -5,24 +5,11 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { FolderDTO } from 'app/types';
 
+import { mockFolderDTO } from '../fixtures/folder.fixture';
+
 import CreateNewButton from './CreateNewButton';
 
-const mockParentFolder: FolderDTO = {
-  canAdmin: true,
-  canDelete: true,
-  canEdit: true,
-  canSave: true,
-  created: '',
-  createdBy: '',
-  hasAcl: true,
-  id: 1,
-  title: 'myFolder',
-  uid: '12345',
-  updated: '',
-  updatedBy: '',
-  url: '',
-  version: 1,
-};
+const mockParentFolder = mockFolderDTO();
 
 function render(...[ui, options]: Parameters<typeof rtlRender>) {
   rtlRender(<TestProvider>{ui}</TestProvider>, options);

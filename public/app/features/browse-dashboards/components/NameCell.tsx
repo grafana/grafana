@@ -8,7 +8,6 @@ import { reportInteraction } from '@grafana/runtime';
 import { IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Span } from '@grafana/ui/src/unstable';
-import { SearchLayout } from 'app/features/search/types';
 
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
@@ -86,14 +85,7 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
         {item.url ? (
           <Link
             onClick={() => {
-              reportInteraction('manage_dashboards_result_clicked', {
-                layout: SearchLayout.Folders,
-                starred: false,
-                sortValue: undefined,
-                query: '',
-                tagCount: 0,
-                includePanels: false,
-              });
+              reportInteraction('manage_dashboards_result_clicked');
             }}
             href={item.url}
             className={styles.link}
