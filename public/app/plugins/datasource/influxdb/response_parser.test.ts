@@ -1,7 +1,7 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
 
-import { AnnotationEvent, DataQueryRequest, dateTime, FieldType, MutableDataFrame } from '@grafana/data';
+import { AnnotationEvent, DataFrame, DataQueryRequest, dateTime, FieldType, MutableDataFrame } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -296,6 +296,17 @@ describe('influxdb response parser', () => {
     });
   });
 
+  describe('table with aliases', () => {
+    it('should parse the table with alias', () => {
+      const table = parser.getTable(mockDataFramesWithAlias, mockQuery, { preferredVisualisationType: 'table' });
+      expect(table.columns.length).toBe(4);
+      expect(table.columns[0].text).toBe('Time');
+      expect(table.columns[1].text).toBe('geohash');
+      expect(table.columns[2].text).toBe('ALIAS1');
+      expect(table.columns[3].text).toBe('ALIAS2');
+    });
+  });
+
   describe('When issuing annotationQuery', () => {
     const ctx = {
       ds: getMockDS(getMockDSInstanceSettings()),
@@ -459,3 +470,231 @@ describe('influxdb response parser', () => {
     });
   });
 });
+
+const mockQuery: InfluxQuery = {
+  datasource: {
+    type: 'influxdb',
+    uid: '12345',
+  },
+  groupBy: [
+    {
+      params: ['$__interval'],
+      type: 'time',
+    },
+    {
+      type: 'tag',
+      params: ['geohash::tag'],
+    },
+    {
+      params: ['null'],
+      type: 'fill',
+    },
+  ],
+  measurement: 'cpu',
+  orderByTime: 'ASC',
+  policy: 'bar',
+  refId: 'A',
+  resultFormat: 'table',
+  select: [
+    [
+      {
+        type: 'field',
+        params: ['value'],
+      },
+      {
+        type: 'mean',
+        params: [],
+      },
+      {
+        type: 'alias',
+        params: ['ALIAS1'],
+      },
+    ],
+    [
+      {
+        type: 'field',
+        params: ['value'],
+      },
+      {
+        type: 'mean',
+        params: [],
+      },
+      {
+        type: 'alias',
+        params: ['ALIAS2'],
+      },
+    ],
+  ],
+  tags: [],
+};
+
+const mockDataFramesWithAlias: DataFrame[] = [
+  {
+    name: 'cpu.ALIAS1 { geohash: tz6h548nc111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'tz6h548nc111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS1 { geohash: tz6h548nc111 }',
+        },
+        values: [null, 111.98024577663908, null],
+      },
+    ],
+    length: 1801,
+  },
+  {
+    name: 'cpu.ALIAS2 { geohash: tz6h548nc111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'tz6h548nc111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS2 { geohash: tz6h548nc111 }',
+        },
+        values: [null, 111.98024577663908, null],
+      },
+    ],
+    length: 1801,
+  },
+  {
+    name: 'cpu.ALIAS1 { geohash: wj7c61wnv111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'wj7c61wnv111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS1 { geohash: wj7c61wnv111 }',
+        },
+        values: [null, 112.97136059147347, null],
+      },
+    ],
+    length: 1801,
+  },
+  {
+    name: 'cpu.ALIAS2 { geohash: wj7c61wnv111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'wj7c61wnv111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS2 { geohash: wj7c61wnv111 }',
+        },
+        values: [null, 112.97136059147347, null],
+      },
+    ],
+    length: 1801,
+  },
+  {
+    name: 'cpu.ALIAS1 { geohash: wr50zpuhj111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'wr50zpuhj111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS1 { geohash: wr50zpuhj111 }',
+        },
+        values: [null, 112.27638560052755, null],
+      },
+    ],
+    length: 1801,
+  },
+  {
+    name: 'cpu.ALIAS2 { geohash: wr50zpuhj111 }',
+    refId: 'A',
+    meta: {
+      executedQueryString:
+        'SELECT mean("value") AS "ALIAS1", mean("value") AS "ALIAS2" FROM "bar"."cpu" WHERE time >= 1686582333244ms and time <= 1686583233244ms GROUP BY time(500ms), "geohash"::tag fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686582333000, 1686582333500, 1686582334000],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        labels: {
+          geohash: 'wr50zpuhj111',
+        },
+        config: {
+          displayNameFromDS: 'cpu.ALIAS2 { geohash: wr50zpuhj111 }',
+        },
+        values: [null, 112.27638560052755, null],
+      },
+    ],
+    length: 1801,
+  },
+];
