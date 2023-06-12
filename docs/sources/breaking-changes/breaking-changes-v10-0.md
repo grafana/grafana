@@ -222,8 +222,6 @@ For everyone using Grafana 8.5+, it’s possible to import queries created with 
 
 [Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
 
-**Note:**
-
 ## For Plugin Developers
 
 ### Upgrading to React 18
