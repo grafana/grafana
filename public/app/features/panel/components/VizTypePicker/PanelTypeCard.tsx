@@ -64,6 +64,7 @@ export const PanelTypeCard = ({
           }}
           className={styles.deleteButton}
           aria-label="Delete button on panel type card"
+          tooltip="Delete"
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 import { LokiVariableQuery, LokiVariableQueryType } from '../types';
 
 export const labelNamesRegex = /^label_names\(\)\s*$/;
-export const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
+export const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_$][a-zA-Z0-9_]*)\)\s*$/;
 
 export function migrateVariableQuery(rawQuery: string | LokiVariableQuery): LokiVariableQuery {
   // If not string, we assume LokiVariableQuery
