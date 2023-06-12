@@ -48,3 +48,7 @@ func (i fakeEntityStore) Search(ctx context.Context, r *entity.EntitySearchReque
 func (i fakeEntityStore) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
 	return fmt.Errorf("unimplemented")
 }
+
+func (s fakeEntityStore) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntitySearchResponse, error) {
+	return nil, fmt.Errorf("unimplemented")
+}

@@ -141,10 +141,11 @@ var exporters = []Exporter{
 }
 
 type StandardExport struct {
-	logger  log.Logger
-	glive   *live.GrafanaLive
-	mutex   sync.Mutex
-	dataDir string
+	logger   log.Logger
+	glive    *live.GrafanaLive
+	mutex    sync.Mutex
+	dataDir  string
+	features featuremgmt.FeatureToggles
 
 	// Services
 	db                        db.DB
@@ -177,6 +178,7 @@ func ProvideService(db db.DB, features featuremgmt.FeatureToggles, gl *live.Graf
 		preferenceService:         preferenceService,
 		exportJob:                 &stoppedJob{},
 		dataDir:                   cfg.DataPath,
+		features:                  features,
 		store:                     store,
 		db:                        db,
 	}
@@ -230,7 +232,7 @@ func (ex *StandardExport) HandleRequestExport(c *contextmodel.ReqContext) respon
 	case "dummy":
 		job, err = startDummyExportJob(cfg, broadcast)
 	case "entityStore":
-		job, err = startEntityStoreJob(ctx, cfg, broadcast, ex.db, ex.playlistService,
+		job, err = startEntityStoreJob(ctx, ex.features, cfg, broadcast, ex.db, ex.playlistService,
 			ex.store, ex.dashboardsnapshotsService, ex.preferenceService)
 	case "git":
 		dir := filepath.Join(ex.dataDir, "export_git", fmt.Sprintf("git_%d", time.Now().Unix()))
