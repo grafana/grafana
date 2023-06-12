@@ -98,12 +98,6 @@ func (s *Service) syncVectorStore(ctx context.Context) error {
 	return nil
 }
 
-type VectorMetadataRequest struct {
-	OrgID                      int64
-	PluginID                   string
-	DataSourceInstanceSettings *backend.DataSourceInstanceSettings
-}
-
 // syncVectorStoreForDatasource syncs the vector store with the latest metadata from a datasource.
 //
 // It:

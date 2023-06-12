@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	logger                       = log.New("vector")
-	DataSourceCollectionTemplate = "grafana-datasource-%s-%s-"
+	logger                             = log.New("vector")
+	DataSourceCollectionPrefixTemplate = "grafana-datasource-%s-%s-"
 )
 
 // TODO: make this an interface
@@ -84,7 +84,7 @@ func datasourceCollections(ctx context.Context, client VectorClient, datasourceT
 	if err != nil {
 		return nil, err
 	}
-	prefix := fmt.Sprintf(DataSourceCollectionTemplate, datasourceType, datasourceUID)
+	prefix := fmt.Sprintf(DataSourceCollectionPrefixTemplate, datasourceType, datasourceUID)
 	collections := make([]collection, 0)
 	for _, c := range allCollections {
 		if !strings.HasPrefix(c, prefix) {
