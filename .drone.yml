@@ -6925,7 +6925,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
   image: aquasec/trivy:0.21.0
@@ -6955,7 +6955,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
   image: aquasec/trivy:0.21.0
@@ -6985,7 +6985,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   image: aquasec/trivy:0.21.0
@@ -7016,7 +7016,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
   image: aquasec/trivy:0.21.0
@@ -7242,6 +7242,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: caf02d8ce78dd5c2fd6d841d0661702e74571c07939c6af602ac11d1790b31b8
+hmac: 4e45ceef4d3bcbdadb78c0a8e5e3f71e609af6c4a6ad50daeaf74b87bf437397
 
 ...

@@ -57,15 +57,15 @@ def scan_docker_image_pipeline(tag):
         cronName = "nightly",
         name = "scan-" + docker_image + "-image",
         steps = [
-            scan_docker_image_unkown_low_medium_vulnerabilities_step(docker_image),
+            scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image),
             scan_docker_image_high_critical_vulnerabilities_step(docker_image),
             slack_job_failed_step("grafana-backend-ops", docker_image),
         ],
     )
 
-def scan_docker_image_unkown_low_medium_vulnerabilities_step(docker_image):
+def scan_docker_image_unknown_low_medium_vulnerabilities_step(docker_image):
     return {
-        "name": "scan-unkown-low-medium-vulnerabilities",
+        "name": "scan-unknown-low-medium-vulnerabilities",
         "image": aquasec_trivy_image,
         "commands": [
             "trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM " + docker_image,
