@@ -60,12 +60,18 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   async getRichHistory(filters: RichHistorySearchFilters) {
     const params = buildQueryParams(filters);
 
+    let requestId = 'query-history-get-all';
+
+    if (filters.starred) {
+      requestId = 'query-history-get-starred';
+    }
+
     const queryHistory = await lastValueFrom(
       getBackendSrv().fetch<RichHistoryRemoteStorageResultsPayloadDTO>({
         method: 'GET',
         url: `/api/query-history?${params}`,
         // to ensure any previous requests are cancelled
-        requestId: 'query-history-get-all',
+        requestId,
       })
     );
 
