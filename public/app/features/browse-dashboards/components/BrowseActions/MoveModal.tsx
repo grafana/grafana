@@ -11,20 +11,27 @@ import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
-  onConfirm: (targetFolderUid: string) => void;
+  onConfirm: (targetFolderUid: string) => Promise<void>;
   onDismiss: () => void;
   selectedItems: DashboardTreeSelection;
 }
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
+  const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
-  const onMove = () => {
+  const onMove = async () => {
     if (moveTarget !== undefined) {
-      onConfirm(moveTarget);
+      setIsMoving(true);
+      try {
+        await onConfirm(moveTarget);
+        setIsMoving(false);
+        onDismiss();
+      } catch {
+        setIsMoving(false);
+      }
     }
-    onDismiss();
   };
 
   return (
@@ -45,8 +52,8 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         <Button onClick={onDismiss} variant="secondary" fill="outline">
           Cancel
         </Button>
-        <Button disabled={moveTarget === undefined} onClick={onMove} variant="primary">
-          Move
+        <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
+          {isMoving ? 'Moving...' : 'Move'}
         </Button>
       </Modal.ButtonRow>
     </Modal>

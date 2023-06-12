@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -73,6 +74,7 @@ export function BrowseActions() {
       const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
+    trackAction('delete', selectedDashboards, selectedFolders);
     onActionComplete(parentsToRefresh);
   };
 
@@ -97,6 +99,7 @@ export function BrowseActions() {
       const dashboard = findItem(rootItems?.items ?? [], childrenByParentUID, dashboardUID);
       parentsToRefresh.add(dashboard?.parentUID);
     }
+    trackAction('move', selectedDashboards, selectedFolders);
     onActionComplete(parentsToRefresh);
   };
 
@@ -144,3 +147,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(2),
   }),
 });
+
+type actionType = 'move' | 'delete';
+const actionMap: Record<actionType, string> = {
+  move: 'grafana_manage_dashboards_item_moved',
+  delete: 'grafana_manage_dashboards_item_deleted',
+};
+
+function trackAction(action: actionType, selectedDashboards: string[], selectedFolders: string[]) {
+  reportInteraction(actionMap[action], {
+    item_counts: {
+      folder: selectedFolders.length,
+      dashboard: selectedDashboards.length,
+    },
+    source: 'tree_actions',
+  });
+}
