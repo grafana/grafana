@@ -2,6 +2,11 @@
 This module has functions for Drone services to be used in pipelines.
 """
 
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+
 def integration_test_services_volumes():
     return [
         {"name": "postgres", "temp": {"medium": "memory"}},
@@ -12,7 +17,7 @@ def integration_test_services(edition):
     services = [
         {
             "name": "postgres",
-            "image": "postgres:12.3-alpine",
+            "image": images["postgres_alpine_image"],
             "environment": {
                 "POSTGRES_USER": "grafanatest",
                 "POSTGRES_PASSWORD": "grafanatest",
@@ -25,7 +30,7 @@ def integration_test_services(edition):
         },
         {
             "name": "mysql",
-            "image": "mysql:5.7.39",
+            "image": images["mysql5_image"],
             "environment": {
                 "MYSQL_ROOT_PASSWORD": "rootpass",
                 "MYSQL_DATABASE": "grafana_tests",
@@ -57,7 +62,7 @@ def integration_test_services(edition):
 def ldap_service():
     return {
         "name": "ldap",
-        "image": "osixia/openldap:1.4.0",
+        "image": images["openldap_image"],
         "environment": {
             "LDAP_ADMIN_PASSWORD": "grafana",
             "LDAP_DOMAIN": "grafana.org",
