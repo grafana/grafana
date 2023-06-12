@@ -25,10 +25,6 @@ func (m *MigrationBase) SkipMigrationLog() bool {
 	return false
 }
 
-func (m *MigrationBase) Validate() error {
-	return nil
-}
-
 type RawSQLMigration struct {
 	MigrationBase
 
@@ -113,10 +109,6 @@ func (m *AddColumnMigration) Column(col *Column) *AddColumnMigration {
 
 func (m *AddColumnMigration) SQL(dialect Dialect) string {
 	return dialect.AddColumnSQL(m.tableName, m.column)
-}
-
-func (m *AddColumnMigration) Validate() error {
-	return m.column.Validate()
 }
 
 type RenameColumnMigration struct {
@@ -207,15 +199,6 @@ func NewAddTableMigration(table Table) *AddTableMigration {
 
 func (m *AddTableMigration) SQL(d Dialect) string {
 	return d.CreateTableSQL(&m.table)
-}
-
-func (m *AddTableMigration) Validate() error {
-	for _, col := range m.table.Columns {
-		if err := col.Validate(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 type DropTableMigration struct {

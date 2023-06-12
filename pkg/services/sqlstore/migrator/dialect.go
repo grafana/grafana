@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"xorm.io/xorm"
@@ -129,15 +130,12 @@ func (b *BaseDialect) EqStr() string {
 
 func (b *BaseDialect) Default(col *Column) string {
 	if col.Type == DB_Bool {
-		bl, err := ParseBoolStr(col.Default)
+		// Ensure that all dialects support the same literals in the same way.
+		bl, err := strconv.ParseBool(col.Default)
 		if err != nil {
-			// This should not be possible since we validate the default value before migration.
-			return col.Default
+			panic(fmt.Errorf("failed to create default value for column '%s': invalid boolean default value '%s'", col.Name, col.Default))
 		}
-		if bl == nil {
-			return "NULL"
-		}
-		return b.dialect.BooleanStr(*bl)
+		return b.dialect.BooleanStr(bl)
 	}
 	return col.Default
 }
