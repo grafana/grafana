@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // defaultDetectors contains all the detectors to detect Angular plugins.
@@ -29,10 +30,10 @@ func newDefaultStaticDetectorsGetter() detectorsProvider {
 	return &staticDetectorsProvider{detectors: defaultDetectors}
 }
 
-// newDefaultInspector returns the default Inspector, which is a PatternsListInspector that will:
+// newRemoteInspector returns the default remote Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
-func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
+func newRemoteInspector(cfg *config.Cfg) (Inspector, error) {
 	remoteGetter, err := newGCOMDetectorsProvider(cfg.GrafanaComURL, defaultGCOMDetectorsProviderTTL)
 	if err != nil {
 		return nil, fmt.Errorf("newGCOMDetectorsProvider: %w", err)
@@ -45,6 +46,15 @@ func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
 	}, nil
 }
 
+// newHardcodedInspector returns the default Inspector, which is a PatternsListInspector that only uses the
+// hardcoded (static) angular detection patterns.
+func newHardcodedInspector() (Inspector, error) {
+	return &PatternsListInspector{detectorsProvider: newDefaultStaticDetectorsGetter()}, nil
+}
+
 func ProvideInspector(cfg *config.Cfg) (Inspector, error) {
-	return newDefaultInspector(cfg)
+	if cfg.Features.IsEnabled(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns) {
+		return newRemoteInspector(cfg)
+	}
+	return newHardcodedInspector()
 }

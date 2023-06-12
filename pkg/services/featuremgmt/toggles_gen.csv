@@ -81,3 +81,4 @@ extraThemes,alpha,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,alpha,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,alpha,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,beta,@grafana/grafana-bi-squad,false,false,false,true
+pluginsRemoteAngularDetectionPatterns,alpha,@grafana/plugins-platform-backend,false,false,false,false

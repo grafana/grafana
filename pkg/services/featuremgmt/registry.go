@@ -556,5 +556,12 @@ var (
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "pluginsRemoteAngularDetectionPatterns",
+			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
+			State:        FeatureStateAlpha,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )
