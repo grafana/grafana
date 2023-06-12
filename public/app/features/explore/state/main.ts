@@ -141,8 +141,7 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitClose.match(action)) {
-    const panes = { ...state.panes };
-    delete panes[action.payload];
+    const { [action.payload]: _, ...panes } = { ...state.panes };
 
     return {
       ...state,

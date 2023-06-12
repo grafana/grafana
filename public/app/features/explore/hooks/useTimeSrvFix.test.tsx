@@ -3,6 +3,7 @@ import { createMemoryHistory } from 'history';
 import { stringify } from 'querystring';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { HistoryWrapper } from '@grafana/runtime';
 
@@ -13,10 +14,28 @@ describe('useTimeSrvFix', () => {
     const history = createMemoryHistory({
       initialEntries: [{ pathname: '/explore', search: stringify({ from: '1', to: '2' }) }],
     });
+
     const location = new HistoryWrapper(history);
 
+    const context = getGrafanaContextMock();
+
     renderHook(() => useTimeSrvFix(), {
-      wrapper: ({ children }) => <TestProvider grafanaContext={{ location }}>{children}</TestProvider>,
+      wrapper: ({ children }) => (
+        <TestProvider
+          grafanaContext={{
+            ...context,
+            location,
+            config: {
+              ...context.config,
+              featureToggles: {
+                exploreMixedDatasource: true,
+              },
+            },
+          }}
+        >
+          {children}
+        </TestProvider>
+      ),
     });
 
     await waitFor(() => {

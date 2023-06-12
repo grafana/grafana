@@ -402,7 +402,7 @@ function pruneObject(obj: object): object | undefined {
   return pruned;
 }
 
-export const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
   if (isDateTime(from)) {
     from = from.valueOf().toString(10);

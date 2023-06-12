@@ -13,7 +13,7 @@ export interface Props {
   storeState?: Partial<StoreState>;
   store?: ToolkitStore;
   children: React.ReactNode;
-  grafanaContext?: Partial<GrafanaContextType>;
+  grafanaContext?: GrafanaContextType;
 }
 
 /**
