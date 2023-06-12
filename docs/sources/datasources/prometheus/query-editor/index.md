@@ -128,7 +128,7 @@ You can also enter text into the selector when the dropdown is open to search an
 
 #### Metrics Explorer
 
-{{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+{{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
 If you would like to explore your metrics further, you can open the **Metrics Explorer** by clicking the first option in the metric select.
 
@@ -140,7 +140,7 @@ You can also filter by type.
 There are also additional settings for the following items:
 
 - Include description in search. Search by name **and** description
-- Include results with no metadata. Many prometheus metrics have no metadata. This allows users to include metrics with undefined type and descrition.
+- Include results with no metadata. Many prometheus metrics have no metadata. This allows users to include metrics with undefined type and description.
 - Disable text wrap.
 - Enable regex search. This uses the prometheus API to enable regex search for the metric name.
 
