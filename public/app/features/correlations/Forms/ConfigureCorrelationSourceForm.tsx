@@ -37,7 +37,7 @@ export const ConfigureCorrelationSourceForm = () => {
   return (
     <>
       <FieldSet
-        label={`Configure the data source for ${
+        label={`Configure the data source that will link to ${
           getDatasourceSrv().getInstanceSettings(correlation?.targetUID)?.name
         } (Step 3 of 3)`}
       >
