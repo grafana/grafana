@@ -24,10 +24,14 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const onMove = async () => {
     if (moveTarget !== undefined) {
       setIsMoving(true);
-      await onConfirm(moveTarget);
-      setIsMoving(false);
+      try {
+        await onConfirm(moveTarget);
+        setIsMoving(false);
+        onDismiss();
+      } catch {
+        setIsMoving(false);
+      }
     }
-    onDismiss();
   };
 
   return (

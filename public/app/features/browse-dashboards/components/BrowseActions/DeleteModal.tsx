@@ -19,9 +19,13 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const [isDeleting, setIsDeleting] = useState(false);
   const onDelete = async () => {
     setIsDeleting(true);
-    await onConfirm();
-    setIsDeleting(false);
-    onDismiss();
+    try {
+      await onConfirm();
+      setIsDeleting(false);
+      onDismiss();
+    } catch {
+      setIsDeleting(false);
+    }
   };
 
   return (

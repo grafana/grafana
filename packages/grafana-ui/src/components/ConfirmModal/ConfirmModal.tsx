@@ -37,7 +37,9 @@ export interface ConfirmModalProps {
   alternativeText?: string;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
-  /** Confirm action callback */
+  /** Confirm action callback
+   * Return a promise to disable the confirm button until the promise is resolved
+   */
   onConfirm(): void | Promise<void>;
   /** Dismiss action callback */
   onDismiss(): void;
@@ -85,8 +87,11 @@ export const ConfirmModal = ({
 
   const onConfirmClick = async () => {
     setDisabled(true);
-    await onConfirm();
-    setDisabled(false);
+    try {
+      await onConfirm();
+    } finally {
+      setDisabled(false);
+    }
   };
 
   return (
