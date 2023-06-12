@@ -162,6 +162,10 @@ export class QueryGroup extends PureComponent<Props, State> {
       dataSource: dataSource,
       dsSettings: newSettings,
     });
+
+    if (defaultQueries) {
+      this.props.onRunQueries();
+    }
   };
 
   onAddQueryClick = () => {

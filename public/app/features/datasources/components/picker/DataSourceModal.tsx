@@ -1,16 +1,8 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
 import React, { useState } from 'react';
-import { DropEvent, FileRejection } from 'react-dropzone';
 
-import {
-  DataFrame,
-  DataFrameJSON,
-  dataFrameToJSON,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
@@ -23,14 +15,15 @@ import {
   Icon,
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { fileDropHandler } from 'app/plugins/datasource/grafana/utils';
 
 import { useDatasource } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
-import { fileDropHandler, matchDataSourceWithSearch } from './utils';
+import { matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspickermodal_clicked';
 const INTERACTION_ITEM = {
