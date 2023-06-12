@@ -278,7 +278,9 @@ type GetCorrelationsQuery struct {
 	// default:1
 	Page int64 `json:"page"`
 
-	// Filters to be applied to correlations
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// required:false
 	SourceUIDs []string `json:"sourceuid"`
 }
 

@@ -267,6 +267,12 @@ Status codes:
 
 Get all correlations.
 
+Query parameters:
+
+- **page** - Optional. Specify which page number to return. Use the limit parameter to specify the number of queries per page. The default is page 1.
+- **limit** - Optional. Limits the number of returned correlations per page. The default is 100 queries per page.
+- **sourceuid** - Optional. Specify a source datasource UID to filter by. This can be repeated to filter by multiple datasources.
+
 **Example request:**
 
 ```http
