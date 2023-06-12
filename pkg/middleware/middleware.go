@@ -52,10 +52,18 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				addNoCacheHeaders(c.Resp)
 			}
 
-			if !cfg.AllowEmbedding {
+			if !cfg.AllowEmbedding && !strings.HasPrefix(c.Req.URL.Path, "/d-embed") {
 				addXFrameOptionsDenyHeader(w)
 			}
 			addSecurityHeaders(w, cfg)
+		})
+	}
+}
+
+func RemoveXFrameOptionsDenyHeader() web.Handler {
+	return func(c *web.Context) {
+		c.Resp.Before(func(w web.ResponseWriter) {
+			removeXFrameOptionsDenyHeader(w)
 		})
 	}
 }
@@ -90,6 +98,10 @@ func addNoCacheHeaders(w web.ResponseWriter) {
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "deny")
+}
+
+func removeXFrameOptionsDenyHeader(w web.ResponseWriter) {
+	w.Header().Del("X-Frame-Options")
 }
 
 func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
