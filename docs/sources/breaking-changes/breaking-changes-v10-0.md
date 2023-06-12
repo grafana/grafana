@@ -216,9 +216,9 @@ In v10.0.0, Grafana no longer supports the use of the [DoiT International BigQue
 
 #### Migration path
 
-For everyone using Grafana v8.5+, it’s possible to import queries created with the DoiT International BigQuery community plugin by simply changing the data source to Grafana BigQuery in the data source selector in the affected panel. Please note that [queries will be imported](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin) as raw SQL queries. 
+For everyone using Grafana v8.5+, it’s possible to import queries created with the DoiT International BigQuery community plugin by simply changing the data source to Grafana BigQuery in the data source selector in the affected panel. Please note that [queries will be imported](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin) as raw SQL queries.
 
-#### Learn more 
+#### Learn more
 
 - [Information about importing DoiT International BigQuery queries](https://github.com/grafana/google-bigquery-datasource#importing-queries-created-with-doit-international-bigquery-datasource-plugin).
 
