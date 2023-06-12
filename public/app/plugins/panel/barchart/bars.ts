@@ -493,12 +493,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
         let heightReduce = 0;
         let widthReduce = 0;
 
+        const rect = hRect && findRect(qt, hRect.sidx - 1, hRect.didx);
         // get height of bar rect at same index of the series below the hovered one
-        if (isStacked && isHovered && hRect!.sidx > 1) {
+        if (isStacked && isHovered && hRect!.sidx > 1 && rect) {
           if (isXHorizontal) {
-            heightReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.h;
+            heightReduce = rect.h;
           } else {
-            widthReduce = findRect(qt, hRect!.sidx - 1, hRect!.didx)!.w;
+            widthReduce = rect.w;
           }
         }
 
