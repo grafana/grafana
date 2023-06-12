@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -22,13 +23,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ Job = new(entityStoreJob)
 
 type entityStoreJob struct {
-	logger log.Logger
+	logger   log.Logger
+	features featuremgmt.FeatureToggles
 
 	statusMu      sync.Mutex
 	status        ExportStatus
@@ -45,6 +48,7 @@ type entityStoreJob struct {
 }
 
 func startEntityStoreJob(ctx context.Context,
+	features featuremgmt.FeatureToggles,
 	cfg ExportConfig,
 	broadcaster statusBroadcaster,
 	db db.DB,
@@ -55,6 +59,7 @@ func startEntityStoreJob(ctx context.Context,
 ) (Job, error) {
 	job := &entityStoreJob{
 		logger:      log.New("export_to_object_store_job"),
+		features:    features,
 		cfg:         cfg,
 		ctx:         ctx,
 		broadcaster: broadcaster,
@@ -129,40 +134,43 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		folders[dash.ID] = dash.UID
 	}
 
-	for idx, dash := range folderInfo {
-		rowUser.OrgID = dash.OrgID
-		rowUser.UserID = dash.UpdatedBy
-		if dash.UpdatedBy < 0 {
+	for idx, fobj := range folderInfo {
+		rowUser.OrgID = fobj.OrgID
+		rowUser.UserID = fobj.UpdatedBy
+		if fobj.UpdatedBy < 0 {
 			rowUser.UserID = 0 // avoid Uint64Val issue????
 		}
-		f := folder.Model{Name: dash.Title}
+		f := folder.Model{Name: fobj.Title}
 		d, _ := json.Marshal(f)
+		if fobj.ParentUID == nil || *fobj.ParentUID == "" {
+			fobj.ParentUID = util.Pointer(folders[fobj.FolderID])
+		}
 
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
-				UID:  dash.UID,
+				UID:  fobj.UID,
 				Kind: entity.StandardKindFolder,
 			},
 			ClearHistory: true,
-			CreatedAt:    dash.Created.UnixMilli(),
-			UpdatedAt:    dash.Updated.UnixMilli(),
-			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
-			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
+			CreatedAt:    fobj.Created.UnixMilli(),
+			UpdatedAt:    fobj.Updated.UnixMilli(),
+			UpdatedBy:    fmt.Sprintf("user:%d", fobj.UpdatedBy),
+			CreatedBy:    fmt.Sprintf("user:%d", fobj.CreatedBy),
 			Body:         d,
-			Folder:       folders[dash.FolderID],
+			Folder:       *fobj.ParentUID,
 			Comment:      "(exported from SQL)",
 			Origin: &entity.EntityOriginInfo{
 				Source: "export-from-sql",
 			},
 		})
 		if err != nil {
-			e.status.Status = fmt.Sprintf("error exporting folder[%d]%s: %s", idx, dash.Title, err.Error())
+			e.status.Status = fmt.Sprintf("error exporting folder[%d]%s: %s", idx, fobj.Title, err.Error())
 			return
 		}
 		e.status.Changed = time.Now().UnixMilli()
 		e.status.Index++
 		e.status.Count[what] += 1
-		e.status.Last = fmt.Sprintf("FOLDER: %s", dash.UID)
+		e.status.Last = fmt.Sprintf("FOLDER: %s", fobj.UID)
 		e.broadcaster(e.status)
 	}
 
@@ -472,7 +480,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		}
 		info := []libraryPanelInfo{}
 
-		e.status.Status = fmt.Sprintf("loading panels for: %d", orgId)
+		e.status.Status = fmt.Sprintf("loading %s for: org-%d", what, orgId)
 		e.broadcaster(e.status)
 		err = e.sess.Select(ctx, &info, `SELECT 
 			dashboard.uid as folder_uid,
@@ -538,7 +546,9 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			e.broadcaster(e.status)
 		}
 	}
-
+	e.status.Changed = time.Now().UnixMilli()
+	e.status.Last = "finished"
+	e.broadcaster(e.status)
 }
 
 type dashInfo struct {
@@ -555,15 +565,17 @@ type dashInfo struct {
 }
 
 type folderInfo struct {
-	ID        int64 `db:"id"`
-	OrgID     int64 `db:"org_id"`
-	UID       string
-	Title     string
-	Created   time.Time
-	Updated   time.Time
-	CreatedBy int64 `db:"created_by"`
-	UpdatedBy int64 `db:"updated_by"`
-	FolderID  int64 `db:"folder_id"`
+	ID          int64 `db:"id"`
+	OrgID       int64 `db:"org_id"`
+	UID         string
+	Title       string
+	Description *string
+	Created     time.Time
+	Updated     time.Time
+	CreatedBy   int64   `db:"created_by"`
+	UpdatedBy   int64   `db:"updated_by"`
+	FolderID    int64   `db:"folder_id"`
+	ParentUID   *string `db:"parent_uid"`
 }
 
 // TODO, paging etc
@@ -578,11 +590,17 @@ func (e *entityStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 
 // TODO, paging etc
 func (e *entityStoreJob) getFolders(ctx context.Context) ([]folderInfo, error) {
-	e.status.Last = "find dashbaords...."
+	e.status.Last = "find folders...."
 	e.broadcaster(e.status)
 
+	var err error
 	dash := make([]folderInfo, 0)
-	err := e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
+	if e.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		err = e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,parent_uid,description,created,updated FROM folder")
+		// ??? JOIN ??? created_by,updated_by
+	} else {
+		err = e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
+	}
 	return dash, err
 }
 

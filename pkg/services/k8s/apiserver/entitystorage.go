@@ -350,15 +350,19 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 			streamer.SetInputStream(i)
 			return err
 		case "ref":
-			refs := make(map[string]interface{})
-			refs["TODO"] = "find references"
+			rsp, err := s.store.FindReferences(ctx, &entity.ReferenceRequest{
+				Kind: grn.Kind,
+				Uid:  grn.UID,
+			})
+			if err != nil {
+				return err
+			}
 
 			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
-				raw, err := json.Marshal(refs)
+				raw, err := json.Marshal(rsp)
 				if err != nil {
 					return nil, false, "", err
 				}
-				fmt.Printf("REFS: %s\n", string(raw))
 				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
 			}
 
