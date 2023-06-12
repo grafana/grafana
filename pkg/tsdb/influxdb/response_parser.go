@@ -70,7 +70,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 	}
 	frames := make([]*data.Frame, 0, len(rows)+cols)
 
-	// frameName is pre-allocated so we can reuse it, saving memory.
+	// frameName is pre-allocated. So we can reuse it, saving memory.
 	// It's sized for a reasonably-large name, but will grow if needed.
 	frameName := make([]byte, 0, 128)
 
@@ -87,111 +87,118 @@ func transformRows(rows []Row, query Query) data.Frames {
 		}
 
 		if !hasTimeCol {
-			var values []string
-
-			if retentionPolicyQuery {
-				values = make([]string, 1, len(row.Values))
-			} else {
-				values = make([]string, 0, len(row.Values))
-			}
-
-			for _, valuePair := range row.Values {
-				if tagValuesQuery {
-					if len(valuePair) >= 2 {
-						values = append(values, valuePair[1].(string))
-					}
-				} else if retentionPolicyQuery {
-					// We want to know whether the given retention policy is the default one or not.
-					// If it is default policy then we should add it to the beginning.
-					// The index 4 gives us if that policy is default or not.
-					// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
-					// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
-					// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
-					// Since it is always the last value we will check that last value always.
-					if len(valuePair) >= 1 {
-						if valuePair[len(row.Columns)-1].(bool) {
-							values[0] = valuePair[0].(string)
-						} else {
-							values = append(values, valuePair[0].(string))
-						}
-					}
-				} else {
-					if len(valuePair) >= 1 {
-						values = append(values, valuePair[0].(string))
-					}
-				}
-			}
-
-			field := data.NewField("Value", nil, values)
-			frames = append(frames, data.NewFrame(row.Name, field))
+			newFrame := newFrameWithoutTimeField(row, retentionPolicyQuery, tagValuesQuery)
+			frames = append(frames, newFrame)
 		} else {
 			for colIndex, column := range row.Columns {
 				if column == "time" {
 					continue
 				}
-
-				var timeArray []time.Time
-				var floatArray []*float64
-				var stringArray []*string
-				var boolArray []*bool
-				valType := typeof(row.Values, colIndex)
-
-				for _, valuePair := range row.Values {
-					timestamp, timestampErr := parseTimestamp(valuePair[0])
-					// we only add this row if the timestamp is valid
-					if timestampErr == nil {
-						timeArray = append(timeArray, timestamp)
-						switch valType {
-						case "string":
-							{
-								value, chk := valuePair[colIndex].(string)
-								if chk {
-									stringArray = append(stringArray, &value)
-								} else {
-									stringArray = append(stringArray, nil)
-								}
-							}
-						case "json.Number":
-							value := parseNumber(valuePair[colIndex])
-							floatArray = append(floatArray, value)
-						case "bool":
-							value, chk := valuePair[colIndex].(bool)
-							if chk {
-								boolArray = append(boolArray, &value)
-							} else {
-								boolArray = append(boolArray, nil)
-							}
-						case "null":
-							floatArray = append(floatArray, nil)
-						}
-					}
-				}
-
-				name := string(formatFrameName(row, column, query, frameName[:]))
-
-				timeField := data.NewField("Time", nil, timeArray)
-				if valType == "string" {
-					valueField := data.NewField("Value", row.Tags, stringArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "json.Number" {
-					valueField := data.NewField("Value", row.Tags, floatArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "bool" {
-					valueField := data.NewField("Value", row.Tags, boolArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				} else if valType == "null" {
-					valueField := data.NewField("Value", row.Tags, floatArray)
-					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
-					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
-				}
+				newFrame := newFrameWithTimeField(row, column, colIndex, query, frameName)
+				frames = append(frames, newFrame)
 			}
 		}
 	}
 
 	return frames
+}
+
+func newFrameWithTimeField(row Row, column string, colIndex int, query Query, frameName []byte) *data.Frame {
+	var timeArray []time.Time
+	var floatArray []*float64
+	var stringArray []*string
+	var boolArray []*bool
+	valType := typeof(row.Values, colIndex)
+
+	for _, valuePair := range row.Values {
+		timestamp, timestampErr := parseTimestamp(valuePair[0])
+		// we only add this row if the timestamp is valid
+		if timestampErr != nil {
+			continue
+		}
+
+		timeArray = append(timeArray, timestamp)
+		switch valType {
+		case "string":
+			value, ok := valuePair[colIndex].(string)
+			if ok {
+				stringArray = append(stringArray, &value)
+			} else {
+				stringArray = append(stringArray, nil)
+			}
+		case "json.Number":
+			value := parseNumber(valuePair[colIndex])
+			floatArray = append(floatArray, value)
+		case "bool":
+			value, ok := valuePair[colIndex].(bool)
+			if ok {
+				boolArray = append(boolArray, &value)
+			} else {
+				boolArray = append(boolArray, nil)
+			}
+		case "null":
+			floatArray = append(floatArray, nil)
+		}
+	}
+
+	timeField := data.NewField("Time", nil, timeArray)
+
+	var valueField *data.Field
+
+	switch valType {
+	case "string":
+		valueField = data.NewField("Value", row.Tags, stringArray)
+	case "json.Number":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	case "bool":
+		valueField = data.NewField("Value", row.Tags, boolArray)
+	case "null":
+		valueField = data.NewField("Value", row.Tags, floatArray)
+	}
+
+	name := string(formatFrameName(row, column, query, frameName[:]))
+	valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
+	return newDataFrame(name, query.RawQuery, timeField, valueField)
+}
+
+func newFrameWithoutTimeField(row Row, retentionPolicyQuery bool, tagValuesQuery bool) *data.Frame {
+	var values []string
+
+	if retentionPolicyQuery {
+		values = make([]string, 1, len(row.Values))
+	} else {
+		values = make([]string, 0, len(row.Values))
+	}
+
+	for _, valuePair := range row.Values {
+		if tagValuesQuery {
+			if len(valuePair) >= 2 {
+				values = append(values, valuePair[1].(string))
+			}
+		} else if retentionPolicyQuery {
+			// We want to know whether the given retention policy is the default one or not.
+			// If it is default policy then we should add it to the beginning.
+			// The index 4 gives us if that policy is default or not.
+			// https://docs.influxdata.com/influxdb/v1.8/query_language/explore-schema/#show-retention-policies
+			// Only difference is v0.9. In that version we don't receive shardGroupDuration value.
+			// https://archive.docs.influxdata.com/influxdb/v0.9/query_language/schema_exploration/#show-retention-policies
+			// Since it is always the last value we will check that last value always.
+			if len(valuePair) >= 1 {
+				if valuePair[len(row.Columns)-1].(bool) {
+					values[0] = valuePair[0].(string)
+				} else {
+					values = append(values, valuePair[0].(string))
+				}
+			}
+		} else {
+			if len(valuePair) >= 1 {
+				values = append(values, valuePair[0].(string))
+			}
+		}
+	}
+
+	field := data.NewField("Value", nil, values)
+	return data.NewFrame(row.Name, field)
 }
 
 func newDataFrame(name string, queryString string, timeField *data.Field, valueField *data.Field) *data.Frame {
