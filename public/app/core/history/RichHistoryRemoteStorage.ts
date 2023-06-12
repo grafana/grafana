@@ -113,7 +113,6 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
 }
 
 function buildQueryParams(filters: RichHistorySearchFilters): string {
-  console.log('buildQueryParams - filters', filters);
   let params = `${filters.datasourceFilters
     .map((datasourceName) => {
       const uid = getDataSourceSrv().getInstanceSettings(datasourceName)!.uid;
