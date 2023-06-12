@@ -15,7 +15,8 @@ weight: 1300
 # Prometheus data source
 
 Grafana ships with built-in support for Prometheus.
-This topic explains options, variables, querying, and other features specific to the Prometheus data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor/" >}}).
+
+<!-- This topic explains options, variables, querying, and other features specific to the Prometheus data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor/" >}}). -->
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
