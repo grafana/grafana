@@ -56,7 +56,11 @@ export const CloneRuleButton = React.forwardRef<HTMLAnchorElement, CloneRuleButt
             </div>
           }
           confirmText="Copy"
-          onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
+          onConfirm={() => {
+            if (provRuleCloneUrl) {
+              locationService.push(provRuleCloneUrl);
+            }
+          }}
           onDismiss={() => setProvRuleCloneUrl(undefined)}
         />
       </>
