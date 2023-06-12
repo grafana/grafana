@@ -134,11 +134,12 @@ describe('<SpanDetail>', () => {
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
   });
 
-  it('lists the service name, duration and start time', () => {
+  it('lists the service name, duration, start time and kind', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByText('Duration:')).toBeInTheDocument();
     expect(screen.getByText('Service:')).toBeInTheDocument();
     expect(screen.getByText('Start Time:')).toBeInTheDocument();
+    expect(screen.getByText('Kind:')).toBeInTheDocument();
   });
 
   it('start time shows the absolute time', () => {

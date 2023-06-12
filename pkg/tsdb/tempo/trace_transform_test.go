@@ -50,7 +50,7 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, 1616072924072.852, span["startTime"])
 		require.Equal(t, 0.094, span["duration"])
 		require.Equal(t, json.RawMessage("[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]"), span["logs"])
-		require.Equal(t, json.RawMessage("[{\"value\":0,\"key\":\"status.code\"}]"), span["intrinsics"])
+		require.Equal(t, json.RawMessage("[{\"value\":0,\"key\":\"otel.status_code\"}]"), span["intrinsics"])
 	})
 
 	t.Run("should transform correct traceID", func(t *testing.T) {

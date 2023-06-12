@@ -56,25 +56,20 @@ const getTagMatches = (spans: TraceSpan[], tags: Tag[]) => {
       // match against every tag filter
       return tags.every((tag: Tag) => {
         if (tag.key && tag.value) {
-          if (span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.intrinsics && span.intrinsics.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv)))) {
+          if (
+            span.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+            (span.intrinsics && span.intrinsics.some((kv) => checkKeyAndValueForMatch(tag, kv))) ||
+            span.process.tags.some((kv) => checkKeyAndValueForMatch(tag, kv)) ||
+            (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyAndValueForMatch(tag, kv))))
+          ) {
             return getReturnValue(tag.operator, true);
           }
         } else if (tag.key) {
-          if (span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.intrinsics && span.intrinsics.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-            return getReturnValue(tag.operator, true);
-          } else if (span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key))) {
-            return getReturnValue(tag.operator, true);
-          } else if (
-            span.logs &&
-            span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key)))
+          if (
+            span.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
+            (span.intrinsics && span.intrinsics.some((kv) => checkKeyForMatch(tag.key!, kv.key))) ||
+            span.process.tags.some((kv) => checkKeyForMatch(tag.key!, kv.key)) ||
+            (span.logs && span.logs.some((log) => log.fields.some((kv) => checkKeyForMatch(tag.key!, kv.key))))
           ) {
             return getReturnValue(tag.operator, true);
           }

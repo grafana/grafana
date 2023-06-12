@@ -113,7 +113,7 @@ export function findServerChildSpan(spans: TraceSpan[]) {
 
 export const isKindClient = (span: TraceSpan): Boolean => {
   if (span.intrinsics) {
-    return span.intrinsics.some(({ key, value }) => key === 'span.kind' && value === 'client');
+    return span.intrinsics.some(({ key, value }) => key === 'kind' && value === 'client');
   }
   return false;
 };

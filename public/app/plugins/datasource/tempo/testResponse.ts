@@ -1940,7 +1940,7 @@ export const otlpDataFrameFromResponse = new MutableDataFrame({
       values: [
         [
           {
-            key: 'span.kind',
+            key: 'kind',
             value: 'client',
           },
         ],
@@ -2101,7 +2101,7 @@ export const otlpDataFrameToResponse = new MutableDataFrame({
       values: [
         [
           {
-            key: 'span.kind',
+            key: 'kind',
             value: 'client',
           },
         ],

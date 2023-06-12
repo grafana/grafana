@@ -59,14 +59,14 @@ describe('TraceTimelineViewer/utils', () => {
   describe('spanHasIntrinsic() and variants', () => {
     it('returns true if the key/value pair is found', () => {
       const span = traceGenerator.span;
-      span.intrinsics = [{ key: 'span.kind', value: 'server' }];
-      expect(spanHasIntrinsic('span.kind', 'client', span)).toBe(false);
-      expect(spanHasIntrinsic('span.kind', 'server', span)).toBe(true);
+      span.intrinsics = [{ key: 'kind', value: 'server' }];
+      expect(spanHasIntrinsic('kind', 'client', span)).toBe(false);
+      expect(spanHasIntrinsic('kind', 'server', span)).toBe(true);
     });
 
     const spanTypeTestCases = [
-      { fn: isClientSpan, name: 'isClientSpan', key: 'span.kind', value: 'client' },
-      { fn: isServerSpan, name: 'isServerSpan', key: 'span.kind', value: 'server' },
+      { fn: isClientSpan, name: 'isClientSpan', key: 'kind', value: 'client' },
+      { fn: isServerSpan, name: 'isServerSpan', key: 'kind', value: 'server' },
       { fn: isErrorSpan, name: 'isErrorSpan', key: 'error', value: true },
       { fn: isErrorSpan, name: 'isErrorSpan', key: 'error', value: 'true' },
     ];
@@ -130,11 +130,11 @@ describe('TraceTimelineViewer/utils', () => {
 
     beforeEach(() => {
       spans = [
-        { depth: 0, intrinsics: [{ key: 'span.kind', value: 'client' }] },
+        { depth: 0, intrinsics: [{ key: 'kind', value: 'client' }] },
         { depth: 1, intrinsics: [] },
-        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'server' }] },
-        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'third-kind' }] },
-        { depth: 1, intrinsics: [{ key: 'span.kind', value: 'server' }] },
+        { depth: 1, intrinsics: [{ key: 'kind', value: 'server' }] },
+        { depth: 1, intrinsics: [{ key: 'kind', value: 'third-kind' }] },
+        { depth: 1, intrinsics: [{ key: 'kind', value: 'server' }] },
       ] as TraceSpan[];
     });
 
