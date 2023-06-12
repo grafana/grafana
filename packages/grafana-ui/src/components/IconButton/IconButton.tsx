@@ -46,7 +46,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
       name,
       size = 'md',
       iconType,
-      tooltip = '',
+      tooltip,
       tooltipPlacement,
       ariaLabel,
       className,

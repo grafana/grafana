@@ -19,7 +19,7 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
-  onTooltipVisible?: Function; // TODO: choose more suitable type
+  onTooltipVisible?: Function; // TODO: choose more suitable type?
 }
 
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
