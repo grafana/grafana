@@ -19,7 +19,6 @@ import { TraceLog, TraceSpanReference } from '../../types/trace';
  */
 export default class DetailState {
   isTagsOpen: boolean;
-  isIntrinsicsOpen: boolean;
   isProcessOpen: boolean;
   logs: { isOpen: boolean; openedItems: Set<TraceLog> };
   references: { isOpen: boolean; openedItems: Set<TraceSpanReference> };
@@ -30,7 +29,6 @@ export default class DetailState {
   constructor(oldState?: DetailState) {
     const {
       isTagsOpen,
-      isIntrinsicsOpen,
       isProcessOpen,
       isReferencesOpen,
       isWarningsOpen,
@@ -39,7 +37,6 @@ export default class DetailState {
       references,
     }: DetailState | Record<string, undefined> = oldState || {};
     this.isTagsOpen = Boolean(isTagsOpen);
-    this.isIntrinsicsOpen = Boolean(isIntrinsicsOpen);
     this.isProcessOpen = Boolean(isProcessOpen);
     this.isReferencesOpen = Boolean(isReferencesOpen);
     this.isWarningsOpen = Boolean(isWarningsOpen);
@@ -57,12 +54,6 @@ export default class DetailState {
   toggleTags() {
     const next = new DetailState(this);
     next.isTagsOpen = !this.isTagsOpen;
-    return next;
-  }
-
-  toggleIntrinsics() {
-    const next = new DetailState(this);
-    next.isIntrinsicsOpen = !this.isIntrinsicsOpen;
     return next;
   }
 

@@ -158,7 +158,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.references = span.references || [];
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.dedupedTags, getConfigValue('topTagPrefixes'));
-    span.intrinsics = orderTags(span.intrinsics);
     span.warnings = span.warnings.concat(tagsInfo.warnings);
     span.references.forEach((ref, index) => {
       const refSpan = spanMap.get(ref.spanID);

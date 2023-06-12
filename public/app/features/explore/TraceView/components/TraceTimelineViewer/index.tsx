@@ -100,7 +100,6 @@ export type TProps = TExtractUiFindFromStateReturn & {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
-  detailIntrinsicsToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setTrace: (trace: Trace | TNil, uiFind: string | TNil) => void;
   addHoverIndentGuideId: (spanID: string) => void;

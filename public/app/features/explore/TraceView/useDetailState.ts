@@ -86,15 +86,11 @@ export function useDetailState(frame: DataFrame) {
       (spanID: string) => makeDetailSubsectionToggle('tags', detailStates, setDetailStates)(spanID),
       [detailStates]
     ),
-    detailIntrinsicsToggle: useCallback(
-      (spanID: string) => makeDetailSubsectionToggle('intrinsics', detailStates, setDetailStates)(spanID),
-      [detailStates]
-    ),
   };
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'intrinsics' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
+  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -106,8 +102,6 @@ function makeDetailSubsectionToggle(
     let detailState;
     if (subSection === 'tags') {
       detailState = old.toggleTags();
-    } else if (subSection === 'intrinsics') {
-      detailState = old.toggleIntrinsics();
     } else if (subSection === 'process') {
       detailState = old.toggleProcess();
     } else if (subSection === 'warnings') {
