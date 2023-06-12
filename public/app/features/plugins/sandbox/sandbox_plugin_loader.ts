@@ -44,7 +44,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
    */
   function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
     if (isDomElement(originalValue)) {
-      const element = getSafeSandboxDomElement(originalValue);
+      const element = getSafeSandboxDomElement(originalValue, meta.id);
       // the element.style attribute should be a live target to work in chrome
       markDomElementStyleAsALiveTarget(element, SANDBOX_LIVE_VALUE);
       return element;
@@ -95,7 +95,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
             // only after the plugin has been executed
             // we can return the plugin exports.
             // This is what grafana effectively gets.
-            const pluginExports = await sandboxPluginComponents(pluginExportsRaw);
+            const pluginExports = await sandboxPluginComponents(pluginExportsRaw, meta);
             resolve(pluginExports);
           } catch (e) {
             reject(new Error(`Could not execute plugin ${meta.id}: ` + e));

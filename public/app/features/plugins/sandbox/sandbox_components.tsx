@@ -1,6 +1,6 @@
 import React, { ComponentType, FC } from 'react';
 
-import { PluginConfigPage, PluginExtensionConfig } from '@grafana/data';
+import { PluginConfigPage, PluginExtensionConfig, PluginMeta } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
 import { isFunction, isSandboxedPluginObject } from './utils';
@@ -21,7 +21,10 @@ import { isFunction, isSandboxedPluginObject } from './utils';
  * classes that plugins could bring.
  *
  */
-export async function sandboxPluginComponents(pluginExports: unknown): Promise<SandboxedPluginObject | unknown> {
+export async function sandboxPluginComponents(
+  pluginExports: unknown,
+  meta: PluginMeta
+): Promise<SandboxedPluginObject | unknown> {
   if (!isSandboxedPluginObject(pluginExports)) {
     // we should monitor these cases. There should not be any plugins without a plugin export loaded inside the sandbox
     return pluginExports;
@@ -33,21 +36,21 @@ export async function sandboxPluginComponents(pluginExports: unknown): Promise<S
 
   // wrap panel component
   if (Reflect.has(pluginObject, 'panel')) {
-    Reflect.set(pluginObject, 'panel', withSandboxWrapper(Reflect.get(pluginObject, 'panel')));
+    Reflect.set(pluginObject, 'panel', withSandboxWrapper(Reflect.get(pluginObject, 'panel'), meta.id));
   }
 
   // wrap datasource components
   if (Reflect.has(pluginObject, 'components')) {
     const components: Record<string, ComponentType> = Reflect.get(pluginObject, 'components');
     Object.entries(components).forEach(([key, value]) => {
-      Reflect.set(components, key, withSandboxWrapper(value));
+      Reflect.set(components, key, withSandboxWrapper(value, meta.id));
     });
     Reflect.set(pluginObject, 'components', components);
   }
 
   // wrap app components
   if (Reflect.has(pluginObject, 'root')) {
-    Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root')));
+    Reflect.set(pluginObject, 'root', withSandboxWrapper(Reflect.get(pluginObject, 'root'), meta.id));
   }
 
   // extension components
@@ -55,7 +58,7 @@ export async function sandboxPluginComponents(pluginExports: unknown): Promise<S
     const extensions: PluginExtensionConfig[] = Reflect.get(pluginObject, 'extensionConfigs');
     for (const extension of extensions) {
       if (Reflect.has(extension, 'component')) {
-        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component')));
+        Reflect.set(extension, 'component', withSandboxWrapper(Reflect.get(extension, 'component'), meta.id));
       }
     }
     Reflect.set(pluginObject, 'extensionConfigs', extensions);
@@ -70,7 +73,7 @@ export async function sandboxPluginComponents(pluginExports: unknown): Promise<S
       }
       Reflect.set(configPages, key, {
         ...value,
-        body: withSandboxWrapper(value.body),
+        body: withSandboxWrapper(value.body, meta.id),
       });
     }
     Reflect.set(pluginObject, 'configPages', configPages);
@@ -79,14 +82,17 @@ export async function sandboxPluginComponents(pluginExports: unknown): Promise<S
   return pluginExports;
 }
 
-const withSandboxWrapper = <P extends object>(WrappedComponent: ComponentType<P>): FC<P> => {
-  const WithWrapper: FC<P> = (props: P) => {
+const withSandboxWrapper = <P extends object>(
+  WrappedComponent: ComponentType<P>,
+  pluginId: string
+): React.MemoExoticComponent<FC<P>> => {
+  const WithWrapper = React.memo((props: P) => {
     return (
-      <div data-plugin-sandbox="sandboxed-plugin">
+      <div data-plugin-sandbox={pluginId}>
         <WrappedComponent {...props} />
       </div>
     );
-  };
+  });
   WithWrapper.displayName = `GrafanaSandbox(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
   return WithWrapper;
 };

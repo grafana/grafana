@@ -3,7 +3,7 @@ import { forbiddenElements } from './constants';
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 
-export function getSafeSandboxDomElement(element: Element): Element {
+export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');
 
   // the condition redundancy is intentional
@@ -27,7 +27,7 @@ export function getSafeSandboxDomElement(element: Element): Element {
   }
 
   // allow elements inside the sandbox or the sandbox body
-  if (isDomElementInsideSandbox(element)) {
+  if (isDomElementInsideSandbox(element, pluginId)) {
     return element;
   }
 
@@ -77,8 +77,8 @@ export function markDomElementStyleAsALiveTarget(el: Element, mark: symbol) {
  * - is inside a div[data-plugin-sandbox]
  *
  */
-export function isDomElementInsideSandbox(el: Element): boolean {
-  return !document.contains(el) || el.closest(`[data-plugin-sandbox]`) !== null;
+export function isDomElementInsideSandbox(el: Element, pluginId: string): boolean {
+  return !document.contains(el) || el.closest(`[data-plugin-sandbox=${pluginId}]`) !== null;
 }
 
 let sandboxBody: HTMLDivElement;
