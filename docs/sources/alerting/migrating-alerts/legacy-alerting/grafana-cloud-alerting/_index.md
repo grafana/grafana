@@ -66,10 +66,10 @@ You can create:
 If you exceed the limits, you will encounter an error similar to this:
 
 ```bash
-ERRO[0000] requests failed fields.msg="request failed with response body
+ERROR[0000] requests failed fields.msg="request failed with response body
 per-user rules per rule group limit (limit: 20 actual: 22) exceeded\n"
 status="400 Bad Request"
-ERRO[0000] unable to load rule group  error="failed request to the cortex api"
+ERROR[0000] unable to load rule group  error="failed request to the cortex api"
 group=limit_rules_per_group namespace=test
 ```
 
