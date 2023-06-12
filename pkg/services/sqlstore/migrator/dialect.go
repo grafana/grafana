@@ -75,9 +75,9 @@ type Dialect interface {
 }
 
 type LockCfg struct {
-	Session  *xorm.Session
-	Key      string
-	Timeout  int
+	Session *xorm.Session
+	Key     string
+	Timeout int
 }
 
 type dialectFunc func() Dialect

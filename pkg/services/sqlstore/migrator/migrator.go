@@ -156,7 +156,7 @@ func (mg *Migrator) Start(isDatabaseLockingEnabled bool, lockAttemptTimeout int)
 		mg.Logger.Info("Locking database")
 		lockCfg := LockCfg{
 			Session: sess,
-			Key: key,
+			Key:     key,
 			Timeout: lockAttemptTimeout,
 		}
 
