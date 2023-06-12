@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
@@ -30,6 +31,7 @@ type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, createNewFolder }: Props) {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
 
   const onCreateFolder = (folderName: string) => {
@@ -45,11 +47,29 @@ function CreateNewButton({ parentFolder, canCreateDashboard, canCreateFolder, cr
   const newMenu = (
     <Menu>
       {canCreateDashboard && (
-        <MenuItem url={addFolderUidToUrl('/dashboard/new', parentFolder?.uid)} label={getNewDashboardPhrase()} />
+        <MenuItem
+          label={getNewDashboardPhrase()}
+          onClick={() =>
+            reportInteraction('grafana_menu_item_clicked', {
+              url: addFolderUidToUrl('/dashboard/new', parentFolder?.uid),
+              from: location.pathname,
+            })
+          }
+          url={addFolderUidToUrl('/dashboard/new', parentFolder?.uid)}
+        />
       )}
       {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
       {canCreateDashboard && (
-        <MenuItem url={addFolderUidToUrl('/dashboard/import', parentFolder?.uid)} label={getImportPhrase()} />
+        <MenuItem
+          label={getImportPhrase()}
+          onClick={() =>
+            reportInteraction('grafana_menu_item_clicked', {
+              url: addFolderUidToUrl('/dashboard/import', parentFolder?.uid),
+              from: location.pathname,
+            })
+          }
+          url={addFolderUidToUrl('/dashboard/import', parentFolder?.uid)}
+        />
       )}
     </Menu>
   );
