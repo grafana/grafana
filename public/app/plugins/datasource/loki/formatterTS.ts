@@ -193,7 +193,7 @@ export function formatLogRangeExpr(node: SyntaxNode, query: string): string {
     switch (node.type.id) {
       case Selector:
         let logExpr = query.substring(node.from, node.to);
-        selector += formatSelector({ from: 0, to: logExpr.length } as SyntaxNode, logExpr);
+        selector += formatSelector({ ...node, from: 0, to: logExpr.length }, logExpr);
         break;
 
       case PipelineExpr:
