@@ -4,10 +4,10 @@ import { commonOptionsBuilder } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { TrendPanel } from './TrendPanel';
-import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
+import { FieldConfig, Options } from './panelcfg.gen';
 import { TrendSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(TrendPanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     const category = ['X Axis'];

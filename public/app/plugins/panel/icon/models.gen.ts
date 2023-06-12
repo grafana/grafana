@@ -7,11 +7,11 @@ import { CanvasElementOptions } from 'app/features/canvas';
 import { IconConfig } from 'app/features/canvas/elements/icon';
 import { ResourceDimensionMode } from '@grafana/schema';
 
-export interface PanelOptions {
+export interface Options {
   root: Omit<CanvasElementOptions<IconConfig>, 'type' | 'name'>; // type is forced
 }
 
-export const defaultPanelOptions: PanelOptions = {
+export const defaultOptions: Options = {
   root: {
     config: {
       path: {

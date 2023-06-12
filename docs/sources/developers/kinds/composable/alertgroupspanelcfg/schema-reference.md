@@ -13,11 +13,11 @@ title: AlertGroupsPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Default | Description |
-|----------------|-------------------------|----------|---------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |         |             |
+| Property  | Type               | Required | Default | Description |
+|-----------|--------------------|----------|---------|-------------|
+| `Options` | [object](#options) | **Yes**  |         |             |
 
-### PanelOptions
+### Options
 
 | Property       | Type    | Required | Default | Description                                                 |
 |----------------|---------|----------|---------|-------------------------------------------------------------|
