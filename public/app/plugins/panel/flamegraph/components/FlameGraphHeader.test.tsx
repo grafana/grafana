@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { CoreApp } from '@grafana/data';
 
@@ -9,32 +9,50 @@ import FlameGraphHeader from './FlameGraphHeader';
 import { SelectedView } from './types';
 
 describe('FlameGraphHeader', () => {
-  const FlameGraphHeaderWithProps = () => {
-    const [search, setSearch] = useState('');
-    const [selectedView, setSelectedView] = useState(SelectedView.Both);
+  function setup(props: Partial<React.ComponentProps<typeof FlameGraphHeader>> = {}) {
+    const setSearch = jest.fn();
+    const setSelectedView = jest.fn();
+    const onReset = jest.fn();
 
-    return (
+    const renderResult = render(
       <FlameGraphHeader
         app={CoreApp.Explore}
-        search={search}
+        search={''}
         setSearch={setSearch}
-        selectedView={selectedView}
+        selectedView={SelectedView.Both}
         setSelectedView={setSelectedView}
         containerWidth={1600}
-        onReset={() => {
-          setSearch('');
-        }}
+        onReset={onReset}
         onTextAlignChange={jest.fn()}
         textAlign={'left'}
+        showResetButton={true}
+        {...props}
       />
     );
-  };
 
-  it('reset button should remove search text', async () => {
-    render(<FlameGraphHeaderWithProps />);
-    await userEvent.type(screen.getByPlaceholderText('Search..'), 'abc');
-    expect(screen.getByDisplayValue('abc')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /Reset/i }));
-    expect(screen.queryByDisplayValue('abc')).not.toBeInTheDocument();
+    return {
+      renderResult,
+      handlers: {
+        setSearch,
+        setSelectedView,
+        onReset,
+      },
+    };
+  }
+
+  it('show reset button when needed', async () => {
+    setup({ showResetButton: false });
+    expect(screen.queryByLabelText(/Reset focus/)).toBeNull();
+
+    setup();
+    expect(screen.getByLabelText(/Reset focus/)).toBeInTheDocument();
+  });
+
+  it('calls on reset when reset button is clicked', async () => {
+    const { handlers } = setup();
+    const resetButton = screen.getByLabelText(/Reset focus/);
+    expect(resetButton).toBeInTheDocument();
+    await userEvent.click(resetButton);
+    expect(handlers.onReset).toHaveBeenCalledTimes(1);
   });
 });

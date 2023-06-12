@@ -55,7 +55,7 @@ type TooltipData = {
 };
 
 export const getTooltipData = (data: FlameGraphDataContainer, item: LevelItem, totalTicks: number): TooltipData => {
-  const displayValue = data.getValueDisplay(item.itemIndexes);
+  const displayValue = data.valueDisplayProcessor(item.value);
   const displaySelf = data.getSelfDisplay(item.itemIndexes);
 
   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;

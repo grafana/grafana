@@ -3,7 +3,7 @@ import React from 'react';
 
 import { CoreApp, createDataFrame } from '@grafana/data';
 
-import { FlameGraphDataContainer, nestedSetToLevels } from '../FlameGraph/dataTransform';
+import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
 import { data } from '../FlameGraph/testData/dataNestedSet';
 
 import FlameGraphTopTableContainer from './FlameGraphTopTableContainer';
@@ -12,16 +12,8 @@ describe('FlameGraphTopTableContainer', () => {
   const FlameGraphTopTableContainerWithProps = () => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData);
-    const levels = nestedSetToLevels(container);
 
-    return (
-      <FlameGraphTopTableContainer
-        data={container}
-        app={CoreApp.Explore}
-        totalLevels={levels.length}
-        onSymbolClick={jest.fn()}
-      />
-    );
+    return <FlameGraphTopTableContainer data={container} app={CoreApp.Explore} onSymbolClick={jest.fn()} />;
   };
 
   it('should render without error', async () => {

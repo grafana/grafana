@@ -20,9 +20,6 @@ type Props = {
 const FlameGraphMetadata = React.memo(
   ({ data, focusedItem, totalTicks, sandwichedLabel, onFocusPillClick, onSandwichPillClick }: Props) => {
     const styles = useStyles2(getStyles);
-    // const metadata = getMetadata(data, totalTicks, theme);
-    // const metadataText = `${metadata.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
-
     const parts: ReactNode[] = [];
     const ticksVal = getValueFormat('short')(totalTicks);
 
@@ -38,6 +35,7 @@ const FlameGraphMetadata = React.memo(
 
     parts.push(
       <FilterPill
+        key={'default'}
         className={styles.pill}
         label={`${unitValue} | ${ticksVal.text}${ticksVal.suffix} samples (${unitTitle})`}
         selected={false}
@@ -47,7 +45,7 @@ const FlameGraphMetadata = React.memo(
 
     if (sandwichedLabel) {
       parts.push(
-        <>
+        <span key={'sandwich'}>
           {' > '}
           <FilterPill
             className={styles.pill}
@@ -60,15 +58,16 @@ const FlameGraphMetadata = React.memo(
             selected={false}
             tooltip={'Remove sandwich view'}
             onClick={onSandwichPillClick}
+            aria-label={'Remove sandwich view'}
           />
-        </>
+        </span>
       );
     }
 
     if (focusedItem) {
       const percentValue = Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100;
       parts.push(
-        <>
+        <span key={'focus'}>
           {' > '}
           <FilterPill
             className={styles.pill}
@@ -80,32 +79,15 @@ const FlameGraphMetadata = React.memo(
             selected={false}
             onClick={onFocusPillClick}
             tooltip={'Remove focus'}
+            aria-label={'Remove focus'}
           />
-        </>
+        </span>
       );
     }
 
     return <>{<div className={styles.metadata}>{parts}</div>}</>;
   }
 );
-
-// export const getMetadata = (
-//   data: FlameGraphDataContainer,
-//   value: number,
-//   totalTicks: number,
-//   theme: GrafanaTheme2
-// ): Metadata => {
-//   const displayValue = data.valueDisplayProcessor(value);
-//   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
-//   let unitValue = displayValue.text + displayValue.suffix;
-//
-//   return {
-//     percentValue,
-//     unitTitle,
-//     unitValue,
-//     samples: ticksVal.text,
-//   };
-// };
 
 FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 

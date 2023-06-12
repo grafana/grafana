@@ -85,7 +85,7 @@ const FlameGraphContainer = (props: Props) => {
             }}
             textAlign={textAlign}
             onTextAlignChange={setTextAlign}
-            showResetButton={focusedItemData || sandwichItem}
+            showResetButton={Boolean(focusedItemData || sandwichItem)}
           />
 
           <div className={styles.body}>

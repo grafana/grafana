@@ -5,7 +5,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, Input, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { config } from '../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
@@ -90,6 +90,7 @@ const FlameGraphHeader = ({
               onReset();
             }}
             className={styles.buttonSpacing}
+            aria-label={'Reset focus and sandwich state'}
           />
         )}
 
