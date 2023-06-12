@@ -23,7 +23,7 @@ You have two options to configure alerts within the Grafana Cloud GUI and a thir
 - **Grafana Cloud alerts - GUI** are an implementation of Prometheus-style rules that enable you to query your Grafana Cloud Metrics and then set up Prometheus Alertmanager-style alerts based on those rules.
   This is useful when you want to create precise, PromQL-based rules or create alerts from across many metrics and logs being collected into your Grafana Cloud Metrics.
   This form of alerting is much more powerful and configurable, but that comes with some complexity.
-- **Grafana Cloud alerts - CLI** use `mimirtool` to create and upload the same types of Prometheus-style recording and alerting rules definitions to your Grafana Cloud Metrics instance.
+- **Grafana Cloud alerts - CLI** use mimirtool to create and upload the same types of Prometheus-style recording and alerting rules definitions to your Grafana Cloud Metrics instance.
   Once created, you will also be able to view these rules from within the Grafana Cloud Alerting page in the GUI.
 - **Synthetic Monitoring alerts** are built on Prometheus alerts, just like in Grafana Cloud alerting.
   You can configure synthetic monitoring alerts separately using the UI in synthetic monitoring.
