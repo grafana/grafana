@@ -18,8 +18,15 @@ import (
 )
 
 var (
-	logger                             = log.New("vector")
+	logger = log.New("vector")
+
 	DataSourceCollectionPrefixTemplate = "grafana-datasource-%s-%s-"
+
+	CoreCollectionPrefix      = "grafana-core-"
+	CoreCollectionAlertRules  = fmt.Sprintf("%salert-rules", CoreCollectionPrefix)
+	CoreCollectionDashboards  = fmt.Sprintf("%sdashboards", CoreCollectionPrefix)
+	CoreCollectionDatasources = fmt.Sprintf("%sdatasources", CoreCollectionPrefix)
+	CoreCollectionFolders     = fmt.Sprintf("%sfolders", CoreCollectionPrefix)
 )
 
 // TODO: make this an interface
@@ -38,6 +45,30 @@ func ProvideService(
 	}
 }
 
+type RelatedMetadataRequestType string
+
+const (
+	RelatedMetadataRequestTypeDatasource RelatedMetadataRequestType = "datasource"
+	RelatedMetadataRequestTypeGrafana    RelatedMetadataRequestType = "grafana"
+)
+
+type RelatedMetadataRequest struct {
+	// The type of metadata request.
+	Type RelatedMetadataRequestType `json:"type"`
+
+	// Only used for type == datasource
+	// The type of the datasource to fetch metadata for.
+	DatasourceType string `json:"datasourceType"`
+	// The UID of the datasource to fetch metadata for.
+	DatasourceUID string `json:"datasourceUid"`
+
+	// The text to fetch related metadata for.
+	Text string `json:"text"`
+
+	// The number of results to return for each collection.
+	Limit uint64 `json:"limit"`
+}
+
 type RelatedMetadataResponse = map[string][]string
 
 // RelatedMetadata returns metadata related to the given text.
@@ -50,8 +81,8 @@ type RelatedMetadataResponse = map[string][]string
 //
 // This method will return a map from collection names to the closest `limit` matches
 // in each of the datasources' collections.
-func (s *Service) RelatedMetadata(ctx context.Context, datasourceType, datasourceUID, text string, limit uint64) (RelatedMetadataResponse, error) {
-	embeddings, err := s.llmClient.Embeddings(ctx, text)
+func (s *Service) RelatedMetadata(ctx context.Context, request RelatedMetadataRequest) (RelatedMetadataResponse, error) {
+	embeddings, err := s.llmClient.Embeddings(ctx, request.Text)
 	if err != nil {
 		return nil, fmt.Errorf("get embeddings: %w", err)
 	}
@@ -60,10 +91,22 @@ func (s *Service) RelatedMetadata(ctx context.Context, datasourceType, datasourc
 		return nil, fmt.Errorf("create vector store client: %s", err)
 	}
 	defer cancel()
-	collections, err := datasourceCollections(ctx, qdrantClient, datasourceType, datasourceUID)
+
+	var collections []collection
+	switch request.Type {
+	case RelatedMetadataRequestTypeDatasource:
+		collections, err = datasourceCollections(ctx, qdrantClient, request.DatasourceType, request.DatasourceUID)
+		if err != nil {
+			return nil, err
+		}
+	case RelatedMetadataRequestTypeGrafana:
+		collections = grafanaCollections(ctx)
+	default:
+		return nil, fmt.Errorf("unsupported metadata request type: %s", request.Type)
+	}
 	result := make(map[string][]string, len(collections))
 	for _, collection := range collections {
-		best, err := qdrantClient.Search(ctx, collection.vectorDBName, embeddings, limit)
+		best, err := qdrantClient.Search(ctx, collection.vectorDBName, embeddings, request.Limit)
 		if err != nil {
 			logger.Error("error searching vector collection for closest matches", "collection", collection, "error", err)
 			continue
@@ -98,4 +141,26 @@ func datasourceCollections(ctx context.Context, client VectorClient, datasourceT
 		collections = append(collections, collection)
 	}
 	return collections, nil
+}
+
+// grafanaCollections fetches the names of all core Grafana vector collections.
+func grafanaCollections(ctx context.Context) []collection {
+	return []collection{
+		{
+			name:         "dashboards",
+			vectorDBName: CoreCollectionDashboards,
+		},
+		{
+			name:         "alert-rules",
+			vectorDBName: CoreCollectionAlertRules,
+		},
+		{
+			name:         "datasources",
+			vectorDBName: CoreCollectionDatasources,
+		},
+		{
+			name:         "folders",
+			vectorDBName: CoreCollectionFolders,
+		},
+	}
 }

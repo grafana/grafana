@@ -4,6 +4,8 @@ package vectorsync
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"time"
@@ -12,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/llm/client"
 	"github.com/grafana/grafana/pkg/services/llm/vector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,6 +28,7 @@ var (
 )
 
 type Service struct {
+	dashboardService  dashboards.DashboardService
 	dataSourceService datasources.DataSourceService
 	pluginService     *store.Service
 	pluginClient      plugins.Client
@@ -34,6 +39,7 @@ type Service struct {
 }
 
 func ProvideService(
+	dashboardService dashboards.DashboardService,
 	dataSourceService datasources.DataSourceService,
 	pluginService *store.Service,
 	pluginClient plugins.Client,
@@ -41,6 +47,7 @@ func ProvideService(
 ) *Service {
 	llmClient := client.NewOpenAILLMClient(cfg.LLM)
 	return &Service{
+		dashboardService:  dashboardService,
 		dataSourceService: dataSourceService,
 		pluginService:     pluginService,
 		pluginClient:      pluginClient,
@@ -74,37 +81,42 @@ func (s *Service) Run(ctx context.Context) error {
 // Currently only supports qdrant as a vector store and only syncs datasource
 // metadata.
 func (s *Service) syncVectorStore(ctx context.Context) error {
-	datasources, err := s.dataSourceService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
-	if err != nil {
-		return fmt.Errorf("get datasources: %w", err)
-	}
 	// TODO: support different types of vector store.
-	client, cancel, err := vector.NewQdrantClient(s.cfg.LLM.VectorDB.Host)
+	client, cancel, err := vector.NewQdrantClient(s.cfg.LLM.VectorDB.Address)
 	if err != nil {
 		return fmt.Errorf("create vector store client: %s", err)
 	}
 	defer cancel()
+
+	if err := s.syncCoreMetadataToVectorStore(ctx, client); err != nil {
+		logger.Warn("error syncing core Grafana metadata to vector store", "err", err)
+	}
+
+	datasources, err := s.dataSourceService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if err != nil {
+		return fmt.Errorf("get datasources: %w", err)
+	}
 	for _, ds := range datasources {
 		plugin, found := s.pluginService.Plugin(ctx, ds.Type)
 		if !found {
 			continue
 		}
 		if plugin.SupportsVectorStore() {
-			if err := s.syncVectorStoreForDatasource(ctx, client, ds); err != nil {
-				logger.Warn("sync vector store for datasource", "datasourceName", ds.Name, "datasourceUid", ds.UID, "err", err)
+			if err := s.syncDatasourceMetadataToVectorStore(ctx, client, ds); err != nil {
+				logger.Warn("error syncing datasource metadata to vector store", "datasourceName", ds.Name, "datasourceUid", ds.UID, "err", err)
 			}
 		}
 	}
 	return nil
 }
 
-// syncVectorStoreForDatasource syncs the vector store with the latest metadata from a datasource.
+// syncDatasourceMetadataToVectorStore syncs the vector store with the latest metadata from a datasource.
 //
 // It:
 // - fetches metadata from the datasource
 // - creates a vector store collection for each collection in the datasource, if one doesn't already exist
 // - adds any new metadata to the vector store
-func (s *Service) syncVectorStoreForDatasource(ctx context.Context, client vector.VectorClient, ds *datasources.DataSource) error {
+func (s *Service) syncDatasourceMetadataToVectorStore(ctx context.Context, client vector.VectorClient, ds *datasources.DataSource) error {
 	instanceSettings, err := adapters.ModelToInstanceSettings(ds, s.decryptSecureJSONDataFn(ctx))
 	if err != nil {
 		return fmt.Errorf("convert datasource to instance settings: %w", err)
@@ -133,6 +145,61 @@ func (s *Service) syncVectorStoreForDatasource(ctx context.Context, client vecto
 		}
 	}
 	return nil
+}
+
+func (s *Service) syncCoreMetadataToVectorStore(ctx context.Context, client vector.VectorClient) error {
+	// TODO: improve error handling, this is horrible.
+
+	// Dashboards
+	// This doesn't work correctly because searching dashboards using the dashboardService requires a signed in user,
+	// but we just want _all_ dashboards. Right now it finds zero dashboards.
+	dashboards, dashboardsErr := s.dashboardService.SearchDashboards(ctx, &dashboards.FindPersistedDashboardsQuery{Type: "dash-db", SignedInUser: &user.SignedInUser{}})
+	if dashboardsErr == nil {
+		metadata := make([]string, 0, len(dashboards))
+		for _, dashboard := range dashboards {
+			jdoc, err := json.Marshal(dashboard)
+			if err != nil {
+				logger.Warn("error marshalling dashboard", "dashboardUID", dashboard.UID, "err", err)
+				continue
+			}
+			metadata = append(metadata, string(jdoc))
+		}
+		dashboardsErr = s.createCollectionIfNotExists(ctx, client, vector.CoreCollectionDashboards)
+		if dashboardsErr != nil {
+			dashboardsErr = fmt.Errorf("create collection: %w", dashboardsErr)
+		}
+		if dashboardsErr == nil {
+			dashboardsErr = s.addNewMetadata(ctx, client, vector.CoreCollectionDashboards, metadata)
+			if dashboardsErr != nil {
+				dashboardsErr = fmt.Errorf("add new metadata: %w", dashboardsErr)
+			}
+		}
+	}
+	// Datasources
+	datasources, datasourcesErr := s.dataSourceService.GetAllDataSources(ctx, &datasources.GetAllDataSourcesQuery{})
+	if datasourcesErr == nil {
+		metadata := make([]string, 0, len(datasources))
+		for _, datasource := range datasources {
+			jdoc, err := json.Marshal(datasource)
+			if err != nil {
+				logger.Warn("error marshalling datasource", "datasourceUID", datasource.UID, "err", err)
+				continue
+			}
+			metadata = append(metadata, string(jdoc))
+		}
+		datasourcesErr = s.createCollectionIfNotExists(ctx, client, vector.CoreCollectionDatasources)
+		if datasourcesErr != nil {
+			datasourcesErr = fmt.Errorf("create collection: %w", datasourcesErr)
+		}
+		if datasourcesErr == nil {
+			datasourcesErr = s.addNewMetadata(ctx, client, vector.CoreCollectionDatasources, metadata)
+		}
+		if datasourcesErr != nil {
+			datasourcesErr = fmt.Errorf("add new metadata: %w", datasourcesErr)
+		}
+	}
+	// TODO: add alert rules, folders, annotations, ...
+	return errors.Join(dashboardsErr, datasourcesErr)
 }
 
 func (s *Service) createCollectionIfNotExists(ctx context.Context, client vector.VectorClient, collection string) error {
@@ -194,7 +261,7 @@ func (s *Service) addNewMetadata(ctx context.Context, client vector.VectorClient
 		logger.Debug("no new embeddings to add")
 		return nil
 	}
-	logger.Debug("adding embeddings to vector DB", "count", len(embeddings))
+	logger.Debug("adding embeddings to vector DB", "collection", collection, "count", len(embeddings))
 	err := client.UpsertColumnar(ctx, collection, ids, embeddings, payloads)
 	if err != nil {
 		return fmt.Errorf("upsert columnar: %w", err)

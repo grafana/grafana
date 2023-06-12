@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/llm/vector"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -44,15 +45,8 @@ func (hs *HTTPServer) ProxyLLMRequest(c *contextmodel.ReqContext) {
 	proxy.ServeHTTP(c.Resp, c.Req)
 }
 
-type relatedMetadataRequest struct {
-	DatasourceType string `json:"datasourceType"`
-	DatasourceUID  string `json:"datasourceUid"`
-	Text           string `json:"text"`
-	Limit          uint64 `json:"limit"`
-}
-
 func (hs *HTTPServer) RelatedMetadataRequest(c *contextmodel.ReqContext) response.Response {
-	request := relatedMetadataRequest{}
+	request := vector.RelatedMetadataRequest{}
 	if err := web.Bind(c.Req, &request); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -61,7 +55,7 @@ func (hs *HTTPServer) RelatedMetadataRequest(c *contextmodel.ReqContext) respons
 	} else if request.Limit > 10 {
 		request.Limit = 10
 	}
-	resp, err := hs.vectorService.RelatedMetadata(c.Req.Context(), request.DatasourceType, request.DatasourceUID, request.Text, request.Limit)
+	resp, err := hs.vectorService.RelatedMetadata(c.Req.Context(), request)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get related metadata", err)
 	}
