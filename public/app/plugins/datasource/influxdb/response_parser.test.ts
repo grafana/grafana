@@ -305,6 +305,16 @@ describe('influxdb response parser', () => {
       expect(table.columns[2].text).toBe('ALIAS1');
       expect(table.columns[3].text).toBe('ALIAS2');
     });
+
+    it('should parse the table when there is no alias and two field selects', () => {
+      const table = parser.getTable(mockDataframesWithTwoFieldSelect, mockQueryWithTwoFieldSelect, {
+        preferredVisualisationType: 'table',
+      });
+      expect(table.columns.length).toBe(3);
+      expect(table.columns[0].text).toBe('Time');
+      expect(table.columns[1].text).toBe('mean');
+      expect(table.columns[2].text).toBe('mean_1');
+    });
   });
 
   describe('When issuing annotationQuery', () => {
@@ -341,114 +351,8 @@ describe('influxdb response parser', () => {
     let response: AnnotationEvent[];
 
     beforeEach(async () => {
-      const mockResponse: FetchResponse = {
-        config: { url: '' },
-        headers: new Headers(),
-        ok: false,
-        redirected: false,
-        status: 0,
-        statusText: '',
-        type: 'basic',
-        url: '',
-        data: {
-          results: {
-            metricFindQuery: {
-              frames: [
-                {
-                  schema: {
-                    name: 'logs.host',
-                    fields: [
-                      {
-                        name: 'time',
-                        type: 'time',
-                      },
-                      {
-                        name: 'value',
-                        type: 'string',
-                      },
-                    ],
-                  },
-                  data: {
-                    values: [
-                      [1645208701000, 1645208702000],
-                      ['cbfa07e0e3bb 1', 'cbfa07e0e3bb 2'],
-                    ],
-                  },
-                },
-                {
-                  schema: {
-                    name: 'logs.message',
-                    fields: [
-                      {
-                        name: 'time',
-                        type: 'time',
-                      },
-                      {
-                        name: 'value',
-                        type: 'string',
-                      },
-                    ],
-                  },
-                  data: {
-                    values: [
-                      [1645208701000, 1645208702000],
-                      [
-                        'Station softwareupdated[447]: Adding client 1',
-                        'Station softwareupdated[447]: Adding client 2',
-                      ],
-                    ],
-                  },
-                },
-                {
-                  schema: {
-                    name: 'logs.path',
-                    fields: [
-                      {
-                        name: 'time',
-                        type: 'time',
-                      },
-                      {
-                        name: 'value',
-                        type: 'string',
-                      },
-                    ],
-                  },
-                  data: {
-                    values: [
-                      [1645208701000, 1645208702000],
-                      ['/var/log/host/install.log 1', '/var/log/host/install.log 2'],
-                    ],
-                  },
-                },
-                {
-                  schema: {
-                    name: 'textColumn',
-                    fields: [
-                      {
-                        name: 'time',
-                        type: 'time',
-                      },
-                      {
-                        name: 'value',
-                        type: 'string',
-                      },
-                    ],
-                  },
-                  data: {
-                    values: [
-                      [1645208701000, 1645208702000],
-                      ['text 1', 'text 2'],
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        },
-      };
-
       fetchMock.mockImplementation(() => {
-        return of(mockResponse);
+        return of(annotationMockResponse);
       });
 
       config.featureToggles.influxdbBackendMigration = true;
@@ -698,3 +602,206 @@ const mockDataFramesWithAlias: DataFrame[] = [
     length: 1801,
   },
 ];
+
+const mockDataframesWithTwoFieldSelect: DataFrame[] = [
+  {
+    name: 'cpu.mean',
+    refId: 'A',
+    meta: {
+      typeVersion: [0, 0],
+      executedQueryString:
+        'SELECT mean("value"), mean("value") FROM "bar"."cpu" WHERE time >= 1686585763070ms and time <= 1686585793070ms GROUP BY time(10ms) fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686585763070, 1686585763080, 1686585763090],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {
+          displayNameFromDS: 'cpu.mean',
+        },
+        values: [null, 87.42703187930438, null],
+      },
+    ],
+    length: 3,
+  },
+  {
+    name: 'cpu.mean_1',
+    refId: 'A',
+    meta: {
+      typeVersion: [0, 0],
+      executedQueryString:
+        'SELECT mean("value"), mean("value") FROM "bar"."cpu" WHERE time >= 1686585763070ms and time <= 1686585793070ms GROUP BY time(10ms) fill(null) ORDER BY time ASC',
+    },
+    fields: [
+      {
+        name: 'Time',
+        type: FieldType.time,
+        config: {},
+        values: [1686585763070, 1686585763080, 1686585763090],
+      },
+      {
+        name: 'Value',
+        type: FieldType.number,
+        config: {
+          displayNameFromDS: 'cpu.mean_1',
+        },
+        values: [87.3, 87.4, 87.5],
+      },
+    ],
+    length: 3,
+  },
+];
+
+const mockQueryWithTwoFieldSelect: InfluxQuery = {
+  datasource: {
+    type: 'influxdb',
+    uid: '1234',
+  },
+  groupBy: [
+    {
+      params: ['$__interval'],
+      type: 'time',
+    },
+    {
+      params: ['null'],
+      type: 'fill',
+    },
+  ],
+  measurement: 'cpu',
+  orderByTime: 'ASC',
+  policy: 'bar',
+  refId: 'A',
+  resultFormat: 'table',
+  select: [
+    [
+      {
+        type: 'field',
+        params: ['value'],
+      },
+      {
+        type: 'mean',
+        params: [],
+      },
+    ],
+    [
+      {
+        type: 'field',
+        params: ['value'],
+      },
+      {
+        type: 'mean',
+        params: [],
+      },
+    ],
+  ],
+  tags: [],
+};
+
+const annotationMockResponse: FetchResponse = {
+  config: { url: '' },
+  headers: new Headers(),
+  ok: false,
+  redirected: false,
+  status: 0,
+  statusText: '',
+  type: 'basic',
+  url: '',
+  data: {
+    results: {
+      metricFindQuery: {
+        frames: [
+          {
+            schema: {
+              name: 'logs.host',
+              fields: [
+                {
+                  name: 'time',
+                  type: 'time',
+                },
+                {
+                  name: 'value',
+                  type: 'string',
+                },
+              ],
+            },
+            data: {
+              values: [
+                [1645208701000, 1645208702000],
+                ['cbfa07e0e3bb 1', 'cbfa07e0e3bb 2'],
+              ],
+            },
+          },
+          {
+            schema: {
+              name: 'logs.message',
+              fields: [
+                {
+                  name: 'time',
+                  type: 'time',
+                },
+                {
+                  name: 'value',
+                  type: 'string',
+                },
+              ],
+            },
+            data: {
+              values: [
+                [1645208701000, 1645208702000],
+                ['Station softwareupdated[447]: Adding client 1', 'Station softwareupdated[447]: Adding client 2'],
+              ],
+            },
+          },
+          {
+            schema: {
+              name: 'logs.path',
+              fields: [
+                {
+                  name: 'time',
+                  type: 'time',
+                },
+                {
+                  name: 'value',
+                  type: 'string',
+                },
+              ],
+            },
+            data: {
+              values: [
+                [1645208701000, 1645208702000],
+                ['/var/log/host/install.log 1', '/var/log/host/install.log 2'],
+              ],
+            },
+          },
+          {
+            schema: {
+              name: 'textColumn',
+              fields: [
+                {
+                  name: 'time',
+                  type: 'time',
+                },
+                {
+                  name: 'value',
+                  type: 'string',
+                },
+              ],
+            },
+            data: {
+              values: [
+                [1645208701000, 1645208702000],
+                ['text 1', 'text 2'],
+              ],
+            },
+          },
+        ],
+      },
+    },
+  },
+};

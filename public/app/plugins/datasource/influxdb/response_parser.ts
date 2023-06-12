@@ -257,7 +257,7 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   let allParams: string[] = [];
   target.select?.forEach((select) => {
     const selector = select.filter((x) => x.type !== 'field');
-    if (selector.length > 1) {
+    if (selector.length > 0) {
       const aliasIfExist = selector.find((s) => s.type === 'alias');
       if (aliasIfExist) {
         allParams.push(aliasIfExist.params?.[0].toString() ?? '');
