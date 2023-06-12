@@ -14,7 +14,7 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['href'] },
+    controls: { exclude: ['href', 'external'] },
   },
   argTypes: {
     variant: { control: 'select', options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', undefined] },
@@ -37,7 +37,6 @@ const meta: Meta = {
         undefined,
       ],
     },
-    external: { control: 'boolean' },
     inline: { control: 'boolean' },
   },
 };
@@ -46,12 +45,9 @@ export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
       <StoryExample name="">
-        <Link href="https://google.es" icon="external-link-alt">
+        <Link href="https://google.es" icon="external-link-alt" external>
           This is an external link
         </Link>
-      </StoryExample>
-      <StoryExample name="">
-        <Link href="/">This is an internal link</Link>
       </StoryExample>
     </VerticalGroup>
   );
@@ -66,7 +62,7 @@ export const Basic: StoryFn = (args) => {
   return (
     <div>
       <Link href={args.href} {...args}>
-        Go to home
+        Go to Google
       </Link>
     </div>
   );
@@ -75,8 +71,10 @@ Basic.args = {
   variant: 'bodySmall',
   weight: 'light',
   color: undefined,
-  inline: true,
-  href: '/',
+  inline: false,
+  href: 'https://www.google.com',
+  external: true,
+  icon: 'external-link-alt',
 };
 
 export default meta;
