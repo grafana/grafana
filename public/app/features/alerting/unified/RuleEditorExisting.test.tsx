@@ -4,8 +4,6 @@ import React from 'react';
 import { Route } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
-import { byRole } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
