@@ -100,7 +100,13 @@ export const getAdditionalOptions = (
         <>
           <CheckboxField label={Messages.form.labels.additionalOptions.tls} name="tls" />
           <PostgreTLSCertificate form={form} />
-          <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
+          <>
+            <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
+            <CheckboxField
+              label={Messages.form.labels.additionalOptions.disableCommentsParsing}
+              name="disable_comments_parsing"
+            />
+          </>
           <PostgreSQLAdditionalOptions
             isRDS={remoteInstanceCredentials.isRDS}
             isAzure={remoteInstanceCredentials.isAzure}
@@ -132,6 +138,10 @@ export const getAdditionalOptions = (
           <MysqlTLSCertificate form={form} />
           <CheckboxField label={Messages.form.labels.additionalOptions.tlsSkipVerify} name="tls_skip_verify" />
           <MySQLOptions form={form} />
+          <CheckboxField
+            label={Messages.form.labels.additionalOptions.disableCommentsParsing}
+            name="disable_comments_parsing"
+          />
           <CheckboxField
             label={Messages.form.labels.additionalOptions.qanMysqlPerfschema}
             name="qan_mysql_perfschema"

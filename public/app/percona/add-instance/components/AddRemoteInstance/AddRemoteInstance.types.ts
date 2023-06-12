@@ -2,6 +2,7 @@ import { RemoteInstanceCredentials, InstanceAvailable, SelectInstance } from 'ap
 
 export interface FormValues extends RemoteInstanceCredentials {
   qan_mysql_perfschema?: boolean;
+  disable_comments_parsing?: boolean;
   tracking?: 'qan_postgresql_pgstatements_agent';
 }
 
@@ -92,6 +93,7 @@ export interface PostgreSQLPayload extends RemoteCommonPayload, TLSCommon {
   qan_postgresql_pgstatements_agent: boolean;
   qan_postgresql_pgstatmonitor_agent: boolean;
   disable_query_examples: boolean;
+  disable_comments_parsing: boolean;
   metrics_mode: string;
   disable_collectors: string[];
   tls_ca: string;
@@ -110,6 +112,7 @@ export interface MySQLPayload extends RemoteCommonPayload, TLSCommon {
   cluster: string;
   replication_set: string;
   qan_mysql_perfschema: boolean;
+  disable_comments_parsing: boolean;
   qan_mysql_slowlog: boolean;
   disable_query_examples: boolean;
   max_slowlog_file_size: string;
@@ -185,6 +188,7 @@ export interface RDSPayload extends CommonRDSAzurePayload {
   aws_secret_key: string;
   rds_exporter: boolean;
   qan_mysql_perfschema: boolean;
+  disable_parsing_comments: boolean;
   disable_basic_metrics: boolean;
   disable_enhanced_metrics: boolean;
   metrics_mode: string;
