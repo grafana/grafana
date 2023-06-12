@@ -18,6 +18,7 @@ import {
   Matcher,
   Identifier,
   Distinct,
+  Range,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -301,6 +302,22 @@ export function isQueryWithDistinct(query: string): boolean {
     },
   });
   return hasDistinct;
+}
+
+export function isQueryWithRangeVariable(query: string): boolean {
+  let hasRangeVariableDuration = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === Range) {
+        if (query.substring(from, to).match(/\[\$__range(_s|_ms)?/)) {
+          hasRangeVariableDuration = true;
+          return false;
+        }
+      }
+    },
+  });
+  return hasRangeVariableDuration;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {

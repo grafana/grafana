@@ -20,6 +20,13 @@ const templateSrv: any = {
     },
     {
       type: 'datasource',
+      name: 'datasourceByUid',
+      current: {
+        value: 'uid-code-DDDD',
+      },
+    },
+    {
+      type: 'datasource',
       name: 'datasourceDefault',
       current: {
         value: 'default',
@@ -32,6 +39,7 @@ const templateSrv: any = {
     }
 
     let result = v.replace('${datasource}', 'BBB');
+    result = result.replace('${datasourceByUid}', 'DDDD');
     result = result.replace('${datasourceDefault}', 'default');
     return result;
   },
@@ -103,6 +111,12 @@ describe('datasource_srv', () => {
       meta: { metrics: true },
       isDefault: true,
     },
+    DDDD: {
+      type: 'test-db',
+      name: 'DDDD',
+      uid: 'uid-code-DDDD',
+      meta: { metrics: true },
+    },
     Jaeger: {
       type: 'jaeger-db',
       name: 'Jaeger',
@@ -165,7 +179,7 @@ describe('datasource_srv', () => {
         expect(dataSourceSrv.getInstanceSettings({ uid: 'uid-code-mmm' })).toBe(ds);
       });
 
-      it('should work with variable', () => {
+      it('should work with variable by ds name', () => {
         const ds = dataSourceSrv.getInstanceSettings('${datasource}');
         expect(ds?.name).toBe('${datasource}');
         expect(ds?.uid).toBe('${datasource}');
@@ -173,6 +187,18 @@ describe('datasource_srv', () => {
           {
             "type": "test-db",
             "uid": "uid-code-BBB",
+          }
+        `);
+      });
+
+      it('should work with variable by ds value (uid)', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasourceByUid}');
+        expect(ds?.name).toBe('${datasourceByUid}');
+        expect(ds?.uid).toBe('${datasourceByUid}');
+        expect(ds?.rawRef).toMatchInlineSnapshot(`
+          {
+            "type": "test-db",
+            "uid": "uid-code-DDDD",
           }
         `);
       });
@@ -247,7 +273,7 @@ describe('datasource_srv', () => {
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(6);
+        expect(externalSources.length).toBe(7);
       });
     });
 
@@ -260,8 +286,9 @@ describe('datasource_srv', () => {
 
     it('Can get list of data sources with variables: true', () => {
       const list = dataSourceSrv.getList({ metrics: true, variables: true });
-      expect(list[0].name).toBe('${datasourceDefault}');
-      expect(list[1].name).toBe('${datasource}');
+      expect(list[0].name).toBe('${datasourceByUid}');
+      expect(list[1].name).toBe('${datasourceDefault}');
+      expect(list[2].name).toBe('${datasource}');
     });
 
     it('Can get list of data sources with tracing: true', () => {
@@ -299,6 +326,14 @@ describe('datasource_srv', () => {
             "name": "BBB",
             "type": "test-db",
             "uid": "uid-code-BBB",
+          },
+          {
+            "meta": {
+              "metrics": true,
+            },
+            "name": "DDDD",
+            "type": "test-db",
+            "uid": "uid-code-DDDD",
           },
           {
             "meta": {

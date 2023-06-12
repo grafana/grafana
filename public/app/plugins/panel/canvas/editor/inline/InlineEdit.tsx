@@ -84,7 +84,13 @@ export function InlineEdit({ onClose, id, scene }: Props) {
               <strong className={styles.inlineEditorHeader}>
                 <div className={styles.placeholder} />
                 <div>Canvas Inline Editor</div>
-                <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
+                <IconButton
+                  name="times"
+                  size="xl"
+                  className={styles.inlineEditorClose}
+                  onClick={onClose}
+                  tooltip="Close inline editor"
+                />
               </strong>
               <div className={styles.inlineEditorContentWrapper}>
                 <div className={styles.inlineEditorContent}>
