@@ -113,7 +113,9 @@ const AnnotationsField = () => {
                             <span></span>
                           ) : (
                             <div>
-                              <span className={styles.annotationTitle}>{annotationLabels[annotation]} </span>
+                              <span className={styles.annotationTitle} data-testid={`annotation-key-${index}`}>
+                                {annotationLabels[annotation]}{' '}
+                              </span>
                               {annotationLabels[annotation] ? (
                                 <span className={styles.annotationTitle}>(optional)</span>
                               ) : (

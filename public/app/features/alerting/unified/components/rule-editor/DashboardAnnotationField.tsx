@@ -26,10 +26,16 @@ const DashboardAnnotationField = ({
   const panelLink = makePanelLink(dashboard.uid, panel?.id.toString() || '');
   return (
     <>
-      <a href={dashboardLink} className={styles.link} target="_blank" rel="noreferrer">
+      <a
+        href={dashboardLink}
+        className={styles.link}
+        target="_blank"
+        rel="noreferrer"
+        data-testid="dashboard-annotation"
+      >
         {dashboard.title} <Icon name={'external-link-alt'} />
       </a>
-      <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer">
+      <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer" data-testid="panel-annotation">
         {panel?.title || '<No title>'} <Icon name={'external-link-alt'} />
       </a>
 

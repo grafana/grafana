@@ -260,7 +260,7 @@ describe('Receivers', () => {
     await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
 
     // enter custom annotations and labels
-    await clickSelectOption(ui.contactPointAnnotationSelect(0).get(), 'Description');
+    await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'description');
     await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
     await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
     await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');

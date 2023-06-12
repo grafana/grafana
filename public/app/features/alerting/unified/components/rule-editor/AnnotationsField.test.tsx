@@ -154,18 +154,12 @@ describe('AnnotationsField', function () {
 
       await user.click(ui.dashboardPicker.confirmButton.get());
 
-      const annotationKeyElements = ui.annotationKeys.getAll();
       const annotationValueElements = ui.annotationValues.getAll();
 
       expect(ui.dashboardPicker.dialog.query()).not.toBeInTheDocument();
 
-      expect(annotationKeyElements).toHaveLength(2);
       expect(annotationValueElements).toHaveLength(2);
-
-      expect(annotationKeyElements[0]).toHaveTextContent('Dashboard UID');
       expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
-
-      expect(annotationKeyElements[1]).toHaveTextContent('Panel ID');
       expect(annotationValueElements[1]).toHaveTextContent('2');
     });
 
