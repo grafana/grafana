@@ -827,7 +827,7 @@ def verify_release_pipeline(
             "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat | grep \"No URL\"".format(version),
+            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat".format(version),
         ],
     }
     return pipeline(
