@@ -16,15 +16,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-// defaultGCOMDetectorsGetterTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
-const defaultGCOMDetectorsGetterTTL = time.Hour * 24
+const (
+	// defaultGCOMDetectorsProviderTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
+	defaultGCOMDetectorsProviderTTL = time.Hour * 24
 
-var _ detectorsGetter = &gcomDetectorsGetter{}
+	// gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
+	gcomAngularPatternsPath = "/api/angular_patterns"
+)
 
-// gcomDetectorsGetter is a detectorsGetter which fetches patterns from GCOM, and caches the result for
-// the specified ttl. All subsequent calls to getDetectors will return the cached result until the TTL expires.
+var _ detectorsProvider = &gcomDetectorsProvider{}
+
+// gcomDetectorsProvider is a detectorsProvider which fetches patterns from GCOM, and caches the result for
+// the specified ttl. All subsequent calls to provideDetectors will return the cached result until the TTL expires.
 // This struct is safe for concurrent use.
-type gcomDetectorsGetter struct {
+type gcomDetectorsProvider struct {
 	log log.Logger
 
 	httpClient *http.Client
@@ -38,15 +43,15 @@ type gcomDetectorsGetter struct {
 	detectors []detector
 }
 
-// newGCOMDetectorsGetter returns a new gcomDetectorsGetter.
+// newGCOMDetectorsProvider returns a new gcomDetectorsProvider.
 // baseURL is the GCOM base url, without /api and without a trailing slash (e.g.: https://grafana.com)
-// A default reasonable value for ttl is defaultGCOMDetectorsGetterTTL.
-func newGCOMDetectorsGetter(baseURL string, ttl time.Duration) (detectorsGetter, error) {
+// A default reasonable value for ttl is defaultGCOMDetectorsProviderTTL.
+func newGCOMDetectorsProvider(baseURL string, ttl time.Duration) (detectorsProvider, error) {
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
-	return &gcomDetectorsGetter{
+	return &gcomDetectorsProvider{
 		log:        log.New("plugins.angulardetector.gcom"),
 		baseURL:    baseURL,
 		httpClient: cl,
@@ -63,19 +68,19 @@ func newGCOMDetectorsGetter(baseURL string, ttl time.Duration) (detectorsGetter,
 // However, if there's an error, the cached value is not changed.
 //
 // The caller must have acquired g.mux.
-func (g *gcomDetectorsGetter) tryUpdateRemoteDetectors(ctx context.Context) error {
-	if time.Since(g.lastUpdate) <= g.ttl {
+func (p *gcomDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) error {
+	if time.Since(p.lastUpdate) <= p.ttl {
 		// Patterns already fetched
 		return nil
 	}
 
 	// Update last update even if there's an error, to avoid wasting time due to consecutive failures
 	defer func() {
-		g.lastUpdate = time.Now()
+		p.lastUpdate = time.Now()
 	}()
 
-	// fetch patterns using fetcher
-	resp, err := g.fetch(ctx)
+	// Fetch patterns from GCOM API
+	resp, err := p.fetch(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch: %w", err)
 	}
@@ -87,35 +92,35 @@ func (g *gcomDetectorsGetter) tryUpdateRemoteDetectors(ctx context.Context) erro
 	}
 
 	// Update cached result
-	g.detectors = detectors
+	p.detectors = detectors
 	return nil
 }
 
-// getDetectors gets the remote detections, either from the cache or from the remote source (if TTL has passed).
+// provideDetectors gets the remote detections, either from the cache or from the remote source (if TTL has passed).
 // If an error occurs during the cache refresh, the function fails silently and the old cached value is returned
 // instead.
-func (g *gcomDetectorsGetter) getDetectors(ctx context.Context) []detector {
-	g.mux.Lock()
-	defer g.mux.Unlock()
+func (p *gcomDetectorsProvider) provideDetectors(ctx context.Context) []detector {
+	p.mux.Lock()
+	defer p.mux.Unlock()
 
-	if err := g.tryUpdateRemoteDetectors(ctx); err != nil {
+	if err := p.tryUpdateRemoteDetectors(ctx); err != nil {
 		// Fail silently
-		g.log.Warn("Could not update remote detectors", "error", err)
+		p.log.Warn("Could not update remote detectors", "error", err)
 	}
-	return g.detectors
+	return p.detectors
 }
 
 // fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
-func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
+func (p *gcomDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error) {
 	st := time.Now()
 
-	reqURL, err := url.JoinPath(g.baseURL, "/api/angular_patterns")
+	reqURL, err := url.JoinPath(p.baseURL, gcomAngularPatternsPath)
 	if err != nil {
 		return nil, fmt.Errorf("url joinpath: %w", err)
 	}
 
-	g.log.Debug("Fetching remote angular detection patterns", "url", reqURL)
+	p.log.Debug("Fetching remote angular detection patterns", "url", reqURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request with context: %w", err)
@@ -126,14 +131,14 @@ func (g *gcomDetectorsGetter) fetch(ctx context.Context) (gcomPatterns, error) {
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			g.log.Error("response body close error", "error", err)
+			p.log.Error("response body close error", "error", err)
 		}
 	}()
 	var out gcomPatterns
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
-	g.log.Debug("fetched remote angular detection patterns", "duration", time.Since(st))
+	p.log.Debug("fetched remote angular detection patterns", "duration", time.Since(st))
 	return out, nil
 }
 

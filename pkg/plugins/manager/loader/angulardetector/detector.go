@@ -10,8 +10,8 @@ var (
 	_ detector = &containsBytesDetector{}
 	_ detector = &regexDetector{}
 
-	_ detectorsGetter = &staticDetectorsGetter{}
-	_ detectorsGetter = sequenceDetectorsGetter{}
+	_ detectorsProvider = &staticDetectorsProvider{}
+	_ detectorsProvider = sequenceDetectorsProvider{}
 )
 
 // detector implements a check to see if a plugin uses Angular.
@@ -40,28 +40,27 @@ func (d *regexDetector) Detect(moduleJs []byte) bool {
 	return d.regex.Match(moduleJs)
 }
 
-// detectorsGetter returns a list of angular detector s.
-type detectorsGetter interface {
-	// getDetectors returns a slice of detector provided by the detectorsGetter.
-	getDetectors(ctx context.Context) []detector
+// detectorsProvider returns a slice of detectors.
+type detectorsProvider interface {
+	provideDetectors(ctx context.Context) []detector
 }
 
-// staticDetectorsGetter is a detectorsGetter that always returns the provided detectors.
-type staticDetectorsGetter struct {
+// staticDetectorsProvider is a detectorsProvider that always returns the provided detectors.
+type staticDetectorsProvider struct {
 	detectors []detector
 }
 
-func (g *staticDetectorsGetter) getDetectors(_ context.Context) []detector {
-	return g.detectors
+func (p *staticDetectorsProvider) provideDetectors(_ context.Context) []detector {
+	return p.detectors
 }
 
-// sequenceDetectorsGetter is a detectorsGetter that calls all the detectorsGetters in it and returns the
-// first value which isn't empty.
-type sequenceDetectorsGetter []detectorsGetter
+// sequenceDetectorsProvider is a detectorsProvider that calls provideDetectors on all the detectors in
+// it and returns the first value which isn't empty.
+type sequenceDetectorsProvider []detectorsProvider
 
-func (d sequenceDetectorsGetter) getDetectors(ctx context.Context) []detector {
-	for _, getter := range d {
-		if detectors := getter.getDetectors(ctx); len(detectors) > 0 {
+func (p sequenceDetectorsProvider) provideDetectors(ctx context.Context) []detector {
+	for _, provider := range p {
+		if detectors := provider.provideDetectors(ctx); len(detectors) > 0 {
 			return detectors
 		}
 	}

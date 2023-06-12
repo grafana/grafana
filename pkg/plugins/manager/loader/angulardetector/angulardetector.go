@@ -23,22 +23,22 @@ var defaultDetectors = []detector{
 	&regexDetector{regex: regexp.MustCompile(`System\.register\(`)},
 }
 
-// newDefaultStaticDetectorsGetter returns a new staticDetectorsGetter with the default (hardcoded) angular
+// newDefaultStaticDetectorsGetter returns a new staticDetectorsProvider with the default (hardcoded) angular
 // detection patterns (defaultDetectors)
-func newDefaultStaticDetectorsGetter() detectorsGetter {
-	return &staticDetectorsGetter{detectors: defaultDetectors}
+func newDefaultStaticDetectorsGetter() detectorsProvider {
+	return &staticDetectorsProvider{detectors: defaultDetectors}
 }
 
 // newDefaultInspector returns the default Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
 func newDefaultInspector(cfg *config.Cfg) (Inspector, error) {
-	remoteGetter, err := newGCOMDetectorsGetter(cfg.GrafanaComURL, defaultGCOMDetectorsGetterTTL)
+	remoteGetter, err := newGCOMDetectorsProvider(cfg.GrafanaComURL, defaultGCOMDetectorsProviderTTL)
 	if err != nil {
-		return nil, fmt.Errorf("newGCOMDetectorsGetter: %w", err)
+		return nil, fmt.Errorf("newGCOMDetectorsProvider: %w", err)
 	}
 	return &PatternsListInspector{
-		detectorsGetter: sequenceDetectorsGetter{
+		detectorsProvider: sequenceDetectorsProvider{
 			remoteGetter,
 			newDefaultStaticDetectorsGetter(),
 		},
