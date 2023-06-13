@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
-
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
    * Offset buckets by this amount

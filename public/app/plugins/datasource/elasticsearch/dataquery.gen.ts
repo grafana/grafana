@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
-
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
 export type MetricAggregation = (Count | PipelineMetricAggregation | MetricAggregationWithSettings);
