@@ -549,7 +549,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
-			// This was added to mitage the hight load that could be created by loki range queries.
+			// This was added to mitigate the high load that could be created by loki range queries.
 			// In previous versions of Grafana, Loki datasources would default to range queries
 			// instead of instant queries, sometimes creating unnecessary load. This is only
 			// done for Grafana Cloud.

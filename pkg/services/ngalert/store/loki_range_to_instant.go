@@ -23,8 +23,8 @@ func canBeInstant(r *models.AlertRule) bool {
 	if r.Data[0].DatasourceUID != grafanaCloudLogs && r.Data[0].DatasourceUID != grafanaCloudUsageInsights {
 		return false
 	}
-	// Second query part should be and expression
-	if r.Data[1].DatasourceUID != "__expr__" {
+	// Second query part should be and expression, '-100' is the legacy way to define it.
+	if r.Data[1].DatasourceUID != "__expr__" && r.Data[1].DatasourceUID != "-100" {
 		return false
 	}
 	exprRaw := make(map[string]interface{})
