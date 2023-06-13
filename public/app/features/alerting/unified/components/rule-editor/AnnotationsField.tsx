@@ -6,15 +6,14 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Input, InputControl, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, Field, Input, TextArea, useStyles2 } from '@grafana/ui';
 import { DashboardDataDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
-import { Annotation, annotationDescriptions, annotationLabels, defaultAnnotations } from '../../utils/constants';
+import { Annotation, annotationLabels, defaultAnnotations } from '../../utils/constants';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
-import CustomAnnotationField from './CustomAnnotationField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO } from './DashboardPicker';
 
