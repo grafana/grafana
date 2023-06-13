@@ -29,6 +29,8 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import TableModel from '../../../core/TableModel';
+
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
@@ -188,7 +190,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             return { data: [] };
           }
 
-          const seriesList: any[] = [];
+          const seriesList: TableModel[] = [];
           filteredRequest.targets.forEach((target) => {
             const filteredFrames = groupedFrames[target.refId] ?? [];
             switch (target.resultFormat) {
