@@ -38,3 +38,9 @@ export const annotationDescriptions: Record<Annotation, string> = {
   [Annotation.panelID]: '',
   [Annotation.alertId]: '',
 };
+
+export const defaultAnnotations = [
+  { key: Annotation.summary, value: '' },
+  { key: Annotation.description, value: '' },
+  { key: Annotation.runbookURL, value: '' },
+];

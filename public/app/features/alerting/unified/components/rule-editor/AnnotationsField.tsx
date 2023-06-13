@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import produce from 'immer';
+import { defaultOrder } from 'ol/renderer/vector';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
@@ -11,7 +12,7 @@ import { DashboardDataDTO } from 'app/types';
 
 import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
-import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
+import { Annotation, annotationDescriptions, annotationLabels, defaultAnnotations } from '../../utils/constants';
 
 import CustomAnnotationField from './CustomAnnotationField';
 import DashboardAnnotationField from './DashboardAnnotationField';
@@ -31,6 +32,18 @@ const AnnotationsField = () => {
   const annotations = watch('annotations');
 
   const { fields, append, remove } = useFieldArray({ control, name: 'annotations' });
+
+  //make sure default annotations are always shown even if empty
+  useEffect(() => {
+    const defaultAnnotationKeys = defaultAnnotations.map((annotation) => annotation.key);
+
+    defaultAnnotationKeys.forEach((defaultAnnotationKey, defaultOrderIndex: number) => {
+      const fieldIndex = fields.findIndex((field) => field.key === defaultAnnotationKey);
+      if (fieldIndex === -1) {
+        append({ key: defaultAnnotationKey, value: '' });
+      }
+    });
+  }, [append, fields]);
 
   const selectedDashboardUid = annotations.find((annotation) => annotation.key === Annotation.dashboardUID)?.value;
   const selectedPanelId = annotations.find((annotation) => annotation.key === Annotation.panelID)?.value;

@@ -34,7 +34,7 @@ import { EvalFunction } from '../../state/alertDef';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
-import { Annotation } from './constants';
+import { Annotation, defaultAnnotations } from './constants';
 import { getDefaultOrFirstCompatibleDataSource, isGrafanaRulesSource } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
@@ -51,11 +51,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     name: '',
     uid: '',
     labels: [{ key: '', value: '' }],
-    annotations: [
-      { key: Annotation.summary, value: '' },
-      { key: Annotation.description, value: '' },
-      { key: Annotation.runbookURL, value: '' },
-    ],
+    annotations: defaultAnnotations,
     dataSourceName: null,
     type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
     group: '',
