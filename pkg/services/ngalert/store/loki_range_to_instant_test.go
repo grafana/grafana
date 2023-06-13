@@ -69,6 +69,20 @@ func TestCanBeInstant(t *testing.T) {
 				return r
 			}(),
 		},
+		{
+			name:     "invalid rule that has not last() pointing to range query",
+			expected: false,
+			rule: func() *models.AlertRule {
+				r := createMigrateableLokiRule(t)
+				raw := make(map[string]interface{})
+				err := json.Unmarshal(r.Data[1].Model, &raw)
+				require.NoError(t, err)
+				raw["expression"] = "C"
+				r.Data[1].Model, err = json.Marshal(raw)
+				require.NoError(t, err)
+				return r
+			}(),
+		},
 	}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
