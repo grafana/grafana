@@ -142,7 +142,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       }
       if (span.intrinsics) {
         const intrinsicValue = span.intrinsics.find((t) => t.key === key)?.value;
-        if (intrinsicValue) {
+        if (intrinsicValue !== undefined) {
           values.push(intrinsicValue.toString());
         }
       }

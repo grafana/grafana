@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
@@ -210,6 +211,16 @@ export default function SpanDetail(props: SpanDetailProps) {
     }
   };
 
+  const getValue = (key: string, value: string) => {
+    switch (key) {
+      case 'otel.status_code':
+        const code = parseInt(value, 10);
+        return code === 0 || code === 1 || code === 2 ? SpanStatusCode[code].toLowerCase() : value;
+      default:
+        return value;
+    }
+  };
+
   const intrinsicItems = intrinsics
     ?.filter((intrinsic) => {
       return intrinsic.key !== 'error';
@@ -218,7 +229,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       return {
         key: intrinsic.key,
         label: `${getLabel(intrinsic.key)}:`,
-        value: intrinsic.value,
+        value: getValue(intrinsic.key, intrinsic.value),
       };
     });
   if (intrinsicItems) {

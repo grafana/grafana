@@ -192,7 +192,7 @@ function getIntrinsics(
     if (span.status.code !== undefined) {
       intrinsics.push({
         key: 'otel.status_code',
-        value: span.status.code,
+        value: SpanStatusCode[span.status.code].toLowerCase(),
       });
       if (span.status.message) {
         intrinsics.push({ key: 'otel.status_description', value: span.status.message });
