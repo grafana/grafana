@@ -625,7 +625,9 @@ export class LokiDatasource
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '!=', value);
+          expression = queryHasFilter(expression, action.options.key, '!=', value)
+            ? removeLabelFromQuery(expression, action.options.key, '!=', value)
+            : addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;
       }
