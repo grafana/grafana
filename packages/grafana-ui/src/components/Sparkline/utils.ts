@@ -45,7 +45,7 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
 
   return applyNullInsertThreshold({
     frame,
-    refFieldPseudoMin: sparkline.timeRange!.from.valueOf(),
-    refFieldPseudoMax: sparkline.timeRange!.to.valueOf(),
+    refFieldPseudoMin: sparkline.timeRange?.from.valueOf(),
+    refFieldPseudoMax: sparkline.timeRange?.to.valueOf(),
   });
 }
