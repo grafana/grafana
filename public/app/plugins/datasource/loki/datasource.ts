@@ -33,6 +33,7 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
+  InspectQueryOptions,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -608,6 +609,21 @@ export class LokiDatasource
 
     const escapedValues = lodashMap(value, lokiSpecialRegexEscape);
     return escapedValues.join('|');
+  }
+
+  inspectQuery(query: LokiQuery, options: InspectQueryOptions): boolean {
+    let expression = query.expr ?? '';
+    switch (options.check) {
+      case 'HAS_FILTER': {
+        return expression.includes(`${options.attributes.key}="${options.attributes.value}"`);
+      }
+      case 'HAS_FILTER_OUT': {
+        console.log(`${options.attributes.key}!="${options.attributes.value}"`);
+        return expression.includes(`${options.attributes.key}!="${options.attributes.value}"`);
+      }
+      default:
+        return false;
+    }
   }
 
   modifyQuery(query: LokiQuery, action: QueryFixAction): LokiQuery {

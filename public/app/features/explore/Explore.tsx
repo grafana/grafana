@@ -182,24 +182,32 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
-  isFilterActive = async (type: string, key: string, value: string) => {
+  inspectQuery = async (check: string, key: string, value: string) => {
     let isActive = false;
     const { queries } = this.props;
     for (const query of queries) {
       const ds = await getDataSourceSrv().get(query.datasource);
-      if (ds) {
-        isActive = true;
+      if (ds.inspectQuery) {
+        isActive = ds.inspectQuery(query, {
+          check,
+          attributes: {
+            key,
+            value,
+          },
+        });
+      } else {
+        return false;
       }
     }
     return isActive;
   };
 
   isFilterLabelActive = async (key: string, value: string) => {
-    return await this.isFilterActive('FILTER', key, value);
+    return await this.inspectQuery('HAS_FILTER', key, value);
   };
 
   isFilterOutLabelActive = async (key: string, value: string) => {
-    return await this.isFilterActive('FILTER_OUT', key, value);
+    return await this.inspectQuery('HAS_FILTER_OUT', key, value);
   };
 
   onClickFilterLabel = (key: string, value: string) => {
