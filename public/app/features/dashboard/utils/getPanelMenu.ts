@@ -25,6 +25,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -141,7 +142,11 @@ export function getPanelMenu(
     shortcut: 'p s',
   });
 
-  if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
+  if (
+    contextSrv.hasAccessToExplore() &&
+    !(panel.plugin && panel.plugin.meta.skipDataQuery) &&
+    panel.datasource?.uid !== SHARED_DASHBOARD_QUERY
+  ) {
     menu.push({
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
