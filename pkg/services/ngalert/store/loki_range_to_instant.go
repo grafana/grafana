@@ -45,7 +45,6 @@ func canBeInstant(r *models.AlertRule) bool {
 // migrateToInstant will move a range-query to an instant query. This should only
 // be used for loki.
 func migrateToInstant(r *models.AlertRule) error {
-	r.Data[0].QueryType = "instant"
 	modelRaw := make(map[string]interface{})
 	if err := json.Unmarshal(r.Data[0].Model, &modelRaw); err != nil {
 		return err
@@ -56,5 +55,6 @@ func migrateToInstant(r *models.AlertRule) error {
 		return err
 	}
 	r.Data[0].Model = model
+	r.Data[0].QueryType = "instant"
 	return nil
 }
