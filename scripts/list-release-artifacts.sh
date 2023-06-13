@@ -3,7 +3,7 @@ set -e
 
 VERSION="${1:-v9.5.2}"
 ERSION="${VERSION#*v}"
-ERSION_DEB=$(echo ${ERSION} | sed 's/-/~/g')
+ERSION_DEB="${ERSION//-/\~}"
 
 ASSETS=$(cat << EOF
 gs://${BUCKET}/artifacts/static-assets/grafana-oss/${ERSION}/public/robots.txt
