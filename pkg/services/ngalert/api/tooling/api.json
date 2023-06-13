@@ -297,6 +297,12 @@
       "$ref": "#/definitions/AlertRuleGroupExport"
      },
      "type": "array"
+    },
+    "policies": {
+     "items": {
+      "$ref": "#/definitions/NotificationPolicyExport"
+     },
+     "type": "array"
     }
    },
    "title": "AlertingFileExport is the full provisioned file export.",
@@ -1897,6 +1903,19 @@
    "title": "NoticeSeverity is a type for the Severity property of a Notice.",
    "type": "integer"
   },
+  "NotificationPolicyExport": {
+   "properties": {
+    "Policy": {
+     "$ref": "#/definitions/RouteExport"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+   "type": "object"
+  },
   "NotificationTemplate": {
    "properties": {
     "name": {
@@ -2979,6 +2998,61 @@
     "routes": {
      "items": {
       "$ref": "#/definitions/Route"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "RouteExport": {
+   "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+   "properties": {
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
      },
      "type": "array"
     }
@@ -4068,6 +4142,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4178,7 +4253,6 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -5232,6 +5306,29 @@
      }
     },
     "summary": "Sets the notification policy tree.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/policies/export": {
+   "get": {
+    "operationId": "RouteGetPolicyTreeExport",
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Export the notification policy tree in provisioning file format.",
     "tags": [
      "provisioning"
     ]
