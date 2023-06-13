@@ -10,6 +10,7 @@ import {
   LabelFilter,
   LabelFormatExpr,
   LabelParser,
+  LabelReplaceExpr,
   LineFilter,
   LineFormatExpr,
   LiteralExpr,
@@ -49,6 +50,7 @@ import {
   formatVectorExpr,
   formatDistinctFilter,
   formatDecolorizeExpr,
+  formatLabelReplaceExpr,
 } from './formatter';
 
 describe('formats logql queries', () => {
@@ -240,6 +242,13 @@ describe('metric expression syntaxnode functions', () => {
 
     const MOCK_NODE_2 = generateNode(LiteralExpr, `- 1`);
     expect(formatLiteralExpr(MOCK_NODE_2, `- 1`)).toBe(`-1`);
+  });
+
+  it('formatLabelReplaceExpr should return a formatted expr', () => {
+    const MOCK_NODE = generateNode(LabelReplaceExpr, `label_replace(rate({label=""}[1s]), "", "", "", "")`);
+    expect(formatLabelReplaceExpr(MOCK_NODE, `label_replace(rate({label=""}[1s]), "", "", "", "")`)).toBe(
+      `label_replace(\n  rate(\n    {label=""}\n    [1s]\n  ),\n  "",\n  "",\n  "",\n  ""\n)`
+    );
   });
 
   it('formatVectorExpr should return a formatted literal expr', () => {

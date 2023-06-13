@@ -51,6 +51,7 @@ import {
   Sub,
   DecolorizeExpr,
   DistinctFilter,
+  LabelReplaceExpr,
 } from '@grafana/lezer-logql';
 
 import { replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
@@ -135,6 +136,10 @@ const formatMetricExpr = (node: SyntaxNode, query: string): string => {
 
     case LiteralExpr:
       formatted = formatLiteralExpr(node, query);
+      break;
+
+    case LabelReplaceExpr:
+      formatted = formatLabelReplaceExpr(node, query);
       break;
 
     case VectorExpr:
@@ -368,6 +373,24 @@ export function formatLiteralExpr(node: SyntaxNode, query: string): string {
   }
 
   return query.substring(numberNode.from, numberNode.to);
+}
+
+export function formatLabelReplaceExpr(node: SyntaxNode, query: string): string {
+  let response = 'label_replace(\n';
+
+  iterateNode(node, [MetricExpr, String]).forEach((node) => {
+    if (node.parent?.type.id !== LabelReplaceExpr) {
+      return;
+    }
+
+    if (node.type.id === MetricExpr) {
+      response += indentMultiline(formatLokiQuery(query.substring(node.from, node.to)), 1) + ',\n';
+    } else {
+      response += indent(1) + query.substring(node.from, node.to) + ',\n';
+    }
+  });
+
+  return trimEnd(response, ',\n') + '\n)';
 }
 
 export function formatVectorExpr(node: SyntaxNode, query: string): string {
