@@ -13,6 +13,7 @@ import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels, defaultAnnotations } from '../../utils/constants';
 
+import AnnotationHeaderField from './AnnotationHeaderField';
 import CustomAnnotationField from './CustomAnnotationField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO } from './DashboardPicker';
@@ -113,39 +114,12 @@ const AnnotationsField = () => {
           return (
             <div key={annotationField.id} className={styles.flexRow}>
               <div>
-                <div>
-                  <label className={styles.annotationContainer}>
-                    {
-                      <InputControl
-                        name={`annotations.${index}.key`}
-                        defaultValue={annotationField.key}
-                        render={({ field: { ref, ...field } }) => {
-                          switch (annotationField.key) {
-                            case Annotation.dashboardUID:
-                              return <div>Dashboard and panel</div>;
-                            case Annotation.panelID:
-                              return <span></span>;
-                            default:
-                              return (
-                                <div>
-                                  {annotationLabels[annotation] && (
-                                    <span className={styles.annotationTitle} data-testid={`annotation-key-${index}`}>
-                                      {annotationLabels[annotation]}
-                                      {' (optional)'}
-                                    </span>
-                                  )}
-                                  {!annotationLabels[annotation] && <CustomAnnotationField field={field} />}
-                                </div>
-                              );
-                          }
-                        }}
-                        control={control}
-                        rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
-                      />
-                    }
-                  </label>
-                  <div className={styles.annotationDescription}>{annotationDescriptions[annotation]}</div>
-                </div>
+                <AnnotationHeaderField
+                  annotationField={annotationField}
+                  annotations={annotations}
+                  annotation={annotation}
+                  index={index}
+                />
                 {selectedDashboard && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
                     dashboard={selectedDashboard}
