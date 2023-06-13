@@ -363,7 +363,9 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             tooltip={
               <>
                 Overrides the relative time range for individual panels, which causes them to be different than what is
-                selected in the dashboard time picker in the top-right corner of the dashboard.
+                selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
+                the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables
+                like <code>$_relativeTime</code>.
               </>
             }
           >
@@ -386,7 +388,8 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             tooltip={
               <>
                 Overrides the time range for individual panels by shifting its start and end relative to the time
-                picker.
+                picker. For example to configure the Last 1h the Time shift should be <code>now-1h</code> and{' '}
+                <code>1h</code>, or variables like <code>$_timeShift</code>.
               </>
             }
           >
@@ -395,7 +398,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           <Input
             type="text"
             className="width-6"
-            placeholder="1h"
+            placeholder="0h"
             onChange={this.onTimeShiftChange}
             onBlur={this.onTimeShift}
             invalid={!timeShiftIsValid}
