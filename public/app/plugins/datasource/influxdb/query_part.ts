@@ -33,7 +33,7 @@ function aliasRenderer(part: { params: string[] }, innerExpr: string) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
 }
 
-function fieldRenderer(part: { params: string[] }, innerExpr: any) {
+function fieldRenderer(part: { params: string[] }) {
   const param = part.params[0];
 
   if (param === '*') {
