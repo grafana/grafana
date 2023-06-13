@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	
 )
 
 // XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
