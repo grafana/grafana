@@ -44,6 +44,9 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  permalinkedRowId?: string;
+  scrollIntoView: (element: HTMLElement) => void;
 }
 
 interface State {
@@ -139,66 +142,40 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
 
+    const getLogRowProperties = (row: LogRowModel) => {
+      return {
+        getRows: getRows,
+        row: row,
+        showContextToggle: showContextToggle,
+        showDuplicates: showDuplicates,
+        showLabels: showLabels,
+        showTime: showTime,
+        displayedFields: displayedFields,
+        wrapLogMessage: wrapLogMessage,
+        prettifyLogMessage: prettifyLogMessage,
+        timeZone: timeZone,
+        enableLogDetails: enableLogDetails,
+        onClickFilterLabel: onClickFilterLabel,
+        onClickFilterOutLabel: onClickFilterOutLabel,
+        onClickShowField: onClickShowField,
+        onClickHideField: onClickHideField,
+        getFieldLinks: getFieldLinks,
+        logsSortOrder: logsSortOrder,
+        forceEscape: forceEscape,
+        onOpenContext: this.openContext,
+        onLogRowHover: onLogRowHover,
+        app: app,
+        styles: styles,
+        onPermalinkClick: this.props.onPermalinkClick,
+        scrollIntoView: this.props.scrollIntoView,
+        permalinkedRowId: this.props.permalinkedRowId,
+      };
+    };
     return (
       <table className={styles.logsRowsTable}>
         <tbody>
-          {hasData &&
-            firstRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                row={row}
-                showContextToggle={showContextToggle}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                displayedFields={displayedFields}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                enableLogDetails={enableLogDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                forceEscape={forceEscape}
-                onOpenContext={this.openContext}
-                onLogRowHover={onLogRowHover}
-                app={app}
-                styles={styles}
-              />
-            ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                row={row}
-                showContextToggle={showContextToggle}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                displayedFields={displayedFields}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                enableLogDetails={enableLogDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                forceEscape={forceEscape}
-                onOpenContext={this.openContext}
-                onLogRowHover={onLogRowHover}
-                app={app}
-                styles={styles}
-              />
-            ))}
+          {hasData && firstRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
+          {hasData && renderAll && lastRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
           {hasData && !renderAll && (
             <tr>
               <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
