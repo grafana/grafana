@@ -19,11 +19,10 @@ export interface TooltipProps {
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
   interactive?: boolean;
-  onTooltipVisible?: Function; // TODO: choose more suitable type?
 }
 
 export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
-  ({ children, theme, interactive, show, placement, content, onTooltipVisible }, forwardedRef) => {
+  ({ children, theme, interactive, show, placement, content }, forwardedRef) => {
     const [controlledVisible, setControlledVisible] = React.useState(show);
 
     useEffect(() => {
@@ -56,10 +55,6 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
     const styles = useStyles2(getStyles);
     const style = styles[theme ?? 'info'];
 
-    useEffect(() => {
-      onTooltipVisible?.(visible);
-    }, [onTooltipVisible, visible]);
-
     const handleRef = useCallback(
       (ref: HTMLElement | null) => {
         setTriggerRef(ref);
@@ -83,7 +78,7 @@ export const Tooltip = React.forwardRef<HTMLElement, TooltipProps>(
           <Portal>
             <div ref={setTooltipRef} {...getTooltipProps({ className: style.container })}>
               <div {...getArrowProps({ className: style.arrow })} />
-              {typeof content === 'string' && <span id="tooltip-body">{content}</span>}
+              {typeof content === 'string' && content}
               {React.isValidElement(content) && React.cloneElement(content)}
               {typeof content === 'function' &&
                 update &&
