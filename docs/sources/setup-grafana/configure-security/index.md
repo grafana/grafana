@@ -5,7 +5,7 @@ description: Considerations and planification before setting up Grafana for the 
 aliases:
   - /docs/mimir/latest/old-architecture/
   - docs/sources/auth/planning/
-weight: 200
+weight: 100
 keywords:
   - IdP
   - IAM
