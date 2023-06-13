@@ -96,8 +96,7 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 	}`)
 
 	require.True(t, canBeInstant(original))
-
-	migrateToInstant(original)
+	require.NoError(t, migrateToInstant(original))
 
 	require.Equal(t, mirgrated.Data[0].QueryType, original.Data[0].QueryType)
 
