@@ -637,23 +637,24 @@ describe('LokiDatasource', () => {
           expect(result.refId).toEqual('A');
           expect(result.expr).toEqual('rate({bar="baz", job="grafana"}[5m])');
         });
-        describe('and query has parser', () => {
-          it('then the correct label should be added for logs query', () => {
-            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-            const result = ds.modifyQuery(query, action);
+      });
 
-            expect(result.refId).toEqual('A');
-            expect(result.expr).toEqual('{bar="baz"} | logfmt | job=`grafana`');
-          });
-          it('then the correct label should be added for metrics query', () => {
-            const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
-            const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
-            const result = ds.modifyQuery(query, action);
+      describe('and query has parser', () => {
+        it('then the correct label should be added for logs query', () => {
+          const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
+          const result = ds.modifyQuery(query, action);
 
-            expect(result.refId).toEqual('A');
-            expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job=`grafana` [5m])');
-          });
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('{bar="baz"} | logfmt | job=`grafana`');
+        });
+        it('then the correct label should be added for metrics query', () => {
+          const query: LokiQuery = { refId: 'A', expr: 'rate({bar="baz"} | logfmt [5m])' };
+          const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER' };
+          const result = ds.modifyQuery(query, action);
+
+          expect(result.refId).toEqual('A');
+          expect(result.expr).toEqual('rate({bar="baz"} | logfmt | job=`grafana` [5m])');
         });
       });
     });
