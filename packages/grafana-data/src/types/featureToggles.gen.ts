@@ -59,7 +59,6 @@ export interface FeatureToggles {
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
   emptyDashboardPage?: boolean;
-  authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
@@ -88,6 +87,7 @@ export interface FeatureToggles {
   renderAuthJWT?: boolean;
   pyroscopeFlameGraph?: boolean;
   externalServiceAuth?: boolean;
+  refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
   authenticationConfigUI?: boolean;
@@ -98,4 +98,7 @@ export interface FeatureToggles {
   dataSourcePageHeader?: boolean;
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
+  pluginsFrontendSandbox?: boolean;
+  sqlDatasourceDatabaseSelection?: boolean;
+  cloudWatchLogsMonacoEditor?: boolean;
 }

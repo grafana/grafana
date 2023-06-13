@@ -8,9 +8,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	alertingModels "github.com/grafana/alerting/models"
 	"github.com/hashicorp/go-multierror"
-	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
@@ -355,7 +353,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
 	notify := func(states []state.StateTransition) {
-		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		expiredAlerts := state.FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
@@ -425,8 +423,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			logger.Debug("Skip updating the state because the context has been cancelled")
 			return
 		}
-		processedStates := sch.stateManager.ProcessEvalResults(ctx, e.scheduledAt, e.rule, results, sch.getRuleExtraLabels(e))
-		alerts := FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
+		processedStates := sch.stateManager.ProcessEvalResults(
+			ctx,
+			e.scheduledAt,
+			e.rule,
+			results,
+			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+		)
+		alerts := state.FromStateTransitionToPostableAlerts(processedStates, sch.stateManager, sch.appURL)
 		span.AddEvents(
 			[]string{"message", "state_transitions", "alerts_to_send"},
 			[]tracing.EventValue{
@@ -556,19 +560,6 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 	}
 
 	sch.stopAppliedFunc(alertDefKey)
-}
-
-func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
-	extraLabels := make(map[string]string, 4)
-
-	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
-	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
-	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
-
-	if !sch.disableGrafanaFolder {
-		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle
-	}
-	return extraLabels
 }
 
 func SchedulerUserFor(orgID int64) *user.SignedInUser {

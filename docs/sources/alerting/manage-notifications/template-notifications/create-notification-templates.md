@@ -30,13 +30,9 @@ To create a template, complete the following steps.
 
 3. Write the content of the template in the content field.
 
-   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-subject-9-4.png" caption="New notification template email.subject" >}}
-
 4. Click **Save**.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
-
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-notification-template-email-subject-9-4.png" caption="Edit notification template email.subject" >}}
 
 To create a notification template that contains more than one template:
 
@@ -45,8 +41,6 @@ To create a notification template that contains more than one template:
 2. Enter a name for the notification template.
 
 3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
-
-   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-9-4.png" caption="New notification template" >}}
 
 4. Click **Save**.
 
@@ -185,7 +179,13 @@ Template the title of a Slack message to contain the number of firing and resolv
 
 ## Template the content of a Slack message
 
-Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL:
+Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL.
+
+**Note:**
+
+This template is for Grafana-managed alerts only.
+To use the template for Grafana Mimir/Loki-managed alerts, delete the references to DashboardURL and SilenceURL.
+For more information, see the [Prometheus documentation on notifications](https://prometheus.io/docs/alerting/latest/notifications/).
 
 ```
 1 firing alert(s):

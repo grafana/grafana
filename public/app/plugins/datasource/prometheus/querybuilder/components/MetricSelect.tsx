@@ -49,6 +49,14 @@ export function MetricSelect({
     initialMetrics?: string[];
   }>({});
 
+  const metricsModalOption: SelectableValue[] = [
+    {
+      value: 'BrowseMetrics',
+      label: 'Metrics explorer',
+      description: 'Browse and filter metrics and metadata with a fuzzy search',
+    },
+  ];
+
   const customFilterOption = useCallback((option: SelectableValue<any>, searchQuery: string) => {
     const label = option.label ?? option.value;
     if (!label) {
@@ -61,7 +69,16 @@ export function MetricSelect({
     }
 
     const searchWords = searchQuery.split(splitSeparator);
-    return searchWords.reduce((acc, cur) => acc && label.toLowerCase().includes(cur.toLowerCase()), true);
+    return searchWords.reduce((acc, cur) => {
+      const matcheSearch = label.toLowerCase().includes(cur.toLowerCase());
+
+      let browseOption = false;
+      if (prometheusMetricEncyclopedia) {
+        browseOption = label === 'Metrics explorer';
+      }
+
+      return acc && (matcheSearch || browseOption);
+    }, true);
   }, []);
 
   const formatOptionLabel = useCallback(
@@ -70,7 +87,8 @@ export function MetricSelect({
       if (option['__isNew__']) {
         return option.label;
       }
-
+      // only matches on input, does not match on regex
+      // look into matching for regex input
       return (
         <Highlighter
           searchWords={meta.inputValue.split(splitSeparator)}
@@ -104,12 +122,19 @@ export function MetricSelect({
       if (results.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
         results.splice(0, results.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
       }
-      return results.map((result) => {
+
+      const resultsOptions = results.map((result) => {
         return {
           label: result.text,
           value: result.text,
         };
       });
+
+      if (prometheusMetricEncyclopedia) {
+        return [...metricsModalOption, ...resultsOptions];
+      } else {
+        return resultsOptions;
+      }
     });
   };
 
@@ -201,18 +226,11 @@ export function MetricSelect({
               }
 
               if (prometheusMetricEncyclopedia) {
-                // pass the initial metrics, possibly filtered by labels into the Metrics Modal
-                const metricsModalOption: SelectableValue[] = [
-                  {
-                    value: 'BrowseMetrics',
-                    label: 'Metrics explorer',
-                    description: 'Browse and filter metrics and metadata with a fuzzy search',
-                  },
-                ];
-                // pass the initial metrics into the Metrics Modal
                 setState({
+                  // add the modal butoon option to the options
                   metrics: [...metricsModalOption, ...metrics],
                   isLoading: undefined,
+                  // pass the initial metrics into the Metrics Modal
                   initialMetrics: initialMetrics,
                 });
               } else {
