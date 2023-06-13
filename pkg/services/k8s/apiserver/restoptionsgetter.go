@@ -93,7 +93,7 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			for _, k := range kinds {
 				if k.Props().Common().PluralMachineName == config.GroupResource.Resource {
 					found = k
-					f.dualWriter(k.MachineName())
+					dualWrite = f.dualWriter(k.MachineName())
 					break
 				}
 			}
