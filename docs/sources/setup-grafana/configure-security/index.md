@@ -14,33 +14,33 @@ keywords:
 
 # Planning IAM integration strategy
 
-This topic describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [Grafana resources], simplifying user management and authentication.
+This section describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [Grafana resources], simplifying user management and authentication.
 
 ## Benefits of integrating with an IAM provider
 
 Integrating with an IAM provider provides the following benefits:
 
-- **User management**: By providing Grafana access to your current user database, you eliminate the overhead of replicating user information and instead have centralized user management for users' roles and permissions to Grafana resources.
+- **User management**: By providing Grafana access to your current user management system, you eliminate the overhead of replicating user information and instead have centralized user management for users' roles and permissions to Grafana resources.
 
-- **Security**: IAM solutions provide advanced security features such as MFA, RBCA, and audit trails, which can help to improve the security of your Grafana installation.
+- **Security**: many IAM solutions provide advanced security features such as multi-factor authentication, RBCA, and audit trails, which can help to improve the security of your Grafana installation.
 
 - **SSO**: Properly setting up Grafana with your current IAM solution enables users to access Grafana with the same credentials they use for other applications.
 
-- **Scalability**: Adding, updating, or removing users from your user database is immediately reflected in Grafana.
+- **Scalability**: User additions and updates in your user database are immediately reflected in Grafana.
 
-In order to plan an integration with Grafana, assess your organization's current needs, requirements and any existing IAM solutions being used. This should include which set of roles and permissions will be match to each type of user and which groups of users share the same set of permissions and access to shared resources.
-
-After considering needs, chosen IAM solution and taking into consideration the security requirements, the last step is to test it out thoroughly before deploying it to a production environment.
+In order to plan an integration with Grafana, assess your organization's current needs, requirements and any existing IAM solutions being used. This includes thinking about how roles and permissions will be mapped to users in Grafana, and how users can be grouped together to access shared resources.
 
 ## Internal vs external users
 
-As a first step, determine where your Grafana users are located. Are the users located within your organization, or are they outside your organization?
+As a first step, determine how you want to manage users who will access Grafana.
 
-If the users are within your organization, Grafana might be able to integrate with those users through an identify provider.
+Do you already use an identity provider to manage users? If so, Grafana might be able to integrate with your identity provider through one of our IdP integrations.
+Refer to [Configure authentication documentation]({{< relref "./configure-authentication" >}}) for the list of currently supported providers.
 
-If the users are outside your organization, you must provide anonymous access to Grafana, which is not enabled by default.
+If you are not interested in setting up an external identity provider, but still want to limit access to your Grafana instance, you should consider using Grafana's basic authentication.
 
-For information about enabling anonymous access, refer to the [documentation]({{< relref "../../setup-grafana/configure-security/configure-authentication#anonymous-authentication" >}}).
+Finally, if you want your Grafana instance to be accessible to everyone, you can enable anonymous access to Grafana.
+For information, refer to the [anonymous authentication documentation]({{< relref "./configure-security/configure-authentication#anonymous-authentication" >}}).
 
 ## Ways to organize users
 
@@ -48,22 +48,26 @@ Organize users in subgroups that are sensible to the organization. These are som
 
 - **Security**: Different groups of users or customers should only have access to their intended resources.
 - **Simplicity**: Reduce the scope of dashboards and resources available.
-- **Cost attribution**: Track and bill costs to their customers, departments, or divisions.
+- **Cost attribution**: Track and bill costs to individual customers, departments, or divisions.
 - **Customization**: Each group of users could have a personalized experience like different dashboards or theme colours.
 
-### Users in Grafana Teams
+### Users in Grafana teams
 
-You can organize users into [Teams] and assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+You can organize users into [teams] and assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team.
 
-A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team members' team roles, UI preferences, and the default dashboard to be displayed upon login for the team members.
+A user can belong to multiple teams, and can be a member or an administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team administrators can add members to a team and update its settings, such as the team name, team members, roles assigned to the team, and UI preferences.
 
 Teams are a perfect solution for working with a small subset of users. Teams can share resources with other teams.
 
-### Users in Grafana Organizations
+### Users in Grafana organizations
 
-[Grafana Organizations] isolate users from dashboards and data sources by having multiple organizations under a single instance of Grafana. This means users under different organizations won't share any resources such as dashboards, folders, and data sources.
+[Grafana organizations] allow complete isolation of resources, such as dashboards and data sources. Users can be members of one or several organizations, and they can only access resources from an organization that they belong to.
 
-By default, organizations provide a measure of isolation within Grafana. They can be used to present different user experiences, which gives the appearance that there are multiple instances of Grafana within a single instance. However, because they lack the scalability of [Folders], we do not recommend using organizations as a way to group users.
+Having multiple organizations under a single instance of Grafana allows you to manage your users in one place, while having a complete separation of resources.
+
+Organizations provide a higher measure of isolation within Grafana than teams do, and can be useful in certain scenarios. However, because organizations lack the scalability and flexibility of teams and [folders], we do not recommend using them as the default way to group users and resources.
+
+Note that Grafana Cloud does not support having several organizations per instance.
 
 ### Choosing between teams and organizations
 
