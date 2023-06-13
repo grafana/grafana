@@ -82,6 +82,9 @@ export function registerSuggestions(
     triggerCharacters: ['$'],
 
     provideCompletionItems: (model, position, context) => {
+    if (model !== monaco.editor.getModel(model.uri)){
+      return undefined
+    }
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
