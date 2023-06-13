@@ -30,7 +30,7 @@ func GetConfig(c *cli.Context, version string) (config.Config, config.Edition, e
 		}
 	} else {
 		if version != packageVersion {
-			return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s", packageVersion, version), 1)
+			return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json!", packageVersion, version), 1)
 		}
 	}
 
