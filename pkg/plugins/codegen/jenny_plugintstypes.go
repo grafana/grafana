@@ -42,17 +42,6 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		}
 	}
 
-	version := "export const pluginVersion = \"%s\";"
-	if decl.PluginMeta.Info.Version != nil {
-		version = fmt.Sprintf(version, *decl.PluginMeta.Info.Version)
-	} else {
-		version = fmt.Sprintf(version, decl.GrafanaVersion)
-	}
-
-	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-		Data: version,
-	})
-
 	jf, err := j.inner.Generate(decl)
 	if err != nil {
 		return nil, err
