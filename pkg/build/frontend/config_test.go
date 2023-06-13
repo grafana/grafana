@@ -3,10 +3,11 @@ package frontend
 import (
 	"encoding/json"
 	"flag"
-	"github.com/stretchr/testify/require"
-	"github.com/urfave/cli/v2"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
 )
 
 const (

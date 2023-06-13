@@ -31,7 +31,7 @@ func GetConfig(c *cli.Context, inputTagVersion string) (config.Config, config.Ed
 		return cfg, mode, err
 	}
 	if inputTagVersion != packageVersion {
-		return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json!", packageVersion, inputTagVersion), 1)
+		return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json", packageVersion, inputTagVersion), 1)
 	}
 
 	cfg.PackageVersion = inputTagVersion
