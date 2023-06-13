@@ -83,6 +83,8 @@ export function registerSuggestions(
     triggerCharacters: ['$'],
 
     provideCompletionItems: (model, position, context) => {
+      // only return these suggestions for the specified modelId
+      // prevents duplicate suggestions when multiple editors are open
       if (model.id !== modelId) {
         return undefined;
       }

@@ -86,23 +86,21 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
-    this.monaco.editor.onDidCreateModel((model) => {
-      console.log(model.id);
-      this.modelId = model.id;
-      if (getSuggestions && this.modelId) {
-        this.completionCancel = registerSuggestions(monaco, language, getSuggestions, model.id);
-      }
-    });
-    const { language, getSuggestions, onBeforeEditorMount } = this.props;
+
+    const { onBeforeEditorMount } = this.props;
 
     onBeforeEditorMount?.(monaco);
   };
 
   handleOnMount = (editor: MonacoEditorType, monaco: Monaco) => {
-    const { onChange, onEditorDidMount } = this.props;
+    const { getSuggestions, language, onChange, onEditorDidMount } = this.props;
 
+    this.modelId = editor.getModel()?.id;
     this.getEditorValue = () => editor.getValue();
 
+    if (getSuggestions && this.modelId) {
+      this.completionCancel = registerSuggestions(monaco, language, getSuggestions, this.modelId);
+    }
     // Save when pressing Ctrl+S or Cmd+S
     editor.onKeyDown((e: monacoType.IKeyboardEvent) => {
       if (e.keyCode === monaco.KeyCode.KeyS && (e.ctrlKey || e.metaKey)) {
