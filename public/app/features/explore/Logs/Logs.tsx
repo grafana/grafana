@@ -27,7 +27,7 @@ import {
   EventBus,
   LogRowContextOptions,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
@@ -102,9 +102,10 @@ interface State {
   contextRow?: LogRowModel;
 }
 
+const scrollableLogsContainer = config.featureToggles.scrollableLogsContainer;
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
-  margin-bottom: 0;
+  ${scrollableLogsContainer && 'margin-bottom: 0px'};
   & > div {
     overflow: visible;
     & > div {
@@ -631,8 +632,8 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      overflow-x: scroll;
-      max-height: calc(100vh - 150px);
+      ${scrollableLogsContainer && 'overflow-x: scroll;'};
+      ${scrollableLogsContainer && 'max-height: calc(100vh - 150px)'};
     `,
     logRows: css`
       overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};

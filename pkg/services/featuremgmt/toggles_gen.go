@@ -338,4 +338,8 @@ const (
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagScrollableLogsContainer
+	// Improves the scrolling behavior of logs in Explore
+	FlagScrollableLogsContainer = "scrollableLogsContainer"
 )

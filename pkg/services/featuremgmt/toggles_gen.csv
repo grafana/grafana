@@ -82,3 +82,4 @@ lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,fa
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
+scrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true

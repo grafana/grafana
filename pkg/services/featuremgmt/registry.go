@@ -564,5 +564,12 @@ var (
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
+		{
+			Name:         "scrollableLogsContainer",
+			Description:  "Improves the scrolling behavior of logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
 	}
 )
