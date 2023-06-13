@@ -119,24 +119,26 @@ const AnnotationsField = () => {
                       <InputControl
                         name={`annotations.${index}.key`}
                         defaultValue={annotationField.key}
-                        render={({ field: { ref, ...field } }) =>
-                          annotationField.key === Annotation.dashboardUID ? (
-                            <div>Dashboard and panel</div>
-                          ) : annotationField.key === Annotation.panelID ? (
-                            <span></span>
-                          ) : (
-                            <div>
-                              <span className={styles.annotationTitle} data-testid={`annotation-key-${index}`}>
-                                {annotationLabels[annotation]}{' '}
-                              </span>
-                              {annotationLabels[annotation] ? (
-                                <span className={styles.annotationTitle}>(optional)</span>
-                              ) : (
-                                <CustomAnnotationField field={field} />
-                              )}
-                            </div>
-                          )
-                        }
+                        render={({ field: { ref, ...field } }) => {
+                          switch (annotationField.key) {
+                            case Annotation.dashboardUID:
+                              return <div>Dashboard and panel</div>;
+                            case Annotation.panelID:
+                              return <span></span>;
+                            default:
+                              return (
+                                <div>
+                                  {annotationLabels[annotation] && (
+                                    <span className={styles.annotationTitle} data-testid={`annotation-key-${index}`}>
+                                      {annotationLabels[annotation]}
+                                      {' (optional)'}
+                                    </span>
+                                  )}
+                                  {!annotationLabels[annotation] && <CustomAnnotationField field={field} />}
+                                </div>
+                              );
+                          }
+                        }}
                         control={control}
                         rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
                       />
