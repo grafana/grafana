@@ -318,7 +318,7 @@ describe('LibraryPanelsSearch', () => {
       expect(card()).toBeInTheDocument();
       expect(within(card()).getByText(/library panel name/i)).toBeInTheDocument();
       expect(within(card()).getByText(/library panel description/i)).toBeInTheDocument();
-      expect(within(card()).getByLabelText(/delete button on panel type card/i)).toBeInTheDocument();
+      expect(within(card()).getByLabelText(/Delete/i)).toBeInTheDocument();
     });
   });
 
