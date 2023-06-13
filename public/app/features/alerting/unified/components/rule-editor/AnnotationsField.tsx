@@ -13,6 +13,7 @@ import { dashboardApi } from '../../api/dashboardApi';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
+import CustomAnnotationField from './CustomAnnotationField';
 import DashboardAnnotationField from './DashboardAnnotationField';
 import { DashboardPicker, PanelDTO } from './DashboardPicker';
 
@@ -119,15 +120,7 @@ const AnnotationsField = () => {
                               {annotationLabels[annotation] ? (
                                 <span className={styles.annotationTitle}>(optional)</span>
                               ) : (
-                                <div>
-                                  <span className={styles.annotationTitle}>Custom annotation name and content</span>
-                                  <Input
-                                    placeholder="Enter custom annotation name..."
-                                    width={18}
-                                    {...field}
-                                    className={styles.customAnnotationInput}
-                                  />
-                                </div>
+                                <CustomAnnotationField field={field} />
                               )}
                             </div>
                           )
@@ -188,18 +181,18 @@ const AnnotationsField = () => {
         <Stack direction="row" gap={1}>
           <div className={styles.addAnnotationsButtonContainer}>
             <Button
-              icon="plus-circle"
+              icon="plus"
               type="button"
               variant="secondary"
               onClick={() => {
                 append({ key: '', value: '' });
               }}
             >
-              Add annotation
+              Add custom annotation
             </Button>
             {!selectedDashboard && (
               <Button type="button" variant="secondary" icon="dashboard" onClick={() => setShowPanelSelector(true)}>
-                Set dashboard and panel
+                Link dashboard and panel
               </Button>
             )}
           </div>
@@ -262,11 +255,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   annotationDescription: css`
     color: ${theme.colors.text.secondary};
-  `,
-
-  customAnnotationInput: css`
-    margin-top: 5px;
-    width: 100%;
   `,
 
   annotationValueContainer: css`
