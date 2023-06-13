@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 
 import {
   DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceOption,
@@ -23,7 +24,7 @@ import {
 import { config } from 'app/core/config';
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../../../constants';
-import { InfluxOptions, InfluxSecureJsonData, InfluxVersion } from '../../../types';
+import { InfluxOptions, InfluxOptionsV1, InfluxSecureJsonData, InfluxVersion } from '../../../types';
 
 const { Input, SecretFormField } = LegacyForms;
 
@@ -76,7 +77,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
     const { options, onOptionsChange } = this.props;
 
-    const copy: any = {
+    const copy: DataSourceSettings<InfluxOptionsV1, {}> = {
       ...options,
       jsonData: {
         ...options.jsonData,
@@ -89,11 +90,12 @@ export class ConfigEditor extends PureComponent<Props, State> {
       copy.jsonData.httpMode = 'POST';
 
       // Remove old 1x configs
-      delete copy.user;
-      delete copy.database;
-    }
+      const { user, database, ...rest } = copy;
 
-    onOptionsChange(copy);
+      onOptionsChange(rest as DataSourceSettings<InfluxOptions, {}>);
+    } else {
+      onOptionsChange(copy);
+    }
   };
 
   renderInflux2x() {

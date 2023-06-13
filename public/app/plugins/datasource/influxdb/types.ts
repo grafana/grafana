@@ -19,6 +19,14 @@ export interface InfluxOptions extends DataSourceJsonData {
   maxSeries?: number;
 }
 
+/**
+ * @deprecated
+ */
+export interface InfluxOptionsV1 extends InfluxOptions {
+  user?: string;
+  database?: string;
+}
+
 export interface InfluxSecureJsonData {
   // For Flux
   token?: string;
