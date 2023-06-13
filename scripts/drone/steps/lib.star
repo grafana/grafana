@@ -11,6 +11,10 @@ load(
     "scripts/drone/utils/images.star",
     "images",
 )
+load(
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
+)
 
 grabpl_version = "v3.0.38"
 
@@ -56,7 +60,7 @@ def wire_install_step():
 def windows_wire_install_step(edition):
     return {
         "name": "wire-install",
-        "image": images["windows_go_image"],
+        "image": windows_images["windows_go_image"],
         "commands": [
             "go install github.com/google/wire/cmd/wire@v0.5.0",
             "wire gen -tags {} ./pkg/server".format(edition),
@@ -78,7 +82,7 @@ def identify_runner_step(platform = "linux"):
     else:
         return {
             "name": "identify-runner",
-            "image": images["windows_image"],
+            "image": windows_images["1809_image"],
             "commands": [
                 "echo $env:DRONE_RUNNER_NAME",
             ],
@@ -192,7 +196,7 @@ def windows_init_enterprise_steps(ver_mode):
             download_grabpl_step(platform = "windows"),
             {
                 "name": "clone",
-                "image": images["wix_image"],
+                "image": windows_images["wix_image"],
                 "environment": {
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },
@@ -200,7 +204,7 @@ def windows_init_enterprise_steps(ver_mode):
             },
             {
                 "name": "windows-init",
-                "image": images["wix_image"],
+                "image": windows_images["wix_image"],
                 "commands": init_cmds,
                 "depends_on": ["clone"],
                 "environment": {"GITHUB_TOKEN": from_secret("github_token")},
@@ -213,7 +217,7 @@ def download_grabpl_step(platform = "linux"):
     if platform == "windows":
         return {
             "name": "grabpl",
-            "image": images["wix_image"],
+            "image": windows_images["wix_image"],
             "commands": [
                 '$$ProgressPreference = "SilentlyContinue"',
                 "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
@@ -637,7 +641,7 @@ def test_backend_step(image = images["build_image"]):
     }
 
 def windows_test_backend_step():
-    step = test_backend_step(image = images["windows_go_image"])
+    step = test_backend_step(image = windows_images["windows_go_image"])
     return step
 
 def test_backend_integration_step():
@@ -1329,7 +1333,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
 def windows_clone_step():
     return {
         "name": "clone",
-        "image": images["wix_image"],
+        "image": windows_images["wix_image"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -1389,7 +1393,7 @@ def get_windows_steps(edition, ver_mode):
             [
                 {
                     "name": "clone",
-                    "image": images["wix_image"],
+                    "image": windows_images["wix_image"],
                     "environment": {
                         "GITHUB_TOKEN": from_secret("github_token"),
                     },
@@ -1397,7 +1401,7 @@ def get_windows_steps(edition, ver_mode):
                 },
                 {
                     "name": "windows-init",
-                    "image": images["wix_image"],
+                    "image": windows_images["wix_image"],
                     "commands": init_cmds,
                     "depends_on": ["clone"],
                     "environment": {"GITHUB_TOKEN": from_secret("github_token")},
@@ -1416,7 +1420,7 @@ def get_windows_steps(edition, ver_mode):
             [
                 {
                     "name": "windows-init",
-                    "image": images["wix_image"],
+                    "image": windows_images["wix_image"],
                     "commands": init_cmds,
                 },
             ],
@@ -1491,7 +1495,7 @@ def get_windows_steps(edition, ver_mode):
         steps.append(
             {
                 "name": "build-windows-installer",
-                "image": images["wix_image"],
+                "image": windows_images["wix_image"],
                 "depends_on": [
                     "windows-init",
                 ],
