@@ -543,6 +543,12 @@
    },
    "type": "array"
   },
+  "CounterResetHint": {
+   "description": "or alternatively that we are dealing with a gauge histogram, where counter resets do not apply.",
+   "format": "uint8",
+   "title": "CounterResetHint contains the known information about a counter reset,",
+   "type": "integer"
+  },
   "DataLink": {
    "description": "DataLink define what",
    "properties": {
@@ -889,7 +895,7 @@
      "type": "string"
     },
     "displayNameFromDS": {
-     "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+     "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
      "type": "string"
     },
     "filterable": {
@@ -950,6 +956,56 @@
      "$ref": "#/definitions/EnumFieldConfig"
     }
    },
+   "type": "object"
+  },
+  "FloatHistogram": {
+   "description": "A FloatHistogram is needed by PromQL to handle operations that might result\nin fractional counts. Since the counts in a histogram are unlikely to be too\nlarge to be represented precisely by a float64, a FloatHistogram can also be\nused to represent a histogram with integer counts and thus serves as a more\ngeneralized representation.",
+   "properties": {
+    "Count": {
+     "description": "Total number of observations. Must be zero or positive.",
+     "format": "double",
+     "type": "number"
+    },
+    "CounterResetHint": {
+     "$ref": "#/definitions/CounterResetHint"
+    },
+    "PositiveBuckets": {
+     "description": "Observation counts in buckets. Each represents an absolute count and\nmust be zero or positive.",
+     "items": {
+      "format": "double",
+      "type": "number"
+     },
+     "type": "array"
+    },
+    "PositiveSpans": {
+     "description": "Spans for positive and negative buckets (see Span below).",
+     "items": {
+      "$ref": "#/definitions/Span"
+     },
+     "type": "array"
+    },
+    "Schema": {
+     "description": "Currently valid schema numbers are -4 \u003c= n \u003c= 8.  They are all for\nbase-2 bucket schemas, where 1 is a bucket boundary in each case, and\nthen each power of two is divided into 2^n logarithmic buckets.  Or\nin other words, each bucket boundary is the previous boundary times\n2^(2^-n).",
+     "format": "int32",
+     "type": "integer"
+    },
+    "Sum": {
+     "description": "Sum of observations. This is also used as the stale marker.",
+     "format": "double",
+     "type": "number"
+    },
+    "ZeroCount": {
+     "description": "Observations falling into the zero bucket. Must be zero or positive.",
+     "format": "double",
+     "type": "number"
+    },
+    "ZeroThreshold": {
+     "description": "Width of the zero bucket.",
+     "format": "double",
+     "type": "number"
+    }
+   },
+   "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
    "type": "object"
   },
   "Frame": {
@@ -1553,11 +1609,19 @@
      "description": "FollowRedirects specifies whether the client should follow HTTP 3xx redirects.\nThe omitempty flag is not set, because it would be hidden from the\nmarshalled configuration when set to false.",
      "type": "boolean"
     },
+    "no_proxy": {
+     "description": "NoProxy contains addresses that should not use a proxy.",
+     "type": "string"
+    },
     "oauth2": {
      "$ref": "#/definitions/OAuth2"
     },
     "proxy_connect_header": {
      "$ref": "#/definitions/Header"
+    },
+    "proxy_from_environment": {
+     "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+     "type": "boolean"
     },
     "proxy_url": {
      "$ref": "#/definitions/URL"
@@ -1865,6 +1929,17 @@
      },
      "type": "object"
     },
+    "no_proxy": {
+     "description": "NoProxy contains addresses that should not use a proxy.",
+     "type": "string"
+    },
+    "proxy_connect_header": {
+     "$ref": "#/definitions/Header"
+    },
+    "proxy_from_environment": {
+     "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+     "type": "boolean"
+    },
     "proxy_url": {
      "$ref": "#/definitions/URL"
     },
@@ -2064,7 +2139,11 @@
    "type": "object"
   },
   "Point": {
+   "description": "If H is not nil, then this is a histogram point and only (T, H) is valid.\nIf H is nil, then only (T, V) is valid.",
    "properties": {
+    "H": {
+     "$ref": "#/definitions/FloatHistogram"
+    },
     "T": {
      "format": "int64",
      "type": "integer"
@@ -2230,6 +2309,29 @@
      "type": "string"
     }
    },
+   "type": "object"
+  },
+  "PostableExtendedRuleNodeExtended": {
+   "properties": {
+    "folderTitle": {
+     "example": "project_x",
+     "type": "string"
+    },
+    "folderUid": {
+     "example": "okrd3I0Vz",
+     "type": "string"
+    },
+    "rule": {
+     "$ref": "#/definitions/PostableExtendedRuleNode"
+    },
+    "ruleGroup": {
+     "example": "eval_group_1",
+     "type": "string"
+    }
+   },
+   "required": [
+    "rule"
+   ],
    "type": "object"
   },
   "PostableGrafanaReceiver": {
@@ -2508,8 +2610,30 @@
    },
    "type": "array"
   },
+  "ProxyConfig": {
+   "properties": {
+    "no_proxy": {
+     "description": "NoProxy contains addresses that should not use a proxy.",
+     "type": "string"
+    },
+    "proxy_connect_header": {
+     "$ref": "#/definitions/Header"
+    },
+    "proxy_from_environment": {
+     "description": "ProxyFromEnvironment makes use of net/http ProxyFromEnvironment function\nto determine proxies.",
+     "type": "boolean"
+    },
+    "proxy_url": {
+     "$ref": "#/definitions/URL"
+    }
+   },
+   "type": "object"
+  },
   "PushoverConfig": {
    "properties": {
+    "device": {
+     "type": "string"
+    },
     "expire": {
      "type": "string"
     },
@@ -2584,7 +2708,7 @@
      "type": "string"
     },
     "displayNameFromDS": {
-     "description": "DisplayNameFromDS overrides Grafana default naming in a better way that allows users to override it easily.",
+     "description": "DisplayNameFromDS overrides Grafana default naming strategy.",
      "type": "string"
     },
     "filterable": {
@@ -3007,6 +3131,9 @@
   },
   "Sample": {
    "properties": {
+    "H": {
+     "$ref": "#/definitions/FloatHistogram"
+    },
     "Metric": {
      "$ref": "#/definitions/Labels"
     },
@@ -3201,6 +3328,22 @@
   "SmtpNotEnabled": {
    "$ref": "#/definitions/ResponseDetails"
   },
+  "Span": {
+   "properties": {
+    "Length": {
+     "description": "Length of the span.",
+     "format": "uint32",
+     "type": "integer"
+    },
+    "Offset": {
+     "description": "Gap to previous span (always positive), or starting index for the 1st\nspan (which can be negative).",
+     "format": "int32",
+     "type": "integer"
+    }
+   },
+   "title": "A Span defines a continuous sequence of buckets.",
+   "type": "object"
+  },
   "Status": {
    "format": "int64",
    "type": "integer"
@@ -3273,6 +3416,9 @@
     },
     "token": {
      "$ref": "#/definitions/Secret"
+    },
+    "token_file": {
+     "type": "string"
     }
    },
    "title": "TelegramConfig configures notifications via Telegram.",
@@ -3684,7 +3830,10 @@
      "type": "boolean"
     },
     "url": {
-     "$ref": "#/definitions/URL"
+     "$ref": "#/definitions/SecretURL"
+    },
+    "url_file": {
+     "type": "string"
     }
    },
    "title": "WebhookConfig configures notifications via a generic webhook.",
@@ -3875,7 +4024,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3931,13 +4079,13 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4136,6 +4284,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4173,7 +4322,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5112,6 +5260,21 @@
    "schema": {
     "items": {
      "$ref": "#/definitions/GettableHistoricUserConfig"
+    },
+    "type": "array"
+   }
+  },
+  "StateHistory": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/Frame"
+   }
+  },
+  "TestGrafanaRuleResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/postableAlert"
     },
     "type": "array"
    }

@@ -147,6 +147,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
+
     this.onChange({
       queries,
       dataSource: {
