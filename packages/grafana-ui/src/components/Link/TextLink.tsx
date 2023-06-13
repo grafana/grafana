@@ -34,11 +34,11 @@ export const TextLink = forwardRef<HTMLAnchorElement, Props>(
 
     const theme = useTheme2();
     const styles = getLinkStyles(theme, variant, weight, color, inline);
-
+    const externalIcon = icon || 'external-link-alt';
     return external ? (
       <a href={validUrl} ref={ref} target="_blank" rel="noreferrer" {...rest} className={styles}>
         {children}
-        {icon && !inline && <Icon name={icon ? icon : 'external-link-alt'} />}
+        {!inline && <Icon name={externalIcon} />}
       </a>
     ) : (
       <Link ref={ref} href={validUrl} {...rest} className={styles}>
