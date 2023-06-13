@@ -257,7 +257,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return query;
   }
 
-  targetContainsTemplate(target: any) {
+  targetContainsTemplate(target: InfluxQuery) {
     // for flux-mode we just take target.query,
     // for influxql-mode we use InfluxQueryModel to create the text-representation
     const queryText = this.isFlux ? target.query : buildRawQuery(target);
