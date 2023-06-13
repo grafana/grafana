@@ -57,4 +57,3 @@ Annotations: [[ template "__default_annotations" $annotations ]]
     [[ template "__default_message" . ]]
 [[- end ]]
 
-Sent by Grafana v[[.BuildVersion]] (c) [[now | date "2006"]] Grafana Labs
