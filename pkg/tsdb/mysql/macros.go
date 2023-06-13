@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
 const rsIdentifier = `([_a-zA-Z0-9]+)`
@@ -19,15 +19,15 @@ var restrictedRegExp = regexp.MustCompile(`(?im)([\s]*show[\s]+grants|[\s,]sessi
 
 type mySQLMacroEngine struct {
 	*sqleng.SQLMacroEngineBase
-	logger log.Logger
+	logger    log.Logger
 	userError string
 }
 
 func newMysqlMacroEngine(logger log.Logger, cfg *setting.Cfg) sqleng.SQLMacroEngine {
 	return &mySQLMacroEngine{
 		SQLMacroEngineBase: sqleng.NewSQLMacroEngineBase(),
-		logger: logger,
-		userError: cfg.UserFacingDefaultError,
+		logger:             logger,
+		userError:          cfg.UserFacingDefaultError,
 	}
 }
 
