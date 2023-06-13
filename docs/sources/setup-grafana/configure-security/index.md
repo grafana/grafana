@@ -12,7 +12,7 @@ keywords:
   - Auth
 ---
 
-# Planning your IAM integration strategy
+# Planning IAM integration strategy
 
 This topic describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [Grafana resources], simplifying user management and authentication.
 
@@ -40,7 +40,7 @@ If the users are within your organization, Grafana might be able to integrate wi
 
 If the users are outside your organization, you must provide anonymous access to Grafana, which is not enabled by default.
 
-For information about enabling anonymous access, refer to the [documentation](../../setup-grafana/configure-security/configure-authentication/_index.md#anonymous-authentication)
+For information about enabling anonymous access, refer to the [documentation]({{< relref "../../setup-grafana/configure-security/configure-authentication#anonymous-authentication" >}}).
 
 ## Ways to organize users
 
@@ -89,7 +89,7 @@ These are just a few examples of how Grafana can be used in M2M scenarios. The p
 
 You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and service accounts tokens to authenticate applications, such as Terraform, with the Grafana API.
 
-> **Note:** Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+> **Note:** Service accounts will eventually replace [API keys]({{< relref "../api-keys" >}}) as the primary way to authenticate applications that interact with Grafana.
 
 A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
 
@@ -98,7 +98,7 @@ A common use case for creating a service account is to perform operations on aut
 - Set up an external SAML authentication provider
 - Interact with Grafana without signing in as a user
 
-In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}) to grant very specific permissions to applications that interact with Grafana.
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}) to grant very specific permissions to applications that interact with Grafana.
 
 > **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
 
@@ -120,7 +120,7 @@ Service account access tokens inherit permissions from the service account.
 
 ### API keys
 
-> **Note:** If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts/" >}}).
+> **Note:** If you use Grafana v8.5 or newer, you should use service accounts instead of API keys. API keys will be deprecated in the near future. For more information, refer to [Grafana service accounts]({{< relref "../service-accounts" >}}).
 
 You can use Grafana API keys to interact with data sources via HTTP APIs. API keys can have a well-defined and limited scope to resources with the help of [Roles].
 
@@ -146,13 +146,13 @@ For example, the **Admin** role includes permissions for an administrator to cre
 Grafana supports setting granular permissions for dashboards and folders to determine which users and teams are allowed to view, edit and administer them.
 For example, you might want a certain viewer to be able to edit a dashboard. While that user can see all dashboards, you can grant them access to update only one of them.
 
-In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also grant granular permissions for data sources to control who can query and edit them.
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}), you can also grant granular permissions for data sources to control who can query and edit them.
 
 Dashboard, folder and data source permissions can be set through the UI or APIs or provisioned through Terraform.
 
 ### Role-based access control
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 If you find basic organization and server administrator roles are too restrictive, you might want to consider using RBAC features.
 RBAC provides you a fully flexible way of granting, changing, and revoking user read and write access to Grafana resources, such as users, data sources and reports.
@@ -170,7 +170,7 @@ When connecting Grafana to an Identity Provider, it's important to think beyond 
 
 Team sync is a feature that allows you to synchronize teams or groups from your authentication provider with teams in Grafana. This means that users who are part of specific teams or groups in LDAP, OAuth, or SAML will be automatically added or removed as members of corresponding teams in Grafana. Whenever a user logs in, Grafana will check for any changes in the teams or groups of the authentication provider and update the user's teams in Grafana accordingly. This makes it easy to manage user permissions across multiple systems.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud/).
 
 > **Note:** Currently, team synchronization occurs only when a user logs in. However, if you are using LDAP, it is possible to enable active background synchronization, which was added to Grafana 6.3. This allows for the continuous synchronization of teams.
 
