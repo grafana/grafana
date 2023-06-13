@@ -18,7 +18,9 @@ interface Props {
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
+  permalinkedRowId?: string;
 }
 
 function renderLogMessage(
@@ -58,7 +60,14 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
   return line;
 });
 
+interface State {
+  link: string;
+}
 export class LogRowMessage extends PureComponent<Props> {
+  state: State = {
+    link: '',
+  };
+
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
     const { onOpenContext } = this.props;
     e.stopPropagation();
@@ -76,7 +85,7 @@ export class LogRowMessage extends PureComponent<Props> {
   };
 
   render() {
-    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
+    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles, onPermalinkClick } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -100,7 +109,7 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
+          <span className={cx('log-row-menu', styles.rowMenu, styles.hidden)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
@@ -117,9 +126,18 @@ export class LogRowMessage extends PureComponent<Props> {
               fill="text"
               size="md"
               getText={this.getLogText}
-              tooltip="Copy"
+              tooltip="Copy logline to clipboard"
               tooltipPlacement="top"
             />
+            {onPermalinkClick && row.uid && (
+              <IconButton
+                tooltip="Copy shortlink to logline"
+                tooltipPlacement="top"
+                size="md"
+                name="link"
+                onClick={() => onPermalinkClick(row)}
+              />
+            )}
           </span>
         </td>
       </>

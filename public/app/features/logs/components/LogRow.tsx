@@ -38,11 +38,14 @@ interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext: (row: LogRowModel, onClose: () => void) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
+  permalinkedRowId?: string;
+  scrollIntoView: (element: HTMLElement) => void;
 }
 
 interface State {
-  showContext: boolean;
+  highlightBackround: boolean;
   showDetails: boolean;
 }
 
@@ -55,17 +58,17 @@ interface State {
  */
 class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
-    showContext: false,
+    highlightBackround: false,
     showDetails: false,
   };
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   debouncedContextClose = debounce(() => {
-    this.setState({ showContext: false });
+    this.setState({ highlightBackround: false });
   }, 3000);
 
   onOpenContext = (row: LogRowModel) => {
-    this.setState({ showContext: true });
+    this.setState({ highlightBackround: true });
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
@@ -87,6 +90,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       };
     });
   };
+  logLineRef: React.RefObject<HTMLTableRowElement>;
 
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
@@ -104,6 +108,35 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   onMouseLeave = () => {
     if (this.props.onLogRowHover) {
       this.props.onLogRowHover(undefined);
+    }
+  };
+
+  constructor(props: Props) {
+    super(props);
+    this.logLineRef = React.createRef();
+  }
+
+  componentDidMount() {
+    this.scrollToLogRow();
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
+    if (
+      this.props.permalinkedRowId !== prevProps.permalinkedRowId &&
+      this.props.permalinkedRowId !== this.props.row.uid
+    ) {
+      this.setState({ highlightBackround: false });
+    } else if (this.props.permalinkedRowId === this.props.row.uid && !this.state.highlightBackround) {
+      this.scrollToLogRow();
+    }
+  }
+
+  scrollToLogRow = () => {
+    if (this.logLineRef.current && this.props.permalinkedRowId === this.props.row.uid) {
+      this.props.scrollIntoView(this.logLineRef.current);
+      this.setState({ highlightBackround: true });
+    } else {
+      this.setState({ highlightBackround: false });
     }
   };
 
@@ -129,12 +162,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       app,
       styles,
     } = this.props;
-    const { showDetails, showContext } = this.state;
+    const { showDetails, highlightBackround } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.contextBackground]: showContext,
+      [styles.highlightBackground]: highlightBackround,
+    });
+    const logRowDetailsBackground = cx(styles.logsRow, {
+      [styles.errorLogRow]: hasError,
+      [styles.highlightBackground]: highlightBackround && !this.state.showDetails,
     });
 
     const processedRow =
@@ -145,6 +182,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     return (
       <>
         <tr
+          ref={this.logLineRef}
           className={logRowBackground}
           onClick={this.toggleDetails}
           onMouseEnter={this.onMouseEnter}
@@ -187,14 +225,16 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onOpenContext={this.onOpenContext}
+              onPermalinkClick={this.props.onPermalinkClick}
               app={app}
               styles={styles}
+              permalinkedRowId={this.props.permalinkedRowId}
             />
           )}
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            className={logRowBackground}
+            className={logRowDetailsBackground}
             showDuplicates={showDuplicates}
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
