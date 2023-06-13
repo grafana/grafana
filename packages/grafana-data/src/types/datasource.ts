@@ -324,6 +324,11 @@ abstract class DataSourceApi<
   modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
 
   /**
+   * Used in explore for Log details
+   */
+  inspectQuery?(query: TQuery, options: InspectQueryOptions): TQuery;
+
+  /**
    * @deprecated since version 8.2.0
    * Not used anymore.
    */
@@ -554,6 +559,11 @@ export interface QueryFixAction {
   query?: string;
   preventSubmit?: boolean;
   options?: KeyValue<string>;
+}
+
+export interface InspectQueryOptions {
+  type: string;
+  attributes?: KeyValue<string>;
 }
 
 export interface QueryHint {
