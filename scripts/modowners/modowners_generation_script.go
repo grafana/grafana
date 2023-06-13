@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,28 +12,23 @@ import (
 	"strings"
 )
 
-// input: import name, output: list of files that import it
-func getFiles(importName string) ([]string, error) {
-	var importingFiles []string
-
+// input: directory, import name, output: bool
+func hasImport(dir, importName string) (bool, error) {
 	// Get the absolute path to the repository
-	repoAbsPath, err := filepath.Abs("")
+	repoAbsPath, err := filepath.Abs(dir)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-
-	fmt.Println("repoAbsPath", repoAbsPath)
 
 	// Find what files are in specified repo
 	fset := token.NewFileSet()
 	packages, err := parser.ParseDir(fset, repoAbsPath, nil, parser.ImportsOnly)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse directory: %w", err)
+		return false, fmt.Errorf("failed to parse directory: %w", err)
 	}
-	fmt.Println("packages", packages)
+
 	// Iterate over parsed packages and their files
 	for _, pkg := range packages {
-		fmt.Println("pkg", pkg)
 		for _, file := range pkg.Files {
 			// Check if the file imports the specified package
 			for _, imp := range file.Imports {
@@ -41,26 +37,33 @@ func getFiles(importName string) ([]string, error) {
 					log.Printf("Failed to unquote import path %s: %v\n", imp.Path.Value, err)
 					continue
 				}
-				fmt.Printf("importPath is %s, importName is %s", importPath, importName)
 				if strings.Contains(importPath, importName) {
-					importingFiles = append(importingFiles, fset.Position(file.Pos()).Filename)
-					break
+					return true, nil
 				}
 			}
 		}
 	}
 
-	fmt.Println("importingFiles", importingFiles)
-
-	return importingFiles, nil
+	return false, nil
 }
 
 func main() {
-	fmt.Println("os.Args", os.Args[1])
-	files, err := getFiles(os.Args[1])
+	// Iterate recursively through directories
+	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+		if !d.IsDir() {
+			return nil
+		}
+		contains, err := hasImport(path, os.Args[1])
+		if err != nil {
+			return err
+		}
+		if contains {
+			fmt.Println(path)
+		}
+		return nil
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("files from getFiles", files)
-
 }
