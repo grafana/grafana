@@ -419,21 +419,22 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
-  serializeParams(params: any) {
+  serializeParams(params: { q: string }) {
+    console.log('serializeParams params', params);
     if (!params) {
       return '';
     }
 
     return reduce(
       params,
-      (memo, value, key) => {
+      (memo: string[], value, key) => {
         if (value === null || value === undefined) {
           return memo;
         }
         memo.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
         return memo;
       },
-      [] as string[]
+      []
     ).join('&');
   }
 
@@ -470,7 +471,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       data = null;
     }
 
-    const req: any = {
+    const req = {
+      headers: new Headers(),
       method: method,
       url: currentUrl + url,
       params: params,
@@ -478,18 +480,18 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       precision: 'ms',
       inspect: { type: 'influxdb' },
       paramSerializer: this.serializeParams,
+      withCredentials: false,
     };
 
-    req.headers = req.headers || {};
     if (this.basicAuth || this.withCredentials) {
       req.withCredentials = true;
     }
     if (this.basicAuth) {
-      req.headers.Authorization = this.basicAuth;
+      req.headers.set('Authorization', this.basicAuth);
     }
 
     if (method === 'POST') {
-      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
+      req.headers.set('Content-type', 'application/x-www-form-urlencoded');
     }
 
     return getBackendSrv()
