@@ -288,7 +288,8 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               tooltip={
                 <>
                   The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
-                  <code>$__interval_ms</code>
+                  <code>$__interval_ms</code>. This value is not exactly equal to{' '}
+                  <code>Time range / max data points</code>, it will approximate a series of magic number.
                 </>
               }
             >
