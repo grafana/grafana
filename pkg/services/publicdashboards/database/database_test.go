@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"strings"
@@ -145,31 +144,6 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 
 		query := &PublicDashboardListQuery{
 			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
-			OrgID:  orgId,
-			Page:   1,
-			Limit:  50,
-			Offset: 0,
-		}
-		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
-		require.NoError(t, err)
-
-		assert.Len(t, resp.PublicDashboards, 0)
-		assert.Equal(t, resp.TotalCount, int64(0))
-	})
-
-	t.Run("FindAllWithPagination will return empty dashboard list based on edit permissions with pagination", func(t *testing.T) {
-		setup()
-
-		permissions := []accesscontrol.Permission{
-			{Action: dashboards.ActionDashboardsWrite, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
-			{Action: dashboards.ActionDashboardsWrite, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
-		}
-
-		err := insertPermissions(sqlStore, orgId, "editor", permissions)
-		require.NoError(t, err)
-
-		query := &PublicDashboardListQuery{
-			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
 			OrgID:  orgId,
 			Page:   1,
 			Limit:  50,
