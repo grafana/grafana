@@ -82,7 +82,7 @@ def identify_runner_step(platform = "linux"):
     else:
         return {
             "name": "identify-runner",
-            "image": windows_images["windows_image"],
+            "image": windows_images["1809_image"],
             "commands": [
                 "echo $env:DRONE_RUNNER_NAME",
             ],
