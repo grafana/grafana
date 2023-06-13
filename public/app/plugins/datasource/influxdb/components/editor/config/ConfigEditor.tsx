@@ -92,6 +92,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
       // Remove old 1x configs
       const { user, database, ...rest } = copy;
 
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       onOptionsChange(rest as DataSourceSettings<InfluxOptions, {}>);
     } else {
       onOptionsChange(copy);
