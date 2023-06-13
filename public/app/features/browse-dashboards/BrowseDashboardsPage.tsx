@@ -104,8 +104,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolder) && (
             <CreateNewButton
-              parentFolderTitle={folderDTO?.title}
-              parentFolderUid={folderUID}
+              parentFolder={folderDTO}
               canCreateDashboard={canCreateDashboards}
               canCreateFolder={canCreateFolder}
             />

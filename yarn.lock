@@ -2221,6 +2221,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.21.0":
+  version: 7.22.5
+  resolution: "@babel/runtime@npm:7.22.5"
+  dependencies:
+    regenerator-runtime: ^0.13.11
+  checksum: 12a50b7de2531beef38840d17af50c55a094253697600cee255311222390c68eed704829308d4fd305e1b3dfbce113272e428e9d9d45b1730e0fede997eaceb1
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.18.10, @babel/template@npm:^7.20.7, @babel/template@npm:^7.21.9, @babel/template@npm:^7.3.3":
   version: 7.21.9
   resolution: "@babel/template@npm:7.21.9"
@@ -3564,7 +3573,7 @@ __metadata:
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 3.0.1
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     dompurify: ^2.4.3
     esbuild: 0.17.19
     eventemitter3: 5.0.0
@@ -3990,7 +3999,7 @@ __metadata:
     css-loader: 6.8.1
     csstype: 3.1.1
     d3: 7.8.2
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     esbuild: 0.17.19
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
@@ -15092,10 +15101,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:2.29.3":
-  version: 2.29.3
-  resolution: "date-fns@npm:2.29.3"
-  checksum: e01cf5b62af04e05dfff921bb9c9933310ed0e1ae9a81eb8653452e64dc841acf7f6e01e1a5ae5644d0337e9a7f936175fd2cb6819dc122fdd9c5e86c56be484
+"date-fns@npm:2.30.0":
+  version: 2.30.0
+  resolution: "date-fns@npm:2.30.0"
+  dependencies:
+    "@babel/runtime": ^7.21.0
+  checksum: f7be01523282e9bb06c0cd2693d34f245247a29098527d4420628966a2d9aad154bd0e90a6b1cf66d37adcb769cd108cf8a7bd49d76db0fb119af5cdd13644f4
   languageName: node
   linkType: hard
 
@@ -18726,7 +18737,7 @@ __metadata:
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
     dangerously-set-html-content: 1.0.9
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     debounce-promise: 3.1.2
     emotion: 11.0.0
     esbuild: 0.17.19

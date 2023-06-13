@@ -7,18 +7,16 @@ load(
     "from_secret",
     "prerelease_bucket",
 )
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
+)
 
 grabpl_version = "v3.0.38"
-cloudsdk_image = "google/cloud-sdk:431.0.0"
-build_image = "grafana/build-container:1.7.4"
-publish_image = "grafana/grafana-ci-deploy:1.3.3"
-deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
-alpine_image = "alpine:3.17.1"
-curl_image = "byrnedo/alpine-curl:0.1.8"
-windows_image = "mcr.microsoft.com/windows:1809"
-wix_image = "grafana/ci-wix:0.1.1"
-go_image = "golang:1.20.4"
-windows_go_image = "grafana/grafana-ci-windows-test:0.1.0"
 
 trigger_oss = {
     "repo": [
@@ -29,7 +27,7 @@ trigger_oss = {
 def slack_step(channel, template, secret):
     return {
         "name": "slack",
-        "image": "plugins/slack",
+        "image": images["plugins_slack_image"],
         "settings": {
             "webhook": from_secret(secret),
             "channel": channel,
@@ -40,7 +38,7 @@ def slack_step(channel, template, secret):
 def yarn_install_step():
     return {
         "name": "yarn-install",
-        "image": build_image,
+        "image": images["build_image"],
         "commands": [
             "yarn install --immutable",
         ],
@@ -50,7 +48,7 @@ def yarn_install_step():
 def wire_install_step():
     return {
         "name": "wire-install",
-        "image": build_image,
+        "image": images["build_image"],
         "commands": [
             "make gen-go",
         ],
@@ -62,7 +60,7 @@ def wire_install_step():
 def windows_wire_install_step(edition):
     return {
         "name": "wire-install",
-        "image": windows_go_image,
+        "image": windows_images["windows_go_image"],
         "commands": [
             "go install github.com/google/wire/cmd/wire@v0.5.0",
             "wire gen -tags {} ./pkg/server".format(edition),
@@ -76,7 +74,7 @@ def identify_runner_step(platform = "linux"):
     if platform == "linux":
         return {
             "name": "identify-runner",
-            "image": alpine_image,
+            "image": images["alpine_image"],
             "commands": [
                 "echo $DRONE_RUNNER_NAME",
             ],
@@ -84,7 +82,7 @@ def identify_runner_step(platform = "linux"):
     else:
         return {
             "name": "identify-runner",
-            "image": windows_image,
+            "image": windows_images["1809_image"],
             "commands": [
                 "echo $env:DRONE_RUNNER_NAME",
             ],
@@ -111,7 +109,7 @@ def clone_enterprise_step(source = "${DRONE_COMMIT}"):
     """
     step = {
         "name": "clone-enterprise",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -137,7 +135,7 @@ def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFai
     """
     step = {
         "name": "clone-enterprise",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -183,7 +181,7 @@ def init_enterprise_step(ver_mode):
         token = ""
     return {
         "name": "init-enterprise",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "clone-enterprise",
             "grabpl",
@@ -241,7 +239,7 @@ def windows_init_enterprise_steps(ver_mode):
             download_grabpl_step(platform = "windows"),
             {
                 "name": "clone",
-                "image": wix_image,
+                "image": windows_images["wix_image"],
                 "environment": {
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },
@@ -249,7 +247,7 @@ def windows_init_enterprise_steps(ver_mode):
             },
             {
                 "name": "windows-init",
-                "image": wix_image,
+                "image": windows_images["wix_image"],
                 "commands": init_cmds,
                 "depends_on": ["clone"],
                 "environment": {"GITHUB_TOKEN": from_secret("github_token")},
@@ -262,7 +260,7 @@ def download_grabpl_step(platform = "linux"):
     if platform == "windows":
         return {
             "name": "grabpl",
-            "image": wix_image,
+            "image": windows_images["wix_image"],
             "commands": [
                 '$$ProgressPreference = "SilentlyContinue"',
                 "Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/windows/grabpl.exe -OutFile grabpl.exe".format(
@@ -273,7 +271,7 @@ def download_grabpl_step(platform = "linux"):
 
     return {
         "name": "grabpl",
-        "image": curl_image,
+        "image": images["curl_image"],
         "commands": [
             "mkdir -p bin",
             "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl".format(
@@ -286,7 +284,7 @@ def download_grabpl_step(platform = "linux"):
 def lint_drone_step():
     return {
         "name": "lint-drone",
-        "image": curl_image,
+        "image": images["curl_image"],
         "commands": [
             "./bin/build verify-drone",
         ],
@@ -298,7 +296,7 @@ def lint_drone_step():
 def lint_starlark_step():
     return {
         "name": "lint-starlark",
-        "image": build_image,
+        "image": images["build_image"],
         "commands": [
             "./bin/build verify-starlark .",
         ],
@@ -325,7 +323,7 @@ def enterprise_downstream_step(ver_mode):
 
     step = {
         "name": "trigger-enterprise-downstream",
-        "image": "grafana/drone-downstream",
+        "image": images["drone_downstream_image"],
         "settings": {
             "server": "https://drone.grafana.net",
             "token": from_secret("drone_token"),
@@ -349,7 +347,7 @@ def lint_backend_step():
     return {
         "name": "lint-backend",
         # TODO: build_image or go_image?
-        "image": go_image,
+        "image": images["go_image"],
         "environment": {
             # We need CGO because of go-sqlite3
             "CGO_ENABLED": "1",
@@ -367,7 +365,7 @@ def lint_backend_step():
 def validate_modfile_step():
     return {
         "name": "validate-modfile",
-        "image": go_image,
+        "image": images["go_image"],
         "failure": "ignore",
         "commands": [
             "go run scripts/modowners/modowners.go check go.mod",
@@ -377,7 +375,7 @@ def validate_modfile_step():
 def benchmark_ldap_step():
     return {
         "name": "benchmark-ldap",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "LDAP_HOSTNAME": "ldap",
         },
@@ -390,7 +388,7 @@ def benchmark_ldap_step():
 def build_storybook_step(ver_mode):
     return {
         "name": "build-storybook",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             "build-frontend",
@@ -434,7 +432,7 @@ def store_storybook_step(ver_mode, trigger = None):
 
     step = {
         "name": "store-storybook",
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": [
                           "build-storybook",
                       ] +
@@ -464,7 +462,7 @@ def store_storybook_step(ver_mode, trigger = None):
 def e2e_tests_artifacts():
     return {
         "name": "e2e-tests-artifacts-upload",
-        "image": cloudsdk_image,
+        "image": images["cloudsdk_image"],
         "depends_on": [
             "end-to-end-tests-dashboards-suite",
             "end-to-end-tests-panels-suite",
@@ -526,7 +524,7 @@ def upload_cdn_step(edition, ver_mode, trigger = None):
 
     step = {
         "name": "upload-cdn-assets" + enterprise2_suffix(edition),
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": deps,
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
@@ -578,7 +576,7 @@ def build_backend_step(edition, ver_mode, variants = None):
 
     return {
         "name": "build-backend" + enterprise2_suffix(edition),
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "wire-install",
             "compile-build-cmd",
@@ -613,7 +611,7 @@ def build_frontend_step(edition, ver_mode):
 
     return {
         "name": "build-frontend",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "NODE_OPTIONS": "--max_old_space_size=8192",
         },
@@ -653,7 +651,7 @@ def build_frontend_package_step(edition, ver_mode):
 
     return {
         "name": "build-frontend-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "NODE_OPTIONS": "--max_old_space_size=8192",
         },
@@ -673,7 +671,7 @@ def build_plugins_step(edition, ver_mode):
         env = None
     return {
         "name": "build-plugins",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": env,
         "depends_on": [
             "compile-build-cmd",
@@ -685,7 +683,7 @@ def build_plugins_step(edition, ver_mode):
         ],
     }
 
-def test_backend_step(image = build_image):
+def test_backend_step(image = images["build_image"]):
     return {
         "name": "test-backend",
         "image": image,
@@ -698,13 +696,13 @@ def test_backend_step(image = build_image):
     }
 
 def windows_test_backend_step():
-    step = test_backend_step(image = windows_go_image)
+    step = test_backend_step(image = windows_images["windows_go_image"])
     return step
 
 def test_backend_integration_step():
     return {
         "name": "test-backend-integration",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "wire-install",
         ],
@@ -729,7 +727,7 @@ def betterer_frontend_step(edition = "oss"):
     deps.extend(["yarn-install"])
     return {
         "name": "betterer-frontend",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": deps,
         "commands": [
             "yarn betterer ci",
@@ -752,7 +750,7 @@ def test_frontend_step(edition = "oss"):
     deps.extend(["yarn-install"])
     return {
         "name": "test-frontend",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "TEST_MAX_WORKERS": "50%",
         },
@@ -765,7 +763,7 @@ def test_frontend_step(edition = "oss"):
 def lint_frontend_step():
     return {
         "name": "lint-frontend",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "TEST_MAX_WORKERS": "50%",
         },
@@ -784,7 +782,7 @@ def verify_i18n_step():
     uncommited_error_message = "\nTranslation extraction has not been committed. Please run 'yarn i18n:extract', commit the changes and push again."
     return {
         "name": "verify-i18n",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "yarn-install",
         ],
@@ -836,7 +834,7 @@ def test_a11y_frontend_step(ver_mode, port = 3001):
     return {
         "name": "test-a11y-frontend",
         # TODO which image should be used?
-        "image": "grafana/docker-puppeteer:1.1.0",
+        "image": images["docker_puppeteer_image"],
         "depends_on": [
             "grafana-server",
         ],
@@ -861,7 +859,7 @@ def frontend_metrics_step(trigger = None):
     """
     step = {
         "name": "publish-frontend-metrics",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "test-a11y-frontend",
         ],
@@ -880,7 +878,7 @@ def frontend_metrics_step(trigger = None):
 def codespell_step():
     return {
         "name": "codespell",
-        "image": build_image,
+        "image": images["build_image"],
         "commands": [
             # Important: all words have to be in lowercase, and separated by "\n".
             'echo -e "unknwon\nreferer\nerrorstring\neror\niam\nwan" > words_to_ignore.txt',
@@ -939,7 +937,7 @@ def package_step(edition, ver_mode):
 
     return {
         "name": "package" + enterprise2_suffix(edition),
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": deps,
         "environment": env,
         "commands": cmds,
@@ -962,7 +960,7 @@ def grafana_server_step(edition, port = 3001):
 
     return {
         "name": "grafana-server",
-        "image": build_image,
+        "image": images["build_image"],
         "detach": True,
         "depends_on": [
             "build-plugins",
@@ -982,7 +980,7 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         cmd += " --tries {}".format(tries)
     return {
         "name": "end-to-end-tests-{}".format(suite),
-        "image": "cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97",
+        "image": images["cypress_image"],
         "depends_on": [
             "grafana-server",
         ],
@@ -1034,7 +1032,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
     branch = "${DRONE_SOURCE_BRANCH}".replace("/", "-")
     step = {
         "name": "end-to-end-tests-{}-{}".format(suite, cloud),
-        "image": "us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest",
+        "image": images["cloud_datasources_e2e_image"],
         "depends_on": [
             "grafana-server",
         ],
@@ -1048,7 +1046,7 @@ def build_docs_website_step():
     return {
         "name": "build-docs-website",
         # Use latest revision here, since we want to catch if it breaks
-        "image": "grafana/docs-base:latest",
+        "image": images["docs_image"],
         "commands": [
             "mkdir -p /hugo/content/docs/grafana/latest",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
@@ -1059,7 +1057,7 @@ def build_docs_website_step():
 def copy_packages_for_docker_step(edition = None):
     return {
         "name": "copy-packages-for-docker",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "package" + enterprise2_suffix(edition),
         ],
@@ -1107,7 +1105,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
 
     return {
         "name": "build-docker-images" + ubuntu_sfx,
-        "image": cloudsdk_image,
+        "image": images["cloudsdk_image"],
         "depends_on": [
             "copy-packages-for-docker",
             "compile-build-cmd",
@@ -1120,7 +1118,7 @@ def build_docker_images_step(edition, archs = None, ubuntu = False, publish = Fa
 def fetch_images_step(edition):
     return {
         "name": "fetch-images-{}".format(edition),
-        "image": cloudsdk_image,
+        "image": images["cloudsdk_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "DOCKER_USER": from_secret("docker_username"),
@@ -1199,7 +1197,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
 
     step = {
         "name": "publish-images-{}".format(name),
-        "image": cloudsdk_image,
+        "image": images["cloudsdk_image"],
         "environment": environment,
         "commands": [cmd],
         "depends_on": deps,
@@ -1224,7 +1222,7 @@ def postgres_integration_tests_step():
     ]
     return {
         "name": "postgres-integration-tests",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": ["wire-install"],
         "environment": {
             "PGPASSWORD": "grafanatest",
@@ -1245,7 +1243,7 @@ def mysql_integration_tests_step(hostname, version):
     ]
     return {
         "name": "mysql-{}-integration-tests".format(version),
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": ["wire-install"],
         "environment": {
             "GRAFANA_TEST_DB": "mysql",
@@ -1257,7 +1255,7 @@ def mysql_integration_tests_step(hostname, version):
 def redis_integration_tests_step():
     return {
         "name": "redis-integration-tests",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": ["wire-install"],
         "environment": {
             "REDIS_URL": "redis://redis:6379/0",
@@ -1272,7 +1270,7 @@ def redis_integration_tests_step():
 def memcached_integration_tests_step():
     return {
         "name": "memcached-integration-tests",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": ["wire-install"],
         "environment": {
             "MEMCACHED_HOSTS": "memcached:11211",
@@ -1296,7 +1294,7 @@ def release_canary_npm_packages_step(trigger = None):
     """
     step = {
         "name": "release-canary-npm-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
             "NPM_TOKEN": from_secret("npm_token"),
@@ -1339,7 +1337,7 @@ def upload_packages_step(edition, ver_mode, trigger = None):
     """
     step = {
         "name": "upload-packages" + enterprise2_suffix(edition),
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": end_to_end_tests_deps(),
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
@@ -1381,7 +1379,7 @@ def publish_grafanacom_step(edition, ver_mode):
 
     return {
         "name": "publish-grafanacom-{}".format(edition),
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": [
             "publish-linux-packages-deb",
             "publish-linux-packages-rpm",
@@ -1399,7 +1397,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
     return {
         "name": "publish-linux-packages-{}".format(package_manager),
         # See https://github.com/grafana/deployment_tools/blob/master/docker/package-publish/README.md for docs on that image
-        "image": "us.gcr.io/kubernetes-dev/package-publish:latest",
+        "image": images["package_publish_image"],
         "depends_on": ["compile-build-cmd"],
         "privileged": True,
         "settings": {
@@ -1421,7 +1419,7 @@ def publish_linux_packages_step(edition, package_manager = "deb"):
 def windows_clone_step():
     return {
         "name": "clone",
-        "image": wix_image,
+        "image": windows_images["wix_image"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token"),
         },
@@ -1481,7 +1479,7 @@ def get_windows_steps(edition, ver_mode):
             [
                 {
                     "name": "clone",
-                    "image": wix_image,
+                    "image": windows_images["wix_image"],
                     "environment": {
                         "GITHUB_TOKEN": from_secret("github_token"),
                     },
@@ -1489,7 +1487,7 @@ def get_windows_steps(edition, ver_mode):
                 },
                 {
                     "name": "windows-init",
-                    "image": wix_image,
+                    "image": windows_images["wix_image"],
                     "commands": init_cmds,
                     "depends_on": ["clone"],
                     "environment": {"GITHUB_TOKEN": from_secret("github_token")},
@@ -1508,7 +1506,7 @@ def get_windows_steps(edition, ver_mode):
             [
                 {
                     "name": "windows-init",
-                    "image": wix_image,
+                    "image": windows_images["wix_image"],
                     "commands": init_cmds,
                 },
             ],
@@ -1583,7 +1581,7 @@ def get_windows_steps(edition, ver_mode):
         steps.append(
             {
                 "name": "build-windows-installer",
-                "image": wix_image,
+                "image": windows_images["wix_image"],
                 "depends_on": [
                     "windows-init",
                 ],
@@ -1601,7 +1599,7 @@ def get_windows_steps(edition, ver_mode):
 def verify_gen_cue_step():
     return {
         "name": "verify-gen-cue",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [],
         "commands": [
             "# It is required that code generated from Thema/CUE be committed and in sync with its inputs.",
@@ -1613,7 +1611,7 @@ def verify_gen_cue_step():
 def verify_gen_jsonnet_step():
     return {
         "name": "verify-gen-jsonnet",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [],
         "commands": [
             "# It is required that generated jsonnet is committed and in sync with its inputs.",
@@ -1625,7 +1623,7 @@ def verify_gen_jsonnet_step():
 def trigger_test_release():
     return {
         "name": "trigger-test-release",
-        "image": build_image,
+        "image": images["build_image"],
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
             "TEST_TAG": "v0.0.0-test",
@@ -1659,7 +1657,7 @@ def trigger_test_release():
 def artifacts_page_step():
     return {
         "name": "artifacts-page",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
         ],
@@ -1687,7 +1685,7 @@ def compile_build_cmd(edition = "oss"):
         ]
     return {
         "name": "compile-build-cmd",
-        "image": go_image,
+        "image": images["go_image"],
         "commands": [
             "go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd",
         ],
