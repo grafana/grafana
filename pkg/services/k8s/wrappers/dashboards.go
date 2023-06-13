@@ -132,7 +132,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 
 	// Dashboard versions
 	res.APIVersion = "dashboard.kinds.grafana.com/v0-alpha"
-	res.Kind = "Dashbaord"
+	res.Kind = "Dashboard"
 	res.Spec = cmd.Dashboard
 
 	rv := ""
