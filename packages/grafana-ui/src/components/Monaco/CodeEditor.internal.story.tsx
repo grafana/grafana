@@ -40,7 +40,7 @@ export const Basic: StoryFn<typeof CodeEditor> = (args) => {
         onSave={(text: string) => {
           action('code saved')(text);
         }}
-        getSuggestions={() => [{label: 'foo'}]}
+        getSuggestions={() => [{ label: 'foo' }]}
         showLineNumbers={args.showLineNumbers}
         showMiniMap={args.showMiniMap}
         readOnly={args.readOnly}
@@ -56,7 +56,7 @@ export const Basic: StoryFn<typeof CodeEditor> = (args) => {
         onSave={(text: string) => {
           action('code saved')(text);
         }}
-        getSuggestions={() => [{label: 'foo'}]}
+        getSuggestions={() => [{ label: 'bar' }]}
         showLineNumbers={args.showLineNumbers}
         showMiniMap={args.showMiniMap}
         readOnly={args.readOnly}

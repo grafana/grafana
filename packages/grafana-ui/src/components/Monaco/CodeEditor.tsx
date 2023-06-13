@@ -17,6 +17,7 @@ type Props = CodeEditorProps & Themeable2;
 class UnthemedCodeEditor extends PureComponent<Props> {
   completionCancel?: monacoType.IDisposable;
   monaco?: Monaco;
+  modelId?: string;
 
   constructor(props: Props) {
     super(props);
@@ -44,8 +45,8 @@ class UnthemedCodeEditor extends PureComponent<Props> {
         return;
       }
 
-      if (getSuggestions) {
-        this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions);
+      if (getSuggestions && this.modelId) {
+        this.completionCancel = registerSuggestions(this.monaco, language, getSuggestions, this.modelId);
       }
     }
 
@@ -85,11 +86,14 @@ class UnthemedCodeEditor extends PureComponent<Props> {
 
   handleBeforeMount = (monaco: Monaco) => {
     this.monaco = monaco;
+    this.monaco.editor.onDidCreateModel((model) => {
+      console.log(model.id);
+      this.modelId = model.id;
+      if (getSuggestions && this.modelId) {
+        this.completionCancel = registerSuggestions(monaco, language, getSuggestions, model.id);
+      }
+    });
     const { language, getSuggestions, onBeforeEditorMount } = this.props;
-
-    if (getSuggestions) {
-      this.completionCancel = registerSuggestions(monaco, language, getSuggestions);
-    }
 
     onBeforeEditorMount?.(monaco);
   };

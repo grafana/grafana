@@ -73,7 +73,8 @@ function mapKinds(monaco: Monaco, sug?: CodeEditorSuggestionItemKind): monacoTyp
 export function registerSuggestions(
   monaco: Monaco,
   language: string,
-  getSuggestions: CodeEditorSuggestionProvider
+  getSuggestions: CodeEditorSuggestionProvider,
+  modelId: string
 ): monacoType.IDisposable | undefined {
   if (!language || !getSuggestions) {
     return undefined;
@@ -82,9 +83,9 @@ export function registerSuggestions(
     triggerCharacters: ['$'],
 
     provideCompletionItems: (model, position, context) => {
-    if (model !== monaco.editor.getModel(model.uri)){
-      return undefined
-    }
+      if (model.id !== modelId) {
+        return undefined;
+      }
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
