@@ -47,6 +47,7 @@ export function getQueryWithDefaults(
   }
 
   // default query expr is now empty string, set in getDefaultQuery
+  // While expr is required in the types, it is not always defined at runtime, so we need to check for undefined and default to an empty string to prevent runtime errors
   if (!query.expr) {
     result = { ...result, expr: '', legendFormat: LegendFormatMode.Auto };
   }
