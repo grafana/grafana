@@ -10,9 +10,11 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
+  DateTime,
   FieldType,
   MetricFindValue,
   QueryResultMeta,
+  RawTimeRange,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
@@ -406,6 +408,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.metricFindQuery(query, options);
   }
 
+  /**
+   * @deprecated
+   * @param query
+   * @param options
+   */
   _seriesQuery(query: string, options?: DataQueryRequest<InfluxQuery>) {
     if (!query) {
       return of({ results: [] });
@@ -420,7 +427,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   serializeParams(params: { q: string }) {
-    console.log('serializeParams params', params);
     if (!params) {
       return '';
     }
@@ -438,6 +444,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     ).join('&');
   }
 
+  /**
+   * @deprecated
+   * @param method
+   * @param url
+   * @param data
+   * @param options
+   */
   _influxRequest(method: string, url: string, data: any, options?: any) {
     const currentUrl = this.urls.shift()!;
     this.urls.push(currentUrl);
@@ -524,6 +537,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       );
   }
 
+  /**
+   * @deprecated
+   * @param err
+   */
   handleErrors(err: any) {
     const error: DataQueryError = {
       message:
@@ -549,14 +566,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return error;
   }
 
-  getTimeFilter(options: any) {
+  getTimeFilter(options: { rangeRaw: RawTimeRange; timezone: string }) {
     const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
     const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
 
     return 'time >= ' + from + ' and time <= ' + until;
   }
 
-  getInfluxTime(date: any, roundUp: any, timezone: any) {
+  getInfluxTime(date: DateTime | string, roundUp: any, timezone: any) {
+    let outPutDate;
     if (isString(date)) {
       if (date === 'now') {
         return 'now()';
@@ -568,7 +586,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         const unit = parts[2];
         return 'now() - ' + amount + unit;
       }
-      date = dateMath.parse(date, roundUp, timezone);
+      outPutDate = dateMath.parse(date, roundUp, timezone);
+      if (!outPutDate) {
+        throw new Error('unable to parse date');
+      }
+      date = outPutDate;
     }
 
     return date.valueOf() + 'ms';
@@ -582,6 +604,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   /**
    * The unchanged pre 7.1 query implementation
+   * @deprecated
    */
   classicQuery(options: any): Observable<DataQueryResponse> {
     let timeFilter = this.getTimeFilter(options);
