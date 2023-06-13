@@ -123,7 +123,7 @@ Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
 
 ### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
 
-Latest Version: 3.0.0 | Signature: Commercial | Last Updated: 2023
+Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
 
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
