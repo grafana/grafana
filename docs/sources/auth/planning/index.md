@@ -1,6 +1,6 @@
 ---
 title: Planning IAM integration strategy
-menuTitle: IAM integration
+menuTitle: Planning IAM integration strategy
 description: Considerations and planification before setting up Grafana for the first time.
 aliases:
   - /docs/mimir/latest/old-architecture/
@@ -117,8 +117,6 @@ You can create multiple tokens for the same service account. You might want to d
 - you need to rotate or replace a compromised token.
 
 Service account access tokens inherit permissions from the service account.
-
-### 🚧 Personal access tokens
 
 ### API keys
 
