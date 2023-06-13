@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 
+import { useAsyncFn } from 'react-use';
+
 import { Button } from '../Button';
 import { Field } from '../Forms/Field';
 import { Form } from '../Forms/Form';
 import { Input } from '../Input/Input';
+import { Spinner } from '../Spinner/Spinner';
 
 interface LLMSrvChatMessage {
   role: string;
@@ -29,20 +32,23 @@ export interface LLMQueryEditorProps {
 
 export function LLMQueryEditor({ systemPrompt, onChange, llmSrv }: LLMQueryEditorProps): JSX.Element {
   const [query, setQuery] = useState('');
+  const [state, onSubmit] = useAsyncFn(
+    async ({ prompt }: { prompt: string }) => {
+      const returnedMessage = await llmSrv.chatCompletions({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
+      });
+      setQuery(returnedMessage);
+      onChange(returnedMessage);
+    },
+    [systemPrompt, onChange]
+  );
+
   return (
     <div>
-      <Form
-        onSubmit={async ({ prompt }) => {
-          const returnedMessage = await llmSrv.chatCompletions({
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: prompt },
-            ],
-          });
-          setQuery(returnedMessage);
-          onChange(returnedMessage);
-        }}
-      >
+      <Form onSubmit={onSubmit}>
         {({ register }) => {
           return (
             <>
@@ -54,7 +60,13 @@ export function LLMQueryEditor({ systemPrompt, onChange, llmSrv }: LLMQueryEdito
           );
         }}
       </Form>
-      {query !== '' && <div>{query}</div>}
+      {state.loading ? (
+        <Spinner />
+      ) : state.error ? (
+        <div>Something went wrong! Error: {state.error.message}</div>
+      ) : (
+        query !== '' && <div>{query}</div>
+      )}
     </div>
   );
 }
