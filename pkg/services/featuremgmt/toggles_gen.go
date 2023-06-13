@@ -171,10 +171,6 @@ const (
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
 
-	// FlagAuthnService
-	// Use new auth service to perform authentication
-	FlagAuthnService = "authnService"
-
 	// FlagDisablePrometheusExemplarSampling
 	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
@@ -338,4 +334,8 @@ const (
 	// FlagSqlDatasourceDatabaseSelection
 	// Enables previous SQL data source dataset dropdown behavior
 	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
+
+	// FlagCloudWatchLogsMonacoEditor
+	// Enables the Monaco editor for CloudWatch Logs queries
+	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
 )

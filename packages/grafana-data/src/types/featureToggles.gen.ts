@@ -59,7 +59,6 @@ export interface FeatureToggles {
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
   emptyDashboardPage?: boolean;
-  authnService?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
@@ -101,4 +100,5 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  cloudWatchLogsMonacoEditor?: boolean;
 }

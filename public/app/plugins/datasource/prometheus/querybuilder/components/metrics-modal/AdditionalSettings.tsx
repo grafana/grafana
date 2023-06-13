@@ -14,18 +14,11 @@ type AdditionalSettingsProps = {
   onChangeIncludeNullMetadata: () => void;
   onChangeDisableTextWrap: () => void;
   onChangeUseBackend: () => void;
-  onChangeInferType: () => void;
 };
 
 export function AdditionalSettings(props: AdditionalSettingsProps) {
-  const {
-    state,
-    onChangeFullMetaSearch,
-    onChangeIncludeNullMetadata,
-    onChangeDisableTextWrap,
-    onChangeUseBackend,
-    onChangeInferType,
-  } = props;
+  const { state, onChangeFullMetaSearch, onChangeIncludeNullMetadata, onChangeDisableTextWrap, onChangeUseBackend } =
+    props;
 
   const theme = useTheme2();
   const styles = getStyles(theme);
@@ -58,18 +51,6 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
           content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}
-          placement="bottom-end"
-        >
-          <Icon name="info-circle" size="xs" className={styles.settingsIcon} />
-        </Tooltip>
-      </div>
-      <div className={styles.selectItem}>
-        <Switch data-testid={testIds.inferType} value={state.inferType} onChange={() => onChangeInferType()} />
-        <div className={styles.selectItemLabel}>{placeholders.inferType}&nbsp;</div>
-        <Tooltip
-          content={
-            'For example, metrics ending in _sum, _count, will be given an inferred type of counter. Metrics ending in _bucket with be given a type of histogram.'
-          }
           placement="bottom-end"
         >
           <Icon name="info-circle" size="xs" className={styles.settingsIcon} />

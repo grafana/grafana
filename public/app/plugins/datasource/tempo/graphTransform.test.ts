@@ -1,4 +1,4 @@
-import { DataFrameView, dateTime, createDataFrame } from '@grafana/data';
+import { DataFrameView, dateTime, createDataFrame, FieldType } from '@grafana/data';
 
 import { createGraphFrames, mapPromMetricsToServiceMap } from './graphTransform';
 import { bigResponse } from './testResponse';
@@ -57,6 +57,26 @@ describe('createGraphFrames', () => {
     expect(frames[0].length).toBe(2);
     expect(frames[1].length).toBe(0);
   });
+});
+
+it('assigns correct field type even if values are numbers', async () => {
+  const range = {
+    from: dateTime('2000-01-01T00:00:00'),
+    to: dateTime('2000-01-01T00:01:00'),
+  };
+  const { nodes } = mapPromMetricsToServiceMap([{ data: [serverIsANumber, serverIsANumber] }], {
+    ...range,
+    raw: range,
+  });
+
+  expect(nodes.fields).toMatchObject([
+    { name: 'id', values: ['0', '1'], type: FieldType.string },
+    { name: 'title', values: ['0', '1'], type: FieldType.string },
+    { name: 'mainstat', values: [NaN, NaN], type: FieldType.number },
+    { name: 'secondarystat', values: [10, 20], type: FieldType.number },
+    { name: 'arc__success', values: [1, 1], type: FieldType.number },
+    { name: 'arc__failed', values: [0, 0], type: FieldType.number },
+  ]);
 });
 
 describe('mapPromMetricsToServiceMap', () => {
@@ -189,5 +209,18 @@ const invalidFailedPromMetric = createDataFrame({
     { name: 'server', values: ['db', 'app'] },
     { name: 'tempo_config', values: ['default', 'default'] },
     { name: 'Value #traces_service_graph_request_failed_total', values: [20, 40] },
+  ],
+});
+
+const serverIsANumber = createDataFrame({
+  refId: 'traces_service_graph_request_total',
+  fields: [
+    { name: 'Time', values: [1628169788000, 1628169788000] },
+    { name: 'client', values: ['0', '1'] },
+    { name: 'instance', values: ['127.0.0.1:12345', '127.0.0.1:12345'] },
+    { name: 'job', values: ['local_scrape', 'local_scrape'] },
+    { name: 'server', values: ['0', '1'] },
+    { name: 'tempo_config', values: ['default', 'default'] },
+    { name: 'Value #traces_service_graph_request_total', values: [10, 20] },
   ],
 });
