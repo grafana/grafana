@@ -410,8 +410,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   /**
    * @deprecated
-   * @param query
-   * @param options
    */
   _seriesQuery(query: string, options?: DataQueryRequest<InfluxQuery>) {
     if (!query) {
@@ -426,6 +424,9 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
   }
 
+  /**
+   * @deprecated
+   */
   serializeParams(params: { q: string }) {
     if (!params) {
       return '';
@@ -446,10 +447,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   /**
    * @deprecated
-   * @param method
-   * @param url
-   * @param data
-   * @param options
    */
   _influxRequest(method: string, url: string, data: any, options?: any) {
     const currentUrl = this.urls.shift()!;
@@ -539,7 +536,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   /**
    * @deprecated
-   * @param err
    */
   handleErrors(err: any) {
     const error: DataQueryError = {
