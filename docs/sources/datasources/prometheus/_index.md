@@ -14,15 +14,22 @@ weight: 1300
 
 # Prometheus data source
 
-Grafana ships with built-in support for Prometheus.
+Prometheus is an open-source toolkit that collects and stores metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](https://grafana.com/docs/grafana/next/fundamentals/intro-to-prometheus/)
 
-<!-- This topic explains options, variables, querying, and other features specific to the Prometheus data source, which include its [feature-rich code editor for queries and visual query builder]({{< relref "./query-editor/" >}}). -->
+Grafana provides out-of-the-box support for Prometheus.
+For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
+
+The following guides will help you get started with the Prometheus data source:
+
+- [Configure the Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prom-data-source/)
+- [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
+- [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
-Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
+Once you've added the Prometheus data source, you can [configure it](/docs/grafana/latest/datasources/prometheus/configure-prom-data-source/) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
 
 ## Prometheus API
 
@@ -177,19 +184,3 @@ This can be toggled on or off in the data source configuration or provisioning f
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
 
 Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
-
-# new prometheus data source section
-
-# Prometheus data source
-
-Prometheus is an open-source toolkit that collects and stores metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](https://grafana.com/docs/grafana/next/fundamentals/intro-to-prometheus/).
-
-Grafana provides out of the box support for Prometheus.
-For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
-
-The following guides will help you get started with the Prometheus data source:
-
-- [Get started with Prometheus](/docs/grafana/latest/datasources/prometheus/get-started-with-prometheus/)
-- Configure the Prometheus data source
-- [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
-- [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)
