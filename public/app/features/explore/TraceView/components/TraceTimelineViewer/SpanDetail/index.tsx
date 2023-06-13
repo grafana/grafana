@@ -204,7 +204,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         return 'Library Version';
       case 'otel.status_code':
         return 'Status';
-      case 'otel.status_message':
+      case 'otel.status_description':
         return 'Status Message';
       default:
         return toPascalCase(key);

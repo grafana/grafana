@@ -219,7 +219,6 @@ func getIntrinsics(span pdata.Span, instrumentationLibrary pdata.Instrumentation
 	possibleNilTags := []*KeyValue{
 		getTagFromSpanKind(span.Kind()),
 		getTagFromStatusCode(status.Code()),
-		getErrorTagFromStatusCode(status.Code()),
 		getTagFromStatusMsg(status.Message()),
 		getTagFromTraceState(span.TraceState()),
 	}
@@ -282,22 +281,12 @@ func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	}
 }
 
-func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
-	if statusCode == pdata.StatusCodeError {
-		return &KeyValue{
-			Key:   tracetranslator.TagError,
-			Value: true,
-		}
-	}
-	return nil
-}
-
 func getTagFromStatusMsg(statusMsg string) *KeyValue {
 	if statusMsg == "" {
 		return nil
 	}
 	return &KeyValue{
-		Key:   "otel.status_message",
+		Key:   "otel.status_description",
 		Value: statusMsg,
 	}
 }
