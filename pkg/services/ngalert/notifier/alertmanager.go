@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/prometheus/alertmanager/config"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -13,6 +12,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
