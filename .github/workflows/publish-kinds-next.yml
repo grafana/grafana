@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "main"
+    paths:
+      - '**/*.cue'
   workflow_dispatch:
 
 jobs:

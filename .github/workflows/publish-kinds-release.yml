@@ -6,6 +6,8 @@ on:
       - v[0-9]+.[0-9]+.x
     tags:
       - v[0-9]+.[0-9]+.[0-9]+
+    paths:
+      - '**/*.cue'
   workflow_dispatch:
 
 jobs:
