@@ -167,7 +167,7 @@ const FlameGraph = ({
   useEffect(() => {
     const handleOnClick = (e: MouseEvent) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
+      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer_clickOutsideCheck') {
         setClickedItemData(undefined);
       }
     };
@@ -176,7 +176,7 @@ const FlameGraph = ({
   }, [setClickedItemData]);
 
   return (
-    <div className={styles.graph} ref={sizeRef}>
+    <div className={styles.graph}>
       <FlameGraphMetadata
         data={data}
         focusedItem={focusedItemData}
@@ -185,7 +185,7 @@ const FlameGraph = ({
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
       />
-      <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
+      <div className={styles.canvasContainer}>
         {sandwichItem && (
           <div>
             <div
@@ -201,13 +201,15 @@ const FlameGraph = ({
             </div>
           </div>
         )}
-        <canvas
-          ref={graphRef}
-          data-testid="flameGraph"
-          onClick={onGraphClick}
-          onMouseMove={onGraphMouseMove}
-          onMouseLeave={onGraphMouseLeave}
-        />
+        <div className={styles.canvasWrapper} id="flameGraphCanvasContainer_clickOutsideCheck" ref={sizeRef}>
+          <canvas
+            ref={graphRef}
+            data-testid="flameGraph"
+            onClick={onGraphClick}
+            onMouseMove={onGraphMouseMove}
+            onMouseLeave={onGraphMouseLeave}
+          />
+        </div>
       </div>
       <FlameGraphTooltip tooltipRef={tooltipRef} item={tooltipItem} data={data} totalTicks={totalTicks} />
       {clickedItemData && (
@@ -239,8 +241,14 @@ const getStyles = () => ({
     flex-basis: 50%;
   `,
   canvasContainer: css`
-    cursor: pointer;
+    label: canvasContainer;
     display: flex;
+  `,
+  canvasWrapper: css`
+    label: canvasWrapper;
+    cursor: pointer;
+    flex: 1;
+    overflow: hidden;
   `,
   sandwichMarker: css`
     writing-mode: vertical-lr;
