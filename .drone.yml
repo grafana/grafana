@@ -4550,7 +4550,7 @@ steps:
   image: alpine/git
   name: clone-rgm
 - commands:
-  - apk update && apk add docker
+  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
@@ -4604,7 +4604,7 @@ steps:
   image: alpine/git
   name: clone-rgm
 - commands:
-  - apk update && apk add docker
+  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
@@ -7308,6 +7308,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: b3f3cd5171763ddaf3c62e0c83dad0f9705496e53ba7416f6dd3581fa9a5ec27
+hmac: 57a88408eae5719f7ffa85c575c46e5b90ea301627144cb738d2ac8b8396e973
 
 ...
