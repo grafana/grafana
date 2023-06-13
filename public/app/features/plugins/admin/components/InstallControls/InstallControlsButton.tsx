@@ -122,11 +122,9 @@ export function InstallControlsButton({
       </HorizontalGroup>
     );
   }
+  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
   return (
-    <Button
-      disabled={isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected)}
-      onClick={onInstall}
-    >
+    <Button disabled={shouldDisable} onClick={onInstall}>
       {isInstalling ? 'Installing' : 'Install'}
     </Button>
   );

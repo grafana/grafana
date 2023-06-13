@@ -74,7 +74,7 @@ export function PluginDetailsPage({
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
       <Page.Contents>
         <TabContent className={styles.tabContent}>
-          <PluginDetailsAngularDeprecation plugin={plugin} className={styles.alert} />
+          {plugin.angularDetected && <PluginDetailsAngularDeprecation className={styles.alert} />}
           <PluginDetailsSignature plugin={plugin} className={styles.alert} />
           <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
           <PluginDetailsBody queryParams={Object.fromEntries(queryParams)} plugin={plugin} pageId={activePageId} />
