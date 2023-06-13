@@ -152,7 +152,7 @@ Dashboard, folder and data source permissions can be set through the UI or APIs 
 
 ### Role-based access control
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 If you find basic organization and server administrator roles are too restrictive, you might want to consider using RBAC features.
 RBAC provides you a fully flexible way of granting, changing, and revoking user read and write access to Grafana resources, such as users, data sources and reports.
