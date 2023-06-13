@@ -392,19 +392,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     return this.metricFindQuery(query, options);
   }
 
-  getTagValues(options: any = {}) {
+  getTagValues(options: InfluxQuery) {
     const query = buildMetadataQuery({
       type: 'TAG_VALUES',
       templateService: this.templateSrv,
       database: this.database,
       withKey: options.key,
-      measurement: options.measurement || '',
+      measurement: options.measurement ?? '',
       tags: [],
     });
     return this.metricFindQuery(query, options);
   }
 
-  _seriesQuery(query: string, options?: any) {
+  _seriesQuery(query: string, options?: DataQueryRequest<InfluxQuery>) {
     if (!query) {
       return of({ results: [] });
     }
