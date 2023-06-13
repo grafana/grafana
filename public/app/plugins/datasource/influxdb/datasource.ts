@@ -300,10 +300,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (query.select) {
       expandedQuery.select = query.select.map((selects) => {
-        return selects.map((select: any) => {
+        return selects.map((select) => {
           return {
             ...select,
-            params: select.params?.map((param: any) => {
+            params: select.params?.map((param) => {
               return this.templateSrv.replace(param.toString(), undefined, 'regex');
             }),
           };
@@ -357,7 +357,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         super.query({
           ...options, // includes 'range'
           targets: [target],
-        } as DataQueryRequest)
+        })
       ).then((rsp) => {
         if (rsp.data?.length) {
           return frameToMetricFindValue(rsp.data[0]);
