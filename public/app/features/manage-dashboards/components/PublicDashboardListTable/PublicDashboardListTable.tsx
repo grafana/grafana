@@ -151,7 +151,7 @@ export const PublicDashboardListTable = () => {
                 onNavigate={setPage}
                 currentPage={paginatedPublicDashboards.page}
                 numberOfPages={paginatedPublicDashboards.totalPages}
-                hideWhenSinglePage={true}
+                hideWhenSinglePage
               />
             </HorizontalGroup>
           </div>

@@ -3,7 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,51 +40,147 @@ func TestIntegrationListPublicDashboard(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlStore, cfg := db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
-	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
-	require.NoError(t, err)
-	publicdashboardStore := ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
+
+	var sqlStore *sqlstore.SQLStore
+	var cfg *setting.Cfg
+
+	var aDash *dashboards.Dashboard
+	var bDash *dashboards.Dashboard
+	var cDash *dashboards.Dashboard
+
+	var aPublicDash *PublicDashboard
+	var bPublicDash *PublicDashboard
+	var cPublicDash *PublicDashboard
 
 	var orgId int64 = 1
 
-	bDash := insertTestDashboard(t, dashboardStore, "b", orgId, 0, true)
-	aDash := insertTestDashboard(t, dashboardStore, "a", orgId, 0, true)
-	cDash := insertTestDashboard(t, dashboardStore, "c", orgId, 0, true)
+	var publicdashboardStore *PublicDashboardStoreImpl
 
-	// these are in order of how they should be returned from ListPUblicDashboards
-	a := insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, PublicShareType)
-	b := insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, PublicShareType)
-	c := insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
+	setup := func() {
+		sqlStore, cfg = db.InitTestDBwithCfg(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagPublicDashboards}})
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
+		publicdashboardStore = ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 
-	// this is case that can happen as of now, however, postgres and mysql sort
-	// null in the exact opposite fashion and there is no shared syntax to sort
-	// nulls in the same way in all 3 db's.
-	//d := insertPublicDashboard(t, publicdashboardStore, "missing", orgId, false)
+		bDash = insertTestDashboard(t, dashboardStore, "b", orgId, 0, false)
+		aDash = insertTestDashboard(t, dashboardStore, "a", orgId, 0, false)
+		cDash = insertTestDashboard(t, dashboardStore, "c", orgId, 0, false)
 
-	// should not be included in response
-	_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false, PublicShareType)
-
-	query := &PublicDashboardListQuery{
-		User: &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
-			1: {"dashboards:read": {
-				fmt.Sprintf("dashboards:uid:%s", a.Uid),
-				fmt.Sprintf("dashboards:uid:%s", b.Uid),
-				fmt.Sprintf("dashboards:uid:%s", c.Uid),
-			}}},
-		},
-		OrgID:  orgId,
-		Page:   1,
-		Limit:  50,
-		Offset: 0,
+		// these are in order of how they should be returned from ListPUblicDashboards
+		aPublicDash = insertPublicDashboard(t, publicdashboardStore, aDash.UID, orgId, false, PublicShareType)
+		bPublicDash = insertPublicDashboard(t, publicdashboardStore, bDash.UID, orgId, true, PublicShareType)
+		cPublicDash = insertPublicDashboard(t, publicdashboardStore, cDash.UID, orgId, true, PublicShareType)
 	}
-	resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
-	require.NoError(t, err)
 
-	assert.Len(t, resp, 3)
-	assert.Equal(t, resp.PublicDashboards[0].Uid, a.Uid)
-	assert.Equal(t, resp.PublicDashboards[1].Uid, b.Uid)
-	assert.Equal(t, resp.PublicDashboards[2].Uid, c.Uid)
+	t.Run("FindAllWithPagination will return dashboard list based on orgId with pagination", func(t *testing.T) {
+		setup()
+
+		// should not be included in response
+		_ = insertPublicDashboard(t, publicdashboardStore, "wrongOrgId", 777, false, PublicShareType)
+
+		permissions := []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
+			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", bDash.UID)},
+			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
+		}
+
+		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
+		require.NoError(t, err)
+
+		query := &PublicDashboardListQuery{
+			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			OrgID:  orgId,
+			Page:   1,
+			Limit:  50,
+			Offset: 0,
+		}
+		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.PublicDashboards, 3)
+		assert.Equal(t, resp.PublicDashboards[0].Uid, aPublicDash.Uid)
+		assert.Equal(t, resp.PublicDashboards[1].Uid, bPublicDash.Uid)
+		assert.Equal(t, resp.PublicDashboards[2].Uid, cPublicDash.Uid)
+		assert.Equal(t, resp.TotalCount, int64(3))
+	})
+
+	t.Run("FindAllWithPagination will return dashboard list based on read permissions with pagination", func(t *testing.T) {
+		setup()
+
+		permissions := []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
+			{Action: dashboards.ActionDashboardsRead, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
+		}
+
+		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
+		require.NoError(t, err)
+
+		query := &PublicDashboardListQuery{
+			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			OrgID:  orgId,
+			Page:   1,
+			Limit:  50,
+			Offset: 0,
+		}
+		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.PublicDashboards, 2)
+		assert.Equal(t, resp.PublicDashboards[0].Uid, aPublicDash.Uid)
+		assert.Equal(t, resp.PublicDashboards[1].Uid, cPublicDash.Uid)
+		assert.Equal(t, resp.TotalCount, int64(2))
+	})
+
+	t.Run("FindAllWithPagination will return empty dashboard list based on read permissions with pagination", func(t *testing.T) {
+		setup()
+
+		permissions := []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-uid"},
+			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:another-dashboard-2-uid"},
+		}
+
+		err := insertPermissions(sqlStore, orgId, "viewer", permissions)
+		require.NoError(t, err)
+
+		query := &PublicDashboardListQuery{
+			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			OrgID:  orgId,
+			Page:   1,
+			Limit:  50,
+			Offset: 0,
+		}
+		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.PublicDashboards, 0)
+		assert.Equal(t, resp.TotalCount, int64(0))
+	})
+
+	t.Run("FindAllWithPagination will return empty dashboard list based on edit permissions with pagination", func(t *testing.T) {
+		setup()
+
+		permissions := []accesscontrol.Permission{
+			{Action: dashboards.ActionDashboardsWrite, Scope: fmt.Sprintf("dashboards:uid:%s", aDash.UID)},
+			{Action: dashboards.ActionDashboardsWrite, Scope: fmt.Sprintf("dashboards:uid:%s", cDash.UID)},
+		}
+
+		err := insertPermissions(sqlStore, orgId, "editor", permissions)
+		require.NoError(t, err)
+
+		query := &PublicDashboardListQuery{
+			User:   &user.SignedInUser{UserID: 1, OrgID: orgId, OrgRole: org.RoleEditor, Permissions: map[int64]map[string][]string{orgId: accesscontrol.GroupScopesByAction(permissions)}},
+			OrgID:  orgId,
+			Page:   1,
+			Limit:  50,
+			Offset: 0,
+		}
+		resp, err := publicdashboardStore.FindAllWithPagination(context.Background(), query)
+		require.NoError(t, err)
+
+		assert.Len(t, resp.PublicDashboards, 0)
+		assert.Equal(t, resp.TotalCount, int64(0))
+	})
 }
 
 func TestIntegrationFindDashboard(t *testing.T) {
@@ -841,4 +941,52 @@ func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardSt
 	require.NoError(t, err)
 
 	return pubdash
+}
+
+func insertPermissions(sqlStore *sqlstore.SQLStore, orgId int64, role string, permissions []accesscontrol.Permission) error {
+	return sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		newRole := &accesscontrol.Role{
+			OrgID:   orgId,
+			UID:     fmt.Sprintf("basic_%s", role),
+			Name:    fmt.Sprintf("basic:%s", role),
+			Updated: time.Now(),
+			Created: time.Now(),
+		}
+		_, err := sess.Insert(newRole)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Insert(accesscontrol.BuiltinRole{
+			OrgID:   orgId,
+			RoleID:  newRole.ID,
+			Role:    strings.ToUpper(role[:1]) + role[1:],
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+
+		for i := range permissions {
+			permissions[i].RoleID = newRole.ID
+			permissions[i].Created = time.Now()
+			permissions[i].Updated = time.Now()
+		}
+
+		_, err = sess.InsertMulti(&permissions)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Insert(accesscontrol.UserRole{
+			OrgID:   orgId,
+			RoleID:  newRole.ID,
+			UserID:  1,
+			Created: time.Now(),
+		})
+
+		return err
+	})
+
 }

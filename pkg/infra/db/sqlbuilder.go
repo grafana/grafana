@@ -60,7 +60,7 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType, queryType string) {
 	var (
 		sql          string
 		params       []interface{}
@@ -68,7 +68,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		recQryParams []interface{}
 	)
 	if !ac.IsDisabled(sb.cfg) {
-		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features, sb.recursiveQueriesAreSupported)
+		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, queryType, sb.features, sb.recursiveQueriesAreSupported)
 		sql, params = filterRBAC.Where()
 		recQry, recQryParams = filterRBAC.With()
 	} else {

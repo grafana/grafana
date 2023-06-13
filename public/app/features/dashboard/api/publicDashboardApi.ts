@@ -142,7 +142,7 @@ export const publicDashboardApi = createApi({
     }),
     listPublicDashboards: builder.query<PublicDashboardListWithPagination, number | void>({
       query: (page = 1) => ({
-        url: `/dashboards/public-dashboards?page=${page}`,
+        url: `/dashboards/public-dashboards?page=${page}&perpage=8`,
       }),
       transformResponse: (response: PublicDashboardListWithPaginationResponse) => ({
         ...response,

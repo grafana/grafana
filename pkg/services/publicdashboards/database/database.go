@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -57,7 +58,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
 	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
-		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
+		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
 	}
 	pubdashBuilder.Write(" ORDER BY dashboard.title")
 	pubdashBuilder.Write(d.sqlStore.GetDialect().LimitOffset(int64(query.Limit), int64(query.Offset)))
@@ -68,7 +69,7 @@ func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, qu
 	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
 	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
 	if query.User.OrgRole != org.RoleAdmin {
-		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
+		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
 	}
 
 	err = d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
