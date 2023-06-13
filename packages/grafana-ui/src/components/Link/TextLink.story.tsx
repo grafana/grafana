@@ -4,12 +4,12 @@ import React from 'react';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
 
-import { Link } from './Link';
-import mdx from './Link.mdx';
+import { TextLink } from './TextLink';
+import mdx from './TextLink.mdx';
 
 const meta: Meta = {
-  title: 'General/Link',
-  component: Link,
+  title: 'General/TextLink',
+  component: TextLink,
   parameters: {
     docs: {
       page: mdx,
@@ -45,9 +45,9 @@ export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
       <StoryExample name="">
-        <Link href="https://google.es" icon="external-link-alt" external>
+        <TextLink href="https://google.es" icon="external-link-alt" external>
           This is an external link
-        </Link>
+        </TextLink>
       </StoryExample>
     </VerticalGroup>
   );
@@ -61,9 +61,9 @@ Example.parameters = {
 export const Basic: StoryFn = (args) => {
   return (
     <div>
-      <Link href={args.href} {...args}>
+      <TextLink href={args.href} {...args}>
         Go to Google
-      </Link>
+      </TextLink>
     </div>
   );
 };
