@@ -1,4 +1,4 @@
-import { flatten, omit, uniq } from 'lodash';
+import { omit } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,21 +8,16 @@ import {
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
-  dateMath,
-  DateTime,
   DefaultTimeZone,
   ExploreUrlState,
   HistoryItem,
   IntervalValues,
-  isDateTime,
   LogsDedupStrategy,
   LogsSortOrder,
   rangeUtil,
   RawTimeRange,
-  TimeFragment,
   TimeRange,
   TimeZone,
-  toUtc,
   urlUtil,
 } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -48,8 +43,12 @@ export const DEFAULT_UI_STATE = {
 
 const MAX_HISTORY_ITEMS = 100;
 
-export const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
-export const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
+const LAST_USED_DATASOURCE_KEY = 'grafana.explore.datasource';
+const lastUsedDatasourceKeyForOrgId = (orgId: number) => `${LAST_USED_DATASOURCE_KEY}.${orgId}`;
+export const getLastUsedDatasourceUID = (orgId: number) =>
+  store.getObject<string>(lastUsedDatasourceKeyForOrgId(orgId));
+export const setLastUsedDatasourceUID = (orgId: number, datasourceUID: string) =>
+  store.setObject(lastUsedDatasourceKeyForOrgId(orgId), datasourceUID);
 
 export interface GetExploreUrlArguments {
   panel: PanelModel;
@@ -223,8 +222,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   }
 
   if (!Array.isArray(parsed)) {
-    const urlState = { ...parsed, isFromCompactUrl: false };
-    return urlState;
+    return { queries: [], range: DEFAULT_RANGE, ...parsed };
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
@@ -241,7 +239,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState, isFromCompactUrl: true };
+  return { datasource, queries, range, panelsState };
 }
 
 export function generateKey(index = 0): string {
@@ -283,15 +281,6 @@ export const generateNewKeyAndAddRefIdIfMissing = (target: DataQuery, queries: D
   const refId = target.refId || getNextRefIdChar(queries);
 
   return { ...target, refId, key };
-};
-
-export const queryDatasourceDetails = (queries: DataQuery[]) => {
-  const allUIDs = queries.map((query) => query.datasource?.uid);
-  return {
-    allHaveDatasource: allUIDs.length === queries.length,
-    noneHaveDatasource: allUIDs.length === 0,
-    allDatasourceSame: allUIDs.every((val, i, arr) => val === arr[0]),
-  };
 };
 
 /**
@@ -396,11 +385,6 @@ export function updateHistory<T extends DataQuery>(
   }
 }
 
-export function clearHistory(datasourceId: string) {
-  const historyKey = `grafana.explore.history.${datasourceId}`;
-  store.delete(historyKey);
-}
-
 export const getQueryKeys = (queries: DataQuery[]): string[] => {
   const queryKeys = queries.reduce<string[]>((newQueryKeys, query, index) => {
     const primaryKey = query.datasource?.uid || query.key;
@@ -418,105 +402,6 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalY
   }
 
   return range;
-};
-
-const parseRawTime = (value: string | DateTime): TimeFragment | null => {
-  if (value === null) {
-    return null;
-  }
-
-  if (isDateTime(value)) {
-    return value;
-  }
-
-  if (value.indexOf('now') !== -1) {
-    return value;
-  }
-  if (value.length === 8) {
-    return toUtc(value, 'YYYYMMDD');
-  }
-  if (value.length === 15) {
-    return toUtc(value, 'YYYYMMDDTHHmmss');
-  }
-  // Backward compatibility
-  if (value.length === 19) {
-    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
-  }
-
-  // This should handle cases where value is an epoch time as string
-  if (value.match(/^\d+$/)) {
-    const epoch = parseInt(value, 10);
-    return toUtc(epoch);
-  }
-
-  // This should handle ISO strings
-  const time = toUtc(value);
-  if (time.isValid()) {
-    return time;
-  }
-
-  return null;
-};
-
-export const getTimeRangeFromUrl = (
-  range: RawTimeRange,
-  timeZone: TimeZone,
-  fiscalYearStartMonth: number
-): TimeRange => {
-  const raw = {
-    from: parseRawTime(range.from)!,
-    to: parseRawTime(range.to)!,
-  };
-
-  return {
-    from: dateMath.parse(raw.from, false, timeZone)!,
-    to: dateMath.parse(raw.to, true, timeZone)!,
-    raw,
-  };
-};
-
-export const getValueWithRefId = (value?: any): any => {
-  if (!value || typeof value !== 'object') {
-    return undefined;
-  }
-
-  if (value.refId) {
-    return value;
-  }
-
-  const keys = Object.keys(value);
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    const refId = getValueWithRefId(value[key]);
-    if (refId) {
-      return refId;
-    }
-  }
-
-  return undefined;
-};
-
-export const getRefIds = (value: any): string[] => {
-  if (!value) {
-    return [];
-  }
-
-  if (typeof value !== 'object') {
-    return [];
-  }
-
-  const keys = Object.keys(value);
-  const refIds = [];
-  for (let index = 0; index < keys.length; index++) {
-    const key = keys[index];
-    if (key === 'refId') {
-      refIds.push(value[key]);
-      continue;
-    }
-    refIds.push(getRefIds(value[key]));
-  }
-
-  return uniq(flatten(refIds));
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>

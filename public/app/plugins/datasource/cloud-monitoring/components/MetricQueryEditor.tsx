@@ -63,19 +63,22 @@ function Editor({
 
   useEffect(() => {
     if (query.queryType === QueryType.TIME_SERIES_LIST && !query.timeSeriesList) {
-      onChangeTimeSeriesList(defaultTimeSeriesList(datasource));
+      onQueryChange({
+        refId: query.refId,
+        datasource: query.datasource,
+        queryType: QueryType.TIME_SERIES_LIST,
+        timeSeriesList: defaultTimeSeriesList(datasource),
+      });
     }
     if (query.queryType === QueryType.TIME_SERIES_QUERY && !query.timeSeriesQuery) {
-      onChangeTimeSeriesQuery(defaultTimeSeriesQuery(datasource));
+      onQueryChange({
+        refId: query.refId,
+        datasource: query.datasource,
+        queryType: QueryType.TIME_SERIES_QUERY,
+        timeSeriesQuery: defaultTimeSeriesQuery(datasource),
+      });
     }
-  }, [
-    onChangeTimeSeriesList,
-    onChangeTimeSeriesQuery,
-    query.queryType,
-    query.timeSeriesList,
-    query.timeSeriesQuery,
-    datasource,
-  ]);
+  }, [onQueryChange, query, datasource]);
 
   return (
     <EditorRows>

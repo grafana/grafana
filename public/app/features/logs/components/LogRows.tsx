@@ -10,8 +10,6 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
-  DataQueryResponse,
-  LogRowContextOptions,
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
@@ -41,7 +39,6 @@ export interface Props extends Themeable2 {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getRowContext?: (row: LogRowModel, options?: LogRowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -141,7 +138,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
-    const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve({ data: [] });
 
     return (
       <table className={styles.logsRowsTable}>
@@ -151,7 +147,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               <LogRow
                 key={row.uid}
                 getRows={getRows}
-                getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
                 showDuplicates={showDuplicates}
@@ -181,7 +176,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               <LogRow
                 key={row.uid}
                 getRows={getRows}
-                getRowContext={getRowContext}
                 row={row}
                 showContextToggle={showContextToggle}
                 showDuplicates={showDuplicates}

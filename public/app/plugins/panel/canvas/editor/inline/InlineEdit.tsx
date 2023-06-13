@@ -84,7 +84,13 @@ export function InlineEdit({ onClose, id, scene }: Props) {
               <strong className={styles.inlineEditorHeader}>
                 <div className={styles.placeholder} />
                 <div>Canvas Inline Editor</div>
-                <IconButton name="times" size="xl" className={styles.inlineEditorClose} onClick={onClose} />
+                <IconButton
+                  name="times"
+                  size="xl"
+                  className={styles.inlineEditorClose}
+                  onClick={onClose}
+                  tooltip="Close inline editor"
+                />
               </strong>
               <div className={styles.inlineEditorContentWrapper}>
                 <div className={styles.inlineEditorContent}>
@@ -105,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: column;
     background: ${theme.components.panel.background};
     border: 1px solid ${theme.colors.border.strong};
-    box-shadow: 5px 5px 20px -5px #000000;
+    box-shadow: ${theme.shadows.z3};
     z-index: 1000;
     opacity: 1;
     min-width: 400px;
