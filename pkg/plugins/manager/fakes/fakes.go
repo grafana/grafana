@@ -425,9 +425,9 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename strin
 }
 
 type FakeOauthService struct {
-	Result *oauth.ExternalServiceDTO
+	Result *oauth.PluginExternalServiceRegistration
 }
 
-func (f *FakeOauthService) SaveExternalService(ctx context.Context, cmd *oauth.ExternalServiceRegistration) (*oauth.ExternalServiceDTO, error) {
+func (f *FakeOauthService) SavePluginExternalService(ctx context.Context, name string, svc *oauth.PluginExternalService) (*oauth.PluginExternalServiceRegistration, error) {
 	return f.Result, nil
 }

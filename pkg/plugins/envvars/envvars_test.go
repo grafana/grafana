@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/oauthserver/oasimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,7 +37,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
-		}, licensing, &oasimpl.OAuth2ServiceImpl{})
+		}, licensing, &fakes.FakeOauthService{})
 
 		envVars, err := envVarsProvider.Get(context.Background(), p)
 		require.NoError(t, err)
@@ -300,7 +299,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			envVarsProvider := NewProvider(tc.cfg, nil, &oasimpl.OAuth2ServiceImpl{})
+			envVarsProvider := NewProvider(tc.cfg, nil, &fakes.FakeOauthService{})
 			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
 			require.NoError(t, err)
 			tc.exp(t, envVars)
@@ -312,8 +311,8 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 	t.Run("backend datasource with oauth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
-				ID:                       "test",
-				OauthServiceRegistration: &oauth.ExternalServiceRegistration{},
+				ID:                          "test",
+				ExternalServiceRegistration: &oauth.PluginExternalService{},
 			},
 		}
 
@@ -321,12 +320,10 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 			GrafanaAppURL: "https://myorg.com/",
 			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 		}, nil, &fakes.FakeOauthService{
-			Result: &oauth.ExternalServiceDTO{
-				ID:     "clientID",
-				Secret: "clientSecret",
-				KeyResult: &oauth.KeyResult{
-					PrivatePem: "privatePem",
-				},
+			Result: &oauth.PluginExternalServiceRegistration{
+				ClientID:     "clientID",
+				ClientSecret: "clientSecret",
+				PrivateKey:   "privatePem",
 			},
 		})
 		envVars, err := envVarsProvider.Get(context.Background(), p)

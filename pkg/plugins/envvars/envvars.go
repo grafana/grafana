@@ -22,16 +22,16 @@ type Provider interface {
 }
 
 type Service struct {
-	cfg         *config.Cfg
-	license     plugins.Licensing
-	oauthServer oauth.ExternalServiceRegister
+	cfg             *config.Cfg
+	license         plugins.Licensing
+	serviceRegister oauth.ExternalServiceRegister
 }
 
-func NewProvider(cfg *config.Cfg, license plugins.Licensing, oauthServer oauth.ExternalServiceRegister) *Service {
+func NewProvider(cfg *config.Cfg, license plugins.Licensing, serviceRegister oauth.ExternalServiceRegister) *Service {
 	return &Service{
-		cfg:         cfg,
-		license:     license,
-		oauthServer: oauthServer,
+		cfg:             cfg,
+		license:         license,
+		serviceRegister: serviceRegister,
 	}
 }
 
@@ -50,8 +50,8 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
-	if p.OauthServiceRegistration != nil && s.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		vars, err := s.oauth2OnBehalfOfVars(ctx, p.ID, p.OauthServiceRegistration)
+	if p.ExternalServiceRegistration != nil && s.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		vars, err := s.oauth2OnBehalfOfVars(ctx, p.ID, p.ExternalServiceRegistration)
 		if err != nil {
 			return nil, err
 		}
@@ -112,22 +112,17 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 	return nil
 }
 
-func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.ExternalServiceRegistration) ([]string, error) {
-	cli, err := s.oauthServer.SaveExternalService(ctx, &oauth.ExternalServiceRegistration{
-		Name:          pluginID,
-		Self:          oauthAppInfo.Self,
-		Impersonation: oauthAppInfo.Impersonation,
-		Key:           oauthAppInfo.Key,
-	})
+func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.PluginExternalService) ([]string, error) {
+	cli, err := s.serviceRegister.SavePluginExternalService(ctx, pluginID, oauthAppInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	return []string{
 		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
-		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ID),
-		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.Secret),
-		fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.KeyResult.PrivatePem),
+		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ClientID),
+		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.ClientSecret),
+		fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.PrivateKey),
 	}, nil
 }
 

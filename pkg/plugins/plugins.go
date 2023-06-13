@@ -153,7 +153,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	OauthServiceRegistration *oauth.ExternalServiceRegistration `json:"oauthServiceRegistration,omitempty"`
+	ExternalServiceRegistration *oauth.PluginExternalService `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

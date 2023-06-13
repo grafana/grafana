@@ -190,7 +190,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 // SaveExternalService creates or updates an external service in the database, it generates client_id and secrets and
 // it ensures that the associated service account has the correct permissions.
 // Database consistency is not guaranteed, consider changing this in the future.
-func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauth.ExternalServiceRegistration) (*oauth.ExternalServiceDTO, error) {
+func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ExternalServiceDTO, error) {
 	if registration == nil {
 		s.logger.Warn("RegisterExternalService called without registration")
 		return nil, nil
@@ -271,6 +271,32 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	return dto, nil
 }
 
+// SavePluginExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
+func (s *OAuth2ServiceImpl) SavePluginExternalService(ctx context.Context, svcName string, svc *oauth.PluginExternalService) (*oauth.PluginExternalServiceRegistration, error) {
+	extSvc, err := s.SaveExternalService(ctx, &oauthserver.ExternalServiceRegistration{
+		Name: svcName,
+		Impersonation: oauthserver.ImpersonationCfg{
+			Enabled:     true,
+			Groups:      true,
+			Permissions: svc.ImpersonationPermissions,
+		},
+		Self: oauthserver.SelfCfg{
+			Enabled:     true,
+			Permissions: svc.SelfPermissions,
+		},
+		Key: &oauthserver.KeyOption{Generate: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &oauth.PluginExternalServiceRegistration{
+		ClientID:     extSvc.ID,
+		ClientSecret: extSvc.Secret,
+		PrivateKey:   extSvc.KeyResult.PrivatePem,
+	}, nil
+}
+
 // randString generates a a cryptographically secure random string of n bytes
 func (s *OAuth2ServiceImpl) randString(n int) (string, error) {
 	res := make([]byte, n)
@@ -307,7 +333,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(selfAccessEnabled, impersonationEn
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauth.KeyOption) (*oauth.KeyResult, error) {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oauthserver.KeyOption) (*oauthserver.KeyResult, error) {
 	if keyOption == nil {
 		return nil, fmt.Errorf("keyOption is nil")
 	}
@@ -356,7 +382,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Debug("ECDSA key has been generated")
 		}
 
-		return &oauth.KeyResult{
+		return &oauthserver.KeyResult{
 			PrivatePem: privatePem,
 			PublicPem:  publicPem,
 			Generated:  true,
@@ -380,7 +406,7 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, keyOption *oau
 			s.logger.Error("cannot parse PEM encoded string", "error", err)
 			return nil, err
 		}
-		return &oauth.KeyResult{
+		return &oauthserver.KeyResult{
 			PublicPem: string(pemEncoded),
 		}, nil
 	}
@@ -479,7 +505,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, extSvcName
 
 // handleRegistrationPermissions parses the registration form to retrieve requested permissions and adds default
 // permissions when impersonation is requested
-func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauth.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
+func (*OAuth2ServiceImpl) handleRegistrationPermissions(registration *oauthserver.ExternalServiceRegistration) ([]ac.Permission, []ac.Permission) {
 	selfPermissions := []ac.Permission{}
 	impersonatePermissions := []ac.Permission{}
 
