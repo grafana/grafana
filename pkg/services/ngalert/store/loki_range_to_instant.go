@@ -6,6 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+const (
+	grafanaCloudLogs          = "grafanacloud-logs"
+	grafanaCloudUsageInsights = "grafanacloud-usage-insights"
+)
+
 func canBeInstant(r *models.AlertRule) bool {
 	if len(r.Data) < 2 {
 		return false

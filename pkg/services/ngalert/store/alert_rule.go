@@ -27,11 +27,6 @@ const AlertRuleMaxTitleLength = 190
 // AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
 const AlertRuleMaxRuleGroupNameLength = 190
 
-const (
-	grafanaCloudLogs          = "grafanacloud-logs"
-	grafanaCloudUsageInsights = "grafanacloud-usage-insights"
-)
-
 var (
 	ErrAlertRuleGroupNotFound = errors.New("rulegroup not found")
 	ErrOptimisticLock         = errors.New("version conflict while updating a record in the database with optimistic locking")
