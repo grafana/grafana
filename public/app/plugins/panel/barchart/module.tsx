@@ -13,6 +13,7 @@ import { GraphTransform, GraphTresholdsStyleMode, StackingMode, VisibilityMode }
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
+import { addPointAndLineStyles } from '../timeseries/config';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
@@ -103,6 +104,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
         shouldApply: () => true,
       });
 
+      addPointAndLineStyles(cfg, builder, true, true);
       commonOptionsBuilder.addAxisConfig(builder, cfg, false);
       commonOptionsBuilder.addHideFrom(builder);
     },

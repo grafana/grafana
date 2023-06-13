@@ -77,7 +77,7 @@ export const defaultOptions: Partial<Options> = {
   xTickLabelSpacing: 0,
 };
 
-export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig {
+export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig, common.PointsConfig, common.LineConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -95,10 +95,12 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
    * Threshold rendering
    */
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
+  drawStyle?: common.GraphDrawStyle;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
+  drawStyle: common.GraphDrawStyle.Bars,
 };
