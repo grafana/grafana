@@ -18,7 +18,7 @@ import { CompartmentDependencyModule, PluginFactoryFunction } from './types';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
 if (process.env.NODE_ENV !== 'production') {
-  require('./custom_formatter');
+  require('@locker/near-membrane-dom/custom-devtools-formatter');
 }
 
 const pluginImportCache = new Map<string, Promise<unknown>>();
