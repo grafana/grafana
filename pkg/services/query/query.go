@@ -48,7 +48,6 @@ func ProvideService(
 		dataSourceService:      dataSourceService,
 		pluginClient:           pluginClient,
 		log:                    log.New("query_data"),
-		userError:              cfg.UserFacingDefaultError,
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -71,7 +70,6 @@ type ServiceImpl struct {
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
 	log                    log.Logger
-	userError              string
 }
 
 // Run ServiceImpl.
@@ -116,7 +114,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			} else if theErrString, ok := r.(string); ok {
 				err = fmt.Errorf(theErrString)
 			} else {
-				err = fmt.Errorf("unexpected error - %s", s.userError)
+				err = fmt.Errorf("unexpected error - %s", s.cfg.UserFacingDefaultError)
 			}
 			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
 			rchan <- buildErrorResponses(err, queries)
