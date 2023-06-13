@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import produce from 'immer';
-import { defaultOrder } from 'ol/renderer/vector';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';

@@ -33,7 +33,7 @@ jest.mock(
 );
 
 const ui = {
-  setDashboardButton: byRole('button', { name: 'Set dashboard and panel' }),
+  setDashboardButton: byRole('button', { name: 'Link dashboard and panel' }),
   annotationKeys: byTestId('annotation-key-', { exact: false }),
   annotationValues: byTestId('annotation-value-', { exact: false }),
   dashboardPicker: {
@@ -158,9 +158,10 @@ describe('AnnotationsField', function () {
 
       expect(ui.dashboardPicker.dialog.query()).not.toBeInTheDocument();
 
-      expect(annotationValueElements).toHaveLength(2);
-      expect(annotationValueElements[0]).toHaveTextContent('dash-test-uid');
-      expect(annotationValueElements[1]).toHaveTextContent('2');
+      expect(annotationValueElements).toHaveLength(5); //first 3 correspond to the default values (summary, description, runbook url)
+
+      expect(annotationValueElements[3]).toHaveTextContent('dash-test-uid');
+      expect(annotationValueElements[4]).toHaveTextContent('2');
     });
 
     // this test _should_ work in theory but something is stopping the 'onClick' function on the dashboard item
