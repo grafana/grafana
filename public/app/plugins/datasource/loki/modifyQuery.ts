@@ -130,6 +130,88 @@ function getMatchersWithFilter(query: string, key: string, operator: string, val
   });
 }
 
+
+export type Position = { from: number; to: number };
+
+/**
+ * Checks for the presence of a given label=value filter in any Matcher expression in the query.
+ */
+export function queryHasFilter(query: string, key: string, operator: string, value: string): boolean {
+  const matchers = getMatchersWithFilter(query, key, operator, value);
+  return matchers.length > 0;
+}
+
+/**
+ * Removes a label=value Matcher expression from the query.
+ */
+export function removeLabelFromQuery(query: string, key: string, operator: string, value: string): string {
+  const matchers = getMatchersWithFilter(query, key, operator, value);
+  for (const matcher of matchers) {
+    query =
+      matcher.parent?.type.id === LabelFilter ? removeLabelFilter(query, matcher) : removeSelector(query, matcher);
+  }
+  return query;
+}
+
+function removeLabelFilter(query: string, matcher: SyntaxNode): string {
+  const pipelineStage = matcher.parent?.parent;
+  if (!pipelineStage) {
+    return query;
+  }
+  return (query.substring(0, pipelineStage.from) + query.substring(pipelineStage.to)).trim();
+}
+
+function removeSelector(query: string, matcher: SyntaxNode): string {
+  const selector = matcher.parent?.parent;
+  const label = matcher.getChild(Identifier);
+  if (!selector || !label) {
+    return query;
+  }
+  const labelName = query.substring(label.from, label.to);
+  const modeller = new LokiQueryModeller();
+
+  const prefix = query.substring(0, selector.from);
+  const suffix = query.substring(selector.to);
+
+  const matchVisQuery = buildVisualQueryFromString(query.substring(selector.from, selector.to));
+  matchVisQuery.query.labels = matchVisQuery.query.labels.filter((label) => label.label !== labelName);
+
+  return prefix + modeller.renderQuery(matchVisQuery.query) + suffix;
+}
+
+function getMatchersWithFilter(query: string, key: string, operator: string, value: string): SyntaxNode[] {
+  const tree = parser.parse(query);
+  const matchers: SyntaxNode[] = [];
+  tree.iterate({
+    enter: ({ type, node }): void => {
+      if (type.id === Matcher) {
+        matchers.push(node);
+      }
+    },
+  });
+  return matchers.filter((matcher) => {
+    const labelNode = matcher.getChild(Identifier);
+    const opNode = labelNode?.nextSibling;
+    const valueNode = matcher.getChild(String);
+    if (!labelNode || !opNode || !valueNode) {
+      return false;
+    }
+    const labelName = query.substring(labelNode.from, labelNode.to);
+    if (labelName !== key) {
+      return false;
+    }
+    const labelValue = query.substring(valueNode.from, valueNode.to);
+    if (handleQuotes(labelValue) !== value) {
+      return false;
+    }
+    const labelOperator = query.substring(opNode.from, opNode.to);
+    if (labelOperator !== operator) {
+      return false;
+    }
+    return true;
+  });
+}
+
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
  *
