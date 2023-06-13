@@ -28,40 +28,22 @@ const meta: Meta<typeof CodeEditor> = {
 
 export const Basic: StoryFn<typeof CodeEditor> = (args) => {
   return (
-    <>
-      <CodeEditor
-        width={args.width}
-        height={args.height}
-        value={args.value}
-        language={args.language}
-        onBlur={(text: string) => {
-          action('code blur')(text);
-        }}
-        onSave={(text: string) => {
-          action('code saved')(text);
-        }}
-        getSuggestions={() => [{ label: 'foo' }]}
-        showLineNumbers={args.showLineNumbers}
-        showMiniMap={args.showMiniMap}
-        readOnly={args.readOnly}
-      />
-      <CodeEditor
-        width={args.width}
-        height={args.height}
-        value={args.value}
-        language={args.language}
-        onBlur={(text: string) => {
-          action('code blur')(text);
-        }}
-        onSave={(text: string) => {
-          action('code saved')(text);
-        }}
-        getSuggestions={() => [{ label: 'bar' }]}
-        showLineNumbers={args.showLineNumbers}
-        showMiniMap={args.showMiniMap}
-        readOnly={args.readOnly}
-      />
-    </>
+    <CodeEditor
+      width={args.width}
+      height={args.height}
+      value={args.value}
+      language={args.language}
+      onBlur={(text: string) => {
+        action('code blur')(text);
+      }}
+      onSave={(text: string) => {
+        action('code saved')(text);
+      }}
+      getSuggestions={() => [{ label: 'foo' }]}
+      showLineNumbers={args.showLineNumbers}
+      showMiniMap={args.showMiniMap}
+      readOnly={args.readOnly}
+    />
   );
 };
 Basic.args = {
