@@ -664,10 +664,10 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 			Kind:       "GrafanaResourceDefinition",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s.%s.%s", props.PluralMachineName, props.MachineName, "kinds.grafana.com"),
+			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, "core.kinds.grafana.com"),
 		},
 		Spec: kindsv1.GrafanaResourceDefinitionSpec{
-			Group: props.MachineName + ".kinds.grafana.com",
+			Group: "core.kinds.grafana.com",
 			Scope: "Namespaced",
 			Names: kindsv1.GrafanaResourceDefinitionNames{
 				Kind:     props.Name,
