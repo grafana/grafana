@@ -51,7 +51,7 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 	}
 
 	if p.ExternalServiceRegistration != nil && s.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		vars, err := s.oauth2OnBehalfOfVars(ctx, p.ID, p.ExternalServiceRegistration)
+		vars, err := s.externalServiceEnvVars(ctx, p.ID, p.ExternalServiceRegistration)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +112,7 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 	return nil
 }
 
-func (s *Service) oauth2OnBehalfOfVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.PluginExternalService) ([]string, error) {
+func (s *Service) externalServiceEnvVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.PluginExternalService) ([]string, error) {
 	cli, err := s.serviceRegister.SavePluginExternalService(ctx, pluginID, oauthAppInfo)
 	if err != nil {
 		return nil, err

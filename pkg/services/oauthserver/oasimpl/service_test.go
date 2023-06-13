@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	AppURL   = "https://oauthserver.test/"
+	AppURL   = "https://oauth.test/"
 	TokenURL = AppURL + "oauth2/token"
 )
 
