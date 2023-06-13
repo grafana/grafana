@@ -68,6 +68,9 @@ let singletonInstance: LLMSrv;
  * @internal
  */
 export const setLLMSrv = (instance: LLMSrv) => {
+  if (singletonInstance && process.env.NODE_ENV !== 'test') {
+    throw new Error('setLLMSrv() function should only be called once, when Grafana is starting.');
+  }
   singletonInstance = instance;
 };
 
