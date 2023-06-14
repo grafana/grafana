@@ -1,3 +1,7 @@
+"""
+This module contains logic for checking if the package.json whats new url matches with the in-flight tag.
+"""
+
 load(
     "scripts/drone/utils/images.star",
     "images",

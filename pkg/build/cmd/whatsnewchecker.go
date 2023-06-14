@@ -15,7 +15,6 @@ import (
 
 const GrafanaDir = "."
 
-// nolint:gosimple
 var whatsNewRegex = regexp.MustCompile(`^.*whats-new-in-(v\d*-[\d+]*)`)
 
 type PackageJSON struct {

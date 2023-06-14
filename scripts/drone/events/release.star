@@ -219,7 +219,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
     # We don't need to run integration tests at release time since they have
     # been run multiple times before:
     if ver_mode in ("release"):
-        pipelines.append(whats_new_checker_pipeline(release_trigger),)
+        pipelines.append(whats_new_checker_pipeline(release_trigger))
         integration_test_steps = []
         volumes = []
 
