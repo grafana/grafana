@@ -305,6 +305,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        buildInfo: config.buildInfo,
       })
     );
   }
