@@ -68,7 +68,7 @@ func (s *SocialBase) httpGet(ctx context.Context, client *http.Client, url strin
 	response := &httpGetResponse{body, r.Header}
 
 	if r.StatusCode >= 300 {
-		return nil, fmt.Errorf("invalid response status code %d: %s", r.StatusCode, string(response.Body))
+		return nil, fmt.Errorf("unsuccessful response status code %d: %s", r.StatusCode, string(response.Body))
 	}
 
 	s.log.Debug("HTTP GET", "url", url, "status", r.Status, "response_body", string(response.Body))
