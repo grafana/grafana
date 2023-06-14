@@ -60,6 +60,7 @@ export function useDatasource(dataSource: string | DataSourceRef | DataSourceIns
 export interface KeybaordNavigatableListProps {
   keyboardEvents?: Observable<React.KeyboardEvent>;
   containerRef: React.RefObject<HTMLElement>;
+  numberOfItems?: number;
 }
 
 /**
@@ -67,7 +68,7 @@ export interface KeybaordNavigatableListProps {
  * @param props
  */
 export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps): [Record<string, string>, string] {
-  const { keyboardEvents, containerRef } = props;
+  const { keyboardEvents, containerRef, numberOfItems } = props;
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   const attributeName = 'data-role';
@@ -91,7 +92,7 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
       selectedItem.scrollIntoView({ block: 'center' });
       selectedItem.setAttribute(selectedAttributeName, 'true');
     }
-  }, [selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements]);
+  }, [selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements, numberOfItems]);
 
   const clickSelectedElement = () => {
     containerRef?.current
