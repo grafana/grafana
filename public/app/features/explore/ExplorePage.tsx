@@ -19,6 +19,7 @@ import { useStateSync } from './hooks/useStateSync';
 import { useStopQueries } from './hooks/useStopQueries';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
 import { splitSizeUpdateAction } from './state/main';
+import { runQueries } from './state/query';
 import { selectOrderedExplorePanes } from './state/selectors';
 
 const styles = {
@@ -55,7 +56,11 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
 
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
-  }, [keybindings]);
+
+    keybindings.bindWithExploreId('shift+enter', (exploreId) => {
+      dispatch(runQueries({ exploreId }));
+    });
+  }, [dispatch, keybindings]);
 
   const updateSplitSize = (size: number) => {
     const evenSplitWidth = windowWidth / 2;

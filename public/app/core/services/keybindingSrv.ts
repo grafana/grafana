@@ -9,6 +9,7 @@ import { getExploreUrl } from 'app/core/utils/explore';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { ExploreId } from 'app/types';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
 import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
@@ -26,7 +27,7 @@ import { contextSrv } from '../core';
 import { RouteDescriptor } from '../navigation/types';
 
 import { toggleTheme } from './theme';
-import { withFocusedPanel } from './withFocusedPanelId';
+import { withFocusedExplorePane, withFocusedPanel } from './withFocusedElement';
 
 export class KeybindingSrv {
   constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
@@ -184,6 +185,10 @@ export class KeybindingSrv {
 
   bindWithPanelId(keyArg: string, fn: (panelId: number) => void) {
     this.bind(keyArg, withFocusedPanel(fn));
+  }
+
+  bindWithExploreId(keyArg: string, fn: (exploreId: ExploreId) => void) {
+    this.bind(keyArg, withFocusedExplorePane(fn));
   }
 
   setupTimeRangeBindings(updateUrl = true) {

@@ -49,7 +49,12 @@ function ExplorePaneContainerUnconnected({ exploreId }: Props) {
   }, []);
 
   return (
-    <div className={styles.explore} ref={ref} data-testid={selectors.pages.Explore.General.container}>
+    <div
+      className={styles.explore}
+      ref={ref}
+      data-testid={selectors.pages.Explore.General.container}
+      data-exploreid={exploreId}
+    >
       <Explore exploreId={exploreId} eventBus={eventBus.current} />
     </div>
   );
