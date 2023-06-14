@@ -295,10 +295,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAuthenticationConfigUI
-	// Enables authentication configuration UI
-	FlagAuthenticationConfigUI = "authenticationConfigUI"
-
 	// FlagPluginsAPIManifestKey
 	// Use grafana.com API to retrieve the public manifest key
 	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"

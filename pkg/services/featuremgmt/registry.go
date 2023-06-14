@@ -488,13 +488,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "authenticationConfigUI",
-			Description: "Enables authentication configuration UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true",
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:        "pluginsAPIManifestKey",
 			Description: "Use grafana.com API to retrieve the public manifest key",
 			Stage:       FeatureStageExperimental,
