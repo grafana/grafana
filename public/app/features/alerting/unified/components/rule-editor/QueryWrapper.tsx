@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, defaultsDeep } from 'lodash';
 import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
@@ -15,6 +14,7 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { DataQuery } from '@grafana/schema';
 import {
   GraphTresholdsStyleMode,
   Icon,
@@ -82,6 +82,8 @@ export const QueryWrapper = ({
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
+  const queryWithDefaults = defaultsDeep({}, query, { model: defaults });
+
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
     return (
@@ -139,6 +141,10 @@ export const QueryWrapper = ({
     );
   }
 
+  const hasStarted = data.state !== LoadingState.NotStarted;
+  const isDisabled = query.model.hide === true; // undefined means "enabled"
+  const showVizualisation = hasStarted && !isDisabled;
+
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
@@ -151,10 +157,7 @@ export const QueryWrapper = ({
           index={index}
           key={query.refId}
           data={data}
-          query={{
-            ...defaults,
-            ...cloneDeep(query.model),
-          }}
+          query={queryWithDefaults.model}
           onChange={(query) => onChangeQuery(query, index)}
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
@@ -162,10 +165,9 @@ export const QueryWrapper = ({
           queries={queries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
-          hideDisableQuery={true}
         />
       </div>
-      {data.state !== LoadingState.NotStarted && (
+      {showVizualisation && (
         <VizWrapper
           data={data}
           thresholds={thresholds}
