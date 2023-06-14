@@ -108,7 +108,8 @@ type AlertmanagerAggregatedMetrics struct {
 	dispatchAggrGroups         *prometheus.Desc
 	dispatchProcessingDuration *prometheus.Desc
 
-	//
+	// added to measure usage of matchers, match_re, match and
+	// object_matchers
 	matchers       *prometheus.Desc
 	matchRE        *prometheus.Desc
 	match          *prometheus.Desc
