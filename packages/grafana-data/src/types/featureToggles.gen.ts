@@ -100,4 +100,6 @@ export interface FeatureToggles {
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  cloudWatchLogsMonacoEditor?: boolean;
+  recordedQueriesMulti?: boolean;
 }

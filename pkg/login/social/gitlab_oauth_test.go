@@ -165,7 +165,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				}
 			}))
 			provider.apiUrl = ts.URL + apiURI
-			actualResult, err := provider.UserInfo(ts.Client(), &oauth2.Token{})
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), &oauth2.Token{})
 			if test.ExpectedError != nil {
 				require.Equal(t, err, test.ExpectedError)
 				return
@@ -359,7 +359,7 @@ func TestSocialGitlab_extractFromToken(t *testing.T) {
 			idToken := fmt.Sprintf("%s.%s.%s", headerEncoded, payloadEncoded, signatureEncoded)
 
 			token = token.WithExtra(map[string]interface{}{"id_token": idToken})
-			data, err := s.extractFromToken(client, token)
+			data, err := s.extractFromToken(context.Background(), client, token)
 			if tc.wantErrMessage != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tc.wantErrMessage)

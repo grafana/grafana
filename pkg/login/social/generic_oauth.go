@@ -2,6 +2,7 @@ package social
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,12 +47,12 @@ func (s *SocialGenericOAuth) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsTeamMember(ctx context.Context, client *http.Client) bool {
 	if len(s.teamIds) == 0 {
 		return true
 	}
 
-	teamMemberships, err := s.FetchTeamMemberships(client)
+	teamMemberships, err := s.FetchTeamMemberships(ctx, client)
 	if err != nil {
 		return false
 	}
@@ -67,12 +68,12 @@ func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGenericOAuth) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGenericOAuth) IsOrganizationMember(ctx context.Context, client *http.Client) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, ok := s.FetchOrganizations(client)
+	organizations, ok := s.FetchOrganizations(ctx, client)
 	if !ok {
 		return false
 	}
@@ -107,14 +108,14 @@ func (info *UserInfoJson) String() string {
 		info.Name, info.DisplayName, info.Login, info.Username, info.Email, info.Upn, info.Attributes)
 }
 
-func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	s.log.Debug("Getting user info")
 	toCheck := make([]*UserInfoJson, 0, 2)
 
 	if tokenData := s.extractFromToken(token); tokenData != nil {
 		toCheck = append(toCheck, tokenData)
 	}
-	if apiData := s.extractFromAPI(client); apiData != nil {
+	if apiData := s.extractFromAPI(ctx, client); apiData != nil {
 		toCheck = append(toCheck, apiData)
 	}
 
@@ -175,7 +176,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 
 	if userInfo.Email == "" {
 		var err error
-		userInfo.Email, err = s.FetchPrivateEmail(client)
+		userInfo.Email, err = s.FetchPrivateEmail(ctx, client)
 		if err != nil {
 			return nil, err
 		}
@@ -187,11 +188,11 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		userInfo.Login = userInfo.Email
 	}
 
-	if !s.IsTeamMember(client) {
+	if !s.IsTeamMember(ctx, client) {
 		return nil, errors.New("user not a member of one of the required teams")
 	}
 
-	if !s.IsOrganizationMember(client) {
+	if !s.IsOrganizationMember(ctx, client) {
 		return nil, errors.New("user not a member of one of the required organizations")
 	}
 
@@ -236,14 +237,14 @@ func (s *SocialGenericOAuth) extractFromToken(token *oauth2.Token) *UserInfoJson
 	return &data
 }
 
-func (s *SocialGenericOAuth) extractFromAPI(client *http.Client) *UserInfoJson {
+func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Client) *UserInfoJson {
 	s.log.Debug("Getting user info from API")
 	if s.apiUrl == "" {
 		s.log.Debug("No api url configured")
 		return nil
 	}
 
-	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
+	rawUserInfoResponse, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info from API", "url", s.apiUrl, "error", err)
 		return nil
@@ -352,7 +353,7 @@ func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error)
 	return s.searchJSONForStringArrayAttr(s.groupsAttributePath, data.rawJSON)
 }
 
-func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
+func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
 	type Record struct {
 		Email       string `json:"email"`
 		Primary     bool   `json:"primary"`
@@ -361,7 +362,7 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		s.log.Error("Error getting email address", "url", s.apiUrl+"/emails", "error", err)
 		return "", fmt.Errorf("%v: %w", "Error getting email address", err)
@@ -399,14 +400,14 @@ func (s *SocialGenericOAuth) FetchPrivateEmail(client *http.Client) (string, err
 	return email, nil
 }
 
-func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) FetchTeamMemberships(ctx context.Context, client *http.Client) ([]string, error) {
 	var err error
 	var ids []string
 
 	if s.teamsUrl == "" {
-		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(client)
+		ids, err = s.fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx, client)
 	} else {
-		ids, err = s.fetchTeamMembershipsFromTeamsUrl(client)
+		ids, err = s.fetchTeamMembershipsFromTeamsUrl(ctx, client)
 	}
 
 	if err == nil {
@@ -416,16 +417,14 @@ func (s *SocialGenericOAuth) FetchTeamMemberships(client *http.Client) ([]string
 	return ids, err
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *http.Client) ([]string, error) {
-	var response httpGetResponse
-	var err error
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
 	var ids []string
 
 	type Record struct {
 		Id int `json:"id"`
 	}
 
-	response, err = s.httpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.apiUrl+"/teams", "error", err)
 		return []string{}, err
@@ -447,15 +446,12 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromDeprecatedTeamsUrl(client *
 	return ids, nil
 }
 
-func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Client) ([]string, error) {
+func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Context, client *http.Client) ([]string, error) {
 	if s.teamIdsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	var response httpGetResponse
-	var err error
-
-	response, err = s.httpGet(client, fmt.Sprintf(s.teamsUrl))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.teamsUrl))
 	if err != nil {
 		s.log.Error("Error getting team memberships", "url", s.teamsUrl, "error", err)
 		return nil, err
@@ -464,12 +460,12 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(client *http.Clien
 	return s.searchJSONForStringArrayAttr(s.teamIdsAttributePath, response.Body)
 }
 
-func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, bool) {
+func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
 	type Record struct {
 		Login string `json:"login"`
 	}
 
-	response, err := s.httpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	response, err := s.httpGet(ctx, client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
 		s.log.Error("Error getting organizations", "url", s.apiUrl+"/orgs", "error", err)
 		return nil, false

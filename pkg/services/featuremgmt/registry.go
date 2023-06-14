@@ -557,5 +557,18 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "cloudWatchLogsMonacoEditor",
+			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:        "recordedQueriesMulti",
+			Description: "Enables writing multiple items from a single query within Recorded Queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
 	}
 )

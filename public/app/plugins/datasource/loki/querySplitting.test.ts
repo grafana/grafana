@@ -91,7 +91,8 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date()
+          new Date(),
+          { predefinedOperations: '' }
         );
       });
     });

@@ -83,6 +83,11 @@ func main() {
 			},
 		},
 		{
+			Name:   "whatsnew-checker",
+			Usage:  "Checks whatsNewUrl in package.json for differences between the tag and the docs version",
+			Action: WhatsNewChecker,
+		},
+		{
 			Name:   "build-docker",
 			Usage:  "Build Grafana Docker images",
 			Action: MaxArgCountWrapper(1, BuildDocker),

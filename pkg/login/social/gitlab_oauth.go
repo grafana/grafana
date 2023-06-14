@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -56,10 +57,10 @@ func (s *SocialGitlab) isGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGitlab) getGroups(client *http.Client) []string {
+func (s *SocialGitlab) getGroups(ctx context.Context, client *http.Client) []string {
 	groups := make([]string, 0)
 
-	for page, url := s.getGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.getGroupsPage(client, url) {
+	for page, url := s.getGroupsPage(ctx, client, s.apiUrl+"/groups"); page != nil; page, url = s.getGroupsPage(ctx, client, url) {
 		groups = append(groups, page...)
 	}
 
@@ -67,7 +68,7 @@ func (s *SocialGitlab) getGroups(client *http.Client) []string {
 }
 
 // getGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) getGroupsPage(client *http.Client, url string) ([]string, string) {
+func (s *SocialGitlab) getGroupsPage(ctx context.Context, client *http.Client, url string) ([]string, string) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
@@ -81,7 +82,7 @@ func (s *SocialGitlab) getGroupsPage(client *http.Client, url string) ([]string,
 		return nil, next
 	}
 
-	response, err := s.httpGet(client, url)
+	response, err := s.httpGet(ctx, client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
 		return nil, next
@@ -108,8 +109,8 @@ func (s *SocialGitlab) getGroupsPage(client *http.Client, url string) ([]string,
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
-	data, err := s.extractFromToken(client, token)
+func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+	data, err := s.extractFromToken(ctx, client, token)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	// fallback to API
 	if data == nil {
 		var errAPI error
-		data, errAPI = s.extractFromAPI(client, token)
+		data, errAPI = s.extractFromAPI(ctx, client, token)
 		if errAPI != nil {
 			return nil, errAPI
 		}
@@ -144,9 +145,9 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	return userInfo, nil
 }
 
-func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) (*userData, error) {
+func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
 	apiResp := &apiData{}
-	response, err := s.httpGet(client, s.apiUrl+"/user")
+	response, err := s.httpGet(ctx, client, s.apiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %w", err)
 	}
@@ -169,7 +170,7 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 		Login:  apiResp.Username,
 		Email:  apiResp.Email,
 		Name:   apiResp.Name,
-		Groups: s.getGroups(client),
+		Groups: s.getGroups(ctx, client),
 	}
 
 	if !s.skipOrgRoleSync {
@@ -189,7 +190,7 @@ func (s *SocialGitlab) extractFromAPI(client *http.Client, token *oauth2.Token) 
 	return idData, nil
 }
 
-func (s *SocialGitlab) extractFromToken(client *http.Client, token *oauth2.Token) (*userData, error) {
+func (s *SocialGitlab) extractFromToken(ctx context.Context, client *http.Client, token *oauth2.Token) (*userData, error) {
 	s.log.Debug("Extracting user info from OAuth token")
 
 	idToken := token.Extra("id_token")
@@ -216,7 +217,7 @@ func (s *SocialGitlab) extractFromToken(client *http.Client, token *oauth2.Token
 		return nil, fmt.Errorf("user %s's email is not confirmed", data.Login)
 	}
 
-	userInfo, err := s.retrieveUserInfo(client)
+	userInfo, err := s.retrieveUserInfo(ctx, client)
 	if err != nil {
 		s.log.Warn("Error retrieving groups from userinfo. Using only token provided groups", "error", err)
 	} else {
@@ -257,10 +258,10 @@ type userInfoResponse struct {
 }
 
 // retrieve and parse /oauth/userinfo
-func (s *SocialGitlab) retrieveUserInfo(client *http.Client) (*userInfoResponse, error) {
+func (s *SocialGitlab) retrieveUserInfo(ctx context.Context, client *http.Client) (*userInfoResponse, error) {
 	userInfoURL := strings.TrimSuffix(s.Endpoint.AuthURL, "/oauth/authorize") + "/oauth/userinfo"
 
-	resp, err := s.httpGet(client, userInfoURL)
+	resp, err := s.httpGet(ctx, client, userInfoURL)
 	if err != nil {
 		return nil, err
 	}
