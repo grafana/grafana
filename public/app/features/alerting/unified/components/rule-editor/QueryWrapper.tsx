@@ -144,6 +144,7 @@ export const QueryWrapper = ({
       <div className={styles.wrapper}>
         <QueryEditorRow<DataQuery>
           alerting
+          collapsable={false}
           dataSource={dsSettings}
           onDataSourceLoaded={setDsInstance}
           onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
