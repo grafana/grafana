@@ -101,4 +101,5 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   dashboardEmbed?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
+  cloudWatchLogsMonacoEditor?: boolean;
 }
