@@ -1637,6 +1637,7 @@ func TestBuildTimeSettings(t *testing.T) {
 
 	// the day before fakeNow in Australia/Sydney timezone is not the same day before as in Europe/Madrid
 	startOfYesterdaySydney, endOfYesterdaySydney := getStartAndEndOfTheDayBefore(fakeNow, "Australia/Sydney")
+	startOfYesterdayUTC, endOfYesterdayUTC := getStartAndEndOfTheDayBefore(fakeNow, "UTC")
 
 	selectionFromMs := strconv.FormatInt(time.Now().UnixMilli(), 10)
 	selectionToMs := strconv.FormatInt(time.Now().Add(time.Hour).UnixMilli(), 10)
@@ -1656,6 +1657,16 @@ func TestBuildTimeSettings(t *testing.T) {
 			want: TimeSettings{
 				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
 				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return default time range with UTC timezone with relative time range with unknown timezone",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "browser")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayUTC.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdayUTC.UnixMilli(), 10),
 			},
 		},
 		{
