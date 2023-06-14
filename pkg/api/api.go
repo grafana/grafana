@@ -149,7 +149,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	if hs.Features.IsEnabled(featuremgmt.FlagDashboardEmbed) {
-		r.Get("/d-embed", reqSignedIn, middleware.RemoveXFrameOptionsDenyHeader(), hs.Index)
+		r.Get("/d-embed", reqSignedIn, middleware.AddAllowEmbeddingHeader(), hs.Index)
 	}
 
 	if hs.Features.IsEnabled(featuremgmt.FlagPublicDashboards) {

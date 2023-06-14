@@ -52,7 +52,10 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				addNoCacheHeaders(c.Resp)
 			}
 
-			if !cfg.AllowEmbedding && !strings.HasPrefix(c.Req.URL.Path, "/d-embed") {
+			// X-Allow-Embedding header is set for specific URLs that need to be embedded in an iframe regardless
+			// of the configured allow_embedding setting.
+			embeddingHeader := w.Header().Get("X-Allow-Embedding")
+			if !cfg.AllowEmbedding && embeddingHeader != "allow" {
 				addXFrameOptionsDenyHeader(w)
 			}
 			addSecurityHeaders(w, cfg)
@@ -60,10 +63,10 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	}
 }
 
-func RemoveXFrameOptionsDenyHeader() web.Handler {
+func AddAllowEmbeddingHeader() web.Handler {
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) {
-			removeXFrameOptionsDenyHeader(w)
+			w.Header().Set("X-Allow-Embedding", "allow")
 		})
 	}
 }
