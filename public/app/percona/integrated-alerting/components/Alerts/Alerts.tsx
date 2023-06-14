@@ -68,7 +68,7 @@ export const Alerts: FC = () => {
         Header: stateColumn,
         accessor: 'status',
         width: '5%',
-        Cell: ({ value }) => <AmAlertStateTag state={value.state} />,
+        Cell: ({ value }) => <AmAlertStateTag state={value.state} silenced={AlertMessages.silenced} />,
       },
       {
         Header: 'Summary',

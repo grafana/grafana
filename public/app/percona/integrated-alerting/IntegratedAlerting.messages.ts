@@ -17,7 +17,7 @@ export const Messages = {
       columns: {
         activeSince: 'Active since',
         labels: 'Labels',
-        lastNotified: 'Last notified',
+        lastNotified: 'Last Triggered',
         severity: 'Severity',
         state: 'State',
         actions: 'Actions',
@@ -33,7 +33,7 @@ export const Messages = {
         createdAt: 'Created',
         duration: 'Duration',
         filters: 'Filters',
-        lastNotified: 'Last notified',
+        lastNotified: 'Last Triggered',
         severity: 'Severity',
         summary: 'Name',
         params: 'Parameters',
