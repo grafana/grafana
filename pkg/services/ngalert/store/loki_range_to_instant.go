@@ -9,6 +9,7 @@ import (
 const (
 	grafanaCloudLogs          = "grafanacloud-logs"
 	grafanaCloudUsageInsights = "grafanacloud-usage-insights"
+	grafanaCloudStateHistory  = "grafanacloud-loki-alert-state-history"
 )
 
 func canBeInstant(r *models.AlertRule) bool {
@@ -20,7 +21,9 @@ func canBeInstant(r *models.AlertRule) bool {
 		return false
 	}
 	// First query part should go to cloud logs or insights.
-	if r.Data[0].DatasourceUID != grafanaCloudLogs && r.Data[0].DatasourceUID != grafanaCloudUsageInsights {
+	if r.Data[0].DatasourceUID != grafanaCloudLogs &&
+		r.Data[0].DatasourceUID != grafanaCloudUsageInsights &&
+		r.Data[0].DatasourceUID != grafanaCloudStateHistory {
 		return false
 	}
 	// Second query part should be and expression, '-100' is the legacy way to define it.
