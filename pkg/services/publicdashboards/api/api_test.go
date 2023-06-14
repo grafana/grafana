@@ -145,10 +145,10 @@ func TestAPIListPublicDashboard(t *testing.T) {
 			assert.Equal(t, test.ExpectedHttpResponse, response.Code)
 
 			if test.ExpectedHttpResponse == http.StatusOK {
-				var jsonResp []PublicDashboardListResponse
+				var jsonResp PublicDashboardListResponseWithPagination
 				err := json.Unmarshal(response.Body.Bytes(), &jsonResp)
 				require.NoError(t, err)
-				assert.Equal(t, jsonResp[0].Uid, "1234asdfasdf")
+				assert.Equal(t, jsonResp.PublicDashboards[0].Uid, "1234asdfasdf")
 			}
 
 			if test.ResponseErr != nil {
