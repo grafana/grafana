@@ -12,7 +12,7 @@ import { HoverCard } from '../HoverCard';
 type MatchersProps = { matchers: ObjectMatcher[] };
 
 // renders the first N number of matchers
-const Matchers: FC<MatchersProps> = React.forwardRef<HTMLInputElement, MatchersProps>(({ matchers }, ref) => {
+const Matchers: FC<MatchersProps> = ({ matchers }) => {
   const styles = useStyles2(getStyles);
 
   const NUM_MATCHERS = 5;
@@ -22,7 +22,7 @@ const Matchers: FC<MatchersProps> = React.forwardRef<HTMLInputElement, MatchersP
   const hasMoreMatchers = rest.length > 0;
 
   return (
-    <span data-testid="label-matchers" ref={ref}>
+    <span data-testid="label-matchers">
       <Stack direction="row" gap={1} alignItems="center">
         {firstFew.map((matcher) => (
           <MatcherBadge key={uniqueId()} matcher={matcher} />
@@ -48,9 +48,7 @@ const Matchers: FC<MatchersProps> = React.forwardRef<HTMLInputElement, MatchersP
       </Stack>
     </span>
   );
-});
-
-Matchers.displayName = 'Matchers';
+};
 
 interface MatcherBadgeProps {
   matcher: ObjectMatcher;

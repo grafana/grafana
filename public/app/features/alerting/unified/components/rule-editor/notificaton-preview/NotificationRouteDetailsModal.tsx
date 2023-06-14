@@ -3,68 +3,18 @@ import { compact } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, getTagColorIndexFromName, Icon, Modal, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { getNotificationsPermissions } from '../../../utils/access-control';
-import { Label } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
-import { AlertInstanceMatch, LabelMatchResult } from '../../../utils/notification-policies';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
 import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
 
-export const LabelsMatching = ({
-  routeId,
-  matchingMapPath,
-}: {
-  routeId: string;
-  matchingMap: Map<string, AlertInstanceMatch[]>;
-  matchingMapPath: Map<string, AlertInstanceMatch[]>;
-}) => {
-  const matching = matchingMapPath.get(routeId);
-  if (!matching) {
-    return null;
-  }
-  const matchingInstances: AlertInstanceMatch[] | undefined = matchingMapPath.get(routeId);
-  // get array of labelsMatch from mapchingInstances
-  const valuesIterator = matchingInstances?.map((instance) => instance.labelsMatch)?.values() ?? [];
-  const labelMaps: Array<Map<Label, LabelMatchResult>> = Array.from(valuesIterator);
-  const labels = labelMaps
-    .map((m) => Array.from(m.entries() ?? []).filter(([label, result]) => result.match))
-    .flat()
-    .map(([label, _]) => label);
-  // get array of strings from labels, remove duplicated
-  const labelsStringArray = Array.from(
-    new Set(
-      labels.map((label: Label) => ({
-        label: label[0] + '=' + label[1],
-        colorindex: getTagColorIndexFromName(label[0]),
-      }))
-    )
-  );
-
-  return (
-    <TagList
-      tags={labelsStringArray.map((lbl) => lbl.label)}
-      getColorIndex={(_, index) => labelsStringArray[index].colorindex}
-    />
-  );
-};
-
-function PolicyPath({
-  route,
-  routesByIdMap,
-  matchingMap,
-  matchingMapPath,
-}: {
-  routesByIdMap: Map<string, RouteWithPath>;
-  route: RouteWithPath;
-  matchingMapPath: Map<string, AlertInstanceMatch[]>;
-  matchingMap: Map<string, AlertInstanceMatch[]>;
-}) {
+function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
   const styles = useStyles2(getStyles);
   const routePathIds = route.path?.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
@@ -79,18 +29,7 @@ function PolicyPath({
               {hasEmptyMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
-                <Tooltip
-                  placement="bottom"
-                  content={
-                    <LabelsMatching
-                      routeId={pathRoute.id}
-                      matchingMap={matchingMap}
-                      matchingMapPath={matchingMapPath}
-                    />
-                  }
-                >
-                  <Matchers matchers={pathRoute.object_matchers ?? []} />
-                </Tooltip>
+                <Matchers matchers={pathRoute.object_matchers ?? []} />
               )}
             </div>
           </div>
@@ -106,8 +45,6 @@ interface NotificationRouteDetailsModalProps {
   receiver: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
-  matchingMap: Map<string, AlertInstanceMatch[]>;
-  matchingMapPath: Map<string, AlertInstanceMatch[]>;
 }
 
 export function NotificationRouteDetailsModal({
@@ -116,8 +53,6 @@ export function NotificationRouteDetailsModal({
   receiver,
   routesByIdMap,
   alertManagerSourceName,
-  matchingMap,
-  matchingMapPath,
 }: NotificationRouteDetailsModalProps) {
   const styles = useStyles2(getStyles);
   const isDefault = isDefaultPolicy(route);
@@ -140,12 +75,7 @@ export function NotificationRouteDetailsModal({
         <div className={styles.separator(1)} />
         {!isDefault && (
           <>
-            <PolicyPath
-              route={route}
-              routesByIdMap={routesByIdMap}
-              matchingMap={matchingMap}
-              matchingMapPath={matchingMapPath}
-            />
+            <PolicyPath route={route} routesByIdMap={routesByIdMap} />
           </>
         )}
         <div className={styles.separator(4)} />

@@ -22,8 +22,10 @@ function NotificationPreviewByAlertManager({
 }) {
   const styles = useStyles2(getStyles);
 
-  const { routesByIdMap, receiversByName, matchingMap, matchingMapPath, loading, error } =
-    useAlertmanagerNotificationRoutingPreview(alertManagerSource.name, potentialInstances);
+  const { routesByIdMap, receiversByName, matchingMap, loading, error } = useAlertmanagerNotificationRoutingPreview(
+    alertManagerSource.name,
+    potentialInstances
+  );
 
   if (error) {
     return (
@@ -72,8 +74,6 @@ function NotificationPreviewByAlertManager({
               key={routeId}
               routesByIdMap={routesByIdMap}
               alertManagerSourceName={alertManagerSource.name}
-              matchingMap={matchingMap}
-              matchingMapPath={matchingMapPath}
             />
           );
         })}

@@ -49,10 +49,7 @@ export const useAlertmanagerNotificationRoutingPreview = (
 
   // match labels in the tree => map of notification policies and the alert instances (list of labels) in each one
   const {
-    value: matchingMap = {
-      result: new Map<string, AlertInstanceMatch[]>(),
-      resultPath: new Map<string, AlertInstanceMatch[]>(),
-    },
+    value: matchingMap = new Map<string, AlertInstanceMatch[]>(),
     loading: matchingLoading,
     error: matchingError,
   } = useAsync(async () => {
@@ -65,8 +62,7 @@ export const useAlertmanagerNotificationRoutingPreview = (
   return {
     routesByIdMap,
     receiversByName,
-    matchingMap: matchingMap.result,
-    matchingMapPath: matchingMap.resultPath,
+    matchingMap: matchingMap,
     loading: configLoading || matchingLoading,
     error: configError ?? matchingError,
   };
