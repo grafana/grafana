@@ -21,7 +21,7 @@ import {
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from './LineStyleEditor';
-import { SpanNullsEditor } from './SpanNullsEditor';
+import { InsertNullsEditor, SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
@@ -150,6 +150,18 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
+          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
+          shouldApply: (f) => f.type !== FieldType.time,
+          process: identityOverrideProcessor,
+        })
+        .addCustomEditor<void, boolean>({
+          id: 'insertNulls',
+          path: 'insertNulls',
+          name: 'Disconnect values',
+          category: categoryStyles,
+          defaultValue: false,
+          editor: InsertNullsEditor,
+          override: InsertNullsEditor,
           showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
           shouldApply: (f) => f.type !== FieldType.time,
           process: identityOverrideProcessor,
