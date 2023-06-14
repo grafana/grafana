@@ -10,6 +10,15 @@ export interface DashboardDTO {
   meta: DashboardMeta;
 }
 
+export interface SaveDashboardResponseDTO {
+  id: number;
+  slug: string;
+  status: string;
+  uid: string;
+  url: string;
+  version: number;
+}
+
 export interface DashboardMeta {
   slug?: string;
   uid?: string;

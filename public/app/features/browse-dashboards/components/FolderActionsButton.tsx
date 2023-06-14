@@ -7,9 +7,9 @@ import { appEvents, contextSrv } from 'app/core/core';
 import { AccessControlAction, FolderDTO, useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
+import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
 import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
-import { deleteFolder, refetchChildren } from '../state';
+import { refetchChildren } from '../state';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -23,13 +23,14 @@ export function FolderActionsButton({ folder }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
+  const [deleteFolder] = useDeleteFolderMutation();
   const canViewPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead);
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
   const canMoveFolder = contextSrv.hasPermission(AccessControlAction.FoldersWrite);
   const canDeleteFolder = contextSrv.hasPermission(AccessControlAction.FoldersDelete);
 
   const onMove = async (destinationUID: string) => {
-    await moveFolder({ folderUID: folder.uid, destinationUID });
+    await moveFolder({ folder, destinationUID });
     reportInteraction('grafana_manage_dashboards_item_moved', {
       item_counts: {
         folder: 1,
@@ -47,7 +48,7 @@ export function FolderActionsButton({ folder }: Props) {
   };
 
   const onDelete = async () => {
-    await dispatch(deleteFolder(folder.uid));
+    await deleteFolder(folder);
     reportInteraction('grafana_manage_dashboards_item_deleted', {
       item_counts: {
         folder: 1,

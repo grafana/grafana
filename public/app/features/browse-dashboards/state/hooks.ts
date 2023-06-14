@@ -1,8 +1,10 @@
+import { useCallback, useEffect, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState } from 'app/types';
+import { useSelector, StoreState, useDispatch } from 'app/types';
 
+import { endpoints } from '../api/browseDashboardsAPI';
 import { ROOT_PAGE_SIZE } from '../api/services';
 import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
@@ -10,16 +12,6 @@ export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDa
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
 export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
 export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
-
-const flatTreeSelector = createSelector(
-  rootItemsSelector,
-  childrenByParentUIDSelector,
-  openFoldersSelector,
-  (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
-  (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
-  }
-);
 
 const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
   return Object.values(selectedItems).some((selectedItem) =>
@@ -75,7 +67,59 @@ export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending'
 }
 
 export function useFlatTreeState(folderUID: string | undefined) {
-  return useSelector((state) => flatTreeSelector(state, folderUID));
+  const rootItems = useSelector(rootItemsSelector);
+  const childrenByParentUID = useSelector(childrenByParentUIDSelector);
+  const openFolders = useSelector(openFoldersSelector);
+  const handleSubscription = useHandleSubscription();
+
+  return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders, handleSubscription);
+}
+
+export function useHandleSubscription() {
+  type RtkQuerySubscription = ReturnType<ReturnType<typeof endpoints.getFolderChildren.initiate>>;
+  const subscriptions = useRef<Record<string, RtkQuerySubscription>>({});
+  const dispatch = useDispatch();
+  const childrenByParentUID = useSelector(childrenByParentUIDSelector);
+
+  const handleSubscription = useCallback(
+    (folderUID: string, isOpen: boolean) => {
+      if (isOpen) {
+        // Register a subscription for this folder if it doesn't already exist
+        if (!subscriptions.current[folderUID]) {
+          const subscription = dispatch(endpoints.getFolderChildren.initiate(folderUID));
+          subscriptions.current[folderUID] = subscription;
+        }
+      } else {
+        const subscription = subscriptions.current[folderUID];
+        // Unsubscribe and delete subscription if it exists
+        if (subscription) {
+          subscription.unsubscribe();
+          delete subscriptions.current[folderUID];
+        }
+        // Recursively unsubscribe from all children
+        const children = childrenByParentUID[folderUID];
+        if (children && children.items.length > 0) {
+          children.items.forEach((child) => {
+            if (child.kind === 'folder') {
+              handleSubscription(child.uid, isOpen);
+            }
+          });
+        }
+      }
+    },
+    [childrenByParentUID, subscriptions, dispatch]
+  );
+
+  useEffect(() => {
+    const subscriptionsCopy = subscriptions.current;
+    return () => {
+      Object.values(subscriptionsCopy).forEach((subscription) => {
+        subscription.unsubscribe();
+      });
+    };
+  }, []);
+
+  return handleSubscription;
 }
 
 export function useHasSelection() {
@@ -108,12 +152,21 @@ function createFlatTree(
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
+  handleSubscription: (folderUID: string, isOpen: boolean) => void,
   level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      handleSubscription,
+      level + 1
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
+    handleSubscription(item.uid, isOpen);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
     if (isOpen && emptyFolder) {
       mappedChildren.push({
