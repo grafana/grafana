@@ -121,6 +121,12 @@ export type PluginExtensionDataSourceConfigContext<JsonData extends DataSourceJs
   // Meta information about the datasource plugin
   dataSourceMeta: DataSourcePluginMeta;
 
+  // Testing status
+  testingStatus?: {
+    message?: string | null;
+    status?: string | null;
+  };
+
   // Can be used to update the `jsonData` field on the datasource
   // (Only updates the form, it still needs to be saved by the user)
   setJsonData: (jsonData: JsonData) => void;

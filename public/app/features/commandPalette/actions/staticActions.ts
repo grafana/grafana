@@ -1,4 +1,4 @@
-import { locationUtil, NavModelItem } from '@grafana/data';
+import { NavModelItem } from '@grafana/data';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -32,7 +32,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
       id: idForNavItem(navItem),
       name: text,
       section: section,
-      url: url && locationUtil.stripBaseFromUrl(url),
+      url,
       target,
       parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       priority: priority,

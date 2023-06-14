@@ -75,7 +75,7 @@ Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
 
 ### [AWS IoT TwinMaker App](https://grafana.com/grafana/plugins/grafana-iot-twinmaker-app)
 
-Latest Version: 1.6.2 | Signature: Commercial | Last Updated: 2023
+Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
 
 > **Note:** Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
 
@@ -120,6 +120,10 @@ Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
 Latest Version: v0.0.6 | Signature: Community | Last Updated: 2021
 
 > **Migration available - plugin superseded:** The original plugin only claims support for Grafana v4.x.x, it was replaced with a [new plugin](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) based on React.
+
+### [Cognite Data Fusion](https://grafana.com/grafana/plugins/cognitedata-datasource/)
+
+Latest Version: 3.1.0 | Signature: Commercial | Last Updated: 2023
 
 ### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
 
