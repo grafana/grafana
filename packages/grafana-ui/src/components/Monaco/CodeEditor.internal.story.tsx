@@ -39,7 +39,6 @@ export const Basic: StoryFn<typeof CodeEditor> = (args) => {
       onSave={(text: string) => {
         action('code saved')(text);
       }}
-      getSuggestions={() => [{ label: 'foo' }]}
       showLineNumbers={args.showLineNumbers}
       showMiniMap={args.showMiniMap}
       readOnly={args.readOnly}
