@@ -46,7 +46,7 @@ export const SparklineCell = (props: TableCellProps) => {
   }
 
   // Remove non-finite values, e.g: NaN, +/-Infinity
-  sparkline.y.values = sparkline.y.values.map((v, i) => {
+  sparkline.y.values = sparkline.y.values.map((v) => {
     if (!Number.isFinite(v)) {
       return null;
     } else {
