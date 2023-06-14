@@ -64,6 +64,10 @@ load(
     "scripts/drone/utils/images.star",
     "images",
 )
+load(
+    "scripts/drone/pipelines/whats_new_checker.star",
+    "whats_new_checker_pipeline",
+)
 
 ver_mode = "release"
 release_trigger = {
@@ -206,9 +210,12 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         mysql_integration_tests_step(),
     ]
 
+    pipelines = []
+
     # We don't need to run integration tests at release time since they have
     # been run multiple times before:
     if ver_mode in ("release"):
+        pipelines.append(whats_new_checker_pipeline(release_trigger))
         integration_test_steps = []
         volumes = []
 
@@ -225,7 +232,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         environment = environment,
     )
 
-    pipelines = [
+    pipelines.extend([
         pipeline(
             name = "{}-oss-build-e2e-publish".format(ver_mode),
             edition = "oss",
@@ -237,7 +244,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         ),
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
-    ]
+    ])
 
     if ver_mode not in ("release"):
         pipelines.append(pipeline(
