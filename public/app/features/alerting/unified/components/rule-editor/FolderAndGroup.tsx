@@ -5,9 +5,10 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { AsyncSelect, Badge, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, useDispatch } from 'app/types';
+import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -34,19 +35,27 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
   const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
-  const nonProvisionedGroups = folderGroups.filter((g) => {
-    return g.rules.every(
-      (r) => isGrafanaRulerRule(r.rulerRule) && Boolean(r.rulerRule.grafana_alert.provenance) === false
-    );
-  });
-
-  const groupOptions = nonProvisionedGroups.map<SelectableValue<string>>((group) => ({
-    label: group.name,
-    value: group.name,
-    description: group.interval ?? MINUTE,
-  }));
+  const groupOptions = folderGroups
+    .map<SelectableValue<string>>((group) => ({
+      label: group.name,
+      value: group.name,
+      description: group.interval ?? MINUTE,
+      // we include provisioned folders, but disable the option to select them
+      isDisabled: isProvisionedGroup(group),
+    }))
+    .sort(sortByLabel);
 
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
+};
+
+const isProvisionedGroup = (group: CombinedRuleGroup) => {
+  return group.rules.some(
+    (rule) => isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance) === true
+  );
+};
+
+const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
+  return a.label?.localeCompare(b.label ?? '') || 0;
 };
 
 export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
@@ -97,6 +106,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
             })
           )
         : sliceResults(groupOptions);
+
       return results;
     },
     [groupOptions]
@@ -160,7 +170,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
         invalid={!!errors.group?.message}
       >
         <InputControl
-          render={({ field: { ref, ...field } }) =>
+          render={({ field: { ref, ...field }, fieldState }) =>
             loading ? (
               <LoadingPlaceholder text="Loading..." />
             ) : (
@@ -169,12 +179,23 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 inputId="group"
                 key={`my_unique_select_key__${selectedGroup?.title ?? ''}`}
                 {...field}
-                invalid={Boolean(folder) && !selectedGroup.title}
+                invalid={Boolean(folder) && !selectedGroup.title && Boolean(fieldState.error)}
                 loadOptions={debouncedSearch}
                 loadingMessage={'Loading groups...'}
                 defaultOptions={groupOptions}
                 defaultValue={selectedGroup}
-                getOptionLabel={(option: SelectableValue<string>) => `${option.label}`}
+                getOptionLabel={(option: SelectableValue<string>) => (
+                  <div>
+                    <span>{option.label}</span>
+                    {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
+                    {option.isDisabled && (
+                      <>
+                        {' '}
+                        <Badge color="purple" text="Provisioned" />
+                      </>
+                    )}
+                  </div>
+                )}
                 placeholder={'Evaluation group name'}
                 onChange={(value) => {
                   field.onChange(value.label ?? '');
@@ -209,6 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   formInput: css`
     width: 275px;
+
     & + & {
       margin-left: ${theme.spacing(3)};
     }
