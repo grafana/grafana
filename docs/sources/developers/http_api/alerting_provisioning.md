@@ -602,10 +602,12 @@ POST /api/v1/provisioning/alert-rules
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
+{{% responsive-table %}}
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
 | -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |             |
+| X-Disable-Provenance | `header` | string | `string` | | | | |
+| Body | `body` | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` | | | | |
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -644,10 +646,12 @@ POST /api/v1/provisioning/contact-points
 
 #### Parameters
 
+{{% responsive-table %}
 | Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description |
 | -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | ----------- |
 | X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |             |
 | Body                 | `body`   | [EmbeddedContactPoint](#embedded-contact-point) | `models.EmbeddedContactPoint` |           |          |         |             |
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -683,6 +687,7 @@ POST /api/v1/provisioning/mute-timings
 #### Consumes
 
 - application/json
+  {{% responsive-table %}
 
 #### Parameters
 
@@ -690,6 +695,8 @@ POST /api/v1/provisioning/mute-timings
 | -------------------- | -------- | --------------------------------------- | ------------------------- | --------- | :------: | ------- | ----------- |
 | X-Disable-Provenance | `header` | string                                  | `string`                  |           |          |         |             |
 | Body                 | `body`   | [MuteTimeInterval](#mute-time-interval) | `models.MuteTimeInterval` |           |          |         |             |
+
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -728,11 +735,13 @@ PUT /api/v1/provisioning/alert-rules/{UID}
 
 #### Parameters
 
-| Name                 | Source   | Type                                            | Go type                       | Separator | Required | Default | Description    |
+{{% responsive-table %}}
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
 | -------------------- | -------- | ----------------------------------------------- | ----------------------------- | --------- | :------: | ------- | -------------- |
-| UID                  | `path`   | string                                          | `string`                      |           |    ✓     |         | Alert rule UID |
-| X-Disable-Provenance | `header` | string                                          | `string`                      |           |          |         |                |
-| Body                 | `body`   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |           |          |         |                |
+| UID | `path` | string | `string` | | ✓ | | Alert rule UID |
+| X-Disable-Provenance | `header` | string | `string` | | | | |
+| Body | `body` | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` | | | | |
+{{% /responsive-table %}}
 
 #### All responses
 
@@ -771,12 +780,14 @@ PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}
 
 #### Parameters
 
-| Name                 | Source   | Type                                | Go type                 | Separator | Required | Default | Description |
+{{% responsive-table %}}
+| Name | Source | Type | Go type | Separator | Required | Default | Description |
 | -------------------- | -------- | ----------------------------------- | ----------------------- | --------- | :------: | ------- | ----------- |
-| FolderUID            | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| Group                | `path`   | string                              | `string`                |           |    ✓     |         |             |
-| X-Disable-Provenance | `header` | string                              | `string`                |           |          |         |             |
-| Body                 | `body`   | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` |           |          |         |             |
+| FolderUID | `path` | string | `string` | | ✓ | | |
+| Group | `path` | string | `string` | | ✓ | | |
+| X-Disable-Provenance | `header` | string | `string` | | | | |
+| Body | `body` | [AlertRuleGroup](#alert-rule-group) | `models.AlertRuleGroup` | | | | |
+{{% /responsive-table %}}
 
 #### All responses
 
