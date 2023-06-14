@@ -107,19 +107,23 @@ const AnnotationsField = () => {
                   annotation={annotation}
                   index={index}
                 />
-                {selectedDashboard && annotationField.key === Annotation.dashboardUID && (
+                {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
                     dashboard={selectedDashboard}
                     panel={selectedPanel}
+                    dashboardUid={selectedDashboardUid.toString()}
+                    panelId={selectedPanelId.toString()}
                     onEditClick={handleEditDashboardAnnotation}
                     onDeleteClick={handleDeleteDashboardAnnotation}
                   />
                 )}
 
-                {(!selectedDashboard ||
-                  (annotationField.key !== Annotation.dashboardUID && annotationField.key !== Annotation.panelID)) && (
+                {
                   <div className={styles.annotationValueContainer}>
                     <Field
+                      hidden={
+                        annotationField.key === Annotation.dashboardUID || annotationField.key === Annotation.panelID
+                      }
                       className={cx(styles.flexRowItemMargin, styles.field)}
                       invalid={!!errors.annotations?.[index]?.value?.message}
                       error={errors.annotations?.[index]?.value?.message}
@@ -148,7 +152,7 @@ const AnnotationsField = () => {
                       />
                     )}
                   </div>
-                )}
+                }
               </div>
             </div>
           );
