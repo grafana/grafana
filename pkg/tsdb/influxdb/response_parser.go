@@ -19,16 +19,19 @@ var (
 	legendFormat = regexp.MustCompile(`\[\[([\@\/\w-]+)(\.[\@\/\w-]+)*\]\]*|\$([\@\w-]+?)*`)
 )
 
-func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.QueryDataResponse {
-	return rp.parse(buf, queries)
+func (rp *ResponseParser) Parse(buf io.ReadCloser, statusCode int, queries []Query) *backend.QueryDataResponse {
+	return rp.parse(buf, statusCode, queries)
 }
 
 // parse is the same as Parse, but without the io.ReadCloser (we don't need to
 // close the buffer)
-func (*ResponseParser) parse(buf io.Reader, queries []Query) *backend.QueryDataResponse {
+func (*ResponseParser) parse(buf io.Reader, statusCode int, queries []Query) *backend.QueryDataResponse {
 	resp := backend.NewQueryDataResponse()
-
 	response, jsonErr := parseJSON(buf)
+
+	if statusCode/100 != 2 {
+		resp.Responses["A"] = backend.DataResponse{Error: fmt.Errorf("InfluxDB returned error: %s", response.Error)}
+	}
 
 	if jsonErr != nil {
 		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
