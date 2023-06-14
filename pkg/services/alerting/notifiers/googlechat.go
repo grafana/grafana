@@ -16,16 +16,16 @@ import (
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
 		Type:        "googlechat",
-		Name:        "Google Hangouts Chat",
-		Description: "Sends notifications to Google Hangouts Chat via webhooks based on the official JSON message format",
+		Name:        "Google Chat",
+		Description: "Sends notifications to Google Chat via webhooks based on the official JSON message format",
 		Factory:     newGoogleChatNotifier,
-		Heading:     "Google Hangouts Chat settings",
+		Heading:     "Google Chat settings",
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
-				Placeholder:  "Google Hangouts Chat incoming webhook url",
+				Placeholder:  "Google Chat incoming webhook url",
 				PropertyName: "url",
 				Required:     true,
 			},
@@ -56,8 +56,8 @@ type GoogleChatNotifier struct {
 
 /*
 *
-Structs used to build a custom Google Hangouts Chat message card.
-See: https://developers.google.com/hangouts/chat/reference/message-formats/cards
+Structs used to build a custom Google Chat message card.
+See: https://developers.google.com/chat/api/guides/message-formats/cards
 */
 type outerStruct struct {
 	PreviewText  string `json:"previewText"`
@@ -228,7 +228,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if err := gcn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
-		gcn.log.Error("Failed to send Google Hangouts Chat alert", "error", err, "webhook", gcn.Name)
+		gcn.log.Error("Failed to send Google Chat alert", "error", err, "webhook", gcn.Name)
 		return err
 	}
 

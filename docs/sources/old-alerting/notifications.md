@@ -63,7 +63,7 @@ These examples show how often and when reminders are sent for a triggered alert.
 | [DingDing](#dingdingdingtalk)                 | `dingding`                | yes, external only | no                       |
 | [Discord](#discord)                           | `discord`                 | yes                | no                       |
 | [Email](#email)                               | `email`                   | yes                | no                       |
-| [Google Hangouts Chat](#google-hangouts-chat) | `googlechat`              | yes, external only | no                       |
+| [Google Chat](#google-chat)                   | `googlechat`              | yes, external only | no                       |
 | Hipchat                                       | `hipchat`                 | yes, external only | no                       |
 | [Kafka](#kafka)                               | `kafka`                   | yes, external only | no                       |
 | Line                                          | `line`                    | yes, external only | no                       |
@@ -259,9 +259,9 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
-### Google Hangouts Chat
+### Google Chat
 
-Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
+Notifications can be sent by setting up an incoming webhook in Google Chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/chat/how-tos/webhooks).
 
 ### Prometheus Alertmanager
 

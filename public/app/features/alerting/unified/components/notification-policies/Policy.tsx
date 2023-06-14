@@ -435,7 +435,7 @@ interface ContactPointDetailsProps {
 const INTEGRATION_ICONS: Record<string, IconName> = {
   discord: 'discord',
   email: 'envelope',
-  googlechat: 'google-hangouts-alt',
+  googlechat: 'google-chat-alt',
   hipchat: 'hipchat',
   line: 'line',
   pagerduty: 'pagerduty',
