@@ -17,7 +17,7 @@ func GetConfig(c *cli.Context, metadata config.Metadata) (config.Config, config.
 
 	mode := config.Edition(c.String("edition"))
 
-	if metadata.ReleaseMode.Mode == config.TagMode {
+	if metadata.ReleaseMode.Mode == config.TagMode && !metadata.ReleaseMode.IsTest {
 		packageJSONVersion, err := config.GetPackageJSONVersion(GrafanaDir)
 		if err != nil {
 			return config.Config{}, "", err

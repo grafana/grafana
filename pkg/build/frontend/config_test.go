@@ -47,6 +47,13 @@ func TestGetConfig(t *testing.T) {
 			wantErr:            true,
 		},
 		{
+			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, "", flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
+			name:               "test tag event, check should be skipped",
+			packageJsonVersion: "10.1.0",
+			metadata:           config.Metadata{GrafanaVersion: "10.1.0-test", ReleaseMode: config.ReleaseMode{Mode: config.TagMode, IsTest: true}},
+			wantErr:            false,
+		},
+		{
 			ctx:                cli.NewContext(app, setFlags(t, jobs, githubToken, buildID, flag.NewFlagSet("flagSet", flag.ContinueOnError)), nil),
 			name:               "non-tag event",
 			packageJsonVersion: "10.1.0-pre",
