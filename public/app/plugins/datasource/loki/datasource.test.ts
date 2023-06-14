@@ -647,6 +647,15 @@ describe('LokiDatasource', () => {
             expect(result.refId).toEqual('A');
             expect(result.expr).toEqual('{bar="baz"}');
           });
+
+          it('then it should remove the filter with escaped value', () => {
+            const query: LokiQuery = { refId: 'A', expr: '{place="luna", job="\\"grafana/data\\""}' };
+            const action = { options: { key: 'job', value: '"grafana/data"' }, type: 'ADD_FILTER' };
+            const result = ds.modifyQuery(query, action);
+
+            expect(result.refId).toEqual('A');
+            expect(result.expr).toEqual('{place="luna"}');
+          });
         });
       });
 
