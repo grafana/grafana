@@ -109,7 +109,7 @@ type splitResponse struct {
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	// g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
 	rchan := make(chan splitResponse, len(queriesbyDs))
 
 	// Create panic recovery function for loop below
