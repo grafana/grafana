@@ -2,6 +2,7 @@ package pluginscdn
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -12,7 +13,7 @@ const (
 	cdnAssetPathTemplate = "{id}/{version}/public/plugins/{id}/{assetPath}"
 
 	// systemJSCDNURLTemplate is a special path template used by system.js to identify plugin CDN assets
-	systemJSCDNURLTemplate = "plugin-cdn/" + cdnAssetPathTemplate
+	systemJSCDNURLTemplate = cdnAssetPathTemplate
 )
 
 var ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
@@ -69,7 +70,14 @@ func (s *Service) SystemJSAssetPath(pluginID, pluginVersion, assetPath string) (
 	if err != nil {
 		return "", err
 	}
-	return u.String(), nil
+
+	base, err := s.BaseURL()
+	if err != nil {
+		return "", err
+	}
+
+	path := fmt.Sprintf("%s/%s", base, u.String())
+	return path, nil
 }
 
 // AssetURL returns the URL of a CDN asset for a CDN plugin. If the specified plugin is not a CDN plugin,
