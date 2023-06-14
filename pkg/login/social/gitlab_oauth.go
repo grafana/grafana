@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,10 +35,10 @@ func (s *SocialGitlab) IsGroupMember(groups []string) bool {
 	return false
 }
 
-func (s *SocialGitlab) GetGroups(client *http.Client) []string {
+func (s *SocialGitlab) GetGroups(ctx context.Context, client *http.Client) []string {
 	groups := make([]string, 0)
 
-	for page, url := s.GetGroupsPage(client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(client, url) {
+	for page, url := s.GetGroupsPage(ctx, client, s.apiUrl+"/groups"); page != nil; page, url = s.GetGroupsPage(ctx, client, url) {
 		groups = append(groups, page...)
 	}
 
@@ -45,7 +46,7 @@ func (s *SocialGitlab) GetGroups(client *http.Client) []string {
 }
 
 // GetGroupsPage returns groups and link to the next page if response is paginated
-func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string, string) {
+func (s *SocialGitlab) GetGroupsPage(ctx context.Context, client *http.Client, url string) ([]string, string) {
 	type Group struct {
 		FullPath string `json:"full_path"`
 	}
@@ -59,7 +60,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 		return nil, next
 	}
 
-	response, err := s.httpGet(client, url)
+	response, err := s.httpGet(ctx, client, url)
 	if err != nil {
 		s.log.Error("Error getting groups from GitLab API", "err", err)
 		return nil, next
@@ -86,7 +87,7 @@ func (s *SocialGitlab) GetGroupsPage(client *http.Client, url string) ([]string,
 	return fullPaths, next
 }
 
-func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGitlab) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id       int
 		Username string
@@ -95,7 +96,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 		State    string
 	}
 
-	response, err := s.httpGet(client, s.apiUrl+"/user")
+	response, err := s.httpGet(ctx, client, s.apiUrl+"/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
@@ -108,7 +109,7 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
-	groups := s.GetGroups(client)
+	groups := s.GetGroups(ctx, client)
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil

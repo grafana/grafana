@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -159,7 +160,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 				}
 			}))
 			provider.apiUrl = ts.URL + apiURI
-			actualResult, err := provider.UserInfo(ts.Client(), nil)
+			actualResult, err := provider.UserInfo(context.Background(), ts.Client(), nil)
 			if test.ExpectedError != nil {
 				require.Equal(t, err, test.ExpectedError)
 				return

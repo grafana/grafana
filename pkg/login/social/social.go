@@ -7,9 +7,11 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -261,7 +263,7 @@ func (b *BasicUserInfo) String() string {
 }
 
 type SocialConnector interface {
-	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
+	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
@@ -450,9 +452,19 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: info.TlsSkipVerify,
 		},
+		DialContext: (&net.Dialer{
+			Timeout:   time.Second * 10,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
 	}
+
 	oauthClient := &http.Client{
 		Transport: tr,
+		Timeout:   time.Second * 15,
 	}
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
