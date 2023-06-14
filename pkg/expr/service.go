@@ -34,9 +34,13 @@ const DatasourceID = -100
 // should be used instead and should be set to "__expr__".
 const OldDatasourceUID = "-100"
 
-// IsDataSource checks if the uid points to an expression query
-func IsDataSource(uid string) bool {
-	return uid == DatasourceUID || uid == OldDatasourceUID
+// QueryKindByDatasourceUID returns NodeType depending on the UID of the data source: TypeCMDNode if UID is DatasourceUID
+// or OldDatasourceUID, and TypeDatasourceNode otherwise.
+func QueryKindByDatasourceUID(uid string) NodeType {
+	if uid == DatasourceUID || uid == OldDatasourceUID {
+		return TypeCMDNode
+	}
+	return TypeDatasourceNode
 }
 
 // Service is service representation for expression handling.
