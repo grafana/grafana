@@ -78,7 +78,10 @@ function removeLabelFilter(query: string, matcher: SyntaxNode): string {
 }
 
 function removeSelector(query: string, matcher: SyntaxNode): string {
-  const selector = matcher.parent?.parent;
+  let selector: SyntaxNode | null = matcher;
+  do {
+    selector = selector.parent;
+  } while (selector && selector.type.id !== Selector);
   const label = matcher.getChild(Identifier);
   if (!selector || !label) {
     return query;
