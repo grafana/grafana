@@ -32,6 +32,10 @@ func WhatsNewChecker(c *cli.Context) error {
 		return err
 	}
 
+	if metadata.ReleaseMode.IsTest {
+		fmt.Println("test mode, skipping check")
+		return nil
+	}
 	if metadata.ReleaseMode.Mode != config.TagMode {
 		return fmt.Errorf("non-tag pipeline, exiting")
 	}

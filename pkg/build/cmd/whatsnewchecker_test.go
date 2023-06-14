@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	DroneBuildEvent = "DRONE_BUILD_EVENT"
-	DroneTag        = "DRONE_TAG"
+	DroneBuildEvent       = "DRONE_BUILD_EVENT"
+	DroneTag              = "DRONE_TAG"
+	DroneSemverPrerelease = "DRONE_SEMVER_PRERELEASE"
 )
 
 const whatsNewUrl = "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-"
@@ -29,8 +30,9 @@ func TestWhatsNewChecker(t *testing.T) {
 	}{
 		{envMap: map[string]string{DroneBuildEvent: config.PullRequest}, packageJsonVersion: "", name: "non-tag event", wantErr: true, errMsg: "non-tag pipeline, exiting"},
 		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "abcd123"}, packageJsonVersion: "", name: "non-semver compatible", wantErr: true, errMsg: "non-semver compatible version vabcd123, exiting"},
-		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "10.0.0"}, packageJsonVersion: "v10-0", name: "package.json version matches tag", wantErr: false},
-		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "10.0.0"}, packageJsonVersion: "v9-5", name: "package.json doesn't match tag", wantErr: true, errMsg: "whatsNewUrl in package.json needs to be updated to https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-0/"},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "v0.0.0", DroneSemverPrerelease: "test"}, packageJsonVersion: "v10-0", name: "skip check for test tags", wantErr: false},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "v10.0.0"}, packageJsonVersion: "v10-0", name: "package.json version matches tag", wantErr: false},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "v10.0.0"}, packageJsonVersion: "v9-5", name: "package.json doesn't match tag", wantErr: true, errMsg: "whatsNewUrl in package.json needs to be updated to https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-0/"},
 	}
 	for _, tt := range tests {
 		app := cli.NewApp()
