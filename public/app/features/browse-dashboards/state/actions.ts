@@ -1,8 +1,6 @@
-import { getBackendSrv } from '@grafana/runtime';
-import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
-import { createAsyncThunk, DashboardDTO } from 'app/types';
+import { createAsyncThunk } from 'app/types';
 
 import { listDashboards, listFolders } from '../api/services';
 
@@ -129,35 +127,5 @@ export const fetchNextChildrenPage = createAsyncThunk(
       page,
       kind: fetchKind,
     };
-  }
-);
-
-export const deleteDashboard = createAsyncThunk('browseDashboards/deleteDashboard', async (dashboardUID: string) => {
-  return getBackendSrv().delete<DeleteDashboardResponse>(`/api/dashboards/uid/${dashboardUID}`);
-});
-
-export const deleteFolder = createAsyncThunk('browseDashboards/deleteFolder', async (folderUID: string) => {
-  return getBackendSrv().delete(`/api/folders/${folderUID}`, undefined, {
-    // TODO: Revisit this field when this permissions issue is resolved
-    // https://github.com/grafana/grafana-enterprise/issues/5144
-    params: { forceDeleteRules: false },
-  });
-});
-
-export const moveDashboard = createAsyncThunk(
-  'browseDashboards/moveDashboard',
-  async ({ dashboardUID, destinationUID }: { dashboardUID: string; destinationUID: string }) => {
-    const fullDash: DashboardDTO = await getBackendSrv().get(`/api/dashboards/uid/${dashboardUID}`);
-
-    const options = {
-      dashboard: fullDash.dashboard,
-      folderUid: destinationUID,
-      overwrite: false,
-    };
-
-    return getBackendSrv().post('/api/dashboards/db', {
-      message: '',
-      ...options,
-    });
   }
 );

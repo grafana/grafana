@@ -79,7 +79,10 @@ export const browseDashboardsAPI = createApi({
       }),
     }),
     saveFolder: builder.mutation<FolderDTO, FolderDTO>({
-      invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.uid }],
+      invalidatesTags: (_result, _error, args) => [
+        { type: 'getFolder', id: args.uid },
+        { type: 'getFolderChildren', id: args.parentUid },
+      ],
       query: (folder) => ({
         method: 'PUT',
         showErrorAlert: false,
