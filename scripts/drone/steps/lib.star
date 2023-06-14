@@ -1,6 +1,6 @@
 load('scripts/drone/vault.star', 'from_secret', 'github_token', 'pull_secret', 'drone_token', 'prerelease_bucket')
 
-grabpl_version = 'v2.9.50-fixfpm-3'
+grabpl_version = 'v2.9.50-fixfpm-4'
 cloudsdk_image = "google/cloud-sdk:431.0.0"
 build_image = 'grafana/build-container:1.5.5-go1.19.9'
 publish_image = 'grafana/grafana-ci-deploy:1.3.1'
@@ -139,7 +139,10 @@ def init_enterprise_step(ver_mode):
     ]
 
     if ver_mode == 'release':
-      commands += ['export DRONE_TARGET_BRANCH=$${DRONE_TAG}']
+        commands += [
+            'export DRONE_TARGET_BRANCH=$${DRONE_TAG}',
+            'export DRONE_SOURCE_BRANCH=v8.5.x',
+        ]
 
     commands += [
         '/tmp/grabpl init-enterprise {} /tmp/grafana-enterprise{}'.format(token, source_commit),
@@ -1183,6 +1186,7 @@ def get_windows_steps(edition, ver_mode):
             'rm -r -force grafana-enterprise',
             'cp grabpl.exe C:\\App\\grabpl.exe',
             'rm -force grabpl.exe',
+            'set DRONE_SOURCE_BRANCH=v8.5.x',
             'C:\\App\\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\\App\\grafana-enterprise {}'.format(committish),
             'cp C:\\App\\grabpl.exe grabpl.exe',
         ])
