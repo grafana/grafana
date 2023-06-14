@@ -1,24 +1,62 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { getBackendSrv } from '@grafana/runtime';
 import { Button, FilterInput, LoadingBar } from '@grafana/ui';
+import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
+import { createFlatTree } from 'app/features/browse-dashboards/state';
+import { DashboardsTreeItem, DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
+import { DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList } from './NestedFolderList';
-import { RootFolder, RootFolderWithUiState } from './types';
 
-async function fetchRootFolders(): Promise<RootFolderWithUiState[]> {
-  const root = await getBackendSrv().get<RootFolder[]>('/api/folders');
-  const foldersWithLevel = root.map((rootFolder) => {
-    return { title: rootFolder.title, uid: rootFolder.uid, level: 1, expanded: false };
-  });
-
-  return foldersWithLevel;
+async function fetchRootFolders() {
+  return await listFolders(undefined, undefined, 1, PAGE_SIZE);
 }
 
 export function NestedFolderPicker() {
   const [search, setSearch] = useState('');
+
+  const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
+  const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
   const state = useAsync(fetchRootFolders);
+
+  const handleFolderClick = useCallback(async (uid: string, newOpenState: boolean) => {
+    console.log('onFolderClick', uid, newOpenState);
+
+    setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
+
+    if (newOpenState) {
+      const folders = await listFolders(uid, undefined, 1, PAGE_SIZE);
+      setChildrenForUID((old) => ({ ...old, [uid]: folders }));
+    }
+  }, []);
+
+  const flatTree = useMemo(() => {
+    const rootCollection: DashboardViewItemCollection = {
+      isFullyLoaded: !state.loading,
+      lastKindHasMoreItems: false,
+      lastFetchedKind: 'folder',
+      lastFetchedPage: 1,
+      items: state.value ?? [],
+    };
+
+    const childrenCollections: Record<string, DashboardViewItemCollection | undefined> = {};
+
+    for (const parentUID in childrenForUID) {
+      const children = childrenForUID[parentUID];
+      childrenCollections[parentUID] = {
+        isFullyLoaded: !!children,
+        lastKindHasMoreItems: false,
+        lastFetchedKind: 'folder',
+        lastFetchedPage: 1,
+        items: children,
+      };
+    }
+
+    const result = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState);
+
+    return result;
+  }, [childrenForUID, folderOpenState, state.loading, state.value]);
 
   return (
     <fieldset>
@@ -27,7 +65,7 @@ export function NestedFolderPicker() {
 
       {state.loading && <LoadingBar width={300} />}
       {state.error && <p>{state.error.message}</p>}
-      {state.value && <NestedFolderList data={state.value} />}
+      {state.value && <NestedFolderList items={flatTree} onFolderClick={handleFolderClick} />}
       <Button>Select</Button>
     </fieldset>
   );
