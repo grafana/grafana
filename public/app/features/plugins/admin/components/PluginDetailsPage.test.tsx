@@ -4,8 +4,6 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
 
-import { CatalogPlugin } from '../types';
-
 import { PluginDetailsPage } from './PluginDetailsPage';
 
 jest.mock('../state/hooks', () => ({
@@ -43,7 +41,6 @@ describe('PluginDetailsAngularDeprecation', () => {
   });
 
   it('renders the component for angular plugins', () => {
-    // render(<PluginDetailsPage plugin={{ ...plugin, angularDetected: true }} />);
     render(
       <TestProvider>
         <PluginDetailsPage pluginId="angular" />
@@ -53,7 +50,6 @@ describe('PluginDetailsAngularDeprecation', () => {
   });
 
   it('does not render the component for non-angular plugins', () => {
-    // render(<PluginDetailsPage plugin={{ ...plugin, angularDetected: false }} />);
     render(
       <TestProvider>
         <PluginDetailsPage pluginId="not-angular" />
