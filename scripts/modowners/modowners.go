@@ -144,7 +144,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies") // NOTE: indirect is a pointer bc we dont want to lose value after changing it
-	modfile := fs.String("m", "go.txd", "use specified modfile")
+	modfile := fs.String("m", "go.mod", "use specified modfile")
 	owner := fs.String("o", "", "one or more owners")
 	fs.Parse(args)
 	m, err := parseGoMod(fileSystem, *modfile) // NOTE: give me the string that's the first positional argument; fs.Arg works only after fs.Parse
@@ -158,7 +158,7 @@ func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 		// Else if -i is present and current dependency is indirect
 		if len(*owner) > 0 && hasCommonElement(mod.Owners, ownerFlags) {
 			logger.Println(mod.Name)
-		} else if *indirect && !mod.Indirect {
+		} else if *indirect || !mod.Indirect {
 			logger.Println(mod.Name)
 		}
 	}
@@ -177,6 +177,8 @@ func hasCommonElement(a []string, b []string) bool {
 }
 
 func main() {
+	log.SetFlags(0)
+	log.SetOutput(os.Stdout)
 	if len(os.Args) < 2 {
 		fmt.Println("usage: modowners subcommand go.mod...")
 		os.Exit(1)

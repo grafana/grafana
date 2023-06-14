@@ -2,7 +2,7 @@
 
 # Step 1: Get a list of imports from grafana/grafana's go.mod
 get_modules() {
-    ./modowners.go modules
+    go run modowners.go modules
 }
 
 get_modules
