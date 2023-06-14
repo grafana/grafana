@@ -160,17 +160,30 @@ const imports = Object.keys(importMap).reduce((acc, key) => {
   return acc;
 }, {} as Record<string, string>);
 
-// Fetch and eval when loading from CDN
-SystemJS.shouldFetch = function (url) {
-  return !url.includes(location.hostname);
+const moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
+
+// Fetch and eval if assest is not JS or loading from CDN
+// otherwise we load via script for performance and security goodness!
+SystemJS.shouldFetch = function (url: string) {
+  const isCDN = Boolean(config.pluginsCDNBaseURL) && url.startsWith(config.pluginsCDNBaseURL);
+  const isNotJS = moduleTypesRegEx.test(url);
+
+  const shouldFetch = isNotJS || isCDN;
+
+  console.log('SystemJS should fetch:', {
+    url,
+    shouldFetch,
+  });
+
+  return shouldFetch;
 };
 
 const systemJSPrototype = SystemJS.constructor.prototype;
 const fetch = systemJSPrototype.fetch;
 
 // Is this how we tackle plugin lifecycle hooks now?
-systemJSPrototype.fetch = function (url: any, options: any) {
-  console.log({ url, options });
+systemJSPrototype.fetch = function (url: string, options: Record<string, unknown>) {
+  console.log('SystemJS fetch hook:', { url, options });
   return fetch(url, options).then((res: any) => {
     return res;
   });
@@ -179,7 +192,7 @@ systemJSPrototype.fetch = function (url: any, options: any) {
 const originalResolve = systemJSPrototype.resolve;
 // We can hook resolutions like this...
 systemJSPrototype.resolve = function (id: string, parentUrl: string) {
-  console.log(id, parentUrl);
+  console.log('SystemJS resolve hook:', { id, parentUrl });
   try {
     return originalResolve.apply(this, arguments);
   } catch (err) {
@@ -191,12 +204,12 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 const loadPluginCssRegEx = /^plugins.+\.css$/i;
 
 function monkeyPatchLoadPluginCss(id: string, parentUrl: string) {
-  console.log({ id, test: loadPluginCssRegEx.test(id) });
+  console.log('SystemJS monkeyPatchLoadPluginCss', { id, test: loadPluginCssRegEx.test(id) });
   if (loadPluginCssRegEx.test(id)) {
-    return `/public/${id}`;
-  } else {
-    console.log('oh no!!!!');
+    return `./public/${id}`;
   }
+
+  console.log('oh no!!!!');
   return '/some-url.js';
 }
 
