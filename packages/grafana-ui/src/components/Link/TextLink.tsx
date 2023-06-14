@@ -38,7 +38,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, Props>(
     return external ? (
       <a href={validUrl} ref={ref} target="_blank" rel="noreferrer" {...rest} className={styles}>
         {children}
-        {!inline && <Icon name={externalIcon} />}
+        {!inline && <Icon size={getSvgVariantSize(variant)} name={externalIcon} />}
       </a>
     ) : (
       <Link ref={ref} href={validUrl} {...rest} className={styles}>
@@ -74,9 +74,8 @@ export const getLinkStyles = (
         text-decoration: underline;
       };
       & > div > svg {
-        vertical-align: text-top;
-        display: inline-block;
-        margin-left: ${theme.spacing(1)}
+        margin-left: ${theme.spacing(1)};
+        margin-bottom: ${adjustIconSize(variant, theme)};
       }
       `,
     inline && {
@@ -84,3 +83,25 @@ export const getLinkStyles = (
     },
   ]);
 };
+
+export function getSvgVariantSize(variant: keyof ThemeTypographyVariantTypes = 'body') {
+  if (variant === 'h1' || variant === 'h2') {
+    return 'xl';
+  } else if (variant === 'h3' || variant === 'h4') {
+    return 'lg';
+  } else if (variant === 'bodySmall') {
+    return 'xs';
+  } else {
+    return 'md';
+  }
+}
+
+export function adjustIconSize(variant: keyof ThemeTypographyVariantTypes = 'body', theme: GrafanaTheme2) {
+  if (variant !== 'h1' && variant !== 'h3' && variant !== 'bodySmall') {
+    return theme.spacing(0.25);
+  } else if (variant === 'bodySmall') {
+    return theme.spacing(0.17);
+  } else {
+    return 'inherit';
+  }
+}
