@@ -3,7 +3,7 @@ import { compact } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, TagList, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, getTagColorIndexFromName, Icon, Modal, TagList, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
@@ -38,8 +38,21 @@ export const LabelsMatching = ({
     .flat()
     .map(([label, _]) => label);
   // get array of strings from labels, remove duplicated
-  const labelsStringArray = Array.from(new Set(labels.map((label: Label) => label[0] + '=' + label[1])));
-  return <TagList tags={labelsStringArray} />;
+  const labelsStringArray = Array.from(
+    new Set(
+      labels.map((label: Label) => ({
+        label: label[0] + '=' + label[1],
+        colorindex: getTagColorIndexFromName(label[0]),
+      }))
+    )
+  );
+
+  return (
+    <TagList
+      tags={labelsStringArray.map((lbl) => lbl.label)}
+      getColorIndex={(_, index) => labelsStringArray[index].colorindex}
+    />
+  );
 };
 
 function PolicyPath({
