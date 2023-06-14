@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service provides methods for constructing asset paths for plugins.
@@ -17,11 +16,10 @@ import (
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
 type Service struct {
 	cdn *pluginscdn.Service
-	cfg *setting.Cfg
 }
 
-func ProvideService(cdn *pluginscdn.Service, cfg *setting.Cfg) *Service {
-	return &Service{cdn: cdn, cfg: cfg}
+func ProvideService(cdn *pluginscdn.Service) *Service {
+	return &Service{cdn: cdn}
 }
 
 // Base returns the base path for the specified plugin.
@@ -43,7 +41,6 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "module.js")
 	}
-	// path := fmt.Sprintf("%s%s", s.cfg.AppURL, path.Join(s.cfg.AppSubURL, "public", "plugins", pluginJSON.ID, "module.js"))
 	path := path.Join("public", "plugins", pluginJSON.ID, "module.js")
 	return fmt.Sprintf("%s%s", "./", path), nil
 }
