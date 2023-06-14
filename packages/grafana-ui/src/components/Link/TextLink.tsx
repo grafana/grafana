@@ -75,7 +75,6 @@ export const getLinkStyles = (
       };
       & > div > svg {
         margin-left: ${theme.spacing(1)};
-        margin-bottom: ${adjustIconSize(variant, theme)};
       }
       `,
     inline && {
@@ -93,15 +92,5 @@ export function getSvgVariantSize(variant: keyof ThemeTypographyVariantTypes = '
     return 'xs';
   } else {
     return 'md';
-  }
-}
-
-export function adjustIconSize(variant: keyof ThemeTypographyVariantTypes = 'body', theme: GrafanaTheme2) {
-  if (variant !== 'h1' && variant !== 'h3' && variant !== 'bodySmall') {
-    return theme.spacing(0.25);
-  } else if (variant === 'bodySmall') {
-    return theme.spacing(0.17);
-  } else {
-    return 'inherit';
   }
 }
