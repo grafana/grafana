@@ -2,12 +2,13 @@ package models
 
 import (
 	"encoding/json"
+	"strconv"
+	"time"
+
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"strconv"
-	"time"
 )
 
 // PublicDashboardErr represents a dashboard error.
