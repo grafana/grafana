@@ -135,6 +135,10 @@ export function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
   return {
     ...routeTree,
     routes: routeTree.routes?.map((route) => {
+      // receiver='' its valid in upstream AM, so we map to undefined to inherit from parent in this case
+      if (route.receiver === '') {
+        delete route.receiver;
+      }
       const inheritableProperties = pick(routeTree, [
         'receiver',
         'group_by',

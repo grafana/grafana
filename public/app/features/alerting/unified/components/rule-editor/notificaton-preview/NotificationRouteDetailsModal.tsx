@@ -14,7 +14,6 @@ import { AlertInstanceMatch, LabelMatchResult } from '../../../utils/notificatio
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
-import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
 import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
 
 export const LabelsMatching = ({
@@ -136,19 +135,11 @@ export function NotificationRouteDetailsModal({
         <div className={cx(styles.textMuted, styles.marginBottom(2))}>
           Preview how this alert will be routed while firing.
         </div>
-        <div className={cx(styles.marginBottom(2))}>Policy routing</div>
-        {!isDefault ? (
-          <>
-            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Matching labels</div>
-            <NotificationPolicyMatchers route={route} />
-          </>
-        ) : (
-          <div className={styles.textMuted}>Default policy</div>
-        )}
-        <div className={styles.separator(4)} />
+        <div>Notification policy path</div>
+        {isDefault && <div className={styles.textMuted}>Default policy</div>}
+        <div className={styles.separator(1)} />
         {!isDefault && (
           <>
-            <div className={cx(styles.textMuted, styles.marginBottom(1))}>Notification policy path</div>
             <PolicyPath
               route={route}
               routesByIdMap={routesByIdMap}
