@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/assert"
@@ -21,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -289,9 +292,22 @@ func TestQueryDataMultipleSources(t *testing.T) {
 			PublicDashboardAccessToken: "abc123",
 		}
 
-		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+		req, err := http.NewRequest("POST", "http://localhost:3000", nil)
+		reqCtx := &contextmodel.ReqContext{
+			SkipQueryCache: false,
+			Context: &web.Context{
+				Resp: web.NewResponseWriter(http.MethodGet, httptest.NewRecorder()),
+				Req:  req,
+			},
+		}
+		ctx := ctxkey.Set(context.Background(), reqCtx)
 
+		_, err = tc.queryService.QueryData(ctx, tc.signedInUser, true, reqDTO)
 		require.NoError(t, err)
+
+		// response headers should be merged
+		header := contexthandler.FromContext(ctx).Resp.Header()
+		assert.Len(t, header.Values("test"), 2)
 	})
 
 	t.Run("can query multiple datasources with an expression present", func(t *testing.T) {
@@ -539,6 +555,10 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 
 	if req.Queries[0].QueryType == "FAIL" {
 		return nil, errors.New("plugin client failed")
+	}
+
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Resp != nil {
+		reqCtx.Resp.Header().Add("test", fmt.Sprintf("header-%d", time.Now().Nanosecond()))
 	}
 
 	return &backend.QueryDataResponse{Responses: make(backend.Responses)}, nil
