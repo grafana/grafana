@@ -29,7 +29,7 @@ export function MetricsLabelsSection({
 }: MetricsLabelsSectionProps) {
   // fixing the use of 'as' from refactoring
   // @ts-ignore
-  const onChangeLabels = (labels) => {
+  const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
   /**
