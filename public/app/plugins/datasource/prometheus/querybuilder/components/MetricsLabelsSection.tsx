@@ -28,7 +28,6 @@ export function MetricsLabelsSection({
   variableEditor,
 }: MetricsLabelsSectionProps) {
   // fixing the use of 'as' from refactoring
-  // @ts-ignore
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -214,6 +213,7 @@ export function MetricsLabelsSection({
         debounceDuration={datasource.getDebounceTimeInMilliseconds()}
         getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
         labelsFilters={query.labels}
+        // eslint-ignore
         onChange={onChangeLabels}
         onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
         onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
