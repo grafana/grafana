@@ -103,11 +103,11 @@ export class LogRowMessage extends PureComponent<Props> {
           <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
-                tooltip="Show context"
-                tooltipPlacement="top"
                 size="md"
                 name="gf-show-context"
                 onClick={this.onShowContextClick}
+                tooltip="Show context"
+                tooltipPlacement="top"
               />
             )}
             <ClipboardButton

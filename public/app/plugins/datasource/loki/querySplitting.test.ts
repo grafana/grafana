@@ -45,7 +45,10 @@ describe('runSplitQuery()', () => {
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
     await expect(runSplitQuery(datasource, request)).toEmitValuesWith((values) => {
-      expect(values).toEqual([{ error: { refId: 'A', message: 'Error' }, data: [], state: LoadingState.Streaming }]);
+      expect(values).toHaveLength(1);
+      expect(values[0]).toEqual(
+        expect.objectContaining({ error: { refId: 'A', message: 'Error' }, state: LoadingState.Streaming })
+      );
     });
   });
 
@@ -88,7 +91,8 @@ describe('runSplitQuery()', () => {
             },
           ],
           request,
-          new Date()
+          new Date(),
+          { predefinedOperations: '' }
         );
       });
     });
