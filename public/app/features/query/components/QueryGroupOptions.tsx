@@ -375,7 +375,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           <Input
             type="text"
             className="width-6"
-            placeholder="No override"
+            placeholder="1h"
             onChange={this.onRelativeTimeChange}
             onBlur={this.onOverrideTime}
             invalid={!relativeTimeIsValid}
