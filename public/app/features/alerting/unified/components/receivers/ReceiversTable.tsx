@@ -24,9 +24,8 @@ import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
-import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
-import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
-import { ReceiverWithTypes } from './grafanaAppReceivers/types';
+import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
+import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/grafanaApp';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -57,6 +56,7 @@ function UpdateActions({ permissions, alertManagerName, receiverName, onClickDel
     </>
   );
 }
+
 interface ActionProps {
   permissions: {
     read: AccessControlAction;
@@ -80,6 +80,7 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
     </Authorize>
   );
 }
+
 interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
@@ -146,11 +147,13 @@ const useContactPointsState = (alertManagerName: string) => {
   const errorStateAvailable = Object.keys(receivers).length > 0;
   return { contactPointsState, errorStateAvailable };
 };
+
 interface ReceiverItem {
   name: string;
   types: string[];
   provisioned?: boolean;
   grafanaAppReceiverType?: SupportedPlugin;
+  metadata?: ReceiverMetadata;
 }
 
 interface NotifierStatus {
@@ -170,6 +173,7 @@ type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
+
 const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
 
 function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
@@ -234,6 +238,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       },
     ];
   }
+
   const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
     typeState[1].map((notifierStatus, index) => {
       return {
@@ -264,6 +269,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
+  const receiversMetadata = useReceiversMetadata(config.alertmanager_config.receivers ?? []);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
   const [receiverToDelete, setReceiverToDelete] = useState<string>();
@@ -283,10 +289,11 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     }
     setReceiverToDelete(undefined);
   };
-  const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
   const rows: RowItemTableProps[] = useMemo(() => {
+    const receivers = config.alertmanager_config.receivers ?? [];
+
     return (
-      receivers?.map((receiver: ReceiverWithTypes) => ({
+      receivers.map((receiver) => ({
         id: receiver.name,
         data: {
           name: receiver.name,
@@ -300,10 +307,11 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
           ),
           grafanaAppReceiverType: receiver.grafanaAppReceiverType,
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
+          metadata: receiversMetadata.get(receiver),
         },
       })) ?? []
     );
-  }, [grafanaNotifiers.result, receivers]);
+  }, [grafanaNotifiers.result, config.alertmanager_config, receiversMetadata]);
 
   const columns = useGetColumns(
     alertManagerName,
@@ -403,8 +411,8 @@ function useGetColumns(
     {
       id: 'type',
       label: 'Type',
-      renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
-        <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
+      renderCell: ({ data: { types, metadata } }) => (
+        <>{metadata ? <ReceiverMetadataBadge metadata={metadata} /> : types.join(', ')}</>
       ),
       size: 1,
     },
