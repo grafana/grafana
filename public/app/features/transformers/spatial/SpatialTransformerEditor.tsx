@@ -165,4 +165,5 @@ export const spatialTransformRegistryItem: TransformerRegistryItem<SpatialTransf
   name: spatialTransformer.name,
   description: spatialTransformer.description,
   state: PluginState.alpha,
+  categories: new Set(['performSpatialOperations']),
 };

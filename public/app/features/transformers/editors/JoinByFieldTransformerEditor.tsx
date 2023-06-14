@@ -69,4 +69,5 @@ export const joinByFieldTransformerRegistryItem: TransformerRegistryItem<JoinByF
   transformation: standardTransformers.joinByFieldTransformer,
   name: standardTransformers.joinByFieldTransformer.name,
   description: standardTransformers.joinByFieldTransformer.description,
+  categories: new Set(['combine']),
 };

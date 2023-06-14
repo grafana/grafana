@@ -139,6 +139,7 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   name: standardTransformers.filterByValueTransformer.name,
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
+  categories: new Set(['filterAndReduce']),
 };
 
 const getEditorStyles = stylesFactory(() => ({

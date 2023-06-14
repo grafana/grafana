@@ -156,6 +156,7 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   name: joinByLabelsTransformer.name,
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
+  categories: new Set(['combine']),
   //   help: `
   // ### Use cases
 

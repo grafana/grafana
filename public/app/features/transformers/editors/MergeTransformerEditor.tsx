@@ -19,4 +19,5 @@ export const mergeTransformerRegistryItem: TransformerRegistryItem<MergeTransfor
   name: 'Merge',
   description: `Merge many series/tables and return a single table where mergeable values will be combined into the same row.
                 Useful for showing multiple series, tables or a combination of both visualized in a table.`,
+  categories: new Set(['combine']),
 };

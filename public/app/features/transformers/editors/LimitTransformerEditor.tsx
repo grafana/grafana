@@ -38,4 +38,5 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   transformation: standardTransformers.limitTransformer,
   name: 'Limit',
   description: `Limit the number of items displayed.`,
+  categories: new Set(['filterAndReduce']),
 };
