@@ -632,13 +632,12 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      ${scrollableLogsContainer && 'overflow-x: scroll;'};
-      ${scrollableLogsContainer && 'max-height: calc(100vh - 150px)'};
     `,
     logRows: css`
-      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;
       width: 100%;
+      ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
     `,
   };
 };
