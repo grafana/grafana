@@ -6,7 +6,7 @@ import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDash
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
-import { LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import { Input, LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
@@ -52,48 +52,31 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   };
 }
 
-const isDataSourceBeingConsumed = (
-  datasource: string | { uid?: string } | undefined | null,
-  datasourceName: string
-): boolean => {
-  if (!datasource) {
-    return false;
+const getLibraryPanelInputInfo = (info?: string): { isLibraryPanelInput: boolean; libraryPanelUid?: string } => {
+  if (!info) {
+    return { isLibraryPanelInput: false };
   }
 
-  return typeof datasource === 'string'
-    ? getDataSourceRefNameFromPlaceholder(datasource) === datasourceName
-    : getDataSourceRefNameFromPlaceholder(datasource?.uid) === datasourceName;
+  const hyphenIndex = info.lastIndexOf('-');
+
+  const panel = info.substring(0, hyphenIndex);
+  const uid = info.substring(hyphenIndex + 1);
+
+  const isLibraryPanelInput = panel === 'library-panel';
+
+  return { isLibraryPanelInput, libraryPanelUid: isLibraryPanelInput ? uid : undefined };
 };
 
 function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
   let filteredUsedInputs = dashboardJson.__inputs;
   if (!!state.inputs.libraryPanels.length) {
-    filteredUsedInputs = dashboardJson.__inputs?.filter((input: any) => {
-      if (input.type !== InputType.DataSource) {
-        return true;
-      }
-
-      const isDataSourceInputUsedInAnyLibPanel = state.inputs.libraryPanels?.some((libPanel) =>
-        isDataSourceBeingConsumed(libPanel.model.model.datasource, input.name)
-      );
-      const isDataSourceInputUsedInAnyPanel = dashboardJson.panels?.some((el) => {
-        if (!('datasource' in el)) {
-          return false;
-        }
-        return isDataSourceBeingConsumed(el.datasource, input.name);
-      });
-      const isDataSourceInputUsedInAnyTemplating = dashboardJson.templating?.list?.some((temp) =>
-        isDataSourceBeingConsumed(temp.datasource, input.name)
-      );
-      const isDataSourceInputUsedInAnyAnnotation = dashboardJson.annotations?.list?.some((anno) =>
-        isDataSourceBeingConsumed(anno.datasource, input.name)
-      );
-
-      return (
-        isDataSourceInputUsedInAnyLibPanel ||
-        isDataSourceInputUsedInAnyPanel ||
-        isDataSourceInputUsedInAnyTemplating ||
-        isDataSourceInputUsedInAnyAnnotation
+    filteredUsedInputs = dashboardJson.__inputs?.filter((input: Input) => {
+      const { isLibraryPanelInput, libraryPanelUid } = getLibraryPanelInputInfo(input.usage);
+      return !(
+        isLibraryPanelInput &&
+        state.inputs.libraryPanels.some(
+          (libPanel) => libPanel.model.uid === libraryPanelUid && libPanel.state === LibraryPanelInputState.Exists
+        )
       );
     });
   }
@@ -410,11 +393,11 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
   }, []);
 }
 
-function getDataSourceRefNameFromPlaceholder(datasourceUid?: string): string {
-  const regex = /\$\{([^}]+)\}/;
-  const match = datasourceUid?.match(regex);
-  if (match && match.length >= 2) {
-    return match[1];
-  }
-  return '';
-}
+// function getDataSourceRefNameFromPlaceholder(datasourceUid?: string): string {
+//   const regex = /\$\{([^}]+)\}/;
+//   const match = datasourceUid?.match(regex);
+//   if (match && match.length >= 2) {
+//     return match[1];
+//   }
+//   return '';
+// }

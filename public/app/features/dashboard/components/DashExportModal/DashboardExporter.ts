@@ -13,12 +13,13 @@ import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
-interface Input {
+export interface Input {
   name: string;
   type: string;
   label: string;
   value: any;
   description: string;
+  usage?: string;
 }
 
 interface Requires {
@@ -58,6 +59,7 @@ interface DataSources {
     type: string;
     pluginId: string;
     pluginName: string;
+    usage?: string;
   };
 }
 
@@ -92,7 +94,11 @@ export class DashboardExporter {
       variableLookup[variable.name] = variable;
     }
 
-    const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
+    const templateizeDatasourceUsage = (
+      obj: any,
+      fallback?: DataSourceRef,
+      libraryPanel?: { uid: string; name: string }
+    ) => {
       if (obj.datasource === undefined) {
         obj.datasource = fallback;
         return;
@@ -132,14 +138,16 @@ export class DashboardExporter {
             return;
           }
 
-          const refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+          const libraryPanelSuffix = !!libraryPanel ? `for-library-panel-${libraryPanel.name.replace(' ', '-')}` : '';
+          let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
           datasources[refName] = {
             name: refName,
-            label: ds.name,
+            label: !!libraryPanel ? `${ds.name}-${libraryPanelSuffix}` : ds.name,
             description: '',
             type: 'datasource',
             pluginId: ds.meta?.id,
             pluginName: ds.meta?.name,
+            usage: !!libraryPanel ? `library-panel-${libraryPanel?.uid}` : undefined,
           };
 
           obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
@@ -177,7 +185,7 @@ export class DashboardExporter {
           model = libPanel.model;
         }
 
-        await templateizeDatasourceUsage(model);
+        await templateizeDatasourceUsage(model, undefined, { name, uid });
 
         const { gridPos, id, ...rest } = model as any;
         if (!libraryPanels.has(uid)) {
