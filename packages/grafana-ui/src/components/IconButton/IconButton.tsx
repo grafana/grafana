@@ -84,8 +84,9 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
   );
 
   if ('tooltip' in props) {
+    const { tooltip, tooltipPlacement } = props;
     return (
-      <Tooltip ref={ref} content={props.tooltip} placement={props.tooltipPlacement}>
+      <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
         {button}
       </Tooltip>
     );
