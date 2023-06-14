@@ -1,28 +1,21 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
+import { uniqueId, groupBy, upperFirst, sumBy, isArray } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useMemo } from 'react';
-import { useEnabled } from 'react-enable';
+import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
-import {
-  RouteWithID,
-  Receiver,
-  ObjectMatcher,
-  Route,
-  AlertmanagerGroup,
-} from 'app/plugins/datasource/alertmanager/types';
+import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
-import { AlertingFeature } from '../../features';
 import { getNotificationsPermissions } from '../../utils/access-control';
-import { normalizeMatchers } from '../../utils/amroutes';
+import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
-import { findMatchingAlertGroups } from '../../utils/notification-policies';
+import { getInheritedProperties, InhertitableProperties } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -32,18 +25,16 @@ import { Strong } from '../Strong';
 import { Matchers } from './Matchers';
 import { TimingOptions, TIMING_OPTIONS_DEFAULTS } from './timingOptions';
 
-type InhertitableProperties = Pick<
-  Route,
-  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
->;
-
 interface PolicyComponentProps {
   receivers?: Receiver[];
   alertGroups?: AlertmanagerGroup[];
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
-  inheritedProperties?: InhertitableProperties;
+  inheritedProperties?: Partial<InhertitableProperties>;
   routesMatchingFilters?: RouteWithID[];
+  // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
+
+  matchingInstancesPreview?: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
@@ -64,6 +55,7 @@ const Policy: FC<PolicyComponentProps> = ({
   routeTree,
   inheritedProperties,
   routesMatchingFilters = [],
+  matchingInstancesPreview = { enabled: false },
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -71,7 +63,6 @@ const Policy: FC<PolicyComponentProps> = ({
 }) => {
   const styles = useStyles2(getStyles);
   const isDefaultPolicy = currentRoute === routeTree;
-  const showMatchingInstances = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
@@ -79,7 +70,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   const contactPoint = currentRoute.receiver;
   const continueMatching = currentRoute.continue ?? false;
-  const groupBy = currentRoute.group_by ?? [];
+  const groupBy = currentRoute.group_by;
   const muteTimings = currentRoute.mute_time_intervals ?? [];
   const timingOptions: TimingOptions = {
     group_wait: currentRoute.group_wait,
@@ -107,19 +98,24 @@ const Policy: FC<PolicyComponentProps> = ({
     errors.push(error);
   });
 
-  const childPolicies = currentRoute.routes ?? [];
-  const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
   const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
+
+  const childPolicies = currentRoute.routes ?? [];
+
+  const inheritedGrouping = hasInheritedProperties && inheritedProperties.group_by;
+  const noGrouping = isArray(groupBy) && groupBy[0] === '...';
+  const customGrouping = !noGrouping && isArray(groupBy) && groupBy.length > 0;
+  const singleGroup = isDefaultPolicy && isArray(groupBy) && groupBy.length === 0;
 
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = useMemo(() => {
-    return showMatchingInstances ? findMatchingAlertGroups(routeTree, currentRoute, alertGroups) : [];
-  }, [alertGroups, currentRoute, routeTree, showMatchingInstances]);
+  const matchingAlertGroups = matchingInstancesPreview?.groupsMap?.get(currentRoute.id);
 
   // sum all alert instances for all groups we're handling
-  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
+  const numberOfAlertInstances = matchingAlertGroups
+    ? sumBy(matchingAlertGroups, (group) => group.alerts.length)
+    : undefined;
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -196,15 +192,15 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              {showMatchingInstances && (
+              {matchingInstancesPreview.enabled && (
                 <MetaText
                   icon="layers-alt"
                   onClick={() => {
-                    onShowAlertInstances(matchingAlertGroups, matchers);
+                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
                   }}
                   data-testid="matching-instances"
                 >
-                  <Strong>{numberOfAlertInstances}</Strong>
+                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
                   <span>{pluralize('instance', numberOfAlertInstances)}</span>
                 </MetaText>
               )}
@@ -218,17 +214,25 @@ const Policy: FC<PolicyComponentProps> = ({
                   />
                 </MetaText>
               )}
-              {isGrouping && (
-                <MetaText icon="layer-group" data-testid="grouping">
-                  <span>Grouped by</span>
-                  <Strong>{groupBy.join(', ')}</Strong>
-                </MetaText>
-              )}
-              {/* we only want to show "no grouping" on the root policy, children with empty groupBy will inherit from the parent policy */}
-              {!isGrouping && isDefaultPolicy && (
-                <MetaText icon="layer-group">
-                  <span>Not grouping</span>
-                </MetaText>
+              {!inheritedGrouping && (
+                <>
+                  {customGrouping && (
+                    <MetaText icon="layer-group" data-testid="grouping">
+                      <span>Grouped by</span>
+                      <Strong>{groupBy.join(', ')}</Strong>
+                    </MetaText>
+                  )}
+                  {singleGroup && (
+                    <MetaText icon="layer-group">
+                      <span>Single group</span>
+                    </MetaText>
+                  )}
+                  {noGrouping && (
+                    <MetaText icon="layer-group">
+                      <span>Not grouping</span>
+                    </MetaText>
+                  )}
+                </>
               )}
               {hasMuteTimings && (
                 <MetaText icon="calendar-slash" data-testid="mute-timings">
@@ -253,44 +257,18 @@ const Policy: FC<PolicyComponentProps> = ({
       </div>
       <div className={styles.childPolicies}>
         {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
-        {childPolicies.map((route) => {
-          // inherited properties are config properties that exist on the parent but not on currentRoute
-          const inheritableProperties: InhertitableProperties = pick(currentRoute, [
-            'receiver',
-            'group_by',
-            'group_wait',
-            'group_interval',
-            'repeat_interval',
-            'mute_time_intervals',
-          ]);
-
-          // TODO how to solve this TypeScript mystery
-          const inherited = merge(
-            reduce(
-              inheritableProperties,
-              (acc: Partial<Route> = {}, value, key) => {
-                // @ts-ignore
-                if (value !== undefined && route[key] === undefined) {
-                  // @ts-ignore
-                  acc[key] = value;
-                }
-
-                return acc;
-              },
-              {}
-            ),
-            inheritedProperties
-          );
+        {childPolicies.map((child) => {
+          const childInheritedProperties = getInheritedProperties(currentRoute, child, inheritedProperties);
 
           return (
             <Policy
               key={uniqueId()}
               routeTree={routeTree}
-              currentRoute={route}
+              currentRoute={child}
               receivers={receivers}
               contactPointsState={contactPointsState}
               readOnly={readOnly}
-              inheritedProperties={inherited}
+              inheritedProperties={childInheritedProperties}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
               onDeletePolicy={onDeletePolicy}
@@ -298,6 +276,7 @@ const Policy: FC<PolicyComponentProps> = ({
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
               routesMatchingFilters={routesMatchingFilters}
+              matchingInstancesPreview={matchingInstancesPreview}
             />
           );
         })}
@@ -365,13 +344,14 @@ const InheritedProperties: FC<{ properties: InhertitableProperties }> = ({ prope
     content={
       <Stack direction="row" gap={0.5}>
         {Object.entries(properties).map(([key, value]) => {
-          // no idea how to do this with TypeScript
+          // no idea how to do this with TypeScript without type casting...
           return (
             <Label
               key={key}
               // @ts-ignore
               label={routePropertyToLabel(key)}
-              value={<Strong>{Array.isArray(value) ? value.join(', ') : value}</Strong>}
+              // @ts-ignore
+              value={<Strong>{routePropertyToValue(key, value)}</Strong>}
             />
           );
         })}
@@ -557,6 +537,29 @@ const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
     case 'repeat_interval':
       return 'Repeat interval';
   }
+};
+
+const routePropertyToValue = (key: keyof InhertitableProperties, value: string | string[]): React.ReactNode => {
+  const isNotGrouping = key === 'group_by' && Array.isArray(value) && value[0] === '...';
+  const isSingleGroup = key === 'group_by' && Array.isArray(value) && value.length === 0;
+
+  if (isNotGrouping) {
+    return (
+      <Span variant="bodySmall" color="secondary">
+        Not grouping
+      </Span>
+    );
+  }
+
+  if (isSingleGroup) {
+    return (
+      <Span variant="bodySmall" color="secondary">
+        Single group
+      </Span>
+    );
+  }
+
+  return Array.isArray(value) ? value.join(', ') : value;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

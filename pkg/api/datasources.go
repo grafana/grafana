@@ -20,7 +20,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -77,6 +77,7 @@ func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Respon
 		if plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type); exists {
 			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
 			dsItem.TypeName = plugin.Name
+			dsItem.Type = plugin.ID // may be from an alias
 		} else {
 			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
 		}
@@ -730,6 +731,15 @@ func (hs *HTTPServer) convertModelToDtos(ctx context.Context, ds *datasources.Da
 		ReadOnly:         ds.ReadOnly,
 	}
 
+	if hs.pluginStore != nil {
+		if plugin, exists := hs.pluginStore.Plugin(ctx, ds.Type); exists {
+			dto.TypeLogoUrl = plugin.Info.Logos.Small
+			dto.Type = plugin.ID // may be from an alias
+		} else {
+			dto.TypeLogoUrl = "public/img/icn-datasource.svg"
+		}
+	}
+
 	secrets, err := hs.DataSourcesService.DecryptedValues(ctx, ds)
 	if err == nil {
 		for k, v := range secrets {
@@ -801,23 +811,16 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *datasources.DataSource) response.Response {
-	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), ds.Type)
-	if !exists {
-		return response.Error(http.StatusInternalServerError, "Unable to find datasource plugin", nil)
-	}
-
-	dsInstanceSettings, err := adapters.ModelToInstanceSettings(ds, hs.decryptSecureJsonDataFn(c.Req.Context()))
+	pCtx, err := hs.pluginContextProvider.GetWithDataSource(c.Req.Context(), ds.Type, c.SignedInUser, ds)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Unable to get datasource model", err)
+		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+			return response.Error(http.StatusNotFound, "Unable to find datasource plugin", nil)
+		}
+		return response.Error(http.StatusInternalServerError, "Unable to get plugin context", err)
 	}
 	req := &backend.CheckHealthRequest{
-		PluginContext: backend.PluginContext{
-			User:                       adapters.BackendUserFromSignedInUser(c.SignedInUser),
-			OrgID:                      c.OrgID,
-			PluginID:                   plugin.ID,
-			DataSourceInstanceSettings: dsInstanceSettings,
-		},
-		Headers: map[string]string{},
+		PluginContext: pCtx,
+		Headers:       map[string]string{},
 	}
 
 	var dsURL string
@@ -856,12 +859,6 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 	}
 
 	return response.JSON(http.StatusOK, payload)
-}
-
-func (hs *HTTPServer) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
-	return func(ds *datasources.DataSource) (map[string]string, error) {
-		return hs.DataSourcesService.DecryptedValues(ctx, ds)
-	}
 }
 
 func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, user *user.SignedInUser, ds []*datasources.DataSource) ([]*datasources.DataSource, error) {

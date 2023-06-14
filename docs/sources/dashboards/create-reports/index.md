@@ -10,6 +10,10 @@ keywords:
   - reporting
   - export
   - pdf
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Reporting
 title: Create and manage reports
 weight: 85
@@ -26,7 +30,7 @@ Reporting enables you to automatically generate PDFs from any of your dashboards
 {{< figure src="/static/img/docs/enterprise/reports_list_8.1.png" max-width="500px" >}}
 -->
 
-Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes.
+Any changes you make to a dashboard used in a report are reflected the next time the report is sent. For example, if you change the time range in the dashboard, then the time range in the report also changes, unless you've configured a custom time range.
 
 For information about recent improvements to the reporting UI, refer to [Grafana reporting: How we improved the UX in Grafana](https://grafana.com/blog/2022/06/29/grafana-reporting-how-we-improved-the-ux-in-grafana/).
 
@@ -68,6 +72,14 @@ Only organization administrators can create reports by default. You can customiz
    - **Include a dashboard link:** Include a link to the dashboard from within the report email.
    - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 1. Preview and save the report.
+
+### Save as draft
+
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 9.1.0 and later and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
+{{% /admonition %}}
+
+You can save a report as a draft at any point during the report creation or update process. You can save a report as a draft even if it's missing required fields. Also, the report won't be sent according to its schedule while it's a draft.
 
 ### Choose template variables
 

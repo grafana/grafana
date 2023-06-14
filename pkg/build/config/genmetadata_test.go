@@ -72,10 +72,8 @@ func setUpEnv(t *testing.T, envMap map[string]string) {
 	t.Helper()
 
 	os.Clearenv()
-	err := os.Setenv("DRONE_COMMIT", "abcd12345")
-	require.NoError(t, err)
+	t.Setenv("DRONE_COMMIT", "abcd12345")
 	for k, v := range envMap {
-		err := os.Setenv(k, v)
-		require.NoError(t, err)
+		t.Setenv(k, v)
 	}
 }

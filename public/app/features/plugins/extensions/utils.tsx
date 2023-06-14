@@ -3,6 +3,7 @@ import React from 'react';
 
 import {
   type PluginExtensionLinkConfig,
+  type PluginExtensionComponentConfig,
   type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
   PluginExtensionTypes,
@@ -19,6 +20,12 @@ export function isPluginExtensionLinkConfig(
   extension: PluginExtensionConfig | undefined
 ): extension is PluginExtensionLinkConfig {
   return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
+}
+
+export function isPluginExtensionComponentConfig(
+  extension: PluginExtensionConfig | undefined
+): extension is PluginExtensionComponentConfig {
+  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.component;
 }
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
