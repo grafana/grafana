@@ -1,0 +1,82 @@
+package main
+
+import (
+	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+	"testing"
+
+	"github.com/grafana/grafana/pkg/build/config"
+	"github.com/stretchr/testify/require"
+	"github.com/urfave/cli/v2"
+)
+
+const (
+	DroneBuildEvent = "DRONE_BUILD_EVENT"
+	DroneTag        = "DRONE_TAG"
+)
+
+const whatsNewUrl = "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-"
+
+func TestWhatsNewChecker(t *testing.T) {
+	tests := []struct {
+		envMap             map[string]string
+		packageJsonVersion string
+		name               string
+		wantErr            bool
+	}{
+		{envMap: map[string]string{DroneBuildEvent: config.PullRequest}, packageJsonVersion: "", name: "non-tag event", wantErr: true},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "abcd123"}, packageJsonVersion: "", name: "non-semver compatible", wantErr: true},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "10.0.0"}, packageJsonVersion: "v10-0", name: "package.json version matches tag", wantErr: false},
+		{envMap: map[string]string{DroneBuildEvent: config.Tag, DroneTag: "10.0.0"}, packageJsonVersion: "v9-5", name: "package.json doesn't match tag", wantErr: true},
+	}
+	for _, tt := range tests {
+		app := cli.NewApp()
+		app.Version = "1.0.0"
+		context := cli.NewContext(app, &flag.FlagSet{}, nil)
+		t.Run(tt.name, func(t *testing.T) {
+			setUpEnv(t, tt.envMap)
+			err := createTempPackageJson(t, tt.packageJsonVersion)
+			require.NoError(t, err)
+			defer deleteTempPackageJson(t)
+
+			err = WhatsNewChecker(context)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func setUpEnv(t *testing.T, envMap map[string]string) {
+	t.Helper()
+
+	os.Clearenv()
+	t.Setenv("DRONE_COMMIT", "abcd12345")
+	for k, v := range envMap {
+		t.Setenv(k, v)
+	}
+}
+
+func createTempPackageJson(t *testing.T, version string) error {
+	t.Helper()
+
+	grafanaData := Grafana{WhatsNewUrl: fmt.Sprintf("%s%s/", whatsNewUrl, version)}
+	data := PackageJSON{Grafana: grafanaData}
+	file, _ := json.MarshalIndent(data, "", " ")
+
+	err := os.WriteFile("package.json", file, 0644)
+	require.NoError(t, err)
+
+	return nil
+}
+
+func deleteTempPackageJson(t *testing.T) {
+	t.Helper()
+
+	err := os.RemoveAll("package.json")
+	require.NoError(t, err)
+}
