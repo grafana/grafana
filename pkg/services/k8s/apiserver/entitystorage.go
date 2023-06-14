@@ -9,19 +9,17 @@ import (
 	"io"
 	"strings"
 
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
-
-	"github.com/grafana/kindsys"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	"github.com/grafana/kindsys"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"

@@ -4,11 +4,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/kindsys"
-
-	"github.com/grafana/grafana/pkg/registry/corekind"
-
 	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -18,6 +15,7 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
