@@ -369,34 +369,29 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     }}
                     className={css`
                       margin-bottom: 16px;
+                      color: ${config.theme2.colors.text.secondary};
+                      display: inline-block;
+                      padding-right: 8px;
+                      border-bottom: 1px solid transparent;
+                      &:hover {
+                        border-bottom: 1px solid ${config.theme2.colors.text.secondary};
+                      }
                     `}
                   >
-                    <div
+                    <Icon
                       className={css`
                         color: ${config.theme2.colors.text.secondary};
-                        display: inline-block;
-                        padding-right: 8px;
-                        border-bottom: 1px solid transparent;
-                        &:hover {
-                          border-bottom: 1px solid ${config.theme2.colors.text.secondary};
-                        }
+                      `}
+                      name="angle-left"
+                      size="xl"
+                    />{' '}
+                    <span
+                      className={css`
+                        vertical-align: middle;
                       `}
                     >
-                      <Icon
-                        className={css`
-                          color: ${config.theme2.colors.text.secondary};
-                        `}
-                        name="angle-left"
-                        size="xl"
-                      />{' '}
-                      <span
-                        className={css`
-                          vertical-align: middle;
-                        `}
-                      >
-                        Go back to <i>Transformations in use</i>
-                      </span>
-                    </div>
+                      Go back to <i>Transformations in use</i>
+                    </span>
                   </div>
                 )}
                 <p

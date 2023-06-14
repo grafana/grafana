@@ -32,6 +32,7 @@ export const rowsToFieldsTransformRegistryItem: TransformerRegistryItem<RowToFie
   name: rowsToFieldsTransformer.name,
   description: rowsToFieldsTransformer.description,
   state: PluginState.beta,
+  categories: new Set(['reformat']),
   help: `
 ### Use cases 
 

@@ -55,4 +55,5 @@ export const sortByTransformRegistryItem: TransformerRegistryItem<SortByTransfor
   transformation: standardTransformers.sortByTransformer,
   name: standardTransformers.sortByTransformer.name,
   description: standardTransformers.sortByTransformer.description,
+  categories: new Set(['reorderAndRename']),
 };

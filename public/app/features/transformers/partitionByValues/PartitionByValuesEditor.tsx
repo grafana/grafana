@@ -104,4 +104,5 @@ export const partitionByValuesTransformRegistryItem: TransformerRegistryItem<Par
   name: partitionByValuesTransformer.name,
   description: partitionByValuesTransformer.description,
   state: PluginState.alpha,
+  categories: new Set(['reformat']),
 };

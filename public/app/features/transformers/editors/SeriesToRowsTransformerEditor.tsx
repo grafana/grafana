@@ -16,4 +16,5 @@ export const seriesToRowsTransformerRegistryItem: TransformerRegistryItem<Series
   name: 'Series to rows',
   description: `Merge many series and return a single series with time, metric and value as columns.
                 Useful for showing multiple time series visualized in a table.`,
+  categories: new Set(['combine', 'reformat']),
 };

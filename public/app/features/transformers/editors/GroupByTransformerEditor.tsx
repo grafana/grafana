@@ -145,4 +145,5 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
   transformation: standardTransformers.groupByTransformer,
   name: standardTransformers.groupByTransformer.name,
   description: standardTransformers.groupByTransformer.description,
+  categories: new Set(['combine', 'calculateNewFields', 'reformat']),
 };

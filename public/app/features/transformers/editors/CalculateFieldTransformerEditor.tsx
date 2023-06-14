@@ -384,4 +384,5 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   transformation: standardTransformers.calculateFieldTransformer,
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
+  categories: new Set(['calculateNewFields']),
 };

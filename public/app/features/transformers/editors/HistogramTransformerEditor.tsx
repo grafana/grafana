@@ -81,4 +81,5 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   transformation: standardTransformers.histogramTransformer,
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
+  categories: new Set(['createNewVisualization']),
 };
