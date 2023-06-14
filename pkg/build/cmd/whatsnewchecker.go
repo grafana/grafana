@@ -19,6 +19,7 @@ var whatsNewRegex = regexp.MustCompile("^.*whats-new-in-(v\\d*-[\\d+]*)")
 
 type PackageJSON struct {
 	Grafana Grafana `json:"grafana"`
+	Version string  `json:"version"`
 }
 
 type Grafana struct {
@@ -32,8 +33,7 @@ func WhatsNewChecker(c *cli.Context) error {
 	}
 
 	if metadata.ReleaseMode.Mode != config.TagMode {
-		fmt.Println("Non-tag pipeline, exiting...")
-		return nil
+		return fmt.Errorf("non-tag pipeline, exiting")
 	}
 
 	tag := fmt.Sprintf("v%s", metadata.GrafanaVersion)
@@ -60,7 +60,7 @@ func WhatsNewChecker(c *cli.Context) error {
 	whatsNewVersion := whatsNewSplit[1]
 
 	if whatsNewVersion != majorMinorDigits {
-		return fmt.Errorf("whatsNewUrl in package.json needs to be updated to %s", strings.Replace(whatsNewSplit[0], whatsNewVersion, majorMinorDigits, 1))
+		return fmt.Errorf("whatsNewUrl in package.json needs to be updated to %s/", strings.Replace(whatsNewSplit[0], whatsNewVersion, majorMinorDigits, 1))
 	}
 
 	return nil
