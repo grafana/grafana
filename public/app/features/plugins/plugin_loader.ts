@@ -69,8 +69,14 @@ const importMap = {
   '@grafana/runtime': grafanaRuntime,
   '@grafana/slate-react': slateReact, // for backwards compatibility with older plugins
   '@grafana/ui': grafanaUI,
-  'app/core/app_events': appEvents,
-  'app/core/config': config,
+  'app/core/app_events': {
+    default: appEvents,
+    __useDefault: true,
+  },
+  'app/core/config': {
+    default: config,
+    __useDefault: true,
+  },
   'app/core/core': {
     appEvents: appEvents,
     contextSrv: contextSrv,
@@ -79,7 +85,7 @@ const importMap = {
     BackendSrv,
     getBackendSrv,
   },
-  'app/core/table_model': { default: TableModel, __usedefault: true },
+  'app/core/table_model': { default: TableModel, __useDefault: true },
   'app/core/time_series': { default: TimeSeries, __useDefault: true },
   'app/core/time_series2': { default: TimeSeries, __useDefault: true },
   'app/core/utils/datemath': grafanaData.dateMath,
@@ -121,7 +127,10 @@ const importMap = {
   'slate-react': slateReact,
   d3: d3,
   emotion: emotion,
-  jquery: jquery,
+  jquery: {
+    default: jquery,
+    __useDefault: true,
+  },
   lodash: _,
   moment: {
     default: moment,
