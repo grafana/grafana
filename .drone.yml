@@ -846,7 +846,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -1943,7 +1945,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5287,7 +5291,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6013,7 +6019,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6553,7 +6561,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6730,7 +6740,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
