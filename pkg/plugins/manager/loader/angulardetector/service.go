@@ -12,7 +12,6 @@ import (
 // They are executed in the specified order.
 var defaultDetectors = []detector{
 	&containsBytesDetector{pattern: []byte("PanelCtrl")},
-	&containsBytesDetector{pattern: []byte("QueryCtrl")},
 	&containsBytesDetector{pattern: []byte("ConfigCtrl")},
 	&containsBytesDetector{pattern: []byte("app/plugins/sdk")},
 	&containsBytesDetector{pattern: []byte("angular.isNumber(")},
@@ -20,9 +19,7 @@ var defaultDetectors = []detector{
 	&containsBytesDetector{pattern: []byte("ctrl.annotation")},
 	&containsBytesDetector{pattern: []byte("getLegacyAngularInjector")},
 
-	&regexDetector{regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
-	&regexDetector{regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
-	&regexDetector{regex: regexp.MustCompile(`System\.register\(`)},
+	&regexDetector{regex: regexp.MustCompile(`["']QueryCtrl["']`)},
 }
 
 // PatternsListInspector matches module.js against all the specified patterns, in sequence.
