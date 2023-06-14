@@ -100,6 +100,7 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
     >
       <div className={styles.leftColumn}>
         <Input
+          type="search"
           autoFocus
           className={styles.searchInput}
           value={search}

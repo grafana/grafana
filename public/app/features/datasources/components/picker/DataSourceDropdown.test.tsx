@@ -36,16 +36,12 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-jest.mock('../../hooks', () => {
-  const hooks = jest.requireActual('../../hooks');
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
-    ...hooks,
-    useDatasource: () => {
-      return mockDS;
-    },
-    useDatasources: () => {
-      return mockDSList;
-    },
+    getDataSourceSrv: () => ({
+      getList: () => mockDSList,
+      getInstanceSettings: () => mockDS,
+    }),
   };
 });
 
