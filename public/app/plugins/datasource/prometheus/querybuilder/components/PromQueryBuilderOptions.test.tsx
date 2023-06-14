@@ -80,6 +80,19 @@ describe('PromQueryBuilderOptions', () => {
     });
   });
 
+  it('does not call onRunQuery when selecting custom', async () => {
+    const { props } = setup();
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+
+    let legendModeSelect = screen.getByText('Auto').parentElement!;
+    await userEvent.click(legendModeSelect);
+
+    await selectOptionInTest(legendModeSelect, 'Custom');
+
+    expect(props.onRunQuery).toHaveBeenCalledTimes(0);
+  });
+
   it('Handle defaults with undefined range', () => {
     setup(getQueryWithDefaults({ refId: 'A', expr: '', range: undefined, instant: true }, CoreApp.Dashboard));
 

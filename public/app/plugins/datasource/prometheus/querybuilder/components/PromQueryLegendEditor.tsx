@@ -45,6 +45,7 @@ export const PromQueryLegendEditor = React.memo<Props>(({ legendFormat, onChange
     switch (value.value!) {
       case LegendFormatMode.Auto:
         onChange(LegendFormatMode.Auto);
+        onRunQuery();
         break;
       case LegendFormatMode.Custom:
         onChange('{{label_name}}');
@@ -55,9 +56,9 @@ export const PromQueryLegendEditor = React.memo<Props>(({ legendFormat, onChange
         break;
       case LegendFormatMode.Verbose:
         onChange('');
+        onRunQuery();
         break;
     }
-    onRunQuery();
   };
 
   return (
