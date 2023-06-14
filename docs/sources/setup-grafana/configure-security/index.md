@@ -71,9 +71,13 @@ Note that Grafana Cloud does not support having several organizations per instan
 
 ### Choosing between teams and organizations
 
-[Grafana teams] and Grafana organizations serve similar purposes in the Grafana platform. While both are designed to help manage and control access to resources, teams provide a more focused approach for smaller groups or projects. Teams also enable collaboration and shared ownership of resources among members, making it simple to manage access and control who has access to which resources.
+[Grafana teams] and Grafana organizations serve similar purposes in the Grafana platform. Both are designed to help group users and manage and control access to resources.
 
-In contrast, organizations provide a higher level of management for multiple teams and resources. They are designed for larger enterprises or organizations with a complex setup or multiple or different business models.
+Teams provide more flexibility, as recources can be accessible by multiple teams and team creation and management is simple.
+
+In contrast, organizations provide a high level of isolation, as resources cannot be shared between organizations.
+They are more difficult to manage than teams, as you have to create and update resources for each organization individually.
+Organizations are designed for larger enterprises or users with a complex access setup that requires full resource isolation.
 
 ## Access to external systems
 
@@ -109,7 +113,7 @@ In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise" >}}),
 {{< vimeo 742056367 >}}
 <br>
 
-## Service account tokens
+#### Service account tokens
 
 A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana's HTTP API.
 
