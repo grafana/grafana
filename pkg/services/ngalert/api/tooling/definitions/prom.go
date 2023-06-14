@@ -85,7 +85,7 @@ type RuleGroup struct {
 	Name string `json:"name"`
 	// required: true
 	File         string `json:"file"`
-	NamespaceUID string `json:"namespace_uid"`
+	NamespaceUID string `json:"namespaceUID"`
 	// In order to preserve rule ordering, while exposing type (alerting or recording)
 	// specific properties, both alerting and recording rules are exposed in the
 	// same array.
@@ -133,7 +133,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// UIDs of the datasources used in the rule query.
-	DatasourceUIDs []string `json:"datasource_uids"`
+	DatasourceUIDs []string `json:"datasourceUIDs"`
 	// required: true
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true

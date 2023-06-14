@@ -320,12 +320,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
-			"namespace_uid": "%s",
+			"namespaceUID": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
-				"datasource_uids": ["AUID"],
+				"datasourceUIDs": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -385,12 +385,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
-			"namespace_uid": "%s",
+			"namespaceUID": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
-				"datasource_uids": ["AUID"],
+				"datasourceUIDs": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -449,12 +449,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
-			"namespace_uid": "%s",
+			"namespaceUID": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
-				"datasource_uids": ["AUID", "BUID"],
+				"datasourceUIDs": ["AUID", "BUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
