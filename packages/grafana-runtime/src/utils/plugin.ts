@@ -1,11 +1,12 @@
-// @ts-ignore
-import System from 'systemjs/dist/system.js';
+import 'systemjs/dist/system';
+// Add ability to load plugins bundled as AMD format
+import 'systemjs/dist/extras/amd';
+// Add ability to load css, json, wasm
+import 'systemjs/dist/extras/module-types';
 
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
-
-// @ts-ignore
 
 /**
  * Option to specify a plugin css that should be applied for the dark
@@ -21,7 +22,7 @@ export interface PluginCssOptions {
 /**
  * @internal
  */
-export const SystemJS = System;
+export const SystemJS = window.System;
 
 /**
  * Use this to load css for a Grafana plugin by specifying a {@link PluginCssOptions}
@@ -31,8 +32,8 @@ export const SystemJS = System;
  * @public
  */
 export function loadPluginCss(options: PluginCssOptions): Promise<any> {
-  const theme = config.bootData.user.lightTheme ? options.light : options.dark;
-  return SystemJS.import(`${theme}!css`);
+  const cssPath = config.bootData.user.theme === 'light' ? options.light : options.dark;
+  return SystemJS.import(cssPath);
 }
 
 interface PluginImportUtils {

@@ -5,6 +5,9 @@ export declare global {
     __grafana_load_failed: () => void;
     public_cdn_path: string;
     nonce: string | undefined;
+    System: typeof System & {
+      shouldFetch: (url: string) => Boolean;
+    };
   }
 
   // Augment DOMParser to accept TrustedType sanitised content
