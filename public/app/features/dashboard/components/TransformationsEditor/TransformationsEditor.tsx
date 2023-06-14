@@ -374,6 +374,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     <div
                       className={css`
                         color: ${config.theme2.colors.text.secondary};
+                        display: inline-block;
+                        padding-right: 8px;
+                        border-bottom: 1px solid transparent;
+                        &:hover {
+                          border-bottom: 1px solid ${config.theme2.colors.text.secondary};
+                        }
                       `}
                     >
                       <Icon
@@ -386,9 +392,6 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       <span
                         className={css`
                           vertical-align: middle;
-                          &:hover {
-                            text-decoration: underline;
-                          }
                         `}
                       >
                         Go back to <i>Transformations in use</i>
@@ -399,6 +402,8 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 <p
                   className={css`
                     font-size: 16px;
+                    display: flex;
+                    align-items: center;
                   `}
                 >
                   <a
@@ -407,9 +412,16 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Transformations
-                  </a>{' '}
-                  allow you to manipulate your data before a visualization is applied.
+                    <span
+                      className={css`
+                        vertical-align: middle;
+                      `}
+                    >
+                      Transformations
+                    </span>{' '}
+                    <Icon name="external-link-alt" />
+                  </a>
+                  &nbsp;allow you to manipulate your data before a visualization is applied.
                 </p>
               </>
             )}
@@ -418,7 +430,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 aria-label={selectors.components.Transforms.searchInput}
                 value={search ?? ''}
                 autoFocus={!noTransforms}
-                placeholder="Add transformation"
+                placeholder="Search for transformation"
                 onChange={this.onSearchChange}
                 onKeyDown={this.onSearchKeyDown}
                 suffix={suffix}
@@ -492,7 +504,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
     return (
       <CustomScrollbar scrollTop={this.state.scrollTop} autoHeightMin="100%">
-        <Container padding="md">
+        <Container padding="lg">
           <div aria-label={selectors.components.TransformTab.content}>
             {hasTransforms && alert ? (
               <Alert
