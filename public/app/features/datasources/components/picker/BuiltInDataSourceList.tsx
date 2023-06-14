@@ -27,7 +27,7 @@ export function BuiltInDataSourceList({ className, current, onChange }: BuiltInD
       {grafanaDataSources.map((ds) => {
         return (
           <DataSourceCard
-            key={ds.id}
+            key={ds.uid}
             ds={ds}
             description={CUSTOM_DESCRIPTIONS_BY_UID[ds.uid]}
             selected={current === ds.id}
