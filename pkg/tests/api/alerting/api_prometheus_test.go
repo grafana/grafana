@@ -235,10 +235,12 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 		"groups": [{
 			"name": "arulegroup",
 			"file": "default",
+			"namespaceUID": "default",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -254,6 +256,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -297,6 +300,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -312,6 +316,7 @@ func TestIntegrationPrometheusRules(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -448,6 +453,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
@@ -461,6 +467,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -489,6 +496,7 @@ func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"datasourceUIDs": [],
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
