@@ -72,7 +72,6 @@ refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false,f
 useCachingService,GA,@grafana/grafana-operator-experience-squad,false,false,true,false
 enableElasticsearchBackendQuerying,preview,@grafana/observability-logs,false,false,false,false
 authenticationConfigUI,GA,@grafana/grafana-authnz-team,false,false,false,false
-pluginsAPIManifestKey,experimental,@grafana/plugins-platform-backend,false,false,false,false
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,false,false,false,true

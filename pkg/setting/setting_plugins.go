@@ -31,6 +31,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
 	cfg.PluginSettings = extractPluginSettings(iniFile.Sections())
 	cfg.PluginForcePublicKeyDownload = pluginsSection.Key("enforce_public_key_download").MustBool(false)
+	cfg.PluginSkipPublicKeyDownload = pluginsSection.Key("skip_public_key_download").MustBool(false)
 
 	pluginsAllowUnsigned := pluginsSection.Key("allow_loading_unsigned_plugins").MustString("")
 

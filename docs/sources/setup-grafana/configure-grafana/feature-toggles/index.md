@@ -109,7 +109,6 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                      |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
-| `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
