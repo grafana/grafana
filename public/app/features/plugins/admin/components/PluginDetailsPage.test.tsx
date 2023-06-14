@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -40,20 +40,24 @@ describe('PluginDetailsAngularDeprecation', () => {
     jest.resetAllMocks();
   });
 
-  it('renders the component for angular plugins', () => {
-    render(
-      <TestProvider>
-        <PluginDetailsPage pluginId="angular" />
-      </TestProvider>
+  it('renders the component for angular plugins', async () => {
+    await act(async () =>
+      render(
+        <TestProvider>
+          <PluginDetailsPage pluginId="angular" />
+        </TestProvider>
+      )
     );
     expect(screen.getByText(/angular plugin/i)).toBeVisible();
   });
 
-  it('does not render the component for non-angular plugins', () => {
-    render(
-      <TestProvider>
-        <PluginDetailsPage pluginId="not-angular" />
-      </TestProvider>
+  it('does not render the component for non-angular plugins', async () => {
+    await act(async () =>
+      render(
+        <TestProvider>
+          <PluginDetailsPage pluginId="not-angular" />
+        </TestProvider>
+      )
     );
     expect(screen.queryByText(/angular plugin/i)).toBeNull();
   });
