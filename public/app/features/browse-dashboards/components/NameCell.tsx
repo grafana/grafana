@@ -9,7 +9,6 @@ import { IconButton, Link, Spinner, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Span } from '@grafana/ui/src/unstable';
 
-import { usePrefetch } from '../api/browseDashboardsAPI';
 import { useChildrenByParentUIDState } from '../state';
 import { DashboardsTreeItem } from '../types';
 
@@ -24,8 +23,6 @@ type NameCellProps = CellProps<DashboardsTreeItem, unknown> & {
 export function NameCell({ row: { original: data }, onFolderClick }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
-  const prefetchFolderChildren = usePrefetch('getFolderChildren');
-  const prefetchFolderDetails = usePrefetch('getFolder');
   const childrenByParentUID = useChildrenByParentUIDState();
   const chevronRef = useRef<HTMLButtonElement>(null);
   const isLoading = isOpen && !childrenByParentUID[item.uid];
@@ -70,9 +67,6 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
               size={CHEVRON_SIZE}
               className={styles.chevron}
               ref={chevronRef}
-              onMouseEnter={() => {
-                // prefetchFolderChildren(item.uid);
-              }}
               onClick={() => {
                 if (!isOpen && !childrenByParentUID[item.uid]) {
                   setShouldRestoreFocus(true);
@@ -92,11 +86,6 @@ export function NameCell({ row: { original: data }, onFolderClick }: NameCellPro
           <Link
             onClick={() => {
               reportInteraction('manage_dashboards_result_clicked');
-            }}
-            onMouseEnter={() => {
-              if (item.kind === 'folder') {
-                // prefetchFolderDetails(item.uid);
-              }
             }}
             href={item.url}
             className={styles.link}
