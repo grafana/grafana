@@ -6,6 +6,7 @@ import { DataSourceRef } from '@grafana/schema';
 import { useDatasources } from '../../hooks';
 
 import { DataSourceCard } from './DataSourceCard';
+import { isDataSourceMatch } from './utils';
 
 const CUSTOM_DESCRIPTIONS_BY_UID: Record<string, string> = {
   grafana: 'Discover visualizations using mock data',
@@ -27,10 +28,10 @@ export function BuiltInDataSourceList({ className, current, onChange }: BuiltInD
       {grafanaDataSources.map((ds) => {
         return (
           <DataSourceCard
-            key={ds.id}
+            key={ds.uid}
             ds={ds}
             description={CUSTOM_DESCRIPTIONS_BY_UID[ds.uid]}
-            selected={current === ds.id}
+            selected={isDataSourceMatch(ds, current)}
             onClick={() => onChange(ds)}
           />
         );

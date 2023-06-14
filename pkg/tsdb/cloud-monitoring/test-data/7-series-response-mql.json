@@ -13,6 +13,9 @@
       {
         "key": "metric.response_code_class",
         "valueType": "INT64"
+      },
+      {
+        "key": "metadata.app"
       }
     ],
     "pointDescriptors": [
@@ -37,6 +40,9 @@
         },
         {
           "int64Value": "200"
+        },
+        {
+          "stringValue": "test-app"
         }
       ],
       "pointData": [

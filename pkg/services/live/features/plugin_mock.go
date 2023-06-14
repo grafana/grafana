@@ -5,13 +5,12 @@
 package features
 
 import (
-	"context"
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	"github.com/grafana/grafana/pkg/services/user"
+	user "github.com/grafana/grafana/pkg/services/user"
 )
 
 // MockPluginContextGetter is a mock of PluginContextGetter interface.
@@ -38,17 +37,16 @@ func (m *MockPluginContextGetter) EXPECT() *MockPluginContextGetterMockRecorder 
 }
 
 // GetPluginContext mocks base method.
-func (m *MockPluginContextGetter) GetPluginContext(ctx context.Context, arg0 *user.SignedInUser, arg1, arg2 string) (backend.PluginContext, bool, error) {
+func (m *MockPluginContextGetter) GetPluginContext(arg0 context.Context, arg1 *user.SignedInUser, arg2, arg3 string, arg4 bool) (backend.PluginContext, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetPluginContext", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(backend.PluginContext)
-	ret1, _ := ret[1].(bool)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetPluginContext indicates an expected call of GetPluginContext.
-func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(ctx context.Context, arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockPluginContextGetterMockRecorder) GetPluginContext(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPluginContext", reflect.TypeOf((*MockPluginContextGetter)(nil).GetPluginContext), arg0, arg1, arg2, arg3, arg4)
 }
