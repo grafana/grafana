@@ -1,17 +1,15 @@
-import { NavIndex, NavSection } from '@grafana/data';
+import { NavIndex } from '@grafana/data';
 
 export const mockNavModel: NavIndex = {
   home: {
     id: 'home',
     text: 'Home',
-    section: NavSection.Core,
     icon: 'home-alt',
     url: '/',
   },
   dashboards: {
     id: 'dashboards',
     text: 'Dashboards',
-    section: NavSection.Core,
     subTitle: 'Manage dashboards and folders',
     icon: 'apps',
     url: '/dashboards',
@@ -39,12 +37,6 @@ export const mockNavModel: NavIndex = {
         text: 'Library panels',
         icon: 'library-panel',
         url: '/library-panels',
-      },
-      {
-        id: 'divider',
-        text: 'Divider',
-        divider: true,
-        hideFromTabs: true,
       },
       {
         id: 'new-dashboard',
@@ -79,7 +71,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -107,12 +98,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -148,7 +133,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -176,12 +160,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -217,7 +195,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -245,12 +222,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -286,7 +257,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -314,81 +284,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
-        },
-        {
-          id: 'new-dashboard',
-          text: 'New dashboard',
-          icon: 'plus',
-          url: '/dashboard/new',
-          hideFromTabs: true,
-        },
-        {
-          id: 'new-folder',
-          text: 'New folder',
-          subTitle: 'Create a new folder to organize your dashboards',
-          icon: 'plus',
-          url: '/dashboards/folder/new',
-          hideFromTabs: true,
-        },
-        {
-          id: 'import',
-          text: 'Import',
-          subTitle: 'Import dashboard from file or Grafana.com',
-          icon: 'plus',
-          url: '/dashboard/import',
-          hideFromTabs: true,
-        },
-      ],
-    },
-  },
-  divider: {
-    id: 'divider',
-    text: 'Divider',
-    divider: true,
-    hideFromTabs: true,
-    parentItem: {
-      id: 'dashboards',
-      text: 'Dashboards',
-      section: NavSection.Core,
-      subTitle: 'Manage dashboards and folders',
-      icon: 'apps',
-      url: '/dashboards',
-      children: [
-        {
-          id: 'manage-dashboards',
-          text: 'Browse',
-          icon: 'sitemap',
-          url: '/dashboards',
-        },
-        {
-          id: 'playlists',
-          text: 'Playlists',
-          icon: 'presentation-play',
-          url: '/playlists',
-        },
-        {
-          id: 'snapshots',
-          text: 'Snapshots',
-          icon: 'camera',
-          url: '/dashboard/snapshots',
-        },
-        {
-          id: 'library-panels',
-          text: 'Library panels',
-          icon: 'library-panel',
-          url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -425,7 +320,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -453,12 +347,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -496,7 +384,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -524,12 +411,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -567,7 +448,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'dashboards',
       text: 'Dashboards',
-      section: NavSection.Core,
       subTitle: 'Manage dashboards and folders',
       icon: 'apps',
       url: '/dashboards',
@@ -595,12 +475,6 @@ export const mockNavModel: NavIndex = {
           text: 'Library panels',
           icon: 'library-panel',
           url: '/library-panels',
-        },
-        {
-          id: 'divider',
-          text: 'Divider',
-          divider: true,
-          hideFromTabs: true,
         },
         {
           id: 'new-dashboard',
@@ -636,7 +510,6 @@ export const mockNavModel: NavIndex = {
   explore: {
     id: 'explore',
     text: 'Explore',
-    section: NavSection.Core,
     subTitle: 'Explore your data',
     icon: 'compass',
     url: '/explore',
@@ -644,7 +517,6 @@ export const mockNavModel: NavIndex = {
   alerting: {
     id: 'alerting',
     text: 'Alerting',
-    section: NavSection.Core,
     subTitle: 'Alert rules and notifications',
     icon: 'bell',
     url: '/alerting/list',
@@ -671,7 +543,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -699,7 +570,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'alerting',
       text: 'Alerting',
-      section: NavSection.Core,
       subTitle: 'Alert rules and notifications',
       icon: 'bell',
       url: '/alerting/list',
@@ -722,7 +592,6 @@ export const mockNavModel: NavIndex = {
   cfg: {
     id: 'cfg',
     text: 'Configuration',
-    section: NavSection.Config,
     subTitle: 'Organization: Main Org',
     icon: 'cog',
     url: '/datasources',
@@ -773,7 +642,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -825,7 +693,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -877,7 +744,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -929,7 +795,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -981,7 +846,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -1033,7 +897,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'cfg',
       text: 'Configuration',
-      section: NavSection.Config,
       subTitle: 'Organization: Main Org',
       icon: 'cog',
       url: '/datasources',
@@ -1080,7 +943,6 @@ export const mockNavModel: NavIndex = {
   admin: {
     id: 'admin',
     text: 'Server Admin',
-    section: NavSection.Config,
     subTitle: 'Manage all users and orgs',
     icon: 'shield',
     url: '/admin/users',
@@ -1120,7 +982,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -1161,7 +1022,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -1208,7 +1068,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -1249,7 +1108,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'admin',
       text: 'Server Admin',
-      section: NavSection.Config,
       subTitle: 'Manage all users and orgs',
       icon: 'shield',
       url: '/admin/users',
@@ -1285,7 +1143,6 @@ export const mockNavModel: NavIndex = {
   profile: {
     id: 'profile',
     text: 'admin',
-    section: NavSection.Config,
     img: '/avatar/46d229b033af06a191ff2267bca9ae56',
     url: '/profile',
     children: [
@@ -1319,7 +1176,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       children: [
@@ -1354,7 +1210,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       children: [
@@ -1391,7 +1246,6 @@ export const mockNavModel: NavIndex = {
     parentItem: {
       id: 'profile',
       text: 'admin',
-      section: NavSection.Config,
       img: '/avatar/46d229b033af06a191ff2267bca9ae56',
       url: '/profile',
       children: [
@@ -1421,7 +1275,6 @@ export const mockNavModel: NavIndex = {
   help: {
     id: 'help',
     text: 'Help',
-    section: NavSection.Config,
     subTitle: 'Grafana v8.5.0-pre (f1c4da095b)',
     icon: 'question-circle',
     url: '#',

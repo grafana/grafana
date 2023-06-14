@@ -12,7 +12,7 @@ import { GraphiteQuery, GraphiteQueryType } from './types';
 import { DEFAULT_GRAPHITE_VERSION } from './versions';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -178,7 +178,7 @@ describe('graphiteDatasource', () => {
     it('should convert to millisecond resolution', async () => {
       await expect(response).toEmitValuesWith((values: any) => {
         const results = values[0];
-        expect(results.data[0].fields[1].values.get(0)).toBe(10);
+        expect(results.data[0].fields[1].values[0]).toBe(10);
       });
     });
   });

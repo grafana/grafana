@@ -17,7 +17,7 @@ import { DashboardQueryEditor } from './DashboardQueryEditor';
 import { SHARED_DASHBOARD_QUERY } from './types';
 
 jest.mock('app/core/config', () => ({
-  ...(jest.requireActual('app/core/config') as unknown as object),
+  ...jest.requireActual('app/core/config'),
   panels: {
     timeseries: {
       info: {

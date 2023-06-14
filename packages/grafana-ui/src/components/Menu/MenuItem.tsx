@@ -30,7 +30,7 @@ export interface MenuItemProps<T = any> {
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
-  onClick?: (event?: React.MouseEvent<HTMLElement>, payload?: T) => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
@@ -44,6 +44,10 @@ export interface MenuItemProps<T = any> {
   childItems?: Array<ReactElement<MenuItemProps>>;
   /** Custom style for SubMenu */
   customSubMenuContainerStyles?: CSSProperties;
+  /** Shortcut key combination */
+  shortcut?: string;
+  /** Test id for e2e tests and fullstory*/
+  testId?: string;
 }
 
 /** @internal */
@@ -65,6 +69,8 @@ export const MenuItem = React.memo(
       role = 'menuitem',
       tabIndex = -1,
       customSubMenuContainerStyles,
+      shortcut,
+      testId,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
@@ -132,6 +138,8 @@ export const MenuItem = React.memo(
       localRef?.current?.focus();
     };
 
+    const hasShortcut = Boolean(shortcut && shortcut.length > 0);
+
     return (
       <ItemElement
         target={target}
@@ -145,6 +153,7 @@ export const MenuItem = React.memo(
         role={url === undefined ? role : undefined}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
+        data-testid={testId}
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
@@ -153,18 +162,26 @@ export const MenuItem = React.memo(
         <>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
-        </>
 
-        {hasSubMenu && (
-          <SubMenu
-            items={childItems}
-            isOpen={isSubMenuOpen}
-            openedWithArrow={openedWithArrow}
-            setOpenedWithArrow={setOpenedWithArrow}
-            close={closeSubMenu}
-            customStyle={customSubMenuContainerStyles}
-          />
-        )}
+          <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
+            {hasShortcut && (
+              <div className={styles.shortcut}>
+                <Icon name="keyboard" aria-hidden />
+                {shortcut}
+              </div>
+            )}
+            {hasSubMenu && (
+              <SubMenu
+                items={childItems}
+                isOpen={isSubMenuOpen}
+                openedWithArrow={openedWithArrow}
+                setOpenedWithArrow={setOpenedWithArrow}
+                close={closeSubMenu}
+                customStyle={customSubMenuContainerStyles}
+              />
+            )}
+          </div>
+        </>
       </ItemElement>
     );
   })
@@ -237,6 +254,25 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-right: 10px;
       margin-left: -4px;
       color: ${theme.colors.text.secondary};
+    `,
+    rightWrapper: css`
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    `,
+    shortcutIcon: css`
+      margin-right: ${theme.spacing(1)};
+    `,
+    withShortcut: css`
+      min-width: ${theme.spacing(10.5)};
+    `,
+    shortcut: css`
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(2)};
+      color: ${theme.colors.text.secondary};
+      opacity: 0.7;
     `,
   };
 };

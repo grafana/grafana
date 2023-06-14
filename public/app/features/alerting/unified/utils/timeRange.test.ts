@@ -12,7 +12,7 @@ describe('timeRange', () => {
         const expressionQuery: AlertQuery = {
           refId: 'B',
           queryType: 'expression',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             queryType: 'query',
             datasource: '__expr__',
@@ -40,7 +40,7 @@ describe('timeRange', () => {
         const expressionQuery: AlertQuery = {
           refId: 'C',
           queryType: 'expression',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             queryType: 'query',
             datasource: '__expr__',
@@ -80,7 +80,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -105,7 +105,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'C',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -142,7 +142,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',
@@ -175,7 +175,7 @@ describe('timeRange', () => {
       const expressionQuery: AlertQuery = {
         refId: 'B',
         queryType: 'expression',
-        datasourceUid: '-100',
+        datasourceUid: '__expr__',
         model: {
           queryType: 'query',
           datasource: '__expr__',

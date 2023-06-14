@@ -1,0 +1,27 @@
+{
+  "results": {
+    "fields": {
+      "status": 200,
+      "frames": [
+        {
+          "schema": {
+            "refId": "fields",
+            "meta": {
+              "executedQueryString": "SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'DataMaker' AND table_name = 'RandomIntsWithTimes' ORDER BY column_name"
+            },
+            "fields": [
+              { "name": "COLUMN_NAME", "type": "string", "typeInfo": { "frame": "string", "nullable": true } },
+              { "name": "DATA_TYPE", "type": "string", "typeInfo": { "frame": "string", "nullable": true } }
+            ]
+          },
+          "data": {
+            "values": [
+              ["createdAt", "id", "time", "updatedAt", "bigint"],
+              ["datetime", "int", "datetime", "datetime", "int"]
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

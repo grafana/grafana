@@ -32,14 +32,14 @@ export type GraphContextMenuProps = ContextMenuProps & {
 };
 
 /** @internal */
-export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
+export const GraphContextMenu = ({
   getContextMenuSource,
   timeZone,
   itemsGroup,
   dimensions,
   contextDimensions,
   ...otherProps
-}) => {
+}: GraphContextMenuProps) => {
   const source = getContextMenuSource();
 
   //  Do not render items that do not have label specified

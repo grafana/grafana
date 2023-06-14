@@ -74,11 +74,11 @@ type Service struct {
 
 func DataSourceModel(orgId int64) *datasources.DataSource {
 	return &datasources.DataSource{
-		Id:             DatasourceID,
-		Uid:            DatasourceUID,
+		ID:             DatasourceID,
+		UID:            DatasourceUID,
 		Name:           DatasourceName,
 		Type:           "grafana",
-		OrgId:          orgId,
+		OrgID:          orgId,
 		JsonData:       simplejson.New(),
 		SecureJsonData: make(map[string][]byte),
 	}

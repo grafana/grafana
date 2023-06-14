@@ -1,0 +1,16 @@
+[{
+  "alias": "",
+  "bucketAggs": [
+    {
+      "field": "@timestamp",
+      "id": "2",
+      "settings": { "interval": "1m" },
+      "type": "date_histogram"
+    }
+  ],
+  "datasource": { "type": "elasticsearch", "uid": "uid" },
+  "datasourceId": 42,
+  "metrics": [{ "field": "counter", "id": "1", "type": "avg" }],
+  "query": "",
+  "refId": "A"
+}]

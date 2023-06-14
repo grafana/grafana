@@ -1,16 +1,15 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { serializeStateToUrlParam } from '@grafana/data';
-import { locationService, config } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
+import { ExploreId } from 'app/types';
 
-import { changeDatasource } from './spec/helper/interactions';
-import { makeLogsQueryResponse, makeMetricsQueryResponse } from './spec/helper/query';
+import { makeLogsQueryResponse } from './spec/helper/query';
 import { setupExplore, tearDown, waitForExplore } from './spec/helper/setup';
 import * as mainState from './state/main';
-import * as queryState from './state/query';
 
 jest.mock('app/core/core', () => {
   return {
@@ -39,131 +38,51 @@ describe('ExplorePage', () => {
     tearDown();
   });
 
-  describe('Handles datasource states', () => {
-    it('shows warning if there are no data sources', async () => {
-      setupExplore({ datasources: [] });
-      await waitFor(() => screen.getByText(/Explore requires at least one data source/i));
-    });
-
-    it('handles changing the datasource manually', async () => {
-      const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}', refId: 'A' }]) };
-      const { datasources } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-      await waitForExplore();
-      await changeDatasource('elastic');
-
-      await screen.findByText('elastic Editor input:');
-      expect(datasources.elastic.query).not.toBeCalled();
-      expect(locationService.getSearchObject()).toEqual({
-        orgId: '1',
-        left: serializeStateToUrlParam({
-          datasource: 'elastic-uid',
-          queries: [{ refId: 'A', datasource: { type: 'logs', uid: 'elastic-uid' } }],
-          range: { from: 'now-1h', to: 'now' },
-        }),
-      });
-    });
-  });
-
-  describe('Handles running/not running query', () => {
-    it('inits url and renders editor but does not call query on empty url', async () => {
-      const { datasources } = setupExplore();
-      await waitForExplore();
-
-      // At this point url should be initialised to some defaults
-      expect(locationService.getSearchObject()).toEqual({
-        orgId: '1',
-        left: serializeStateToUrlParam({
-          datasource: 'loki-uid',
-          queries: [{ refId: 'A', datasource: { type: 'logs', uid: 'loki-uid' } }],
-          range: { from: 'now-1h', to: 'now' },
-        }),
-      });
-      expect(datasources.loki.query).not.toBeCalled();
-    });
-
-    it('runs query when url contains query and renders results', async () => {
-      const urlParams = {
-        left: serializeStateToUrlParam({
-          datasource: 'loki-uid',
-          queries: [{ refId: 'A', expr: '{ label="value"}' }],
-          range: { from: 'now-1h', to: 'now' },
-        }),
-      };
-      const { datasources } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-
-      // Make sure we render the logs panel
-      await screen.findByText(/^Logs$/);
-
-      // Make sure we render the log line
-      await screen.findByText(/custom log line/i);
-
-      // And that the editor gets the expr from the url
-      await screen.findByText(`loki Editor input: { label="value"}`);
-
-      // We did not change the url
-      expect(locationService.getSearchObject()).toEqual({
-        orgId: '1',
-        ...urlParams,
-      });
-
-      // We called the data source query method once
-      expect(datasources.loki.query).toBeCalledTimes(1);
-      expect(jest.mocked(datasources.loki.query).mock.calls[0][0]).toMatchObject({
-        targets: [{ expr: '{ label="value"}' }],
-      });
-    });
-
-    it('handles url change and runs the new query', async () => {
-      const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-      const { datasources } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-      // Wait for rendering the logs
-      await screen.findByText(/custom log line/i);
-
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
-
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
-      });
-
-      // Editor renders the new query
-      await screen.findByText(`loki Editor input: { label="different"}`);
-      // Renders new response
-      await screen.findByText(/different log/i);
-    });
-
-    it('handles url change and runs the new query with different datasource', async () => {
-      const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-      const { datasources } = setupExplore({ urlParams });
-      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-      // Wait for rendering the logs
-      await screen.findByText(/custom log line/i);
-      await screen.findByText(`loki Editor input: { label="value"}`);
-
-      jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
-
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
-      });
-
-      // Editor renders the new query
-      await screen.findByText(`elastic Editor input: other query`);
-      // Renders graph
-      await screen.findByText(/Graph/i);
-    });
-  });
-
   describe('Handles open/close splits and related events in UI and URL', () => {
     it('opens the split pane when split button is clicked', async () => {
-      setupExplore();
+      const { location } = setupExplore();
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(1);
+
+        // initializing explore replaces the first history entry
+        expect(location.getHistory().length).toBe(1);
+        expect(location.getHistory().action).toBe('REPLACE');
+      });
+
       // Wait for rendering the editor
-      const splitButton = await screen.findByText(/split/i);
-      fireEvent.click(splitButton);
+      const splitButton = await screen.findByRole('button', { name: /split/i });
+      await userEvent.click(splitButton);
       await waitFor(() => {
         const editors = screen.getAllByText('loki Editor input:');
         expect(editors.length).toBe(2);
+        // a new entry is pushed to the history
+        expect(location.getHistory().length).toBe(2);
+      });
+
+      act(() => {
+        location.getHistory().goBack();
+      });
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(1);
+        // going back pops the history
+        expect(location.getHistory().action).toBe('POP');
+        expect(location.getHistory().length).toBe(2);
+      });
+
+      act(() => {
+        location.getHistory().goForward();
+      });
+
+      await waitFor(() => {
+        const editors = screen.getAllByText('loki Editor input:');
+        expect(editors.length).toBe(2);
+        // going forward pops the history
+        expect(location.getHistory().action).toBe('POP');
+        expect(location.getHistory().length).toBe(2);
       });
     });
 
@@ -181,7 +100,7 @@ describe('ExplorePage', () => {
         }),
       };
 
-      const { datasources } = setupExplore({ urlParams });
+      const { datasources, location } = setupExplore({ urlParams });
       jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
       jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -196,14 +115,11 @@ describe('ExplorePage', () => {
       expect(logsLines.length).toBe(2);
 
       // And that the editor gets the expr from the url
-      await screen.findByText(`loki Editor input: { label="value"}`);
-      await screen.findByText(`elastic Editor input: error`);
+      expect(screen.getByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
+      expect(screen.getByText(`elastic Editor input: error`)).toBeInTheDocument();
 
       // We did not change the url
-      expect(locationService.getSearchObject()).toEqual({
-        orgId: '1',
-        ...urlParams,
-      });
+      expect(location.getSearchObject()).toEqual(expect.objectContaining(urlParams));
 
       // We called the data source query method once
       expect(datasources.loki.query).toBeCalledTimes(1);
@@ -217,37 +133,50 @@ describe('ExplorePage', () => {
       });
     });
 
+    // TODO: the following tests are using the compact format, we should use the current format instead
+    // and have a dedicated test ensuring the compact format is parsed correctly
     it('can close a panel from a split', async () => {
       const urlParams = {
         left: JSON.stringify(['now-1h', 'now', 'loki', { refId: 'A' }]),
         right: JSON.stringify(['now-1h', 'now', 'elastic', { refId: 'A' }]),
       };
-      setupExplore({ urlParams });
-      const closeButtons = await screen.findAllByLabelText(/Close split pane/i);
+      const { location } = setupExplore({ urlParams });
+      let closeButtons = await screen.findAllByLabelText(/Close split pane/i);
       await userEvent.click(closeButtons[1]);
 
+      expect(location.getHistory().length).toBe(1);
+
       await waitFor(() => {
-        const postCloseButtons = screen.queryAllByLabelText(/Close split pane/i);
-        expect(postCloseButtons.length).toBe(0);
+        closeButtons = screen.queryAllByLabelText(/Close split pane/i);
+        expect(closeButtons.length).toBe(0);
+        // Closing a pane using the split close button causes a new entry to be pushed in the history
+        expect(location.getHistory().length).toBe(2);
       });
     });
 
-    it('handles url change to split view', async () => {
+    it('Reacts to URL changes and opens a pane if an entry is pushed to history', async () => {
       const urlParams = {
         left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
       };
-      const { datasources } = setupExplore({ urlParams });
+      const { datasources, location } = setupExplore({ urlParams });
       jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
       jest.mocked(datasources.elastic.query).mockReturnValue(makeLogsQueryResponse());
 
-      locationService.partial({
-        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
-        right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+      await waitFor(() => {
+        expect(screen.getByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
       });
 
-      // Editor renders the new query
-      await screen.findByText(`loki Editor input: { label="value"}`);
-      await screen.findByText(`elastic Editor input: error`);
+      act(() => {
+        location.partial({
+          left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]),
+          right: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'error' }]),
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
+        expect(screen.getByText(`elastic Editor input: error`)).toBeInTheDocument();
+      });
     });
 
     it('handles opening split with split open func', async () => {
@@ -258,38 +187,42 @@ describe('ExplorePage', () => {
       jest.mocked(datasources.loki.query).mockReturnValue(makeLogsQueryResponse());
       jest.mocked(datasources.elastic.query).mockReturnValue(makeLogsQueryResponse());
 
-      // This is mainly to wait for render so that the left pane state is initialized as that is needed for splitOpen
-      // to work
-      await screen.findByText(`loki Editor input: { label="value"}`);
+      // Wait for the left pane to render
+      await waitFor(async () => {
+        expect(await screen.findByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
+      });
 
-      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+      act(() => {
+        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+      });
 
       // Editor renders the new query
-      await screen.findByText(`elastic Editor input: error`);
-      await screen.findByText(`loki Editor input: { label="value"}`);
+      expect(await screen.findByText(`elastic Editor input: error`)).toBeInTheDocument();
+      expect(await screen.findByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
     });
 
     it('handles split size events and sets relevant variables', async () => {
       setupExplore();
+
       const splitButton = await screen.findByText(/split/i);
-      fireEvent.click(splitButton);
-      await waitForExplore(undefined, true);
-      let widenButton = await screen.findAllByLabelText('Widen pane');
-      let narrowButton = await screen.queryAllByLabelText('Narrow pane');
+      await userEvent.click(splitButton);
+      await waitForExplore(ExploreId.left);
+
+      expect(await screen.findAllByLabelText('Widen pane')).toHaveLength(2);
+      expect(screen.queryByLabelText('Narrow pane')).not.toBeInTheDocument();
+
       const panes = screen.getAllByRole('main');
-      expect(widenButton.length).toBe(2);
-      expect(narrowButton.length).toBe(0);
+
       expect(Number.parseInt(getComputedStyle(panes[0]).width, 10)).toBe(1000);
       expect(Number.parseInt(getComputedStyle(panes[1]).width, 10)).toBe(1000);
       const resizer = screen.getByRole('presentation');
+
       fireEvent.mouseDown(resizer, { buttons: 1 });
       fireEvent.mouseMove(resizer, { clientX: -700, buttons: 1 });
       fireEvent.mouseUp(resizer);
-      widenButton = await screen.findAllByLabelText('Widen pane');
-      narrowButton = await screen.queryAllByLabelText('Narrow pane');
-      expect(widenButton.length).toBe(1);
-      expect(narrowButton.length).toBe(1);
-      // the autosizer is mocked so there is no actual resize here
+
+      expect(await screen.findAllByLabelText('Widen pane')).toHaveLength(1);
+      expect(await screen.findAllByLabelText('Narrow pane')).toHaveLength(1);
     });
   });
 
@@ -319,210 +252,249 @@ describe('ExplorePage', () => {
       // to work
       await screen.findByText(`loki Editor input: { label="value"}`);
 
-      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+      act(() => {
+        store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', query: { expr: 'error', refId: 'A' } }));
+      });
       await waitFor(() => expect(document.title).toEqual('Explore - loki | elastic - Grafana'));
     });
   });
 
   describe('Handles different URL datasource redirects', () => {
-    it('No params, no store value uses default data source', async () => {
-      setupExplore();
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
-
-    it('No datasource in root or query and no store value uses default data source', async () => {
-      setupExplore({ urlParams: 'orgId=1&left={"queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}' });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
-
-    it('No datasource in root or query with store value uses store value data source', async () => {
-      setupExplore({
-        urlParams: 'orgId=1&left={"queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+    describe('exploreMixedDatasource on', () => {
+      beforeAll(() => {
+        config.featureToggles.exploreMixedDatasource = true;
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
 
-    it('UID datasource in root uses root data source', async () => {
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      describe('When root datasource is not specified in the URL', () => {
+        it('Redirects to default datasource', async () => {
+          const { location } = setupExplore({ mixedEnabled: true });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+
+            expect(urlParams).toBe(
+              'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+          expect(location.getHistory()).toHaveLength(1);
+        });
+
+        it('Redirects to last used datasource when available', async () => {
+          const { location } = setupExplore({
+            prevUsedDatasource: { orgId: 1, datasource: 'elastic-uid' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+          expect(location.getHistory()).toHaveLength(1);
+        });
+
+        it("Redirects to first query's datasource", async () => {
+          const { location } = setupExplore({
+            urlParams: {
+              left: '{"queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+            },
+            prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+          expect(location.getHistory()).toHaveLength(1);
+        });
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
 
-    it('Name datasource in root uses root data source, converts to UID', async () => {
-      setupExplore({
-        urlParams: 'orgId=1&left={"datasource":"loki","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      describe('When root datasource is specified in the URL', () => {
+        it('Uses the datasource in the URL', async () => {
+          const { location } = setupExplore({
+            urlParams: {
+              left: '{"datasource":"elastic-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}',
+            },
+            prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"elastic-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+
+          expect(location.getHistory()).toHaveLength(1);
+        });
+
+        it('Filters out queries not using the root datasource', async () => {
+          const { location } = setupExplore({
+            urlParams: {
+              left: '{"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+            },
+            prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"elastic-uid","queries":[{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+        });
+
+        it('Fallbacks to last used datasource if root datasource does not exist', async () => {
+          const { location } = setupExplore({
+            urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
+            prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+        });
+
+        it('Fallbacks to default datasource if root datasource does not exist and last used datasource does not exist', async () => {
+          const { location } = setupExplore({
+            urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
+            prevUsedDatasource: { orgId: 1, datasource: 'I DO NOT EXIST' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+        });
+
+        it('Fallbacks to default datasource if root datasource does not exist there is no last used datasource', async () => {
+          const { location } = setupExplore({
+            urlParams: { left: '{"datasource":"NON-EXISTENT","range":{"from":"now-1h","to":"now"}}' },
+            mixedEnabled: true,
+          });
+          await waitForExplore();
+
+          await waitFor(() => {
+            const urlParams = decodeURIComponent(location.getSearch().toString());
+            expect(urlParams).toBe(
+              'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+            );
+          });
+        });
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A"}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
 
-    it('Datasource ref in query, none in root uses query datasource', async () => {
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      it('Queries using nonexisting datasources gets removed', async () => {
+        const { location } = setupExplore({
+          urlParams: {
+            left: '{"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"NON-EXISTENT","uid":"NON-EXISTENT"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+          },
+          prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+          mixedEnabled: true,
+        });
+        await waitForExplore();
+
+        await waitFor(() => {
+          const urlParams = decodeURIComponent(location.getSearch().toString());
+          expect(urlParams).toBe(
+            'left={"datasource":"--+Mixed+--","queries":[{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+          );
+        });
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
 
-    it('Datasource ref in query with matching UID in root uses matching datasource', async () => {
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      it('Only keeps queries using root datasource', async () => {
+        const { location } = setupExplore({
+          urlParams: {
+            left: '{"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+          },
+          prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+          mixedEnabled: true,
+        });
+
+        await waitForExplore();
+
+        await waitFor(() => {
+          const urlParams = decodeURIComponent(location.getSearch().toString());
+          // because there are no import/export queries in our mock datasources, only the first one remains
+
+          expect(urlParams).toBe(
+            'left={"datasource":"elastic-uid","queries":[{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+          );
+        });
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
     });
+  });
 
-    it('Datasource ref in query with matching name in root uses matching datasource, converts root to UID', async () => {
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"loki","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
-      });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
-
-    it('Datasource ref in query with mismatching UID in root uses query datasource', async () => {
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
-      });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
-
-    it('Different datasources in query with mixed feature on changes root to Mixed', async () => {
-      config.featureToggles.exploreMixedDatasource = true;
-
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
-      });
-      const reducerMock = jest.spyOn(queryState, 'queryReducer');
-      await waitForExplore(undefined, true);
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(reducerMock).not.toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ type: 'explore/queriesImported' })
-      );
-      // this mixed UID is weird just because of our fake datasource generator
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"--+Mixed+---uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-
+  describe('exploreMixedDatasource off', () => {
+    beforeAll(() => {
       config.featureToggles.exploreMixedDatasource = false;
     });
 
-    it('Different datasources in query with mixed feature off uses first query DS, converts rest', async () => {
-      config.featureToggles.exploreMixedDatasource = false;
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+    it('Redirects to the first query datasource if the root is mixed', async () => {
+      const { location } = setupExplore({
+        urlParams: {
+          left: '{"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}},{"refId":"B","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}',
+        },
+        mixedEnabled: false,
       });
 
-      const reducerMock = jest.spyOn(queryState, 'queryReducer');
-      await waitForExplore(undefined, true);
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      // because there are no import/export queries in our mock datasources, only the first one remains
-      expect(reducerMock).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          type: 'explore/queriesImported',
-          payload: expect.objectContaining({
-            exploreId: 'left',
-            queries: [
-              expect.objectContaining({
-                datasource: {
-                  type: 'logs',
-                  uid: 'loki-uid',
-                },
-              }),
-            ],
-          }),
-        })
-      );
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
+      await waitForExplore();
+
+      await waitFor(() => {
+        const urlParams = decodeURIComponent(location.getSearch().toString());
+
+        expect(urlParams).toBe(
+          'left={"datasource":"elastic-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+        );
+      });
     });
 
-    it('Datasource in root not found and no queries changes to default', async () => {
-      setupExplore({
-        urlParams: 'orgId=1&left={"datasource":"asdasdasd","range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+    it('Redirects to the default datasource if the root is mixed and there are no queries', async () => {
+      const { location } = setupExplore({
+        urlParams: {
+          left: '{"datasource":"-- Mixed --","range":{"from":"now-1h","to":"now"}}',
+        },
+        mixedEnabled: false,
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-    });
 
-    it('Datasource root is mixed and there are two queries, one with datasource not found, only one query remains with root datasource as that datasource', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-      setupExplore({
-        urlParams:
-          'orgId=1&left={"datasource":"-- Mixed --","queries":[{"refId":"A","datasource":{"type":"asdf","uid":"asdf"}},{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}',
-        prevUsedDatasource: { orgId: 1, datasource: 'elastic' },
+      await waitForExplore();
+
+      await waitFor(() => {
+        const urlParams = decodeURIComponent(location.getSearch().toString());
+
+        expect(urlParams).toBe(
+          'left={"datasource":"loki-uid","queries":[{"refId":"A","datasource":{"type":"logs","uid":"loki-uid"}}],"range":{"from":"now-1h","to":"now"}}&orgId=1'
+        );
       });
-      await waitForExplore();
-      const urlParams = decodeURIComponent(locationService.getSearch().toString());
-      expect(urlParams).toBe(
-        'orgId=1&left={"datasource":"elastic-uid","queries":[{"refId":"B","datasource":{"type":"logs","uid":"elastic-uid"}}],"range":{"from":"now-1h","to":"now"}}'
-      );
-      expect(consoleErrorSpy).toBeCalledTimes(1);
-
-      consoleErrorSpy.mockRestore();
     });
   });
 
   it('removes `from` and `to` parameters from url when first mounted', async () => {
-    setupExplore({ searchParams: 'from=1&to=2&orgId=1' });
+    const { location } = setupExplore({ urlParams: { from: '1', to: '2' } });
+    await waitForExplore();
 
-    expect(locationService.getSearchObject()).toEqual(expect.not.objectContaining({ from: '1', to: '2' }));
-    expect(locationService.getSearchObject()).toEqual(expect.objectContaining({ orgId: '1' }));
+    await waitFor(() => {
+      expect(location.getSearchObject()).toEqual(expect.not.objectContaining({ from: '1', to: '2' }));
+      expect(location.getSearchObject()).toEqual(expect.objectContaining({ orgId: '1' }));
+    });
   });
 });

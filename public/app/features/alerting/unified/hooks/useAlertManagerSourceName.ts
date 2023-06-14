@@ -18,7 +18,7 @@ function useIsAlertManagerAvailable(availableAlertManagers: AlertManagerDataSour
 
 /* This will return am name either from query params or from local storage or a default (grafana).
  * Due to RBAC permissions Grafana Managed Alert manager or external alert managers may not be available
- * In the worst case neihter GMA nor external alert manager is available
+ * In the worst case neither GMA nor external alert manager is available
  */
 export function useAlertManagerSourceName(
   availableAlertManagers: AlertManagerDataSource[]

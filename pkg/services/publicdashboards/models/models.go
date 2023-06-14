@@ -25,27 +25,59 @@ func (e PublicDashboardErr) Error() string {
 	return "Dashboard Error"
 }
 
-const QuerySuccess = "success"
-const QueryFailure = "failure"
+const (
+	QuerySuccess              = "success"
+	QueryFailure              = "failure"
+	EmailShareType  ShareType = "email"
+	PublicShareType ShareType = "public"
+)
 
-var QueryResultStatuses = []string{QuerySuccess, QueryFailure}
+var (
+	QueryResultStatuses = []string{QuerySuccess, QueryFailure}
+	ValidShareTypes     = []ShareType{EmailShareType, PublicShareType}
+)
+
+type ShareType string
 
 type PublicDashboard struct {
-	Uid                  string        `json:"uid" xorm:"pk uid"`
-	DashboardUid         string        `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId                int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	Uid          string    `json:"uid" xorm:"pk uid"`
+	DashboardUid string    `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId        int64     `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	AccessToken  string    `json:"accessToken" xorm:"access_token"`
+	CreatedBy    int64     `json:"createdBy" xorm:"created_by"`
+	UpdatedBy    int64     `json:"updatedBy" xorm:"updated_by"`
+	CreatedAt    time.Time `json:"createdAt" xorm:"created_at"`
+	UpdatedAt    time.Time `json:"updatedAt" xorm:"updated_at"`
+	//config fields
 	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken          string        `json:"accessToken" xorm:"access_token"`
-	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
-	Share                string        `json:"share"`
+	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
+	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	Share                ShareType     `json:"share" xorm:"share"`
+	Recipients           []EmailDTO    `json:"recipients,omitempty" xorm:"-"`
+}
 
-	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
-	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
+type PublicDashboardDTO struct {
+	Uid          string    `json:"uid"`
+	DashboardUid string    `json:"dashboardUid"`
+	OrgId        int64     `json:"-"` // Don't ever marshal orgId to Json
+	AccessToken  string    `json:"accessToken"`
+	CreatedBy    int64     `json:"createdBy"`
+	UpdatedBy    int64     `json:"updatedBy"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+	//config fields
+	TimeSettings         *TimeSettings `json:"timeSettings"`
+	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled"`
+	IsEnabled            *bool         `json:"isEnabled"`
+	AnnotationsEnabled   *bool         `json:"annotationsEnabled"`
+	Share                ShareType     `json:"share"`
+	Recipients           []EmailDTO    `json:"recipients,omitempty"`
+}
 
-	CreatedAt time.Time `json:"createdAt" xorm:"created_at"`
-	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
+type EmailDTO struct {
+	Uid       string `json:"uid"`
+	Recipient string `json:"recipient"`
 }
 
 // Alias the generated type
@@ -117,15 +149,15 @@ func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, req
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
 	DashboardUid    string
-	OrgId           int64
 	UserId          int64
-	PublicDashboard *PublicDashboard
+	PublicDashboard *PublicDashboardDTO
 }
 
 type PublicDashboardQueryDTO struct {
-	IntervalMs    int64
-	MaxDataPoints int64
-	TimeRange     TimeSettings
+	IntervalMs      int64
+	MaxDataPoints   int64
+	QueryCachingTTL int64
+	TimeRange       TimeSettings
 }
 
 type AnnotationsQueryDTO struct {

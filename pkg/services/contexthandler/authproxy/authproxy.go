@@ -10,6 +10,7 @@ import (
 	"net/mail"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,21 +33,6 @@ const (
 	CachePrefix = "auth-proxy-sync-ttl:%s"
 )
 
-// getLDAPConfig gets LDAP config
-var getLDAPConfig = ldap.GetConfig
-
-// isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = func(cfg *setting.Cfg) bool {
-	if cfg != nil {
-		return cfg.LDAPEnabled
-	}
-
-	return setting.LDAPEnabled
-}
-
-// newLDAP creates multiple LDAP instance
-var newLDAP = multildap.New
-
 // supportedHeaders states the supported headers configuration fields
 var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups", "Role"}
 
@@ -57,11 +43,14 @@ type AuthProxy struct {
 	loginService login.Service
 	sqlStore     db.DB
 	userService  user.Service
+	ldapService  service.LDAP
 
 	logger log.Logger
 }
 
-func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, loginService login.Service, userService user.Service, sqlStore db.DB) *AuthProxy {
+func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache,
+	loginService login.Service, userService user.Service,
+	sqlStore db.DB, ldapService service.LDAP) *AuthProxy {
 	return &AuthProxy{
 		cfg:          cfg,
 		remoteCache:  remoteCache,
@@ -69,6 +58,7 @@ func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, lo
 		sqlStore:     sqlStore,
 		userService:  userService,
 		logger:       log.New("auth.proxy"),
+		ldapService:  ldapService,
 	}
 }
 
@@ -174,7 +164,7 @@ func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) 
 		}
 	}
 
-	if isLDAPEnabled(auth.cfg) {
+	if auth.cfg.LDAPAuthEnabled {
 		id, err := auth.LoginViaLDAP(reqCtx)
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {
@@ -201,14 +191,19 @@ func (auth *AuthProxy) getUserViaCache(reqCtx *contextmodel.ReqContext) (int64, 
 		return 0, err
 	}
 	auth.logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.remoteCache.Get(reqCtx.Req.Context(), cacheKey)
+	cachedValue, err := auth.remoteCache.Get(reqCtx.Req.Context(), cacheKey)
+	if err != nil {
+		return 0, err
+	}
+
+	userId, err := strconv.ParseInt(string(cachedValue), 10, 64)
 	if err != nil {
 		auth.logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
 	}
 
-	auth.logger.Debug("Successfully got user ID via auth cache", "id", userID)
-	return userID.(int64), nil
+	auth.logger.Debug("Successfully got user ID via auth cache", "id", cachedValue)
+	return userId, nil
 }
 
 // RemoveUserFromCache removes user from cache.
@@ -228,14 +223,9 @@ func (auth *AuthProxy) RemoveUserFromCache(reqCtx *contextmodel.ReqContext) erro
 
 // LoginViaLDAP logs in user via LDAP request
 func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, error) {
-	config, err := getLDAPConfig(auth.cfg)
-	if err != nil {
-		return 0, newError("failed to get LDAP config", err)
-	}
-
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
-	mldap := newLDAP(config.Servers)
-	extUser, _, err := mldap.User(header)
+
+	extUser, err := auth.ldapService.User(header)
 	if err != nil {
 		return 0, err
 	}
@@ -251,11 +241,12 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, err
 			UserID: nil,
 		},
 	}
-	if err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert); err != nil {
+	u, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
+	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.ID, nil
+	return u.ID, nil
 }
 
 // loginViaHeader logs in user from the header only
@@ -292,8 +283,8 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, e
 				if rt.IsValid() {
 					extUser.OrgRoles = map[int64]org.RoleType{}
 					orgID := int64(1)
-					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-						orgID = int64(setting.AutoAssignOrgId)
+					if auth.cfg.AutoAssignOrg && auth.cfg.AutoAssignOrgId > 0 {
+						orgID = int64(auth.cfg.AutoAssignOrgId)
 					}
 					extUser.OrgRoles[orgID] = rt
 				}
@@ -314,12 +305,12 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, e
 		},
 	}
 
-	err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
+	result, err := auth.loginService.UpsertUser(reqCtx.Req.Context(), upsert)
 	if err != nil {
 		return 0, err
 	}
 
-	return upsert.Result.ID, nil
+	return result.ID, nil
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName
@@ -363,14 +354,15 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 	}
 
 	// Check if user already in cache
-	userID, err := auth.remoteCache.Get(reqCtx.Req.Context(), key)
-	if err == nil && userID != nil {
+	cachedValue, err := auth.remoteCache.Get(reqCtx.Req.Context(), key)
+	if err == nil && len(cachedValue) != 0 {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	if err := auth.remoteCache.Set(reqCtx.Req.Context(), key, id, expiration); err != nil {
+	userIdPayload := []byte(strconv.FormatInt(id, 10))
+	if err := auth.remoteCache.Set(reqCtx.Req.Context(), key, userIdPayload, expiration); err != nil {
 		return err
 	}
 

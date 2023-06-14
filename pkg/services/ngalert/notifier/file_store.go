@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -29,7 +29,7 @@ func NewFileStore(orgID int64, store kvstore.KVStore, workingDirPath string) *Fi
 		workingDirPath: workingDirPath,
 		orgID:          orgID,
 		kv:             kvstore.WithNamespace(store, orgID, KVNamespace),
-		logger:         log.New("filestore", "org", orgID),
+		logger:         log.New("ngalert.notifier.alertmanager.file_store", orgID),
 	}
 }
 
@@ -63,7 +63,7 @@ func (fileStore *FileStore) FilepathFor(ctx context.Context, filename string) (s
 }
 
 // Persist takes care of persisting the binary representation of internal state to the database as a base64 encoded string.
-func (fileStore *FileStore) Persist(ctx context.Context, filename string, st alerting.State) (int64, error) {
+func (fileStore *FileStore) Persist(ctx context.Context, filename string, st alertingNotify.State) (int64, error) {
 	var size int64
 
 	bytes, err := st.MarshalBinary()
@@ -92,11 +92,11 @@ func (fileStore *FileStore) WriteFileToDisk(fn string, content []byte) error {
 // CleanUp will remove the working directory from disk.
 func (fileStore *FileStore) CleanUp() {
 	if err := os.RemoveAll(fileStore.workingDirPath); err != nil {
-		fileStore.logger.Warn("unable to delete the local working directory", "dir", fileStore.workingDirPath,
+		fileStore.logger.Warn("Unable to delete the local working directory", "dir", fileStore.workingDirPath,
 			"error", err)
 		return
 	}
-	fileStore.logger.Info("successfully deleted working directory", "dir", fileStore.workingDirPath)
+	fileStore.logger.Info("Successfully deleted working directory", "dir", fileStore.workingDirPath)
 }
 
 func (fileStore *FileStore) pathFor(fn string) string {

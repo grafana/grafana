@@ -3,6 +3,7 @@ import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataSourceApi, HistoryItem } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
@@ -39,13 +40,13 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  */
 export function changeDatasource(
   exploreId: ExploreId,
-  datasourceUid: string,
+  datasource: string | DataSourceRef,
   options?: { importQueries: boolean }
-): ThunkResult<void> {
+): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const orgId = getState().user.orgId;
-    const { history, instance } = await loadAndInitDatasource(orgId, { uid: datasourceUid });
-    const currentDataSourceInstance = getState().explore[exploreId]!.datasourceInstance;
+    const { history, instance } = await loadAndInitDatasource(orgId, datasource);
+    const currentDataSourceInstance = getState().explore.panes[exploreId]!.datasourceInstance;
 
     reportInteraction('explore_change_ds', {
       from: (currentDataSourceInstance?.meta?.mixed ? 'mixed' : currentDataSourceInstance?.type) || 'unknown',
@@ -61,17 +62,17 @@ export function changeDatasource(
     );
 
     if (options?.importQueries) {
-      const queries = getState().explore[exploreId]!.queries;
+      const queries = getState().explore.panes[exploreId]!.queries;
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
-    if (getState().explore[exploreId]!.isLive) {
-      dispatch(changeRefreshInterval(exploreId, RefreshPicker.offOption.value));
+    if (getState().explore.panes[exploreId]!.isLive) {
+      dispatch(changeRefreshInterval({ exploreId, refreshInterval: RefreshPicker.offOption.value }));
     }
 
     // Exception - we only want to run queries on data source change, if the queries were imported
     if (options?.importQueries) {
-      dispatch(runQueries(exploreId));
+      dispatch(runQueries({ exploreId }));
     }
   };
 }
@@ -106,7 +107,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       loading: false,
       queryKeys: [],
       history,
-      datasourceMissing: false,
     };
   }
 

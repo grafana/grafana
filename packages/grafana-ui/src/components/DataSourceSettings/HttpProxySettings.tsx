@@ -7,11 +7,11 @@ import { HttpSettingsBaseProps } from './types';
 
 const LABEL_WIDTH = 26;
 
-export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
+export const HttpProxySettings = ({
   dataSourceConfig,
   onChange,
   showForwardOAuthIdentityOption = true,
-}) => {
+}: HttpSettingsBaseProps) => {
   return (
     <>
       <div className="gf-form-inline">

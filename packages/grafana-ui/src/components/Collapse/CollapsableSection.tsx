@@ -54,8 +54,12 @@ export const CollapsableSection = ({
 
   return (
     <>
+      {/* disabling the a11y rules here as the button handles keyboard interactions */}
+      {/* this is just to provide a better experience for mouse users */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div onClick={onClick} className={cx(styles.header, className)}>
         <button
+          type="button"
           id={`collapse-button-${id}`}
           className={styles.button}
           onClick={onClick}

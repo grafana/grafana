@@ -117,7 +117,7 @@ The sample application exposes metrics which are stored in [Prometheus](https://
 
 To be able to visualize the metrics from Prometheus, you first need to add it as a data source in Grafana.
 
-1. In the sidebar, hover your cursor over the **Configuration** (gear) icon, and then click **Data sources**.
+1. In the sidebar, hover over the **Configuration** (gear) icon, and then click **Data sources**.
 1. Click **Add data source**.
 1. In the list of data sources, click **Prometheus**.
 1. In the URL box, enter **http\://prometheus:9090**.
@@ -131,7 +131,7 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
-1. In the sidebar, click the **Explore** (compass) icon.
+1. In the sidebar, click the **Explore** (compass) icon. The Prometheus data source that you added will already be selected.
 1. In the **Query editor**, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
    A graph appears.
 1. In the top right corner, click the dropdown arrow on the **Run Query** button, and then select **5s**. Grafana runs your query and updates the graph every 5 seconds.
@@ -166,7 +166,7 @@ Depending on your use case, you might want to group on other labels. Try groupin
 
 Grafana supports log data sources, like [Loki](/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
 
-1. In the sidebar, hover your cursor over the **Configuration** (gear) icon, and then click **Data Sources**.
+1. In the sidebar, hover over the **Configuration** (gear) icon, and then click **Data Sources**.
 1. Click **Add data source**.
 1. In the list of data sources, click **Loki**.
 1. In the URL box, enter [http://loki:3100](http://loki:3100).
@@ -215,16 +215,16 @@ Dashboards consist of _panels_, each representing a part of the story you want y
 
 Every panel consists of a _query_ and a _visualization_. The query defines _what_ data you want to display, whereas the visualization defines _how_ the data is displayed.
 
-1. In the sidebar, hover your cursor over the **Create** (plus sign) icon and then click **Dashboard**.
-1. Click **Add a new panel**.
-1. In the **Query editor** below the graph, enter the query from earlier and then press Shift + Enter:
+1. In the sidebar, hover over the **Create** (plus sign) icon and then click **Dashboard**.
+1. Click **Add new panel**. The Prometheus data source that you added will already be selected.
+1. In the **Query** tab below the graph, enter the query from earlier and then press Shift + Enter:
 
    ```
    sum(rate(tns_request_duration_seconds_count[5m])) by(route)
    ```
 
 1. In the **Legend** field, enter **{{route}}** to rename the time series in the legend. The graph legend updates when you click outside the field.
-1. In the Panel editor on the right, under **Settings**, change the panel title to "Traffic".
+1. In the panel editor on the right, under **Panel options**, change the panel title to "Traffic".
 1. Click **Apply** in the top-right corner to save the panel and go back to the dashboard view.
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
 1. Enter a name in the **Dashboard name** field and then click **Save**.
@@ -299,7 +299,7 @@ Your request bin is now waiting for the first request.
 
 Next, let's configure a Contact Point in Grafana's Alerting UI to send notifications to our Request Bin.
 
-1. Return to Grafana. In Grafana's sidebar, hover your cursor over the **Alerting** (bell) icon and then click **Contact points**.
+1. Return to Grafana. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Contact points**.
 1. Click **+ New contact point**.
 1. In **Name**, write **RequestBin**.
 1. In **Contact point type**, choose **Webhook**.
@@ -314,7 +314,7 @@ We have now created a dummy webhook endpoint and created a new Alerting Contact 
 
 Now that Grafana knows how to notify us, it's time to set up an alert rule:
 
-1. In Grafana's sidebar, hover the cursor over the **Alerting** (bell) icon and then click **Alert rules**.
+1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Alert rules**.
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`, and set **Rule type** to **Grafana Managed Alert**. For **Folder** type `fundamentals` and in the box that appears, press **Create: fundamentals**.
 1. For **Section 2**, find the **query A** box. Choose your Prometheus datasource and enter the same query that we used in our earlier panel: `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`. Press **Run queries**. You should see some data in the graph.
@@ -322,8 +322,10 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. In **Section 3**, enter `30s` for the **Evaluate every** field. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. In the **for** field, enter `0m`. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
 1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save and exit** at the top of the page.
-1. In Grafana's sidebar, hover the cursor over the **Alerting** (bell) icon and then click **Notification policies**.
-1. Under **Root policy**, press **Edit** and change the **Default contact point** to **RequestBin**. As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to specific contact points.
+1. In Grafana's sidebar, hover over the **Alerting** (bell) icon and then click **Notification policies**.
+1. Under **Default policy**, select **...** &rsaquo; **Edit** and change the **Default contact point** to **RequestBin**.
+   As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to
+   specific contact points.
 
 ### Trigger a Grafana Managed Alert
 

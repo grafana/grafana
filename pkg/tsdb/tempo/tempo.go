@@ -61,13 +61,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	queryRes := backend.DataResponse{}
 	refID := req.Queries[0].RefID
 
-	model := &dataquery.TempoDataQuery{}
+	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
 	if err != nil {
 		return result, err
 	}
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -135,8 +135,8 @@ func (s *Service) createRequest(ctx context.Context, dsInfo *datasourceInfo, tra
 	return req, nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*datasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*datasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

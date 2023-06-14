@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -24,7 +25,7 @@ func TestDeleteLibraryElement(t *testing.T) {
 			resp := sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
-			var result DeleteLibraryElementResponse
+			var result model.DeleteLibraryElementResponse
 			err := json.Unmarshal(resp.Body(), &result)
 
 			require.NoError(t, err)

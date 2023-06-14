@@ -13,8 +13,8 @@ import {
 export function createArray(
   expressions: QueryEditorExpression[],
   type: QueryEditorExpressionType.And | QueryEditorExpressionType.Or = QueryEditorExpressionType.And
-): QueryEditorArrayExpression {
-  const array = {
+) {
+  const array: QueryEditorArrayExpression = {
     type,
     expressions,
   };

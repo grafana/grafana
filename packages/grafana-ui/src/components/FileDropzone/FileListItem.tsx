@@ -26,24 +26,13 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
       return (
         <>
           <span className={styles.error}>{error.message}</span>
-          {retryUpload && (
-            <IconButton
-              type="button"
-              aria-label="Retry"
-              name="sync"
-              tooltip="Retry"
-              tooltipPlacement="top"
-              onClick={retryUpload}
-            />
-          )}
+          {retryUpload && <IconButton name="sync" tooltip="Retry" tooltipPlacement="top" onClick={retryUpload} />}
           {removeFile && (
             <IconButton
               className={retryUpload ? styles.marginLeft : ''}
-              type="button"
               name="trash-alt"
               onClick={() => removeFile(customFile)}
               tooltip={REMOVE_FILE}
-              aria-label={REMOVE_FILE}
             />
           )}
         </>
@@ -69,8 +58,6 @@ export function FileListItem({ file: customFile, removeFile }: FileListItemProps
           name="trash-alt"
           onClick={() => removeFile(customFile)}
           tooltip={REMOVE_FILE}
-          aria-label={REMOVE_FILE}
-          type="button"
           tooltipPlacement="top"
         />
       )
@@ -124,15 +111,15 @@ function getStyles(theme: GrafanaTheme2) {
       color: ${theme.colors.error.text};
     `,
     progressBar: css`
-      border-radius: ${theme.spacing(1)};
+      border-radius: ${theme.shape.radius.default};
       height: 4px;
       ::-webkit-progress-bar {
         background-color: ${theme.colors.border.weak};
-        border-radius: ${theme.spacing(1)};
+        border-radius: ${theme.shape.radius.default};
       }
       ::-webkit-progress-value {
         background-color: ${theme.colors.primary.main};
-        border-radius: ${theme.spacing(1)};
+        border-radius: ${theme.shape.radius.default};
       }
     `,
   };

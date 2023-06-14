@@ -7,11 +7,11 @@ export enum AzureCloud {
   None = '',
 }
 
-export const KnownAzureClouds = [
+export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [
   { value: AzureCloud.Public, label: 'Azure' },
   { value: AzureCloud.China, label: 'Azure China' },
   { value: AzureCloud.USGovernment, label: 'Azure US Government' },
-] as SelectableValue[];
+];
 
 export type AzureAuthType = 'msi' | 'clientsecret';
 

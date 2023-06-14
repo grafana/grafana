@@ -1,20 +1,22 @@
-import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
+import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { isPromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
+import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromSeries, refIdExists } from '../util';
 
@@ -27,19 +29,20 @@ import {
   removeExpression,
   rewireExpressions,
   setDataQueries,
+  setRecordingRulesQueries,
   updateExpression,
   updateExpressionRefId,
   updateExpressionTimeRange,
   updateExpressionType,
 } from './reducer';
+import { useAlertQueryRunner } from './useAlertQueryRunner';
 
 interface Props {
   editingExistingRule: boolean;
   onDataChange: (error: string) => void;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onDataChange }) => {
-  const runner = useRef(new AlertingQueryRunner());
+export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: Props) => {
   const {
     setValue,
     getValues,
@@ -47,51 +50,32 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     formState: { errors },
     control,
   } = useFormContext<RuleFormValues>();
-  const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
+
+  const { queryPreviewData, runQueries, cancelQueries, isPreviewLoading, clearPreviewData } = useAlertQueryRunner();
 
   const initialState = {
     queries: getValues('queries'),
-    panelData: {},
   };
-  const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
 
+  const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
-  const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
+  const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
 
-  const showCloudExpressionEditor = (isRecordingRuleType || isCloudAlertRuleType) && dataSourceName;
+  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const cancelQueries = useCallback(() => {
-    runner.current.cancel();
-  }, []);
-
-  const runQueries = useCallback(() => {
-    runner.current.run(getValues('queries'));
-  }, [getValues]);
+  const runQueriesPreview = useCallback(() => {
+    runQueries(getValues('queries'));
+  }, [runQueries, getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
     setValue('queries', queries, { shouldValidate: false });
   }, [queries, runQueries, setValue]);
 
-  // set up the AlertQueryRunner
-  useEffect(() => {
-    const currentRunner = runner.current;
-
-    runner.current.get().subscribe((data) => {
-      setPanelData(data);
-    });
-
-    return () => currentRunner.destroy();
-  }, []);
-
   const noCompatibleDataSources = getDefaultOrFirstCompatibleDataSource() === undefined;
-
-  const isDataLoading = useMemo(() => {
-    return Object.values(panelData).some((d) => d.state === LoadingState.Loading);
-  }, [panelData]);
 
   // data queries only
   const dataQueries = useMemo(() => {
@@ -108,13 +92,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
   useEffect(() => {
     const currentCondition = getValues('condition');
 
-    if (!currentCondition) {
+    if (!currentCondition || RuleFormType.cloudRecording) {
       return;
     }
 
-    const error = errorFromSeries(panelData[currentCondition]?.series || []);
+    const error = errorFromSeries(queryPreviewData[currentCondition]?.series || []);
     onDataChange(error?.message || '');
-  }, [panelData, getValues, onDataChange]);
+  }, [queryPreviewData, getValues, onDataChange]);
 
   const handleSetCondition = useCallback(
     (refId: string | null) => {
@@ -122,11 +106,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
         return;
       }
 
-      runQueries(); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
-    [runQueries, setValue]
+    [runQueriesPreview, setValue]
   );
 
   const onUpdateRefId = useCallback(
@@ -149,6 +133,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
 
   const onChangeQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
+      // Most data sources triggers onChange and onRunQueries consecutively
+      // It means our reducer state is always one step behind when runQueries is invoked
+      // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
+      // As a workaround we update form values as soon as possible to avoid stale state
+      // This way we can access up to date queries in runQueriesPreview without waiting for re-render
+      setValue('queries', updatedQueries, { shouldValidate: false });
+
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
       // check if we need to rewire expressions
@@ -161,8 +152,64 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
         }
       });
     },
-    [queries]
+    [queries, setValue]
   );
+
+  const onChangeRecordingRulesQueries = useCallback(
+    (updatedQueries: AlertQuery[]) => {
+      const query = updatedQueries[0];
+
+      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+      if (!dataSourceSettings) {
+        throw new Error('The Data source has not been defined.');
+      }
+
+      if (!isPromOrLokiQuery(query.model)) {
+        return;
+      }
+
+      const expression = query.model.expr;
+
+      setValue('queries', updatedQueries, { shouldValidate: false });
+      setValue('dataSourceName', dataSourceSettings.name);
+      setValue('expression', expression);
+
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
+      runQueriesPreview();
+    },
+    [runQueriesPreview, setValue]
+  );
+
+  const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
+
+  useEffect(() => {
+    clearPreviewData();
+    if (type === RuleFormType.cloudRecording) {
+      const expr = getValues('expression');
+
+      if (!recordingRuleDefaultDatasource) {
+        return;
+      }
+
+      const datasourceUid =
+        (editingExistingRule && getDataSourceSrv().getInstanceSettings(dataSourceName)?.uid) ||
+        recordingRuleDefaultDatasource.uid;
+
+      const defaultQuery = {
+        refId: 'A',
+        datasourceUid,
+        queryType: '',
+        relativeTimeRange: getDefaultRelativeTimeRange(),
+        expr,
+        model: {
+          refId: 'A',
+          hide: false,
+          expr,
+        },
+      };
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: expr }));
+    }
+  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues, dataSourceName, clearPreviewData]);
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));
@@ -180,8 +227,21 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
-      {/* This is the PromQL Editor for Cloud rules and recording rules */}
-      {showCloudExpressionEditor && (
+      {/* This is the PromQL Editor for recording rules */}
+      {isRecordingRuleType && dataSourceName && (
+        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+          <RecordingRuleEditor
+            dataSourceName={dataSourceName}
+            queries={queries}
+            runQueries={runQueriesPreview}
+            onChangeQuery={onChangeRecordingRulesQueries}
+            panelData={queryPreviewData}
+          />
+        </Field>
+      )}
+
+      {/* This is the PromQL Editor for Cloud rules */}
+      {isCloudAlertRuleType && dataSourceName && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <InputControl
             name="expression"
@@ -209,17 +269,17 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueries}
+            onRunQueries={runQueriesPreview}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
-            panelData={panelData}
+            panelData={queryPreviewData}
             condition={condition}
             onSetCondition={handleSetCondition}
           />
           {/* Expression Queries */}
           <ExpressionsEditor
             queries={queries}
-            panelData={panelData}
+            panelData={queryPreviewData}
             condition={condition}
             onSetCondition={handleSetCondition}
             onRemoveExpression={(refId) => {
@@ -263,13 +323,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
               </Button>
             )}
 
-            {isDataLoading && (
+            {isPreviewLoading && (
               <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
                 Cancel
               </Button>
             )}
-            {!isDataLoading && (
-              <Button icon="sync" type="button" onClick={() => runQueries()} disabled={emptyQueries}>
+            {!isPreviewLoading && (
+              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
                 Preview
               </Button>
             )}

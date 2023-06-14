@@ -23,6 +23,12 @@ export const SceneListPage = ({}: Props) => {
     <Page navId="scenes" subTitle="Experimental new runtime and state model for dashboards">
       <Page.Contents>
         <Stack direction="column" gap={1}>
+          <h5>Apps</h5>
+          <Stack direction="column" gap={0}>
+            <Card href={`/scenes/grafana-monitoring`}>
+              <Card.Heading>Grafana monitoring</Card.Heading>
+            </Card>
+          </Stack>
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
             {scenes.map((scene) => (

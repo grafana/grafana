@@ -87,7 +87,7 @@ def main_pipelines():
         test_backend(trigger, ver_mode),
         lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
-        integration_tests(trigger, prefix = ver_mode),
+        integration_tests(trigger, prefix = ver_mode, ver_mode = ver_mode),
         windows(trigger, edition = "oss", ver_mode = ver_mode),
         notify_pipeline(
             name = "notify-drone-changes",

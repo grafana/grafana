@@ -8,13 +8,14 @@ import (
 
 	"golang.org/x/oauth2"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestOAuth_Authenticate(t *testing.T) {
@@ -136,8 +137,10 @@ func TestOAuth_Authenticate(t *testing.T) {
 				OrgRoles:   map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
-					SyncTeamMembers: true,
+					SyncTeams:       true,
 					AllowSignUp:     true,
+					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
 					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
 				},
 			},
@@ -179,7 +182,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
-				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeamMembers, identity.ClientParams.SyncTeamMembers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)
@@ -276,7 +279,7 @@ type fakeConnector struct {
 	social.SocialConnector
 }
 
-func (f fakeConnector) UserInfo(client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+func (f fakeConnector) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	return f.ExpectedUserInfo, f.ExpectedUserInfoErr
 }
 

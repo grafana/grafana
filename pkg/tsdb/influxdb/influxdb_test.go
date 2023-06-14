@@ -15,7 +15,7 @@ import (
 func TestExecutor_createRequest(t *testing.T) {
 	datasource := &models.DatasourceInfo{
 		URL:      "http://awesome-influxdb:1337",
-		Database: "awesome-db",
+		DbName:   "awesome-db",
 		HTTPMode: "GET",
 	}
 	query := "SELECT awesomeness FROM somewhere"

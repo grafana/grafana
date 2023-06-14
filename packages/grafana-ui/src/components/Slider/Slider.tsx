@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { Global } from '@emotion/react';
 import SliderComponent from 'rc-slider';
-import React, { useState, useCallback, ChangeEvent, FunctionComponent, FocusEvent } from 'react';
+import React, { useState, useCallback, ChangeEvent, FocusEvent } from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Input } from '../Input/Input';
@@ -12,7 +12,7 @@ import { SliderProps } from './types';
 /**
  * @public
  */
-export const Slider: FunctionComponent<SliderProps> = ({
+export const Slider = ({
   min,
   max,
   onChange,
@@ -24,7 +24,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
   ariaLabelForHandle,
   marks,
   included,
-}) => {
+}: SliderProps) => {
   const isHorizontal = orientation === 'horizontal';
   const theme = useTheme2();
   const styles = getStyles(theme, isHorizontal, Boolean(marks));

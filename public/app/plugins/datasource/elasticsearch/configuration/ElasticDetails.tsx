@@ -1,7 +1,6 @@
 import React from 'react';
-import { valid } from 'semver';
 
-import { DataSourceSettings, SelectableValue, isTruthy } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { FieldSet, InlineField, Input, Select, InlineSwitch } from '@grafana/ui';
 
 import { ElasticsearchOptions, Interval } from '../types';
@@ -15,39 +14,26 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
   { label: 'Yearly', value: 'Yearly', example: '[logstash-]YYYY' },
 ];
 
-const esVersions: SelectableValue[] = [
-  { label: '7.10+', value: '7.10.0' },
-  { label: '8.x', value: '8.0.0' },
-];
-
 type Props = {
   value: DataSourceSettings<ElasticsearchOptions>;
   onChange: (value: DataSourceSettings<ElasticsearchOptions>) => void;
 };
 export const ElasticDetails = ({ value, onChange }: Props) => {
-  const currentVersion = esVersions.find((version) => version.value === value.jsonData.esVersion);
-  const customOption =
-    !currentVersion && valid(value.jsonData.esVersion)
-      ? {
-          label: value.jsonData.esVersion,
-          value: value.jsonData.esVersion,
-        }
-      : undefined;
   return (
     <>
       <FieldSet label="Elasticsearch details">
-        <InlineField label="Index name" labelWidth={26}>
+        <InlineField label="Index name" htmlFor="es_config_indexName" labelWidth={26}>
           <Input
             id="es_config_indexName"
-            value={value.database || ''}
-            onChange={changeHandler('database', value, onChange)}
+            value={value.jsonData.index ?? (value.database || '')}
+            onChange={indexChangeHandler(value, onChange)}
             width={24}
             placeholder="es-index-name"
             required
           />
         </InlineField>
 
-        <InlineField label="Pattern" labelWidth={26}>
+        <InlineField label="Pattern" htmlFor="es_config_indexPattern" labelWidth={26}>
           <Select
             inputId="es_config_indexPattern"
             value={indexPatternTypes.find(
@@ -59,7 +45,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="Time field name" labelWidth={26}>
+        <InlineField label="Time field name" htmlFor="es_config_timeField" labelWidth={26}>
           <Input
             id="es_config_timeField"
             value={value.jsonData.timeField || ''}
@@ -70,29 +56,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           />
         </InlineField>
 
-        <InlineField label="ElasticSearch version" labelWidth={26}>
-          <Select
-            inputId="es_config_version"
-            options={[customOption, ...esVersions].filter(isTruthy)}
-            onChange={(option) => {
-              const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                value.jsonData.maxConcurrentShardRequests
-              );
-              onChange({
-                ...value,
-                jsonData: {
-                  ...value.jsonData,
-                  esVersion: option.value!,
-                  maxConcurrentShardRequests,
-                },
-              });
-            }}
-            value={currentVersion || customOption}
-            width={24}
-          />
-        </InlineField>
-
-        <InlineField label="Max concurrent Shard Requests" labelWidth={26}>
+        <InlineField label="Max concurrent Shard Requests" htmlFor="es_config_shardRequests" labelWidth={26}>
           <Input
             id="es_config_shardRequests"
             value={value.jsonData.maxConcurrentShardRequests || ''}
@@ -103,6 +67,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
 
         <InlineField
           label="Min time interval"
+          htmlFor="es_config_minTimeInterval"
           labelWidth={26}
           tooltip={
             <>
@@ -131,7 +96,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         </InlineField>
 
         {value.jsonData.xpack && (
-          <InlineField label="Include Frozen Indices" labelWidth={26}>
+          <InlineField label="Include Frozen Indices" htmlFor="es_config_frozenIndices" labelWidth={26}>
             <InlineSwitch
               id="es_config_frozenIndices"
               value={value.jsonData.includeFrozen ?? false}
@@ -144,13 +109,16 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
   );
 };
 
-// TODO: Use change handlers from @grafana/data
-const changeHandler =
-  (key: keyof DataSourceSettings<ElasticsearchOptions>, value: Props['value'], onChange: Props['onChange']) =>
+const indexChangeHandler =
+  (value: Props['value'], onChange: Props['onChange']) =>
   (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
     onChange({
       ...value,
-      [key]: event.currentTarget.value,
+      database: '',
+      jsonData: {
+        ...value.jsonData,
+        index: event.currentTarget.value,
+      },
     });
   };
 
@@ -181,11 +149,11 @@ const jsonDataSwitchChangeHandler =
 
 const intervalHandler =
   (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<Interval | 'none'>) => {
-    const { database } = value;
     // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
     const newInterval = option.value === 'none' ? undefined : option.value;
 
-    if (!database || database.length === 0 || database.startsWith('[logstash-]')) {
+    const currentIndex = value.jsonData.index ?? value.database;
+    if (!currentIndex || currentIndex.length === 0 || currentIndex.startsWith('[logstash-]')) {
       let newDatabase = '';
 
       if (newInterval !== undefined) {
@@ -198,9 +166,10 @@ const intervalHandler =
 
       onChange({
         ...value,
-        database: newDatabase,
+        database: '',
         jsonData: {
           ...value.jsonData,
+          index: newDatabase,
           interval: newInterval,
         },
       });
@@ -214,14 +183,6 @@ const intervalHandler =
       });
     }
   };
-
-function getMaxConcurrenShardRequestOrDefault(maxConcurrentShardRequests: number | undefined): number {
-  if (maxConcurrentShardRequests === 256) {
-    return 5;
-  }
-
-  return maxConcurrentShardRequests || defaultMaxConcurrentShardRequests();
-}
 
 export function defaultMaxConcurrentShardRequests() {
   return 5;

@@ -1,6 +1,6 @@
 import { Feature } from 'ol';
 
-import { ComparisonOperation } from '../types';
+import { ComparisonOperation } from '@grafana/schema';
 
 import { checkFeatureMatchesStyleRule } from './checkFeatureMatchesStyleRule';
 

@@ -1,17 +1,16 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, useStyles2, LoadingPlaceholder } from '@grafana/ui';
-import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
+import { AsyncSelect, Badge, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, useDispatch } from 'app/types';
-import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { CombinedRuleGroup } from 'app/types/unified-alerting';
 
+import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
@@ -19,86 +18,44 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
-import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
-import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
+import { MINUTE } from './AlertRuleForm';
+import { Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const SLICE_GROUP_RESULTS_TO = 1000;
 
-const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undefined, folderName: string) => {
-  const groupOptions = useMemo(() => {
-    const groupsForFolderResult: Array<RulerRuleGroupDTO<RulerRuleDTO>> = groupfoldersForGrafana
-      ? groupfoldersForGrafana[folderName] ?? []
-      : [];
-
-    const folderGroups = groupsForFolderResult.map((group) => ({
-      name: group.name,
-      provisioned: group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance)),
-    }));
-
-    return folderGroups.filter((group) => !group.provisioned).map((group) => group.name);
-  }, [groupfoldersForGrafana, folderName]);
-
-  return groupOptions;
-};
-
-function mapGroupsToOptions(
-  groupsForFolder: RulerRulesConfigDTO | null | undefined,
-  groups: string[],
-  folderTitle: string
-): Array<SelectableValue<string>> {
-  return groups.map((group) => ({
-    label: group,
-    value: group,
-    description: `${getIntervalForGroup(groupsForFolder, group, folderTitle)}`,
-  }));
-}
 interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
 
 export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
-  const groupsForFolder = groupfoldersForGrafana?.result;
+  const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
+  const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
-  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    groupsForFolder,
-    useGetGroups(groupfoldersForGrafana?.result, folderTitle),
-    folderTitle
-  );
+  const groupOptions = folderGroups
+    .map<SelectableValue<string>>((group) => ({
+      label: group.name,
+      value: group.name,
+      description: group.interval ?? MINUTE,
+      // we include provisioned folders, but disable the option to select them
+      isDisabled: isProvisionedGroup(group),
+    }))
+    .sort(sortByLabel);
+
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
 };
 
-const useRuleFolderFilter = (existingRuleForm: RuleForm | null) => {
-  const isSearchHitAvailable = useCallback(
-    (hit: DashboardSearchHit) => {
-      const rbacDisabledFallback = contextSrv.hasEditPermissionInFolders;
-
-      const canCreateRuleInFolder = contextSrv.hasAccessInMetadata(
-        AccessControlAction.AlertingRuleCreate,
-        hit,
-        rbacDisabledFallback
-      );
-
-      const canUpdateInCurrentFolder =
-        existingRuleForm &&
-        hit.folderId === existingRuleForm.id &&
-        contextSrv.hasAccessInMetadata(AccessControlAction.AlertingRuleUpdate, hit, rbacDisabledFallback);
-      return canCreateRuleInFolder || canUpdateInCurrentFolder;
-    },
-    [existingRuleForm]
+const isProvisionedGroup = (group: CombinedRuleGroup) => {
+  return group.rules.some(
+    (rule) => isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance) === true
   );
+};
 
-  return useCallback<FolderPickerFilter>(
-    (folderHits) =>
-      folderHits
-        .filter(isSearchHitAvailable)
-        .filter((value: DashboardSearchHit) => !containsSlashes(value.title ?? '')),
-    [isSearchHitAvailable]
-  );
+const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
+  return a.label?.localeCompare(b.label ?? '') || 0;
 };
 
 export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
@@ -110,7 +67,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-  const folderFilter = useRuleFolderFilter(initialFolder);
 
   const folder = watch('folder');
   const group = watch('group');
@@ -150,6 +106,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
             })
           )
         : sliceResults(groupOptions);
+
       return results;
     },
     [groupOptions]
@@ -186,7 +143,6 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
               {...field}
               enableCreateNew={contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
               enableReset={true}
-              filter={folderFilter}
               onChange={({ title, uid }) => {
                 field.onChange({ title, uid });
                 if (!groupIsInGroupOptions(selectedGroup.value ?? '')) {
@@ -214,7 +170,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
         invalid={!!errors.group?.message}
       >
         <InputControl
-          render={({ field: { ref, ...field } }) =>
+          render={({ field: { ref, ...field }, fieldState }) =>
             loading ? (
               <LoadingPlaceholder text="Loading..." />
             ) : (
@@ -223,11 +179,23 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 inputId="group"
                 key={`my_unique_select_key__${selectedGroup?.title ?? ''}`}
                 {...field}
+                invalid={Boolean(folder) && !selectedGroup.title && Boolean(fieldState.error)}
                 loadOptions={debouncedSearch}
                 loadingMessage={'Loading groups...'}
                 defaultOptions={groupOptions}
                 defaultValue={selectedGroup}
-                getOptionLabel={(option: SelectableValue<string>) => `${option.label}`}
+                getOptionLabel={(option: SelectableValue<string>) => (
+                  <div>
+                    <span>{option.label}</span>
+                    {/* making the assumption here that it's provisioned when it's disabled, should probably change this */}
+                    {option.isDisabled && (
+                      <>
+                        {' '}
+                        <Badge color="purple" text="Provisioned" />
+                      </>
+                    )}
+                  </div>
+                )}
                 placeholder={'Evaluation group name'}
                 onChange={(value) => {
                   field.onChange(value.label ?? '');
@@ -235,6 +203,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 value={selectedGroup}
                 allowCustomValue
                 formatCreateLabel={(_) => '+ Add new '}
+                noOptionsMessage="Start typing to create evaluation group"
               />
             )
           }
@@ -261,6 +230,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   formInput: css`
     width: 275px;
+
     & + & {
       margin-left: ${theme.spacing(3)};
     }

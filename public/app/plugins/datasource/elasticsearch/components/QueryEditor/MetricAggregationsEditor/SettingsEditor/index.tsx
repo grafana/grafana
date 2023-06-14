@@ -5,14 +5,10 @@ import { InlineField, Input, InlineSwitch, Select } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { extendedStats } from '../../../../queryDef';
+import { MetricAggregation, ExtendedStat } from '../../../../types';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
-import {
-  MetricAggregation,
-  isMetricAggregationWithInlineScript,
-  isMetricAggregationWithMissingSupport,
-  ExtendedStat,
-} from '../aggregations';
+import { isMetricAggregationWithInlineScript, isMetricAggregationWithMissingSupport } from '../aggregations';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import { metricAggregationConfig } from '../utils';
 

@@ -1,5 +1,4 @@
 import {
-  ArrayVector,
   createTheme,
   DashboardCursorSync,
   DataFrame,
@@ -232,7 +231,7 @@ describe('GraphNG utils', () => {
           name: 'time',
           type: FieldType.time,
           config: {},
-          values: new ArrayVector([1, 2, 4, 6, 100]), // should find smallest delta === 1 from here
+          values: [1, 2, 4, 6, 100], // should find smallest delta === 1 from here
         },
         {
           name: 'value',
@@ -242,7 +241,7 @@ describe('GraphNG utils', () => {
               drawStyle: GraphDrawStyle.Bars,
             },
           },
-          values: new ArrayVector([1, 1, 1, 1, 1]),
+          values: [1, 1, 1, 1, 1],
         },
       ],
     };
@@ -255,7 +254,7 @@ describe('GraphNG utils', () => {
           name: 'time',
           type: FieldType.time,
           config: {},
-          values: new ArrayVector([30, 40, 50, 90, 100]), // should be appended with two smallest-delta increments
+          values: [30, 40, 50, 90, 100], // should be appended with two smallest-delta increments
         },
         {
           name: 'value',
@@ -265,7 +264,7 @@ describe('GraphNG utils', () => {
               drawStyle: GraphDrawStyle.Bars,
             },
           },
-          values: new ArrayVector([2, 2, 2, 2, 2]), // bar series should be appended with nulls
+          values: [2, 2, 2, 2, 2], // bar series should be appended with nulls
         },
         {
           name: 'value',
@@ -275,7 +274,7 @@ describe('GraphNG utils', () => {
               drawStyle: GraphDrawStyle.Line,
             },
           },
-          values: new ArrayVector([3, 3, 3, 3, 3]), // line series should be appended with undefineds
+          values: [3, 3, 3, 3, 3], // line series should be appended with undefineds
         },
       ],
     };
@@ -288,7 +287,7 @@ describe('GraphNG utils', () => {
           name: 'time',
           type: FieldType.time,
           config: {},
-          values: new ArrayVector([1, 1.1]), // should not trip up on smaller deltas of non-bars
+          values: [1, 1.1], // should not trip up on smaller deltas of non-bars
         },
         {
           name: 'value',
@@ -298,7 +297,7 @@ describe('GraphNG utils', () => {
               drawStyle: GraphDrawStyle.Line,
             },
           },
-          values: new ArrayVector([4, 4]),
+          values: [4, 4],
         },
         {
           name: 'value',
@@ -311,7 +310,7 @@ describe('GraphNG utils', () => {
               },
             },
           },
-          values: new ArrayVector([4, 4]),
+          values: [4, 4],
         },
       ],
     };

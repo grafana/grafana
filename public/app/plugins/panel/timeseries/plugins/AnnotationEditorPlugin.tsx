@@ -22,7 +22,7 @@ interface AnnotationEditorPluginProps {
 /**
  * @alpha
  */
-export const AnnotationEditorPlugin: React.FC<AnnotationEditorPluginProps> = ({ data, timeZone, config, children }) => {
+export const AnnotationEditorPlugin = ({ data, timeZone, config, children }: AnnotationEditorPluginProps) => {
   const plotInstance = useRef<uPlot>();
   const [bbox, setBbox] = useState<DOMRect>();
   const [isAddingAnnotation, setIsAddingAnnotation] = useState(false);

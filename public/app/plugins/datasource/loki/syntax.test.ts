@@ -33,6 +33,7 @@ describe('Loki syntax', () => {
     expect(Prism.highlight('avg_over_time({key="value"}[5m])', syntax, 'loki')).toContain(
       '<span class="token function">avg_over_time</span>'
     );
+    expect(Prism.highlight('vector(5)', syntax, 'loki')).toContain('<span class="token function">vector</span>');
   });
   it('should highlight operators in Loki query correctly', () => {
     expect(Prism.highlight('{key="value"} |= "test"', syntax, 'loki')).toContain(

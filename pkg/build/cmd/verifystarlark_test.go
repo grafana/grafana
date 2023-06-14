@@ -1,3 +1,5 @@
+//go:build requires_buildifier
+
 package main
 
 import (

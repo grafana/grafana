@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
-import { setContextSrv } from '../../../../core/services/context_srv';
+import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
@@ -32,7 +32,7 @@ function getDefaultDashboardModel() {
 }
 
 function getTestContext() {
-  const contextSrv: any = { isSignedIn: true, isEditor: true };
+  const contextSrv = { isSignedIn: true, isEditor: true } as ContextSrv;
   setContextSrv(contextSrv);
   const dash = getDefaultDashboardModel();
   const original = dash.getSaveModelClone();

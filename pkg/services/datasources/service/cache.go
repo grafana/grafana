@@ -43,7 +43,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgId == user.OrgID {
+			if ds.OrgID == user.OrgID {
 				return ds, nil
 			}
 		}
@@ -51,17 +51,15 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgID)
 
-	query := &datasources.GetDataSourceQuery{Id: datasourceID, OrgId: user.OrgID}
+	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
-	err := ss.GetDataSource(ctx, query)
+	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	ds := query.Result
-
-	if ds.Uid != "" {
-		dc.CacheService.Set(uidKey(ds.OrgId, ds.Uid), ds, time.Second*5)
+	if ds.UID != "" {
+		dc.CacheService.Set(uidKey(ds.OrgID, ds.UID), ds, time.Second*5)
 	}
 	dc.CacheService.Set(cacheKey, ds, dc.cacheTTL)
 	return ds, nil
@@ -84,24 +82,22 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
 			ds := cached.(*datasources.DataSource)
-			if ds.OrgId == user.OrgID {
+			if ds.OrgID == user.OrgID {
 				return ds, nil
 			}
 		}
 	}
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
-	query := &datasources.GetDataSourceQuery{Uid: datasourceUID, OrgId: user.OrgID}
+	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
-	err := ss.GetDataSource(ctx, query)
+	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	ds := query.Result
-
 	dc.CacheService.Set(uidCacheKey, ds, dc.cacheTTL)
-	dc.CacheService.Set(idKey(ds.Id), ds, dc.cacheTTL)
+	dc.CacheService.Set(idKey(ds.ID), ds, dc.cacheTTL)
 	return ds, nil
 }
 

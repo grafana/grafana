@@ -1,4 +1,4 @@
-import React, { ChangeEvent, FormEvent, FunctionComponent, useCallback } from 'react';
+import React, { ChangeEvent, FormEvent, useCallback } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { VerticalGroup } from '@grafana/ui';
@@ -16,11 +16,11 @@ export interface SelectionOptionsEditorProps<Model extends VariableWithMultiSupp
   onMultiChanged: (identifier: KeyedVariableIdentifier, value: boolean) => void;
 }
 
-export const SelectionOptionsEditor: FunctionComponent<SelectionOptionsEditorProps> = ({
+export const SelectionOptionsEditor = ({
   onMultiChanged: onMultiChangedProps,
   onPropChange,
   variable,
-}) => {
+}: SelectionOptionsEditorProps) => {
   const onMultiChanged = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       onMultiChangedProps(toKeyedVariableIdentifier(variable), event.target.checked);

@@ -2,7 +2,8 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
@@ -83,6 +84,9 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
+  cellHeight?: TableCellHeight;
   /** @alpha */
   subData?: DataFrame[];
+  /** @alpha Used by SparklineCell when provided */
+  timeRange?: TimeRange;
 }

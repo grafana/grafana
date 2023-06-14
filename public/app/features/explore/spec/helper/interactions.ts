@@ -8,7 +8,7 @@ import { ExploreId } from '../../../../types';
 import { withinExplore } from './setup';
 
 export const changeDatasource = async (name: string) => {
-  const datasourcePicker = (await screen.findByLabelText(selectors.components.DataSourcePicker.container)).children[0];
+  const datasourcePicker = (await screen.findByTestId(selectors.components.DataSourcePicker.container)).children[0];
   fireEvent.keyDown(datasourcePicker, { keyCode: 40 });
   const option = screen.getByText(name);
   fireEvent.click(option);
@@ -71,7 +71,7 @@ export const commentQueryHistory = async (
   const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
   await userEvent.clear(input);
   await userEvent.type(input, comment);
-  await invokeAction(queryIndex, 'Submit button', exploreId);
+  await invokeAction(queryIndex, 'Save comment', exploreId);
 };
 
 export const deleteQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {

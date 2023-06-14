@@ -17,7 +17,7 @@ interface Props {
   secondaryPaneStyle?: React.CSSProperties;
 }
 
-export class SplitPaneWrapper extends PureComponent<Props> {
+export class SplitPaneWrapper extends PureComponent<React.PropsWithChildren<Props>> {
   //requestAnimationFrame reference
   rafToken: MutableRefObject<number | null> = createRef();
 
@@ -126,7 +126,7 @@ const getStyles = (theme: GrafanaTheme2, hasSplit: boolean) => {
       top: 50%;
       transition: 0.2s background ease-in-out;
       transform: translate(-50%, -50%);
-      border-radius: 4px;
+      border-radius: ${theme.shape.radius.default};
     }
 
     &:hover {

@@ -299,7 +299,10 @@
   "revision": 1,
   "schemaVersion": 37,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "gdev",
+    "transform"
+  ],
   "templating": {
     "list": []
   },
@@ -309,7 +312,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Test extractFields JSON",
+  "title": "Transforms - Test extractFields JSON",
   "uid": "pD4vPYhVz",
   "version": 3,
   "weekStart": ""

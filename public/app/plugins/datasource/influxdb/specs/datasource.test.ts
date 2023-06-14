@@ -1,8 +1,9 @@
 import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { ScopedVars } from '@grafana/data';
-import { FetchResponse, setBackendSrv } from '@grafana/runtime';
+import { ScopedVars } from '@grafana/data/src';
+import { FetchResponse } from '@grafana/runtime';
+import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
@@ -10,6 +11,11 @@ import InfluxDatasource from '../datasource';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getBackendSrv: () => backendSrv,
+}));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
@@ -23,7 +29,6 @@ describe('InfluxDataSource', () => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
-    setBackendSrv(backendSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -111,6 +116,8 @@ describe('InfluxDataSource', () => {
         } as FetchResponse);
       });
 
+      ctx.ds.retentionPolicies = [''];
+
       try {
         await lastValueFrom(ctx.ds.query(queryOptions));
       } catch (err) {
@@ -192,6 +199,17 @@ describe('InfluxDataSource', () => {
       it('should not have q as a query parameter', () => {
         expect(requestQueryParameter).not.toHaveProperty('q');
       });
+    });
+  });
+
+  // Some functions are required by the parent datasource class to provide functionality
+  // such as ad-hoc filters, which requires the definition of the getTagKeys, and getTagValues
+  describe('Datasource contract', () => {
+    it('has function called getTagKeys', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagKeys');
+    });
+    it('has function called getTagValues', () => {
+      expect(Object.getOwnPropertyNames(Object.getPrototypeOf(ctx.ds))).toContain('getTagValues');
     });
   });
 
@@ -320,6 +338,7 @@ describe('InfluxDataSource', () => {
       it('should apply all template variables with InfluxQL mode', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
@@ -330,6 +349,7 @@ describe('InfluxDataSource', () => {
       it('should apply all scopedVars to tags', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
+        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },

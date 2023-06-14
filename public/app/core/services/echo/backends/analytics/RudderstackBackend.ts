@@ -1,4 +1,4 @@
-import type { identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
+import type { apiOptions, identify, load, page, track } from 'rudder-sdk-js'; // SDK is loaded dynamically from config, so we only import types from the SDK package
 
 import { CurrentUserDTO } from '@grafana/data';
 import {
@@ -10,7 +10,7 @@ import {
   PageviewEchoEvent,
 } from '@grafana/runtime';
 
-import { getUserIdentifier, loadScript } from '../../utils';
+import { loadScript } from '../../utils';
 
 interface Rudderstack {
   identify: typeof identify;
@@ -70,13 +70,24 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
-      const identifier = getUserIdentifier(options.user);
+      const { identifier, intercomIdentifier } = options.user.analytics;
+      const apiOptions: apiOptions = {};
 
-      window.rudderanalytics?.identify?.(identifier, {
-        email: options.user.email,
-        orgId: options.user.orgId,
-        language: options.user.language,
-      });
+      if (intercomIdentifier) {
+        apiOptions.Intercom = {
+          user_hash: intercomIdentifier,
+        };
+      }
+
+      window.rudderanalytics?.identify?.(
+        identifier,
+        {
+          email: options.user.email,
+          orgId: options.user.orgId,
+          language: options.user.language,
+        },
+        apiOptions
+      );
     }
   }
 

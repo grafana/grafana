@@ -3,26 +3,26 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } from '@grafana/ui';
+import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
-import { defaultToRawSql } from '../utils/sql.utils';
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
-import { ErrorBoundary } from './ErrorBoundary';
+import { isSqlDatasourceDatabaseSelectionFeatureFlagEnabled } from './QueryEditorFeatureFlag.utils';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
   db: DB;
-  query: QueryWithDefaults;
-  onChange: (query: SQLQuery) => void;
-  onRunQuery: () => void;
-  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
-  queryRowFilter: QueryRowFilter;
+  isPostgresInstance?: boolean;
   isQueryRunnable: boolean;
-  isDatasetSelectorHidden?: boolean;
+  onChange: (query: SQLQuery) => void;
+  onQueryRowChange: (queryRowFilter: QueryRowFilter) => void;
+  onRunQuery: () => void;
+  preconfiguredDataset: string;
+  query: QueryWithDefaults;
+  queryRowFilter: QueryRowFilter;
 }
 
 const editorModes = [
@@ -32,18 +32,19 @@ const editorModes = [
 
 export function QueryHeader({
   db,
+  isPostgresInstance,
+  isQueryRunnable,
+  onChange,
+  onQueryRowChange,
+  onRunQuery,
+  preconfiguredDataset,
   query,
   queryRowFilter,
-  onChange,
-  onRunQuery,
-  onQueryRowChange,
-  isQueryRunnable,
-  isDatasetSelectorHidden,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
-  const toRawSql = db.toRawSql || defaultToRawSql;
+  const toRawSql = db.toRawSql;
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -88,34 +89,31 @@ export function QueryHeader({
       sql: undefined,
       rawSql: '',
     };
+
     onChange(next);
+  };
+
+  const datasetDropdownIsAvailable = () => {
+    // If the feature flag is DISABLED, && the datasource is Postgres (`isPostgresInstance`),
+    // we want to hide the dropdown - as per previous behavior.
+    if (!isSqlDatasourceDatabaseSelectionFeatureFlagEnabled() && isPostgresInstance) {
+      return false;
+    }
+
+    return true;
   };
 
   return (
     <>
       <EditorHeader>
-        {/* Backward compatibility check. Inline select uses SelectContainer that was added in 8.3 */}
-        <ErrorBoundary
-          fallBackComponent={
-            <InlineField label="Format" labelWidth={15}>
-              <Select
-                placeholder="Select format"
-                value={query.format}
-                onChange={onFormatChange}
-                options={QUERY_FORMAT_OPTIONS}
-              />
-            </InlineField>
-          }
-        >
-          <InlineSelect
-            label="Format"
-            value={query.format}
-            placeholder="Select format"
-            menuShouldPortal
-            onChange={onFormatChange}
-            options={QUERY_FORMAT_OPTIONS}
-          />
-        </ErrorBoundary>
+        <InlineSelect
+          label="Format"
+          value={query.format}
+          placeholder="Select format"
+          menuShouldPortal
+          onChange={onFormatChange}
+          options={QUERY_FORMAT_OPTIONS}
+        />
 
         {editorMode === EditorMode.Builder && (
           <>
@@ -221,24 +219,23 @@ export function QueryHeader({
         <>
           <Space v={0.5} />
           <EditorRow>
-            {isDatasetSelectorHidden ? null : (
+            {datasetDropdownIsAvailable() && (
               <EditorField label="Dataset" width={25}>
                 <DatasetSelector
                   db={db}
-                  value={query.dataset === undefined ? null : query.dataset}
+                  dataset={query.dataset}
+                  isPostgresInstance={isPostgresInstance}
+                  preconfiguredDataset={preconfiguredDataset}
                   onChange={onDatasetChange}
                 />
               </EditorField>
             )}
-
             <EditorField label="Table" width={25}>
               <TableSelector
                 db={db}
-                query={query}
-                value={query.table === undefined ? null : query.table}
+                dataset={query.dataset || preconfiguredDataset}
+                table={query.table}
                 onChange={onTableChange}
-                forceFetch={isDatasetSelectorHidden}
-                applyDefault
               />
             </EditorField>
           </EditorRow>

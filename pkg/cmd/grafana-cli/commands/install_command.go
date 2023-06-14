@@ -5,12 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -41,7 +45,11 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	return nil
 }
 
-func (cmd Command) installCommand(c utils.CommandLine) error {
+func logRestartNotice() {
+	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
+}
+
+func installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
@@ -49,14 +57,21 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return installPlugin(context.Background(), pluginID, version, c)
+	err := installPlugin(context.Background(), pluginID, version, c)
+	if err == nil {
+		logRestartNotice()
+	}
+	return err
 }
 
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API
 // and then extracts the zip into the plugin's directory.
 func installPlugin(ctx context.Context, pluginID, version string, c utils.CommandLine) error {
-	skipTLSVerify := c.Bool("insecure")
-	repository := repo.New(skipTLSVerify, c.PluginRepoURL(), services.Logger)
+	repository := repo.NewManager(repo.ManagerCfg{
+		SkipTLSVerify: c.Bool("insecure"),
+		BaseURL:       c.PluginRepoURL(),
+		Logger:        services.Logger,
+	})
 
 	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, runtime.GOOS, runtime.GOARCH)
 
@@ -74,7 +89,7 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 	}
 
 	pluginFs := storage.FileSystem(services.Logger, c.PluginDirectory())
-	extractedArchive, err := pluginFs.Add(ctx, pluginID, archive.File)
+	extractedArchive, err := pluginFs.Extract(ctx, pluginID, archive.File)
 	if err != nil {
 		return err
 	}
@@ -86,10 +101,25 @@ func installPlugin(ctx context.Context, pluginID, version string, c utils.Comman
 			return fmt.Errorf("%v: %w", fmt.Sprintf("failed to download plugin %s from repository", dep.ID), err)
 		}
 
-		_, err = pluginFs.Add(ctx, dep.ID, d.File)
+		_, err = pluginFs.Extract(ctx, dep.ID, d.File)
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// uninstallPlugin removes the plugin directory
+func uninstallPlugin(_ context.Context, pluginID string, c utils.CommandLine) error {
+	logger.Infof("Removing plugin: %v\n", pluginID)
+
+	pluginPath := filepath.Join(c.PluginDirectory(), pluginID)
+	fs := plugins.NewLocalFS(pluginPath)
+
+	logger.Debugf("Removing directory %v\n", pluginPath)
+	err := fs.Remove()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -100,7 +130,7 @@ func osAndArchString() string {
 	return osString + "-" + arch
 }
 
-func supportsCurrentArch(version *models.Version) bool {
+func supportsCurrentArch(version models.Version) bool {
 	if version.Arch == nil {
 		return true
 	}
@@ -112,10 +142,10 @@ func supportsCurrentArch(version *models.Version) bool {
 	return false
 }
 
-func latestSupportedVersion(plugin *models.Plugin) *models.Version {
+func latestSupportedVersion(plugin models.Plugin) *models.Version {
 	for _, v := range plugin.Versions {
 		ver := v
-		if supportsCurrentArch(&ver) {
+		if supportsCurrentArch(ver) {
 			return &ver
 		}
 	}

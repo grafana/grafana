@@ -1,20 +1,19 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createLokiDatasource } from '../../mocks';
 import { LokiQuery, LokiQueryType } from '../../types';
 
 import { LokiQueryBuilderOptions } from './LokiQueryBuilderOptions';
 
 describe('LokiQueryBuilderOptions', () => {
-  it('Can change query type', async () => {
+  it('can change query type', async () => {
     const { props } = setup();
 
-    screen.getByTitle('Click to edit options').click();
+    await userEvent.click(screen.getByTitle('Click to edit options'));
     expect(screen.getByLabelText('Range')).toBeChecked();
 
-    screen.getByLabelText('Instant').click();
+    await userEvent.click(screen.getByLabelText('Instant'));
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
@@ -22,18 +21,71 @@ describe('LokiQueryBuilderOptions', () => {
     });
   });
 
-  it('Can change legend format', async () => {
+  it('can change legend format', async () => {
     const { props } = setup();
 
-    screen.getByTitle('Click to edit options').click();
+    await userEvent.click(screen.getByTitle('Click to edit options'));
 
-    const element = screen.getByLabelText('Legend');
+    // First autosize input is a Legend
+    const element = screen.getAllByTestId('autosize-input')[0];
     await userEvent.type(element, 'asd');
-    fireEvent.keyDown(element, { key: 'Enter', code: 'Enter', charCode: 13 });
+    await userEvent.keyboard('{enter}');
 
     expect(props.onChange).toHaveBeenCalledWith({
       ...props.query,
       legendFormat: 'asd',
+    });
+  });
+
+  it('can change line limit to valid value', async () => {
+    const { props } = setup();
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
+    await userEvent.type(element, '10');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: 10,
+    });
+  });
+
+  it('does not change line limit to invalid numeric value', async () => {
+    const { props } = setup();
+    // We need to start with some value to be able to change it
+    props.query.maxLines = 10;
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
+    await userEvent.type(element, '-10');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: undefined,
+    });
+  });
+
+  it('does not change line limit to invalid text value', async () => {
+    const { props } = setup();
+    // We need to start with some value to be able to change it
+    props.query.maxLines = 10;
+    props.query.expr = '{foo="bar"}';
+
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    // Second autosize input is a Line limit
+    const element = screen.getAllByTestId('autosize-input')[1];
+    await userEvent.type(element, 'asd');
+    await userEvent.keyboard('{enter}');
+
+    expect(props.onChange).toHaveBeenCalledWith({
+      ...props.query,
+      maxLines: undefined,
     });
   });
 });
@@ -48,7 +100,7 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
     onRunQuery: jest.fn(),
     onChange: jest.fn(),
     maxLines: 20,
-    datasource: createLokiDatasource(),
+    queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
   };
 
   const { container } = render(<LokiQueryBuilderOptions {...props} />);

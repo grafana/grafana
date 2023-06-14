@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, waitFor } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -45,18 +45,18 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitFor(() => {
+      // Assert
+      const { current } = result;
 
-    // Assert
-    const { current } = result;
-
-    expect(current).toHaveLength(1);
-    expect(current[0].dataSource.uid).toBe('1');
-    expect(current[0].url).toBe('http://grafana.com');
+      expect(current).toHaveLength(1);
+      expect(current[0].dataSource.uid).toBe('1');
+      expect(current[0].url).toBe('http://grafana.com');
+    });
   });
 
   it('Should have active state if available in the activeAlertManagers', async () => {
@@ -78,18 +78,18 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForValueToChange(() => result.current[0].status);
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitFor(() => {
+      // Assert
+      const { current } = result;
 
-    // Assert
-    const { current } = result;
-
-    expect(current).toHaveLength(1);
-    expect(current[0].status).toBe('active');
-    expect(current[0].statusInconclusive).toBe(false);
+      expect(current).toHaveLength(1);
+      expect(current[0].status).toBe('active');
+      expect(current[0].statusInconclusive).toBe(false);
+    });
   });
 
   it('Should have dropped state if available in the droppedAlertManagers', async () => {
@@ -111,18 +111,19 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForValueToChange(() => result.current[0].status);
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
 
-    // Assert
-    const { current } = result;
+    await waitFor(() => {
+      // Assert
+      const { current } = result;
 
-    expect(current).toHaveLength(1);
-    expect(current[0].status).toBe('dropped');
-    expect(current[0].statusInconclusive).toBe(false);
+      expect(current).toHaveLength(1);
+      expect(current[0].status).toBe('dropped');
+      expect(current[0].statusInconclusive).toBe(false);
+    });
   });
 
   it('Should have pending state if not available neither in dropped nor in active alertManagers', async () => {
@@ -144,18 +145,19 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
 
-    // Assert
-    const { current } = result;
+    await waitFor(() => {
+      // Assert
+      const { current } = result;
 
-    expect(current).toHaveLength(1);
-    expect(current[0].status).toBe('pending');
-    expect(current[0].statusInconclusive).toBe(false);
+      expect(current).toHaveLength(1);
+      expect(current[0].status).toBe('pending');
+      expect(current[0].statusInconclusive).toBe(false);
+    });
   });
 
   it('Should match Alertmanager url when datasource url does not have protocol specified', async () => {
@@ -177,18 +179,19 @@ describe('useExternalDataSourceAlertmanagers', () => {
       },
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForValueToChange(() => result.current[0].status);
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
 
-    // Assert
-    const { current } = result;
+    await waitFor(() => {
+      // Assert
+      const { current } = result;
 
-    expect(current).toHaveLength(1);
-    expect(current[0].status).toBe('active');
-    expect(current[0].url).toBe('localhost:9093');
+      expect(current).toHaveLength(1);
+      expect(current[0].status).toBe('active');
+      expect(current[0].url).toBe('localhost:9093');
+    });
   });
 
   it('Should have inconclusive state when there are many Alertmanagers of the same URL', async () => {
@@ -210,19 +213,19 @@ describe('useExternalDataSourceAlertmanagers', () => {
       state.dataSources.dataSources = [dsSettings];
     });
 
-    const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
+    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), {
+    const { result } = renderHook(() => useExternalDataSourceAlertmanagers(), {
       wrapper,
     });
 
-    await waitForValueToChange(() => result.current[0].status);
-
-    // Assert
-    expect(result.current).toHaveLength(1);
-    expect(result.current[0].status).toBe('active');
-    expect(result.current[0].statusInconclusive).toBe(true);
+    await waitFor(() => {
+      // Assert
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].status).toBe('active');
+      expect(result.current[0].statusInconclusive).toBe(true);
+    });
   });
 });
 

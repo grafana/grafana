@@ -1,12 +1,12 @@
-import { DateHistogram } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
+  ElasticsearchQuery,
   ExtendedStat,
   MetricAggregation,
   MovingAverageModelOption,
   MetricAggregationType,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
-import { ElasticsearchQuery } from './types';
+  DateHistogram,
+} from './types';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },

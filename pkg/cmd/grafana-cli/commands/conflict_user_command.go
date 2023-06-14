@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,7 +62,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
 	quotaService := quotaimpl.ProvideService(s, cfg)
-	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService)
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
 	}
@@ -237,10 +238,10 @@ func generateConflictUsersFile(r *ConflictResolver) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(getDocumentationForFile())); err != nil {
+	if _, err := tmpFile.WriteString(getDocumentationForFile()); err != nil {
 		return nil, err
 	}
-	if _, err := tmpFile.Write([]byte(r.ToStringPresentation())); err != nil {
+	if _, err := tmpFile.WriteString(r.ToStringPresentation()); err != nil {
 		return nil, err
 	}
 	return tmpFile, nil
@@ -279,7 +280,7 @@ func getValidConflictUsers(r *ConflictResolver, b []byte) error {
 			continue
 		}
 
-		entryRow := matchingExpression.Match([]byte(row))
+		entryRow := matchingExpression.MatchString(row)
 		// not an entry row -> is a conflict block row
 		if !entryRow {
 			// check for malformed row

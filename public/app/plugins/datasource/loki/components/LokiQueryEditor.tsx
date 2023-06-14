@@ -1,9 +1,11 @@
+import { isEqual } from 'lodash';
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
@@ -17,8 +19,9 @@ import { LokiQueryCodeEditor } from '../querybuilder/components/LokiQueryCodeEdi
 import { QueryPatternsModal } from '../querybuilder/components/QueryPatternsModal';
 import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
-import { LokiQuery } from '../types';
+import { LokiQuery, QueryStats } from '../types';
 
+import { getStats, shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
@@ -31,9 +34,19 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
+  const [queryStats, setQueryStats] = useState<QueryStats | null>(null);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
+  const timerange = datasource.getTimeRange();
+  const predefinedOperations = datasource.predefinedOperations;
+  const previousTimerange = usePrevious(timerange);
+
   const query = getQueryWithDefaults(props.query);
+  if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
+    query.expr = `{} ${predefinedOperations}`;
+  }
+  const previousQuery = usePrevious(query.expr);
+
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -68,7 +81,9 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   }, [data]);
 
   const onChangeInternal = (query: LokiQuery) => {
-    setDataIsStale(true);
+    if (!isEqual(query, props.query)) {
+      setDataIsStale(true);
+    }
     onChange(query);
   };
 
@@ -79,6 +94,17 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
 
     setLabelBrowserVisible((visible) => !visible);
   };
+
+  useEffect(() => {
+    const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
+    if (update) {
+      const makeAsyncRequest = async () => {
+        const stats = await getStats(datasource, query.expr);
+        setQueryStats(stats);
+      };
+      makeAsyncRequest();
+    }
+  }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
   return (
     <>
@@ -154,7 +180,13 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       <Space v={0.5} />
       <EditorRows>
         {editorMode === QueryEditorMode.Code && (
-          <LokiQueryCodeEditor {...props} query={query} onChange={onChangeInternal} showExplain={explain} />
+          <LokiQueryCodeEditor
+            {...props}
+            query={query}
+            onChange={onChangeInternal}
+            showExplain={explain}
+            setQueryStats={setQueryStats}
+          />
         )}
         {editorMode === QueryEditorMode.Builder && (
           <LokiQueryBuilderContainer
@@ -171,7 +203,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           onRunQuery={onRunQuery}
           app={app}
           maxLines={datasource.maxLines}
-          datasource={datasource}
+          queryStats={queryStats}
         />
       </EditorRows>
     </>

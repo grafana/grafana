@@ -1,4 +1,4 @@
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 export const hasCyclicalReferences = (queries: AlertQuery[]) => {

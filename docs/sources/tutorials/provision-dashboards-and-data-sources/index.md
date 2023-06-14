@@ -74,7 +74,7 @@ Each data source provisioning config file contains a _manifest_ that specifies t
 
 At startup, Grafana loads the configuration files and provisions the data sources listed in the manifests.
 
-Let's configure a [TestData DB](/docs/grafana/latest/features/datasources/testdata/) data source that you can use for your dashboards.
+Let's configure a [TestData](/docs/grafana/latest/features/datasources/testdata/) data source that you can use for your dashboards.
 
 #### Create a data source manifest
 
@@ -84,12 +84,12 @@ Let's configure a [TestData DB](/docs/grafana/latest/features/datasources/testda
    apiVersion: 1
 
    datasources:
-     - name: TestData DB
+     - name: TestData
        type: testdata
    ```
 
 1. Restart Grafana to load the new changes.
-1. In the sidebar, hover the cursor over the **Configuration** (gear) icon and click **Data Sources**. The TestData DB appears in the list of data sources.
+1. In the sidebar, hover the cursor over the **Configuration** (gear) icon and click **Data Sources**. TestData appears in the list of data sources.
 
 > The configuration options can vary between different types of data sources. For more information on how to configure a specific data source, refer to [Data sources](/docs/grafana/latest/administration/provisioning/#datasources).
 
@@ -146,7 +146,7 @@ For more information on how to configure dashboard providers, refer to [Dashboar
          "bars": false,
          "dashLength": 10,
          "dashes": false,
-         "datasource": "TestData DB",
+         "datasource": "TestData",
          "fill": 1,
          "gridPos": {
            "h": 8,

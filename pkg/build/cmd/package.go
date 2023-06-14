@@ -38,14 +38,17 @@ func Package(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	variantStrs := strings.Split(c.String("variants"), ",")
 	variants := []config.Variant{}
-	for _, varStr := range variantStrs {
-		if varStr == "" {
-			continue
+	variantStrs := strings.Split(c.String("variants"), ",")
+	if c.String("variants") != "" {
+		for _, varStr := range variantStrs {
+			if varStr == "" {
+				continue
+			}
+			variants = append(variants, config.Variant(varStr))
 		}
-
-		variants = append(variants, config.Variant(varStr))
+	} else {
+		variants = releaseModeConfig.Variants
 	}
 
 	if len(variants) == 0 {

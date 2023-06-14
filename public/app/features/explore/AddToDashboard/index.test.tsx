@@ -22,11 +22,13 @@ import { AddToDashboard } from '.';
 const setup = (children: ReactNode, queries: DataQuery[] = [{ refId: 'A' }]) => {
   const store = configureStore({
     explore: {
-      left: {
-        queries,
-        queryResponse: createEmptyQueryResponse(),
+      panes: {
+        left: {
+          queries,
+          queryResponse: createEmptyQueryResponse(),
+        },
       },
-    } as ExploreState,
+    } as unknown as ExploreState,
   });
 
   return render(<Provider store={store}>{children}</Provider>);
@@ -201,7 +203,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -243,7 +244,6 @@ describe('AddToDashboardButton', () => {
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -359,7 +359,6 @@ describe('AddToDashboardButton', () => {
         {
           uid: 'someUid',
           isStarred: false,
-          items: [],
           title: 'Dashboard Title',
           tags: [],
           type: DashboardSearchItemType.DashDB,

@@ -4,8 +4,10 @@ This module returns the pipeline used for linting frontend code.
 
 load(
     "scripts/drone/steps/lib.star",
+    "enterprise_setup_step",
     "identify_runner_step",
     "lint_frontend_step",
+    "verify_i18n_step",
     "yarn_install_step",
 )
 load(
@@ -25,13 +27,24 @@ def lint_frontend_pipeline(trigger, ver_mode):
     """
     environment = {"EDITION": "oss"}
 
-    init_steps = [
+    init_steps = []
+    lint_step = lint_frontend_step()
+    i18n_step = verify_i18n_step()
+
+    if ver_mode == "pr":
+        # In pull requests, attempt to clone grafana enterprise.
+        init_steps = [enterprise_setup_step()]
+        # Ensure the lint step happens after the clone-enterprise step
+
+        lint_step["depends_on"].append("clone-enterprise")
+
+    init_steps += [
         identify_runner_step(),
         yarn_install_step(),
     ]
-
     test_steps = [
-        lint_frontend_step(),
+        lint_step,
+        i18n_step,
     ]
 
     return pipeline(

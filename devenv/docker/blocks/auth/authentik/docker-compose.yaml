@@ -39,7 +39,7 @@
       - "authentik:authentik"
 
   authentik:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2022.12.1}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.2.3}
     restart: unless-stopped
     container_name: authentik
     command: server

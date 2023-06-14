@@ -21,6 +21,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,16 +41,18 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, dashboards.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures())
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, foldertest.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures())
+		dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
+			settings, dashboardStore, foldertest.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
+			folderSvc,
+		)
+		require.NoError(t, err)
 		hs := &HTTPServer{
-			Cfg:      settings,
-			SQLStore: mockSQLStore,
-			Features: features,
-			DashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, dashboards.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
-				folderSvc,
-			),
-			AccessControl: accesscontrolmock.New().WithDisabled(),
+			Cfg:              settings,
+			SQLStore:         mockSQLStore,
+			Features:         features,
+			DashboardService: dashboardService,
+			AccessControl:    accesscontrolmock.New().WithDisabled(),
 		}
 
 		t.Run("Given user has no admin permissions", func(t *testing.T) {

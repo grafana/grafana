@@ -3,11 +3,10 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
-	"os"
 	"path/filepath"
 	"sort"
 
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -33,13 +32,13 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 	decls := make([]*PluginDecl, 0)
 	for _, plugin := range plugins {
-		path := filepath.Dir(plugin)
+		path := filepath.ToSlash(filepath.Dir(plugin))
 		base := filepath.Base(path)
 		if skip, ok := psr.skip[base]; ok && skip {
 			continue
 		}
 
-		dir := os.DirFS(path)
+		dir, _ := fs.Sub(root, path)
 		pp, err := ParsePluginFS(dir, psr.rt)
 		if err != nil {
 			return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)

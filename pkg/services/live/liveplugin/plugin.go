@@ -7,10 +7,10 @@ import (
 	"github.com/centrifugal/centrifuge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -72,14 +72,14 @@ func NewContextGetter(pluginContextProvider *plugincontext.Provider, dataSourceC
 	}
 }
 
-func (g *ContextGetter) GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, bool, error) {
+func (g *ContextGetter) GetPluginContext(ctx context.Context, user *user.SignedInUser, pluginID string, datasourceUID string, skipCache bool) (backend.PluginContext, error) {
 	if datasourceUID == "" {
-		return g.pluginContextProvider.Get(ctx, pluginID, user)
+		return g.pluginContextProvider.Get(ctx, pluginID, user, user.OrgID)
 	}
 
 	ds, err := g.dataSourceCache.GetDatasourceByUID(ctx, datasourceUID, user, skipCache)
 	if err != nil {
-		return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get datasource", err)
+		return backend.PluginContext{}, fmt.Errorf("%v: %w", "Failed to get datasource", err)
 	}
 	return g.pluginContextProvider.GetWithDataSource(ctx, pluginID, user, ds)
 }

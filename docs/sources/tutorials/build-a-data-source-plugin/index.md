@@ -38,13 +38,15 @@ In this tutorial, you'll:
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="latest" >}}
 
+To learn how to create a backend data source plugin, see [Build a data source backend plugin](/docs/grafana/latest/tutorials/build-a-data-source-backend-plugin).
+
 ## Anatomy of a plugin
 
 {{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" version="latest" >}}
 
 ## Data source plugins
 
-A data source in Grafana must extend the `DataSourceApi` interface, which requires you to defines two methods: `query` and `testDatasource`.
+A data source in Grafana must extend the `DataSourceApi` interface, which requires you to define two methods: `query` and `testDatasource`.
 
 ### The `query` method
 
@@ -68,7 +70,7 @@ async testDatasource()
 
 ## Data frames
 
-Nowadays there are countless of different databases, each with their own ways of querying data. To be able to support all the different data formats, Grafana consolidates the data into a unified data structure called _data frames_.
+Nowadays there are countless different databases, each with their own ways of querying data. To be able to support all the different data formats, Grafana consolidates the data into a unified data structure called _data frames_.
 
 Let's see how to create and return a data frame from the `query` method. In this step, you'll change the code in the starter plugin to return a [sine wave](https://en.wikipedia.org/wiki/Sine_wave).
 
@@ -94,6 +96,14 @@ Let's see how to create and return a data frame from the `query` method. In this
 
    ```ts
    const query = defaults(target, defaultQuery);
+   ```
+
+1. Create a default query at the top of datasource.ts:
+
+   ```ts
+   export const defaultQuery: Partial<MyQuery> = {
+     constant: 6.5,
+   };
    ```
 
 1. Create a data frame with a time field and a number field:
@@ -183,7 +193,7 @@ We want to be able to control the frequency of the sine wave, so let's add anoth
 
 Now that you've defined the query model you wish to support, the next step is to bind the model to a form. The `FormField` is a text field component from `grafana/ui` that lets you register a listener which will be invoked whenever the form field value changes.
 
-1. Add a new form field to the query editor to control the new frequency property.
+1. Define the `frequency` from the `query` object and add a new form field to the query editor to control the new frequency property in the `render` method.
 
    **QueryEditor.tsx**
 
@@ -192,14 +202,15 @@ Now that you've defined the query model you wish to support, the next step is to
    ```
 
    ```ts
-   <FormField width={4} value={frequency} onChange={this.onFrequencyChange} label="Frequency" type="number" />
+   <InlineField label="Frequency" labelWidth={16}>
+     <Input onChange={onFrequencyChange} value={frequency} />
+   </InlineField>
    ```
 
 1. Add a event listener for the new property.
 
    ```ts
-   onFrequencyChange = (event: ChangeEvent<HTMLInputElement>) => {
-     const { onChange, query, onRunQuery } = this.props;
+   const onFrequencyChange = (event: ChangeEvent<HTMLInputElement>) => {
      onChange({ ...query, frequency: parseFloat(event.target.value) });
      // executes the query
      onRunQuery();
@@ -252,21 +263,15 @@ Just like query editor, the form field in the config editor calls the registered
    **ConfigEditor.tsx**
 
    ```ts
-   <div className="gf-form">
-     <FormField
-       label="Resolution"
-       onChange={this.onResolutionChange}
-       value={jsonData.resolution || ''}
-       placeholder="Enter a number"
-     />
-   </div>
+   <InlineField label="Resolution" labelWidth={12}>
+     <Input onChange={onResolutionChange} value={jsonData.resolution || ''} placeholder="Enter a number" width={40} />
+   </InlineField>
    ```
 
 1. Add a event listener for the new option.
 
    ```ts
-   onResolutionChange = (event: ChangeEvent<HTMLInputElement>) => {
-     const { onOptionsChange, options } = this.props;
+   const onResolutionChange = (event: ChangeEvent<HTMLInputElement>) => {
      const jsonData = {
        ...options.jsonData,
        resolution: parseFloat(event.target.value),
@@ -296,7 +301,7 @@ Just like query editor, the form field in the config editor calls the registered
 
 1. In the `query` method, use the `resolution` property to calculate the step size.
 
-   **src/DataSource.ts**
+   **src/datasource.ts**
 
    ```ts
    const step = duration / this.resolution;
@@ -312,7 +317,7 @@ The main advantage of `getBackendSrv` is that it proxies requests through the Gr
 
 1. Import `getBackendSrv`.
 
-   **src/DataSource.ts**
+   **src/datasource.ts**
 
    ```ts
    import { getBackendSrv } from '@grafana/runtime';

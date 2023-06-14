@@ -135,6 +135,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 	logger = logger.New("dashboard", dashboardUID, "panel", panelID)
 
 	opts := screenshot.ScreenshotOptions{
+		OrgID:        r.OrgID,
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
 		Timeout:      s.screenshotTimeout,

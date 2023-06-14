@@ -2,13 +2,14 @@ import { of } from 'rxjs';
 
 import { DataQueryRequest, dateTime } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../../test/helpers/createFetchResponse';
 import OpenTsDatasource from '../datasource';
 import { OpenTsdbQuery } from '../types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -23,16 +24,16 @@ const metricFindQueryData = [
 ];
 
 describe('opentsdb', () => {
-  function getTestcontext({ data = metricFindQueryData }: { data?: any } = {}) {
+  function getTestcontext({ data = metricFindQueryData }: { data?: unknown } = {}) {
     jest.clearAllMocks();
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
     fetchMock.mockImplementation(() => of(createFetchResponse(data)));
 
     const instanceSettings = { url: '', jsonData: { tsdbVersion: 1 } };
     const replace = jest.fn((value) => value);
-    const templateSrv: any = {
+    const templateSrv = {
       replace,
-    };
+    } as unknown as TemplateSrv;
 
     const ds = new OpenTsDatasource(instanceSettings, templateSrv);
 
@@ -186,7 +187,6 @@ describe('opentsdb', () => {
         requestId: 'Q103',
         timezone: 'browser',
         panelId: 2,
-        dashboardId: 189,
         dashboardUID: 'tyzmfPIVz',
         publicDashboardAccessToken: '',
         range: {

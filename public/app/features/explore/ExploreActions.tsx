@@ -1,5 +1,5 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
-import { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ExploreId, useDispatch, useSelector } from 'app/types';
 
@@ -12,7 +12,7 @@ interface Props {
   exploreIdRight?: ExploreId;
 }
 
-export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Props) => {
+export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();
@@ -32,7 +32,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
         name: 'Run query (left)',
         keywords: 'query left',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: exploreIdLeft }));
         },
         section: exploreSection,
       });
@@ -43,7 +43,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
           name: 'Run query (right)',
           keywords: 'query right',
           perform: () => {
-            dispatch(runQueries(exploreIdRight));
+            dispatch(runQueries({ exploreId: exploreIdRight }));
           },
           section: exploreSection,
         });
@@ -72,7 +72,7 @@ export const ExploreActions: FC<Props> = ({ exploreIdLeft, exploreIdRight }: Pro
         name: 'Run query',
         keywords: 'query',
         perform: () => {
-          dispatch(runQueries(exploreIdLeft));
+          dispatch(runQueries({ exploreId: exploreIdLeft }));
         },
         section: exploreSection,
       });

@@ -26,7 +26,7 @@ import { drawMarkers, FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<CandlestickOptions> {}
 
-export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
+export const CandlestickPanel = ({
   data,
   id,
   timeRange,
@@ -37,7 +37,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   fieldConfig,
   onChangeTimeRange,
   replaceVariables,
-}) => {
+}: CandlestickPanelProps) => {
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
     usePanelContext();
 
@@ -49,7 +49,7 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
 
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
-  }, [data, options, theme, timeRange]);
+  }, [data.series, options, theme, timeRange]);
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;

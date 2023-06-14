@@ -7,7 +7,7 @@ import {
   ScatterFieldConfig as GeneratedScatterFieldConfig,
   ScatterSeriesConfig as GeneratedScatterSeriesConfig,
   defaultScatterFieldConfig as generatedDefaultScatterFieldConfig,
-  PanelOptions as GeneratedPanelOptions,
+  Options as GeneratedOptions,
 } from './panelcfg.gen';
 
 /**
@@ -24,13 +24,6 @@ export interface ScatterHoverEvent {
 
 export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
 
-export interface LegendInfo {
-  color: CanvasRenderingContext2D['strokeStyle'];
-  text: string;
-  symbol: string;
-  openEditor?: (evt: any) => void;
-}
-
 export interface ScatterFieldConfig extends GeneratedScatterFieldConfig {
   pointSymbol?: DimensionSupplier<string>;
 }
@@ -41,7 +34,7 @@ export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
 
 export interface ScatterSeriesConfig extends ScatterFieldConfig, GeneratedScatterSeriesConfig {}
 
-export interface PanelOptions extends Omit<GeneratedPanelOptions, 'series'> {
+export interface Options extends Omit<GeneratedOptions, 'series'> {
   series: ScatterSeriesConfig[];
 }
 

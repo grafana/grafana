@@ -1,9 +1,12 @@
 package historian
 
 import (
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	prometheus "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -11,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
+
+const StateHistoryWriteTimeout = time.Minute
 
 func shouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {
@@ -39,6 +44,12 @@ func removePrivateLabels(labels data.Labels) data.Labels {
 	return result
 }
 
+// labelFingerprint calculates a stable Prometheus-style signature for a label set.
+func labelFingerprint(labels data.Labels) string {
+	sig := prometheus.LabelsToSignature(labels)
+	return fmt.Sprintf("%016x", sig)
+}
+
 // panelKey uniquely identifies a panel.
 type panelKey struct {
 	orgID   int64
@@ -56,4 +67,11 @@ func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *panelKey {
 		}
 	}
 	return nil
+}
+
+func mergeLabels(base, into data.Labels) data.Labels {
+	for k, v := range into {
+		base[k] = v
+	}
+	return base
 }

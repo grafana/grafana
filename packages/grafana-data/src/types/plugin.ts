@@ -58,6 +58,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   info: PluginMetaInfo;
   includes?: PluginInclude[];
   state?: PluginState;
+  alias?: string;
 
   // System.load & relative URLS
   module: string;
@@ -80,6 +81,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
+  angularDetected?: boolean;
 }
 
 interface PluginDependencyInfo {
@@ -123,6 +125,7 @@ export interface PluginInclude {
 interface PluginMetaInfoLink {
   name: string;
   url: string;
+  target?: '_blank' | '_self' | '_parent' | '_top';
 }
 
 export interface PluginBuildInfo {

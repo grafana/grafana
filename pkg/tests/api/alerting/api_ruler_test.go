@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -101,7 +102,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "datasourceUid":"-100",
+		                        "datasourceUid":"__expr__",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
 		                           "intervalMs":1000,
@@ -112,6 +113,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused":false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -151,7 +153,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "datasourceUid":"-100",
+		                        "datasourceUid":"__expr__",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
 		                           "intervalMs":1000,
@@ -162,6 +164,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						"updated":"2021-02-21T01:10:30Z",
 						"intervalSeconds":60,
+						"is_paused":false,
 						"version":1,
 						"uid":"uid",
 						"namespace_uid":"nsuid",
@@ -224,7 +227,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "datasourceUid":"-100",
+		                        "datasourceUid":"__expr__",
 								"model":{
 		                           "expression":"2 + 3 \u003E 1",
 		                           "intervalMs":1000,
@@ -235,6 +238,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused":false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -290,14 +294,14 @@ func createRule(t *testing.T, client apiClient, folder string) {
 				GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 					Title:     fmt.Sprintf("rule under folder %s", folder),
 					Condition: "A",
-					Data: []ngmodels.AlertQuery{
+					Data: []apimodels.AlertQuery{
 						{
 							RefID: "A",
-							RelativeTimeRange: ngmodels.RelativeTimeRange{
-								From: ngmodels.Duration(time.Duration(5) * time.Hour),
-								To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+							RelativeTimeRange: apimodels.RelativeTimeRange{
+								From: apimodels.Duration(time.Duration(5) * time.Hour),
+								To:   apimodels.Duration(time.Duration(3) * time.Hour),
 							},
-							DatasourceUID: "-100",
+							DatasourceUID: expr.DatasourceUID,
 							Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -354,9 +358,10 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	require.Len(t, createdRuleGroup.Rules, 2)
 
 	t.Run("trying to create alert with same title under same folder should fail", func(t *testing.T) {
-		rules := newTestingRuleConfig(t)
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules = append(rulesWithUID.Rules, rules.Rules[0]) // Create new copy of first rule.
 
-		status, body := apiClient.PostRulesGroup(t, "folder1", &rules)
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
 		var res map[string]interface{}
@@ -365,12 +370,10 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	})
 
 	t.Run("trying to update an alert to the title of an existing alert in the same folder should fail", func(t *testing.T) {
-		rules := newTestingRuleConfig(t)
-		rules.Rules[0].GrafanaManagedAlert.UID = createdRuleGroup.Rules[0].GrafanaManagedAlert.UID
-		rules.Rules[1].GrafanaManagedAlert.UID = createdRuleGroup.Rules[1].GrafanaManagedAlert.UID
-		rules.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "AlwaysFiring"
 
-		status, body := apiClient.PostRulesGroup(t, "folder1", &rules)
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusInternalServerError, status)
 
 		var res map[string]interface{}
@@ -381,6 +384,28 @@ func TestIntegrationAlertRuleConflictingTitle(t *testing.T) {
 	t.Run("trying to create alert with same title under another folder should succeed", func(t *testing.T) {
 		rules := newTestingRuleConfig(t)
 		status, body := apiClient.PostRulesGroup(t, "folder2", &rules)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	})
+
+	t.Run("trying to swap titles of existing alerts in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		title0 := rulesWithUID.Rules[0].GrafanaManagedAlert.Title
+		title1 := rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = title1
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = title0
+
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
+		assert.Equal(t, http.StatusAccepted, status)
+		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
+	})
+
+	t.Run("trying to update titles of existing alerts in a chain in the same folder should work", func(t *testing.T) {
+		rulesWithUID := convertGettableRuleGroupToPostable(createdRuleGroup)
+		rulesWithUID.Rules[0].GrafanaManagedAlert.Title = rulesWithUID.Rules[1].GrafanaManagedAlert.Title
+		rulesWithUID.Rules[1].GrafanaManagedAlert.Title = "something new"
+
+		status, body := apiClient.PostRulesGroup(t, "folder1", &rulesWithUID)
 		assert.Equal(t, http.StatusAccepted, status)
 		require.JSONEq(t, `{"message":"rule group updated successfully"}`, body)
 	})
@@ -430,14 +455,14 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiring",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -450,14 +475,14 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 						Title:     "AlwaysFiringButSilenced",
 						Condition: "A",
-						Data: []ngmodels.AlertQuery{
+						Data: []apimodels.AlertQuery{
 							{
 								RefID: "A",
-								RelativeTimeRange: ngmodels.RelativeTimeRange{
-									From: ngmodels.Duration(time.Duration(5) * time.Hour),
-									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(time.Duration(5) * time.Hour),
+									To:   apimodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -499,7 +524,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"from": 18000,
 						"to": 10800
 					},
-					"datasourceUid": "-100",
+					"datasourceUid": "__expr__",
 					"model": {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
@@ -509,6 +534,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -532,7 +558,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"from": 18000,
 						"to": 10800
 					},
-					"datasourceUid": "-100",
+					"datasourceUid": "__expr__",
 					"model": {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
@@ -542,6 +568,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -577,7 +604,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 						"from": 18000,
 						"to": 10800
 					},
-					"datasourceUid": "-100",
+					"datasourceUid": "__expr__",
 					"model": {
 						"expression": "2 + 3 \u003e 1",
 						"intervalMs": 1000,
@@ -587,6 +614,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -882,14 +910,14 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring",
 			Condition: "A",
-			Data: []ngmodels.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: ngmodels.RelativeTimeRange{
-						From: ngmodels.Duration(time.Duration(5) * time.Hour),
-						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
-					DatasourceUID: "-100",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"
@@ -909,14 +937,14 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     "AlwaysFiring2",
 			Condition: "A",
-			Data: []ngmodels.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID: "A",
-					RelativeTimeRange: ngmodels.RelativeTimeRange{
-						From: ngmodels.Duration(time.Duration(5) * time.Hour),
-						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
+					RelativeTimeRange: apimodels.RelativeTimeRange{
+						From: apimodels.Duration(time.Duration(5) * time.Hour),
+						To:   apimodels.Duration(time.Duration(3) * time.Hour),
 					},
-					DatasourceUID: "-100",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"
@@ -932,5 +960,129 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 			firstRule,
 			secondRule,
 		},
+	}
+}
+
+func TestIntegrationRulePause(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
+
+	t.Run("should create a paused rule if isPaused is true", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := true
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is false", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := false
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is not present", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		group.Rules[0].GrafanaManagedAlert.IsPaused = nil
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.False(t, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	getBooleanPointer := func(b bool) *bool { return &b }
+	testCases := []struct {
+		description          string
+		isPausedInDb         bool
+		isPausedInBody       *bool
+		expectedIsPausedInDb bool
+	}{
+		{
+			description:          "should pause rule if there is a paused rule in DB and isPaused is true",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is a paused rule in DB and isPaused is false",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule paused if there is a paused rule in DB and isPaused is not present",
+			isPausedInDb:         true,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should pause rule if there is an unpaused rule in DB and isPaused is true",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is an unpaused rule in DB and isPaused is false",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule unpaused if there is an unpaused rule in DB and isPaused is not present",
+			isPausedInDb:         false,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			group := generateAlertRuleGroup(1, alertRuleGen())
+			group.Rules[0].GrafanaManagedAlert.IsPaused = &tc.isPausedInDb
+
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+			getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			group.Rules[0].GrafanaManagedAlert.IsPaused = tc.isPausedInBody
+			status, body = client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equal(t, tc.expectedIsPausedInDb, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+		})
 	}
 }

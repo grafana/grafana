@@ -1,6 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {}
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 1 Fields by 1 Rows
 //  +--------------------------------------+
@@ -18,7 +23,12 @@
   "frames": [
     {
       "schema": {
-        "meta": {},
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
         "fields": [
           {
             "name": "_value",

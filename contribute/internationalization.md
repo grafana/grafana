@@ -4,7 +4,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 
 ## tl;dr
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for grafana.json files - they will be rejected.
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation.
 
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`

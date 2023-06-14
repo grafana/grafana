@@ -13,9 +13,7 @@ import {
   createQueryHeading,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
-  migrateQueryHistoryFromLocalStorage,
   SortOrder,
-  LocalStorageMigrationStatus,
 } from './richHistory';
 
 const richHistoryStorageMock: RichHistoryStorage = {} as RichHistoryStorage;
@@ -176,35 +174,6 @@ describe('richHistory', () => {
     it('should delete query in query in history', async () => {
       const deletedHistoryId = await deleteQueryInRichHistory('1');
       expect(deletedHistoryId).toEqual('1');
-    });
-  });
-
-  describe('migration', () => {
-    beforeEach(() => {
-      richHistoryRemoteStorageMock.migrate.mockReset();
-    });
-
-    it('migrates history', async () => {
-      const history = { richHistory: [{ id: 'test' }, { id: 'test2' }], total: 2 };
-
-      richHistoryLocalStorageMock.getRichHistory.mockReturnValue(history);
-      const migrationResult = await migrateQueryHistoryFromLocalStorage();
-      expect(richHistoryRemoteStorageMock.migrate).toBeCalledWith(history.richHistory);
-      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Successful);
-      expect(migrationResult.error).toBeUndefined();
-    });
-    it('does not migrate if there are no entries', async () => {
-      richHistoryLocalStorageMock.getRichHistory.mockReturnValue({ richHistory: [] });
-      const migrationResult = await migrateQueryHistoryFromLocalStorage();
-      expect(richHistoryRemoteStorageMock.migrate).not.toBeCalled();
-      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.NotNeeded);
-      expect(migrationResult.error).toBeUndefined();
-    });
-    it('propagates thrown errors', async () => {
-      richHistoryLocalStorageMock.getRichHistory.mockRejectedValue(new Error('migration failed'));
-      const migrationResult = await migrateQueryHistoryFromLocalStorage();
-      expect(migrationResult.status).toBe(LocalStorageMigrationStatus.Failed);
-      expect(migrationResult.error?.message).toBe('migration failed');
     });
   });
 

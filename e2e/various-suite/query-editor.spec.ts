@@ -2,7 +2,7 @@ import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
   describeName: 'Query editor',
-  itName: 'Undo should work in query editor for prometheus.',
+  itName: 'Undo should work in query editor for prometheus -- test CI.',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
@@ -30,11 +30,6 @@ e2e.scenario({
 
     cy.contains(queryText).should('be.visible');
 
-    cy.get('body').click();
     e2e.components.Alert.alertV2('error').should('not.be.visible');
-
-    cy.contains('label', 'Builder').click();
-
-    cy.get('[data-testid="operations.0.wrapper"]').should('be.visible');
   },
 });

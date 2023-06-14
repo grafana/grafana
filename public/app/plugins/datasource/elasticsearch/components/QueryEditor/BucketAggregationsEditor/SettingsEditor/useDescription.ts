@@ -1,6 +1,6 @@
+import { BucketAggregation } from '../../../../types';
 import { describeMetric, convertOrderByToMetricId } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import { BucketAggregation } from '../aggregations';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
 const hasValue = (value: string) => (object: { value?: string }) => object.value === value;
@@ -49,8 +49,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'histogram': {
-      const interval = bucketAgg.settings?.interval || 1000;
-      const minDocCount = bucketAgg.settings?.min_doc_count || 1;
+      const interval = bucketAgg.settings?.interval || '1000';
+      const minDocCount = parseInt(bucketAgg.settings?.min_doc_count || '1', 10);
 
       return `Interval: ${interval}${minDocCount > 0 ? `, Min Doc Count: ${minDocCount}` : ''}`;
     }
@@ -67,8 +67,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
 
     case 'date_histogram': {
       const interval = bucketAgg.settings?.interval || 'auto';
-      const minDocCount = bucketAgg.settings?.min_doc_count || 0;
-      const trimEdges = bucketAgg.settings?.trimEdges || 0;
+      const minDocCount = parseInt(bucketAgg.settings?.min_doc_count || '0', 10);
+      const trimEdges = parseInt(bucketAgg.settings?.trimEdges || '0', 10);
 
       let description = `Interval: ${interval}`;
 

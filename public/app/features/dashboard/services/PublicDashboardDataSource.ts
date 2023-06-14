@@ -5,6 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  TestDataSourceResponse,
   DataSourceApi,
   DataSourceJsonData,
   DataSourcePluginMeta,
@@ -86,6 +87,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       requestId,
       publicDashboardAccessToken,
       panelId,
+      queryCachingTTL,
       range: { from: fromRange, to: toRange },
     } = request;
     let queries: DataQuery[];
@@ -110,6 +112,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       const body = {
         intervalMs,
         maxDataPoints,
+        queryCachingTTL,
         timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
       };
 
@@ -149,7 +152,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
     return { data: [toDataFrame(annotations)] };
   }
 
-  testDatasource(): Promise<null> {
-    return Promise.resolve(null);
+  testDatasource(): Promise<TestDataSourceResponse> {
+    return Promise.resolve({ message: '', status: '' });
   }
 }

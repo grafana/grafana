@@ -38,14 +38,14 @@ func (s *Service) detectPrometheusVariants(ctx context.Context) (map[string]int6
 	}
 
 	dsProm := &datasources.GetDataSourcesByTypeQuery{Type: "prometheus"}
-	err := s.datasources.GetDataSourcesByType(ctx, dsProm)
+	dataSources, err := s.datasources.GetDataSourcesByType(ctx, dsProm)
 	if err != nil {
 		s.log.Error("Failed to read all Prometheus data sources", "error", err)
 		return nil, err
 	}
 
 	variants := map[string]int64{}
-	for _, ds := range dsProm.Result {
+	for _, ds := range dataSources {
 		variant, err := s.detectPrometheusVariant(ctx, ds)
 		if err != nil {
 			return nil, err
@@ -79,7 +79,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.D
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.Url+"/api/v1/status/buildinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.URL+"/api/v1/status/buildinfo", nil)
 	if err != nil {
 		s.log.Error("Failed to create Prometheus build info request", "error", err)
 		return "", err
