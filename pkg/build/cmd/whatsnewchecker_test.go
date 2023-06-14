@@ -40,7 +40,6 @@ func TestWhatsNewChecker(t *testing.T) {
 			setUpEnv(t, tt.envMap)
 			err := createTempPackageJson(t, tt.packageJsonVersion)
 			require.NoError(t, err)
-			defer deleteTempPackageJson(t)
 
 			err = WhatsNewChecker(context)
 			if tt.wantErr {
@@ -74,12 +73,9 @@ func createTempPackageJson(t *testing.T, version string) error {
 	err := os.WriteFile("package.json", file, 0644)
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		err := os.RemoveAll("package.json")
+		require.NoError(t, err)
+	})
 	return nil
-}
-
-func deleteTempPackageJson(t *testing.T) {
-	t.Helper()
-
-	err := os.RemoveAll("package.json")
-	require.NoError(t, err)
 }
