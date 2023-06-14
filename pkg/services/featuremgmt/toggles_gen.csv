@@ -83,3 +83,4 @@ pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,fals
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
 scrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
+recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false

@@ -342,4 +342,8 @@ const (
 	// FlagScrollableLogsContainer
 	// Improves the scrolling behavior of logs in Explore
 	FlagScrollableLogsContainer = "scrollableLogsContainer"
+
+	// FlagRecordedQueriesMulti
+	// Enables writing multiple items from a single query within Recorded Queries
+	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 )

@@ -102,4 +102,5 @@ export interface FeatureToggles {
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   scrollableLogsContainer?: boolean;
+  recordedQueriesMulti?: boolean;
 }

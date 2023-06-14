@@ -1,3 +1,21 @@
+<!-- 10.0.0 START -->
+
+# 10.0.0 (2023-06-12)
+
+### Features and enhancements
+
+- **Themes:** Unify secondary button and ToolbarButton. [#69049](https://github.com/grafana/grafana/issues/69049), [@torkelo](https://github.com/torkelo)
+- **PublicDashboards:** Email sharing users with active sessions added in Users list . (Enterprise)
+- **Caching:** Ensure context-canceled are not reported as errors . (Enterprise)
+- **SAML:** Configuration UI. (Enterprise)
+
+### Bug fixes
+
+- **Query Editor:** Ensure dropdown menus position correctly. [#69131](https://github.com/grafana/grafana/issues/69131), [@grafanabot](https://github.com/grafanabot)
+- **Drawer:** Fixes closeOnMaskClick false issue. [#69103](https://github.com/grafana/grafana/issues/69103), [@grafanabot](https://github.com/grafanabot)
+- **SAML:** Fix IdP metadata caching so that invalid metadata doesn't get cached. (Enterprise)
+
+<!-- 10.0.0 END -->
 <!-- 10.0.0-preview START -->
 
 # 10.0.0-preview (2023-05-31)

@@ -571,5 +571,11 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
+		{
+			Name:        "recordedQueriesMulti",
+			Description: "Enables writing multiple items from a single query within Recorded Queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
 	}
 )
