@@ -61,4 +61,5 @@ Annotations: {{ template "__default_sorted_pairs" $annotations }}
     {{ template "__default_message" . }}
 {{- end }}
 
+
 Sent by Grafana v{{.BuildVersion}} (c) {{now | date "2006"}} Grafana Labs
