@@ -68,8 +68,9 @@ export interface KeybaordNavigatableListProps {
  * @param props
  */
 export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps): [Record<string, string>, string] {
-  const { keyboardEvents, containerRef, numberOfItems } = props;
+  const { keyboardEvents, containerRef } = props;
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const [numberOfItems, setNumberOfItems] = useState<number>(0);
 
   const attributeName = 'data-role';
   const roleName = 'keyboardSelectableItem';
@@ -80,10 +81,37 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
   const selectedItemCssSelector = `[${selectedAttributeName}="true"]`;
 
   useEffect(() => {
+    // This observer is used to keep track of the number of items in the list
+    // that can change dinamically (e.g. when filtering a dropdown list)
+    const listObserver = new MutationObserver((mutations) => {
+      let lastNumberOfItems = numberOfItems;
+
+      mutations.forEach((mutation) => {
+        if (mutation.target.childNodes.length !== lastNumberOfItems) {
+          lastNumberOfItems = mutation.target.childNodes.length;
+        }
+      });
+
+      if (lastNumberOfItems !== numberOfItems) {
+        setNumberOfItems(lastNumberOfItems);
+      }
+    });
+
+    if (containerRef.current) {
+      listObserver.observe(containerRef.current, {
+        childList: true,
+      });
+    }
+
+    return () => {
+      listObserver.disconnect();
+    };
+  }, [containerRef, numberOfItems]);
+
+  useEffect(() => {
     const listItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
       querySelectorNavigatableElements
     );
-
     const selectedItem = listItems?.item(selectedIndex % listItems?.length);
 
     listItems?.forEach((li) => li.setAttribute(selectedAttributeName, 'false'));
@@ -92,7 +120,7 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
       selectedItem.scrollIntoView({ block: 'center' });
       selectedItem.setAttribute(selectedAttributeName, 'true');
     }
-  }, [selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements, numberOfItems]);
+  }, [numberOfItems, selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements]);
 
   const clickSelectedElement = () => {
     containerRef?.current
