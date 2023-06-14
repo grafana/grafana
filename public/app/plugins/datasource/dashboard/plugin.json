@@ -11,8 +11,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "public/img/icn-reusequeries.svg",
-      "large": "public/img/icn-reusequeries.svg"
+      "small": "img/icn-reusequeries.svg",
+      "large": "img/icn-reusequeries.svg"
     }
   },
 
