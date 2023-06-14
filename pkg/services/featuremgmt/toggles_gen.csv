@@ -80,6 +80,10 @@ lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,fa
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
+<<<<<<< HEAD
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,true
+=======
+alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
+>>>>>>> 0156923992 (mark feature flag as not frontned only)

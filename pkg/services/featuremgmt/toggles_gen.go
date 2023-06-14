@@ -340,6 +340,6 @@ const (
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
 	// FlagAlertingLokiRangeToInstant
-	// Rewrite eligible loki range queries to instant queries
+	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 )
