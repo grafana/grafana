@@ -52,7 +52,7 @@ export const UsersActionBarUnconnected = ({
   // Show invite button in the following cases:
   // 1) the instance is not a hosted Grafana instance (!config.externalUserMngInfo)
   // 2) new basic auth users can be created for this instance (!config.disableLoginForm).
-  const showInviteButton: boolean = canAddToOrg && (!config.disableLoginForm || !config.externalUserMngInfo);
+  const showInviteButton: boolean = canAddToOrg && !(config.disableLoginForm && config.externalUserMngInfo);
 
   return (
     <div className="page-action-bar" data-testid="users-action-bar">
