@@ -320,10 +320,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"namespace_uid": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"datasource_uids": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -362,7 +364,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Title, folder.UID), string(r.Body()))
 	})
 
 	t.Run("with the inclusion of internal Labels", func(t *testing.T) {
@@ -383,10 +385,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"namespace_uid": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1)",
+				"datasource_uids": ["AUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus",
@@ -428,7 +432,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Title, folder.UID), string(r.Body()))
 	})
 
 	t.Run("with a rule that has multiple queries", func(t *testing.T) {
@@ -445,10 +449,12 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		"groups": [{
 			"name": "rule-group",
 			"file": "%s",
+			"namespace_uid": "%s",
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
 				"query": "vector(1) | vector(1)",
+				"datasource_uids": ["AUID", "BUID"],
 				"alerts": [{
 					"labels": {
 						"job": "prometheus"
@@ -487,7 +493,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		}
 	}
 }
-`, folder.Title), string(r.Body()))
+`, folder.Title, folder.UID), string(r.Body()))
 	})
 
 	t.Run("with many rules in a group", func(t *testing.T) {

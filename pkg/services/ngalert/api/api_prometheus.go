@@ -304,7 +304,8 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folder.Title,
+		File:         folder.Title,
+		NamespaceUID: folder.UID,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))
@@ -312,11 +313,12 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 	ngmodels.RulesGroup(rules).SortByGroupIndex()
 	for _, rule := range rules {
 		alertingRule := apimodels.AlertingRule{
-			State:       "inactive",
-			Name:        rule.Title,
-			Query:       ruleToQuery(srv.log, rule),
-			Duration:    rule.For.Seconds(),
-			Annotations: rule.Annotations,
+			State:          "inactive",
+			Name:           rule.Title,
+			Query:          ruleToQuery(srv.log, rule),
+			DatasourceUIDs: requiredDatasourceAccessForRule(rule),
+			Duration:       rule.For.Seconds(),
+			Annotations:    rule.Annotations,
 		}
 
 		newRule := apimodels.Rule{

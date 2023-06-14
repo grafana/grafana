@@ -222,19 +222,33 @@ func (api *API) authorize(method, path string) web.Handler {
 	panic(fmt.Sprintf("no authorization handler for method [%s] of endpoint [%s]", method, path))
 }
 
-// authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
-func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
+// authorizeAccessToDatasources checks for access to all the listed datasources.
+func authorizeAccessToDatasources(datasourceUIDs []string, evaluator func(evaluator ac.Evaluator) bool) bool {
+	for _, uid := range datasourceUIDs {
+		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(uid))) {
+			return false
+		}
+	}
+	return true
+}
+
+// requiredDatasourceAccessForRule returns the list of data sources for which access is required to evaluate the rule
+func requiredDatasourceAccessForRule(rule *ngmodels.AlertRule) []string {
+	result := []string{}
 	for _, query := range rule.Data {
 		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
 			DatasourceUID == expr.
 			OldDatasourceUID {
 			continue
 		}
-		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))) {
-			return false
-		}
+		result = append(result, query.DatasourceUID)
 	}
-	return true
+	return result
+}
+
+// authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
+func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
+	return authorizeAccessToDatasources(requiredDatasourceAccessForRule(rule), evaluator)
 }
 
 // authorizeAccessToRuleGroup checks all rules against authorizeDatasourceAccessForRule and exits on the first negative result
