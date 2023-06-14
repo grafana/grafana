@@ -9,26 +9,25 @@ import (
 	"io"
 	"strings"
 
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
-
-	"github.com/grafana/kindsys"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	"github.com/grafana/kindsys"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ storage.Interface = (*entityStorage)(nil)
@@ -148,8 +147,8 @@ func getItems(listObj runtime.Object) ([]runtime.Object, error) {
 	out := make([]runtime.Object, 0)
 
 	switch list := listObj.(type) {
-	case *kindsv1.GrafanaResourceDefinitionList:
-	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
+	case *kindsv1.GrafanaKindList:
+	case *grafanaApiServerKinds.GrafanaKindList:
 	case *unstructured.UnstructuredList:
 		for _, item := range list.Items {
 			out = append(out, item.DeepCopyObject())
@@ -277,7 +276,7 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 	switch s.gr.Group {
 	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
 	case grafanaApiServerKinds.GroupName:
-		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
+		listObj = &grafanaApiServerKinds.GrafanaKindList{}
 		break
 	default:
 		listObj = &unstructured.UnstructuredList{}
@@ -410,7 +409,6 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	fmt.Printf("LIST:" + key)
 	if key == "" {
 		return fmt.Errorf("list requires a namespace (for now)")
 	}

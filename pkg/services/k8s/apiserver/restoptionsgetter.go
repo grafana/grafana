@@ -1,15 +1,11 @@
 package apiserver
 
 import (
-	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/kindsys"
 	"path"
 	"time"
 
 	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -18,6 +14,11 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RESTOptionsGetter struct {
@@ -46,7 +47,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	if resource.Resource == "grafanaresourcedefinitions" {
+	if resource.Resource == "grafanakinds" {
 		return f.fallback.GetRESTOptions(resource)
 	}
 
