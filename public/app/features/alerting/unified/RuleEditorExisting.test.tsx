@@ -151,8 +151,8 @@ describe('RuleEditor grafana managed rules', () => {
     expect(nameInput).toHaveValue('my great new rule');
     //check that folder is in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
-    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some description');
-    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue('some summary');
+    expect(ui.inputs.annotationValue(1).get()).toHaveValue('some description');
 
     //check that slashed folders are not in the list
     expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
