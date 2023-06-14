@@ -3999,7 +3999,7 @@ __metadata:
     "@types/lodash": 4.14.191
     "@types/react": 18.2.15
     "@types/react-dom": 18.2.7
-    "@types/systemjs": ^0.20.6
+    "@types/systemjs": ^6.0.0
     esbuild: 0.18.6
     history: 4.10.1
     lodash: 4.17.21
@@ -4013,7 +4013,7 @@ __metadata:
     rollup-plugin-sourcemaps: 0.6.3
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.0
-    systemjs: 0.20.19
+    systemjs: ^6.0.0
     tslib: 2.6.0
     typescript: 4.8.4
   peerDependencies:
@@ -10784,10 +10784,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/systemjs@npm:^0.20.6":
-  version: 0.20.8
-  resolution: "@types/systemjs@npm:0.20.8"
-  checksum: 10bf85416521b89cd20c6eddd72f7414ab6eff31ff8c577152d6f5dd952daf7f9c5eed32d3c482ddbfbe2e9586ed5287838b6dc8a7d6b3963fdad8afbece717b
+"@types/systemjs@npm:^6.0.0":
+  version: 6.13.1
+  resolution: "@types/systemjs@npm:6.13.1"
+  checksum: 61fad0cbdbc61e0b6c6fd82d9623d9e68ff587848e0c8198a6bb4a78985b4880962543e02aeb96dfdb4623439ef0d848fde61a82757308dd5067040deee9d1ee
   languageName: node
   linkType: hard
 
@@ -19367,6 +19367,7 @@ __metadata:
     "@types/slate": 0.47.11
     "@types/slate-plain-serializer": 0.7.2
     "@types/slate-react": 0.22.9
+    "@types/systemjs": ^6.0.0
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     "@types/trusted-types": 2.0.3
@@ -19585,7 +19586,11 @@ __metadata:
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yargs: ^17.5.1
   dependenciesMeta:
+    "@types/systemjs@6.13.1":
+      unplugged: true
     prettier@3.0.0:
+      unplugged: true
+    systemjs@6.14.1:
       unplugged: true
   languageName: unknown
   linkType: soft
@@ -30849,10 +30854,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"systemjs@npm:0.20.19":
-  version: 0.20.19
-  resolution: "systemjs@npm:0.20.19"
-  checksum: 4b5a404be790cd545d6994f617c24ef3a3ae52e029c6498f10206f715c6777c4c0733ab9d626723fdfa359f12707835f302986516e5835be26c202bc13e242df
+"systemjs@npm:^6.0.0":
+  version: 6.14.1
+  resolution: "systemjs@npm:6.14.1"
+  checksum: a72992339e858000892596705ec8cabf5166fc2db6272b5994c788641c3755115920b7a7914c9b8894ef08bfb75f4f96c3086c6b18399a2b22e303ecd5ac6570
   languageName: node
   linkType: hard
 
