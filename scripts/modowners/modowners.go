@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"os"
 	"strings"
 
 	"golang.org/x/mod/modfile"
@@ -175,16 +176,16 @@ func hasCommonElement(a []string, b []string) bool {
 	return false
 }
 
-// func main() {
-// 	if len(os.Args) < 2 {
-// 		fmt.Println("usage: modowners subcommand go.mod...")
-// 		os.Exit(1)
-// 	}
-// 	type CmdFunc func(fs.FS, *log.Logger, []string) error
-// 	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
-// 	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
-// 		log.Fatal("invalid command")
-// 	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
+func main() {
+	if len(os.Args) < 2 {
+		fmt.Println("usage: modowners subcommand go.mod...")
+		os.Exit(1)
+	}
+	type CmdFunc func(fs.FS, *log.Logger, []string) error
+	cmds := map[string]CmdFunc{"check": check, "owners": owners, "modules": modules}
+	if f, ok := cmds[os.Args[1]]; !ok { // NOTE: both f and ok are visible inside the if / else if statement, but not outside; chaining of ifs very common in go when checking errors and calling multiple funcs
+		log.Fatal("invalid command")
+	} else if err := f(os.DirFS("."), log.Default(), os.Args[2:]); err != nil {
+		log.Fatal(err)
+	}
+}

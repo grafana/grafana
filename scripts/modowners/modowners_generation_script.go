@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
-	"io/fs"
 	"log"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-// input: directory, import name, output: bool
+// Confirm if given directory contains given import
+// Example CLI command `go run scripts/modowners/modowners_generation_script.go xorm.io/core`
 func hasImport(dir, importName string) (bool, error) {
 	// Get the absolute path to the repository
 	repoAbsPath, err := filepath.Abs(dir)
@@ -47,23 +46,23 @@ func hasImport(dir, importName string) (bool, error) {
 	return false, nil
 }
 
-func main() {
-	// Iterate recursively through directories
-	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-		if !d.IsDir() {
-			return nil
-		}
-		contains, err := hasImport(path, os.Args[1])
-		if err != nil {
-			return err
-		}
-		if contains {
-			fmt.Println(path)
-		}
-		return nil
-	})
+// func main() {
+// 	// Iterate recursively through directories
+// 	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+// 		if !d.IsDir() {
+// 			return nil
+// 		}
+// 		contains, err := hasImport(path, os.Args[1])
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if contains {
+// 			fmt.Println(path)
+// 		}
+// 		return nil
+// 	})
 
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
