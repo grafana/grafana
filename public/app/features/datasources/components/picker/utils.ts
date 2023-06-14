@@ -3,7 +3,7 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
   current: string | DataSourceInstanceSettings | DataSourceRef | null | undefined
-): boolean | undefined {
+): boolean {
   if (!ds) {
     return false;
   }
