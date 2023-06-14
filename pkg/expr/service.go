@@ -2,6 +2,8 @@ package expr
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -95,13 +97,21 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 	return res, nil
 }
 
-func DataSourceModel() *datasources.DataSource {
-	return &datasources.DataSource{
-		ID:             DatasourceID,
-		UID:            DatasourceUID,
-		Name:           DatasourceUID,
-		Type:           DatasourceType,
-		JsonData:       simplejson.New(),
-		SecureJsonData: make(map[string][]byte),
+// Create a datasources.DataSource struct from NodeType. Returns error if kind is TypeDatasourceNode or unknown one.
+func DataSourceModel(kind NodeType) (*datasources.DataSource, error) {
+	switch kind {
+	case TypeCMDNode:
+		return &datasources.DataSource{
+			ID:             DatasourceID,
+			UID:            DatasourceUID,
+			Name:           DatasourceUID,
+			Type:           DatasourceType,
+			JsonData:       simplejson.New(),
+			SecureJsonData: make(map[string][]byte),
+		}, nil
+	case TypeDatasourceNode:
+		return nil, errors.New("cannot create expression data source for data source kind")
+	default:
+		return nil, fmt.Errorf("cannot create expression data source for '%s' kind", kind)
 	}
 }

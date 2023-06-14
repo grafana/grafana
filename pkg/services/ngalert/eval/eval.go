@@ -269,14 +269,14 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
-			switch expr.QueryKindByDatasourceUID(q.DatasourceUID) {
+			switch kind := expr.QueryKindByDatasourceUID(q.DatasourceUID); kind {
 			case expr.TypeCMDNode:
-				ds = expr.DataSourceModel()
+				ds, err = expr.DataSourceModel(kind)
 			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
-				}
+			}
+			if err != nil {
+				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 			}
 			datasources[q.DatasourceUID] = ds
 		}
