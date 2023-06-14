@@ -11,7 +11,10 @@ type Props = {
 export function PluginDetailsAngularDeprecation({ className }: Props): React.ReactElement | null {
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
-      <p>This plugin is using deprecated plugin APIs.</p>
+      <p>
+        This plugin uses a deprecated, legacy platform based on AngularJS and may be incompatible depending on your
+        Grafana configuration.
+      </p>
 
       <a
         href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
