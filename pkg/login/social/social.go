@@ -2,14 +2,18 @@ package social
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -526,4 +530,60 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interfac
 	}
 
 	return m, nil
+}
+
+func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
+	tokenString, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
+	}
+
+	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
+	matched := jwtRegexp.FindStringSubmatch(tokenString)
+	if matched == nil {
+		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
+	}
+
+	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding id_token: %w", err)
+	}
+
+	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding header: %w", err)
+	}
+
+	var header map[string]interface{}
+	if err := json.Unmarshal(headerBytes, &header); err != nil {
+		return nil, fmt.Errorf("error deserializing header: %w", err)
+	}
+
+	if compressionVal, exists := header["zip"]; exists {
+		compression, ok := compressionVal.(string)
+		if !ok {
+			return nil, fmt.Errorf("unrecognized compression header: %v", compressionVal)
+		}
+
+		if compression != "DEF" {
+			return nil, fmt.Errorf("unknown compression algorithm: %s", compression)
+		}
+
+		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
+		if err != nil {
+			return nil, fmt.Errorf("error creating zlib reader: %w", err)
+		}
+		defer func() {
+			if err := fr.Close(); err != nil {
+				s.log.Warn("Failed closing zlib reader", "error", err)
+			}
+		}()
+
+		rawJSON, err = io.ReadAll(fr)
+		if err != nil {
+			return nil, fmt.Errorf("error decompressing payload: %w", err)
+		}
+	}
+
+	return rawJSON, nil
 }
