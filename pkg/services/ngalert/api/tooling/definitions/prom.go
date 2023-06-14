@@ -133,7 +133,7 @@ type AlertingRule struct {
 	Query    string  `json:"query,omitempty"`
 	Duration float64 `json:"duration,omitempty"`
 	// UIDs of the datasources used in the rule query.
-	DatasourceUIDs []string `json:"datasource_uids,omitempty"`
+	DatasourceUIDs []string `json:"datasource_uids"`
 	// required: true
 	Annotations overrideLabels `json:"annotations,omitempty"`
 	// required: true
