@@ -98,7 +98,7 @@ export function useRouteGroupsMatcher() {
 
       const startTime = performance.now();
 
-      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+      const { result, resultPath } = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
 
       const timeSpent = performance.now() - startTime;
 
@@ -108,8 +108,7 @@ export function useRouteGroupsMatcher() {
         // Counting all nested routes might be too time-consuming, so we only count the first level
         topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
       });
-
-      return result;
+      return { result, resultPath };
     },
     [workerPreviewEnabled]
   );

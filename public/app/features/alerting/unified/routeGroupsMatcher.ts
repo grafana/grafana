@@ -25,15 +25,23 @@ export const routeGroupsMatcher = {
     return routeGroupsMap;
   },
 
-  matchInstancesToRoute(routeTree: RouteWithID, instancesToMatch: Labels[]): Map<string, AlertInstanceMatch[]> {
+  matchInstancesToRoute(
+    routeTree: RouteWithID,
+    instancesToMatch: Labels[]
+  ): { result: Map<string, AlertInstanceMatch[]>; resultPath: Map<string, AlertInstanceMatch[]> } {
     const result = new Map<string, AlertInstanceMatch[]>();
+    const resultPath = new Map<string, AlertInstanceMatch[]>();
 
     const normalizedRootRoute = normalizeRoute(routeTree);
 
+    // find matching routes for each instance and add them to the results map and the path map
     instancesToMatch.forEach((instance) => {
-      const matchingRoutes = findMatchingRoutes(normalizedRootRoute, Object.entries(instance));
+      const { matchesResult: matchingRoutes, matchesPath } = findMatchingRoutes(
+        normalizedRootRoute,
+        Object.entries(instance)
+      );
+      // Only to convert Label[] to Labels[] - needs better approach
       matchingRoutes.forEach(({ route, details, labelsMatch }) => {
-        // Only to convert Label[] to Labels[] - needs better approach
         const matchDetails = new Map(
           Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
         );
@@ -45,9 +53,21 @@ export const routeGroupsMatcher = {
           result.set(route.id, [{ instance, matchDetails, labelsMatch }]);
         }
       });
+      matchesPath.forEach(({ route: routeInPath, details, labelsMatch }) => {
+        const matchDetailsPath = new Map(
+          Array.from(details.entries()).map(([matcher, labels]) => [matcher, Object.fromEntries(labels)])
+        );
+
+        const currentRouteInpath = resultPath.get(routeInPath.id);
+        if (currentRouteInpath) {
+          currentRouteInpath.push({ instance, matchDetails: matchDetailsPath, labelsMatch });
+        } else {
+          resultPath.set(routeInPath.id, [{ instance, matchDetails: matchDetailsPath, labelsMatch }]);
+        }
+      });
     });
 
-    return result;
+    return { result: result, resultPath: resultPath };
   },
 };
 

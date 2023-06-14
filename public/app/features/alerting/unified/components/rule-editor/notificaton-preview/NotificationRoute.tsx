@@ -25,6 +25,8 @@ function NotificationRouteHeader({
   alertManagerSourceName,
   expandRoute,
   onExpandRouteClick,
+  matchingMap,
+  matchingMapPath,
 }: {
   route: RouteWithPath;
   receiver: Receiver;
@@ -33,6 +35,8 @@ function NotificationRouteHeader({
   alertManagerSourceName: string;
   expandRoute: boolean;
   onExpandRouteClick: (expand: boolean) => void;
+  matchingMap: Map<string, AlertInstanceMatch[]>;
+  matchingMapPath: Map<string, AlertInstanceMatch[]>;
 }) {
   const styles = useStyles2(getStyles);
   const [showDetails, setShowDetails] = useState(false);
@@ -82,6 +86,8 @@ function NotificationRouteHeader({
           receiver={receiver}
           routesByIdMap={routesByIdMap}
           alertManagerSourceName={alertManagerSourceName}
+          matchingMap={matchingMap}
+          matchingMapPath={matchingMapPath}
         />
       )}
     </div>
@@ -94,6 +100,8 @@ interface NotificationRouteProps {
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
+  matchingMap: Map<string, AlertInstanceMatch[]>;
+  matchingMapPath: Map<string, AlertInstanceMatch[]>;
 }
 
 export function NotificationRoute({
@@ -102,26 +110,35 @@ export function NotificationRoute({
   receiver,
   routesByIdMap,
   alertManagerSourceName,
+  matchingMap,
+  matchingMapPath,
 }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
   const GREY_COLOR_INDEX = 9;
 
+  const instanceMatchesUnique = [
+    ...new Map(
+      instanceMatches.map((matchInstance) => [JSON.stringify(matchInstance.instance), matchInstance])
+    ).values(),
+  ];
   return (
     <div data-testid="matching-policy-route">
       <NotificationRouteHeader
         route={route}
         receiver={receiver}
         routesByIdMap={routesByIdMap}
-        instancesCount={instanceMatches.length}
+        instancesCount={instanceMatchesUnique.length}
         alertManagerSourceName={alertManagerSourceName}
         expandRoute={expandRoute}
         onExpandRouteClick={setExpandRoute}
+        matchingMap={matchingMap}
+        matchingMapPath={matchingMapPath}
       />
       {expandRoute && (
         <Stack gap={1} direction="column">
           <div className={styles.routeInstances} data-testid="route-matching-instance">
-            {instanceMatches.map((instanceMatch) => {
+            {instanceMatchesUnique.map((instanceMatch) => {
               const matchArray = Array.from(instanceMatch.labelsMatch.entries());
               let matchResult = matchArray.map(([label, matchResult]) => ({
                 label: `${label[0]}=${label[1]}`,

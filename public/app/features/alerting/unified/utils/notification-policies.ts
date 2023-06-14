@@ -37,7 +37,7 @@ function isLabelMatch(matcher: ObjectMatcher, label: Label) {
   return matchFunction(labelValue, matcherValue);
 }
 
-interface LabelMatchResult {
+export interface LabelMatchResult {
   match: boolean;
   matchers: ObjectMatcher[];
 }
@@ -99,36 +99,60 @@ export interface RouteMatchResult<T extends Route> {
 // If the current node is not a match, return nothing
 // const normalizedMatchers = normalizeMatchers(root);
 // Normalization should have happened earlier in the code
-function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): Array<RouteMatchResult<T>> {
-  let matches: Array<RouteMatchResult<T>> = [];
+function findMatchingRoutes<T extends Route>(
+  mainRoot: T,
+  labels: Label[]
+): { matchesResult: Array<RouteMatchResult<T>>; matchesPath: Array<RouteMatchResult<T>> } {
+  // -----------   recursive function to find matching routes
+  function findMatchingRoutesRecursive<T extends Route>(
+    root: T | undefined,
+    labels: Label[],
+    matchesPathAcum: Array<RouteMatchResult<T>>
+  ): { matchesResult: Array<RouteMatchResult<T>>; matchesPath: Array<RouteMatchResult<T>> } {
+    let matches: Array<RouteMatchResult<T>> = [];
+    if (!root) {
+      return { matchesResult: [], matchesPath: matchesPathAcum };
+    }
+    // If the current node is not a match, return nothing
+    const matchResult: MatchingResult = matchLabels(root.object_matchers ?? [], labels);
+    if (!matchResult.matches) {
+      return { matchesResult: [], matchesPath: matchesPathAcum };
+    }
+    // If the current node matches, add current match to the path results and continue with the children
+    matchesPathAcum.push({ route: root, details: matchResult.details, labelsMatch: matchResult.labelsMatch });
+    if (root.routes) {
+      for (let index = 0; index < root.routes.length; index++) {
+        let child = root.routes?.[index];
+        let { matchesResult: matchingChildren, matchesPath: matchesPathInChild } = findMatchingRoutesRecursive(
+          child,
+          labels,
+          matchesPathAcum
+        );
+        // TODO how do I solve this typescript thingy? It looks correct to me /shrug
+        // @ts-ignore
+        matches = matches.concat(matchingChildren);
+        // @ts-ignore
+        matchingChildren.length && matchesPathAcum.concat(matchesPathInChild);
 
-  // If the current node is not a match, return nothing
-  const matchResult = matchLabels(root.object_matchers ?? [], labels);
-  if (!matchResult.matches) {
-    return [];
-  }
-
-  // If the current node matches, recurse through child nodes
-  if (root.routes) {
-    for (let index = 0; index < root.routes.length; index++) {
-      let child = root.routes[index];
-      let matchingChildren = findMatchingRoutes(child, labels);
-      // TODO how do I solve this typescript thingy? It looks correct to me /shrug
-      // @ts-ignore
-      matches = matches.concat(matchingChildren);
-      // we have matching children and we don't want to continue, so break here
-      if (matchingChildren.length && !child.continue) {
-        break;
+        // we have matching children and we don't want to continue, so break here
+        if (matchingChildren.length && !child?.continue) {
+          break;
+        }
       }
     }
-  }
 
-  // If no child nodes were matches, the current node itself is a match.
-  if (matches.length === 0) {
-    matches.push({ route: root, details: matchResult.details, labelsMatch: matchResult.labelsMatch });
-  }
+    // If no child nodes were matches, the current node itself is a match.
+    if (matches.length === 0) {
+      matches.push({ route: root, details: matchResult.details, labelsMatch: matchResult.labelsMatch });
+    }
 
-  return matches;
+    const matchesResultUnique = [
+      ...new Map(matches.map((matchInstance) => [JSON.stringify(matchInstance), matchInstance])).values(),
+    ];
+    return { matchesResult: matchesResultUnique, matchesPath: matchesPathAcum };
+  }
+  // ------------ call to the recursive function
+  return findMatchingRoutesRecursive(mainRoot, labels, []);
 }
 
 // This is a performance improvement to normalize matchers only once and use the normalized version later on
@@ -162,7 +186,8 @@ function findMatchingAlertGroups(
     // find matching alerts in the current group
     const matchingAlerts = group.alerts.filter((alert) => {
       const labels = Object.entries(alert.labels);
-      return findMatchingRoutes(routeTree, labels).some((matchingRoute) => matchingRoute.route === route);
+      const { matchesResult } = findMatchingRoutes(routeTree, labels);
+      return matchesResult.some((matchingRoute) => matchingRoute.route === route);
     });
 
     // if the groups has any alerts left after matching, add it to the results

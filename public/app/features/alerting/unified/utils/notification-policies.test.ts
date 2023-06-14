@@ -1,6 +1,6 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { findMatchingRoutes, normalizeRoute, getInheritedProperties } from './notification-policies';
+import { findMatchingRoutes, getInheritedProperties, normalizeRoute } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
 
@@ -39,19 +39,19 @@ describe('findMatchingRoutes', () => {
   };
 
   it('should match root route with no matching labels', () => {
-    const matches = findMatchingRoutes(policies, []);
+    const { matchesResult: matches } = findMatchingRoutes(policies, []);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'ROOT');
   });
 
   it('should match parent route with no matching children', () => {
-    const matches = findMatchingRoutes(policies, [['team', 'operations']]);
+    const { matchesResult: matches } = findMatchingRoutes(policies, [['team', 'operations']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'A');
   });
 
   it('should match child route of matching parent', () => {
-    const matches = findMatchingRoutes(policies, [
+    const { matchesResult: matches } = findMatchingRoutes(policies, [
       ['team', 'operations'],
       ['region', 'europe'],
     ]);
@@ -60,7 +60,7 @@ describe('findMatchingRoutes', () => {
   });
 
   it('should match simple policy', () => {
-    const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
+    const { matchesResult: matches } = findMatchingRoutes(policies, [['foo', 'bar']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'C');
   });
@@ -71,7 +71,7 @@ describe('findMatchingRoutes', () => {
       routes: [CATCH_ALL_ROUTE, ...(policies.routes ?? [])],
     };
 
-    const matches = findMatchingRoutes(policiesWithAll, []);
+    const { matchesResult: matches } = findMatchingRoutes(policiesWithAll, []);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'ALL');
   });
@@ -88,7 +88,7 @@ describe('findMatchingRoutes', () => {
       ],
     };
 
-    const matches = findMatchingRoutes(policiesWithAll, [['foo', 'bar']]);
+    const { matchesResult: matches } = findMatchingRoutes(policiesWithAll, [['foo', 'bar']]);
     expect(matches).toHaveLength(2);
     expect(matches[0].route).toHaveProperty('receiver', 'ALL');
     expect(matches[1].route).toHaveProperty('receiver', 'C');
@@ -115,7 +115,7 @@ describe('findMatchingRoutes', () => {
       group_interval: '1m',
     };
 
-    const matches = findMatchingRoutes(policies, [['foo', 'bar']]);
+    const { matchesResult: matches } = findMatchingRoutes(policies, [['foo', 'bar']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'PARENT');
   });
