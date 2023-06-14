@@ -293,6 +293,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		}
 
 		req, err := http.NewRequest("POST", "http://localhost:3000", nil)
+		require.NoError(t, err)
 		reqCtx := &contextmodel.ReqContext{
 			SkipQueryCache: false,
 			Context: &web.Context{
