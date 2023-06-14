@@ -168,6 +168,7 @@ describe('RuleEditor grafana managed rules', () => {
     // expect(within(folderInput).queryByText("Folders with '/' character are not allowed.")).not.toBeInTheDocument();
 
     // add an annotation
+    await userEvent.click(screen.getByText('Add custom annotation'));
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation name...'), 'custom');
     await userEvent.type(screen.getByPlaceholderText('Enter custom annotation content...'), 'value');
 
