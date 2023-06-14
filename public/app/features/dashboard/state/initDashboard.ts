@@ -26,6 +26,7 @@ import {
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -270,6 +271,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         queries: getQueriesByDatasource(dashboard.panels),
       })
     );
+
+    trackDashboardLoaded(dashboard);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
