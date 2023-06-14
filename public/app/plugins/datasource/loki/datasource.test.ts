@@ -725,14 +725,14 @@ describe('LokiDatasource', () => {
           expect(result.expr).toEqual('rate({bar="baz", job!="grafana"}[5m])');
         });
 
-        describe('and the filter is already present', () => {
+        describe('and the opposite filter is present', () => {
           it('then it should remove the filter', () => {
-            const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job!="grafana"}' };
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz", job="grafana"}' };
             const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
             const result = ds.modifyQuery(query, action);
 
             expect(result.refId).toEqual('A');
-            expect(result.expr).toEqual('{bar="baz"}');
+            expect(result.expr).toEqual('{bar="baz", job!="grafana"}');
           });
         });
       });
@@ -763,12 +763,12 @@ describe('LokiDatasource', () => {
 
         describe('and the filter is already present', () => {
           it('then it should remove the filter', () => {
-            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job!="grafana"' };
+            const query: LokiQuery = { refId: 'A', expr: '{bar="baz"} | logfmt | job="grafana"' };
             const action = { options: { key: 'job', value: 'grafana' }, type: 'ADD_FILTER_OUT' };
             const result = ds.modifyQuery(query, action);
 
             expect(result.refId).toEqual('A');
-            expect(result.expr).toEqual('{bar="baz"} | logfmt');
+            expect(result.expr).toEqual('{bar="baz"} | logfmt | job!=`grafana`');
           });
         });
       });
