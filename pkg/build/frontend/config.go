@@ -1,11 +1,8 @@
 package frontend
 
 import (
-<<<<<<< HEAD
-=======
 	"fmt"
 
->>>>>>> a6b524fd56 (NPM packages: Fail `build-frontend-packages` step if `package.json` and input tag differ (#70011))
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
 )
