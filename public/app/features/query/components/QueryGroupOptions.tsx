@@ -399,7 +399,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           <Input
             type="text"
             className="width-6"
-            placeholder="0h"
+            placeholder="1h"
             onChange={this.onTimeShiftChange}
             onBlur={this.onTimeShift}
             invalid={!timeShiftIsValid}
