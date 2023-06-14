@@ -167,7 +167,7 @@ async function main() {
   while (true) {
     await sleep(getNextSineWaveSleepDuration());
     const timestamp = new Date();
-    const item = getRandomLogItem(globalCounter + 1, timestamp);
+    const item = getRandomLogItem(globalCounter++, timestamp);
     elasticSendLogItem(timestamp, item);
   }
 }
