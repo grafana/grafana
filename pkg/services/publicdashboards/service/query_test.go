@@ -3,7 +3,9 @@ package service
 import (
 	"context"
 	"errors"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -26,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/stretchr/testify/assert"
@@ -133,6 +136,15 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": "6SOeCRrVk",
+          "exemplar": true,
+          "expr": "test{id=\"f0dd9b69-ad04-4342-8e79-ced8c245683b\", name=\"test\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Panel Title",
@@ -1153,9 +1165,10 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		require.NoError(t, err)
 
 		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
+		require.Len(t, uids, 3)
 		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "_yxMP8Ynk", uids[1])
+		require.Equal(t, "6SOeCRrVk", uids[1])
+		require.Equal(t, "_yxMP8Ynk", uids[2])
 	})
 
 	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
@@ -1229,7 +1242,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("extracts queries from provided dashboard", func(t *testing.T) {
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1280,7 +1292,6 @@ func TestBuildMetricRequest(t *testing.T) {
 
 	t.Run("returns an error when panel missing", func(t *testing.T) {
 		_, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			49,
@@ -1319,7 +1330,6 @@ func TestBuildMetricRequest(t *testing.T) {
 		publicDashboard := insertTestDashboard(t, dashboardStore, "testDashWithHiddenQuery", 1, 0, true, []map[string]interface{}{}, customPanels)
 
 		reqDTO, err := service.buildMetricRequest(
-			context.Background(),
 			publicDashboard,
 			publicDashboardPD,
 			1,
@@ -1611,6 +1621,158 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 	})
 }
 
+func TestBuildTimeSettings(t *testing.T) {
+	var defaultDashboardData = simplejson.NewFromAny(map[string]interface{}{
+		"time": map[string]interface{}{
+			"from": "2022-09-01T00:00:00.000Z", "to": "2022-09-01T12:00:00.000Z",
+		},
+		"timezone": "America/Argentina/Mendoza",
+	})
+
+	defaultFromMs, defaultToMs := internal.GetTimeRangeFromDashboard(t, defaultDashboardData)
+
+	fakeTimezone, _ := time.LoadLocation("Europe/Madrid")
+	fakeNow := time.Date(2018, 12, 9, 20, 30, 0, 0, fakeTimezone)
+
+	// stub time range construction to have a fixed time.Now and be able to tests relative time ranges
+	NewDataTimeRange = func(from, to string) legacydata.DataTimeRange {
+		return legacydata.DataTimeRange{
+			From: from,
+			To:   to,
+			Now:  fakeNow,
+		}
+	}
+
+	startOfYesterdayMadrid, endOfYesterdayMadrid := getStartAndEndOfTheDayBefore(fakeNow, "Europe/Madrid")
+
+	// the day before fakeNow in Australia/Sydney timezone is not the same day before as in Europe/Madrid
+	startOfYesterdaySydney, endOfYesterdaySydney := getStartAndEndOfTheDayBefore(fakeNow, "Australia/Sydney")
+	startOfYesterdayUTC, endOfYesterdayUTC := getStartAndEndOfTheDayBefore(fakeNow, "UTC")
+
+	selectionFromMs := strconv.FormatInt(time.Now().UnixMilli(), 10)
+	selectionToMs := strconv.FormatInt(time.Now().Add(time.Hour).UnixMilli(), 10)
+
+	testCases := []struct {
+		name      string
+		dashboard *dashboards.Dashboard
+		pubdash   *PublicDashboard
+		reqDTO    PublicDashboardQueryDTO
+		want      TimeSettings
+	}{
+		{
+			name:      "should return default time range with timezone with relative time range",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return default time range with UTC timezone with relative time range with unknown timezone",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "browser")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayUTC.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdayUTC.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return default time range with timezone with relative time range if time selection is not enabled",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Australia/Sydney")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					Timezone: "Europe/Madrid",
+				}},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdaySydney.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdaySydney.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return user time range with dashboard timezone with relative time range",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1d/d", "now-1d/d", "Europe/Madrid")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(startOfYesterdayMadrid.UnixMilli(), 10),
+				To:   strconv.FormatInt(endOfYesterdayMadrid.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should return user time range with dashboard timezone with relative time range for the last hour",
+			dashboard: &dashboards.Dashboard{Data: buildJsonDataWithTimeRange("now-1h", "now", "Europe/Madrid")},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: strconv.FormatInt(fakeNow.Add(-time.Hour).UnixMilli(), 10),
+				To:   strconv.FormatInt(fakeNow.UnixMilli(), 10),
+			},
+		},
+		{
+			name:      "should use dashboard time if pubdash time empty",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO:    PublicDashboardQueryDTO{},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+		{
+			name:      "should use dashboard time when time selection is disabled",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: false},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+		{
+			name:      "should use selected values if time selection is enabled",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{
+					From: selectionFromMs,
+					To:   selectionToMs,
+				},
+			},
+			want: TimeSettings{
+				From: selectionFromMs,
+				To:   selectionToMs,
+			},
+		},
+		{
+			name:      "should use default values if time selection is enabled but the time range is empty",
+			dashboard: &dashboards.Dashboard{Data: defaultDashboardData},
+			pubdash:   &PublicDashboard{TimeSelectionEnabled: true},
+			reqDTO: PublicDashboardQueryDTO{
+				TimeRange: TimeRangeDTO{},
+			},
+			want: TimeSettings{
+				From: defaultFromMs,
+				To:   defaultToMs,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, buildTimeSettings(test.dashboard, test.reqDTO, test.pubdash))
+		})
+	}
+}
+
 func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result [][]*simplejson.Json) {
 	t.Helper()
 	byDataSource := make(map[string][]*simplejson.Json)
@@ -1625,4 +1787,22 @@ func groupQueriesByDataSource(t *testing.T, queries []*simplejson.Json) (result 
 	}
 
 	return
+}
+
+func getStartAndEndOfTheDayBefore(fakeNow time.Time, timezoneName string) (time.Time, time.Time) {
+	timezone, _ := time.LoadLocation(timezoneName)
+	fakeNowWithTimezone := fakeNow.In(timezone)
+	yy, mm, dd := fakeNowWithTimezone.Add(-24 * time.Hour).Date()
+	startOfYesterdaySydney := time.Date(yy, mm, dd, 0, 0, 0, 0, timezone)
+	endOfYesterdaySydney := time.Date(yy, mm, dd, 23, 59, 59, 999999999, timezone)
+	return startOfYesterdaySydney, endOfYesterdaySydney
+}
+
+func buildJsonDataWithTimeRange(from, to, timezone string) *simplejson.Json {
+	return simplejson.NewFromAny(map[string]interface{}{
+		"time": map[string]interface{}{
+			"from": from, "to": to,
+		},
+		"timezone": timezone,
+	})
 }
