@@ -117,26 +117,28 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.scrollToLogRow();
+    this.scrollToLogRow(this.state, true);
   }
 
-  componentDidUpdate(prevProps: Readonly<Props>, prevState: Readonly<State>): void {
-    if (
-      this.props.permalinkedRowId !== prevProps.permalinkedRowId &&
-      this.props.permalinkedRowId !== this.props.row.uid
-    ) {
-      this.setState({ highlightBackround: false });
-    } else if (this.props.permalinkedRowId === this.props.row.uid && !this.state.highlightBackround) {
-      this.scrollToLogRow();
+  componentDidUpdate(_: Props, prevState: State) {
+    this.scrollToLogRow(prevState);
+  }
+
+  scrollToLogRow = (prevState: State, mounted = false) => {
+    if (this.props.permalinkedRowId !== this.props.row.uid) {
+      // only set the new state if the row is not permalinked anymore or if the component was mounted.
+      if (prevState.highlightBackround || mounted) {
+        this.setState({ highlightBackround: false });
+      }
+      return;
     }
-  }
 
-  scrollToLogRow = () => {
+    // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
     if (this.logLineRef.current && this.props.scrollIntoView) {
       this.props.scrollIntoView(this.logLineRef.current);
+    }
+    if (!this.state.highlightBackround) {
       this.setState({ highlightBackround: true });
-    } else {
-      this.setState({ highlightBackround: false });
     }
   };
 
