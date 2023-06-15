@@ -234,7 +234,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     border-radius: ${theme.shape.borderRadius(1)};
   `,
   queryOptions: css`
