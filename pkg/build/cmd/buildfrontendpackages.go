@@ -2,26 +2,21 @@ package main
 
 import (
 	"log"
-	"strings"
 
-	"github.com/urfave/cli/v2"
-
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/frontend"
 	"github.com/grafana/grafana/pkg/build/syncutil"
+	"github.com/urfave/cli/v2"
 )
 
 func BuildFrontendPackages(c *cli.Context) error {
-	version := ""
-	if c.NArg() == 1 {
-		// Fixes scenario where an incompatible semver is provided to lerna, which will cause the step to fail.
-		// When there is an invalid semver, a frontend package won't be published anyways.
-		if strings.Count(version, ".") == 2 {
-			version = strings.TrimPrefix(c.Args().Get(0), "v")
-		}
+	metadata, err := config.GenerateMetadata(c)
+	if err != nil {
+		return err
 	}
 
-	cfg, mode, err := frontend.GetConfig(c, version)
+	cfg, mode, err := frontend.GetConfig(c, metadata)
 	if err != nil {
 		return err
 	}
