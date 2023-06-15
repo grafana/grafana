@@ -46,7 +46,7 @@ export interface Props extends Themeable2 {
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
-  scrollIntoView: (element: HTMLElement) => void;
+  scrollIntoView?: (element: HTMLElement) => void;
 }
 
 interface State {

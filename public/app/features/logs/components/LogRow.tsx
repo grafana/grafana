@@ -41,7 +41,7 @@ interface Props extends Themeable2 {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
-  scrollIntoView: (element: HTMLElement) => void;
+  scrollIntoView?: (element: HTMLElement) => void;
 }
 
 interface State {
@@ -132,7 +132,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   scrollToLogRow = () => {
-    if (this.logLineRef.current && this.props.permalinkedRowId === this.props.row.uid) {
+    if (this.logLineRef.current && this.props.scrollIntoView) {
       this.props.scrollIntoView(this.logLineRef.current);
       this.setState({ highlightBackround: true });
     } else {
