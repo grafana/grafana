@@ -35,13 +35,13 @@ To verify ownership of your plugin, generate an API key that you'll use every ti
 
    You can find the plugin ID in the `plugin.json` file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`.
 
-1. [Create a Grafana Cloud API key](https://grafana.com/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
+1. [Create a Grafana Cloud API key](/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
 
 ## Sign a public plugin
 
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
-1. Submit your plugin for [review]({{< relref "publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
+1. Submit your plugin for [review]({{< relref "./publish-a-plugin/#publishing-your-plugin-for-the-first-time" >}})
 1. If we approve your plugin, you're granted a plugin signature level. You need this signature level to proceed.
 1. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin:
 
