@@ -5,7 +5,7 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
-interface QueryOperationRowHeaderProps {
+export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
   draggable: boolean;
