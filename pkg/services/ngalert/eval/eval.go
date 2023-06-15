@@ -269,9 +269,9 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
-			switch kind := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); kind {
+			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
 			case expr.TypeCMDNode:
-				ds, err = expr.DataSourceModel(kind)
+				ds, err = expr.DataSourceModelFromNodeType(nodeType)
 			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
 			}

@@ -57,6 +57,8 @@ type Service struct {
 	pCtxProvider *plugincontext.Provider
 	features     featuremgmt.FeatureToggles
 
+	pluginsClient backend.CallResourceHandler
+
 	tracer  tracing.Tracer
 	metrics *metrics
 }
@@ -64,12 +66,13 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
 	return &Service{
-		cfg:          cfg,
-		dataService:  pluginClient,
-		pCtxProvider: pCtxProvider,
-		features:     features,
-		tracer:       tracer,
-		metrics:      newMetrics(registerer),
+		cfg:           cfg,
+		dataService:   pluginClient,
+		pCtxProvider:  pCtxProvider,
+		features:      features,
+		tracer:        tracer,
+		metrics:       newMetrics(registerer),
+		pluginsClient: pluginClient,
 	}
 }
 
@@ -103,7 +106,7 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 }
 
 // Create a datasources.DataSource struct from NodeType. Returns error if kind is TypeDatasourceNode or unknown one.
-func DataSourceModel(kind NodeType) (*datasources.DataSource, error) {
+func DataSourceModelFromNodeType(kind NodeType) (*datasources.DataSource, error) {
 	switch kind {
 	case TypeCMDNode:
 		return &datasources.DataSource{
@@ -119,4 +122,10 @@ func DataSourceModel(kind NodeType) (*datasources.DataSource, error) {
 	default:
 		return nil, fmt.Errorf("cannot create expression data source for '%s' kind", kind)
 	}
+}
+
+// Deprecated. Use DataSourceModelFromNodeType instead
+func DataSourceModel() *datasources.DataSource {
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
+	return d
 }

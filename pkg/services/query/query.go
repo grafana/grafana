@@ -322,7 +322,7 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 	}
 
 	if kind := expr.NodeTypeFromDatasourceUID(uid); kind != expr.TypeDatasourceNode {
-		return expr.DataSourceModel(kind)
+		return expr.DataSourceModelFromNodeType(kind)
 	}
 
 	if uid == grafanads.DatasourceUID {

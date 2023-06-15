@@ -126,6 +126,6 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 }
 
 func dataSourceModel() *datasources.DataSource {
-	d, _ := DataSourceModel(TypeCMDNode)
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
 	return d
 }
