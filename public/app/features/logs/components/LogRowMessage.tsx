@@ -11,7 +11,7 @@ import { LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 
-interface Props {
+export interface Props {
   row: LogRowModel;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;
@@ -110,6 +110,7 @@ export class LogRowMessage extends PureComponent<Props> {
                 onClick={this.onShowContextClick}
                 tooltip="Show context"
                 tooltipPlacement="top"
+                aria-label="Show context"
               />
             )}
             <ClipboardButton
@@ -125,6 +126,7 @@ export class LogRowMessage extends PureComponent<Props> {
             {onPermalinkClick && row.uid && (
               <IconButton
                 tooltip="Copy shortlink to logline"
+                aria-label="Copy shortlink to logline"
                 tooltipPlacement="top"
                 size="md"
                 name="share-alt"
