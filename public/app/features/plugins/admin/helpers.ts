@@ -62,6 +62,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     updatedAt,
     createdAt: publishedAt,
     status,
+    angularDetected,
   } = plugin;
 
   const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
@@ -90,6 +91,7 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isEnterprise: status === 'enterprise',
     type: typeCode,
     error: error?.errorCode,
+    angularDetected,
   };
 }
 
