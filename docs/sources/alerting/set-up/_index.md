@@ -13,7 +13,7 @@ Set up Grafana Alerting to learn about problems in your systems moments after th
 ## Before you begin
 
 - Configure your [data sources]({{< relref "../../administration/data-source-management" >}})
-- Check which data sources are compatible with and supported by [Grafana Alerting]({{< relref "../alerting/fundamentals/data-source-alerting" >}})
+- Check which data sources are compatible with and supported by [Grafana Alerting]({{< relref "../fundamentals/data-source-alerting" >}})
 
 ## Set up Alerting
 
