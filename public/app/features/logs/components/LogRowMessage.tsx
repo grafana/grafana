@@ -20,7 +20,6 @@ export interface Props {
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
-  permalinkedRowId?: string;
 }
 
 function renderLogMessage(
