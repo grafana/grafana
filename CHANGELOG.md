@@ -15,6 +15,17 @@
 
 # 9.4.10 (2023-05-08)
 
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.4. [#67760](https://github.com/grafana/grafana/issues/67760), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **AzureMonitor:** Fix logs query multi-resource and timespan values. [#67931](https://github.com/grafana/grafana/issues/67931), [@grafanabot](https://github.com/grafanabot)
+- **TimeSeries:** Fix leading null-fill for missing intervals. [#67572](https://github.com/grafana/grafana/issues/67572), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix misleading status code in provisioning API. [#67357](https://github.com/grafana/grafana/issues/67357), [@grafanabot](https://github.com/grafanabot)
+- **Azure Monitor:** Fix bug that was not showing resources for certain locations. [#66617](https://github.com/grafana/grafana/issues/66617), [@grafanabot](https://github.com/grafanabot)
+
 <!-- 9.4.10 END -->
 <!-- 9.4.9 START -->
 
