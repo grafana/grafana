@@ -15,7 +15,7 @@ import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 
-interface Props extends Themeable2 {
+export interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;
@@ -61,6 +61,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     highlightBackround: false,
     showDetails: false,
   };
+  logLineRef: React.RefObject<HTMLTableRowElement>;
+
+  constructor(props: Props) {
+    super(props);
+    this.logLineRef = React.createRef();
+  }
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   debouncedContextClose = debounce(() => {
@@ -90,7 +96,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       };
     });
   };
-  logLineRef: React.RefObject<HTMLTableRowElement>;
 
   renderTimeStamp(epochMs: number) {
     return dateTimeFormat(epochMs, {
@@ -110,11 +115,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       this.props.onLogRowHover(undefined);
     }
   };
-
-  constructor(props: Props) {
-    super(props);
-    this.logLineRef = React.createRef();
-  }
 
   componentDidMount() {
     this.scrollToLogRow(this.state, true);
