@@ -5,14 +5,14 @@ import tinycolor from 'tinycolor2';
 
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
 
-import { LogRow, Props } from './LogRow';
+import { LogRow } from './LogRow';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
 const theme = createTheme();
 const styles = getLogRowStyles(theme);
 const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverrides?: Partial<LogRowModel>) => {
-  const props: Props = {
+  const props: ComponentProps<typeof LogRow> = {
     row: createLogRow({
       entry: 'test123',
       uid: 'log-row-id',
