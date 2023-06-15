@@ -13,6 +13,6 @@ module.exports = async ({ core, filePath }) => {
 
         core.endGroup();
     } catch (error) {
-        core.restFailed(error.message);
+        core.setFailed(error.message);
     }
 }
