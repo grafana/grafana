@@ -118,7 +118,7 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 		return errors.New("condition cannot be empty")
 	}
 	if len(queries) == 0 {
-		return errors.New("no query\\expressions specified")
+		return errors.New("no query/expressions specified")
 	}
 	refIDs := make(map[string]int, len(queries))
 	for idx, query := range queries {
