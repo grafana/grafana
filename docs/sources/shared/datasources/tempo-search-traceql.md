@@ -12,12 +12,21 @@ headless: true
 
 # Create TraceQL queries using Search
 
-{{% admonition type="note" %}}
-This new Search query type is available as an experimental feature.
-This feature is under active development and is not production ready.
-To try this feature, enable the `traceqlSearch` feature flag in Grafana (read [documentation](/docs/grafana/latest/setup-grafana/configure-grafana/feature-toggles/)).
-Grafana Cloud users have this feature.
-{{% /admonition %}}
+{{< docs/experimental.inline product="Search query type" featureFlag="traceqlSearch" >}}
+{{ $product := .Get "product" }}
+{{ $featureFlag := .Get "featureFlag" }}
+
+<div class="admonition admonition-note">
+<blockquote>
+    <p>
+    <strong>Note:</strong> {{ $product }} is available as an experimental feature.
+    This feature is under active development and is not production ready.
+    Enable the <code>{{ $featureFlag }}</code> feature flag in Grafana to use this feature.
+    Contact Grafana Support to enable this feature in Grafana Cloud.
+    </p>
+</blockquote>
+</div>
+{{< /docs/experimental.inline >}}
 
 Using the Search tab in Explore, you can use the query builder’s drop-downs to compose TraceQL queries. The selections you make automatically generate a [TraceQL query](/docs/tempo/latest/traceql).
 
