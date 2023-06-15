@@ -558,6 +558,13 @@ var (
 			Owner:        awsPluginsSquad,
 		},
 		{
+			Name:         "exploreScrollableLogsContainer",
+			Description:  "Improves the scrolling behavior of logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
 			Name:        "recordedQueriesMulti",
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:       FeatureStageExperimental,
