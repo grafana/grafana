@@ -46,7 +46,7 @@ import builtInPlugins from './built_in_plugins';
 import { PLUGIN_CDN_URL_KEY } from './constants';
 import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
+import { locateWithCache2, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
 // import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 // import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
@@ -61,6 +61,19 @@ grafanaUI.AppPlugin = grafanaData.AppPlugin;
 grafanaUI.DataSourceApi = grafanaData.DataSourceApi;
 
 const { SystemJS } = grafanaRuntime;
+
+const jQueryFlotDeps = [
+  'jquery.flot.crosshair',
+  'jquery.flot.events',
+  'jquery.flot.fillbelow',
+  'jquery.flot.gauge',
+  'jquery.flot.pie',
+  'jquery.flot.selection',
+  'jquery.flot.stack',
+  'jquery.flot.stackpercent',
+  'jquery.flot.time',
+  'jquery.flot',
+].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
 
 const importMap = {
   '@emotion/css': emotion,
@@ -101,16 +114,7 @@ const importMap = {
     default: jquery,
     __useDefault: true,
   },
-  'jquery.flot.crosshair': { fakeDep: 1 },
-  'jquery.flot.events': { fakeDep: 1 },
-  'jquery.flot.fillbelow': { fakeDep: 1 },
-  'jquery.flot.gauge': { fakeDep: 1 },
-  'jquery.flot.pie': { fakeDep: 1 },
-  'jquery.flot.selection': { fakeDep: 1 },
-  'jquery.flot.stack': { fakeDep: 1 },
-  'jquery.flot.stackpercent': { fakeDep: 1 },
-  'jquery.flot.time': { fakeDep: 1 },
-  'jquery.flot': { fakeDep: 1 },
+  ...jQueryFlotDeps,
   lodash: _,
   moment: {
     default: moment,
@@ -146,8 +150,6 @@ const importMap = {
 const imports = Object.keys(importMap).reduce((acc, key) => {
   // Use the 'app:' prefix to act as a URL instead of a bare specifier
   const module_name = `app:${key}`;
-
-  // Set the module in Systemjs
   SystemJS.set(module_name, importMap[key]);
 
   // exposes this dependency to sandboxed plugins too.
@@ -156,7 +158,6 @@ const imports = Object.keys(importMap).reduce((acc, key) => {
   sandboxPluginDependencies.set(key, importMap[key]);
 
   acc[key] = module_name;
-
   return acc;
 }, {} as Record<string, string>);
 
@@ -171,10 +172,10 @@ const jsContentTypeRegEx = /^text\/javascript(;|$)/;
 // Fetch and eval if assest is not JS or loading from CDN
 // otherwise we load via script for performance and security goodness!
 SystemJS.shouldFetch = function (url: string) {
-  const isCDN = Boolean(config.pluginsCDNBaseURL) && url.startsWith(config.pluginsCDNBaseURL);
+  const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && url.startsWith(config.pluginsCDNBaseURL);
   const isNotJS = moduleTypesRegEx.test(url);
 
-  return isNotJS || isCDN;
+  return isNotJS || isHostedAtCDN;
 };
 
 const systemJSPrototype = SystemJS.constructor.prototype;
@@ -197,11 +198,15 @@ systemJSPrototype.fetch = function (url: string, options: Record<string, unknown
 };
 
 const originalResolve = systemJSPrototype.resolve;
-// TODO: Need to understand how to handle caching of requests.
+
 systemJSPrototype.resolve = function (id: string, parentUrl: string) {
-  // console.log('SystemJS resolve hook:', { id, parentUrl });
+  // CDN paths are unique as they contain the version in the path
+  const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
+  const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
+  const cachedId = shouldUseQueryCache ? locateWithCache2(id) : id;
+  // console.log('SystemJS resolve hook:', { id, parentUrl, cachedId }, arguments);
   try {
-    return originalResolve.apply(this, arguments);
+    return originalResolve.apply(this, [cachedId, parentUrl]);
   } catch (err) {
     if (loadPluginCssRegEx.test(id)) {
       return monkeyPatchLoadPluginCss(id);
