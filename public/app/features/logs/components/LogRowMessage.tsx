@@ -101,7 +101,7 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span className={cx('log-row-menu', styles.rowMenu, styles.hidden)} onClick={this.onLogRowClick}>
+          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
