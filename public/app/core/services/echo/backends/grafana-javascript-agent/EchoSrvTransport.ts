@@ -3,12 +3,17 @@ import { getEchoSrv, EchoEventType, config } from '@grafana/runtime';
 export class EchoSrvTransport extends BaseTransport {
   readonly name: string = 'EchoSrvTransport';
   readonly version: string = config.buildInfo.version;
-  send(event: TransportItem) {
+  send(items: TransportItem[]) {
     getEchoSrv().addEvent({
       type: EchoEventType.GrafanaJavascriptAgent,
-      payload: event,
+      payload: items,
     });
   }
+
+  isBatched() {
+    return true;
+  }
+
   getIgnoreUrls() {
     return [];
   }
