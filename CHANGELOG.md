@@ -5,6 +5,7 @@
 ### Bug fixes
 
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#68796](https://github.com/grafana/grafana/issues/68796), [@mgyongyosi](https://github.com/mgyongyosi)
 
 <!-- 9.3.15 END -->
 <!-- 9.3.14 START -->
