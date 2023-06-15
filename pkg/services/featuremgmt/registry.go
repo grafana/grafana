@@ -565,7 +565,7 @@ var (
 			Owner:        awsPluginsSquad,
 		},
 		{
-			Name:         "scrollableLogsContainer",
+			Name:         "exploreScrollableLogsContainer",
 			Description:  "Improves the scrolling behavior of logs in Explore",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,

@@ -101,6 +101,6 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
-  scrollableLogsContainer?: boolean;
+  exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
 }

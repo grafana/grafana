@@ -102,7 +102,7 @@ interface State {
   contextRow?: LogRowModel;
 }
 
-const scrollableLogsContainer = config.featureToggles.scrollableLogsContainer;
+const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
   ${scrollableLogsContainer && 'margin-bottom: 0px'};
