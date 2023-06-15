@@ -388,6 +388,7 @@ describe('getLogQueryFromMetricsQuery', () => {
     expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} | logfmt | label="value" [1m])')).toBe(
       '{job="grafana"} | logfmt | label="value"'
     );
+    expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} [1m])')).toBe('{job="grafana"}');
     expect(
       getLogQueryFromMetricsQuery(
         'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'

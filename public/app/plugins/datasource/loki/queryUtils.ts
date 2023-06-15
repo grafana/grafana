@@ -213,12 +213,9 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   const selector = query.substring(selectorNode.from, selectorNode.to);
 
   const pipelineExprNode = getNodeFromQuery(query, PipelineExpr);
-  if (!pipelineExprNode) {
-    return query;
-  }
-  const pipelineExpr = query.substring(pipelineExprNode.from, pipelineExprNode.to);
+  const pipelineExpr = pipelineExprNode ? query.substring(pipelineExprNode.from, pipelineExprNode.to) : '';
 
-  return `${selector} ${pipelineExpr}`;
+  return `${selector} ${pipelineExpr}`.trim();
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {
