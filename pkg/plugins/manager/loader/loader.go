@@ -369,7 +369,7 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if parent.IsCorePlugin() {
 		child.Module = util.JoinURLFragments("app/plugins/app/"+parent.ID, appSubPath) + "/module"
 	} else {
-		child.Module = util.JoinURLFragments("plugins/"+parent.ID, appSubPath) + "/module"
+		child.Module = util.JoinURLFragments("./public/plugins/"+parent.ID, appSubPath) + "/module.js"
 	}
 }
 
