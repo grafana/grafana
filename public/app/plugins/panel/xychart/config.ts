@@ -27,6 +27,13 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
       },
     },
 
+    disableStandardOptions: [
+      FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Mappings,
+      FieldConfigProperty.Min,
+      FieldConfigProperty.Max,
+    ],
+
     useCustomConfig: (builder) => {
       builder
         .addRadio({
