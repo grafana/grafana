@@ -148,7 +148,7 @@ export { VizLegendListItem } from './VizLegend/VizLegendListItem';
 export { Alert, type AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
-export { CollapsableSection } from './Collapse/CollapsableSection';
+export { CollapsableSection, CollapsableSectionUncontrolled } from './Collapse/CollapsableSection';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
 // Panel editors

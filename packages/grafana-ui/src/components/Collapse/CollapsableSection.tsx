@@ -90,6 +90,72 @@ export const CollapsableSection = ({
   );
 };
 
+export const CollapsableSectionUncontrolled = ({
+  label,
+  isOpen,
+  onToggle,
+  className,
+  contentClassName,
+  children,
+  labelId,
+  loading = false,
+  headerDataTestId,
+  contentDataTestId,
+}: Props) => {
+  const styles = useStyles2(collapsableSectionStyles);
+
+  const onClick = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    onToggle?.(!isOpen);
+  };
+  const { current: id } = useRef(uniqueId());
+
+  const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
+  return (
+    <>
+      {/* disabling the a11y rules here as the button handles keyboard interactions */}
+      {/* this is just to provide a better experience for mouse users */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div onClick={onClick} className={cx(styles.header, className)}>
+        <button
+          type="button"
+          id={`collapse-button-${id}`}
+          className={styles.button}
+          onClick={onClick}
+          aria-expanded={isOpen && !loading}
+          aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
+        >
+          {loading ? (
+            <Spinner className={styles.spinner} />
+          ) : (
+            <Icon name={isOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
+          )}
+        </button>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
+          {label}
+        </div>
+      </div>
+      {isOpen && (
+        <div
+          id={`collapse-content-${id}`}
+          className={cx(styles.content, contentClassName)}
+          data-testid={contentDataTestId}
+        >
+          {children}
+        </div>
+      )}
+    </>
+  );
+};
+
 const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
