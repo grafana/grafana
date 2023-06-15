@@ -1,9 +1,16 @@
 import { lastValueFrom, of } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data/src';
+import {
+  AdHocVariableFilter,
+  DataQueryRequest,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  ScopedVars,
+  TypedVariableModel,
+} from '@grafana/data/src';
 import { BackendSrv, BackendSrvRequest, config, FetchResponse, setBackendSrv } from '@grafana/runtime';
 
-import { TemplateSrv } from '../../../../features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '../../../../features/templating/template_srv';
 import InfluxDatasource from '../datasource';
 import { InfluxOptions, InfluxQuery } from '../types';
 
@@ -14,6 +21,7 @@ import {
   mockInfluxTemplateSrv,
   mockInfluxTSDBQueryResponse,
 } from './datasource.proxy.testdata';
+import { templateSrvStub } from './mocks';
 
 const fetchMock = jest.fn().mockReturnValue(of(mockInfluxFetchResponse()));
 
@@ -103,6 +111,73 @@ describe('InfluxDatasource backend (proxy)', () => {
 
       // We called fetch twice
       expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('InfluxDatasource.applyVariables', () => {
+    const testVariableValue = 'test.test.test';
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      const variable = {
+        current: {
+          text: testVariableValue,
+          value: testVariableValue,
+          selected: false,
+        },
+        hide: 0,
+        multi: false,
+        name: 'test',
+        options: [
+          {
+            selected: false,
+            text: 'test.test',
+            value: 'test.test',
+          },
+          {
+            selected: false,
+            text: 'test',
+            value: 'test',
+          },
+          {
+            selected: true,
+            text: testVariableValue,
+            value: testVariableValue,
+          },
+        ],
+        query: `test.test, test, ${testVariableValue}`,
+      } as TypedVariableModel;
+
+      ctx.instanceSettings.url = '/api/datasources/proxy/1';
+      const realTemplateSrv = getTemplateSrv();
+      realTemplateSrv.getAdhocFilters = (datasourceName: string) => [] as AdHocVariableFilter[];
+
+      //@ts-ignore overwriting private method
+      realTemplateSrv.getVariableAtIndex = () => variable;
+
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings as DataSourceInstanceSettings<InfluxOptions>, realTemplateSrv);
+    });
+
+    it('interpolates variables with "." without double escaping', () => {
+      const queryStringRaw = 'SELECT * FROM $test';
+      const query: InfluxQuery = {
+        refId: 'A',
+        query: 'SELECT * FROM $test',
+      };
+      const vars: ScopedVars = {
+        __interval: {
+          text: '10s',
+          value: '10s',
+        },
+        __interval_ms: {
+          text: '10000',
+          value: 10000,
+        },
+      };
+
+      const response = ctx!.ds!.applyVariables(query, vars, vars);
+      expect(response.query === queryStringRaw).toEqual(false);
+      expect(response.query).toEqual(queryStringRaw.replace('$test', testVariableValue));
     });
   });
 });
