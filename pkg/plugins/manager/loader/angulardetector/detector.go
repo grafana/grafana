@@ -54,8 +54,8 @@ func (p *staticDetectorsProvider) provideDetectors(_ context.Context) []detector
 	return p.detectors
 }
 
-// sequenceDetectorsProvider is a detectorsProvider that calls provideDetectors on all the detectors in
-// it and returns the first value which isn't empty.
+// sequenceDetectorsProvider is a detectorsProvider that wraps a slice of detectorsProvider and returns the first
+// provider result that isn't empty.
 type sequenceDetectorsProvider []detectorsProvider
 
 func (p sequenceDetectorsProvider) provideDetectors(ctx context.Context) []detector {
