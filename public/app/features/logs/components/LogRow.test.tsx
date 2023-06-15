@@ -31,7 +31,6 @@ const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverri
     wrapLogMessage: false,
     timeZone: 'utc',
     styles,
-    theme,
     ...(propOverrides || {}),
   };
 
