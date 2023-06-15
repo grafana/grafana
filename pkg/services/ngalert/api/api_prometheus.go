@@ -59,10 +59,12 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
 
-	return PrepareAlertStatuses(srv.manager, AlertStatusesOptions{
+	resp := PrepareAlertStatuses(srv.manager, AlertStatusesOptions{
 		OrgID: c.OrgID,
 		Query: c.Req.Form,
 	})
+
+	return response.JSON(http.StatusOK, resp)
 }
 
 type AlertStatusesOptions struct {
@@ -70,7 +72,7 @@ type AlertStatusesOptions struct {
 	Query url.Values
 }
 
-func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatusesOptions) response.Response {
+func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatusesOptions) apimodels.AlertResponse {
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -105,7 +107,7 @@ func PrepareAlertStatuses(manager state.AlertInstanceManager, opts AlertStatuses
 		})
 	}
 
-	return response.JSON(http.StatusOK, alertResponse)
+	return alertResponse
 }
 
 func formatValues(alertState *state.State) string {
@@ -211,7 +213,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
 
-	return PrepareRuleGroupStatuses(srv.log, srv.manager, srv.store, RuleGroupStatusesOptions{
+	resp := PrepareRuleGroupStatuses(srv.log, srv.manager, srv.store, RuleGroupStatusesOptions{
 		Ctx:        c.Req.Context(),
 		OrgID:      c.OrgID,
 		Query:      c.Req.Form,
@@ -221,35 +223,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		},
 	})
 
+	code := http.StatusOK
+	if resp.Status != "success" {
+		switch resp.ErrorType {
+		case apiv1.ErrBadData:
+			code = http.StatusBadRequest
+		default:
+			code = http.StatusInternalServerError
+		}
+	}
+	return response.JSON(code, resp)
 }
 
-func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) response.Response {
-
-	dashboardUID := opts.Query.Get("dashboard_uid")
-	panelID, err := getPanelIDFromQuery(opts.Query)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "invalid panel_id")
-	}
-	if dashboardUID == "" && panelID != 0 {
-		return ErrResp(http.StatusBadRequest, errors.New("panel_id must be set with dashboard_uid"), "")
-	}
-
-	limitGroups := getInt64WithDefault(opts.Query, "limit", -1)
-	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
-	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
-	matchers, err := getMatchersFromQuery(opts.Query)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-	withStates, err := getStatesFromQuery(opts.Query)
-	if err != nil {
-		return ErrResp(http.StatusBadRequest, err, "")
-	}
-	withStatesFast := make(map[eval.State]struct{})
-	for _, state := range withStates {
-		withStatesFast[state] = struct{}{}
-	}
-
+func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager, store ListAlertRulesStore, opts RuleGroupStatusesOptions) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -259,6 +245,43 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		},
 	}
 
+	dashboardUID := opts.Query.Get("dashboard_uid")
+	panelID, err := getPanelIDFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("invalid panel_id: %s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	if dashboardUID == "" && panelID != 0 {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = "panel_id must be set with dashboard_uid"
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+
+	limitGroups := getInt64WithDefault(opts.Query, "limit", -1)
+	limitRulesPerGroup := getInt64WithDefault(opts.Query, "limit_rules", -1)
+	limitAlertsPerRule := getInt64WithDefault(opts.Query, "limit_alerts", -1)
+	matchers, err := getMatchersFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("%s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	withStates, err := getStatesFromQuery(opts.Query)
+	if err != nil {
+		ruleResponse.DiscoveryBase.Status = "error"
+		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("%s", err.Error())
+		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrBadData
+		return ruleResponse
+	}
+	withStatesFast := make(map[eval.State]struct{})
+	for _, state := range withStates {
+		withStatesFast[state] = struct{}{}
+	}
+
 	var labelOptions []ngmodels.LabelOption
 	if !getBoolWithDefault(opts.Query, queryIncludeInternalLabels, false) {
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
@@ -266,7 +289,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 
 	if len(opts.Namespaces) == 0 {
 		log.Debug("user does not have access to any namespaces")
-		return response.JSON(http.StatusOK, ruleResponse)
+		return ruleResponse
 	}
 
 	namespaceUIDs := make([]string, len(opts.Namespaces))
@@ -285,7 +308,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleResponse.DiscoveryBase.Status = "error"
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
-		return response.JSON(http.StatusInternalServerError, ruleResponse)
+		return ruleResponse
 	}
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
@@ -358,7 +381,7 @@ func PrepareRuleGroupStatuses(log log.Logger, manager state.AlertInstanceManager
 		ruleResponse.Data.RuleGroups = ruleResponse.Data.RuleGroups[0:limitGroups]
 	}
 
-	return response.JSON(http.StatusOK, ruleResponse)
+	return ruleResponse
 }
 
 // This is the same as matchers.Matches but avoids the need to create a LabelSet
