@@ -12,8 +12,8 @@ Set up Grafana Alerting to learn about problems in your systems moments after th
 
 ## Before you begin
 
-- Configure your [data sources](../../administration/data-source-management)
-- Check which data sources are compatible with and supported by [Grafana Alerting](../alerting/fundamentals/data-source-alerting
+- Configure your [data sources]({{< relref "../../administration/data-source-management>}})
+- Check which data sources are compatible with and supported by [Grafana Alerting]({{< relref "../alerting/fundamentals/data-source-alerting>}})
 
 ## Set up Alerting
 
@@ -46,7 +46,7 @@ Grafana Alerting supports many additional configuration options, from configurin
 
 The following topics provide you with advanced configuration options for Grafana Alerting.
 
-- [Provision alert rules using file provisioning](../set-up/provision-alerting-resources/file-provisioning)
-- [Provision alert rules using Terraform](../set-up/provision-alerting-resources/terraform-provisioning)
-- [Add an external Alertmanager](../set-up/configure-alertmanager)
-- [Configure high availability](../set-up/configure-high-availability)
+- [Provision alert rules using file provisioning]({{< relref../set-up/provision-alerting-resources/file-provisioning}})
+- [Provision alert rules using Terraform]({{< relref../set-up/provision-alerting-resources/terraform-provisioning}})
+- [Add an external Alertmanager]({{< relref../set-up/configure-alertmanager}})
+- [Configure high availability]({{< relref../set-up/configure-high-availability}})
