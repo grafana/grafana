@@ -58,7 +58,7 @@ import LogsNavigation from './LogsNavigation';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
-export interface Props extends Themeable2 {
+interface Props extends Themeable2 {
   width: number;
   splitOpen: SplitOpen;
   logRows: LogRowModel[];

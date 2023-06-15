@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 
 import {
   EventBusSrv,
@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { ExploreId } from 'app/types';
 
-import { Logs, Props } from './Logs';
+import { Logs } from './Logs';
 
 const changePanelState = jest.fn();
 jest.mock('../state/explorePane', () => ({
@@ -28,7 +28,7 @@ describe('Logs', () => {
     jest.clearAllMocks();
   });
 
-  const getComponent = (partialProps?: Partial<Props>, logs?: LogRowModel[]) => {
+  const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
     const rows = [
       makeLog({ uid: '1', timeEpochMs: 1 }),
       makeLog({ uid: '2', timeEpochMs: 2 }),
@@ -65,7 +65,7 @@ describe('Logs', () => {
       />
     );
   };
-  const setup = (partialProps?: Partial<Props>, logs?: LogRowModel[]) => {
+  const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
     return render(getComponent(partialProps, logs));
   };
 
