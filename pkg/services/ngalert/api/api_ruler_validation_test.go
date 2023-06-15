@@ -115,7 +115,7 @@ func TestValidateCondition(t *testing.T) {
 			name:      "error when data is empty",
 			condition: "A",
 			data:      []apimodels.AlertQuery{},
-			errorMsg:  "no query\\expressions specified",
+			errorMsg:  "no query/expressions specified",
 		},
 		{
 			name:      "error when condition does not exist",
@@ -141,7 +141,7 @@ func TestValidateCondition(t *testing.T) {
 					RefID: "A",
 				},
 			},
-			errorMsg: "refID 'A' is already used by query\\expression at index 0",
+			errorMsg: "refID 'A' is already used by query/expression at index 0",
 		},
 		{
 			name:      "error when refId is empty",
@@ -154,7 +154,7 @@ func TestValidateCondition(t *testing.T) {
 					RefID: "A",
 				},
 			},
-			errorMsg: "refID is not specified for data query\\expression at index 0",
+			errorMsg: "refID is not specified for data query/expression at index 0",
 		},
 		{
 			name:      "valid case",
