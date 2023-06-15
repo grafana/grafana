@@ -576,6 +576,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('table_sparkline_cell', import '../dev-dashboards/panel-table/table_sparkline_cell.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('table_tests', import '../dev-dashboards/panel-table/table_tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
