@@ -457,17 +457,27 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 </div>
               )}
 
-              {xforms.map((t) => {
-                return (
-                  <TransformationCard
-                    key={t.name}
-                    transform={t}
-                    onClick={() => {
-                      this.onTransformationAdd({ value: t.id });
-                    }}
-                  />
-                );
-              })}
+              {!config.featureToggles.transformationsRedesign &&
+                xforms.map((t) => {
+                  return (
+                    <TransformationCard
+                      key={t.name}
+                      transform={t}
+                      onClick={() => {
+                        this.onTransformationAdd({ value: t.id });
+                      }}
+                    />
+                  );
+                })}
+
+              {config.featureToggles.transformationsRedesign && (
+                <TransformationsGrid
+                  transformations={xforms}
+                  onClick={(id) => {
+                    this.onTransformationAdd({ value: id });
+                  }}
+                />
+              )}
             </VerticalGroup>
           </>
         ) : (
@@ -560,11 +570,14 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
     >
       <Card.Heading>{transform.name}</Card.Heading>
       <Card.Description>{transform.description}</Card.Description>
-      {transform.state && (
+      {/* {transform.state && (
         <Card.Tags>
           <PluginStateInfo state={transform.state} />
         </Card.Tags>
-      )}
+      )} */}
+      <Card.Actions>
+        <PluginStateInfo state={transform.state} />
+      </Card.Actions>
     </Card>
   );
 }
@@ -574,6 +587,58 @@ const getStyles = (theme: GrafanaTheme2) => {
     card: css`
       margin: 0;
       padding: ${theme.spacing(1)};
+    `,
+  };
+};
+
+interface TransformationsGridProps {
+  transformations: Array<TransformerRegistryItem<any>>;
+  onClick: (id: string) => void;
+}
+
+function TransformationsGrid({ transformations, onClick }: TransformationsGridProps) {
+  const styles = useStyles2(getTransformationsGridStyles);
+
+  return (
+    <div className={styles.grid}>
+      {transformations.map((transform) => (
+        <Card
+          key={transform.id}
+          className={styles.card}
+          aria-label={selectors.components.TransformTab.newTransform(transform.name)}
+          onClick={() => onClick(transform.id)}
+        >
+          <Card.Heading className={styles.heading}>{transform.name}</Card.Heading>
+          <Card.Description className={styles.description}>{transform.description}</Card.Description>
+          <Card.Actions>
+            <PluginStateInfo className={styles.badge} state={transform.state} />
+          </Card.Actions>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
+  return {
+    grid: css`
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-auto-rows: 1fr;
+      gap: 16px 8px;
+      width: 100%;
+    `,
+    card: css`
+      grid-template-rows: min-content 0 1fr min-content;
+    `,
+    badge: css`
+      padding: 4px 3px;
+    `,
+    heading: css`
+      font-weight: 400;
+    `,
+    description: css`
+      font-size: 12px;
     `,
   };
 };
