@@ -221,7 +221,6 @@ export const getDefaultQueries = (): AlertQuery[] => {
       relativeTimeRange,
       model: {
         refId: 'A',
-        hide: false,
       },
     },
     ...getDefaultExpressions('B', 'C'),
@@ -241,7 +240,6 @@ export const getDefaultRecordingRulesQueries = (
       relativeTimeRange,
       model: {
         refId: 'A',
-        hide: false,
       },
     },
   ];
@@ -253,7 +251,6 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
 
   const reduceExpression: ExpressionQuery = {
     refId: refIds[0],
-    hide: false,
     type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
@@ -284,7 +281,6 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
 
   const thresholdExpression: ExpressionQuery = {
     refId: refTwo,
-    hide: false,
     type: ExpressionQueryType.threshold,
     datasource: {
       uid: ExpressionDatasourceUID,
