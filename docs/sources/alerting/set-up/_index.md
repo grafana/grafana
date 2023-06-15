@@ -8,7 +8,7 @@ weight: 107
 
 # Set up Alerting
 
-Set up Grafana Alerting to learn about problems in your systems moments after they occur.
+Configure the features and integrations that you need to create and manage your alerts.
 
 ## Before you begin
 
