@@ -1468,6 +1468,7 @@ The following functions and classes related to logs are deprecated in the `grafa
 ### Bug fixes
 
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#68795](https://github.com/grafana/grafana/issues/68795), [@mgyongyosi](https://github.com/mgyongyosi)
 
 <!-- 9.2.19 END -->
 <!-- 9.2.18 START -->
