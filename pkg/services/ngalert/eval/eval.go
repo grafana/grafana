@@ -270,10 +270,10 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
 			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
-			case expr.TypeCMDNode:
-				ds, err = expr.DataSourceModelFromNodeType(nodeType)
 			case expr.TypeDatasourceNode:
 				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
+			default:
+				ds, err = expr.DataSourceModelFromNodeType(nodeType)
 			}
 			if err != nil {
 				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
@@ -622,15 +622,24 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		return err
 	}
 	for _, query := range req.Queries {
-		if query.DataSource == nil || expr.NodeTypeFromDatasourceUID(query.DataSource.UID) != expr.TypeDatasourceNode {
+		if query.DataSource == nil {
 			continue
 		}
-		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
-		if !found { // technically this should fail earlier during datasource resolution phase.
-			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
-		}
-		if !p.Backend {
-			return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+		switch expr.NodeTypeFromDatasourceUID(query.DataSource.UID) {
+		case expr.TypeDatasourceNode:
+			p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+			if !found { // technically this should fail earlier during datasource resolution phase.
+				return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+			}
+			if !p.Backend {
+				return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+			}
+		case expr.TypeMLNode:
+			_, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+			if !found {
+				return fmt.Errorf("data source '%s' refID %s could not be found: %w", query.DataSource.Type, query.RefID, plugins.ErrPluginUnavailable)
+			}
+		case expr.TypeCMDNode:
 		}
 	}
 	_, err = e.create(condition, req)
