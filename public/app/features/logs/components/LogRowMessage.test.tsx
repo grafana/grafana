@@ -63,12 +63,12 @@ describe('LogRowMessage', () => {
   });
 
   describe('with permalinking', () => {
-    it('should show permalinking button', () => {
+    it('should show permalinking button when no `onPermalinkClick` is defined', () => {
       setup({ onPermalinkClick: jest.fn() });
       expect(screen.queryByLabelText('Copy shortlink to logline')).toBeInTheDocument();
     });
 
-    it('should not show permalinking button', () => {
+    it('should not show permalinking button when `onPermalinkClick` is defined', () => {
       setup();
       expect(screen.queryByLabelText('Copy shortlink to logline')).not.toBeInTheDocument();
     });
