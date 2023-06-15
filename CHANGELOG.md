@@ -1058,6 +1058,10 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 # 9.3.14 (2023-05-08)
 
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.4. [#67762](https://github.com/grafana/grafana/issues/67762), [@papagian](https://github.com/papagian)
+
 <!-- 9.3.14 END -->
 <!-- 9.3.6 START -->
 
