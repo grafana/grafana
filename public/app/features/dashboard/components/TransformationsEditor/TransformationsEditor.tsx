@@ -368,10 +368,10 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                       this.setState({ showPicker: false });
                     }}
                     className={css`
-                      margin-bottom: 16px;
+                      margin-bottom: ${config.theme2.spacing(2)};
                       color: ${config.theme2.colors.text.secondary};
                       display: inline-block;
-                      padding-right: 8px;
+                      padding-right: ${config.theme2.spacing(1)};
                       border-bottom: 1px solid transparent;
                       &:hover {
                         border-bottom: 1px solid ${config.theme2.colors.text.secondary};
@@ -394,11 +394,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     </span>
                   </div>
                 )}
-                <p
+                <div
                   className={css`
                     font-size: 16px;
                     display: flex;
                     align-items: center;
+                    margin-bottom: ${config.theme2.spacing(2)};
                   `}
                 >
                   <a
@@ -417,7 +418,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                     <Icon name="external-link-alt" />
                   </a>
                   &nbsp;allow you to manipulate your data before a visualization is applied.
-                </p>
+                </div>
               </>
             )}
             <VerticalGroup>
@@ -434,11 +435,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               {config.featureToggles.transformationsRedesign && (
                 <div
                   className={css`
-                    padding: 8px 0;
+                    padding: ${config.theme2.spacing(1)} 0;
                     display: flex;
                     flex-wrap: wrap;
-                    row-gap: 8px;
-                    column-gap: 4px;
+                    row-gap: ${config.theme2.spacing(1)};
+                    column-gap: ${config.theme2.spacing(0.5)};
                   `}
                 >
                   {filterCategoriesLabels.map(([slug, label]) => {
@@ -518,13 +519,20 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               />
             ) : null}
             {hasTransforms && config.featureToggles.transformationsRedesign && !this.state.showPicker && (
-              <p
+              <div
                 className={css`
                   display: flex;
                   justify-content: space-between;
+                  margin-bottom: 24px;
                 `}
               >
-                <span>Transformations in use</span>{' '}
+                <span
+                  className={css`
+                    font-size: 16px;
+                  `}
+                >
+                  Transformations in use
+                </span>{' '}
                 <Button
                   size="sm"
                   variant="secondary"
@@ -542,7 +550,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   onConfirm={() => this.onTransformationRemoveAll()}
                   onDismiss={() => this.setState({ showRemoveAllModal: false })}
                 />
-              </p>
+              </div>
             )}
             {hasTransforms &&
               (!config.featureToggles.transformationsRedesign || !this.state.showPicker) &&
@@ -570,14 +578,11 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
     >
       <Card.Heading>{transform.name}</Card.Heading>
       <Card.Description>{transform.description}</Card.Description>
-      {/* {transform.state && (
+      {transform.state && (
         <Card.Tags>
           <PluginStateInfo state={transform.state} />
         </Card.Tags>
-      )} */}
-      <Card.Actions>
-        <PluginStateInfo state={transform.state} />
-      </Card.Actions>
+      )}
     </Card>
   );
 }
@@ -608,11 +613,22 @@ function TransformationsGrid({ transformations, onClick }: TransformationsGridPr
           aria-label={selectors.components.TransformTab.newTransform(transform.name)}
           onClick={() => onClick(transform.id)}
         >
-          <Card.Heading className={styles.heading}>{transform.name}</Card.Heading>
-          <Card.Description className={styles.description}>{transform.description}</Card.Description>
-          <Card.Actions>
-            <PluginStateInfo className={styles.badge} state={transform.state} />
-          </Card.Actions>
+          <Card.Heading className={styles.heading}>
+            <>
+              <span>{transform.name}</span>
+              <span>
+                <PluginStateInfo className={styles.badge} state={transform.state} />
+              </span>
+            </>
+          </Card.Heading>
+          <Card.Description className={styles.description}>
+            <>
+              {transform.description}
+              {transform.image && (
+                <img className={styles.image} src={getImagePath(transform.image)} alt={transform.name} />
+              )}
+            </>
+          </Card.Description>
         </Card>
       ))}
     </div>
@@ -625,22 +641,42 @@ const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       grid-auto-rows: 1fr;
-      gap: 16px 8px;
+      gap: ${theme.spacing(2)} ${theme.spacing(1)};
       width: 100%;
     `,
     card: css`
-      grid-template-rows: min-content 0 1fr min-content;
+      grid-template-rows: min-content;
     `,
     badge: css`
       padding: 4px 3px;
     `,
     heading: css`
       font-weight: 400;
+
+      > * {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: no-wrap;
+      }
     `,
     description: css`
       font-size: 12px;
     `,
+    image: css`
+      display: block;
+      max-width: 100%;
+      margin-top: ${theme.spacing(2)};
+    `,
   };
+};
+
+const getImagePath = (image: { light: string; dark: string }) => {
+  if (config.theme2.isDark) {
+    return image.dark;
+  }
+
+  return image.light;
 };
 
 export const TransformationsEditor = withTheme(UnThemedTransformationsEditor);

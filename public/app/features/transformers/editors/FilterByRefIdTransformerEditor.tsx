@@ -10,6 +10,8 @@ import {
 import { FilterFramesByRefIdTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByRefId';
 import { HorizontalGroup, FilterPill, FieldValidationMessage } from '@grafana/ui';
 
+import { filterByQuery } from '../img';
+
 interface FilterByRefIdTransformerEditorProps extends TransformerUIProps<FilterFramesByRefIdTransformerOptions> {}
 
 interface FilterByRefIdTransformerEditorState {
@@ -146,4 +148,5 @@ export const filterFramesByRefIdTransformRegistryItem: TransformerRegistryItem<F
     description:
       'Filter data by query. This is useful if you are sharing the results from a different panel that has many queries and you want to only visualize a subset of that in this panel.',
     categories: new Set(['filterAndReduce']),
+    image: filterByQuery,
   };

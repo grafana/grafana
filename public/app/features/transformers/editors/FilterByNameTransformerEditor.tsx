@@ -13,6 +13,8 @@ import {
 import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
 import { Field, Input, FilterPill, HorizontalGroup } from '@grafana/ui';
 
+import { filterByName } from '../img';
+
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
 interface FilterByNameTransformerEditorState {
@@ -210,4 +212,5 @@ export const filterFieldsByNameTransformRegistryItem: TransformerRegistryItem<Fi
   name: 'Filter by name',
   description: 'Removes part of the query results using a regex pattern. The pattern can be inclusive or exclusive.',
   categories: new Set(['filterAndReduce']),
+  image: filterByName,
 };

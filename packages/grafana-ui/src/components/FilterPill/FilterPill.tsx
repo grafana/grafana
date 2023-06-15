@@ -32,7 +32,6 @@ export const FilterPill = ({ label, selected, onClick, icon = 'check', customCla
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  console.log('theme', theme.isDark);
   return {
     wrapper: css`
       background: ${theme.colors.background.secondary};

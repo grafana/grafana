@@ -12,6 +12,8 @@ import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/s
 import { selectors } from '@grafana/e2e-selectors';
 import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
+import { reduce } from '../img';
+
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
   const modes: Array<SelectableValue<ReduceTransformerMode>> = [
@@ -122,4 +124,5 @@ export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransfor
   name: standardTransformers.reduceTransformer.name,
   description: standardTransformers.reduceTransformer.description,
   categories: new Set(['calculateNewFields']),
+  image: reduce,
 };
