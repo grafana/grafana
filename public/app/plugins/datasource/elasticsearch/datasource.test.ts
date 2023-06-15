@@ -505,7 +505,7 @@ describe('ElasticDatasource', () => {
 
       const errObject = {
         error: 'Bad Request',
-        message: 'Elasticsearch error: Authentication to data source failed',
+        message: 'Authentication to data source failed',
       };
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
