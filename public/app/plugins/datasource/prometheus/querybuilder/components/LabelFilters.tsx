@@ -1,9 +1,10 @@
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorFieldGroup, EditorField, EditorList } from '@grafana/experimental';
-import { InlineField, InlineFieldRow } from '@grafana/ui';
+import { InlineFieldRow, InlineLabel } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from '../shared/types';
 
@@ -83,13 +84,21 @@ export function LabelFilters({
     <>
       {variableEditor ? (
         <InlineFieldRow>
-          <InlineField
-            label="Label filters"
-            labelWidth={20}
-            tooltip={<div>Optional: used to filter the metric select for this query type.</div>}
+          <div
+            className={cx(
+              css`
+                display: flex;
+              `
+            )}
           >
+            <InlineLabel
+              width={20}
+              tooltip={<div>Optional: used to filter the metric select for this query type.</div>}
+            >
+              Label filters
+            </InlineLabel>
             {editorList()}
-          </InlineField>
+          </div>
         </InlineFieldRow>
       ) : (
         <EditorFieldGroup>
