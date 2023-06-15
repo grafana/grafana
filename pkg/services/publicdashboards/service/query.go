@@ -222,9 +222,9 @@ func getUniqueDashboardDatasourceUids(dashboard *simplejson.Json) []string {
 
 		// if uid is for a mixed datasource, get the datasource uids from the targets
 		if uid == "-- Mixed --" {
-			for _, target := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(target)
-				datasourceUid := target.Get("datasource").Get("uid").MustString()
+			for _, targetObj := range panel.Get("targets").MustArray() {
+				target := simplejson.NewFromAny(targetObj)
+				datasourceUid := getDataSourceUidFromJson(target)
 				if _, ok := exists[datasourceUid]; !ok {
 					datasourceUids = append(datasourceUids, datasourceUid)
 					exists[datasourceUid] = true
