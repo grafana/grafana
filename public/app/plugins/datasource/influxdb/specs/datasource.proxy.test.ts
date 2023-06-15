@@ -159,26 +159,22 @@ describe('InfluxDatasource backend (proxy)', () => {
     });
 
     it('interpolates variables with "." without double escaping', () => {
-      const queryStringRaw = 'SELECT * FROM $test';
+      const variableName = '$test';
+      const queryStringRaw = `SELECT * FROM ${variableName}`;
+      const aliasStringRaw = `My alias contains ${variableName}`;
+
       const query: InfluxQuery = {
         refId: 'A',
-        query: 'SELECT * FROM $test',
-        alias: '$test',
-      };
-      const vars: ScopedVars = {
-        __interval: {
-          text: '10s',
-          value: '10s',
-        },
-        __interval_ms: {
-          text: '10000',
-          value: 10000,
-        },
+        query: queryStringRaw,
+        alias: aliasStringRaw,
       };
 
-      const response = ctx!.ds!.applyVariables(query, vars, {});
-      expect(response.query === queryStringRaw).toEqual(false);
-      expect(response.alias).toEqual(testVariableValue);
+      const response = ctx!.ds!.applyVariables(query, {}, {});
+
+      expect(response.query).not.toContain(variableName);
+      expect(response.alias).not.toContain(variableName);
+
+      expect(response.alias).toEqual(aliasStringRaw.replace('$test', testVariableValue));
       expect(response.query).toEqual(queryStringRaw.replace('$test', testVariableValue));
     });
   });
