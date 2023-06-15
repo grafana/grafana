@@ -60,13 +60,11 @@ export function NestedFolderPicker() {
 
   return (
     <fieldset>
-      <legend>Select folder</legend>
       <FilterInput placeholder="Search folder" value={search} escapeRegex={false} onChange={(val) => setSearch(val)} />
 
       {state.loading && <LoadingBar width={300} />}
       {state.error && <p>{state.error.message}</p>}
       {state.value && <NestedFolderList items={flatTree} onFolderClick={handleFolderClick} />}
-      <Button>Select</Button>
     </fieldset>
   );
 }

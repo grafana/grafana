@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Space } from '@grafana/experimental';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { DashboardTreeSelection } from '../../types';
@@ -45,7 +46,8 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label="Folder name">
-        <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
+        {/* <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} /> */}
+        <NestedFolderPicker />
       </Field>
 
       <Modal.ButtonRow>
