@@ -44,8 +44,13 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
    * Create dashboard model and initialize the dashboard from JSON
    */
   useEffect(() => {
+    const callbackUrl = queryParams.callbackUrl;
+
+    if (!callbackUrl) {
+      throw new Error('NO callback URL specified');
+    }
     getBackendSrv()
-      .get('http://localhost:3001/load-dashboard')
+      .get(`${callbackUrl}/load-dashboard`)
       .then((json) => {
         setJson(json);
         const dashboardModel = new DashboardModel(json);
@@ -102,7 +107,7 @@ const Toolbar = ({ dashboard, callbackUrl, json }: ToolbarProps) => {
       return;
     }
 
-    return getBackendSrv().post(callbackUrl, { dashboard: clone });
+    return getBackendSrv().post(`${callbackUrl}/save-dashboard`, { dashboard: clone });
   };
 
   return (
