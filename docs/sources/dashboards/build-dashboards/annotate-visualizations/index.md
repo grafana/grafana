@@ -22,7 +22,7 @@ you can get event description and event tags. The text field can include links t
 You can annotate panels in three ways:
 
 - Directly in the panel, using the built-in annotations query (add link)
-- Querying other data sources, using the dashboard settings (add link)
+- Adding annotation queries for any data source, using the dashboard settings (add link)
 - Using the HTTP API
 
 This page explains the first two options; for information about using the HTTP API, refer to [Annotations API]({{< relref "../../../developers/http_api/annotations/" >}}).
