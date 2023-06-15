@@ -78,5 +78,4 @@ func TestPatternsListInspector(t *testing.T) {
 			tc.exp(t, r, err, tc.fakeDetectors)
 		})
 	}
-
 }

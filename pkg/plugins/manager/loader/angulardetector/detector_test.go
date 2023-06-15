@@ -112,5 +112,4 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 			tc.exp(t, tc.fakeProviders, detectors)
 		})
 	}
-
 }
