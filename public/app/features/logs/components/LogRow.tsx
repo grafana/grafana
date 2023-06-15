@@ -15,7 +15,7 @@ import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 
-export interface Props extends Themeable2 {
+interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
   showLabels: boolean;

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
@@ -11,7 +11,7 @@ import { getLogRowStyles } from './getLogRowStyles';
 
 const theme = createTheme();
 const styles = getLogRowStyles(theme);
-const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
+const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverrides?: Partial<LogRowModel>) => {
   const props: Props = {
     row: createLogRow({
       entry: 'test123',
