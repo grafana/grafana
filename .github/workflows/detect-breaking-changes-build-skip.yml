@@ -8,8 +8,8 @@ on:
   pull_request:
     paths-ignore:
       - "packages/**"
-    # branches:
-    #   - 'main'
+    branches:
+      - 'main'
 
 jobs:
   detect:

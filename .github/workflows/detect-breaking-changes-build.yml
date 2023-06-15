@@ -7,8 +7,8 @@ on:
   pull_request:
     paths:
       - 'packages/**'
-    # branches:
-    #   - 'main'
+    branches:
+      - 'main'
 
 jobs:
   buildPR:
