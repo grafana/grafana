@@ -134,7 +134,7 @@ export class LogRowMessage extends PureComponent<Props> {
                 tooltip="Copy shortlink to logline"
                 tooltipPlacement="top"
                 size="md"
-                name="link"
+                name="share-alt"
                 onClick={() => onPermalinkClick(row)}
               />
             )}
