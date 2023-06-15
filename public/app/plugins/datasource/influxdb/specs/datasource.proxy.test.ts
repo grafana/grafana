@@ -1,3 +1,4 @@
+import { escapeRegExp } from 'lodash';
 import { lastValueFrom, of } from 'rxjs';
 
 import {
@@ -116,6 +117,7 @@ describe('InfluxDatasource backend (proxy)', () => {
 
   describe('InfluxDatasource.applyVariables', () => {
     const testVariableValue = 'test.test.test';
+    const expectedVariableValue = 'test.test.test';
     beforeEach(() => {
       jest.clearAllMocks();
 
@@ -158,24 +160,33 @@ describe('InfluxDatasource backend (proxy)', () => {
       ctx.ds = new InfluxDatasource(ctx.instanceSettings as DataSourceInstanceSettings<InfluxOptions>, realTemplateSrv);
     });
 
-    it('interpolates variables with "." without double escaping', () => {
+    it('interpolates variables with "." and escapes properly', () => {
       const variableName = '$test';
       const queryStringRaw = `SELECT * FROM ${variableName}`;
       const aliasStringRaw = `My alias contains ${variableName}`;
+      const labelStringRaw = `My label contains ${variableName}`;
 
       const query: InfluxQuery = {
         refId: 'A',
         query: queryStringRaw,
         alias: aliasStringRaw,
+        tags: [
+          {
+            key: 'test',
+            value: labelStringRaw,
+          },
+        ],
       };
 
-      const response = ctx!.ds!.applyVariables(query, {}, {});
+      const formattedVars = ctx!.ds!.applyVariables(query, {}, {});
 
-      expect(response.query).not.toContain(variableName);
-      expect(response.alias).not.toContain(variableName);
+      expect(formattedVars.query).not.toContain(variableName);
+      expect(formattedVars.alias).not.toContain(variableName);
+      expect(formattedVars.tags).not.toContain(variableName);
 
-      expect(response.alias).toEqual(aliasStringRaw.replace('$test', testVariableValue));
-      expect(response.query).toEqual(queryStringRaw.replace('$test', testVariableValue));
+      expect(formattedVars.tags[0].value).toEqual(labelStringRaw.replace('$test', testVariableValue));
+      expect(formattedVars.alias).toEqual(aliasStringRaw.replace('$test', expectedVariableValue));
+      expect(formattedVars.query).toEqual(queryStringRaw.replace('$test', escapeRegExp(expectedVariableValue)));
     });
   });
 });
