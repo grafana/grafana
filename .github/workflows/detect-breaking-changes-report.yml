@@ -4,11 +4,6 @@ on:
   workflow_run:
     workflows: ["Levitate / Detect breaking changes"]
     types: [completed]
-  workflow_dispatch:
-    inputs:
-      run_id:
-        description: 'Workflow Run ID'
-        required: true
 
 jobs:
   notify:
@@ -25,7 +20,7 @@ jobs:
     - name: 'Download artifact'
       uses: actions/github-script@v6
       env:
-        RUN_ID: ${{ github.event.workflow_run.id || inputs.run_id }}
+        RUN_ID: ${{ github.event.workflow_run.id }}
       with:
         script: |
           const fs = require('fs');

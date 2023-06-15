@@ -17,7 +17,7 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
   severity?: AlertVariant;
-  children: ReactNode;
+  children?: ReactNode;
   elevated?: boolean;
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
