@@ -1251,7 +1251,7 @@ For example: `filters = sqlstore:debug`
 
 ### user_facing_default_error
 
-Overrides the error message shown to users when a sensitive backend error should be obfuscated. Default is `please inspect Grafana server log for details`.
+Set the default error message shown to users. This message is displayed instead of sensitive backend errors which should be obfuscated. Default is `please inspect Grafana server log for details`.
 
 <hr>
 
