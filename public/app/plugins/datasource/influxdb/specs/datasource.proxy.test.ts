@@ -180,6 +180,7 @@ describe('InfluxDatasource backend (proxy)', () => {
 
       const formattedVars = ctx!.ds!.applyVariables(query, {}, {});
 
+      // After interpolation, the original variable name shouldn't be found in the string
       expect(formattedVars.query).not.toContain(variableName);
       expect(formattedVars.alias).not.toContain(variableName);
       expect(formattedVars.tags).not.toContain(variableName);
