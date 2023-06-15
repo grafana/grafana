@@ -9,7 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPatternsListInspector(t *testing.T) {
+func TestDefaultStaticDetectorsInspector(t *testing.T) {
+	// Tests the default hardcoded angular patterns
+
 	type tc struct {
 		name   string
 		plugin *plugins.Plugin
