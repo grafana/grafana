@@ -61,7 +61,7 @@ describe('LogRow', () => {
       );
     });
 
-    it('does not highlight row details with same permalink-id', async () => {
+    it('does not highlight row details with different permalink-id', async () => {
       const { container } = setup({ permalinkedRowId: 'log-row-id', enableLogDetails: true });
       const row = container.querySelector('tr');
       await userEvent.click(row!);
