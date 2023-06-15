@@ -13,5 +13,6 @@ export interface SelectableValue<T = any> {
   title?: string;
   // Optional component that will be shown together with other options. Does not get past any props.
   component?: React.ComponentType<any>;
+  isDisabled?: boolean;
   [key: string]: any;
 }
