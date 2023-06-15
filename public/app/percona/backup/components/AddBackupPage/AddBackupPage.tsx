@@ -359,7 +359,7 @@ const AddBackupPage: FC<GrafanaRouteComponentProps<{ type: string; id: string }>
                             label={Messages.folder}
                             disabled={editing}
                             tooltipText={Messages.folderTooltip}
-                            tooltipLink={Messages.folderTooltipLink}
+                            tooltipLink={Messages.folderTooltipLink(values.vendor, values.mode)}
                           />
                         </CollapsableSection>
                         {!!backupErrors.length && <BackupErrorSection backupErrors={backupErrors} />}
