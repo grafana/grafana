@@ -214,7 +214,12 @@ export default function SpanDetail(props: SpanDetailProps) {
                 type: 'log',
                 location: 'spanDetails',
               });
-              logLinks?.[0].onClick?.(event);
+
+              if (logLinks?.[0].onClick) {
+                logLinks?.[0].onClick?.(event);
+              } else {
+                window.location.href = logLinks?.[0].href;
+              }
             },
           }}
           buttonProps={{ icon: 'gf-logs' }}
