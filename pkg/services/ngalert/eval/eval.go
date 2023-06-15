@@ -269,7 +269,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
-			switch kind := expr.QueryKindByDatasourceUID(q.DatasourceUID); kind {
+			switch kind := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); kind {
 			case expr.TypeCMDNode:
 				ds, err = expr.DataSourceModel(kind)
 			case expr.TypeDatasourceNode:
@@ -622,7 +622,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		return err
 	}
 	for _, query := range req.Queries {
-		if query.DataSource == nil || expr.QueryKindByDatasourceUID(query.DataSource.UID) != expr.TypeDatasourceNode {
+		if query.DataSource == nil || expr.NodeTypeFromDatasourceUID(query.DataSource.UID) != expr.TypeDatasourceNode {
 			continue
 		}
 		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)

@@ -166,13 +166,13 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		var node Node
-		switch QueryKindByDatasourceUID(query.DataSource.UID) {
+		switch NodeTypeFromDatasourceUID(query.DataSource.UID) {
 		case TypeDatasourceNode:
 			node, err = buildCMDNode(dp, rn)
 		case TypeCMDNode:
 			node, err = s.buildDSNode(dp, rn, req)
 		default:
-			err = fmt.Errorf("unsupported node type '%s'", QueryKindByDatasourceUID(query.DataSource.UID))
+			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
 		}
 
 		if err != nil {
