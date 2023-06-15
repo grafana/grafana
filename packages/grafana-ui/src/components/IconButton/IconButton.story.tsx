@@ -30,7 +30,7 @@ const meta: Meta<typeof IconButton> = {
     tooltip: 'sample tooltip message',
     tooltipPlacement: 'top',
     variant: 'secondary',
-    ariaLabel: 'sample aria-label content',
+    ['aria-label']: 'sample aria-label content',
   },
   argTypes: {
     tooltip: {

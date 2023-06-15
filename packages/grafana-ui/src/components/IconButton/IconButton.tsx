@@ -43,7 +43,7 @@ interface BasePropsWithAriaLabel extends BaseProps {
 export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel;
 
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
-  const { name, size = 'md', iconType, className, variant = 'secondary', ...restProps } = props;
+  const { size = 'md', variant = 'secondary' } = props;
 
   const theme = useTheme2();
   let limitedIconSize: LimitedIconSize;
@@ -71,28 +71,35 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
   }
 
   // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
-  const button = (
-    <button
-      {...restProps}
-      ref={buttonRef}
-      aria-label={ariaLabel}
-      className={cx(styles.button, className)}
-      type="button"
-    >
-      <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
-    </button>
-  );
-
   if ('tooltip' in props) {
-    const { tooltip, tooltipPlacement } = props;
+    const { name, iconType, className, tooltip, tooltipPlacement, ...restProps } = props;
     return (
       <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
-        {button}
+        <button
+          {...restProps}
+          ref={buttonRef}
+          aria-label={ariaLabel}
+          className={cx(styles.button, className)}
+          type="button"
+        >
+          <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+        </button>
       </Tooltip>
     );
+  } else {
+    const { name, iconType, className, ...restProps } = props;
+    return (
+      <button
+        {...restProps}
+        ref={buttonRef}
+        aria-label={ariaLabel}
+        className={cx(styles.button, className)}
+        type="button"
+      >
+        <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
+      </button>
+    );
   }
-
-  return button;
 });
 
 IconButton.displayName = 'IconButton';
