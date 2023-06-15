@@ -35,6 +35,13 @@ export function locateWithCache(load: { address: string }, defaultBust = initial
   return `${address}?_cache=${bust}`;
 }
 
+// TODO: Clean this up!
+export function locateWithCache2(url: string, defaultBust = initializedAt): string {
+  const version = cache[url];
+  const bust = version || defaultBust;
+  return `${url}?_cache=${bust}`;
+}
+
 function extractPath(address: string): string | undefined {
   const match = /\/public\/(plugins\/.+\/module)\.js/i.exec(address);
   if (!match) {
