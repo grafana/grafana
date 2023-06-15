@@ -163,6 +163,7 @@ describe('InfluxDatasource backend (proxy)', () => {
       const query: InfluxQuery = {
         refId: 'A',
         query: 'SELECT * FROM $test',
+        alias: '$test',
       };
       const vars: ScopedVars = {
         __interval: {
@@ -175,8 +176,9 @@ describe('InfluxDatasource backend (proxy)', () => {
         },
       };
 
-      const response = ctx!.ds!.applyVariables(query, vars, vars);
+      const response = ctx!.ds!.applyVariables(query, vars, {});
       expect(response.query === queryStringRaw).toEqual(false);
+      expect(response.alias).toEqual(testVariableValue);
       expect(response.query).toEqual(queryStringRaw.replace('$test', testVariableValue));
     });
   });
