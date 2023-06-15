@@ -45,7 +45,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
   const scrollableLogsContainer = config.featureToggles.scrollableLogsContainer;
-  // const scrollableLogsContainer = false;
   return {
     logsRowLevel: css`
       label: logs-row__level;
