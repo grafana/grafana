@@ -3,8 +3,8 @@ name: "verify-kinds"
 on:
   pull_request:
     branches: [ main ]
-  paths:
-  - '**/*.cue'
+    paths:
+    - '**/*.cue'
 
 jobs:
   main:
