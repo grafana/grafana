@@ -50,8 +50,8 @@ import { ExploreId } from 'app/types/explore';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
-import { getUrlStateFromPaneState } from '../state/utils';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -354,6 +354,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   onPermalinkClick = async (row: LogRowModel) => {
+    // get explore state, add log-row-id and make timerange absolute
     const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
     urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
     urlState.range = {
@@ -361,6 +362,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       to: new Date(this.props.absoluteRange.to).toISOString(),
     };
 
+    // append changed urlState to baseUrl
     const serializedState = serializeStateToUrlParam(urlState);
     const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
     const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
