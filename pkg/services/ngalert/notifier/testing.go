@@ -37,6 +37,10 @@ func (f *fakeConfigStore) GetImageByURL(ctx context.Context, url string) (*model
 	return nil, alertingImages.ErrImageNotFound
 }
 
+func (f *fakeConfigStore) URLExists(ctx context.Context, url string) (bool, error) {
+	return false, alertingImages.ErrImageNotFound
+}
+
 func (f *fakeConfigStore) GetImages(ctx context.Context, tokens []string) ([]models.Image, []string, error) {
 	return nil, nil, alertingImages.ErrImageNotFound
 }
