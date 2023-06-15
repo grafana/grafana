@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { Receiver, RouteWithID } from '../../../../../../plugins/datasource/alertmanager/types';
+import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
@@ -24,9 +24,12 @@ export const useAlertmanagerNotificationRoutingPreview = (
   const { matchInstancesToRoute } = useRouteGroupsMatcher();
 
   // to create the list of matching contact points we need to first get the rootRoute
-  const { rootRoute, receivers } = useMemo((): { rootRoute?: RouteWithID; receivers: Receiver[] } => {
+  const { rootRoute, receivers } = useMemo(() => {
     if (!AMConfig) {
-      return { receivers: [] };
+      return {
+        receivers: [],
+        rootRoute: undefined,
+      };
     }
 
     return {

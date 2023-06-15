@@ -242,6 +242,20 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child, { group_wait: '60s' });
       expect(childInherited).not.toHaveProperty('group_wait');
     });
+
+    it('should inherit if the child property is an empty string', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+      };
+
+      const child: Route = {
+        receiver: '',
+        group_wait: '30s',
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
+    });
   });
 });
 
