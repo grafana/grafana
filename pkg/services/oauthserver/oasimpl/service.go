@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -269,32 +268,6 @@ func (s *OAuth2ServiceImpl) SaveExternalService(ctx context.Context, registratio
 	}
 	s.logger.Debug("Registered", "client", client.LogID())
 	return dto, nil
-}
-
-// SavePluginExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *OAuth2ServiceImpl) SavePluginExternalService(ctx context.Context, svcName string, svc *oauth.PluginExternalService) (*oauth.PluginExternalServiceRegistration, error) {
-	extSvc, err := s.SaveExternalService(ctx, &oauthserver.ExternalServiceRegistration{
-		Name: svcName,
-		Impersonation: oauthserver.ImpersonationCfg{
-			Enabled:     true,
-			Groups:      true,
-			Permissions: svc.ImpersonationPermissions,
-		},
-		Self: oauthserver.SelfCfg{
-			Enabled:     true,
-			Permissions: svc.SelfPermissions,
-		},
-		Key: &oauthserver.KeyOption{Generate: true},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &oauth.PluginExternalServiceRegistration{
-		ClientID:     extSvc.ID,
-		ClientSecret: extSvc.Secret,
-		PrivateKey:   extSvc.KeyResult.PrivatePem,
-	}, nil
 }
 
 // randString generates a a cryptographically secure random string of n bytes

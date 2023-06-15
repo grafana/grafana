@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/caching"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/licensing"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/oauthserver"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
@@ -78,6 +80,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
+	oauthserver.ProvideService,
+	wire.Bind(new(oauth.ExternalServiceRegister), new(*oauthserver.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
