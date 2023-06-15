@@ -1,15 +1,52 @@
 ---
 aliases:
   - unified-alerting/set-up/
-description: How to set up additional alerting features and integrations
-title: Additional setup
-weight: 600
+description: How to set up alerting features and integrations
+title: Set up Alerting
+weight: 107
 ---
 
-# Additional setup
+# Set up Alerting
 
-Alerting supports a plethora of configurations, from [configuring external Alertmanagers]({{< relref "./configure-alertmanager" >}}) to routing Grafana Managed Alerts outside of Grafana, to defining your alerting setup [as-code using Provisioning]({{< relref "./provision-alerting-resources" >}}).
+Set up Grafana Alerting to learn about problems in your systems moments after they occur.
 
-Setup Grafana Alerting high-availability mode by [following this guide]({{< relref "./configure-high-availability" >}}).
+## Before you begin
 
-Connect your alerting setup to Grafana OnCall by [following this guide](/docs/oncall/latest/integrations/available-integrations/add-grafana-alerting/).
+- Configure your [data sources](../../administration/data-source-management)
+- Check which data sources are compatible with and supported by [Grafana Alerting](../alerting/fundamentals/data-source-alerting
+
+## Set up Alerting
+
+To set up Alerting, you need to:
+
+1. Configure alert rules
+
+   - Create Grafana-managed or Mimir/Loki-managed alert rules and recording rules
+
+1. Configure contact points
+
+   - Check the default contact point and update the email address
+
+   - [Optional] Add new contact points and integrations
+
+1. Configure notification policies
+
+   - Check the default notification policy
+
+   - [Optional] Add additional nested policies
+
+   - [Optional] Add labels and label matchers to control alert routing
+
+1. [Optional] Integrate with [Grafana OnCall]
+   (/docs/oncall/latest/integrations/grafana-alerting)
+
+## Advanced set-up options
+
+Grafana Alerting supports many additional configuration options, from configuring external Alertmanagers to routing Grafana-managed alerts outside of Grafana, to defining your alerting setup as code.
+
+The following topics provide you with advanced configuration options for Grafana Alerting.
+
+- [Provision alert rules using file provisioning](../set-up/provision-alerting-resources/file-provisioning)
+- [Provision alert rules using Terraform](../set-up/provision-alerting-resources/terraform-provisioning)
+- [Add an external Alertmanager](../set-up/configure-alertmanager)
+- [Configure high availability](../set-up/configure-high-availability)
