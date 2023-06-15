@@ -38,15 +38,7 @@ export function formatQuery(selector: string | undefined): string {
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
   const results = [];
 
-  const tree = parser.parse(input);
-  const filters: SyntaxNode[] = [];
-  tree.iterate({
-    enter: ({ type, node }): void => {
-      if (type.id === LineFilter) {
-        filters.push(node);
-      }
-    },
-  });
+  const filters = getNodesFromQuery(input, [LineFilter]);
 
   for (let filter of filters) {
     const pipeExact = filter.getChild(Filter)?.getChild(PipeExact);
@@ -242,19 +234,13 @@ export function isQueryWithDistinct(query: string): boolean {
 }
 
 export function isQueryWithRangeVariable(query: string): boolean {
-  let hasRangeVariableDuration = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === Range) {
-        if (query.substring(from, to).match(/\[\$__range(_s|_ms)?/)) {
-          hasRangeVariableDuration = true;
-          return false;
-        }
-      }
-    },
-  });
-  return hasRangeVariableDuration;
+  const rangeNodes = getNodesFromQuery(query, [Range]);
+  for (const node of rangeNodes) {
+    if (query.substring(node.from, node.to).match(/\[\$__range(_s|_ms)?/)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
