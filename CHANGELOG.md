@@ -616,11 +616,25 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 
 - **Query:** Prevent crash while executing concurrent mixed queries
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **RBAC:** Remove legacy AC editor and admin role on new dashboard route. [#68775](https://github.com/grafana/grafana/issues/68775), [@grafanabot](https://github.com/grafanabot)
+- **Revert:** Allow editors to access GET /datasources. [#68653](https://github.com/grafana/grafana/issues/68653), [@grafanabot](https://github.com/grafanabot)
+- **Explore:** Remove data source onboarding page. [#68642](https://github.com/grafana/grafana/issues/68642), [@grafanabot](https://github.com/grafanabot)
 
 <!-- 9.4.12 END -->
 <!-- 9.4.10 START -->
 
 # 9.4.10 (2023-05-08)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.4. [#67760](https://github.com/grafana/grafana/issues/67760), [@papagian](https://github.com/papagian)
+
+### Bug fixes
+
+- **AzureMonitor:** Fix logs query multi-resource and timespan values. [#67931](https://github.com/grafana/grafana/issues/67931), [@grafanabot](https://github.com/grafanabot)
+- **TimeSeries:** Fix leading null-fill for missing intervals. [#67572](https://github.com/grafana/grafana/issues/67572), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix misleading status code in provisioning API. [#67357](https://github.com/grafana/grafana/issues/67357), [@grafanabot](https://github.com/grafanabot)
+- **Azure Monitor:** Fix bug that was not showing resources for certain locations. [#66617](https://github.com/grafana/grafana/issues/66617), [@grafanabot](https://github.com/grafanabot)
 
 <!-- 9.4.10 END -->
 <!-- 9.4.9 START -->
@@ -1037,6 +1051,7 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 ### Bug fixes
 
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#68796](https://github.com/grafana/grafana/issues/68796), [@mgyongyosi](https://github.com/mgyongyosi)
 
 <!-- 9.3.15 END -->
 <!-- 9.3.14 START -->
@@ -1468,6 +1483,7 @@ The following functions and classes related to logs are deprecated in the `grafa
 ### Bug fixes
 
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **Auth:** Remove the session cookie only if it's invalid or revoked. [#68795](https://github.com/grafana/grafana/issues/68795), [@mgyongyosi](https://github.com/mgyongyosi)
 
 <!-- 9.2.19 END -->
 <!-- 9.2.18 START -->
