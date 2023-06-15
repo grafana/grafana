@@ -48,7 +48,7 @@ func StateToPostableAlert(alertState *State, appURL *url.URL) *models.PostableAl
 		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
-	if alertState.Image != nil {
+	if alertState.Image != nil && alertState.Image.Token != "" {
 		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
 	}
 

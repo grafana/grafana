@@ -129,7 +129,7 @@ func Test_StateToPostableAlert(t *testing.T) {
 					for k, v := range alertState.Annotations {
 						expected[k] = v
 					}
-					expected["__alertImageToken__"] = "token://" + alertState.Image.Token
+					expected["__alertImageToken__"] = alertState.Image.Token
 
 					require.Equal(t, expected, result.Annotations)
 				})
