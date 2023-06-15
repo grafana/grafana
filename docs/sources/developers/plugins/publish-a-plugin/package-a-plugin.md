@@ -1,6 +1,6 @@
 ---
 title: Package a plugin
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

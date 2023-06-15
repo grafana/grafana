@@ -1,7 +1,7 @@
 ---
 title: Create a Grafana plugin
 menuTitle: Create a plugin
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

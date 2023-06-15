@@ -2,7 +2,7 @@
 title: Add annotations
 aliases:
   - ../../../plugins/add-support-for-annotations/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

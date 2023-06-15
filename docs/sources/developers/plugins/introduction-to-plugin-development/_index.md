@@ -1,7 +1,7 @@
 ---
 title: Introduction to Grafana plugin development
 menuTitle: Introduction to plugin development
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

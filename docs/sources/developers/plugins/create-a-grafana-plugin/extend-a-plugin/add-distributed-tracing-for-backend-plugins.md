@@ -2,7 +2,7 @@
 title: Add distributed tracing for backend plugins
 aliases:
   - ../../../plugins/add-distributed-tracing-for-backend-plugins/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

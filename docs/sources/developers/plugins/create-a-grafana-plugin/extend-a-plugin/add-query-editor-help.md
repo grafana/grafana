@@ -2,7 +2,7 @@
 title: Add query editor help
 aliases:
   - ../../../plugins/add-query-editor-help/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

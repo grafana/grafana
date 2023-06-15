@@ -3,7 +3,7 @@ title: Publish or update a plugin
 aliases:
   - ../../plugins/publish-a-plugin/
   - share-a-plugin/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

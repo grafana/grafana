@@ -2,7 +2,7 @@
 title: Sign a plugin
 aliases:
   - ../../plugins/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

@@ -1,7 +1,7 @@
 ---
 title: Extend a Grafana plugin
 menuTitle: Extend a plugin
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

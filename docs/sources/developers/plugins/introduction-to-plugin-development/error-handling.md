@@ -2,7 +2,7 @@
 title: Work with error handling
 aliases:
   - ../../plugins/error-handling/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

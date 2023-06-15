@@ -2,7 +2,7 @@
 title: Develop with a local environment
 aliases:
   - ../../plugins/development-with-local-grafana/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

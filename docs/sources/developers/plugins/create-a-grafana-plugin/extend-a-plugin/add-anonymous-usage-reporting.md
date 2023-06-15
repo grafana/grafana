@@ -2,7 +2,7 @@
 title: Add anonymous usage reporting
 aliases:
   - ../../../plugins/add-anonymous-usage-reporting/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

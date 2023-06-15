@@ -2,7 +2,7 @@
 title: Add support for variables
 aliases:
   - ../../../plugins/add-support-for-variables/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

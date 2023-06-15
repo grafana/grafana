@@ -2,7 +2,7 @@
 title: Work with cross-plugin links
 aliases:
   - ../../../plugins/cross-plugin-linking/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

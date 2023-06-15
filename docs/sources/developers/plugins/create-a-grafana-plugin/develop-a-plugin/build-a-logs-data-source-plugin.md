@@ -2,7 +2,7 @@
 title: Build a logs data source plugin
 aliases:
   - ../../../plugins/build-a-logs-data-source-plugin/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

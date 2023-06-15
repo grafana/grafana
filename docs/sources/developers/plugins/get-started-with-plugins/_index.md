@@ -1,7 +1,7 @@
 ---
 title: Get started with Grafana plugin development
 menuTitle: Get started with plugins
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

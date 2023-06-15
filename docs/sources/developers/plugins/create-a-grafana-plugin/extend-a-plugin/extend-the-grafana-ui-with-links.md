@@ -2,7 +2,7 @@
 title: Use extensions to add links to app plugins
 aliases:
   - ../../../plugins/extend-the-grafana-ui-with-links/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

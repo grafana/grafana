@@ -2,7 +2,7 @@
 title: Plugin publishing and signing criteria
 aliases:
   - ../../plugins/publishing-and-signing-criteria/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

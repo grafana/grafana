@@ -2,7 +2,7 @@
 title: Data frames
 aliases:
   - ../../plugins/data-frames/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin

@@ -2,7 +2,7 @@
 title: Work with data frames
 aliases:
   - ../../../plugins/working-with-data-frames/
-keywords: 
+keywords:
   - grafana
   - plugins
   - plugin
