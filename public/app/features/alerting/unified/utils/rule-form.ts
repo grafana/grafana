@@ -127,6 +127,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;
+
       return {
         ...defaultFormValues,
         name: ga.title,

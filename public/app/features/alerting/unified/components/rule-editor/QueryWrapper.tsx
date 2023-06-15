@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, defaultsDeep } from 'lodash';
+import { cloneDeep } from 'lodash';
 import React, { ChangeEvent, useState } from 'react';
 
 import {
@@ -82,7 +82,10 @@ export const QueryWrapper = ({
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
-  const queryWithDefaults = defaultsDeep({}, query, { model: defaults });
+  const queryWithDefaults = {
+    ...defaults,
+    ...cloneDeep(query.model),
+  };
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -141,9 +144,7 @@ export const QueryWrapper = ({
     );
   }
 
-  const hasStarted = data.state !== LoadingState.NotStarted;
-  const isDisabled = query.model.hide === true; // undefined means "enabled"
-  const showVizualisation = hasStarted && !isDisabled;
+  const showVizualisation = data.state !== LoadingState.NotStarted;
 
   return (
     <Stack direction="column" gap={0.5}>
@@ -157,7 +158,7 @@ export const QueryWrapper = ({
           index={index}
           key={query.refId}
           data={data}
-          query={queryWithDefaults.model}
+          query={queryWithDefaults}
           onChange={(query) => onChangeQuery(query, index)}
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
@@ -165,6 +166,7 @@ export const QueryWrapper = ({
           queries={queries}
           renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
           app={CoreApp.UnifiedAlerting}
+          hideDisableQuery={true}
         />
       </div>
       {showVizualisation && (
