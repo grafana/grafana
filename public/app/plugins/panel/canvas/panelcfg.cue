@@ -18,90 +18,95 @@ import (
 	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
-composableKinds: PanelCfg: lineage: {
+composableKinds: PanelCfg: {
 	maturity: "experimental"
 
-	schemas: [{
-		version: [0, 0]
-		schema: {
-			// TODO docs
-			HorizontalConstraint: "left" | "right" | "leftright" | "center" | "scale" @cuetsy(kind="enum", memberNames="Left|Right|LeftRight|Center|Scale")
-			// TODO docs
-			VerticalConstraint: "top" | "bottom" | "topbottom" | "center" | "scale" @cuetsy(kind="enum", memberNames="Top|Bottom|TopBottom|Center|Scale")
-			// TODO docs
-			Constraint: {
-				horizontal?: HorizontalConstraint
-				vertical?:   VerticalConstraint
-			} @cuetsy(kind="interface")
+	lineage: {
 
-			// TODO docs
-			Placement: {
-				top?:    float64
-				left?:   float64
-				right?:  float64
-				bottom?: float64
-
-				width?:  float64
-				height?: float64
-			} @cuetsy(kind="interface")
-			// TODO docs
-			BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
-			// TODO docs
-			BackgroundConfig: {
-				color?: ui.ColorDimensionConfig
-				image?: ui.ResourceDimensionConfig
-				size?:  BackgroundImageSize
-			} @cuetsy(kind="interface")
-
-			// TODO docs
-			LineConfig: {
-				color?: ui.ColorDimensionConfig
-				width?: float64
-			} @cuetsy(kind="interface")
-
-			// TODO docs
-			ConnectionCoordinates: {
-				x: float64
-				y: float64
-			} @cuetsy(kind="interface")
-
-			// TODO docs
-			ConnectionPath: "straight" @cuetsy(kind="enum", memberNames="Straight")
-			// TODO docs
-			CanvasConnection: {
-				source:      ConnectionCoordinates
-				target:      ConnectionCoordinates
-				targetName?: string
-				path:        ConnectionPath
-				color?:      ui.ColorDimensionConfig
-				size?:       ui.ScaleDimensionConfig
-			} @cuetsy(kind="interface")
-			// TODO docs
-			CanvasElementOptions: {
-				name:        string | *"test"
-				type:        string | *"test"
-				config?:     _
-				constraint?: Constraint
-				placement?:  Placement
-				background?: BackgroundConfig
-				border?:     LineConfig
-				connections?: [...CanvasConnection]
-			} @cuetsy(kind="interface")
-
-			Options: {
-				// Enable inline editing
-				inlineEditing: bool | *true
-				// Show all available element types
-				showAdvancedTypes: bool | *true
+		schemas: [{
+			version: [0, 0]
+			schema: {
 				// TODO docs
-				root: {
-					// TODO docs
-					type: string | *"frame"
-					// TODO docs
-					elements: [...CanvasElementOptions]
+				HorizontalConstraint: "left" | "right" | "leftright" | "center" | "scale" @cuetsy(kind="enum", memberNames="Left|Right|LeftRight|Center|Scale")
+				// TODO docs
+				VerticalConstraint: "top" | "bottom" | "topbottom" | "center" | "scale" @cuetsy(kind="enum", memberNames="Top|Bottom|TopBottom|Center|Scale")
+				// TODO docs
+				Constraint: {
+					horizontal?: HorizontalConstraint
+					vertical?:   VerticalConstraint
 				} @cuetsy(kind="interface")
-			} @cuetsy(kind="interface")
-		}
-	}]
-	lenses: []
+
+				// TODO docs
+				Placement: {
+					top?:    float64
+					left?:   float64
+					right?:  float64
+					bottom?: float64
+
+					width?:  float64
+					height?: float64
+				} @cuetsy(kind="interface")
+				// TODO docs
+				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
+				// TODO docs
+				BackgroundConfig: {
+					color?: ui.ColorDimensionConfig
+					image?: ui.ResourceDimensionConfig
+					size?:  BackgroundImageSize
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				LineConfig: {
+					color?: ui.ColorDimensionConfig
+					width?: float64
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				ConnectionCoordinates: {
+					x: float64
+					y: float64
+				} @cuetsy(kind="interface")
+
+				// TODO docs
+				ConnectionPath: "straight" @cuetsy(kind="enum", memberNames="Straight")
+				// TODO docs
+				CanvasConnection: {
+					source:      ConnectionCoordinates
+					target:      ConnectionCoordinates
+					targetName?: string
+					path:        ConnectionPath
+					color?:      ui.ColorDimensionConfig
+					size?:       ui.ScaleDimensionConfig
+				} @cuetsy(kind="interface")
+				// TODO docs
+				CanvasElementOptions: {
+					name:        string
+					type:        string
+					config?:     _
+					constraint?: Constraint
+					placement?:  Placement
+					background?: BackgroundConfig
+					border?:     LineConfig
+					connections?: [...CanvasConnection]
+				} @cuetsy(kind="interface")
+
+				Options: {
+					// Enable inline editing
+					inlineEditing: bool | *true
+					// Show all available element types
+					showAdvancedTypes: bool | *true
+					// TODO docs
+					root: {
+						// TODO docs
+						name: string
+						// TODO docs
+						type: "frame"
+						// TODO docs / default elements value?
+						elements: [...CanvasElementOptions]
+					} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
+	}
 }

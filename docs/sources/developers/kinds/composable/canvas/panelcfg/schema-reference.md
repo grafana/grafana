@@ -8,17 +8,17 @@ title: CanvasPanelCfg kind
 
 ## CanvasPanelCfg
 
-#### Maturity: [merged](../../../maturity/#merged)
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
 
 | Property                | Type                             | Required | Default | Description                                                                         |
 |-------------------------|----------------------------------|----------|---------|-------------------------------------------------------------------------------------|
-| `BackgroundConfig`      | [object](#backgroundconfig)      | **Yes**  |         |                                                                                     |
-| `BackgroundImageSize`   | string                           | **Yes**  |         | Possible values are: `original`, `contain`, `cover`, `fill`, `tile`.                |
-| `CanvasConnection`      | [object](#canvasconnection)      | **Yes**  |         |                                                                                     |
-| `CanvasElementOptions`  | [object](#canvaselementoptions)  | **Yes**  |         |                                                                                     |
+| `BackgroundConfig`      | [object](#backgroundconfig)      | **Yes**  |         | TODO docs                                                                           |
+| `BackgroundImageSize`   | string                           | **Yes**  |         | TODO docs<br/>Possible values are: `original`, `contain`, `cover`, `fill`, `tile`.  |
+| `CanvasConnection`      | [object](#canvasconnection)      | **Yes**  |         | TODO docs                                                                           |
+| `CanvasElementOptions`  | [object](#canvaselementoptions)  | **Yes**  |         | TODO docs                                                                           |
 | `ConnectionCoordinates` | [object](#connectioncoordinates) | **Yes**  |         | TODO docs                                                                           |
 | `ConnectionPath`        | string                           | **Yes**  |         | TODO docs<br/>Possible values are: `straight`.                                      |
 | `Constraint`            | [object](#constraint)            | **Yes**  |         | TODO docs                                                                           |
@@ -30,11 +30,13 @@ title: CanvasPanelCfg kind
 
 ### BackgroundConfig
 
-| Property | Type                                                | Required | Default | Description                                                          |
-|----------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------|
-| `color`  | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                      |
-| `image`  | [ResourceDimensionConfig](#resourcedimensionconfig) | No       |         | Links to a resource (image/svg path)                                 |
-| `size`   | string                                              | No       |         | Possible values are: `original`, `contain`, `cover`, `fill`, `tile`. |
+TODO docs
+
+| Property | Type                                                | Required | Default | Description                                                                        |
+|----------|-----------------------------------------------------|----------|---------|------------------------------------------------------------------------------------|
+| `color`  | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                    |
+| `image`  | [ResourceDimensionConfig](#resourcedimensionconfig) | No       |         | Links to a resource (image/svg path)                                               |
+| `size`   | string                                              | No       |         | TODO docs<br/>Possible values are: `original`, `contain`, `cover`, `fill`, `tile`. |
 
 ### ColorDimensionConfig
 
@@ -64,6 +66,8 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 | `fixed`  | string | No       |         |                                                                                                              |
 
 ### CanvasConnection
+
+TODO docs
 
 | Property     | Type                                            | Required | Default | Description                                    |
 |--------------|-------------------------------------------------|----------|---------|------------------------------------------------|
@@ -97,11 +101,13 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 
 ### CanvasElementOptions
 
+TODO docs
+
 | Property      | Type                                    | Required | Default | Description |
 |---------------|-----------------------------------------|----------|---------|-------------|
-| `name`        | string                                  | **Yes**  | `test`  |             |
-| `type`        | string                                  | **Yes**  | `test`  |             |
-| `background`  | [BackgroundConfig](#backgroundconfig)   | No       |         |             |
+| `name`        | string                                  | **Yes**  |         |             |
+| `type`        | string                                  | **Yes**  |         |             |
+| `background`  | [BackgroundConfig](#backgroundconfig)   | No       |         | TODO docs   |
 | `border`      | [LineConfig](#lineconfig)               | No       |         | TODO docs   |
 | `config`      |                                         | No       |         |             |
 | `connections` | [CanvasConnection](#canvasconnection)[] | No       |         |             |
@@ -144,14 +150,17 @@ TODO docs
 | Property            | Type            | Required | Default | Description                      |
 |---------------------|-----------------|----------|---------|----------------------------------|
 | `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing            |
-| `root`              | [object](#root) | **Yes**  |         |                                  |
+| `root`              | [object](#root) | **Yes**  |         | TODO docs                        |
 | `showAdvancedTypes` | boolean         | **Yes**  | `true`  | Show all available element types |
 
 ### Root
 
-| Property   | Type                                            | Required | Default | Description |
-|------------|-------------------------------------------------|----------|---------|-------------|
-| `elements` | [CanvasElementOptions](#canvaselementoptions)[] | **Yes**  |         |             |
-| `type`     | string                                          | **Yes**  | `frame` |             |
+TODO docs
+
+| Property   | Type                                            | Required | Default | Description                                 |
+|------------|-------------------------------------------------|----------|---------|---------------------------------------------|
+| `elements` | [CanvasElementOptions](#canvaselementoptions)[] | **Yes**  |         | TODO docs / default elements value?         |
+| `name`     | string                                          | **Yes**  |         | TODO docs                                   |
+| `type`     | string                                          | **Yes**  |         | TODO docs<br/>Possible values are: `frame`. |
 
 

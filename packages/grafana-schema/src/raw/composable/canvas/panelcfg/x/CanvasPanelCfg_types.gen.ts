@@ -53,6 +53,9 @@ export interface Placement {
   width?: number;
 }
 
+/**
+ * TODO docs
+ */
 export enum BackgroundImageSize {
   Contain = 'contain',
   Cover = 'cover',
@@ -61,6 +64,9 @@ export enum BackgroundImageSize {
   Tile = 'tile',
 }
 
+/**
+ * TODO docs
+ */
 export interface BackgroundConfig {
   color?: ui.ColorDimensionConfig;
   image?: ui.ResourceDimensionConfig;
@@ -90,6 +96,9 @@ export enum ConnectionPath {
   Straight = 'straight',
 }
 
+/**
+ * TODO docs
+ */
 export interface CanvasConnection {
   color?: ui.ColorDimensionConfig;
   path: ConnectionPath;
@@ -99,6 +108,9 @@ export interface CanvasConnection {
   targetName?: string;
 }
 
+/**
+ * TODO docs
+ */
 export interface CanvasElementOptions {
   background?: BackgroundConfig;
   border?: LineConfig;
@@ -112,8 +124,6 @@ export interface CanvasElementOptions {
 
 export const defaultCanvasElementOptions: Partial<CanvasElementOptions> = {
   connections: [],
-  name: 'test',
-  type: 'test',
 };
 
 export interface Options {
@@ -121,8 +131,21 @@ export interface Options {
    * Enable inline editing
    */
   inlineEditing: boolean;
+  /**
+   * TODO docs
+   */
   root: {
-    type: string;
+    /**
+     * TODO docs
+     */
+    name: string;
+    /**
+     * TODO docs
+     */
+    type: 'frame';
+    /**
+     * TODO docs / default elements value?
+     */
     elements: Array<CanvasElementOptions>;
   };
   /**
