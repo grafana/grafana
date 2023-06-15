@@ -139,92 +139,73 @@ export function parseToNodeNamesArray(query: string): string[] {
   return queryParts;
 }
 
-export function isValidQuery(query: string): boolean {
-  let isValid = true;
+export function isQueryWithNode(query: string, nodeType: number): boolean {
+  let isQueryWithNode = false;
   const tree = parser.parse(query);
   tree.iterate({
     enter: ({ type }): false | void => {
-      if (type.id === ErrorId) {
-        isValid = false;
+      if (type.id === nodeType) {
+        isQueryWithNode = true;
+        return false;
       }
     },
   });
-  return isValid;
+  return isQueryWithNode;
+}
+
+export function getNodesFromQuery(query: string, nodeTypes: number[]): SyntaxNode[] {
+  const nodes: SyntaxNode[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (node): false | void => {
+      if (nodeTypes.includes(node.type.id)) {
+        nodes.push(node.node);
+      }
+    },
+  });
+  return nodes;
+}
+
+export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
+  const nodes = getNodesFromQuery(query, [nodeType]);
+  return nodes.length > 0 ? nodes[0] : undefined;
+}
+
+export function isValidQuery(query: string): boolean {
+  return !isQueryWithNode(query, ErrorId);
 }
 
 export function isLogsQuery(query: string): boolean {
-  let isLogsQuery = true;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === MetricExpr) {
-        isLogsQuery = false;
-      }
-    },
-  });
-  return isLogsQuery;
+  return !isQueryWithNode(query, MetricExpr);
 }
 
 export function isQueryWithParser(query: string): { queryWithParser: boolean; parserCount: number } {
-  let parserCount = 0;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LabelParser || type.id === JsonExpressionParser) {
-        parserCount++;
-      }
-    },
-  });
+  const nodes = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  const parserCount = nodes.length;
   return { queryWithParser: parserCount > 0, parserCount };
 }
 
 export function getParserFromQuery(query: string): string | undefined {
-  const tree = parser.parse(query);
-  let logParser: string | undefined = undefined;
-  tree.iterate({
-    enter: (node: SyntaxNode): false | void => {
-      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
-        logParser = query.substring(node.from, node.to).trim();
-        return false;
-      }
-    },
-  });
-
-  return logParser;
+  const parsers = getNodesFromQuery(query, [LabelParser, JsonExpressionParser]);
+  return parsers.length > 0 ? query.substring(parsers[0].from, parsers[0].to).trim() : undefined;
 }
 
 export function isQueryPipelineErrorFiltering(query: string): boolean {
-  let isQueryPipelineErrorFiltering = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type, node }): false | void => {
-      if (type.id === LabelFilter) {
-        const label = node.getChild(Matcher)?.getChild(Identifier);
-        if (label) {
-          const labelName = query.substring(label.from, label.to);
-          if (labelName === '__error__') {
-            isQueryPipelineErrorFiltering = true;
-          }
-        }
+  const labels = getNodesFromQuery(query, [LabelFilter]);
+  for (const node of labels) {
+    const label = node.getChild(Matcher)?.getChild(Identifier);
+    if (label) {
+      const labelName = query.substring(label.from, label.to);
+      if (labelName === '__error__') {
+        return true;
       }
-    },
-  });
-
-  return isQueryPipelineErrorFiltering;
+    }
+  }
+  return false;
 }
 
 export function isQueryWithLabelFormat(query: string): boolean {
-  let queryWithLabelFormat = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LabelFormatExpr) {
-        queryWithLabelFormat = true;
-        return false;
-      }
-    },
-  });
-  return queryWithLabelFormat;
+  return isQueryWithNode(query, LabelFormatExpr);
 }
 
 export function getLogQueryFromMetricsQuery(query: string): string {
@@ -232,76 +213,32 @@ export function getLogQueryFromMetricsQuery(query: string): string {
     return query;
   }
 
-  const tree = parser.parse(query);
-
   // Log query in metrics query composes of Selector & PipelineExpr
-  let selector = '';
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === Selector) {
-        selector = query.substring(from, to);
-        return false;
-      }
-    },
-  });
+  const selectorNode = getNodeFromQuery(query, Selector);
+  if (!selectorNode) {
+    return query;
+  }
+  const selector = query.substring(selectorNode.from, selectorNode.to);
 
-  let pipelineExpr = '';
-  tree.iterate({
-    enter: ({ type, from, to }): false | void => {
-      if (type.id === PipelineExpr) {
-        pipelineExpr = query.substring(from, to);
-        return false;
-      }
-    },
-  });
+  const pipelineExprNode = getNodeFromQuery(query, PipelineExpr);
+  if (!pipelineExprNode) {
+    return query;
+  }
+  const pipelineExpr = query.substring(pipelineExprNode.from, pipelineExprNode.to);
 
-  return selector + pipelineExpr;
+  return `${selector} ${pipelineExpr}`;
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {
-  const tree = parser.parse(query);
-  let hasLabelFilter = false;
-
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LabelFilter) {
-        hasLabelFilter = true;
-        return false;
-      }
-    },
-  });
-
-  return hasLabelFilter;
+  return isQueryWithNode(query, LabelFilter);
 }
 
 export function isQueryWithLineFilter(query: string): boolean {
-  const tree = parser.parse(query);
-  let queryWithLineFilter = false;
-
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === LineFilter) {
-        queryWithLineFilter = true;
-        return false;
-      }
-    },
-  });
-
-  return queryWithLineFilter;
+  return isQueryWithNode(query, LineFilter);
 }
 
 export function isQueryWithDistinct(query: string): boolean {
-  let hasDistinct = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === Distinct) {
-        hasDistinct = true;
-        return false;
-      }
-    },
-  });
-  return hasDistinct;
+  return isQueryWithNode(query, Distinct);
 }
 
 export function isQueryWithRangeVariable(query: string): boolean {
