@@ -14,17 +14,17 @@ import { SaveDashboardForm } from './SaveDashboardForm';
 type SaveDashboardDrawerProps = {
   dashboard: DashboardModel;
   onDismiss: () => void;
-  json: string;
+  dashboardJson: string;
   onSave: (clone: DashboardModel) => Promise<unknown>;
 };
 
-export const SaveDashboardDrawer = ({ dashboard, onDismiss, json, onSave }: SaveDashboardDrawerProps) => {
+export const SaveDashboardDrawer = ({ dashboard, onDismiss, dashboardJson, onSave }: SaveDashboardDrawerProps) => {
   const data = useMemo<SaveDashboardData>(() => {
     const clone = dashboard.getSaveModelClone();
     const cloneJSON = JSON.stringify(clone, null, 2);
     const cloneSafe = JSON.parse(cloneJSON); // avoids undefined issues
 
-    const diff = jsonDiff(JSON.parse(JSON.stringify(json, null, 2)), cloneSafe);
+    const diff = jsonDiff(JSON.parse(JSON.stringify(dashboardJson, null, 2)), cloneSafe);
     let diffCount = 0;
     for (const d of Object.values(diff)) {
       diffCount += d.length;
@@ -36,7 +36,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, json, onSave }: Save
       diffCount,
       hasChanges: diffCount > 0,
     };
-  }, [dashboard, json]);
+  }, [dashboard, dashboardJson]);
 
   const [showDiff, setShowDiff] = useState(false);
 
@@ -56,7 +56,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, json, onSave }: Save
       scrollableContent
     >
       {showDiff ? (
-        <SaveDashboardDiff diff={data.diff} oldValue={json} newValue={data.clone} />
+        <SaveDashboardDiff diff={data.diff} oldValue={dashboardJson} newValue={data.clone} />
       ) : (
         <SaveDashboardForm
           dashboard={dashboard}

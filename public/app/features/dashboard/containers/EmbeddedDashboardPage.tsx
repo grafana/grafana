@@ -34,12 +34,13 @@ export type Props = GrafanaRouteComponentProps<
   EmbeddedDashboardPageRouteSearchParams
 >;
 
-export default function EmbeddedDashboardPage({ match, route, queryParams }: Props) {
+export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
   const dispatch = useDispatch();
   const context = useGrafana();
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
-  const [json, setJson] = useState('');
+  const [dashboardJson, setDashboardJson] = useState('');
+
   /**
    * Create dashboard model and initialize the dashboard from JSON
    */
@@ -47,13 +48,13 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
     const callbackUrl = queryParams.callbackUrl;
 
     if (!callbackUrl) {
-      throw new Error('NO callback URL specified');
+      throw new Error('No callback URL provided');
     }
     getBackendSrv()
       .get(`${callbackUrl}/load-dashboard`)
-      .then((json) => {
-        setJson(json);
-        const dashboardModel = new DashboardModel(json);
+      .then((dashboardJson) => {
+        setDashboardJson(dashboardJson);
+        const dashboardModel = new DashboardModel(dashboardJson);
 
         dispatch(
           initDashboard({
@@ -80,7 +81,7 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
 
   return (
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
-      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} json={json} />
+      <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={''}>
         <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
@@ -92,10 +93,10 @@ export default function EmbeddedDashboardPage({ match, route, queryParams }: Pro
 interface ToolbarProps {
   dashboard: DashboardModel;
   callbackUrl?: string;
-  json: string;
+  dashboardJson: string;
 }
 
-const Toolbar = ({ dashboard, callbackUrl, json }: ToolbarProps) => {
+const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
   const dispatch = useDispatch();
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
@@ -127,7 +128,7 @@ const Toolbar = ({ dashboard, callbackUrl, json }: ToolbarProps) => {
             onClick={() => {
               showModal(SaveDashboardDrawer, {
                 dashboard,
-                json,
+                dashboardJson,
                 onDismiss: hideModal,
                 onSave: saveDashboard,
               });

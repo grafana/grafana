@@ -103,10 +103,6 @@ func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "deny")
 }
 
-func removeXFrameOptionsDenyHeader(w web.ResponseWriter) {
-	w.Header().Del("X-Frame-Options")
-}
-
 func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) {

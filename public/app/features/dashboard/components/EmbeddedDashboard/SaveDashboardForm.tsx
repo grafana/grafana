@@ -18,24 +18,25 @@ export const SaveDashboardForm = ({ dashboard, onCancel, onSubmit, onSuccess, sa
   const [saving, setSaving] = useState(false);
   const notifyApp = useAppNotification();
   const hasChanges = useMemo(() => dashboard.hasTimeChanged() || saveModel.hasChanges, [dashboard, saveModel]);
+
+  const onFormSubmit = async () => {
+    if (!onSubmit) {
+      return;
+    }
+    setSaving(true);
+    onSubmit(saveModel.clone)
+      .then(() => {
+        notifyApp.success('Dashboard saved');
+        onSuccess();
+      })
+      .catch((error) => {
+        notifyApp.error(error.message || 'Error saving dashboard');
+      })
+      .finally(() => setSaving(false));
+  };
+
   return (
-    <Form
-      onSubmit={async () => {
-        if (!onSubmit) {
-          return;
-        }
-        setSaving(true);
-        onSubmit(saveModel.clone)
-          .then(() => {
-            notifyApp.success('Dashboard saved');
-            onSuccess();
-          })
-          .catch((error) => {
-            notifyApp.error(error.message || 'Error saving dashboard');
-          })
-          .finally(() => setSaving(false));
-      }}
-    >
+    <Form onSubmit={onFormSubmit}>
       {() => {
         return (
           <Stack gap={2}>

@@ -83,7 +83,6 @@ async function fetchDashboard(
         if (args.dashboardDto) {
           return args.dashboardDto;
         }
-        // TODO handle missing DB
       }
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
