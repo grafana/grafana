@@ -7,8 +7,9 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { useDispatch } from 'app/types';
+import { NotifierDTO, NotifierType, useDispatch } from 'app/types';
 
+import { onCallApi } from '../../../api/onCallApi';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import {
   fetchGrafanaNotifiersAction,
@@ -17,6 +18,7 @@ import {
 } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import { option } from '../../../utils/notifier-types';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -46,6 +48,9 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
 });
 
 export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName, config }: Props) => {
+  const { useCreateIntegrationMutation } = onCallApi;
+  const [createIntegrationMutation] = useCreateIntegrationMutation();
+
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 
@@ -75,11 +80,27 @@ export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName,
     return grafanaReceiverToFormValues(prefill, grafanaNotifiers.result!);
   }, [prefill, grafanaNotifiers.result]);
 
-  const onSubmit = (values: ReceiverFormValues<GrafanaChannelValues>) => {
+  const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
+
+    const onCallIntegrations = newReceiver.grafana_managed_receiver_configs?.filter((c) => c.type === 'oncall') ?? [];
+    const autoOnCallIntegrationsJobs = onCallIntegrations
+      .filter((c) => c.settings['automatic_oncall_integration'] === true && !c.settings['url'])
+      .map(async (c) => {
+        const newIntegration = await createIntegrationMutation({
+          integration: 'grafana',
+          verbal_name: c.name,
+        }).unwrap();
+        c.type = 'webhook';
+        c.settings['url'] = newIntegration.integration_url;
+      });
+
+    await Promise.all(autoOnCallIntegrationsJobs);
+
+    const newConfig = updateConfigWithReceiver(config, newReceiver, existing?.name);
     dispatch(
       updateAlertManagerConfigAction({
-        newConfig: updateConfigWithReceiver(config, newReceiver, existing?.name),
+        newConfig: newConfig,
         oldConfig: config,
         alertManagerSourceName: GRAFANA_RULES_SOURCE_NAME,
         successMessage: existing ? 'Contact point updated.' : 'Contact point created',
@@ -130,6 +151,37 @@ export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName,
   const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
 
   if (grafanaNotifiers.result) {
+    const notifiers: Array<NotifierDTO<NotifierType>> = [
+      ...grafanaNotifiers.result,
+      {
+        name: 'Grafana OnCall',
+        type: 'oncall',
+        description: 'Grafana OnCall contact point',
+        heading: 'OnCall heading',
+        options: [
+          option(
+            'automatic_oncall_integration',
+            'Automatic OnCall integration',
+            'Check to automatically setup OnCall integration',
+            {
+              required: true,
+              element: 'checkbox',
+            }
+          ),
+          option('url', 'URL', 'The endpoint to send HTTP POST requests to.', {
+            required: false,
+            // showWhen: { field: 'automatic_oncall_integration', is: 'true' },
+          }),
+          option(
+            'max_alerts',
+            'Max alerts',
+            'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
+            { placeholder: '0', validationRule: '(^\\d+$|^$)' }
+          ),
+        ],
+      },
+    ];
+
     return (
       <>
         {hasProvisionedItems && <ProvisioningAlert resource={ProvisionedResource.ContactPoint} />}
@@ -141,7 +193,7 @@ export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName,
           onSubmit={onSubmit}
           initialValues={existingValue ?? prefillValue}
           onTestChannel={onTestChannel}
-          notifiers={grafanaNotifiers.result}
+          notifiers={notifiers}
           alertManagerSourceName={alertManagerSourceName}
           defaultItem={defaultChannelValues}
           takenReceiverNames={takenReceiverNames}

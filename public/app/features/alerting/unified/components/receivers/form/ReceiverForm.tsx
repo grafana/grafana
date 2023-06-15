@@ -24,7 +24,7 @@ interface Props<R extends ChannelValues> {
   defaultItem: R;
   alertManagerSourceName: string;
   onTestChannel?: (channel: R) => void;
-  onSubmit: (values: ReceiverFormValues<R>) => void;
+  onSubmit: (values: ReceiverFormValues<R>) => Promise<void>;
   takenReceiverNames: string[]; // will validate that user entered receiver name is not one of these
   commonSettingsComponent: CommonSettingsComponentType;
   initialValues?: ReceiverFormValues<R>;
@@ -84,8 +84,8 @@ export function ReceiverForm<R extends ChannelValues>({
     [takenReceiverNames]
   );
 
-  const submitCallback = (values: ReceiverFormValues<R>) => {
-    onSubmit({
+  const submitCallback = async (values: ReceiverFormValues<R>) => {
+    await onSubmit({
       ...values,
       items: values.items.filter((item) => !item.__deleted),
     });

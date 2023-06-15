@@ -58,6 +58,7 @@ export type GrafanaNotifierType =
   | 'kafka';
 
 export type CloudNotifierType =
+  | 'oncall' // Only FE implementation for now
   | 'email'
   | 'pagerduty'
   | 'pushover'

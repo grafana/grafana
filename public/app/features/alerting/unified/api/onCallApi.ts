@@ -8,10 +8,22 @@ export interface OnCallIntegration {
   verbal_name: string;
 }
 
+export interface CreateIntegrationDTO {
+  integration: 'grafana'; // The only one supported right now
+  verbal_name: string;
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getOnCallIntegrations: build.query<OnCallIntegration[], void>({
       query: () => ({ url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/' }),
+    }),
+    createIntegration: build.mutation<OnCallIntegration, CreateIntegrationDTO>({
+      query: (integration) => ({
+        url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/',
+        data: integration,
+        method: 'POST',
+      }),
     }),
   }),
 });
