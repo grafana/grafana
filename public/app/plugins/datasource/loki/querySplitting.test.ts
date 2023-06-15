@@ -40,7 +40,125 @@ describe('runSplitQuery()', () => {
     });
   });
 
-  test('Handles and reports rerrors', async () => {
+  test('Correctly splits queries without step', async () => {
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          requestId: 'TEST_3',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              //2023-02-09T06:00:00.000Z
+              _i: 1675922400000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-10T06:00:00.000Z
+              _i: 1676008800000,
+            }),
+          }),
+        })
+      );
+
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          requestId: 'TEST_2',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              //2023-02-08T05:59:00.000Z
+              _i: 1675835940000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-09T05:59:00.000Z
+              _i: 1675922340000,
+            }),
+          }),
+        })
+      );
+
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          requestId: 'TEST_1',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              //2023-02-08T05:00:00.000Z
+              _i: 1675832400000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-08T05:58:00.000Z
+              _i: 1675835880000,
+            }),
+          }),
+        })
+      );
+    });
+  });
+
+  test('Correctly splits queries with step', async () => {
+    const req = { ...request };
+    req.targets[0].step = '10s';
+    await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          requestId: 'TEST_3',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              //2023-02-09T06:00:00.000Z
+              _i: 1675922400000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-10T06:00:00.000Z
+              _i: 1676008800000,
+            }),
+          }),
+        })
+      );
+
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          requestId: 'TEST_2',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              //2023-02-08T05:59:50.000Z
+              _i: 1675835990000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-09T05:59:50.000Z
+              _i: 1675922390000,
+            }),
+          }),
+        })
+      );
+
+      expect(datasource.runQuery).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          requestId: 'TEST_1',
+          intervalMs: 60000,
+          range: expect.objectContaining({
+            from: expect.objectContaining({
+              // 2023-02-08T05:00:00.000Z
+              _i: 1675832400000,
+            }),
+            to: expect.objectContaining({
+              // 2023-02-08T05:59:40.000Z
+              _i: 1675835980000,
+            }),
+          }),
+        })
+      );
+    });
+  });
+
+  test('Handles and reports errors', async () => {
     jest
       .spyOn(datasource, 'runQuery')
       .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
