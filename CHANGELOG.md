@@ -616,6 +616,9 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 
 - **Query:** Prevent crash while executing concurrent mixed queries
 - **Alerting:** Require alert.notifications:write permissions to test receivers and templates
+- **RBAC:** Remove legacy AC editor and admin role on new dashboard route. [#68775](https://github.com/grafana/grafana/issues/68775), [@grafanabot](https://github.com/grafanabot)
+- **Revert:** Allow editors to access GET /datasources. [#68653](https://github.com/grafana/grafana/issues/68653), [@grafanabot](https://github.com/grafanabot)
+- **Explore:** Remove data source onboarding page. [#68642](https://github.com/grafana/grafana/issues/68642), [@grafanabot](https://github.com/grafanabot)
 
 <!-- 9.4.12 END -->
 <!-- 9.4.10 START -->
