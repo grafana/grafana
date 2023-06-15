@@ -184,8 +184,12 @@ describe('InfluxDatasource backend (proxy)', () => {
       expect(formattedVars.alias).not.toContain(variableName);
       expect(formattedVars.tags).not.toContain(variableName);
 
+      // Labels should be interpolated, but values should not be escaped
       expect(formattedVars.tags[0].value).toEqual(labelStringRaw.replace('$test', testVariableValue));
+      // Likewise, alias should not be escaped, but should be interpolated
       expect(formattedVars.alias).toEqual(aliasStringRaw.replace('$test', expectedVariableValue));
+
+      // But the actual query string should be escaped, including the value of any variables
       expect(formattedVars.query).toEqual(queryStringRaw.replace('$test', escapeRegExp(expectedVariableValue)));
     });
   });
