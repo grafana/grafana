@@ -93,9 +93,17 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries]
   );
+  const selectedExpressionType = gelTypes.find((o) => o.value === queryType);
+  const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
   return (
-    <div className={cx(styles.expression.wrapper, alertCondition && styles.expression.alertCondition)}>
+    <div
+      className={cx(
+        styles.expression.wrapper,
+        alertCondition && styles.expression.alertCondition,
+        queryType === ExpressionQueryType.classic && styles.expression.classic
+      )}
+    >
       <div className={styles.expression.stack}>
         <Header
           refId={query.refId}
@@ -104,7 +112,10 @@ export const Expression: FC<ExpressionProps> = ({
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
         />
-        <div className={styles.expression.body}>{renderExpressionType(query)}</div>
+        <div className={styles.expression.body}>
+          <div className={styles.expression.description}>{selectedExpressionDescription}</div>
+          {renderExpressionType(query)}
+        </div>
         {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
 
         <div className={styles.footer}>
@@ -397,21 +408,29 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       display: flex;
       border: solid 1px ${theme.colors.border.medium};
-
+      flex: 0.5;
       border-radius: ${theme.shape.borderRadius()};
-      max-width: 640px;
     `,
     stack: css`
       display: flex;
       flex-direction: column;
       flex-wrap: nowrap;
       gap: 0;
+      width: 100%;
       min-width: 0; // this one is important to prevent text overflow
+    `,
+    classic: css`
+      flex-basis: 100%;
     `,
     alertCondition: css``,
     body: css`
       padding: ${theme.spacing(1)};
       flex: 1;
+    `,
+    description: css`
+      margin-bottom: ${theme.spacing(1)};
+      font-size: ${theme.typography.size.xs};
+      color: ${theme.colors.text.secondary};
     `,
     refId: css`
       font-weight: ${theme.typography.fontWeightBold};
