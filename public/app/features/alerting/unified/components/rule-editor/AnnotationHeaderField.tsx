@@ -8,7 +8,7 @@ import { InputControl, useStyles2 } from '@grafana/ui';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
 
-import CustomAnnotationField from './CustomAnnotationField';
+import CustomAnnotationHeaderField from './CustomAnnotationHeaderField';
 
 const AnnotationHeaderField = ({
   annotationField,
@@ -45,7 +45,7 @@ const AnnotationHeaderField = ({
                           {' (optional)'}
                         </span>
                       )}
-                      {!annotationLabels[annotation] && <CustomAnnotationField field={field} />}
+                      {!annotationLabels[annotation] && <CustomAnnotationHeaderField field={field} />}
                     </div>
                   );
               }

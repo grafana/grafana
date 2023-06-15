@@ -4,11 +4,11 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, useStyles2 } from '@grafana/ui';
 
-interface CustomAnnotationFieldProps {
+interface CustomAnnotationHeaderFieldProps {
   field: { onChange: () => void; onBlur: () => void; value: string; name: string };
 }
 
-const CustomAnnotationField = ({ field }: CustomAnnotationFieldProps) => {
+const CustomAnnotationHeaderField = ({ field }: CustomAnnotationHeaderFieldProps) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -36,4 +36,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default CustomAnnotationField;
+export default CustomAnnotationHeaderField;
