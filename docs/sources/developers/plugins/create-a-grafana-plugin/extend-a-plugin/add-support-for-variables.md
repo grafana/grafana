@@ -13,7 +13,7 @@ weight: 600
 
 # Add support for variables
 
-Variables are placeholders for values, and you can use them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables/" >}}).
+Variables are placeholders for values, and you can use them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../dashboards/variables" >}}).
 
 In this guide, you'll see how you can turn a query string like this:
 

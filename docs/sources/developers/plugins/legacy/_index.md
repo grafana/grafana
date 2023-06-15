@@ -57,14 +57,14 @@ See the [coding styleguide]({{< relref "style-guide/" >}}) for details on the me
 
 This is the entry point for every plugin. This is the place where you should export
 your plugin implementation. Depending on what kind of plugin you are developing you
-will be expected to export different things. You can find what's expected for [datasource]({{< relref "data-sources/" >}}), [panels]({{< relref "panels/" >}})
-and [apps]({{< relref "apps/" >}}) plugins in the documentation.
+will be expected to export different things. You can find what's expected for [datasource]({{< relref "./data-sources/" >}}), [panels]({{< relref "./panels" >}})
+and [apps]({{< relref "./apps" >}}) plugins in the documentation.
 
 The Grafana SDK is quite small so far and can be found here:
 
 - [SDK file in Grafana](https://github.com/grafana/grafana/blob/main/public/app/plugins/sdk.ts)
 
-The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "data-sources/" >}}).
+The SDK contains three different plugin classes: PanelCtrl, MetricsPanelCtrl and QueryCtrl. For plugins of the panel type, the module.js file should export one of these. There are some extra classes for [data sources]({{< relref "./data-sources/" >}}).
 
 Example:
 
@@ -112,7 +112,7 @@ There are a number of Grafana events that a plugin can hook into:
 - `data-snapshot-load` is an event triggered to load data when in snapshot mode.
 - `data-error` is used to handle errors on dashboard refresh.
 
-If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}}) describes how to add support for this.
+If a panel receives data and hooks into the `data-received` event then it should handle snapshot mode too. Otherwise the panel will not work if saved as a snapshot. [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode" >}}) describes how to add support for this.
 
 ## Examples
 
@@ -126,9 +126,9 @@ We have three different examples that you can fork/download to get started devel
 
 ## Other Articles
 
-- [Getting Plugins to work in Snapshot Mode]({{< relref "snapshot-mode/" >}})
-- [Plugin Defaults and Editor Mode]({{< relref "defaults-and-editor-mode/" >}})
-- [Grafana Plugin Code Styleguide]({{< relref "style-guide/" >}})
-- [Grafana Apps]({{< relref "apps/" >}})
-- [Grafana Data Sources]({{< relref "data-sources/" >}})
+- [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode" >}})
+- [Plugin Defaults and Editor Mode]({{< relref "./defaults-and-editor-mode" >}})
+- [Grafana Plugin Code Styleguide]({{< relref "./style-guide" >}})
+- [Grafana Apps]({{< relref "./apps" >}})
+- [Grafana Data Sources]({{< relref "./data-sources" >}})
 - [plugin.json Schema]({{< relref "../metadata/" >}})

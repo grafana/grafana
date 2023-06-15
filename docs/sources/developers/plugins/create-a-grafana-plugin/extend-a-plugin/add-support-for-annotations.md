@@ -12,7 +12,7 @@ weight: 100
 
 # Add annotations
 
-You can add support to your plugin for annotations that will insert information into Grafana alerts. This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#querying-other-data-sources " >}}) to a data source plugin.
+You can add support to your plugin for annotations that will insert information into Grafana alerts. This guide explains how to add support for [annotations]({{< relref "../../dashboards/build-dashboards/annotate-visualizations/#querying-other-data-sources" >}}) to a data source plugin.
 
 ## Support annotations in your data source plugin
 

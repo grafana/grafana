@@ -14,7 +14,7 @@ weight: 100
 
 This section contains documentation related to the key concepts for Grafana plugin development.
 
-- [Backend plugins]({{< relref "./backend/" >}})
+- [Backend plugins]({{< relref "./backend" >}})
   - [Grafana plugin SDK for Go]({{< relref "./backend/grafana-plugin-sdk-for-go.md" >}})
   - [Plugin protocol]({{< relref "./backend/plugin-protocol.md" >}})
 - [Data frames]({{< relref "data-frames.md">}})

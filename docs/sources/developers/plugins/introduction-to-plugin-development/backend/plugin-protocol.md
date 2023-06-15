@@ -18,7 +18,7 @@ The Grafana server uses a physical wire protocol to communicate with backend plu
 
 ## Developing with the plugin protocol
 
-{{% admonition type="caution" %}} We strongly recommend that backend plugin development not be implemented directly against the protocol. Instead, we prefer that you use the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) that implements this protocol and provides higher-level APIs. {{%
+{{% admonition type="caution" %}} We strongly recommend that backend plugin development not be implemented directly against the protocol. Instead, we prefer that you use the [Grafana Plugin SDK for Go]({{< relref "./grafana-plugin-sdk-for-go" >}}) that implements this protocol and provides higher-level APIs. {{%
 /admonition %}}
 
 If you choose to develop against the plugin protocol directly, you can do so using [Protocol Buffers](https://developers.google.com/protocol-buffers) (that is, protobufs) with [gRPC](https://grpc.io/).

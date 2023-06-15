@@ -31,7 +31,7 @@ Package a plugin to organize the plugin code and make it ready for use in your o
 
    Make sure that all the binaries are executable and have a `0755` (`-rwxr-xr-x`) permission.
 
-1. Sign the plugin. To learn more, refer to [Sign the plugin]({{< relref "./sign-a-plugin" >}}).
+1. Sign the plugin. To learn more, refer to [Sign the plugin]({{< relref "../create-a-grafana-plugin/develop-a-plugin/sign-a-plugin" >}}).
 
 1. Rename the `dist` directory to match your plugin ID, and then create a ZIP archive.
 
@@ -73,4 +73,4 @@ drwxr-xr-x          0 bx stor 22-Mar-24 23:23 grafana-clickhouse-datasource/img/
 22 files, 92516655 bytes uncompressed, 34319591 bytes compressed:  62.9%
 ```
 
-When you've packaged your plugin, you can proceed to [publishing a plugin]({{< relref "publish-a-plugin.md" >}}) or [installing a packaged plugin](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-packaged-plugin).
+When you've packaged your plugin, you can proceed to [publishing a plugin]({{< relref "./publish-or-update-a-plugin.md" >}}) or [installing a packaged plugin](/docs/grafana/latest/administration/plugin-management/#install-a-packaged-plugin).

@@ -29,7 +29,7 @@ Since Grafana v7.0, we have supported server-side plugins that remove this limit
 
 The following examples give some common use cases for backend plugins:
 
-- Enable [Grafana Alerting]({{< relref "../../../alerting/" >}}) for data sources.
+- Enable [Grafana Alerting]({{< relref "../../../alerting" >}}) for data sources.
 - Connect to SQL database servers and other non-HTTP services that normally can't be connected to from a browser.
 - Keep state between users, for example, by query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
@@ -59,7 +59,7 @@ Grafana's backend plugin system exposes several key capabilities, or building bl
 
 #### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards/" >}}), [Explore]({{< relref "../../../explore/" >}}) or [Grafana Alerting]({{< relref "../../../alerting/" >}}). The response contains [data frames]({{< relref "../data-frames/" >}}), which are used to visualize metrics, logs, and traces.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards" >}}), [Explore]({{< relref "../../../explore" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces.
 
 {{% admonition type="note" %}} Backend data source plugins are required to implement the query data capability.{{%
 /admonition %}}

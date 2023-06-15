@@ -2,6 +2,8 @@
 title: Build a logs data source plugin
 aliases:
   - ../../../plugins/build-a-logs-data-source-plugin/
+description:
+  - How to build a logs data source plugin.
 keywords:
   - grafana
   - plugins
@@ -18,7 +20,7 @@ Grafana data source plugins support metrics, logs, and other data types. The ste
 
 ## Before you begin
 
-This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin/) for metrics. We recommend that you review this material before continuing.
+This guide assumes that you're already familiar with how to [Build a data source plugin](/tutorials/build-a-data-source-plugin) for metrics. We recommend that you review this material before continuing.
 
 ## Add logs support to your data source
 
@@ -31,7 +33,7 @@ When these steps are done, then you can improve the user experience with one or 
 
 ### Step 1: Enable logs support
 
-Tell Grafana that your data source plugin can return log data, by adding `"logs": true` to the [plugin.json]({{< relref "metadata/" >}}) file.
+Tell Grafana that your data source plugin can return log data, by adding `"logs": true` to the [plugin.json]({{< relref "../metadata" >}}) file.
 
 ```json
 {
@@ -41,7 +43,7 @@ Tell Grafana that your data source plugin can return log data, by adding `"logs"
 
 ### Step 2: Construct the log data
 
-As it does with metrics data, Grafana expects your plugin to return log data as a [data frame]({{< relref "data-frames/" >}}).
+As it does with metrics data, Grafana expects your plugin to return log data as a [data frame]({{< relref "../introduction-to-plugin-development/data-frames.md" >}}).
 
 To return log data, return a data frame with at least one time field and one text field from the data source's `query` method.
 
@@ -60,7 +62,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../explore/" >}}) or by adding a [Logs panel]({{< relref "../../panels-visualizations/visualizations/logs/" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../../explore" >}}) or by adding a [Logs panel]({{< relref "../../../panels-visualizations/visualizations/logs" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 
@@ -70,7 +72,7 @@ Add visualization type hints, labels, and other optional features to logs.
 
 ### Add a preferred visualization type hint to the data frame
 
-To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore, set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualisation section]({{< relref "add-support-for-explore-queries/#selecting-preferred-visualisation" >}})
+To make sure Grafana recognizes data as logs and shows logs visualization automatically in Explore, set `meta.preferredVisualisationType` to `'logs'` in the returned data frame. See [Selecting preferred visualization section]({{< relref "../extend-a-plugin/add-support-for-explore-queries/#sselect-a-preferred-visualization-type" >}})
 
 **Example:**
 

@@ -14,5 +14,5 @@ weight: 300
 
 This section contains how-to topics for developing and extending Grafana plugins.
 
-- [Develop a plugin](./develop-a-plugin)
-- [Extend a plugin](./extend-a-plugin)
+- [Develop a plugin](./develop-a-plugin/_index.md)
+- [Extend a plugin](./extend-a-plugin/_index.md)
