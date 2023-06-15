@@ -9,31 +9,24 @@ import (
 
 const GrafanaDir = "."
 
-func GetConfig(c *cli.Context, inputTagVersion string) (config.Config, config.Edition, error) {
+func GetConfig(c *cli.Context, metadata config.Metadata) (config.Config, config.Edition, error) {
 	cfg := config.Config{
-		NumWorkers:     c.Int("jobs"),
-		GitHubToken:    c.String("github-token"),
-		PackageVersion: inputTagVersion,
+		NumWorkers:  c.Int("jobs"),
+		GitHubToken: c.String("github-token"),
 	}
 
 	mode := config.Edition(c.String("edition"))
-	buildID := c.String("build-id")
-	packageVersion, err := config.GetGrafanaVersion(buildID, GrafanaDir)
-	if err != nil {
-		return config.Config{}, "", cli.Exit(err.Error(), 1)
-	}
 
-	if inputTagVersion == "" {
-		cfg.PackageVersion = packageVersion
+	if metadata.ReleaseMode.Mode == config.TagMode && !metadata.ReleaseMode.IsTest {
+		packageJSONVersion, err := config.GetPackageJSONVersion(GrafanaDir)
 		if err != nil {
-			return config.Config{}, config.EditionOSS, cli.Exit(err.Error(), 1)
+			return config.Config{}, "", err
 		}
-		return cfg, mode, err
-	}
-	if inputTagVersion != packageVersion {
-		return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json", packageVersion, inputTagVersion), 1)
+		if metadata.GrafanaVersion != packageJSONVersion {
+			return config.Config{}, "", cli.Exit(fmt.Errorf("package.json version and input tag version differ %s != %s.\nPlease update package.json", packageJSONVersion, metadata.GrafanaVersion), 1)
+		}
 	}
 
-	cfg.PackageVersion = inputTagVersion
+	cfg.PackageVersion = metadata.GrafanaVersion
 	return cfg, mode, nil
 }

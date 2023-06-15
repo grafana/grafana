@@ -38,7 +38,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
 | `alertingNotificationsPoliciesMatchingInstances` | Enables the preview of matching instances for notification policies                                                                                                                                 | Yes                |
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
-| `authenticationConfigUI`                         | Enables authentication configuration UI                                                                                                                                                             | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 
 ## Preview feature toggles
@@ -115,6 +114,8 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 | `dashboardEmbed`                   | Allow embedding dashboard for external use in Code editors                                                   |
 | `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
+| `exploreScrollableLogsContainer`   | Improves the scrolling behavior of logs in Explore                                                           |
+| `recordedQueriesMulti`             | Enables writing multiple items from a single query within Recorded Queries                                   |
 
 ## Development feature toggles
 
