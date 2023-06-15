@@ -123,7 +123,7 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 	refIDs := make(map[string]int, len(queries))
 	for idx, query := range queries {
 		if query.RefID == "" {
-			return fmt.Errorf("refID is not specified for data query\\expression at index %d", idx)
+			return fmt.Errorf("refID is not specified for data query/expression at index %d", idx)
 		}
 		if usedIdx, ok := refIDs[query.RefID]; ok {
 			return fmt.Errorf("refID '%s' is already used by query\\expression at index %d", query.RefID, usedIdx)
