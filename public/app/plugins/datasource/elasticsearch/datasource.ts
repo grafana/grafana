@@ -426,7 +426,7 @@ export class ElasticDatasource
               message: 'No date field named ' + this.timeField + ' found',
             });
           }
-          return of({ status: 'success', message: `${versionMessage}Index OK. Time field name OK` });
+          return of({ status: 'success', message: `${versionMessage}Data source successfully connected.` });
         }),
         catchError((err) => {
           const infoInParentheses = err.message ? ` (${err.message})` : '';
