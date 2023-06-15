@@ -1,6 +1,6 @@
 # Grafana frontend packages
 
-This document contains information about Grafana frontend package versioning and releases.
+This document contains information about Grafana frontend package versioning and releases..
 
 ## Versioning
 
