@@ -47,7 +47,7 @@ To set up Alerting, you need to:
    - [Optional] Add additional nested policies
    - [Optional] Add labels and label matchers to control alert routing
 
-4. [Optional] Integrate with [Grafana OnCall](docs/oncall/latest/integrations/grafana-alerting) and [Grafana Incident](docs/grafana-cloud/incident/set-up)
+4. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting/) and [Grafana Incident](/docs/grafana-cloud/incident/set-up/)
 
 The following topics provide you with advanced configuration options for Grafana Alerting for Cloud.
 
