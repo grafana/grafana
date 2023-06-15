@@ -2035,11 +2035,11 @@ Enter a comma-separated list of plugin identifiers to hide in the plugin catalog
 
 ### public_key_retrieval_disabled
 
-Disable download of public key for verifying plugin signature on startup. Default is `false`. If disabled, it will use the hardcoded public key.
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
 
 ### public_key_retrieval_on_startup
 
-Force download of public key for verifying plugin signature on startup. Default is `false`. If disabled, the public key will be retrieved each 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
 
 <hr>
 
