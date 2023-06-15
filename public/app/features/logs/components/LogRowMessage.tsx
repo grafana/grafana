@@ -60,14 +60,7 @@ const restructureLog = memoizeOne((line: string, prettifyLogMessage: boolean): s
   return line;
 });
 
-interface State {
-  link: string;
-}
 export class LogRowMessage extends PureComponent<Props> {
-  state: State = {
-    link: '',
-  };
-
   onShowContextClick = (e: React.SyntheticEvent<HTMLElement, Event>) => {
     const { onOpenContext } = this.props;
     e.stopPropagation();
