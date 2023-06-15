@@ -7,48 +7,23 @@ import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip, TooltipPlacement } from '../Tooltip';
 
 export interface FilterPillProps {
   selected: boolean;
-  label: React.ReactNode;
+  label: string;
   onClick: React.MouseEventHandler<HTMLElement>;
   icon?: IconName;
-  className?: string;
-  tooltip?: string;
-  tooltipPlacement?: TooltipPlacement;
 }
 
-export const FilterPill = ({
-  label,
-  selected,
-  onClick,
-  icon = 'check',
-  className,
-  tooltip,
-  tooltipPlacement,
-}: FilterPillProps) => {
+export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
-  const pill = (
-    <button
-      type="button"
-      className={cx(clearButton, styles.wrapper, selected && styles.selected, className)}
-      onClick={onClick}
-    >
+  return (
+    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} />}
     </button>
   );
-
-  if (tooltip) {
-    return (
-      <Tooltip content={tooltip} placement={tooltipPlacement}>
-        {pill}
-      </Tooltip>
-    );
-  }
-  return pill;
 };
 
 const getStyles = (theme: GrafanaTheme2) => {

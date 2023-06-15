@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data/src';
-import { FilterPill, Icon, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
@@ -34,32 +34,28 @@ const FlameGraphMetadata = React.memo(
     }
 
     parts.push(
-      <FilterPill
-        key={'default'}
-        className={styles.pill}
-        label={`${unitValue} | ${ticksVal.text}${ticksVal.suffix} samples (${unitTitle})`}
-        selected={false}
-        onClick={() => {}}
-      />
+      <div className={styles.metadataPill} key={'default'}>
+        {unitValue} | {ticksVal.text}
+        {ticksVal.suffix} samples ({unitTitle})
+      </div>
     );
 
     if (sandwichedLabel) {
       parts.push(
         <span key={'sandwich'}>
-          {' > '}
-          <FilterPill
-            className={styles.pill}
-            label={
-              <>
-                <Icon containerClassName={styles.pillIcon} size={'sm'} name={'gf-show-context'} />{' '}
-                {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
-              </>
-            }
-            selected={false}
-            tooltip={'Remove sandwich view'}
-            onClick={onSandwichPillClick}
-            aria-label={'Remove sandwich view'}
-          />
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'gf-show-context'} />{' '}
+            {sandwichedLabel.substring(sandwichedLabel.lastIndexOf('/') + 1)}
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onSandwichPillClick}
+              tooltip={'Remove sandwich view'}
+              aria-label={'Remove sandwich view'}
+            />
+          </div>
         </span>
       );
     }
@@ -68,19 +64,18 @@ const FlameGraphMetadata = React.memo(
       const percentValue = Math.round(10000 * (focusedItem.item.value / totalTicks)) / 100;
       parts.push(
         <span key={'focus'}>
-          {' > '}
-          <FilterPill
-            className={styles.pill}
-            label={
-              <>
-                <Icon containerClassName={styles.pillIcon} size={'sm'} name={'eye'} /> {percentValue}% of total
-              </>
-            }
-            selected={false}
-            onClick={onFocusPillClick}
-            tooltip={'Remove focus'}
-            aria-label={'Remove focus'}
-          />
+          <Icon size={'sm'} name={'angle-right'} />
+          <div className={styles.metadataPill}>
+            <Icon size={'sm'} name={'eye'} /> {percentValue}% of total
+            <IconButton
+              className={styles.pillCloseButton}
+              name={'times'}
+              size={'sm'}
+              onClick={onFocusPillClick}
+              tooltip={'Remove focus'}
+              aria-label={'Remove focus'}
+            />
+          </div>
         </span>
       );
     }
@@ -92,21 +87,26 @@ const FlameGraphMetadata = React.memo(
 FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  metadataPill: css`
+    label: metadataPill;
+    display: inline-block;
+    background: ${theme.colors.background.secondary};
+    border-radius: ${theme.shape.borderRadius(8)};
+    padding: ${theme.spacing(0.5, 1)};
+    font-size: ${theme.typography.bodySmall.fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    line-height: ${theme.typography.bodySmall.lineHeight};
+    color: ${theme.colors.text.secondary};
+  `,
+
+  pillCloseButton: css`
+    label: pillCloseButton;
+    vertical-align: text-bottom;
+    margin: ${theme.spacing(0, 0.5)};
+  `,
   metadata: css`
     margin: 8px 0;
     text-align: center;
-  `,
-  pill: css`
-    label: pill;
-    display: inline-block;
-    height: 24px;
-    padding: ${theme.spacing(0, 1)};
-    font-size: ${theme.typography.bodySmall.fontSize};
-  `,
-
-  pillIcon: css`
-    label: pill;
-    vertical-align: text-bottom;
   `,
 });
 

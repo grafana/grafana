@@ -18,7 +18,7 @@ export type LevelItem = {
   // Value here can be different from a value of items in the data frame as for callers tree in sandwich view we have
   // to trim the value to correspond only to the part used by the children in the subtree.
   value: number;
-  // Index into the data frame. It is an array because for sendwich views we may be merging multiple items into single
+  // Index into the data frame. It is an array because for sandwich views we may be merging multiple items into single
   // node.
   itemIndexes: number[];
   children: LevelItem[];
