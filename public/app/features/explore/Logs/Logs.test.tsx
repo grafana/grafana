@@ -228,7 +228,7 @@ describe('Logs', () => {
       expect(scrollElementMock.scroll).toHaveBeenCalled();
     });
 
-    it('should not scroll the scrollElement into view if rows contain id', () => {
+    it('should not scroll the scrollElement into view if rows does not contain id', () => {
       const panelState = { logs: { id: 'not-included' } };
       const scrollElementMock = { scroll: jest.fn() };
       setup({ loading: false, scrollElement: scrollElementMock as any, panelState });
