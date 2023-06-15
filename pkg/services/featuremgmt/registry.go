@@ -488,13 +488,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "authenticationConfigUI",
-			Description: "Enables authentication configuration UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true",
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
 			Stage:        FeatureStageGeneralAvailability,

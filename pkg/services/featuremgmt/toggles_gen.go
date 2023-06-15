@@ -295,10 +295,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAuthenticationConfigUI
-	// Enables authentication configuration UI
-	FlagAuthenticationConfigUI = "authenticationConfigUI"
-
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
