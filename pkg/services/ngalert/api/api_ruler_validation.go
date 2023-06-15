@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -135,6 +136,7 @@ func validateCondition(condition string, queries []apimodels.AlertQuery) error {
 		for id := range refIDs {
 			ids = append(ids, id)
 		}
+		sort.Strings(ids)
 		return fmt.Errorf("condition %s does not exist, must be one of [%s]", condition, strings.Join(ids, ","))
 	}
 	return nil
