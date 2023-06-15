@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { EventBusSrv, LoadingState, LogLevel, LogRowModel, MutableDataFrame, toUtc } from '@grafana/data';
+import {
+  EventBusSrv,
+  ExploreLogsPanelState,
+  LoadingState,
+  LogLevel,
+  LogRowModel,
+  MutableDataFrame,
+  toUtc,
+} from '@grafana/data';
 import { ExploreId } from 'app/types';
 
 import { Logs, Props } from './Logs';
@@ -10,8 +18,8 @@ import { Logs, Props } from './Logs';
 const changePanelState = jest.fn();
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
-  changePanelState: (...args: any) => {
-    return changePanelState(...args);
+  changePanelState: (exploreId: ExploreId, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+    return changePanelState(exploreId, panel, panelState);
   },
 }));
 
@@ -223,7 +231,7 @@ describe('Logs', () => {
     it('should scroll the scrollElement into view if rows contain id', () => {
       const panelState = { logs: { id: '3' } };
       const scrollElementMock = { scroll: jest.fn() };
-      setup({ loading: false, scrollElement: scrollElementMock as any, panelState });
+      setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
 
       expect(scrollElementMock.scroll).toHaveBeenCalled();
     });
@@ -231,7 +239,7 @@ describe('Logs', () => {
     it('should not scroll the scrollElement into view if rows does not contain id', () => {
       const panelState = { logs: { id: 'not-included' } };
       const scrollElementMock = { scroll: jest.fn() };
-      setup({ loading: false, scrollElement: scrollElementMock as any, panelState });
+      setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
 
       expect(scrollElementMock.scroll).not.toHaveBeenCalled();
     });
