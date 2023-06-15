@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2023 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,10 +31,6 @@ composableKinds: PanelCfg: {
 				// TODO docs
 				CandleStyle: "candles" | "ohlcbars" @cuetsy(kind="enum", memberNames="Candles|OHLCBars")
 				// TODO docs
-				"open-close":  up/down color depends on current close vs current open
-				// filled always
-				"close-close": up/down color depends on current close vs prior close
-				// filled/hollow depends on current close vs current open
 				ColorStrategy: "open-close" | "close-close" @cuetsy(kind="enum", memberNames="OpenClose|CloseClose")
 				// TODO docs
 				CandlestickFieldMap: {
@@ -54,11 +50,11 @@ composableKinds: PanelCfg: {
 					common.OptionsWithLegend
 
 					// TODO docs
-					mode: VizDisplayMode | *"candles"
+					mode: VizDisplayMode
 					// TODO docs
-					candleStyle: CandleStyle | *"candles"
+					candleStyle: CandleStyle
 					// TODO docs
-					colorStrategy: ColorStrategy | *"open-close"
+					colorStrategy: ColorStrategy
 					// TODO docs
 					fields: CandlestickFieldMap | *{}
 					// TODO docs

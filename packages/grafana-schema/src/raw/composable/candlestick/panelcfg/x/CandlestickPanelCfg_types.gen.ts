@@ -4,13 +4,12 @@
 //     public/app/plugins/gen.go
 // Using jennies:
 //     TSTypesJenny
-//     PluginTSTypesJenny
+//     LatestMajorsOrXJenny
+//     PluginEachMajorJenny
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
 import * as common from '@grafana/schema';
-
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 /**
  * TODO docs
