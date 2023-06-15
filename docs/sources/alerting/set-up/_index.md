@@ -1,6 +1,9 @@
 ---
 aliases:
   - unified-alerting/set-up/
+labels:
+  products:
+    - oss
 description: How to set up alerting features and integrations
 title: Set up Alerting
 weight: 107
@@ -9,6 +12,12 @@ weight: 107
 # Set up Alerting
 
 Configure the features and integrations that you need to create and manage your alerts.
+
+**Note:**
+
+These are set up instructions for Grafana Alerting Open Source.
+
+To set up Grafana Alerting for Cloud, see
 
 ## Before you begin
 
