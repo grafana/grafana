@@ -31,6 +31,7 @@ func TestGetImage(t *testing.T) {
 		err := fakeImageStore.SaveImage(context.Background(), &img)
 		require.NoError(tt, err)
 
+		// nolint:staticcheck
 		savedImg, err := store.GetImage(context.Background(), "token://"+img.Token)
 		require.NoError(tt, err)
 		require.Equal(tt, savedImg.Token, img.Token)
@@ -47,6 +48,7 @@ func TestGetImage(t *testing.T) {
 		err := fakeImageStore.SaveImage(context.Background(), &img)
 		require.NoError(tt, err)
 
+		// nolint:staticcheck
 		savedImg, err := store.GetImage(context.Background(), img.URL)
 		require.NoError(tt, err)
 		require.Equal(tt, savedImg.Token, img.Token)
