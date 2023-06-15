@@ -1,8 +1,8 @@
 # Deprecation policy
 
-We do our best to limit breaking changes and the deprecation of features to major releases. We always do our best **not** to introduce breaking changes in order to make upgrading Grafana as easy and reliable as possible. However, at times we have to introduce a breaking change by changing behavior or by removing a feature.  
+We do our best to limit breaking changes and the deprecation of features to major releases. We always do our best **not** to introduce breaking changes in order to make upgrading Grafana as easy and reliable as possible. However, at times we have to introduce a breaking change by changing behavior or by removing a feature.
 
-To minimize the negative effects of removing a feature we require a deprecation plan that includes: 
+To minimize the negative effects of removing a feature we require a deprecation plan that includes:
 
 If we cannot remove a feature without introducing a breaking change we will create a deprecation plan as listed below:
 
