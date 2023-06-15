@@ -11,7 +11,7 @@ import { LogRowStyles } from './getLogRowStyles';
 
 export const MAX_CHARACTERS = 100000;
 
-export interface Props {
+interface Props {
   row: LogRowModel;
   wrapLogMessage: boolean;
   prettifyLogMessage: boolean;

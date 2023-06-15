@@ -1,17 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
+import React, { ComponentProps } from 'react';
 
 import { CoreApp, createTheme, LogLevel, LogRowModel } from '@grafana/data';
 
-import { LogRowMessage, Props } from './LogRowMessage';
+import { LogRowMessage } from './LogRowMessage';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
-const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
+const setup = (propOverrides?: Partial<ComponentProps<typeof LogRowMessage>>, rowOverrides?: Partial<LogRowModel>) => {
   const theme = createTheme();
   const styles = getLogRowStyles(theme);
-  const props: Props = {
+  const props: ComponentProps<typeof LogRowMessage> = {
     wrapLogMessage: false,
     row: createLogRow({ entry: 'test123', logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
     onOpenContext: () => {},
