@@ -53,7 +53,7 @@ export function NestedFolderPicker() {
       };
     }
 
-    const result = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState);
+    const result = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, false);
 
     return result;
   }, [childrenForUID, folderOpenState, state.loading, state.value]);

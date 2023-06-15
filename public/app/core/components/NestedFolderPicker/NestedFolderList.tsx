@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,8 +8,8 @@ import { TextModifier } from '@grafana/ui/src/unstable';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 
-const LIST_HEIGHT = 200;
 const ROW_HEIGHT = 40;
+const LIST_HEIGHT = ROW_HEIGHT * 6.5;
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
@@ -47,6 +47,15 @@ function Row({ index, style, data }: RowProps) {
   const { item, isOpen, level } = items[index];
   const styles = useStyles2(getRowStyles);
 
+  const handleClick = useCallback(
+    (ev: React.MouseEvent<HTMLButtonElement>) => {
+      // ev.stopPropagation();
+      ev.preventDefault();
+      onFolderClick(item.uid, !isOpen);
+    },
+    [item.uid, isOpen, onFolderClick]
+  );
+
   return (
     <div style={style} className={styles}>
       <Indent level={level} />
@@ -55,7 +64,7 @@ function Row({ index, style, data }: RowProps) {
       <label htmlFor={item.uid}>
         {item.kind === 'folder' && (
           <IconButton
-            onClick={() => onFolderClick(item.uid, !isOpen)}
+            onClick={handleClick}
             ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
             name={isOpen ? 'angle-down' : 'angle-right'}
           />

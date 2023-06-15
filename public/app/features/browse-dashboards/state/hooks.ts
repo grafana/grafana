@@ -131,30 +131,22 @@ export function createFlatTree(
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0
+  level = 0,
+  insertEmptyFolderIndicator = true
 ): DashboardsTreeItem[] {
-  if (calls > Infinity) {
-    throw new Error('createFlatTree has too much recursion');
-  }
-
-  calls += 1;
-
-  console.group('createFlatTree called', folderUID);
-  console.info({
-    folderUID,
-    rootCollection,
-    childrenByUID,
-    openFolders,
-    level,
-  });
-
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    console.log('mapItem', level, item.uid, item.title);
-    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
+    const mappedChildren = createFlatTree(
+      item.uid,
+      rootCollection,
+      childrenByUID,
+      openFolders,
+      level + 1,
+      insertEmptyFolderIndicator
+    );
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    if (isOpen && emptyFolder && insertEmptyFolderIndicator) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -175,25 +167,18 @@ export function createFlatTree(
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
 
   const collection = folderUID ? childrenByUID[folderUID] : rootCollection;
-  console.info('collection', collection);
 
   const items = folderUID
     ? isOpen && collection?.items // keep seperate lines
     : collection?.items;
 
-  console.info('iterating over', items ? items.length : undefined, 'items');
   let children = (items || []).flatMap((item) => {
-    console.log('looping on', { item });
     return mapItem(item, folderUID, level);
   });
 
   if (level === 0 && (!collection || !collection.isFullyLoaded)) {
     children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
   }
-
-  console.log('returning children', children);
-
-  console.groupEnd();
 
   return children;
 }
