@@ -71,7 +71,6 @@ externalServiceAuth,experimental,@grafana/grafana-authnz-team,true,false,false,f
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false,false
 useCachingService,GA,@grafana/grafana-operator-experience-squad,false,false,true,false
 enableElasticsearchBackendQuerying,preview,@grafana/observability-logs,false,false,false,false
-authenticationConfigUI,GA,@grafana/grafana-authnz-team,false,false,false,false
 pluginsAPIManifestKey,experimental,@grafana/plugins-platform-backend,false,false,false,false
 advancedDataSourcePicker,GA,@grafana/dashboards-squad,false,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,false,true
@@ -82,3 +81,5 @@ lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,fa
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
+exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
+recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false

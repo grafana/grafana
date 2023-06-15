@@ -295,10 +295,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAuthenticationConfigUI
-	// Enables authentication configuration UI
-	FlagAuthenticationConfigUI = "authenticationConfigUI"
-
 	// FlagPluginsAPIManifestKey
 	// Use grafana.com API to retrieve the public manifest key
 	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
@@ -338,4 +334,12 @@ const (
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagExploreScrollableLogsContainer
+	// Improves the scrolling behavior of logs in Explore
+	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
+
+	// FlagRecordedQueriesMulti
+	// Enables writing multiple items from a single query within Recorded Queries
+	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 )
