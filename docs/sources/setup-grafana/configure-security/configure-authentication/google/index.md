@@ -104,11 +104,11 @@ skip_org_role_sync = true
 
 > Available in Grafana v10.1.0 and later versions.
 
-Team sync allows you to automatically add users to teams based on their Google groups. The following example shows how to configure team sync for Google OAuth.
+With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
 
-1. Enable Cloud Identity API on your [organization's dashboard](https://console.cloud.google.com/apis/api/cloudidentity.googleapis.com/)
+1. Enable the Google Cloud Identity API on your [organization's dashboard](https://console.cloud.google.com/apis/api/cloudidentity.googleapis.com/).
 
-2. Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` configuration:
+1. Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` configuration:
 
 Example:
 
@@ -118,7 +118,7 @@ Example:
 scopes = openid email profile https://www.googleapis.com/auth/cloud-identity.groups.readonly
 ```
 
-3. Configure team sync in your Grafana team's `External group sync` tab.
-   The external group ID for a Google group is the group's email address, such as `dev@grafana.com`
+1. Configure team sync in your Grafana team's `External group sync` tab.
+   The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
+To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).

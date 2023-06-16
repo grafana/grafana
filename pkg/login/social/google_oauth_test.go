@@ -132,7 +132,7 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Groups",
+			name: "Has one page to fetch",
 			fields: fields{
 				Scopes: []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
 			},

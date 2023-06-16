@@ -77,12 +77,12 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	if legacyAPIURL == s.apiUrl {
+	if strings.HasPrefix(s.apiUrl, legacyAPIURL) {
 		s.log.Warn("Using legacy Google API URL, please update your configuration")
 		data := googleAPIData{}
 		response, err := s.httpGet(ctx, client, s.apiUrl)
 		if err != nil {
-			return nil, fmt.Errorf("error unmarshalling legacy user info: %s", err)
+			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
 
 		if err := json.Unmarshal(response.Body, &data); err != nil {
