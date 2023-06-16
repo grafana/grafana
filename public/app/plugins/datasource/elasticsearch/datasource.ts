@@ -426,15 +426,12 @@ export class ElasticDatasource
               message: 'No date field named ' + this.timeField + ' found',
             });
           }
-          return of({ status: 'success', message: `${versionMessage}Index OK. Time field name OK` });
+          return of({ status: 'success', message: `${versionMessage}Data source successfully connected.` });
         }),
         catchError((err) => {
-          console.error(err);
-          if (err.message) {
-            return of({ status: 'error', message: err.message });
-          } else {
-            return of({ status: 'error', message: err.status });
-          }
+          const infoInParentheses = err.message ? ` (${err.message})` : '';
+          const message = `Unable to connect with Elasticsearch${infoInParentheses}. Please check the server logs for more details.`;
+          return of({ status: 'error', message });
         })
       )
     );
