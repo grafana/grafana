@@ -23,7 +23,7 @@ export function BuiltInDataSourceList({ className, current, onChange }: BuiltInD
   const grafanaDataSources = useDatasources({ mixed: true, dashboard: true, filter: (ds) => !!ds.meta.builtIn });
 
   return (
-    <div className={className}>
+    <div className={className} data-testid="built-in-data-sources-list">
       {grafanaDataSources.map((ds) => {
         return (
           <DataSourceCard
