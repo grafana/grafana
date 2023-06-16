@@ -108,38 +108,23 @@ func FromContext(ctx context.Context) *contextmodel.ReqContext {
 		return reqCtx
 	}
 
-	mContext := web.FromContext(ctx)
-
-	reqContext := &contextmodel.ReqContext{
-		Context: mContext,
-		SignedInUser: &user.SignedInUser{
-			Permissions: map[int64]map[string][]string{},
-		},
-		IsSignedIn:     false,
-		AllowAnonymous: false,
-		SkipDSCache:    false,
-		Logger:         log.New("context"),
-	}
-
-	return reqContext
+	return nil
 }
 
 func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		//mContext := web.FromContext(req.Context())
+		mContext := web.FromContext(req.Context())
 
-		// reqContext := &contextmodel.ReqContext{
-		// 	Context: mContext,
-		// 	SignedInUser: &user.SignedInUser{
-		// 		Permissions: map[int64]map[string][]string{},
-		// 	},
-		// 	IsSignedIn:     false,
-		// 	AllowAnonymous: false,
-		// 	SkipDSCache:    false,
-		// 	Logger:         log.New("context"),
-		// }
-
-		reqContext := FromContext(req.Context())
+		reqContext := &contextmodel.ReqContext{
+			Context: mContext,
+			SignedInUser: &user.SignedInUser{
+				Permissions: map[int64]map[string][]string{},
+			},
+			IsSignedIn:     false,
+			AllowAnonymous: false,
+			SkipDSCache:    false,
+			Logger:         log.New("context"),
+		}
 
 		// Inject ReqContext into http.Request.Context
 		*req = *req.WithContext(context.WithValue(req.Context(), ReqContextKey{}, reqContext))
