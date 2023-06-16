@@ -1,3 +1,4 @@
+import { memoize } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -18,6 +19,7 @@ import {
   DataSourceWithLogsContextSupport,
   DataSourceApi,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -63,20 +65,33 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   private getQuery(
     logsQueries: DataQuery[] | undefined,
     row: LogRowModel,
-    datasourceInstance: DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>
+    datasourceInstance?: DataSourceApi<DataQuery> & DataSourceWithLogsContextSupport<DataQuery>
   ) {
     // we need to find the query, and we need to be very sure that it's a query
     // from this datasource
     return (logsQueries ?? []).find(
-      (q) => q.refId === row.dataFrame.refId && q.datasource != null && q.datasource.type === datasourceInstance.type
+      (q) =>
+        (q.refId === row.dataFrame.refId &&
+          q.datasource != null &&
+          datasourceInstance &&
+          q.datasource.type === datasourceInstance.type) ||
+        !datasourceInstance
     );
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
-    const { datasourceInstance, logsQueries } = this.props;
+  private async getDatasourceAndQuery(logsQueries: DataQuery[] | undefined, row: LogRowModel) {
+    const query = this.getQuery(logsQueries, row);
+    const datasourceRef = query?.datasource;
 
+    const datasourceInstance = await getDataSourceSrv().get(datasourceRef);
+    return { datasourceInstance, query };
+  }
+
+  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
+    const { logsQueries } = this.props;
+
+    const { datasourceInstance, query } = await this.getDatasourceAndQuery(logsQueries, row);
     if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
       return datasourceInstance.getLogRowContext(row, options, query);
     }
 
@@ -84,10 +99,10 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const { datasourceInstance, logsQueries } = this.props;
+    const { logsQueries } = this.props;
 
+    const { datasourceInstance, query } = await this.getDatasourceAndQuery(logsQueries, row);
     if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
       return datasourceInstance.getLogRowContextQuery(row, options, query);
     }
 
@@ -105,15 +120,19 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     return <></>;
   };
 
-  showContextToggle = (row?: LogRowModel): boolean => {
-    const { datasourceInstance } = this.props;
+  showContextToggle = memoize(async (row?: LogRowModel): Promise<boolean> => {
+    const { logsQueries } = this.props;
+    if (!row) {
+      return false;
+    }
 
+    const { datasourceInstance } = await this.getDatasourceAndQuery(logsQueries, row);
     if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.showContextToggle(row);
     }
 
     return false;
-  };
+  });
 
   getFieldLinks = (field: Field, rowIndex: number, dataFrame: DataFrame) => {
     const { splitOpenFn, range } = this.props;
