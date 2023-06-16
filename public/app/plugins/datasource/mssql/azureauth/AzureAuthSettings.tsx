@@ -9,30 +9,30 @@ import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
-  const { dataSourceConfig, onChange } = props;
+  const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
 
   const [overrideAudienceAllowed] = useState<boolean>(
     // JEV: FF this feature/or remove?
-    config.featureToggles.prometheusAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
+    config.featureToggles.prometheusAzureOverrideAudience || !!dsSettings.jsonData.azureEndpointResourceId
   );
 
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
-    !!dataSourceConfig.jsonData.azureEndpointResourceId
+    !!dsSettings.jsonData.azureEndpointResourceId
   );
 
-  const credentials = useMemo(() => getCredentials(dataSourceConfig, config), [dataSourceConfig]);
+  const credentials = useMemo(() => getCredentials(dsSettings, config), [dsSettings]);
 
   const onCredentialsChange = (credentials: AzureCredentials): void => {
-    onChange(updateCredentials(dataSourceConfig, config, credentials));
+    onChange(updateCredentials(dsSettings, config, credentials));
   };
 
   const onOverrideAudienceChange = (ev: FormEvent<HTMLInputElement>): void => {
     setOverrideAudienceChecked(ev.currentTarget.checked);
     if (!ev.currentTarget.checked) {
       onChange({
-        ...dataSourceConfig,
-        jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: undefined },
+        ...dsSettings,
+        jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: undefined },
       });
     }
   };
@@ -40,8 +40,8 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const onResourceIdChange = (ev: FormEvent<HTMLInputElement>): void => {
     if (overrideAudienceChecked) {
       onChange({
-        ...dataSourceConfig,
-        jsonData: { ...dataSourceConfig.jsonData, azureEndpointResourceId: ev.currentTarget.value },
+        ...dsSettings,
+        jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: ev.currentTarget.value },
       });
     }
   };
@@ -54,23 +54,23 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
         credentials={credentials}
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
-        disabled={dataSourceConfig.readOnly}
+        disabled={dsSettings.readOnly}
       />
       {overrideAudienceAllowed && (
         <>
           <h6>Azure configuration</h6>
           <div className="gf-form-group">
             <InlineFieldRow>
-              <InlineField labelWidth={26} label="Override AAD audience" disabled={dataSourceConfig.readOnly}>
+              <InlineField labelWidth={26} label="Override AAD audience" disabled={dsSettings.readOnly}>
                 <InlineSwitch value={overrideAudienceChecked} onChange={onOverrideAudienceChange} />
               </InlineField>
             </InlineFieldRow>
             {overrideAudienceChecked && (
               <InlineFieldRow>
-                <InlineField labelWidth={26} label="Resource ID" disabled={dataSourceConfig.readOnly}>
+                <InlineField labelWidth={26} label="Resource ID" disabled={dsSettings.readOnly}>
                   <Input
                     className="width-30"
-                    value={dataSourceConfig.jsonData.azureEndpointResourceId || ''}
+                    value={dsSettings.jsonData.azureEndpointResourceId || ''}
                     onChange={onResourceIdChange}
                   />
                 </InlineField>

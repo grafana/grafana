@@ -278,6 +278,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
               />
             </InlineField>
           </div>
+
+          <azureAuthSettings.azureAuthSettingsUI dataSourceConfig={dsSettings} onChange={onOptionsChange} />
         </FieldSet>
       )}
 
