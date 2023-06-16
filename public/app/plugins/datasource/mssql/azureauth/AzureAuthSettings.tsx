@@ -12,8 +12,10 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
 
   const [overrideAudienceAllowed] = useState<boolean>(
-    config.featureToggles.prometheusAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
+    // JEV: FF this feature/or remove?
+    config.featureToggles.mssqlAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
+  
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
     !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
