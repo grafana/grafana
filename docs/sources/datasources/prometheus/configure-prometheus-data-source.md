@@ -9,7 +9,7 @@ keywords:
   - guide
 menuTitle: Configure Prometheus
 title: Configure the Prometheus data source
-weight: 1301
+weight: 200
 ---
 
 # Configure Prometheus
@@ -20,16 +20,21 @@ Grafana ships with built-in support for Prometheus. If you are new to Prometheus
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
 - [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
 
-## Add the Prometheus data source
+## Configure the data source
 
-For instructions on how to add a data source to Grafana, see [Add a data source](https://grafana.com/docs/grafana/latest/administration/data-source-management/#add-a-data-source). Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+To add the Prometheus data source, complete the following steps:
 
-## Configuration option reference
+1. Click **Connections** in the left-side menu.
+1. Under **Connections**, click **Add new connection**.
+1. Enter `Prometheus` in the search bar.
+1. Select **Prometheus data source**.
+1. Click **Create a Prometheus data source** in the upper right.
+
+You will be taken to the **Settings** tab where you will set up your Prometheus configuration.
+
+## Configuration options
 
 Following is a list of configuration options for Prometheus.
-
-<!-- For step-by-step instructions on how to configure the Prometheus data source see [Configure the Prometheus data source](). -->
 
 The first option to configure is the name of your connection:
 
@@ -39,39 +44,37 @@ The first option to configure is the name of your connection:
 
 ### HTTP section
 
-- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use <http://localhost:9090>. If it is on a server within a network, this is the port exposed where you are running Prometheus. Example: <http://prometheus.example.org:9090>.
+- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use <http://localhost:9090>. If it is on a server within a network, this is the port exposed where you are running Prometheus. Example: <http://prometheus.example.orgname:9090>.
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
 - **Timeout** - The HTTP request timeout. This must be in seconds. There is no default, so this setting is up to you.
 
-### Authentication section
+### Auth section
 
 There are several authentication methods you can choose in the Authentication section.
 
-- **Basic authentication** - The most common authentication method. Use your `data source` username and `data source` password to connect.
+{{% admonition type="note" %}}
 
-- **Enable cross-site access control requests** - Allows cross-site access control requests with your existing credentials and cookies. Enables the server to authenticate the user and perform authorized requests on their behalf on other domains.
+Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/). You must add TLS settings to your Prometheus configuration file **prior** to setting these options in Grafana.
+
+{{% /admonition %}}
+
+- **Basic authentication** - The most common authentication method. Use your `data source` user name and `data source` password to connect.
+
+- **With credentials** - Toggle on to enable credentials such as cookies or auth headers to be sent with cross-site requests.
+
+- **TLS client authentication** - Toggle on to use client authentication. When enabled, add the `Server name`, `Client cert` and `Client key`. The server provides a certificate that is validated by the client to establish the server's trusted identity. The client key encrypts the data between client and server.
+
+- **With CA cert** - Authenticate with a CA certificate. Follow the instructions of th CA (Certificate Authority) to download the certificate file.
+
+- **Skip TLS verify** - Toggle on to bypass TLS certificate validation.
 
 - **Forward OAuth identity** - Forward the OAuth access token (and also the OIDC ID token if available) of the user querying the data source.
 
-- **No authentication** - Use no authentication required to access the data source. This is **not recommended**.
+### Custom HTTP headers
 
-### TLS Settings
-
-Use TLS (transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/).
-
-> You must add TLS settings to your Prometheus configuration file prior to setting these options in Grafana.
-
-- **Add self-signed certificate** - Authenticate with a self-signed certificate.
-
-- **TLS client authentication**-
-
-- **Skip TLS certificate validation** - Check this if you want to skip TLS certificate validation.
-
-### HTTP headers
-
-- **Header** - Custom header. This is to allow custom headers to be passed based on the needs of your Prometheus instance.
+- **Header** - Add a custom header. This allows custom headers to be passed based on the needs of your Prometheus instance.
 
 - **Value** - The actual value of the header.
 
@@ -83,40 +86,44 @@ Following are additional configuration options.
 
 **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
 
-### Interval Behavior
+### Interval behavior
 
-**Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is 15s.
+- **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is 15s.
 
-**Query timeout** - The default is 60s.
+- **Query timeout** - The default is 60s.
 
 ### Query editor
 
-**Default editor** - Sets a default editor. Options are `Builder` or `Code`.
+- **Default editor** - Sets a default editor. Options are `Builder` or `Code`.
 
-**Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
+- **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
 
 ### Performance
 
-**Prometheus type** - The type of your Prometheus server; `Prometheus`, `Cortex`, `Thanos`, `Mimir`. When selected, the **Version** field attempts to populate automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types, such as Cortex, don't support this API and must be manually populated.
+- **Prometheus type** - The type of your Prometheus server. There are four options: `Prometheus`, `Cortex`, `Thanos`, `Mimir`.
 
-**Incremental querying** - Beta. Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
+- **Version** Select the version you are using. Once the Prometheus type has been selected, a list of versions auto-populates using the Prometheus [buildinfo](https://semver.org/) API. The `Cortex` Prometheus type does not support this API so you will need to manually add the version.
+
+- **Incremental querying (beta)** - Beta. Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
 
 ### Other
 
-**Custom query parameters** - Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.
+- **Custom query parameters** - Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.
 
-**HTTP method** - Use either `POST` or `GET` HTTP method to query your data source. `POST` is the recommended and pre-selected method as it allows bigger queries. Change to `GET` if you have a Prometheus version older than 2.1 or if `POST` requests are restricted in your network.
+- **HTTP method** - Use either `POST` or `GET` HTTP method to query your data source. `POST` is the recommended and pre-selected method as it allows bigger queries. Change to `GET` if you have a Prometheus version older than 2.1 or if `POST` requests are restricted in your network.
 
 ### Exemplars
 
 Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/). An exemplar is a specific trace representative of measurement taken in a given time interval.
 
-**Internal link** - Toggle on to if you have an internal link. When enabled, reveals the data source selector. Select the backend tracing data store for your exemplar data.
+- **Internal link** - Toggle on to enable an internal link. When enabled, reveals the data source selector. Select the backend tracing data store for your exemplar data.
 
-**URL** - _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).
+- **URL** - _(Visible if you **disable** `Internal link`)_ Defines the external link's URL trace backend. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}).
 
-**URL label** - _(Optional)_ Adds a custom display label to override the value of the `Label name` field.
+- **Data source** - _(Visible if you **enable** `Internal link`)_ The data source the exemplar will navigate to.
 
-**Label name** - Adds a name for the exemplar traceID property
+- **URL label** - Adds a custom display label to override the value of the `Label name` field.
 
-**Remove exemplar link** - Click to remove existing internal links.
+- **Label name** - The name of the field in the `labels` object used to obtain the traceID property.
+
+- **Remove exemplar link** - Click to remove existing links.

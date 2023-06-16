@@ -16,20 +16,20 @@ weight: 1300
 
 Prometheus is an open-source toolkit that collects and stores metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?](https://grafana.com/docs/grafana/next/fundamentals/intro-to-prometheus/)
 
-Grafana provides out-of-the-box support for Prometheus.
+Grafana provides native support for Prometheus.
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
+
+For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
+Only users with the organization administrator role can add data sources.
+Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
+
+Once you've added the Prometheus data source, you can [configure it](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
 
 The following guides will help you get started with the Prometheus data source:
 
 - [Configure the Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prom-data-source/)
 - [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
 - [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)
-
-For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
-Only users with the organization administrator role can add data sources.
-Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
-
-Once you've added the Prometheus data source, you can [configure it](/docs/grafana/latest/datasources/prometheus/configure-prom-data-source/) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
 
 ## Prometheus API
 
@@ -40,53 +40,12 @@ For more information on how to query other Prometheus-compatible projects from G
 - [Grafana Mimir](/docs/mimir/latest/)
 - [Thanos](https://thanos.io/tip/components/query.md/)
 
-## Configure the data source
-
-To configure basic settings for the data source, complete the following steps:
-
-1.  Click **Connections** in the left-side menu.
-1.  Under Your connections, click **Data sources**.
-1.  Enter `Prometheus` in the search bar.
-1.  Select **Prometheus**.
-
-    The **Settings** tab of the data source is displayed.
-
-1.  Set the data source's basic configuration options:
-
-    | Name                            | Description                                                                                                                                                                                                                                                                                                     |
-    | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | `Name`                          | The data source name. This is how you refer to the data source in panels and queries.                                                                                                                                                                                                                           |
-    | `Default`                       | Default data source that is pre-selected for new panels.                                                                                                                                                                                                                                                        |
-    | `URL`                           | The URL of your Prometheus server, for example, `http://prometheus.example.org:9090`.                                                                                                                                                                                                                           |
-    | `Access`                        | Only Server access mode is functional. If Server mode is already selected this option is hidden. Otherwise change to Server mode to prevent errors.                                                                                                                                                             |
-    | `Basic Auth`                    | Enable basic authentication to the Prometheus data source.                                                                                                                                                                                                                                                      |
-    | `User`                          | User name for basic authentication.                                                                                                                                                                                                                                                                             |
-    | `Password`                      | Password for basic authentication.                                                                                                                                                                                                                                                                              |
-    | `Manage alerts via Alerting UI` | Toggle whether to enable Alertmanager integration for this data source.                                                                                                                                                                                                                                         |
-    | `Scrape interval`               | Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s.                                                                                                                                                                                                               |
-    | `HTTP method`                   | Use either POST or GET HTTP method to query your data source. POST is the recommended and pre-selected method as it allows bigger queries. Change this to GET if you have a Prometheus version older than 2.1 or if POST requests are restricted in your network.                                               |
-    | `Type`                          | The type of your Prometheus server; `Prometheus`, `Cortex`, `Thanos`, `Mimir`. When selected, the **Version** field attempts to populate automatically using the Prometheus [buildinfo](https://semver.org/) API. Some Prometheus types, such as Cortex, don't support this API and must be manually populated. |
-    | `Version`                       | The version of your Prometheus server, note that this field is not visible until the Prometheus type is selected.                                                                                                                                                                                               |
-    | `Disable metrics lookup`        | Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances.                                                                                                                   |
-    | `Custom query parameters`       | Add custom parameters to the Prometheus query URL. For example `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be concatenated together with an '&amp;'.                                                                                                         |
-
-        **Exemplars configuration:**
-
-        | Name              | Description                                                                                                                                                                                                                                                    |
-
-    | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | **Internal link** | Enable this option if you have an internal link. When enabled, this reveals the data source selector. Select the backend tracing data store for your exemplar data. |
-    | **Data source** | _(Visible only if you enable `Internal link`)_ Selects the backend tracing data store for your exemplar data. |
-    | **URL** | _(Visible only if you disable `Internal link`)_ Defines the external link's full URL. You can interpolate the value from the field by using the [`${__value.raw}` macro]({{< relref "../..//panels-visualizations/configure-data-links/#value-variables" >}}). |
-    | **URL label** | _(Optional)_ Adds a custom display label to override the value of the `Label name` field. |
-    | **Label name** | Adds a name for the exemplar traceID property. |
-
-### Provision the data source
+## Provision the data source
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
 
-#### Provisioning example
+### Provisioning example
 
 ```yaml
 apiVersion: 1
@@ -101,7 +60,7 @@ datasources:
       httpMethod: POST
       manageAlerts: true
       prometheusType: Prometheus
-      prometheusVersion: 2.37.0
+      prometheusVersion: 2.44.0
       incrementalQuerying: true
       incrementalQueryOverlapWindow: 10m
       cacheLevel: 'High'
@@ -134,7 +93,7 @@ We also bundle a dashboard within Grafana so you can start viewing your metrics 
 
 For details about these metrics, refer to [Internal Grafana metrics]({{< relref "../../setup-grafana/set-up-grafana-monitoring/" >}}).
 
-### Amazon Managed Service for Prometheus
+## Amazon Managed Service for Prometheus
 
 The Prometheus data source works with Amazon Managed Service for Prometheus.
 
@@ -142,44 +101,38 @@ If you use an AWS Identity and Access Management (IAM) policy to control access 
 
 For details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 
-#### AWS Signature Version 4 authentication
+### AWS Signature Version 4 authentication
 
-> **Note:** Available in Grafana v7.3.5 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.3.5 and higher.
+{{% /admonition %}}
 
 To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html).
 
 If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).
 
-### Configure exemplars
+## Exemplars
 
-> **Note:** Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+Exemplars are unique to Prometheus. Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/) in Prometheus documentation for detailed information on how they work.
+
+{{% admonition type="note" %}}
+Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
+{{% /admonition %}}
 
 Grafana 7.4 and higher can show exemplars data alongside a metric both in Explore and in Dashboards.
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data.
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
-Configure Exemplars in the data source settings by adding external or internal links.
+To configure exemplars see [Exemplars](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/#exemplars).
 
-{{< figure src="/static/img/docs/v74/exemplars-setting.png" class="docs-image--no-shadow" caption="Screenshot of the Exemplars configuration" >}}
+<!-- Configure Exemplars in the data source settings by adding external or internal links. -->
 
-## Query the data source
-
-You can create queries with the Prometheus data source's query editor.
-
-For details, refer to the [query editor documentation]({{< relref "./query-editor/" >}}).
-
-## Use template variables
-
-Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
-Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
-Grafana refers to such variables as template variables.
-
-For details, see the [template variables documentation]({{< relref "./template-variables/" >}}).
+{{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" caption="Exemplars" >}}
 
 ## Incremental Dashboard Queries (beta)
 
 As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
+
 This can be toggled on or off in the data source configuration or provisioning file (under `incrementalQuerying` in jsonData).
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
 
