@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -544,9 +545,13 @@ func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasource
 type fakePluginClient struct {
 	plugins.Client
 	req *backend.QueryDataRequest
+	mu  sync.Mutex
 }
 
 func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	c.req = req
 
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
