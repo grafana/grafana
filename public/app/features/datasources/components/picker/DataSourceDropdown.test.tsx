@@ -136,6 +136,7 @@ describe('DataSourceDropdown', () => {
       await setupOpenDropdown(user, jest.fn(), mockDS.name);
       let cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
+      screen.debug(cards[0]);
       expect(cards[0].dataset.selecteditem).toEqual('true');
 
       //xMock ds is set as current, it appears on top, and is selected
