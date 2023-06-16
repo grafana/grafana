@@ -53,7 +53,7 @@ describe('FlameGraphMetadata', () => {
     });
     expect(screen.getByText(/17 | 17 samples (Count)/)).toBeInTheDocument();
     const focusPill = screen.getByText(/29.41% of total/);
-    expect(screen.getByText(/29.41% of total/)).toBeInTheDocument();
+    expect(focusPill).toBeInTheDocument();
     expect(screen.queryByLabelText(/Remove sandwich/)).toBeNull();
 
     await userEvent.click(focusPill);

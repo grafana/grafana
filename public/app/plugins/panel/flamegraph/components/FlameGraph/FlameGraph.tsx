@@ -67,13 +67,13 @@ const FlameGraph = ({
 
   const [levels, totalTicks, callersCount] = useMemo(() => {
     let levels = data.getLevels();
-    let totalTicks = levels[0][0].value;
+    let totalTicks = levels.length ? levels[0][0].value : 0;
     let callersCount = 0;
 
     if (sandwichItem) {
       const [callers, callees] = data.getSandwichLevels(sandwichItem);
       levels = [...callers, [], ...callees];
-      totalTicks = callees[0][0].value;
+      totalTicks = callees.length ? callees[0][0].value : 0;
       callersCount = callers.length;
     }
     return [levels, totalTicks, callersCount];
@@ -224,8 +224,7 @@ const FlameGraph = ({
             onItemFocused(clickedItemData);
           }}
           onSandwich={() => {
-            const label = data.getLabel(clickedItemData.item.itemIndexes[0]);
-            onSandwich(label);
+            onSandwich(data.getLabel(clickedItemData.item.itemIndexes[0]));
           }}
         />
       )}
