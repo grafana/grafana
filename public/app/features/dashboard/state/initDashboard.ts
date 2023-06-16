@@ -171,6 +171,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
 
+    const versionBeforeMigration = dashDTO?.dashboard?.version;
+
     // returns null if there was a redirect or error
     if (!dashDTO) {
       return;
@@ -272,7 +274,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
-    trackDashboardLoaded(dashboard);
+    trackDashboardLoaded(dashboard, versionBeforeMigration);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));

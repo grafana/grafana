@@ -2,7 +2,7 @@ import { reportInteraction } from '@grafana/runtime';
 
 import { DashboardModel } from '../state';
 
-export function trackDashboardLoaded(dashboard: DashboardModel) {
+export function trackDashboardLoaded(dashboard: DashboardModel, versionBeforeMigration?: number) {
   // Count the different types of variables
   const variables = dashboard.templating.list
     .map((v) => v.type)
@@ -11,11 +11,12 @@ export function trackDashboardLoaded(dashboard: DashboardModel) {
       return r;
     }, {});
 
-  reportInteraction('dashboard_loaded', {
+  reportInteraction('dashboards_init_dashboard_completed', {
     uid: dashboard.uid,
     title: dashboard.title,
-    style: dashboard.style,
+    theme: dashboard.style,
     schemaVersion: dashboard.schemaVersion,
+    version_before_migration: versionBeforeMigration,
     panels_count: dashboard.panels.length,
     ...variables,
   });
