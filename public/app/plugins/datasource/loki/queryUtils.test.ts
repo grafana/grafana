@@ -130,7 +130,7 @@ describe('getNormalizedLokiQuery', () => {
   });
 
   it('removes deprecated range and instant properties if query with queryType', () => {
-    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true, queryType: LokiQueryType.Range };
+    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true, instant: false, queryType: LokiQueryType.Range };
     const output = getNormalizedLokiQuery(input);
     expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
   });
