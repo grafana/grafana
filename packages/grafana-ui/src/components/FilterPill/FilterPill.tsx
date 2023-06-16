@@ -13,13 +13,18 @@ export interface FilterPillProps {
   label: string;
   onClick: React.MouseEventHandler<HTMLElement>;
   icon?: IconName;
+  customClass?: string;
 }
 
-export const FilterPill = ({ label, selected, onClick, icon = 'check' }: FilterPillProps) => {
+export const FilterPill = ({ label, selected, onClick, icon = 'check', customClass }: FilterPillProps) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   return (
-    <button type="button" className={cx(clearButton, styles.wrapper, selected && styles.selected)} onClick={onClick}>
+    <button
+      type="button"
+      className={cx(clearButton, styles.wrapper, selected && styles.selected, customClass)}
+      onClick={onClick}
+    >
       <span>{label}</span>
       {selected && <Icon name={icon} className={styles.icon} />}
     </button>
@@ -48,6 +53,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     selected: css`
       color: ${theme.colors.text.primary};
       background: ${theme.colors.action.selected};
+      border: 1px solid ${theme.colors.warning.main};
 
       &:hover {
         background: ${theme.colors.action.focus};
