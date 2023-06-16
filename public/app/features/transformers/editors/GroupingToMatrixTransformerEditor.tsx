@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
+import { groupingByMatrix } from '../img';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 export const GroupingToMatrixTransformerEditor = ({
@@ -93,4 +94,6 @@ export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<Grou
   transformation: standardTransformers.groupingToMatrixTransformer,
   name: 'Grouping to matrix',
   description: `Takes a three fields combination and produces a Matrix`,
+  categories: new Set(['combine', 'reformat']),
+  image: groupingByMatrix,
 };

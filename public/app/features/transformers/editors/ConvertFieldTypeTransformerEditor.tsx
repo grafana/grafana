@@ -20,6 +20,8 @@ import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/F
 import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
+import { convertFieldType } from '../img';
+
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: { width: 24, isClearable: false },
 } as any;
@@ -173,4 +175,6 @@ export const convertFieldTypeTransformRegistryItem: TransformerRegistryItem<Conv
   transformation: standardTransformers.convertFieldTypeTransformer,
   name: standardTransformers.convertFieldTypeTransformer.name,
   description: standardTransformers.convertFieldTypeTransformer.description,
+  categories: new Set(['reformat']),
+  image: convertFieldType,
 };

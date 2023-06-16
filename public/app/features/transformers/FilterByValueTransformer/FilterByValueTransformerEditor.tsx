@@ -22,6 +22,8 @@ import {
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
+import { filterByValues } from '../img';
+
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
 const filterTypes: Array<SelectableValue<FilterByValueType>> = [
@@ -139,6 +141,8 @@ export const filterByValueTransformRegistryItem: TransformerRegistryItem<FilterB
   name: standardTransformers.filterByValueTransformer.name,
   description:
     'Removes rows of the query results using user-defined filters. This is useful if you can not filter your data in the data source.',
+  categories: new Set(['filterAndReduce']),
+  image: filterByValues,
 };
 
 const getEditorStyles = stylesFactory(() => ({

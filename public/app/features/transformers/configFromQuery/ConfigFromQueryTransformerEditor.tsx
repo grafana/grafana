@@ -12,6 +12,7 @@ import {
 import { fieldMatchersUI, InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
 import { FieldToConfigMappingEditor } from '../fieldToConfigMapping/FieldToConfigMappingEditor';
+import { configFromQueryResults } from '../img';
 
 import { configFromDataTransformer, ConfigFromQueryTransformOptions } from './configFromQuery';
 
@@ -93,6 +94,8 @@ export const configFromQueryTransformRegistryItem: TransformerRegistryItem<Confi
   name: configFromDataTransformer.name,
   description: configFromDataTransformer.description,
   state: PluginState.beta,
+  categories: new Set(['calculateNewFields']),
+  image: configFromQueryResults,
   help: `
 ### Use cases
 

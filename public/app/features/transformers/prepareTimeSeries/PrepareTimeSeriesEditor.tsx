@@ -4,6 +4,8 @@ import React, { useCallback } from 'react';
 import { GrafanaTheme2, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
+import { prepareTimeSeries } from '../img';
+
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const wideInfo = {
@@ -119,4 +121,6 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   This transformer may be especially useful when using old panels that only expect the
   many-frame timeseries format.
   `,
+  categories: new Set(['reformat']),
+  image: prepareTimeSeries,
 };
