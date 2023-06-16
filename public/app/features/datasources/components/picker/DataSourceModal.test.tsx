@@ -18,14 +18,14 @@ const pluginMetaInfo: PluginMetaInfo = {
 };
 
 function createPluginMeta(name: string, builtIn: boolean): DataSourcePluginMeta {
-  return { name, id: name, type: PluginType.datasource, baseUrl: '', info: pluginMetaInfo, module: '' };
+  return { builtIn, name, id: name, type: PluginType.datasource, baseUrl: '', info: pluginMetaInfo, module: '' };
 }
 
 function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanceSettings {
   return {
     name: name,
     uid: name + 'uid',
-    meta: createPluginMeta(name, false),
+    meta: createPluginMeta(name, builtIn),
     id,
     access: 'direct',
     jsonData: {},
@@ -84,11 +84,7 @@ describe('DataSourceDropdown', () => {
       setup();
       const searchBox = await screen.findByRole('searchbox');
       expect(searchBox).toBeInTheDocument();
-      if (!searchBox) {
-        return;
-      }
-
-      await user.click(searchBox);
+      await user.click(searchBox!);
 
       await user.keyboard(xMockDS.name); //Search for xMockDS
 
