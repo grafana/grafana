@@ -15,6 +15,7 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
+  DataSourceApi,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -30,7 +31,7 @@ import {
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { MixedDatasource, MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { getNodeGraphDataFrames } from 'app/plugins/panel/nodeGraph/utils';
 import { StoreState } from 'app/types';
 import { AbsoluteTimeEvent } from 'app/types/events';
@@ -201,12 +202,19 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onModifyQueries = (action: QueryFixAction) => {
+    const datasourceInstance =
+      this.props.datasourceInstance instanceof MixedDatasource ? null : this.props.datasourceInstance;
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
-      const { datasource } = query;
-      if (datasource == null) {
-        return query;
+      let ds: DataSourceApi;
+      if (datasourceInstance) {
+        ds = datasourceInstance;
+      } else {
+        const { datasource } = query;
+        if (datasource == null) {
+          return query;
+        }
+        ds = await getDataSourceSrv().get(datasource);
       }
-      const ds = await getDataSourceSrv().get(datasource);
       if (ds.modifyQuery) {
         return ds.modifyQuery(query, modification);
       } else {
