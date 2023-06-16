@@ -1,7 +1,8 @@
 {
-  "name": "testdatasource",
+  "name": "grafana-test-datasource",
   "version": "1.0.0",
   "description": "Generates test data in different forms",
+  "private": true,
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
     "dev": "webpack -w -c ./.config/webpack/webpack.config.ts --env development",

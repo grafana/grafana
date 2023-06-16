@@ -1,11 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/master/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Testdatasource",
-  "id": "grafana-test-datasource",
+  "name": "TestData",
+  "id": "testdata",
   "metrics": true,
   "backend": true,
-  "executable": "gpx_testdatasource",
+  "executable": "gpx_grafanatestdatasource",
   "info": {
     "description": "Generates test data in different forms",
     "author": {
