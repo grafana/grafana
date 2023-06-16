@@ -536,7 +536,7 @@ var (
 		{
 			Name:         "alertingLokiRangeToInstant",
 			Description:  "Rewrites eligible loki range queries to instant queries",
-			Stage:        FeatureStageExperimental,
+			State:        FeatureStateAlpha,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 		},
