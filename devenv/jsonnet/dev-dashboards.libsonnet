@@ -716,13 +716,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('timeseries-connect-nulls-disconnect-valu', import '../dev-dashboards/panel-timeseries/timeseries-connect-nulls-disconnect-values.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('timeseries-formats', import '../dev-dashboards/panel-timeseries/timeseries-formats.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
