@@ -330,7 +330,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleWithLinks: css({
       label: 'panel-title-with-links',
-      marginBottom: 0, // override default h6 margin-bottom
+      margin: theme.spacing(1, 0, 0),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
