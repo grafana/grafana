@@ -90,7 +90,6 @@ export interface FeatureToggles {
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;

@@ -488,12 +488,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "pluginsAPIManifestKey",
-			Description: "Use grafana.com API to retrieve the public manifest key",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
 			Stage:        FeatureStageGeneralAvailability,

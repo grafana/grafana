@@ -1396,6 +1396,8 @@ github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9F
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
 github.com/grafana/thema v0.0.0-20230601172625-e3eaca4d36bd h1:gK5LMNi8AUp8xcrOSNfbvE5g3dT46Qgy+/pCon1Z9jc=
 github.com/grafana/thema v0.0.0-20230601172625-e3eaca4d36bd/go.mod h1:KWAKeFXxQYiJ/kBVbijBLRVq9atxkfkeeFIvmj4clEA=
+github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8 h1:ESVwKjvGWVucGY65rJq0Hny3a6p8UYqEbClqXhP2qJk=
+github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8/go.mod h1:KWAKeFXxQYiJ/kBVbijBLRVq9atxkfkeeFIvmj4clEA=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
