@@ -142,7 +142,7 @@ We need to update the `scripts` in the `package.json` to use the extended Webpac
 
 ### Configure grafana image to use when running docker
 
-By default `grafana-enterprise` will be used as the docker image for all docker related commands. If you want to override this behaviour simply alter the `docker-compose.yaml` by adding the following build arg `grafana_image`. 
+By default `grafana-enterprise` will be used as the docker image for all docker related commands. If you want to override this behaviour simply alter the `docker-compose.yaml` by adding the following build arg `grafana_image`.
 
 **Example:**
 
