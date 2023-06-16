@@ -43,7 +43,6 @@ interface Props extends Themeable2 {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
-  isFilterOutLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
@@ -258,7 +257,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             app={app}
             styles={styles}
             isFilterLabelActive={this.props.isFilterLabelActive}
-            isFilterOutLabelActive={this.props.isFilterOutLabelActive}
           />
         )}
       </>

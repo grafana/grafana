@@ -615,11 +615,7 @@ export class LokiDatasource
     let expression = query.expr ?? '';
     switch (options.check) {
       case 'HAS_FILTER': {
-        return expression.includes(`${options.attributes.key}="${options.attributes.value}"`);
-      }
-      case 'HAS_FILTER_OUT': {
-        console.log(`${options.attributes.key}!="${options.attributes.value}"`);
-        return expression.includes(`${options.attributes.key}!="${options.attributes.value}"`);
+        return queryHasFilter(expression, options.attributes.key, '=', options.attributes.value);
       }
       default:
         return false;

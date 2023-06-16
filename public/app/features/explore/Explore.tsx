@@ -206,10 +206,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return await this.inspectQuery('HAS_FILTER', key, value);
   };
 
-  isFilterOutLabelActive = async (key: string, value: string) => {
-    return await this.inspectQuery('HAS_FILTER_OUT', key, value);
-  };
-
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
@@ -376,7 +372,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         splitOpenFn={this.onSplitOpen('logs')}
         scrollElement={this.scrollElement}
         isFilterLabelActive={this.isFilterLabelActive}
-        isFilterOutLabelActive={this.isFilterOutLabelActive}
       />
     );
   }

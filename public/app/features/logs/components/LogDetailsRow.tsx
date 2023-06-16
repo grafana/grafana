@@ -28,7 +28,6 @@ export interface Props extends Themeable2 {
   row: LogRowModel;
   app?: CoreApp;
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
-  isFilterOutLabelActive?: (key: string, value: string) => Promise<boolean>;
 }
 
 interface State {
@@ -140,14 +139,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const { isFilterLabelActive, parsedKeys, parsedValues } = this.props;
     if (isFilterLabelActive) {
       return await isFilterLabelActive(parsedKeys[0], parsedValues[0]);
-    }
-    return false;
-  };
-
-  isFilterOutLabelActive = async () => {
-    const { isFilterOutLabelActive, parsedKeys, parsedValues } = this.props;
-    if (isFilterOutLabelActive) {
-      return await isFilterOutLabelActive(parsedKeys[0], parsedValues[0]);
     }
     return false;
   };
@@ -293,12 +284,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 />
               )}
               {hasFilteringFunctionality && (
-                <AsyncIconButton
-                  name="search-minus"
-                  tooltip="Filter out value"
-                  onClick={this.filterOutLabel}
-                  isActive={this.isFilterOutLabelActive}
-                />
+                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
               )}
               {!disableActions && displayedFields && toggleFieldButton}
               {!disableActions && (
@@ -367,7 +353,7 @@ interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButto
 const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
   const [active, setActive] = useState(false);
   useEffect(() => {
-    isActive().then(setActive).catch(console.log);
+    isActive().then(setActive);
   }, [isActive]);
 
   return <IconButton {...rest} variant={active ? 'primary' : undefined} />;
