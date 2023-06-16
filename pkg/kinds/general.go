@@ -1,6 +1,8 @@
 package kinds
 
 import (
+	"encoding/json"
+	"strings"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +55,11 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 const annoKeyCreatedBy = "grafana.com/createdBy"
 const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
 const annoKeyUpdatedBy = "grafana.com/updatedBy"
+const annoKeyTitle = "grafana.com/title"
+const annoKeyDescription = "grafana.com/description"
+const annoKeyTags = "grafana.com/tags"
+
+// The commit message -- note! it will be removed on save
 const AnnotationKeyCommitMessage = "grafana.com/commitMessage"
 
 // The folder identifier
@@ -69,6 +76,9 @@ func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {
 		delete(m.Annotations, key)
 	} else {
+		if m.Annotations == nil {
+			m.Annotations = make(map[string]string)
+		}
 		m.Annotations[key] = val
 	}
 }
@@ -122,6 +132,56 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
 	m.set(annoKeySlug, v)
+}
+
+func (m *GrafanaResourceMetadata) GetTitle() string {
+	return m.Annotations[annoKeyTitle]
+}
+
+func (m *GrafanaResourceMetadata) SetTitle(v string) {
+	m.set(annoKeyTitle, v)
+}
+
+func (m *GrafanaResourceMetadata) GetDescription() string {
+	return m.Annotations[annoKeyDescription]
+}
+
+func (m *GrafanaResourceMetadata) SetDescription(v string) {
+	m.set(annoKeyDescription, v)
+}
+
+func (m *GrafanaResourceMetadata) GetTags() []string {
+	var tags []string
+	v, ok := m.Annotations[annoKeyTags]
+	if ok {
+		err := json.Unmarshal([]byte(v), &tags)
+		if err != nil && len(v) > 0 {
+			return strings.Split(v, ",")
+		}
+	}
+	return tags
+}
+
+func (m *GrafanaResourceMetadata) SetTags(tags []string) {
+	str := ""
+	if len(tags) > 0 {
+		hasComma := false
+		for _, t := range tags {
+			if strings.Contains(t, ",") {
+				hasComma = true
+				break
+			}
+		}
+		if hasComma {
+			out, err := json.Marshal(tags)
+			if err == nil {
+				str = string(out)
+			}
+		} else {
+			str = strings.Join(tags, ",")
+		}
+	}
+	m.set(annoKeyTags, str)
 }
 
 func (m *GrafanaResourceMetadata) GetCommitMessage() string {
