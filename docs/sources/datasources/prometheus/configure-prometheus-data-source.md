@@ -44,7 +44,7 @@ The first option to configure is the name of your connection:
 
 ### HTTP section
 
-- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use <http://localhost:9090>. If it is on a server within a network, this is the port exposed where you are running Prometheus. Example: <http://prometheus.example.orgname:9090>.
+- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the port exposed where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
