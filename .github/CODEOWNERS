@@ -378,7 +378,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
-/public/app/features/panel/ @grafana/grafana-frontend-platform
+/public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
