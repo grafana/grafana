@@ -24,6 +24,7 @@ import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
 import { SpanLinkFunc, TNil } from '../../types';
+import { SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { TopOfViewRefType } from '../VirtualizedTraceView';
@@ -197,14 +198,15 @@ export default function SpanDetail(props: SpanDetailProps) {
   let logLinkButton: JSX.Element | undefined = undefined;
   if (createSpanLink) {
     const links = createSpanLink(span);
-    if (links?.logLinks) {
+    const logLinks = links?.filter((link) => link.type === SpanLinkType.Logs);
+    if (links && logLinks && logLinks.length > 0) {
       logLinkButton = (
         <DataLinkButton
           link={{
-            ...links.logLinks[0],
+            ...logLinks[0],
             title: 'Logs for this span',
             target: '_blank',
-            origin: links.logLinks[0].field,
+            origin: logLinks[0].field,
             onClick: (event: React.MouseEvent) => {
               reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                 datasourceType: datasourceType,
@@ -212,7 +214,7 @@ export default function SpanDetail(props: SpanDetailProps) {
                 type: 'log',
                 location: 'spanDetails',
               });
-              links?.logLinks?.[0].onClick?.(event);
+              logLinks?.[0].onClick?.(event);
             },
           }}
           buttonProps={{ icon: 'gf-logs' }}
@@ -287,7 +289,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             onToggle={() => warningsToggle(spanID)}
           />
         )}
-        {stackTraces && stackTraces.length && (
+        {stackTraces?.length ? (
           <AccordianText
             label="Stack trace"
             data={stackTraces}
@@ -314,7 +316,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             }}
             onToggle={() => stackTracesToggle(spanID)}
           />
-        )}
+        ) : null}
         {references && references.length > 0 && (references.length > 1 || references[0].refType !== 'CHILD_OF') && (
           <AccordianReferences
             data={references}

@@ -203,7 +203,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: postSilencesOKBody
+//       202: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence

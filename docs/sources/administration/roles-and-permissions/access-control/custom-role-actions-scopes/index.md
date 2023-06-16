@@ -10,7 +10,9 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
@@ -120,8 +122,8 @@ The following list contains role-based access control actions.
 | `settings:read`                      | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Read the [Grafana configuration settings]({{< relref "../../../../setup-grafana/configure-grafana/" >}})                                                                                                            |
 | `settings:write`                     | `settings:*`<br>`settings:auth.saml:*`<br>`settings:auth.saml:enabled` (property level) | Update any Grafana configuration settings that can be [updated at runtime]({{< relref "../../../../setup-grafana/configure-grafana/settings-updates-at-runtime" >}}).                                               |
 | `status:accesscontrol`               | `services:accesscontrol`                                                                | Get access-control enabled status.                                                                                                                                                                                  |
-| `teams.permissions:read`             | `teams:*`<br>`teams:id:*`                                                               | Read members and External Group Synchronization setup for teams.                                                                                                                                                    |
-| `teams.permissions:write`            | `teams:*`<br>`teams:id:*`                                                               | Add, remove and update members and manage External Group Synchronization setup for teams.                                                                                                                           |
+| `teams.permissions:read`             | `teams:*`<br>`teams:id:*`                                                               | Read members and Team Sync setup for teams.                                                                                                                                                                         |
+| `teams.permissions:write`            | `teams:*`<br>`teams:id:*`                                                               | Add, remove and update members and manage Team Sync setup for teams.                                                                                                                                                |
 | `teams.roles:add`                    | `permissions:type:delegate`                                                             | Assign a role to a team.                                                                                                                                                                                            |
 | `teams.roles:read`                   | `teams:*`                                                                               | List roles assigned directly to a team.                                                                                                                                                                             |
 | `teams.roles:remove`                 | `permissions:type:delegate`                                                             | Unassign a role from a team.                                                                                                                                                                                        |

@@ -32,9 +32,12 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
   if (panel.state.measureMenuActive) {
     return true;
   }
-  if (!panel.map || panel.state.ttipOpen) {
+
+  // Eject out of this function if map is not loaded or valid tooltip is already open
+  if (!panel.map || (panel.state.ttipOpen && panel.state?.ttip?.layers?.length)) {
     return false;
   }
+
   const mouse = evt.originalEvent;
   const pixel = panel.map.getEventPixel(mouse);
   const hover = toLonLat(panel.map.getCoordinateFromPixel(pixel));
@@ -65,9 +68,9 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
       //this is used as the generic hover event
       if (!hoverPayload.data) {
         const props = feature.getProperties();
-        const frame = props['frame'];
+        const frame: DataFrame = props['frame'];
         if (frame) {
-          hoverPayload.data = ttip.data = frame as DataFrame;
+          hoverPayload.data = ttip.data = frame;
           hoverPayload.rowIndex = ttip.rowIndex = props['rowIndex'];
         }
 
@@ -96,7 +99,10 @@ export const pointerMoveListener = (evt: MapBrowserEvent<MouseEvent>, panel: Geo
   panel.hoverPayload.layers = layers.length ? layers : undefined;
   panel.props.eventBus.publish(panel.hoverEvent);
 
-  panel.setState({ ttip: { ...hoverPayload } });
+  // This check optimizes Geomap panel re-render behavior (without it, Geomap renders on every mouse move event)
+  if (panel.state.ttip === undefined || panel.state.ttip?.layers !== hoverPayload.layers || hoverPayload.layers) {
+    panel.setState({ ttip: { ...hoverPayload } });
+  }
 
   if (!layers.length) {
     // clear mouse events

@@ -12,10 +12,10 @@ import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
+import { Options, FieldConfig, defaultOptions, defaultFieldConfig } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimelinePanel)
+export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          defaultValue: defaultPanelFieldConfig.lineWidth,
+          defaultValue: defaultFieldConfig.lineWidth,
           settings: {
             min: 0,
             max: 10,
@@ -43,7 +43,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultPanelFieldConfig.fillOpacity,
+          defaultValue: defaultFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 100,
@@ -60,6 +60,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
           shouldApply: (f) => f.type !== FieldType.time,
           process: identityOverrideProcessor,
         });
+
+      commonOptionsBuilder.addHideFrom(builder);
     },
   })
   .setPanelOptions((builder) => {
@@ -67,7 +69,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
       .addBooleanSwitch({
         path: 'mergeValues',
         name: 'Merge equal consecutive values',
-        defaultValue: defaultPanelOptions.mergeValues,
+        defaultValue: defaultOptions.mergeValues,
       })
       .addRadio({
         path: 'showValue',
@@ -79,7 +81,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
             { value: VisibilityMode.Never, label: 'Never' },
           ],
         },
-        defaultValue: defaultPanelOptions.showValue,
+        defaultValue: defaultOptions.showValue,
       })
       .addRadio({
         path: 'alignValue',
@@ -91,7 +93,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
             { value: 'right', label: 'Right' },
           ],
         },
-        defaultValue: defaultPanelOptions.alignValue,
+        defaultValue: defaultOptions.alignValue,
       })
       .addSliderInput({
         path: 'rowHeight',
@@ -101,7 +103,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimel
           max: 1,
           step: 0.01,
         },
-        defaultValue: defaultPanelOptions.rowHeight,
+        defaultValue: defaultOptions.rowHeight,
       });
 
     commonOptionsBuilder.addLegendOptions(builder, false);
