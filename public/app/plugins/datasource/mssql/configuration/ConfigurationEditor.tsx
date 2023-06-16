@@ -29,6 +29,7 @@ import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
+import { dataSourceHasCredentials } from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
@@ -38,8 +39,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const azureAuthSettings = {
     azureAuthSupported: config.azureAuthEnabled,
-    getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
-    setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
+    dataSourceHasCredentials,
+    setDataSourceCredentials: (config: DataSourceSettings<any, any>, enabled: boolean) =>
       enabled ? setDefaultCredentials(config) : resetCredentials(config),
     azureSettingsUI: AzureAuthSettings,
   };
