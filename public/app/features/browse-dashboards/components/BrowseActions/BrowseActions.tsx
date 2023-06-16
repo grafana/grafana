@@ -6,11 +6,11 @@ import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
-import { useDispatch, useSelector } from 'app/types';
+import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
-import { childrenByParentUIDSelector, rootItemsSelector, setAllSelection, useActionSelectionState } from '../../state';
+import { setAllSelection, useActionSelectionState } from '../../state';
 import { DashboardTreeSelection } from '../../types';
 
 import { DeleteModal } from './DeleteModal';
@@ -21,15 +21,11 @@ export interface Props {}
 export function BrowseActions() {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
-
   const selectedItems = useActionSelectionState();
-  const rootItems = useSelector(rootItemsSelector);
-  const childrenByParentUID = useSelector(childrenByParentUIDSelector);
-
   const [deleteItems] = useDeleteItemsMutation();
   const [moveItems] = useMoveItemsMutation();
-
   const [, stateManager] = useSearchStateManager();
+
   const isSearching = stateManager.hasSearchFilters();
 
   const onActionComplete = () => {
@@ -42,19 +38,13 @@ export function BrowseActions() {
   };
 
   const onDelete = async () => {
-    await deleteItems({ selectedItems, rootItems: rootItems?.items ?? [], childrenByParentUID });
-
+    await deleteItems({ selectedItems });
     trackAction('delete', selectedItems);
     onActionComplete();
   };
 
   const onMove = async (destinationUID: string) => {
-    await moveItems({
-      selectedItems,
-      rootItems: rootItems?.items ?? [],
-      childrenByParentUID,
-      destinationUID,
-    });
+    await moveItems({ selectedItems, destinationUID });
     trackAction('move', selectedItems);
     onActionComplete();
   };

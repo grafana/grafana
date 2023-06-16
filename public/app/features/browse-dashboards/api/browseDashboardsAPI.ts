@@ -8,12 +8,10 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
-import { DashboardViewItem } from 'app/features/search/types';
 import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashboardResponseDTO } from 'app/types';
 
-import { refetchChildren } from '../state';
-import { findItem } from '../state/utils';
-import { DashboardTreeSelection, DashboardViewItemCollection } from '../types';
+import { refetchChildren, refreshParents } from '../state';
+import { DashboardTreeSelection } from '../types';
 
 import { PAGE_SIZE, ROOT_PAGE_SIZE } from './services';
 
@@ -24,8 +22,6 @@ interface RequestOptions extends BackendSrvRequest {
 
 interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-  rootItems: DashboardViewItem[] | undefined;
-  childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
 }
 
 interface MoveItemsArgs extends DeleteItemsArgs {
@@ -118,7 +114,7 @@ export const browseDashboardsAPI = createApi({
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
           await contextSrv.fetchUserPermissions();
-          dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
+          dispatch(notifyApp(createSuccessNotification('Folder created')));
           dispatch(
             refetchChildren({
               parentUID: parentUid,
@@ -181,25 +177,11 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: ({ selectedItems, rootItems, childrenByParentUID }, { queryFulfilled, dispatch }) => {
+      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         queryFulfilled.then(() => {
-          const parentsToRefresh = new Set<string | undefined>();
-          for (const folderUID of selectedFolders) {
-            // find the parent folder uid to invalidate the children
-            const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
-            parentsToRefresh.add(folder?.parentUID);
-          }
-
-          for (const dashboardUID of selectedDashboards) {
-            // find the parent folder uid to invalidate the children
-            const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
-            parentsToRefresh.add(dashboard?.parentUID);
-          }
-          for (const parentUID of parentsToRefresh) {
-            dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
-          }
+          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
         });
       },
     }),
@@ -242,33 +224,17 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: (
-        { destinationUID, selectedItems, rootItems, childrenByParentUID },
-        { queryFulfilled, dispatch }
-      ) => {
+      onQueryStarted: ({ destinationUID, selectedItems }, { queryFulfilled, dispatch }) => {
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         queryFulfilled.then(() => {
-          const parentsToRefresh = new Set<string | undefined>();
-
-          const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-          const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
-          parentsToRefresh.add(destinationUID);
-
-          for (const folderUID of selectedFolders) {
-            // find the parent folder uid to invalidate the children
-            const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
-            parentsToRefresh.add(folder?.parentUID);
-          }
-
-          for (const dashboardUID of selectedDashboards) {
-            // find the parent folder uid to invalidate the children
-            const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
-            parentsToRefresh.add(dashboard?.parentUID);
-          }
-
-          for (const parentUID of parentsToRefresh) {
-            dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
-          }
+          dispatch(
+            refetchChildren({
+              parentUID: destinationUID,
+              pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
         });
       },
     }),

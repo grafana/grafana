@@ -2,7 +2,9 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types';
 
-import { listDashboards, listFolders } from '../api/services';
+import { listDashboards, listFolders, PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
+
+import { findItem } from './utils';
 
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
@@ -27,6 +29,25 @@ interface RefetchChildrenResult {
   page: number;
   lastPageOfKind: boolean;
 }
+
+export const refreshParents = createAsyncThunk(
+  'browseDashboards/refreshParents',
+  async (uids: string[], { getState, dispatch }) => {
+    const { browseDashboards } = getState();
+    const { rootItems, childrenByParentUID } = browseDashboards;
+    const parentsToRefresh = new Set<string | undefined>();
+
+    for (const uid of uids) {
+      // find the parent folder uid
+      const item = findItem(rootItems?.items ?? [], childrenByParentUID, uid);
+      parentsToRefresh.add(item?.parentUID);
+    }
+
+    for (const parentUID of parentsToRefresh) {
+      dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+    }
+  }
+);
 
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
