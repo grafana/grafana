@@ -157,13 +157,13 @@ If you re-run the configuration, Grafana automatically reloads the plugin.
 
 Configure your code editor to run the following steps:
 
-1. Build the executable file with debug flags.
+1. Build the executable file.
    ```
-   mage build:debug
+   mage build
    ```
-1. Run the plugin's executable file (inside `dist`) with `-standalone -debug` flags.
+1. Run the plugin's executable file (inside `dist`) with `-standalone` flag.
    ```
-   ./gpx_xyz_linux_amd64 -standalone -debug
+   ./gpx_xyz_linux_amd64 -standalone
    ```
 1. Attach a debugger to the process.
 
@@ -174,5 +174,5 @@ Configure your code editor to run the following steps:
 ### Notes
 
 - All logs are printed in the plugin's `stdout` rather than in Grafana logs.
-- If the backend plugin doesn't serve requests after you turn off debug mode, you can force a reset to the standalone mode. To do so, delete the files `dist/standalone.txt`, `dist/pid.txt`, and the executable file, and then restart Grafana.
+- If the backend plugin doesn't serve requests after you stop debugging, you can force a reset to the standalone mode. To do so, delete the files `dist/standalone.txt`, `dist/pid.txt`, and the executable file, and then restart Grafana.
 - Grafana doesn't support debugging backend plugins running inside Docker. But this is a [planned enhancement](https://github.com/grafana/grafana-plugin-sdk-go/issues/685).
