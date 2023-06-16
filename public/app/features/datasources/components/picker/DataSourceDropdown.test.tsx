@@ -130,22 +130,18 @@ describe('DataSourceDropdown', () => {
       expect(getListMock.mock.lastCall[0]).toEqual(filters);
     });
 
-    it('should display the current ds on top and selected', async () => {
-      //Mock ds is set as current, it appears on top, and is selected
+    it('should display the current ds on top', async () => {
+      //Mock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS);
       await setupOpenDropdown(user, jest.fn(), mockDS.name);
       let cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
-      screen.debug(cards[0]);
-      expect(cards[0].dataset.selecteditem).toEqual('true');
 
-      //xMock ds is set as current, it appears on top, and is selected
+      //xMock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(xMockDS);
       await setupOpenDropdown(user, jest.fn(), xMockDS.name);
       cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
-
-      expect(cards[0].dataset.selecteditem).toEqual('true');
     });
 
     it('should get the sorting function using the correct paramters', async () => {
@@ -186,15 +182,11 @@ describe('DataSourceDropdown', () => {
       const onChange = jest.fn();
       await setupOpenDropdown(user, onChange);
 
-      //Dropdown open, first element is selected
-      let mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
-      expect(mockDSElement?.dataset.selecteditem).toEqual('true');
-
       await user.keyboard('[ArrowDown]');
       //Arrow down, second item is selected
       const xMockDSElement = getCard(await screen.findByText(xMockDS.name, { selector: 'span' }));
       expect(xMockDSElement?.dataset.selecteditem).toEqual('true');
-      mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
+      let mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
       expect(mockDSElement?.dataset.selecteditem).toEqual('false');
 
       await user.keyboard('[ArrowUp]');
@@ -215,7 +207,10 @@ describe('DataSourceDropdown', () => {
       await user.keyboard(xMockDS.name); //Search for xMockDS
 
       expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
-      expect(await screen.findByText(xMockDS.name, { selector: 'span' })).toBeInTheDocument();
+      const xMockCard = getCard(await screen.findByText(xMockDS.name, { selector: 'span' }));
+      expect(xMockCard).toBeInTheDocument();
+
+      expect(xMockCard?.dataset.selecteditem).toEqual('true'); //The first search result is selected
 
       await user.keyboard('foobarbaz'); //Search for a DS that should not exist
 
