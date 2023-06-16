@@ -78,7 +78,7 @@ func TestRequireStringWithEnvFallback(t *testing.T) {
 	}{
 		{
 			testName:    "string present in the context",
-			ctx:         cli.NewContext(app, setFlags(t, flag.NewFlagSet("test", flag.ContinueOnError), flagObj{name: flag1, value: "a"}, flagObj{name: flag2, value: "b"}), nil),
+			ctx:         cli.NewContext(app, setFlags(t, flag.NewFlagSet("test", flag.ContinueOnError), flagObj{name: flag1, value: "a"}), nil),
 			name:        flag1,
 			envName:     "",
 			expected:    "a",
