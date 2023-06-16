@@ -111,6 +111,7 @@ func FromContext(ctx context.Context) *contextmodel.ReqContext {
 	return nil
 }
 
+// SetupContext injects `contextmodel.ReqContext` into the request context.
 func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		mContext := web.FromContext(req.Context())
