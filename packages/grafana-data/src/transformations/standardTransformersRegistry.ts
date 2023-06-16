@@ -28,7 +28,26 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
    * React component used as UI for the transformer
    */
   editor: React.ComponentType<TransformerUIProps<TOptions>>;
+
+  /**
+   * Set of categories associated with the transformer
+   */
+  categories?: Set<TransformerCategory>;
+
+  /**
+   * Image path for the transformer
+   */
+  image?: { dark: string; light: string };
 }
+
+export type TransformerCategory =
+  | 'combine'
+  | 'calculateNewFields'
+  | 'createNewVisualization'
+  | 'filterAndReduce'
+  | 'performSpatialOperations'
+  | 'reformat'
+  | 'reorderAndRename';
 
 /**
  * Registry of transformation options that can be driven by
