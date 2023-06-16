@@ -2033,6 +2033,14 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
