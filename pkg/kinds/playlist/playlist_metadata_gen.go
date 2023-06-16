@@ -20,13 +20,13 @@ type Metadata struct {
 	DeletionTimestamp *time.Time `json:"deletionTimestamp,omitempty"`
 
 	// extraFields is reserved for any fields that are pulled from the API server metadata but do not have concrete fields in the CUE metadata
-	ExtraFields     map[string]interface{} `json:"extraFields"`
-	Finalizers      []string               `json:"finalizers"`
-	Labels          map[string]string      `json:"labels"`
-	ResourceVersion string                 `json:"resourceVersion"`
-	Uid             string                 `json:"uid"`
-	UpdateTimestamp time.Time              `json:"updateTimestamp"`
-	UpdatedBy       string                 `json:"updatedBy"`
+	ExtraFields     map[string]any    `json:"extraFields"`
+	Finalizers      []string          `json:"finalizers"`
+	Labels          map[string]string `json:"labels"`
+	ResourceVersion string            `json:"resourceVersion"`
+	Uid             string            `json:"uid"`
+	UpdateTimestamp time.Time         `json:"updateTimestamp"`
+	UpdatedBy       string            `json:"updatedBy"`
 }
 
 // _kubeObjectMetadata is metadata found in a kubernetes object's metadata field.

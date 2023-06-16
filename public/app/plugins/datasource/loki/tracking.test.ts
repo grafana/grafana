@@ -44,7 +44,7 @@ const requests: LokiGroupedRequest[] = [
       }),
       app: 'explore',
     },
-    partition: partitionTimeRange(true, range, 60000, 1, 24 * 60 * 60 * 1000),
+    partition: partitionTimeRange(true, range, 60000, 24 * 60 * 60 * 1000),
   },
   {
     request: {
@@ -54,7 +54,7 @@ const requests: LokiGroupedRequest[] = [
       }),
       app: 'explore',
     },
-    partition: partitionTimeRange(false, range, 60000, 1, 24 * 60 * 60 * 1000),
+    partition: partitionTimeRange(false, range, 60000, 24 * 60 * 60 * 1000),
   },
 ];
 

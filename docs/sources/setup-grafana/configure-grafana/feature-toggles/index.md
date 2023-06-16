@@ -108,12 +108,13 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                      |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
-| `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
 | `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
+| `exploreScrollableLogsContainer`   | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`             | Enables writing multiple items from a single query within Recorded Queries                                   |
+| `alertingLokiRangeToInstant`       | Rewrites eligible loki range queries to instant queries                                                      |
 
 ## Development feature toggles
 
