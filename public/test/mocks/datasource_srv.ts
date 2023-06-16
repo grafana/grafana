@@ -27,6 +27,18 @@ export class DatasourceSrvMock {
     }
     return Promise.reject(`Unknown Datasource: ${JSON.stringify(ref)}`);
   }
+
+  getSync(ref?: DataSourceRef | string): DataSourceApi | null {
+    if (!ref) {
+      return this.defaultDS;
+    }
+    const uid = getDataSourceUID(ref) ?? '';
+    const ds = this.datasources[uid];
+    if (ds) {
+      return ds;
+    }
+    return null;
+  }
 }
 
 export class MockDataSourceApi extends DataSourceApi {
