@@ -107,7 +107,6 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
-      invalidatesTags: (_result, _error, { parentUid }) => [{ type: 'getFolder', id: parentUid }],
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
