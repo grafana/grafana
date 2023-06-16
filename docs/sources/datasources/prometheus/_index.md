@@ -134,6 +134,6 @@ To configure exemplars see [Exemplars](/docs/grafana/latest/datasources/promethe
 As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
 
 This can be toggled on or off in the data source configuration or provisioning file (under `incrementalQuerying` in jsonData).
-Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is 10m (10 minutes).
+Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is `10m` (10 minutes).
 
 Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
