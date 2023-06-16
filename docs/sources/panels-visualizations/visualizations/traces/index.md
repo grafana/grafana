@@ -44,12 +44,12 @@ To view and analyze traces data in a dashboard, you need to add the tracing pane
 The query determines the data that is displayed in the panel.
 For more information on the panel editor, refer to the [Panel editor documentation]({{< relref "../../panel-editor-overview" >}}).
 
-This procedure uses dashboard variables and templates to allow us to enter trace IDs which can then be visualized. We’re going to use a variable called `traceId` and add it as a template query.
+This procedure uses dashboard variables and templates to allow you to enter trace IDs which can then be visualized. You'll use a variable called `traceId` and add it as a template query.
 
-1. From your Grafana instance, create a new dashboard or go to an existing dashboard where you would like to add tracing panels.
+1. From your Grafana stack, create a new dashboard or go to an existing dashboard where you'd like to add tracing panels.
 1. Select **Add visualization** from a new dashboard or select **Add Panel** on an existing dashboard.
 1. Search for and select the appropriate tracing data source.
-1. In the panel search pane on the right, select the **Visualizations** tab, search for, and select **Traces**.
+1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Traces**.
 1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation]({{< relref "../../configure-panel-options" >}}).
 1. In the query editor, select the **TraceQL** query type tab.
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
@@ -72,10 +72,10 @@ It’s more useful to instead be able to use TraceQL queries to search for speci
 
 1. In the same dashboard where you added the trace visualization, select **Add panel** to add a new visualization panel.
 1. Select the same trace data source you used in the previous section.
-1. In the panel search pane, select the **Visualizations** tab and search for **Table**.
+1. In the top-right of the panel editor, select the **Visualizations** tab, search for, and select **Table**.
 1. In the query editor, select the **TraceQL** tab.
 1. Under the **Panel options**, enter a **Title** for your trace panel.
-1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. We’ll use a simple, static query as an example. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
+1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. This example uses a simple, static query. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
 
@@ -87,7 +87,7 @@ When results are returned from a query, the results are rendered in the panel’
 
 The results in the Traces panel include links to the **Explore** page that renders the trace. You can add other links to traces in the table that fill in the `traceId` dashboard variable when selected, so that the trace is visualized in the same dashboard.
 
-To do so, you need to create a set of data links in the panel. Take the following steps:
+To create a set of data links in the panel, use the following steps:
 
 1. In the right-side menu, under **Data links**, select **Add link**.
 1. Add a **Title** for the data link.
