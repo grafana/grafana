@@ -3,6 +3,7 @@ import { SQLOptions } from 'app/features/plugins/sql/types';
 export enum MSSQLAuthenticationType {
   sqlAuth = 'SQL Server Authentication',
   windowsAuth = 'Windows Authentication',
+  azureAuth = 'Azure AD Authentication',
 }
 
 export enum MSSQLEncryptOptions {

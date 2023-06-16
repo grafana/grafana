@@ -45,10 +45,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const { options: dsSettings, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
-  const azureAuthSupported = config.azureAuthEnabled;
+  const azureAuthIsSupported = config.azureAuthEnabled;
 
   const azureAuthSettings: AzureAuthConfigType = {
-    azureAuthSupported,
+    azureAuthIsSupported,
     dataSourceHasCredentials,
     setDataSourceCredentials,
     azureAuthSettingsUI: AzureAuthSettings,
@@ -74,6 +74,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     updateDatasourcePluginJsonDataOption(props, 'encrypt', value.value);
   };
 
+  // JEV update
   const onAuthenticationMethodChanged = (value: SelectableValue) => {
     onOptionsChange({
       ...dsSettings,
@@ -93,6 +94,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const authenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
     { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
     { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
+    { value: MSSQLAuthenticationType.azureAuth, label: 'Azure AD Authentication' },
   ];
 
   const encryptOptions: Array<SelectableValue<string>> = [
@@ -102,7 +104,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   ];
 
   const azureAuthEnabled: boolean =
-    azureAuthSettings?.azureAuthSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
+    azureAuthSettings?.azureAuthIsSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
 
   return (
     <>
@@ -140,37 +142,43 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 <i>Windows Authentication</i> Windows Integrated Security - single sign on for users who are already
                 logged onto Windows and have enabled this option for MS SQL Server.
               </li>
+              <li>
+                <i>Azure Authentication</i> JEV: TODO DESCRIPTION
+              </li>
             </ul>
           }
         >
           <Select
+            // Default to basic authentication of none is set
             value={jsonData.authenticationType || MSSQLAuthenticationType.sqlAuth}
             inputId="authenticationType"
             options={authenticationOptions}
             onChange={onAuthenticationMethodChanged}
           ></Select>
         </InlineField>
-        {jsonData.authenticationType === MSSQLAuthenticationType.windowsAuth ? null : (
-          <InlineFieldRow>
-            <InlineField labelWidth={SHORT_WIDTH} label="User">
-              <Input
-                width={SHORT_WIDTH}
-                value={dsSettings.user || ''}
-                placeholder="user"
-                onChange={onDSOptionChanged('user')}
-              ></Input>
-            </InlineField>
-            <InlineField label="Password" labelWidth={SHORT_WIDTH}>
-              <SecretInput
-                width={SHORT_WIDTH}
-                placeholder="Password"
-                isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
-                onReset={onResetPassword}
-                onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-              ></SecretInput>
-            </InlineField>
-          </InlineFieldRow>
-        )}
+        {/* Basic SQL auth */}
+        {jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth ||
+          (jsonData.authenticationType === MSSQLAuthenticationType.windowsAuth && (
+            <InlineFieldRow>
+              <InlineField labelWidth={SHORT_WIDTH} label="User">
+                <Input
+                  width={SHORT_WIDTH}
+                  value={dsSettings.user || ''}
+                  placeholder="user"
+                  onChange={onDSOptionChanged('user')}
+                ></Input>
+              </InlineField>
+              <InlineField label="Password" labelWidth={SHORT_WIDTH}>
+                <SecretInput
+                  width={SHORT_WIDTH}
+                  placeholder="Password"
+                  isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
+                  onReset={onResetPassword}
+                  onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+                ></SecretInput>
+              </InlineField>
+            </InlineFieldRow>
+          ))}
       </FieldSet>
 
       {config.secureSocksDSProxyEnabled && (
@@ -249,8 +257,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      <FieldSet label="Azure Authentication Settings">
-        {azureAuthEnabled && (
+      {azureAuthEnabled && (
+        <FieldSet label="Azure Authentication Settings">
           <div className="gf-form-inline">
             <InlineField
               label="Azure Authentication"
@@ -270,8 +278,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
               />
             </InlineField>
           </div>
-        )}
-      </FieldSet>
+        </FieldSet>
+      )}
 
       <ConnectionLimits labelWidth={SHORT_WIDTH} options={dsSettings} onOptionsChange={onOptionsChange} />
 

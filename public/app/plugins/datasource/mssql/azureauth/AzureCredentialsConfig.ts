@@ -5,7 +5,7 @@ import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSett
 import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
 export type AzureAuthConfigType = {
-  azureAuthSupported: boolean;
+  azureAuthIsSupported: boolean;
   dataSourceHasCredentials: (options: DataSourceSettings<any, any>) => boolean;
   setDataSourceCredentials: (
     dsSettings: DataSourceSettings<any, any>,
