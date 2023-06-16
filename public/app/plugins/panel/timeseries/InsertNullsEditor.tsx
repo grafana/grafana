@@ -3,14 +3,10 @@ import React from 'react';
 import { FieldOverrideEditorProps, rangeUtil, SelectableValue } from '@grafana/data';
 import { HorizontalGroup, Input, RadioButtonGroup } from '@grafana/ui';
 
-const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
+const DISCONNECT_OPTIONS: Array<SelectableValue<boolean | number>> = [
   {
     label: 'Never',
     value: false,
-  },
-  {
-    label: 'Always',
-    value: true,
   },
   {
     label: 'Threshold',
@@ -20,10 +16,10 @@ const GAPS_OPTIONS: Array<SelectableValue<boolean | number>> = [
 
 type Props = FieldOverrideEditorProps<boolean | number, unknown>;
 
-export const SpanNullsEditor = ({ value, onChange }: Props) => {
+export const InsertNullsEditor = ({ value, onChange }: Props) => {
   const isThreshold = typeof value === 'number';
   const formattedTime = isThreshold ? rangeUtil.secondsToHms(value / 1000) : undefined;
-  GAPS_OPTIONS[2].value = isThreshold ? value : 3600000; // 1h
+  DISCONNECT_OPTIONS[1].value = isThreshold ? value : 3600000; // 1h
 
   const checkAndUpdate = (txt: string) => {
     let val: boolean | number = false;
@@ -50,7 +46,7 @@ export const SpanNullsEditor = ({ value, onChange }: Props) => {
 
   return (
     <HorizontalGroup>
-      <RadioButtonGroup value={value} options={GAPS_OPTIONS} onChange={onChange} />
+      <RadioButtonGroup value={value} options={DISCONNECT_OPTIONS} onChange={onChange} />
       {isThreshold && (
         <Input
           autoFocus={false}
@@ -59,7 +55,7 @@ export const SpanNullsEditor = ({ value, onChange }: Props) => {
           defaultValue={formattedTime}
           onKeyDown={handleEnterKey}
           onBlur={handleBlur}
-          prefix={<div>&lt;</div>}
+          prefix={<div>&gt;</div>}
           spellCheck={false}
         />
       )}

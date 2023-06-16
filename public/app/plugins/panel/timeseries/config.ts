@@ -20,8 +20,9 @@ import {
 } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
+import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
-import { InsertNullsEditor, SpanNullsEditor } from './SpanNullsEditor';
+import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
 
 export const defaultGraphConfig: GraphFieldConfig = {
