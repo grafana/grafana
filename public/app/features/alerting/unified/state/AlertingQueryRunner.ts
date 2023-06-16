@@ -49,7 +49,7 @@ export class AlertingQueryRunner {
     const queriesToExclude: string[] = [];
 
     // do not execute if one more of the queries are not runnable,
-    // for example not completely
+    // for example not completely configured
     for (const query of queries) {
       const refId = query.model.refId;
 
