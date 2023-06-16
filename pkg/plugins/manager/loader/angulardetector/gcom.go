@@ -21,7 +21,7 @@ const (
 	defaultGCOMDetectorsProviderTTL = time.Hour * 24
 
 	// gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
-	gcomAngularPatternsPath = "/api/angular_patterns"
+	gcomAngularPatternsPath = "/api/plugins/angular_patterns"
 )
 
 var _ detectorsProvider = &gcomDetectorsProvider{}
@@ -90,6 +90,7 @@ func (p *gcomDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) er
 	if err != nil {
 		return fmt.Errorf("detectors: %w", err)
 	}
+	p.log.Debug("Updated remote angular detectors", "detectors", len(detectors))
 
 	// Update cached result
 	p.detectors = detectors
@@ -138,7 +139,7 @@ func (p *gcomDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error)
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
-	p.log.Debug("fetched remote angular detection patterns", "duration", time.Since(st))
+	p.log.Debug("Fetched remote angular detection patterns", "patterns", len(out), "duration", time.Since(st))
 	return out, nil
 }
 

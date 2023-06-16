@@ -22,7 +22,7 @@ var mockGCOMResponse = []byte(`[{
 }]`)
 
 func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) {
-	if request.URL.Path != "/api/angular_patterns" {
+	if request.URL.Path != "/api/plugins/angular_patterns" {
 		writer.WriteHeader(http.StatusNotFound)
 		return
 	}
