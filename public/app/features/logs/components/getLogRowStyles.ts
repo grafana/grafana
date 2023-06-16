@@ -89,10 +89,6 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
           z-index: 1;
         }
 
-        .log-row-menu-visible {
-          visibility: hidden;
-        }
-
         background: ${hoverBgColor};
       }
 
