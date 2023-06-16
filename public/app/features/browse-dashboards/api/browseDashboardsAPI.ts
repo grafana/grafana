@@ -3,7 +3,9 @@ import { lastValueFrom } from 'rxjs';
 
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getFolderChildren } from 'app/features/search/service/folders';
 import { DashboardViewItem } from 'app/features/search/types';
 import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashboardResponseDTO } from 'app/types';
@@ -344,7 +346,9 @@ export const browseDashboardsAPI = createApi({
       }),
       onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
         const { folderUid } = arg;
-        queryFulfilled.then(() => {
+        dashboardWatcher.ignoreNextSave();
+        queryFulfilled.then(async () => {
+          await contextSrv.fetchUserPermissions();
           dispatch(
             refetchChildren({
               parentUID: folderUid,
