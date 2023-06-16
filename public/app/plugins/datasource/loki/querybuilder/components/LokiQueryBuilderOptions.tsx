@@ -7,7 +7,7 @@ import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { isLogsQuery } from '../../queryUtils';
+import { getNormalizedLokiQuery, isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
 
 export interface Props {
@@ -61,7 +61,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       }
     }
 
-    let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
+    const queryType = getNormalizedLokiQuery(query).queryType ?? LokiQueryType.Range;
     let showMaxLines = isLogsQuery(query.expr);
 
     return (
