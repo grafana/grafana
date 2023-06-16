@@ -281,7 +281,7 @@ describe(`Traces Filters`, () => {
       rerender
     );
 
-    const removeButtons = screen.getAllByLabelText('Remove');
+    const removeButtons = screen.getAllByLabelText('Remove filter');
 
     mockQuery = {
       ...mockQuery,
