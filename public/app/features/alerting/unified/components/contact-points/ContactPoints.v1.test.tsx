@@ -20,30 +20,31 @@ import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import 'whatwg-fetch';
 
-import Receivers from './Receivers';
-import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from './api/alertmanager';
-import { AlertmanagersChoiceResponse } from './api/alertmanagerApi';
-import { discoverAlertmanagerFeatures } from './api/buildInfo';
-import { fetchNotifiers } from './api/grafana';
-import * as receiversApi from './api/receiversApi';
-import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
+import { fetchAlertManagerConfig, fetchStatus, testReceivers, updateAlertManagerConfig } from '../../api/alertmanager';
+import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
+import { discoverAlertmanagerFeatures } from '../../api/buildInfo';
+import { fetchNotifiers } from '../../api/grafana';
+import * as receiversApi from '../../api/receiversApi';
+import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import {
   mockDataSource,
   MockDataSourceSrv,
   someCloudAlertManagerConfig,
   someCloudAlertManagerStatus,
   someGrafanaAlertManagerConfig,
-} from './mocks';
-import { mockAlertmanagerChoiceResponse } from './mocks/alertmanagerApi';
-import { grafanaNotifiersMock } from './mocks/grafana-notifiers';
-import { getAllDataSources } from './utils/config';
-import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
-import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-jest.mock('./api/alertmanager');
-jest.mock('./api/grafana');
-jest.mock('./utils/config');
+} from '../../mocks';
+import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
+import { grafanaNotifiersMock } from '../../mocks/grafana-notifiers';
+import { getAllDataSources } from '../../utils/config';
+import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+
+import Receivers from './ContactPoints.v1';
+jest.mock('../../api/alertmanager');
+jest.mock('../../api/grafana');
+jest.mock('../../utils/config');
 jest.mock('app/core/services/context_srv');
-jest.mock('./api/buildInfo');
+jest.mock('../../api/buildInfo');
 
 const mocks = {
   getAllDataSources: jest.mocked(getAllDataSources),

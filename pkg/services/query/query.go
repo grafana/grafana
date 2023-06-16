@@ -117,7 +117,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			} else if theErrString, ok := r.(string); ok {
 				err = fmt.Errorf(theErrString)
 			} else {
-				err = fmt.Errorf("unexpected error, see the server log for details")
+				err = fmt.Errorf("unexpected error - %s", s.cfg.UserFacingDefaultError)
 			}
 			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
 			rchan <- buildErrorResponses(err, queries)
