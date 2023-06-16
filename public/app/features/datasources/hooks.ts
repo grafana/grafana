@@ -60,7 +60,6 @@ export function useDatasource(dataSource: string | DataSourceRef | DataSourceIns
 export interface KeybaordNavigatableListProps {
   keyboardEvents?: Observable<React.KeyboardEvent>;
   containerRef: React.RefObject<HTMLElement>;
-  numberOfItems?: number;
 }
 
 /**
