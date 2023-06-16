@@ -1,0 +1,14 @@
+version: '3.0'
+
+services:
+  grafana:
+    container_name: 'grafana-test-datasource'
+    build:
+      context: ./.config
+      args:
+        grafana_version: ${GRAFANA_VERSION:-9.5.3}
+    ports:
+      - 3000:3000/tcp
+    volumes:
+      - ./dist:/var/lib/grafana/plugins/grafana-test-datasource
+      - ./provisioning:/etc/grafana/provisioning

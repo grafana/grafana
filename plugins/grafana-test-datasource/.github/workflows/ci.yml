@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check types
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Unit tests
+        run: npm run test:ci
+      - name: Build frontend
+        run: npm run build
+
+      - name: Check for backend
+        id: check-for-backend
+        run: |
+          if [ -f "Magefile.go" ]
+          then
+            echo "has-backend=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Go environment
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.20'
+
+      - name: Test backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: coverage
+
+      - name: Build backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: buildAll
+
+      - name: Check for E2E
+        id: check-for-e2e
+        run: |
+          if [ -d "cypress" ]
+          then
+            echo "has-e2e=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Start grafana docker
+        if: steps.check-for-e2e.outputs.has-e2e == 'true'
+        run: docker-compose up -d
+
+      - name: Run e2e tests
+        if: steps.check-for-e2e.outputs.has-e2e == 'true'
+        run: npm run e2e
+
+      - name: Stop grafana docker
+        if: steps.check-for-e2e.outputs.has-e2e == 'true'
+        run: docker-compose down
+
+      - name: Archive E2E output
+        uses: actions/upload-artifact@v3
+        if: steps.check-for-e2e.outputs.has-e2e == 'true' && steps.run-e2e-tests.outcome != 'success'
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          retention-days: 5

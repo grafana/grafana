@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Run workflow on version tags, e.g. v1.0.0.
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }} # Requires a Grafana API key from Grafana.com.
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      - name: Setup Go environment
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.19'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and test frontend
+        run: npm run build
+
+      - name: Check for backend
+        id: check-for-backend
+        run: |
+          if [ -f "Magefile.go" ]
+          then
+            echo "has-backend=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: coverage
+
+      - name: Build backend
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: buildAll
+
+      - name: Warn missing Grafana API key
+        run: |
+          echo Please generate a Grafana API key: https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#generate-an-api-key
+          echo Once done please follow the instructions found here: https://github.com/${{github.repository}}/blob/main/README.md#using-github-actions-release-workflow
+        if: ${{ env.GRAFANA_API_KEY == '' }}
+
+      - name: Sign plugin
+        run: npm run sign
+        if: ${{ env.GRAFANA_API_KEY != '' }}
+
+      - name: Get plugin metadata
+        id: metadata
+        run: |
+          sudo apt-get install jq
+
+          export GRAFANA_PLUGIN_ID=$(cat dist/plugin.json | jq -r .id)
+          export GRAFANA_PLUGIN_VERSION=$(cat dist/plugin.json | jq -r .info.version)
+          export GRAFANA_PLUGIN_TYPE=$(cat dist/plugin.json | jq -r .type)
+          export GRAFANA_PLUGIN_ARTIFACT=${GRAFANA_PLUGIN_ID}-${GRAFANA_PLUGIN_VERSION}.zip
+          export GRAFANA_PLUGIN_ARTIFACT_CHECKSUM=${GRAFANA_PLUGIN_ARTIFACT}.md5
+
+          echo "plugin-id=${GRAFANA_PLUGIN_ID}" >> $GITHUB_OUTPUT
+          echo "plugin-version=${GRAFANA_PLUGIN_VERSION}" >> $GITHUB_OUTPUT
+          echo "plugin-type=${GRAFANA_PLUGIN_TYPE}" >> $GITHUB_OUTPUT
+          echo "archive=${GRAFANA_PLUGIN_ARTIFACT}" >> $GITHUB_OUTPUT
+          echo "archive-checksum=${GRAFANA_PLUGIN_ARTIFACT_CHECKSUM}" >> $GITHUB_OUTPUT
+
+          echo "github-tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Read changelog
+        id: changelog
+        run: |
+          awk '/^## / {s++} s == 1 {print}' CHANGELOG.md > release_notes.md
+          echo "path=release_notes.md" >> $GITHUB_OUTPUT
+
+      - name: Check package version
+        run: if [ "v${{ steps.metadata.outputs.plugin-version }}" != "${{ steps.metadata.outputs.github-tag }}" ]; then printf "\033[0;31mPlugin version doesn't match tag name\033[0m\n"; exit 1; fi
+
+      - name: Package plugin
+        id: package-plugin
+        run: |
+          mv dist ${{ steps.metadata.outputs.plugin-id }}
+          zip ${{ steps.metadata.outputs.archive }} ${{ steps.metadata.outputs.plugin-id }} -r
+          md5sum ${{ steps.metadata.outputs.archive }} > ${{ steps.metadata.outputs.archive-checksum }}
+          echo "checksum=$(cat ./${{ steps.metadata.outputs.archive-checksum }} | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Validate plugin
+        run: |
+          git clone https://github.com/grafana/plugin-validator
+          pushd ./plugin-validator/pkg/cmd/plugincheck2
+          go install
+          popd
+          plugincheck2 -config ./plugin-validator/config/default.yaml ${{ steps.metadata.outputs.archive }}
+
+      - name: Create Github release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            ./${{ steps.metadata.outputs.archive }}
+            ./${{ steps.metadata.outputs.archive-checksum }}
+          body: |
+            **This Github draft release has been created for your plugin.**
+
+            _Note: if this is the first release for your plugin please consult the [distributing-your-plugin section](https://github.com/${{github.repository}}/blob/main/README.md#distributing-your-plugin) of the README_
+
+            If you would like to submit this release to Grafana please consider the following steps:
+
+            - Check the Validate plugin step in the [release workflow](https://github.com/${{github.repository}}/commit/${{github.sha}}/checks/${{github.run_id}}) for any warnings that need attention
+            - Navigate to https://grafana.com/auth/sign-in/ to sign into your account
+            - Once logged in click **My Plugins** in the admin navigation
+            - Click the **Submit Plugin** button
+            - Fill in the Plugin Submission form:
+              - Paste this [.zip asset link](https://github.com/${{ github.repository }}/releases/download/v${{ steps.metadata.outputs.plugin-version }}/${{ steps.metadata.outputs.archive }}) in the Plugin URL field
+              - Paste this [.zip.md5 link](https://github.com/${{ github.repository }}/releases/download/v${{ steps.metadata.outputs.plugin-version }}/${{ steps.metadata.outputs.archive-checksum }}) in the MD5 field
+
+            Once done please remove these instructions and publish this release.
