@@ -14,7 +14,7 @@ type fakeDetector struct {
 	returns bool
 }
 
-func (d *fakeDetector) Detect(_ []byte) bool {
+func (d *fakeDetector) detect(_ []byte) bool {
 	d.calls += 1
 	return d.returns
 }

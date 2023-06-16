@@ -11,10 +11,10 @@ import (
 func TestContainsBytesDetector(t *testing.T) {
 	detector := &containsBytesDetector{pattern: []byte("needle")}
 	t.Run("contains", func(t *testing.T) {
-		require.True(t, detector.Detect([]byte("lorem needle ipsum haystack")))
+		require.True(t, detector.detect([]byte("lorem needle ipsum haystack")))
 	})
 	t.Run("not contains", func(t *testing.T) {
-		require.False(t, detector.Detect([]byte("ippif")))
+		require.False(t, detector.detect([]byte("ippif")))
 	})
 }
 
@@ -31,7 +31,7 @@ func TestRegexDetector(t *testing.T) {
 		{name: "no match", s: "bla bla hello you reading this test code", exp: false},
 	} {
 		t.Run(tc.s, func(t *testing.T) {
-			r := detector.Detect([]byte(tc.s))
+			r := detector.detect([]byte(tc.s))
 			require.Equal(t, tc.exp, r, "detector result should be correct")
 		})
 	}

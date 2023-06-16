@@ -11,11 +11,11 @@ import (
 // Inspector can inspect a plugin and determine if it's an Angular plugin or not.
 type Inspector interface {
 	// Inspect takes a plugin and checks if the plugin is using Angular.
-	// It returns true if module.js matches against any of the detectors in angularDetectors.
 	Inspect(ctx context.Context, p *plugins.Plugin) (bool, error)
 }
 
-// PatternsListInspector matches module.js against all the patterns returned by the detectorsProvider, in sequence.
+// PatternsListInspector is an Inspector that matches a plugin's module.js against all the patterns returned by
+// the detectorsProvider, in sequence.
 type PatternsListInspector struct {
 	// detectorsProvider returns the detectors that will be used by Inspect.
 	detectorsProvider detectorsProvider
@@ -36,7 +36,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
 	for _, d := range i.detectorsProvider.provideDetectors(ctx) {
-		if d.Detect(b) {
+		if d.detect(b) {
 			isAngular = true
 			break
 		}
