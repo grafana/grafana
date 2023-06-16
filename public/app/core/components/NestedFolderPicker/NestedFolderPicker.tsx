@@ -1,20 +1,26 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { Button, FilterInput, LoadingBar } from '@grafana/ui';
+import { LoadingBar } from '@grafana/ui';
 import { listFolders, PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { createFlatTree } from 'app/features/browse-dashboards/state';
-import { DashboardsTreeItem, DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
+import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList } from './NestedFolderList';
+import { FolderChange, FolderUID } from './types';
 
 async function fetchRootFolders() {
   return await listFolders(undefined, undefined, 1, PAGE_SIZE);
 }
 
-export function NestedFolderPicker() {
-  const [search, setSearch] = useState('');
+interface NestedFolderPickerProps {
+  value?: FolderUID | undefined;
+  onChange?: (folderUID: FolderChange) => void;
+}
+
+export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps) {
+  // const [search, setSearch] = useState('');
 
   const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
   const [childrenForUID, setChildrenForUID] = useState<Record<string, DashboardViewItem[]>>({});
@@ -58,13 +64,31 @@ export function NestedFolderPicker() {
     return result;
   }, [childrenForUID, folderOpenState, state.loading, state.value]);
 
+  const handleSelectionChange = useCallback(
+    (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
+      console.log('handleSelectionChange', item);
+
+      if (onChange) {
+        onChange({ title: item.title, uid: item.uid });
+      }
+    },
+    [onChange]
+  );
+
   return (
     <fieldset>
-      <FilterInput placeholder="Search folder" value={search} escapeRegex={false} onChange={(val) => setSearch(val)} />
+      {/* <FilterInput placeholder="Search folder" value={search} escapeRegex={false} onChange={(val) => setSearch(val)} /> */}
 
       {state.loading && <LoadingBar width={300} />}
       {state.error && <p>{state.error.message}</p>}
-      {state.value && <NestedFolderList items={flatTree} onFolderClick={handleFolderClick} />}
+      {state.value && (
+        <NestedFolderList
+          items={flatTree}
+          selectedFolder={value}
+          onFolderClick={handleFolderClick}
+          onSelectionChange={handleSelectionChange}
+        />
+      )}
     </fieldset>
   );
 }

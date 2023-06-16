@@ -7,19 +7,27 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import { TextModifier } from '@grafana/ui/src/unstable';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { DashboardViewItem } from 'app/features/search/types';
+
+import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const LIST_HEIGHT = ROW_HEIGHT * 6.5;
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
+  selectedFolder: FolderUID | undefined;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
+  onSelectionChange: (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => void;
 }
 
-export function NestedFolderList({ items, onFolderClick }: NestedFolderListProps) {
+export function NestedFolderList({ items, selectedFolder, onFolderClick, onSelectionChange }: NestedFolderListProps) {
   const styles = useStyles2(getHeaderRowStyles);
 
-  const virtualData = useMemo(() => ({ items, onFolderClick }), [items, onFolderClick]);
+  const virtualData = useMemo(
+    (): VirtualData => ({ items, selectedFolder, onFolderClick, onSelectionChange }),
+    [items, selectedFolder, onFolderClick, onSelectionChange]
+  );
 
   return (
     <>
@@ -33,7 +41,9 @@ export function NestedFolderList({ items, onFolderClick }: NestedFolderListProps
 
 interface VirtualData {
   items: DashboardsTreeItem[];
+  selectedFolder: NestedFolderListProps['selectedFolder'];
   onFolderClick: NestedFolderListProps['onFolderClick'];
+  onSelectionChange: NestedFolderListProps['onSelectionChange'];
 }
 
 interface RowProps {
@@ -43,23 +53,38 @@ interface RowProps {
 }
 
 function Row({ index, style, data }: RowProps) {
-  const { items, onFolderClick } = data;
+  const { items, selectedFolder, onFolderClick, onSelectionChange } = data;
   const { item, isOpen, level } = items[index];
   const styles = useStyles2(getRowStyles);
 
   const handleClick = useCallback(
     (ev: React.MouseEvent<HTMLButtonElement>) => {
-      // ev.stopPropagation();
       ev.preventDefault();
       onFolderClick(item.uid, !isOpen);
     },
     [item.uid, isOpen, onFolderClick]
   );
 
+  const handleRadioChange = useCallback(
+    (ev: React.FormEvent<HTMLInputElement>) => {
+      if (item.kind === 'folder') {
+        onSelectionChange(ev, item);
+      }
+    },
+    [item, onSelectionChange]
+  );
+
   return (
     <div style={style} className={styles}>
       <Indent level={level} />
-      <input type="radio" value={item.uid} id={item.uid} name="folder" />
+      <input
+        type="radio"
+        value={item.uid}
+        id={item.uid}
+        name="folder"
+        checked={item.uid === selectedFolder}
+        onChange={handleRadioChange}
+      />
 
       <label htmlFor={item.uid}>
         {item.kind === 'folder' && (

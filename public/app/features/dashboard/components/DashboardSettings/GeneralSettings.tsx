@@ -5,6 +5,7 @@ import { TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
@@ -30,10 +31,11 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { uid: string; title: string }) => {
-    dashboard.meta.folderUid = folder.uid;
-    dashboard.meta.folderTitle = folder.title;
+  const onFolderChange = (newFolder: FolderChange) => {
+    dashboard.meta.folderUid = newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid;
+    dashboard.meta.folderTitle = newFolder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
+    setRenderCounter(renderCounter + 1);
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
@@ -116,7 +118,7 @@ export function GeneralSettingsUnconnected({
               skipInitialLoad={true}
             /> */}
 
-            <NestedFolderPicker />
+            <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
           </Field>
 
           <Field
