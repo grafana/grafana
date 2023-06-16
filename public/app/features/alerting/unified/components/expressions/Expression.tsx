@@ -4,7 +4,7 @@ import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -111,6 +111,11 @@ export const Expression: FC<ExpressionProps> = ({
           onRemoveExpression={() => onRemoveExpression(query.refId)}
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
+          onSetCondition={onSetCondition}
+          warning={warning}
+          error={error}
+          query={query}
+          alertCondition={alertCondition}
         />
         <div className={styles.expression.body}>
           <div className={styles.expression.description}>{selectedExpressionDescription}</div>
@@ -120,12 +125,6 @@ export const Expression: FC<ExpressionProps> = ({
 
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
-            <AlertConditionIndicator
-              onSetCondition={() => onSetCondition(query.refId)}
-              enabled={alertCondition}
-              error={error}
-              warning={warning}
-            />
             <Spacer />
             {showSummary && (
               <PreviewSummary
@@ -218,9 +217,24 @@ interface HeaderProps {
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
+  warning?: Error;
+  error?: Error;
+  onSetCondition: (refId: string) => void;
+  query: ExpressionQuery;
+  alertCondition: boolean;
 }
 
-const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
+const Header: FC<HeaderProps> = ({
+  refId,
+  queryType,
+  onUpdateRefId,
+  onRemoveExpression,
+  warning,
+  onSetCondition,
+  alertCondition,
+  query,
+  error,
+}) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
   /**
@@ -234,9 +248,6 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
 
   const editing = editMode !== false;
   const editingRefId = editing && editMode === 'refId';
-  const editingType = editing && editMode === 'expressionType';
-
-  const selectedExpressionType = gelTypes.find((o) => o.value === queryType);
 
   return (
     <header className={styles.header.wrapper}>
@@ -263,34 +274,15 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
               }}
             />
           )}
-          {!editingType && (
-            <button
-              type="button"
-              className={cx(clearButton, styles.editable)}
-              onClick={() => setEditMode('expressionType')}
-            >
-              <div className={styles.mutedText}>{capitalize(queryType)}</div>
-              <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
-            </button>
-          )}
-          {editingType && (
-            <Select
-              isOpen
-              autoFocus
-              onChange={(selection) => {
-                onUpdateExpressionType(selection.value ?? ExpressionQueryType.classic);
-                setEditMode(false);
-              }}
-              onBlur={() => {
-                setEditMode(false);
-              }}
-              options={gelTypes}
-              value={selectedExpressionType}
-              width={25}
-            />
-          )}
+          <div className={styles.mutedText}>{capitalize(queryType)}</div>
         </Stack>
         <Spacer />
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={alertCondition}
+          error={error}
+          warning={warning}
+        />
         <IconButton
           name="trash-alt"
           variant="secondary"

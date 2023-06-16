@@ -5,8 +5,9 @@ import { getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -223,6 +224,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     }
   }, [condition, queries, handleSetCondition]);
 
+  const onClickType = useCallback(
+    (type: ExpressionQueryType) => {
+      dispatch(addNewExpression(type));
+    },
+    [dispatch]
+  );
+
   return (
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
@@ -310,18 +318,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             </Tooltip>
 
-            {config.expressionsEnabled && (
-              <Button
-                type="button"
-                icon="plus"
-                onClick={() => {
-                  dispatch(addNewExpression());
-                }}
-                variant="secondary"
-              >
-                Add expression
-              </Button>
-            )}
+            {config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
             {isPreviewLoading && (
               <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
@@ -346,3 +343,28 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     </RuleEditorSection>
   );
 };
+
+function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
+  const newMenu = (
+    <Menu>
+      {gelTypes.map((type) => (
+        <MenuItem
+          key={type.value}
+          onClick={() => onClickType(type.value ?? ExpressionQueryType.math)}
+          label={type.label ?? ''}
+        />
+      ))}
+    </Menu>
+  );
+
+  return (
+    <>
+      <Dropdown overlay={newMenu}>
+        <Button variant="secondary">
+          Add expression
+          <Icon name="angle-down" />
+        </Button>
+      </Dropdown>
+    </>
+  );
+}
