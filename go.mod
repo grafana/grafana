@@ -36,7 +36,7 @@ replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.
 
 require (
 	cloud.google.com/go/storage v1.28.1
-	cuelang.org/go v0.5.0
+	cuelang.org/go v0.6.0-0.dev
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.28
 	github.com/BurntSushi/toml v1.2.1
@@ -209,7 +209,7 @@ require (
 	github.com/rs/cors v1.9.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/encoding v0.3.6 // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -269,7 +269,7 @@ require (
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/grafana-apiserver v0.0.0-20230614122112-17ea0d477b83
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
-	github.com/grafana/thema v0.0.0-20230524160113-4e9d6e28a640
+	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
@@ -455,7 +455,7 @@ require (
 	github.com/xlab/treeprint v1.1.0
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.9.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 

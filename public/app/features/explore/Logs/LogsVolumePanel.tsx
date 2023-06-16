@@ -17,7 +17,7 @@ import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/uti
 import { ExploreGraph } from '../Graph/ExploreGraph';
 
 type Props = {
-  logsVolumeData: DataQueryResponse | undefined;
+  logsVolumeData: DataQueryResponse;
   allLogsVolumeMaximum: number;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -36,10 +36,6 @@ export function LogsVolumePanel(props: Props) {
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
-  if (props.logsVolumeData === undefined) {
-    return null;
-  }
-
   const logsVolumeData = props.logsVolumeData;
 
   const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
@@ -52,33 +48,6 @@ export function LogsVolumePanel(props: Props) {
     ]
       .filter(identity)
       .join('. ');
-  }
-
-  let LogsVolumePanelContent;
-
-  if (logsVolumeData?.data) {
-    if (logsVolumeData.data.length > 0) {
-      LogsVolumePanelContent = (
-        <ExploreGraph
-          graphStyle="lines"
-          loadingState={logsVolumeData.state ?? LoadingState.Done}
-          data={logsVolumeData.data}
-          height={height}
-          width={width - spacing * 2}
-          absoluteRange={props.absoluteRange}
-          onChangeTime={onUpdateTimeRange}
-          timeZone={timeZone}
-          splitOpenFn={splitOpen}
-          tooltipDisplayMode={TooltipDisplayMode.Multi}
-          onHiddenSeriesChanged={onHiddenSeriesChanged}
-          anchorToZero
-          yAxisMaximum={allLogsVolumeMaximum}
-          eventBus={props.eventBus}
-        />
-      );
-    } else {
-      LogsVolumePanelContent = <span>No volume data.</span>;
-    }
   }
 
   let extraInfoComponent = <span>{extraInfo}</span>;
@@ -96,7 +65,22 @@ export function LogsVolumePanel(props: Props) {
 
   return (
     <div style={{ height }} className={styles.contentContainer}>
-      {LogsVolumePanelContent}
+      <ExploreGraph
+        graphStyle="lines"
+        loadingState={logsVolumeData.state ?? LoadingState.Done}
+        data={logsVolumeData.data}
+        height={height}
+        width={width - spacing * 2}
+        absoluteRange={props.absoluteRange}
+        onChangeTime={onUpdateTimeRange}
+        timeZone={timeZone}
+        splitOpenFn={splitOpen}
+        tooltipDisplayMode={TooltipDisplayMode.Multi}
+        onHiddenSeriesChanged={onHiddenSeriesChanged}
+        anchorToZero
+        yAxisMaximum={allLogsVolumeMaximum}
+        eventBus={props.eventBus}
+      />
       {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
     </div>
   );

@@ -31,7 +31,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, ...restProps } = props;
+  const { current, onChange, hideTextValue, width, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -107,7 +107,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2(getStylesDropdown);
 
   return (
-    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container} style={{ width }}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
@@ -122,7 +122,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             )
           }
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentDataSourceInstanceSettings)}
           onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
