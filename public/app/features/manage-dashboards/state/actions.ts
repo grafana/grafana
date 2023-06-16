@@ -310,7 +310,8 @@ export async function saveDashboard(
 ) {
   dashboardWatcher.ignoreNextSave();
 
-  if (config.featureToggles.entityStore) {
+  // This lets us play with writing dashboards directly to the k8s server
+  if (false && config.featureToggles.entityStore) {
     // K8s frontend hack -- dual write from frontend
     const v = await dashboardKindService.save(cmd);
 
