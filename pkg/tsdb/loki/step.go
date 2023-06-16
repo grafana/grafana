@@ -31,7 +31,7 @@ func calculateStep(interval time.Duration, timeRange time.Duration, resolution i
 		return ceilMs(chosenStep), nil
 	}
 
-	step, err := intervalv2.ParseIntervalStringToTimeDuration(interpolateVariables(*queryStep, interval, timeRange))
+	step, err := intervalv2.ParseIntervalStringToTimeDuration(*queryStep)
 	if err != nil {
 		return step, err
 	}

@@ -23,20 +23,6 @@ func TestLokiStep(t *testing.T) {
 			require.Equal(t, time.Minute*1, step)
 		})
 
-		t.Run("step with range variable", func(t *testing.T) {
-			queryStep := "$__range"
-			step, err := calculateStep(time.Second*7, time.Second, 2, &queryStep)
-			require.NoError(t, err)
-			require.Equal(t, time.Second*2, step)
-		})
-
-		t.Run("step with interval variable", func(t *testing.T) {
-			queryStep := "$__interval"
-			step, err := calculateStep(time.Second*7, time.Second, 2, &queryStep)
-			require.NoError(t, err)
-			require.Equal(t, time.Second*14, step)
-		})
-
 		// calculateStep parses a duration with support for unit that Grafana uses (e.g 1d)
 		t.Run("step with 1d", func(t *testing.T) {
 			queryStep := "1d"
