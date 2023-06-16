@@ -62,10 +62,10 @@ func newGCOMDetectorsProvider(baseURL string, ttl time.Duration) (detectorsProvi
 // tryUpdateRemoteDetectors tries to update the cached detectors value, if the cache has expired.
 //
 // If the TTL hasn't passed yet, this function returns immediately.
-// Otherwise, it calls fetch on the fetcher, and updates the cached detectors value and lastUpdate.
+// Otherwise, it calls fetch and updates the cached detectors value and lastUpdate.
 //
 // lastUpdate is also updated in case of an error, to avoid consecutive failures.
-// However, if there's an error, the cached value is not changed.
+// However, if there's an error, the cached value is not changed (the previous one is kept).
 //
 // The caller must have acquired g.mux.
 func (p *gcomDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) error {
