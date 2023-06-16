@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 
-import { PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { Button, ModalsController, PageToolbar } from '@grafana/ui';
+import { Button, ModalsController, PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -98,6 +98,7 @@ interface ToolbarProps {
 
 const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
   const dispatch = useDispatch();
+  const styles = useStyles2(getStyles);
 
   const onChangeTimeZone = (timeZone: TimeZone) => {
     dispatch(updateTimeZoneForSession(timeZone));
@@ -112,13 +113,7 @@ const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
   };
 
   return (
-    <PageToolbar
-      title={dashboard.title}
-      buttonOverflowAlignment="right"
-      className={css`
-        padding: 26px 16px;
-      `}
-    >
+    <PageToolbar title={dashboard.title} buttonOverflowAlignment="right" className={styles.toolbar}>
       {!dashboard.timepicker.hidden && (
         <DashNavTimeControls dashboard={dashboard} onChangeTimeZone={onChangeTimeZone} />
       )}
@@ -140,4 +135,12 @@ const Toolbar = ({ dashboard, callbackUrl, dashboardJson }: ToolbarProps) => {
       </ModalsController>
     </PageToolbar>
   );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    toolbar: css`
+      padding: ${theme.spacing(3, 2)};
+    `,
+  };
 };
