@@ -17,7 +17,7 @@ type EntityInput interface {
 	GetMeta() kinds.GrafanaResourceMetadata
 
 	// byte
-	GetJSONBody() []byte
+	GetBody() ([]byte, error)
 
 	// Note the summary is not included in the JSON body
 	GetSummary() EntitySummary

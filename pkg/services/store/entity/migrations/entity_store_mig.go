@@ -22,28 +22,27 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity",
 		Columns: []*migrator.Column{
-			// Likely should be the primary key, and remove GRN (duplicate tenant+kind+uid/name)
-			{Name: "guid", Type: migrator.DB_Uuid, Nullable: false}, // required... should be primary key? with unique key on tenant+kind+uid?
+			// The k8s path
+			{Name: "uid", Type: migrator.DB_Uuid, Nullable: false, IsPrimaryKey: true}, // required... should be primary key? with unique key on tenant+kind+uid?
+			{Name: "group", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "version", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "kind", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "resourceVersion", Type: migrator.DB_BigInt, Length: 128, Nullable: false}, // auto increment?
 
-			// Object ID (OID) will be unique across all objects/instances
-			// uuid5( tenant_id, kind + uid )
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
-
-			// The entity identifier
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			// UID for folder? or folder name
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "access", Type: migrator.DB_Text, Nullable: true}, // JSON object
 
-			// The raw entity body (any byte array)
-			{Name: "meta", Type: migrator.DB_Blob, Nullable: true},     // raw meta object from k8s (with standard stuff removed)
-			{Name: "body", Type: migrator.DB_LongBlob, Nullable: true}, // null when nested or remote
-			{Name: "status", Type: migrator.DB_Blob, Nullable: true},   // raw status object
+			// Just the metadata (not the spec)
+			{Name: "meta", Type: migrator.DB_Blob, Nullable: true},
 
+			// Full k8s message at the version
+			{Name: "body", Type: migrator.DB_LongBlob, Nullable: true},
+
+			// Size of the
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
-			{Name: "version", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
 
 			// Who changed what when -- We should avoid JOINs with other tables in the database
 			{Name: "updated_at", Type: migrator.DB_BigInt, Nullable: false},
@@ -57,20 +56,14 @@ func initEntityTables(mg *migrator.Migrator) {
 			{Name: "origin_ts", Type: migrator.DB_BigInt, Nullable: false},
 
 			// Summary data (always extracted from the `body` column)
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "slug", Type: migrator.DB_NVarchar, Length: 189, Nullable: false}, // from title
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},                 // JSON object
-			{Name: "fields", Type: migrator.DB_Text, Nullable: true},                 // JSON object
-			{Name: "errors", Type: migrator.DB_Text, Nullable: true},                 // JSON object
+			{Name: "fields", Type: migrator.DB_Text, Nullable: true}, // JSON object (from summary)
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"kind"}},
 			{Cols: []string{"folder"}},
-			{Cols: []string{"uid"}},
-
-			{Cols: []string{"tenant_id", "kind", "uid"}, Type: migrator.UniqueIndex},
-			// {Cols: []string{"tenant_id", "folder", "slug"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"resourceVersion"}}, //
+			{Cols: []string{"group", "kind", "name"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -78,9 +71,8 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_folder",
 		Columns: []*migrator.Column{
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false, IsPrimaryKey: true},
-			{Name: "tenant_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "uid", Type: migrator.DB_Uuid, Nullable: false, IsPrimaryKey: true},
+			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			getLatinPathColumn("slug_path"),                             ///slug/slug/slug/
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false},     // JSON []{uid, title}
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},     // starts at 1
@@ -89,7 +81,7 @@ func initEntityTables(mg *migrator.Migrator) {
 			{Name: "detached", Type: migrator.DB_Bool, Nullable: false}, // a parent folder was not found
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"namespace", "splug_path"}, Type: migrator.UniqueIndex},
 			//	{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
 		},
 	})
@@ -97,14 +89,14 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_labels",
 		Columns: []*migrator.Column{
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
-			{Name: "label", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
+			{Name: "uid", Type: migrator.DB_Uuid, Nullable: false},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 191, Nullable: false},
 			{Name: "value", Type: migrator.DB_NVarchar, Length: 1024, Nullable: false},
-			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: true},
+			{Name: "parent_uid", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: true},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"grn", "label"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"parent_grn"}, Type: migrator.IndexType},
+			{Cols: []string{"uid", "key"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"parent_uid"}, Type: migrator.IndexType},
 		},
 	})
 
@@ -112,8 +104,8 @@ func initEntityTables(mg *migrator.Migrator) {
 		Name: "entity_ref",
 		Columns: []*migrator.Column{
 			// Source:
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
-			{Name: "parent_grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: true},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
+			{Name: "parent_uid", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: true},
 
 			// Address (defined in the body, not resolved, may be invalid and change)
 			{Name: "family", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -138,12 +130,10 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_history",
 		Columns: []*migrator.Column{
-			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
-			{Name: "version", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
+			{Name: "resourceVersion", Type: migrator.DB_BigInt, Length: 128, Nullable: false},
 
 			// Raw bytes
-			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "access", Type: migrator.DB_Text, Nullable: true}, // JSON object
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
@@ -156,7 +146,7 @@ func initEntityTables(mg *migrator.Migrator) {
 			{Name: "message", Type: migrator.DB_Text, Nullable: false}, // defaults to empty string
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"grn", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"uid", "resourceVersion"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
 		},
 	})
@@ -192,7 +182,9 @@ func initEntityTables(mg *migrator.Migrator) {
 	tables = append(tables, migrator.Table{
 		Name: "entity_access_rule",
 		Columns: []*migrator.Column{
+			// UID for the full policy
 			{Name: "policy", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
+			// UID for the scope object
 			{Name: "scope", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "role", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 64, Nullable: false},
