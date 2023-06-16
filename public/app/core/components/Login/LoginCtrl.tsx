@@ -108,7 +108,6 @@ export class LoginCtrl extends PureComponent<Props, State> {
       })
       .catch((err) => {
         const fetchErrorMessage = isFetchError(err) ? getErrorMessage(err) : undefined;
-        console.log({ err, fetchErrorMessage });
         this.setState({
           isLoggingIn: false,
           loginErrorMessage: fetchErrorMessage || t('login.error.unknown', 'Unknown error occurred'),
