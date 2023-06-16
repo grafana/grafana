@@ -346,6 +346,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         onStopScanning={this.onStopScanning}
         eventBus={this.logsEventBus}
         splitOpenFn={this.onSplitOpen('logs')}
+        scrollElement={this.scrollElement}
       />
     );
   }

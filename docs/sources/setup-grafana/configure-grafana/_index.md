@@ -2033,6 +2033,14 @@ Custom install/learn more URL for enterprise plugins. Defaults to https://grafan
 
 Enter a comma-separated list of plugin identifiers to hide in the plugin catalog.
 
+### public_key_retrieval_disabled
+
+Disable download of the public key for verifying plugin signature. The default is `false`. If disabled, it will use the hardcoded public key.
+
+### public_key_retrieval_on_startup
+
+Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
+
 <hr>
 
 ## [live]
@@ -2298,3 +2306,12 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control" >}}) for more information.
+
+## [navigation.app_sections]
+
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+
+## [navigation.app_standalone_pages]
+
+Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
+Format: <pageUrl> = <sectionId> <sortWeight>

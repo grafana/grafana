@@ -5,6 +5,7 @@ import {
   DataFrame,
   FieldColorModeId,
   fieldColorModeRegistry,
+  formattedValueToString,
   getDisplayProcessor,
   getFieldColorModeForField,
   getFieldDisplayName,
@@ -620,6 +621,7 @@ const prepConfig = (
       xAxisLabel == null || xAxisLabel === ''
         ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
         : xAxisLabel,
+    formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
   scatterSeries.forEach((s, si) => {
@@ -653,7 +655,7 @@ const prepConfig = (
           yAxisLabel == null || yAxisLabel === ''
             ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
             : yAxisLabel,
-        values: (u, splits) => splits.map((s) => field.display!(s).text),
+        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
       });
     }
 
