@@ -26,6 +26,7 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
   title?: string;
+  titleWithLinks?: ReactNode;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
@@ -72,6 +73,7 @@ export function PanelChrome({
   children,
   padding = 'md',
   title = '',
+  titleWithLinks,
   description = '',
   displayMode = 'default',
   titleItems,
@@ -119,7 +121,9 @@ export function PanelChrome({
 
   const headerContent = (
     <>
-      {title && (
+      {titleWithLinks ? (
+        <div className={styles.titleWithLinks}>{titleWithLinks}</div>
+      ) : (
         <h6 title={title} className={styles.title}>
           {title}
         </h6>
@@ -318,6 +322,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
       padding: theme.spacing(0, padding),
+      textOverflow: 'ellipsis',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.h6.fontWeight,
+    }),
+    titleWithLinks: css({
+      label: 'panel-title-with-links',
+      marginBottom: 0, // override default h6 margin-bottom
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',

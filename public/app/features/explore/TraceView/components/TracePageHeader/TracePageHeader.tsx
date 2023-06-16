@@ -20,14 +20,9 @@ import React from 'react';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
-import TraceName from '../common/TraceName';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
-import { getTraceLinks } from '../model/link-patterns';
-import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
-import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
@@ -160,12 +155,6 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
   const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
 
   const styles = useStyles2(getStyles);
-  const links = React.useMemo(() => {
-    if (!trace) {
-      return [];
-    }
-    return getTraceLinks(trace);
-  }, [trace]);
 
   if (!trace) {
     return null;
@@ -176,19 +165,8 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
     return { ...rest, value: renderer(trace, timeZone, styles) };
   });
 
-  const title = (
-    <h1 className={styles.TracePageHeaderTitle}>
-      <TraceName traceName={getTraceName(trace.spans)} />{' '}
-      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
-    </h1>
-  );
-
   return (
     <header className={styles.TracePageHeader}>
-      <div className={cx(styles.TracePageHeaderTitleRow, styles.titleBorderBottom)}>
-        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
-        {title}
-      </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
 
       <SpanGraph
