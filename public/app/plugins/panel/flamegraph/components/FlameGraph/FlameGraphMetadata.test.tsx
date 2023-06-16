@@ -52,11 +52,10 @@ describe('FlameGraphMetadata', () => {
       },
     });
     expect(screen.getByText(/17 | 17 samples (Count)/)).toBeInTheDocument();
-    const focusPill = screen.getByText(/29.41% of total/);
-    expect(focusPill).toBeInTheDocument();
+    expect(screen.getByText(/29.41% of total/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Remove sandwich/)).toBeNull();
 
-    await userEvent.click(focusPill);
+    await userEvent.click(screen.getByLabelText(/Remove focus/));
     expect(mocks.onFocusPillClick).toHaveBeenCalledTimes(1);
   });
 
@@ -66,10 +65,9 @@ describe('FlameGraphMetadata', () => {
     });
     expect(screen.getByText(/17 | 17 samples (Count)/)).toBeInTheDocument();
     expect(screen.queryByLabelText(/Remove focus/)).toBeNull();
-    const sandwichPill = screen.getByText(/func.go/);
-    expect(sandwichPill).toBeInTheDocument();
+    expect(screen.getByText(/func.go/)).toBeInTheDocument();
 
-    await userEvent.click(sandwichPill);
+    await userEvent.click(screen.getByLabelText(/Remove sandwich/));
     expect(mocks.onSandwichPillClick).toHaveBeenCalledTimes(1);
   });
 });
