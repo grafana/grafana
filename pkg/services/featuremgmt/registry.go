@@ -564,5 +564,11 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:        "flameGraphV2",
+			Description: "New version of flame graph with new features",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityTracesAndProfilingSquad,
+		},
 	}
 )

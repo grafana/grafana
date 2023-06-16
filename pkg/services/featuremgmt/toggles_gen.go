@@ -338,4 +338,8 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+
+	// FlagFlameGraphV2
+	// New version of flame graph with new features
+	FlagFlameGraphV2 = "flameGraphV2"
 )
