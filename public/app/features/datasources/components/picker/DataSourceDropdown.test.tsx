@@ -136,14 +136,15 @@ describe('DataSourceDropdown', () => {
       await setupOpenDropdown(user, jest.fn(), mockDS.name);
       let cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
-      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
+      expect(cards[0].dataset.selecteditem).toEqual('true');
 
       //xMock ds is set as current, it appears on top, and is selected
       getInstanceSettingsMock.mockReturnValue(xMockDS);
       await setupOpenDropdown(user, jest.fn(), xMockDS.name);
       cards = await screen.findAllByTestId('data-source-card');
       expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
-      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
+
+      expect(cards[0].dataset.selecteditem).toEqual('true');
     });
 
     it('should get the sorting function using the correct paramters', async () => {
@@ -186,19 +187,19 @@ describe('DataSourceDropdown', () => {
 
       //Dropdown open, first element is selected
       let mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
-      expect(mockDSElement?.getAttribute('data-selectedItem')).toEqual('true');
+      expect(mockDSElement?.dataset.selecteditem).toEqual('true');
 
       await user.keyboard('[ArrowDown]');
       //Arrow down, second item is selected
       const xMockDSElement = getCard(await screen.findByText(xMockDS.name, { selector: 'span' }));
-      expect(xMockDSElement?.getAttribute('data-selectedItem')).toEqual('true');
+      expect(xMockDSElement?.dataset.selecteditem).toEqual('true');
       mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
-      expect(mockDSElement?.getAttribute('data-selectedItem')).toEqual('false');
+      expect(mockDSElement?.dataset.selecteditem).toEqual('false');
 
       await user.keyboard('[ArrowUp]');
       //Arrow up, first item is selected again
       mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
-      expect(mockDSElement?.getAttribute('data-selectedItem')).toEqual('true');
+      expect(mockDSElement?.dataset.selecteditem).toEqual('true');
 
       await user.keyboard('[ArrowDown]');
       await user.keyboard('[Enter]');
