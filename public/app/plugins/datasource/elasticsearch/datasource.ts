@@ -33,7 +33,7 @@ import {
   AnnotationEvent,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { queryLogsVolume } from 'app/core/logsModel';
+import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -64,6 +64,8 @@ import {
 import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
+export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -534,13 +536,15 @@ export class ElasticDatasource
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
+      case SupplementaryQueryType.LogsSample:
+        return this.getLogsSampleDataProvider(request);
       default:
         return undefined;
     }
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume];
+    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
@@ -593,6 +597,24 @@ export class ElasticDatasource
           bucketAggs,
         };
 
+      case SupplementaryQueryType.LogsSample:
+        isQuerySuitable = !!(
+          query.metrics?.length === 1 &&
+          query.metrics[0].type !== 'logs' &&
+          query.metrics[0].type !== 'raw_data' &&
+          query.metrics[0].type !== 'raw_document'
+        );
+
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'logs', id: '1' }],
+        };
+
       default:
         return undefined;
     }
@@ -617,6 +639,20 @@ export class ElasticDatasource
         extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
       }
     );
+  }
+
+  getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsSampleRequest = cloneDeep(request);
+    const targets = logsSampleRequest.targets;
+    const queries = targets.map((query) => {
+      return this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query);
+    });
+    const elasticQueries = queries.filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!elasticQueries.length) {
+      return undefined;
+    }
+    return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
