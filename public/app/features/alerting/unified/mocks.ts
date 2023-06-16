@@ -343,6 +343,11 @@ export class MockDataSourceSrv implements DataSourceSrv {
     //return Promise.reject(new Error('not implemented'));
   }
 
+  getSync(name?: string | null | DataSourceRef, scopedVars?: ScopedVars): DataSourceApi | null {
+    return DatasourceSrv.prototype.getSync.call(this, name, scopedVars);
+    //return Promise.reject(new Error('not implemented'));
+  }
+
   /**
    * Get a list of data sources
    */
