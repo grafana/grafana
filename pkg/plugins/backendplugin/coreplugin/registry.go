@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 const (

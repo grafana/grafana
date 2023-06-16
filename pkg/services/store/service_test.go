@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 )
 
 var (

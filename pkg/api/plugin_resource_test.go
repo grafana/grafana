@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -46,7 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	"github.com/grafana/grafana/pkg/tsdb/testdatasource"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
