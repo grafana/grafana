@@ -51,7 +51,6 @@ interface State {
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
-  isAddingMixed: boolean;
   isDataSourceModalOpen: boolean;
   data: PanelData;
   isHelpOpen: boolean;
@@ -65,11 +64,10 @@ export class QueryGroup extends PureComponent<Props, State> {
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
-    isDataSourceModalOpen: false,
+    isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
-    isAddingMixed: false,
     isHelpOpen: false,
     queries: [],
     data: {
@@ -87,6 +85,11 @@ export class QueryGroup extends PureComponent<Props, State> {
     });
 
     this.setNewQueriesAndDatasource(options);
+
+    // Clean up the first panel flag since the modal is now open
+    if (!!locationService.getSearchObject().firstPanel) {
+      locationService.partial({ firstPanel: null }, true);
+    }
   }
 
   componentWillUnmount() {
@@ -117,14 +120,12 @@ export class QueryGroup extends PureComponent<Props, State> {
         datasource,
         ...q,
       }));
+
       this.setState({
         queries,
         dataSource: ds,
         dsSettings,
         defaultDataSource,
-        // TODO: Detect the first panel added into a new dashboard better.
-        // This is flaky in case the UID is generated differently
-        isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
       });
     } catch (error) {
       console.log('failed to load data source', error);
@@ -144,6 +145,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
+
     this.onChange({
       queries,
       dataSource: {
@@ -261,21 +263,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
   onCloseDataSourceModal = () => {
     this.setState({ isDataSourceModalOpen: false });
-    locationService.partial({ firstPanel: null });
-  };
-
-  renderMixedPicker = () => {
-    return (
-      <DataSourcePicker
-        mixed={false}
-        onChange={this.onAddMixedQuery}
-        current={null}
-        autoFocus={true}
-        variables={true}
-        onBlur={this.onMixedPickerBlur}
-        openMenuOnFocus={true}
-      />
-    );
   };
 
   renderDataSourcePickerWithPrompt = () => {
@@ -311,15 +298,6 @@ export class QueryGroup extends PureComponent<Props, State> {
         />
       </>
     );
-  };
-
-  onAddMixedQuery = (datasource: any) => {
-    this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false });
-  };
-
-  onMixedPickerBlur = () => {
-    this.setState({ isAddingMixed: false });
   };
 
   onAddQuery = (query: Partial<DataQuery>) => {
@@ -421,8 +399,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const { isAddingMixed } = this.state;
-    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
+    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">

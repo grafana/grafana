@@ -676,7 +676,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			args, ok := sender.Calls[0].Arguments[1].(definitions.PostableAlerts)
 			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[1]))
 			assert.Len(t, args.PostableAlerts, 1)
-			assert.Equal(t, ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
+			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
 		})
 	})
 

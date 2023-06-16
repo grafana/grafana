@@ -444,7 +444,7 @@ func (hs *HTTPServer) getAccessControlMetadata(c *contextmodel.ReqContext,
 // Context must contain permissions in the given org (see LoadPermissionsMiddleware or AuthorizeInOrgMiddleware)
 func (hs *HTTPServer) getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 	orgID int64, prefix string, resourceIDs map[string]bool) map[string]ac.Metadata {
-	if hs.AccessControl.IsDisabled() || !c.QueryBool("accesscontrol") {
+	if !c.QueryBool("accesscontrol") {
 		return map[string]ac.Metadata{}
 	}
 

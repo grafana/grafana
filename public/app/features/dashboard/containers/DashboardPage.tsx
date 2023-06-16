@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
@@ -417,7 +417,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 }
 
 function updateStatePageNavFromProps(props: Props, state: State): State {
-  const { dashboard } = props;
+  const { dashboard, navIndex } = props;
 
   if (!dashboard) {
     return state;
@@ -426,7 +426,7 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
   let pageNav = state.pageNav;
   let sectionNav = state.sectionNav;
 
-  if (!pageNav || dashboard.title !== pageNav.text) {
+  if (!pageNav || dashboard.title !== pageNav.text || dashboard.meta.folderUrl !== pageNav.parentItem?.url) {
     pageNav = {
       text: dashboard.title,
       url: locationUtil.getUrlForPartial(props.history.location, {
@@ -437,16 +437,26 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  // Check if folder changed
   const { folderTitle, folderUid } = dashboard.meta;
-  if (folderTitle && folderUid && pageNav && pageNav.parentItem?.text !== folderTitle) {
-    pageNav = {
-      ...pageNav,
-      parentItem: {
-        text: folderTitle,
-        url: `/dashboards/f/${dashboard.meta.folderUid}`,
-      },
-    };
+  if (folderUid && pageNav) {
+    if (config.featureToggles.nestedFolders) {
+      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
+    } else {
+      // Check if folder changed
+      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
+        pageNav = {
+          ...pageNav,
+          parentItem: {
+            text: folderTitle,
+            url: `/dashboards/f/${dashboard.meta.folderUid}`,
+          },
+        };
+      }
+    }
   }
 
   if (props.route.routeName === DashboardRoutes.Path) {

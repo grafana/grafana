@@ -358,6 +358,61 @@ describe('explore links utils', () => {
       );
     });
 
+    it('returns internal links within a result consistent with trace data', () => {
+      const transformationLink: DataLink = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: 'http_requests{env=${msg}}' },
+          datasourceUid: 'uid_1',
+          datasourceName: 'test_ds',
+          transformations: [
+            {
+              type: SupportedTransformationType.Regex,
+              expression: '{(?=[^\\}]*\\bkey":"keyA")[^\\}]*\\bvalue":"(.*?)".*}',
+              field: 'serviceTags',
+              mapValue: 'msg',
+            },
+          ],
+        },
+      };
+
+      const { field, range, dataFrame } = setup(transformationLink, true, {
+        name: 'serviceTags',
+        type: FieldType.other,
+        values: [
+          [
+            { value: 'broccoli', key: 'keyA' },
+            { value: 'apple', key: 'keyB' },
+          ],
+          [
+            { key: 'keyA', value: 'cauliflower' },
+            { value: 'durian', key: 'keyB' },
+          ],
+        ],
+        config: {
+          links: [transformationLink],
+        },
+      });
+
+      const links = [
+        getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+        getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+      ];
+      expect(links[0]).toHaveLength(1);
+      expect(links[0][0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=broccoli}"}]}'
+        )}`
+      );
+      expect(links[1]).toHaveLength(1);
+      expect(links[1][0].href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=cauliflower}"}]}'
+        )}`
+      );
+    });
+
     it('returns internal links with logfmt with stringified booleans', () => {
       const transformationLink: DataLink = {
         title: '',
@@ -684,7 +739,7 @@ const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 function setup(
   link: DataLink,
   hasAccess = true,
-  fieldOverride?: Field<string | null>,
+  fieldOverride?: Field<string | Array<{ key: string; value: string }> | null>, // key/value array for traceView fields
   dataFrameOtherFieldOverride?: Field[]
 ) {
   setLinkSrv({

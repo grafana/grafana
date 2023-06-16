@@ -1,4 +1,11 @@
-import { DataFrame, FieldConfig, FieldSparkline, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  FieldConfig,
+  FieldSparkline,
+  FieldType,
+  isLikelyAscendingVector,
+  sortDataFrame,
+} from '@grafana/data';
 import { GraphFieldConfig } from '@grafana/schema';
 
 import { applyNullInsertThreshold } from '../GraphNG/nullInsertThreshold';
@@ -13,22 +20,32 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
     ...config,
   };
 
+  const xField = sparkline.x ?? {
+    name: '',
+    values: [...Array(length).keys()],
+    type: FieldType.number,
+    config: {},
+  };
+
+  let frame: DataFrame = {
+    refId: 'sparkline',
+    fields: [
+      xField,
+      {
+        ...sparkline.y,
+        config: yFieldConfig,
+      },
+    ],
+    length,
+  };
+
+  if (!isLikelyAscendingVector(xField.values)) {
+    frame = sortDataFrame(frame, 0);
+  }
+
   return applyNullInsertThreshold({
-    frame: {
-      refId: 'sparkline',
-      fields: [
-        sparkline.x ?? {
-          name: '',
-          values: [...Array(length).keys()],
-          type: FieldType.number,
-          config: {},
-        },
-        {
-          ...sparkline.y,
-          config: yFieldConfig,
-        },
-      ],
-      length,
-    },
+    frame,
+    refFieldPseudoMin: sparkline.timeRange?.from.valueOf(),
+    refFieldPseudoMax: sparkline.timeRange?.to.valueOf(),
   });
 }

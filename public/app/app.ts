@@ -67,6 +67,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
@@ -119,6 +120,8 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      // This needs to be done after the `initEchoSrv` since it is being used under the hood.
+      startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
@@ -219,6 +222,8 @@ export class GrafanaApp {
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
+    } finally {
+      stopMeasure('frontend_app_init');
     }
   }
 }

@@ -2,6 +2,8 @@ package expr
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -12,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -38,25 +41,38 @@ func IsDataSource(uid string) bool {
 	return uid == DatasourceUID || uid == OldDatasourceUID
 }
 
+// NodeTypeFromDatasourceUID returns NodeType depending on the UID of the data source: TypeCMDNode if UID is DatasourceUID
+// or OldDatasourceUID, and TypeDatasourceNode otherwise.
+func NodeTypeFromDatasourceUID(uid string) NodeType {
+	if IsDataSource(uid) {
+		return TypeCMDNode
+	}
+	return TypeDatasourceNode
+}
+
 // Service is service representation for expression handling.
 type Service struct {
-	cfg               *setting.Cfg
-	dataService       backend.QueryDataHandler
-	dataSourceService datasources.DataSourceService
-	features          featuremgmt.FeatureToggles
+	cfg          *setting.Cfg
+	dataService  backend.QueryDataHandler
+	pCtxProvider *plugincontext.Provider
+	features     featuremgmt.FeatureToggles
+
+	pluginsClient backend.CallResourceHandler
 
 	tracer  tracing.Tracer
 	metrics *metrics
 }
 
-func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, dataSourceService datasources.DataSourceService, features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
+func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer) *Service {
 	return &Service{
-		cfg:               cfg,
-		dataService:       pluginClient,
-		dataSourceService: dataSourceService,
-		features:          features,
-		tracer:            tracer,
-		metrics:           newMetrics(registerer),
+		cfg:           cfg,
+		dataService:   pluginClient,
+		pCtxProvider:  pCtxProvider,
+		features:      features,
+		tracer:        tracer,
+		metrics:       newMetrics(registerer),
+		pluginsClient: pluginClient,
 	}
 }
 
@@ -89,13 +105,27 @@ func (s *Service) ExecutePipeline(ctx context.Context, now time.Time, pipeline D
 	return res, nil
 }
 
-func DataSourceModel() *datasources.DataSource {
-	return &datasources.DataSource{
-		ID:             DatasourceID,
-		UID:            DatasourceUID,
-		Name:           DatasourceUID,
-		Type:           DatasourceType,
-		JsonData:       simplejson.New(),
-		SecureJsonData: make(map[string][]byte),
+// Create a datasources.DataSource struct from NodeType. Returns error if kind is TypeDatasourceNode or unknown one.
+func DataSourceModelFromNodeType(kind NodeType) (*datasources.DataSource, error) {
+	switch kind {
+	case TypeCMDNode:
+		return &datasources.DataSource{
+			ID:             DatasourceID,
+			UID:            DatasourceUID,
+			Name:           DatasourceUID,
+			Type:           DatasourceType,
+			JsonData:       simplejson.New(),
+			SecureJsonData: make(map[string][]byte),
+		}, nil
+	case TypeDatasourceNode:
+		return nil, errors.New("cannot create expression data source for data source kind")
+	default:
+		return nil, fmt.Errorf("cannot create expression data source for '%s' kind", kind)
 	}
+}
+
+// Deprecated. Use DataSourceModelFromNodeType instead
+func DataSourceModel() *datasources.DataSource {
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
+	return d
 }

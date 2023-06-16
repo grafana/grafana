@@ -18,13 +18,14 @@ describe('FlameGraphHeader', () => {
         app={CoreApp.Explore}
         search={search}
         setSearch={setSearch}
-        setTopLevelIndex={jest.fn()}
-        setSelectedBarIndex={jest.fn()}
-        setRangeMin={jest.fn()}
-        setRangeMax={jest.fn()}
         selectedView={selectedView}
         setSelectedView={setSelectedView}
         containerWidth={1600}
+        onReset={() => {
+          setSearch('');
+        }}
+        onTextAlignChange={jest.fn()}
+        textAlign={'left'}
       />
     );
   };
