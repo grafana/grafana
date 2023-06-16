@@ -404,7 +404,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
+	res.APIVersion = "core.kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
@@ -462,7 +462,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.APIVersion = "core.kinds.grafana.com" + "/" + "v0.0-alpha"
 		res.Kind = s.kind.Name()
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)

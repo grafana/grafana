@@ -69,7 +69,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 
 	namespace := util.OrgIdToNamespace(cmd.OrgID)
 	dashboardResource, err := s.clientset.GetClientset().GetResourceClient(schema.GroupVersionKind{
-		Group:   "dashboard.kinds.grafana.com",
+		Group:   "core.kinds.grafana.com",
 		Version: "v0-alpha",
 		Kind:    "Dashboard",
 	}, namespace)
@@ -120,7 +120,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	}
 
 	if cmd.IsFolder {
-		res.APIVersion = "folders.kinds.grafana.com/v0-alpha"
+		res.APIVersion = "core.kinds.grafana.com/v0-alpha"
 		res.Kind = "Folder"
 		res.Spec = cmd.Dashboard
 
@@ -131,7 +131,7 @@ func (s *DashboardStoreWrapper) SaveProvisionedDashboard(ctx context.Context, cm
 	}
 
 	// Dashboard versions
-	res.APIVersion = "dashboard.kinds.grafana.com/v0-alpha"
+	res.APIVersion = "core.kinds.grafana.com/v0-alpha"
 	res.Kind = "Dashboard"
 	res.Spec = cmd.Dashboard
 

@@ -11,9 +11,9 @@ package preferences
 
 // CookiePreferences defines model for CookiePreferences.
 type CookiePreferences struct {
-	Analytics   map[string]interface{} `json:"analytics,omitempty"`
-	Functional  map[string]interface{} `json:"functional,omitempty"`
-	Performance map[string]interface{} `json:"performance,omitempty"`
+	Analytics   map[string]any `json:"analytics,omitempty"`
+	Functional  map[string]any `json:"functional,omitempty"`
+	Performance map[string]any `json:"performance,omitempty"`
 }
 
 // QueryHistoryPreference defines model for QueryHistoryPreference.
