@@ -83,7 +83,7 @@ export default function EmbeddedDashboardPage({ route, queryParams }: Props) {
     <Page pageNav={{ text: dashboard.title }} layout={PageLayoutType.Custom}>
       <Toolbar dashboard={dashboard} callbackUrl={queryParams.callbackUrl} dashboardJson={dashboardJson} />
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
-      <div className={''}>
+      <div>
         <DashboardGrid dashboard={dashboard} isEditable viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
     </Page>
