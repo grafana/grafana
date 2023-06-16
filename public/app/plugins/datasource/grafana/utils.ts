@@ -58,7 +58,9 @@ function updateSnapshotData(frames: DataFrame[], panel: PanelModel) {
   panel.refresh();
 }
 
-export function fileDropHandler(onFileLoaded: (query: GrafanaQuery, fileRejections: FileRejection[]) => void) {
+export function getFileDropToQueryHandler(
+  onFileLoaded: (query: GrafanaQuery, fileRejections: FileRejection[]) => void
+) {
   return (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
     DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
       const snapshot: DataFrameJSON[] = [];

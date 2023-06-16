@@ -16,7 +16,7 @@ import {
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
-import { fileDropHandler } from 'app/plugins/datasource/grafana/utils';
+import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
 
 import { useDatasource } from '../../hooks';
 
@@ -71,7 +71,7 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
 
   const grafanaDS = useDatasource('-- Grafana --');
 
-  const onFileDrop = fileDropHandler((query, fileRejections) => {
+  const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
     if (!grafanaDS) {
       return;
     }
