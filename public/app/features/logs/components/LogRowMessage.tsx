@@ -119,7 +119,7 @@ export class LogRowMessage extends PureComponent<Props> {
               fill="text"
               size="md"
               getText={this.getLogText}
-              tooltip="Copy logline to clipboard"
+              tooltip="Copy log line to clipboard"
               tooltipPlacement="top"
             />
             {onPermalinkClick && row.uid && (
