@@ -434,7 +434,8 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "plugins-bundled/internal/*"
+      "plugins-bundled/internal/*",
+      "plugins/*"
     ]
   },
   "engines": {
