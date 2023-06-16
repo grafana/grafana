@@ -564,5 +564,12 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "alertingLokiRangeToInstant",
+			Description:  "Rewrites eligible loki range queries to instant queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )
