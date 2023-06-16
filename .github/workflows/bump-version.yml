@@ -69,5 +69,5 @@ jobs:
       - name: Run bump version (manually invoked)
         uses: ./actions/bump-version
         with:
-          token: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
+          token: ${{ steps.generate_token.outputs.token }}
           metricsWriteAPIKey: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
