@@ -338,11 +338,23 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 ### Features and enhancements
 
 - **Chore:** Upgrade Go to 1.20.4. [#67757](https://github.com/grafana/grafana/issues/67757), [@papagian](https://github.com/papagian)
+- **Alerting:** Scheduler use rule fingerprint instead of version. [#67516](https://github.com/grafana/grafana/issues/67516), [@grafanabot](https://github.com/grafanabot)
 
 ### Bug fixes
 
+- **TimeSeries:** Fix leading null-fill for missing intervals. [#67571](https://github.com/grafana/grafana/issues/67571), [@leeoniya](https://github.com/leeoniya)
+- **Dashboard:** Revert fixed header shown on mobile devices in the new panel header. [#67514](https://github.com/grafana/grafana/issues/67514), [@grafanabot](https://github.com/grafanabot)
+- **PostgreSQL:** Fix tls certificate issue by downgrading lib/pq. [#67393](https://github.com/grafana/grafana/issues/67393), [@grafanabot](https://github.com/grafanabot)
+- **Provisioning:** Fix provisioning issues with legacy alerting and data source permissions. [#67377](https://github.com/grafana/grafana/issues/67377), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Fix misleading status code in provisioning API. [#67358](https://github.com/grafana/grafana/issues/67358), [@grafanabot](https://github.com/grafanabot)
 - **Explore:** Update table min height (#67321). [#67332](https://github.com/grafana/grafana/issues/67332), [@adrapereira](https://github.com/adrapereira)
 - **DataLinks:** Encoded URL fixed. [#67291](https://github.com/grafana/grafana/issues/67291), [@juanicabanas](https://github.com/juanicabanas)
+- **Loki:** Fix log samples using `instant` queries (#67271). [#67275](https://github.com/grafana/grafana/issues/67275), [@svennergr](https://github.com/svennergr)
+- **Panel Header Fix:** Implement new Panel Header on Angular Panels . [#67228](https://github.com/grafana/grafana/issues/67228), [@grafanabot](https://github.com/grafanabot)
+- **Azure Monitor:** Fix bug that was not showing resources for certain locations. [#67216](https://github.com/grafana/grafana/issues/67216), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Fix panic when reparenting receivers to groups following an attempted rename via Provisioning. [#67175](https://github.com/grafana/grafana/issues/67175), [@grafanabot](https://github.com/grafanabot)
+- **Cloudwatch Logs:** Clarify Cloudwatch Logs Limits. [#67101](https://github.com/grafana/grafana/issues/67101), [@grafanabot](https://github.com/grafanabot)
+- **SAML:** Fix IdP metadata caching so that invalid metadata doesn't get cached. (Enterprise)
 
 <!-- 9.5.2 END -->
 <!-- 9.5.1 START -->
