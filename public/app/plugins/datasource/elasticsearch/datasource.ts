@@ -31,6 +31,7 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
+  InspectQueryOptions,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
@@ -889,6 +890,17 @@ export class ElasticDatasource
     }
 
     return false;
+  }
+
+  inspectQuery(query: ElasticsearchQuery, options: InspectQueryOptions): boolean {
+    let expression = query.query ?? '';
+    switch (options.check) {
+      case 'HAS_FILTER': {
+        return queryHasFilter(expression, options.attributes.key, options.attributes.value);
+      }
+      default:
+        return false;
+    }
   }
 
   modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
