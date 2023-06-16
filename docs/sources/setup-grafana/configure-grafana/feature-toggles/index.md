@@ -65,7 +65,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `refactorVariablesTimeRange`         | Refactor time range variables flow to reduce number of API calls made when query variables are chained                                                                                       |
 | `enableElasticsearchBackendQuerying` | Enable the processing of queries and responses in the Elasticsearch data source through backend                                                                                              |
 | `enableDatagridEditing`              | Enables the edit functionality in the datagrid panel                                                                                                                                         |
-| `alertingLokiRangeToInstant`         | Rewrites eligible loki range queries to instant queries                                                                                                                                      |
 
 ## Alpha feature toggles
 
@@ -112,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                       |
+| `alertingLokiRangeToInstant`       | Rewrites eligible loki range queries to instant queries                                                      |
 
 ## Development feature toggles
 
