@@ -4,13 +4,12 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/kindsys"
-
 	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -52,7 +51,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	if resource.Resource == "grafanaresourcedefinitions" {
+	if resource.Resource == "grafanakinds" {
 		return f.fallback.GetRESTOptions(resource)
 	}
 

@@ -10,10 +10,13 @@ load(
     "scripts/drone/steps/lib.star",
     "get_windows_steps",
     "windows_clone_step",
-    "windows_go_image",
     "windows_init_enterprise_steps",
     "windows_test_backend_step",
     "windows_wire_install_step",
+)
+load(
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
 )
 
 def windows_test_backend(trigger, edition, ver_mode):
@@ -36,7 +39,7 @@ def windows_test_backend(trigger, edition, ver_mode):
     else:
         steps.extend([{
             "name": "windows-init",
-            "image": windows_go_image,
+            "image": windows_images["windows_go_image"],
             "depends_on": ["clone"],
             "commands": [],
         }])
