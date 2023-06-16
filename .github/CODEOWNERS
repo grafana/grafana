@@ -55,6 +55,8 @@
 # Backend code
 /go.mod @grafana/backend-platform
 /go.sum @grafana/backend-platform
+/go.work @grafana/backend-platform
+/go.work.sum @grafana/backend-platform
 /.bingo/ @grafana/backend-platform
 /pkg/README.md @grafana/backend-platform
 /pkg/ruleguard.rules.go @grafana/backend-platform
