@@ -18,7 +18,6 @@ The Traces panel visualizes traces data into a diagram that allows you to easily
 
 For more information about traces and how to use them, refer to the following documentation:
 
-- [What are traces](/docs/grafana-cloud/traces)
 - [Tracing in Explore]({{< relref "../../../explore/trace-integration/" >}})
 - [Tempo data source]({{< relref "../../../datasources/tempo/" >}})
 - [Getting started with Tempo](/docs/tempo/latest/getting-started)
@@ -53,12 +52,18 @@ This procedure uses dashboard variables and templates to allow us to enter trace
 1. In the panel search pane on the right, select the **Visualizations** tab, search for, and select **Traces**.
 1. Under the **Panel options**, enter a **Title** for your trace panel. For more information on the panel editor, refer to the [Configure panel options documentation]({{< relref "../../configure-panel-options" >}}).
 1. In the query editor, select the **TraceQL** query type tab.
-1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query. <br /> {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
+1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query.
+
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
 
 1. Select **Apply** in the panel editor to add the panel to the dashboard.
-1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard. <br /> {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" maxWidth="25%" caption="Add a Custom variable" >}}
+1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard.
 
-1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable. <br /> {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in Trace panel" >}}
+   {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" max-width="50%" caption="Add a Custom variable" >}}
+
+1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
+
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in Trace panel" >}}
 
 ## Add TraceQL with table visualizations
 
@@ -70,7 +75,9 @@ It’s more useful to instead be able to use TraceQL queries to search for speci
 1. In the panel search pane, select the **Visualizations** tab and search for **Table**.
 1. In the query editor, select the **TraceQL** tab.
 1. Under the **Panel options**, enter a **Title** for your trace panel.
-1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. We’ll use a simple, static query as an example. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables. <br /> {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
+1. Add an appropriate TraceQL query to search for traces that you would like to visualize in the dashboard. We’ll use a simple, static query as an example. You can write the TraceQL query as a template query to take advantage of other dashboard variables, if they exist. This lets you create dynamic queries based on these variables.
+
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-dynamic-query.png" caption="Create a dynamic query" >}}
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
@@ -84,9 +91,14 @@ To do so, you need to create a set of data links in the panel. Take the followin
 
 1. In the right-side menu, under **Data links**, select **Add link**.
 1. Add a **Title** for the data link.
-1. Find the UUID of the dashboard by looking in your browser’s address bar when the full dashboard is being rendered. Because this is a link to a dashboard in the same Grafana stack, only the path of the dashboard is required. <br /> {{< figure src="/static/img/docs/panels/traces/screensnot-traces-uuid-url.png" caption="Unique identifier for the dashboard" >}}
+1. Find the UUID of the dashboard by looking in your browser’s address bar when the full dashboard is being rendered. Because this is a link to a dashboard in the same Grafana stack, only the path of the dashboard is required.
 
-1. In the **URL** field, make a self-reference to the dashboard that contains both of the panels. This self-reference uses the value of the selected trace in the table to fill in the dashboard variable. Use the path for the dashboard from the previous step and then fill in the value of `traceId` using the selected results from the TraceQL table. The trace ID is exposed using the `traceID` data field in the returned results, so use that as the value for the dashboard variable. <br/> {{< figure class="float-right"  src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" caption="Edit link and add the Trace link" >}}
+   {{< figure src="/static/img/docs/panels/traces/screensnot-traces-uuid-url.png" caption="Unique identifier for the dashboard" >}}
+
+1. In the **URL** field, make a self-reference to the dashboard that contains both of the panels. This self-reference uses the value of the selected trace in the table to fill in the dashboard variable. Use the path for the dashboard from the previous step and then fill in the value of `traceId` using the selected results from the TraceQL table.
+   The trace ID is exposed using the `traceID` data field in the returned results, so use that as the value for the dashboard variable.
+
+   {{< figure src="/static/img/docs/panels/traces/screenshot-traces-edit-link.png" caption="Edit link and add the Trace link" >}}
 
 1. Select **Save** to save the data link.
 1. Select **Apply** from the panel editor to apply the panel to the dashboard.
