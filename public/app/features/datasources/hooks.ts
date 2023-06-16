@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useLocalStorage } from 'react-use';
 import { Observable } from 'rxjs';
 
@@ -69,8 +69,7 @@ export interface KeybaordNavigatableListProps {
  */
 export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps): [Record<string, string>, string] {
   const { keyboardEvents, containerRef } = props;
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  const [numberOfItems, setNumberOfItems] = useState<number>(0);
+  const selectedIndex = useRef<number>(0);
 
   const attributeName = 'data-role';
   const roleName = 'keyboardSelectableItem';
@@ -80,21 +79,67 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
   const selectedAttributeName = 'data-selectedItem';
   const selectedItemCssSelector = `[${selectedAttributeName}="true"]`;
 
+  const selectItem = useCallback(
+    (index: number) => {
+      const listItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
+        querySelectorNavigatableElements
+      );
+      const selectedItem = listItems?.item(index % listItems?.length);
+
+      listItems?.forEach((li) => li.setAttribute(selectedAttributeName, 'false'));
+
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'center' });
+        selectedItem.setAttribute(selectedAttributeName, 'true');
+      }
+    },
+    [containerRef, querySelectorNavigatableElements]
+  );
+
+  const clickSelectedElement = useCallback(() => {
+    containerRef?.current
+      ?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(selectedItemCssSelector)
+      ?.querySelector<HTMLButtonElement>('button') // This is a bit weird. The main use for this would be to select card items, however the root of the card component does not have the click event handler, instead it's attached to a button inside it.
+      ?.click();
+  }, [containerRef, selectedItemCssSelector]);
+
+  useEffect(() => {
+    if (!keyboardEvents) {
+      return;
+    }
+    const sub = keyboardEvents.subscribe({
+      next: (keyEvent) => {
+        switch (keyEvent?.code) {
+          case 'ArrowDown': {
+            selectItem(++selectedIndex.current);
+            keyEvent.preventDefault();
+            break;
+          }
+          case 'ArrowUp':
+            selectedIndex.current = selectedIndex.current > 0 ? selectedIndex.current - 1 : selectedIndex.current;
+            selectItem(selectedIndex.current);
+            keyEvent.preventDefault();
+            break;
+          case 'Enter':
+            clickSelectedElement();
+            break;
+        }
+      },
+    });
+    return () => sub.unsubscribe();
+  }, [keyboardEvents, selectItem, clickSelectedElement]);
+
   useEffect(() => {
     // This observer is used to keep track of the number of items in the list
     // that can change dinamically (e.g. when filtering a dropdown list)
     const listObserver = new MutationObserver((mutations) => {
-      let lastNumberOfItems = numberOfItems;
+      const listHasChanged = mutations.some(
+        (mutation) =>
+          (mutation.addedNodes && mutation.addedNodes.length > 0) ||
+          (mutation.removedNodes && mutation.removedNodes.length > 0)
+      );
 
-      mutations.forEach((mutation) => {
-        if (mutation.target.childNodes.length !== lastNumberOfItems) {
-          lastNumberOfItems = mutation.target.childNodes.length;
-        }
-      });
-
-      if (lastNumberOfItems !== numberOfItems) {
-        setNumberOfItems(lastNumberOfItems);
-      }
+      listHasChanged && selectItem(0);
     });
 
     if (containerRef.current) {
@@ -106,53 +151,7 @@ export function useKeyboardNavigatableList(props: KeybaordNavigatableListProps):
     return () => {
       listObserver.disconnect();
     };
-  }, [containerRef, numberOfItems]);
-
-  useEffect(() => {
-    const listItems = containerRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      querySelectorNavigatableElements
-    );
-    const selectedItem = listItems?.item(selectedIndex % listItems?.length);
-
-    listItems?.forEach((li) => li.setAttribute(selectedAttributeName, 'false'));
-
-    if (selectedItem) {
-      selectedItem.scrollIntoView({ block: 'center' });
-      selectedItem.setAttribute(selectedAttributeName, 'true');
-    }
-  }, [numberOfItems, selectedIndex, containerRef, selectedAttributeName, querySelectorNavigatableElements]);
-
-  const clickSelectedElement = () => {
-    containerRef?.current
-      ?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(selectedItemCssSelector)
-      ?.querySelector<HTMLButtonElement>('button') // This is a bit weird. The main use for this would be to select card items, however the root of the card component does not have the click event handler, instead it's attached to a button inside it.
-      ?.click();
-  };
-
-  useEffect(() => {
-    if (!keyboardEvents) {
-      return;
-    }
-    const sub = keyboardEvents.subscribe({
-      next: (keyEvent) => {
-        switch (keyEvent?.code) {
-          case 'ArrowDown': {
-            setSelectedIndex(selectedIndex + 1);
-            keyEvent.preventDefault();
-            break;
-          }
-          case 'ArrowUp':
-            setSelectedIndex(selectedIndex > 0 ? selectedIndex - 1 : selectedIndex);
-            keyEvent.preventDefault();
-            break;
-          case 'Enter':
-            clickSelectedElement();
-            break;
-        }
-      },
-    });
-    return () => sub.unsubscribe();
-  });
+  }, [containerRef, querySelectorNavigatableElements, selectItem]);
 
   return [navigatableItemProps, selectedItemCssSelector];
 }
