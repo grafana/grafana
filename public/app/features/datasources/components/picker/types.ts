@@ -12,6 +12,8 @@ export interface DataSourceDropdownProps {
   fileUploadOptions?: DropzoneOptions;
   onClickAddCSV?: () => void;
   recentlyUsed?: string[];
+  hideTextValue?: boolean;
+  width?: number;
 }
 
 export interface PickerContentProps extends DataSourceDropdownProps {
