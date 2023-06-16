@@ -97,13 +97,5 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
   enableDatagridEditing?: boolean;
-  dataSourcePageHeader?: boolean;
-  extraThemes?: boolean;
-  lokiPredefinedOperations?: boolean;
-  pluginsFrontendSandbox?: boolean;
-  sqlDatasourceDatabaseSelection?: boolean;
-  cloudWatchLogsMonacoEditor?: boolean;
-  exploreScrollableLogsContainer?: boolean;
-  recordedQueriesMulti?: boolean;
   alertingLokiRangeToInstant?: boolean;
 }

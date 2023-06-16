@@ -323,38 +323,6 @@ const (
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
 
-	// FlagDataSourcePageHeader
-	// Apply new pageHeader UI in data source edit page
-	FlagDataSourcePageHeader = "dataSourcePageHeader"
-
-	// FlagExtraThemes
-	// Enables extra themes
-	FlagExtraThemes = "extraThemes"
-
-	// FlagLokiPredefinedOperations
-	// Adds predefined query operations to Loki query editor
-	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
-
-	// FlagPluginsFrontendSandbox
-	// Enables the plugins frontend sandbox
-	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
-
-	// FlagSqlDatasourceDatabaseSelection
-	// Enables previous SQL data source dataset dropdown behavior
-	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
-
-	// FlagCloudWatchLogsMonacoEditor
-	// Enables the Monaco editor for CloudWatch Logs queries
-	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
-
-	// FlagExploreScrollableLogsContainer
-	// Improves the scrolling behavior of logs in Explore
-	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
-
-	// FlagRecordedQueriesMulti
-	// Enables writing multiple items from a single query within Recorded Queries
-	FlagRecordedQueriesMulti = "recordedQueriesMulti"
-
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
