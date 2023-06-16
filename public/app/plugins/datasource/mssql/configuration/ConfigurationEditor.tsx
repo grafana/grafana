@@ -29,20 +29,29 @@ import { ConnectionLimits } from 'app/features/plugins/sql/components/configurat
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
-import { dataSourceHasCredentials, setDataSourceCredentials } from '../azureauth/AzureCredentialsConfig';
+import {
+  dataSourceHasCredentials,
+  setDataSourceCredentials,
+  AzureAuthConfigType,
+} from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
+const SHORT_WIDTH = 15;
+const LONG_WIDTH = 46;
+const LABEL_WIDTH_SSL = 25;
+const LABEL_WIDTH_DETAILS = 20;
+
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
-  const { options, onOptionsChange } = props;
+  const { options: dsSettings, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
-  const jsonData = options.jsonData;
+  const jsonData = dsSettings.jsonData;
   const azureAuthSupported = config.azureAuthEnabled;
 
   const azureAuthSettings: AzureAuthConfigType = {
     azureAuthSupported,
     dataSourceHasCredentials,
     setDataSourceCredentials,
-    azureAuthSettings: AzureAuthSettings,
+    azureAuthSettingsUI: AzureAuthSettings,
   };
 
   useMigrateDatabaseFields(props);
@@ -53,7 +62,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const onDSOptionChanged = (property: keyof MssqlOptions) => {
     return (event: SyntheticEvent<HTMLInputElement>) => {
-      onOptionsChange({ ...options, ...{ [property]: event.currentTarget.value } });
+      onOptionsChange({ ...dsSettings, ...{ [property]: event.currentTarget.value } });
     };
   };
 
@@ -67,11 +76,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const onAuthenticationMethodChanged = (value: SelectableValue) => {
     onOptionsChange({
-      ...options,
+      ...dsSettings,
       ...{
         jsonData: { ...jsonData, ...{ authenticationType: value.value } },
-        secureJsonData: { ...options.secureJsonData, ...{ password: '' } },
-        secureJsonFields: { ...options.secureJsonFields, ...{ password: false } },
+        secureJsonData: { ...dsSettings.secureJsonData, ...{ password: '' } },
+        secureJsonFields: { ...dsSettings.secureJsonFields, ...{ password: false } },
         user: '',
       },
     });
@@ -92,27 +101,25 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.true, label: 'true' },
   ];
 
-  const shortWidth = 15;
-  const longWidth = 46;
-  const labelWidthSSL = 25;
-  const labelWidthDetails = 20;
+  const azureAuthEnabled: boolean =
+    azureAuthSettings?.azureAuthSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
 
   return (
     <>
       <FieldSet label="MS SQL Connection" width={400}>
-        <InlineField labelWidth={shortWidth} label="Host">
+        <InlineField labelWidth={SHORT_WIDTH} label="Host">
           <Input
-            width={longWidth}
+            width={LONG_WIDTH}
             name="host"
             type="text"
-            value={options.url || ''}
+            value={dsSettings.url || ''}
             placeholder="localhost:1433"
             onChange={onDSOptionChanged('url')}
           ></Input>
         </InlineField>
-        <InlineField labelWidth={shortWidth} label="Database">
+        <InlineField labelWidth={SHORT_WIDTH} label="Database">
           <Input
-            width={longWidth}
+            width={LONG_WIDTH}
             name="database"
             value={jsonData.database || ''}
             placeholder="database name"
@@ -121,7 +128,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         </InlineField>
         <InlineField
           label="Authentication"
-          labelWidth={shortWidth}
+          labelWidth={SHORT_WIDTH}
           htmlFor="authenticationType"
           tooltip={
             <ul className={styles.ulPadding}>
@@ -145,19 +152,19 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         </InlineField>
         {jsonData.authenticationType === MSSQLAuthenticationType.windowsAuth ? null : (
           <InlineFieldRow>
-            <InlineField labelWidth={shortWidth} label="User">
+            <InlineField labelWidth={SHORT_WIDTH} label="User">
               <Input
-                width={shortWidth}
-                value={options.user || ''}
+                width={SHORT_WIDTH}
+                value={dsSettings.user || ''}
                 placeholder="user"
                 onChange={onDSOptionChanged('user')}
               ></Input>
             </InlineField>
-            <InlineField label="Password" labelWidth={shortWidth}>
+            <InlineField label="Password" labelWidth={SHORT_WIDTH}>
               <SecretInput
-                width={shortWidth}
+                width={SHORT_WIDTH}
                 placeholder="Password"
-                isConfigured={options.secureJsonFields && options.secureJsonFields.password}
+                isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
                 onReset={onResetPassword}
                 onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
               ></SecretInput>
@@ -167,12 +174,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
       </FieldSet>
 
       {config.secureSocksDSProxyEnabled && (
-        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        <SecureSocksProxySettings options={dsSettings} onOptionsChange={onOptionsChange} />
       )}
 
       <FieldSet label="TLS/SSL Auth">
         <InlineField
-          labelWidth={labelWidthSSL}
+          labelWidth={LABEL_WIDTH_SSL}
           htmlFor="encrypt"
           tooltip={
             <>
@@ -204,7 +211,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
         {jsonData.encrypt === MSSQLEncryptOptions.true ? (
           <>
-            <InlineField labelWidth={labelWidthSSL} htmlFor="skipTlsVerify" label="Skip TLS Verify">
+            <InlineField labelWidth={LABEL_WIDTH_SSL} htmlFor="skipTlsVerify" label="Skip TLS Verify">
               <InlineSwitch
                 id="skipTlsVerify"
                 onChange={onSkipTLSVerifyChanged}
@@ -214,7 +221,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             {jsonData.tlsSkipVerify ? null : (
               <>
                 <InlineField
-                  labelWidth={labelWidthSSL}
+                  labelWidth={LABEL_WIDTH_SSL}
                   tooltip={
                     <span>
                       Path to file containing the public key certificate of the CA that signed the SQL Server
@@ -229,7 +236,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                     placeholder="TLS/SSL root certificate file path"
                   ></Input>
                 </InlineField>
-                <InlineField labelWidth={labelWidthSSL} label="Hostname in server certificate">
+                <InlineField labelWidth={LABEL_WIDTH_SSL} label="Hostname in server certificate">
                   <Input
                     placeholder="Common Name (CN) in server certificate"
                     value={jsonData.serverName || ''}
@@ -243,21 +250,22 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
       </FieldSet>
 
       <FieldSet label="Azure Authentication Settings">
-        {azureAuthSettings?.azureAuthSupported && (
+        {azureAuthEnabled && (
           <div className="gf-form-inline">
             <InlineField
               label="Azure Authentication"
               tooltip="Use Azure authentication for Azure endpoint."
-              labelWidth={LABEL_WIDTH}
-              disabled={dataSourceConfig.readOnly}
+              labelWidth={LONG_WIDTH}
+              disabled={dsSettings.readOnly}
             >
               <InlineSwitch
                 id="http-settings-azure-auth"
                 value={azureAuthEnabled}
                 onChange={(event) => {
-                  onSettingsChange(
-                    azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
-                  );
+                  onOptionsChange({
+                    ...dsSettings,
+                    ...azureAuthSettings.setDataSourceCredentials(dsSettings, config, event!.currentTarget.checked),
+                  });
                 }}
               />
             </InlineField>
@@ -265,7 +273,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         )}
       </FieldSet>
 
-      <ConnectionLimits labelWidth={shortWidth} options={options} onOptionsChange={onOptionsChange} />
+      <ConnectionLimits labelWidth={SHORT_WIDTH} options={dsSettings} onOptionsChange={onOptionsChange} />
 
       <FieldSet label="MS SQL details">
         <InlineField
@@ -276,7 +284,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             </span>
           }
           label="Min time interval"
-          labelWidth={labelWidthDetails}
+          labelWidth={LABEL_WIDTH_DETAILS}
         >
           <Input
             placeholder="1m"
@@ -292,7 +300,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             </span>
           }
           label="Connection timeout"
-          labelWidth={labelWidthDetails}
+          labelWidth={LABEL_WIDTH_DETAILS}
         >
           <NumberInput
             placeholder="60"

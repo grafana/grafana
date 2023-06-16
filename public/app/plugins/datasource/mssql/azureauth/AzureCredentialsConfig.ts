@@ -17,8 +17,8 @@ export type AzureAuthConfigType = {
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-export const dataSourceHasCredentials = (options: DataSourceSettings<any, any>): boolean =>
-  !!options.jsonData.azureCredentials;
+export const dataSourceHasCredentials = (dsSettings: DataSourceSettings<any, any>): boolean =>
+  !!dsSettings.jsonData.azureCredentials;
 
 const setDefaultCredentials = (
   dsSettings: DataSourceSettings<any, any>,
