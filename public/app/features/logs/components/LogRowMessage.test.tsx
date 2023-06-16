@@ -65,18 +65,18 @@ describe('LogRowMessage', () => {
   describe('with permalinking', () => {
     it('should show permalinking button when no `onPermalinkClick` is defined', () => {
       setup({ onPermalinkClick: jest.fn() });
-      expect(screen.queryByLabelText('Copy shortlink to logline')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Copy shortlink')).toBeInTheDocument();
     });
 
     it('should not show permalinking button when `onPermalinkClick` is defined', () => {
       setup();
-      expect(screen.queryByLabelText('Copy shortlink to logline')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Copy shortlink')).not.toBeInTheDocument();
     });
 
     it('should call `onPermalinkClick` with row on click', async () => {
       const permalinkClick = jest.fn();
       const props = setup({ onPermalinkClick: permalinkClick });
-      const button = screen.getByLabelText('Copy shortlink to logline');
+      const button = screen.getByLabelText('Copy shortlink');
 
       await userEvent.click(button);
 

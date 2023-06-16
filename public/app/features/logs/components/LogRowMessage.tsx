@@ -119,13 +119,13 @@ export class LogRowMessage extends PureComponent<Props> {
               fill="text"
               size="md"
               getText={this.getLogText}
-              tooltip="Copy log line to clipboard"
+              tooltip="Copy to clipboard"
               tooltipPlacement="top"
             />
             {onPermalinkClick && row.uid && (
               <IconButton
-                tooltip="Copy shortlink to logline"
-                aria-label="Copy shortlink to logline"
+                tooltip="Copy shortlink"
+                aria-label="Copy shortlink"
                 tooltipPlacement="top"
                 size="md"
                 name="share-alt"
