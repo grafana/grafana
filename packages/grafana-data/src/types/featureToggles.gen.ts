@@ -101,5 +101,4 @@ export interface FeatureToggles {
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
-  transformationsRedesign?: boolean;
 }
