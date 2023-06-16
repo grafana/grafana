@@ -21,7 +21,7 @@ import { TitleItem } from './TitleItem';
  */
 export interface PanelChromeProps {
   width: number;
-  height: number;
+  height?: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
@@ -229,7 +229,7 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   width: number,
   headerHeight: number,
-  height: number
+  height?: number
 ) => {
   const chromePadding = (padding === 'md' ? theme.components.panel.padding : 0) * theme.spacing.gridSize;
 
@@ -237,11 +237,15 @@ const getContentStyle = (
   const panelBorder = 1 * 2;
 
   const innerWidth = width - panelPadding - panelBorder;
-  const innerHeight = height - headerHeight - panelPadding - panelBorder;
+  let innerHeight = 0;
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
   };
+
+  if (height) {
+    innerHeight = height - headerHeight - panelPadding - panelBorder;
+  }
 
   return { contentStyle, innerWidth, innerHeight };
 };
@@ -292,7 +296,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'strict',
     }),
     headerContainer: css({
       label: 'panel-header',
