@@ -4,7 +4,8 @@ import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { getCredentials, updateCredentials, KnownAzureClouds, AzureCredentials } from './AzureCredentialsConfig';
+import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
+import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
@@ -13,7 +14,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
 
   const [overrideAudienceAllowed] = useState<boolean>(
     // JEV: FF this feature/or remove?
-    config.featureToggles.mssqlAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
+    config.featureToggles.prometheusAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
 
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(

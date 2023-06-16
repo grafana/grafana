@@ -28,6 +28,7 @@ import { config } from 'app/core/config';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
+import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import { dataSourceHasCredentials, setDataSourceCredentials } from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -41,7 +42,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     azureAuthSupported,
     dataSourceHasCredentials,
     setDataSourceCredentials,
-    azureAuthSettingsUI: AzureAuthSettings,
+    azureAuthSettings: AzureAuthSettings,
   };
 
   useMigrateDatabaseFields(props);
@@ -239,6 +240,29 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             )}
           </>
         ) : null}
+      </FieldSet>
+
+      <FieldSet label="Azure Authentication Settings">
+        {azureAuthSettings?.azureAuthSupported && (
+          <div className="gf-form-inline">
+            <InlineField
+              label="Azure Authentication"
+              tooltip="Use Azure authentication for Azure endpoint."
+              labelWidth={LABEL_WIDTH}
+              disabled={dataSourceConfig.readOnly}
+            >
+              <InlineSwitch
+                id="http-settings-azure-auth"
+                value={azureAuthEnabled}
+                onChange={(event) => {
+                  onSettingsChange(
+                    azureAuthSettings.setAzureAuthEnabled(dataSourceConfig, event!.currentTarget.checked)
+                  );
+                }}
+              />
+            </InlineField>
+          </div>
+        )}
       </FieldSet>
 
       <ConnectionLimits labelWidth={shortWidth} options={options} onOptionsChange={onOptionsChange} />

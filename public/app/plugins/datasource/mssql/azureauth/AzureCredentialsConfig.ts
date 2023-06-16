@@ -1,35 +1,19 @@
-import { DataSourceSettings, SelectableValue } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
+import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-// JEV: remove unnecessary
-enum AzureCloud {
-  Public = 'AzureCloud',
-}
+import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
 
-export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: AzureCloud.Public, label: 'Azure' }];
-
-type AzureAuthType = 'msi' | 'clientsecret';
-
-type ConcealedSecret = symbol;
-
-interface AzureCredentialsBase {
-  authType: AzureAuthType;
-  defaultSubscriptionId?: string;
-}
-
-interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
-  authType: 'msi';
-}
-
-interface AzureClientSecretCredentials extends AzureCredentialsBase {
-  authType: 'clientsecret';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
-}
-
-export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
+export type AzureAuthConfigType = {
+  azureAuthSupported: boolean;
+  dataSourceHasCredentials: (options: DataSourceSettings<any, any>) => boolean;
+  setDataSourceCredentials: (
+    dsSettings: DataSourceSettings<any, any>,
+    bootConfig: GrafanaBootConfig,
+    enabled: boolean
+  ) => Partial<DataSourceSettings<any, any>>;
+  azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
+};
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
