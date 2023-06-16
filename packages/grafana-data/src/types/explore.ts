@@ -15,10 +15,15 @@ export interface ExploreUrlState<T extends DataQuery = AnyQuery> {
 
 export interface ExplorePanelsState extends Partial<Record<PreferredVisualisationType, {}>> {
   trace?: ExploreTracePanelState;
+  logs?: ExploreLogsPanelState;
 }
 
 export interface ExploreTracePanelState {
   spanId?: string;
+}
+
+export interface ExploreLogsPanelState {
+  id?: string;
 }
 
 export interface SplitOpenOptions<T extends AnyQuery = AnyQuery> {

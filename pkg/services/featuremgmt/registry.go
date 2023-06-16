@@ -488,19 +488,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "authenticationConfigUI",
-			Description: "Enables authentication configuration UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true",
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:        "pluginsAPIManifestKey",
-			Description: "Use grafana.com API to retrieve the public manifest key",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
 			Stage:        FeatureStageGeneralAvailability,
@@ -563,6 +550,19 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "exploreScrollableLogsContainer",
+			Description:  "Improves the scrolling behavior of logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "recordedQueriesMulti",
+			Description: "Enables writing multiple items from a single query within Recorded Queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 	}
 )

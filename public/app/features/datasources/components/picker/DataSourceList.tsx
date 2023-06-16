@@ -86,7 +86,7 @@ export function DataSourceList(props: DataSourceListProps) {
               pushRecentlyUsedDataSource(ds);
               onChange(ds);
             }}
-            selected={!!isDataSourceMatch(ds, current)}
+            selected={isDataSourceMatch(ds, current)}
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}

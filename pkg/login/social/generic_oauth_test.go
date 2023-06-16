@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -490,7 +491,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedEmail, actualResult.Email)
 				require.Equal(t, test.ExpectedEmail, actualResult.Login)
@@ -588,7 +589,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedLogin, actualResult.Login)
 			})
@@ -686,7 +687,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedName, actualResult.Name)
 			})
@@ -755,7 +756,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					Expiry:       time.Now(),
 				}
 
-				userInfo, err := provider.UserInfo(ts.Client(), token)
+				userInfo, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedResult, userInfo.Groups)
 			})

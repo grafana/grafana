@@ -38,8 +38,7 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('can change line limit to valid value', async () => {
-    const { props } = setup();
-    props.query.expr = '{foo="bar"}';
+    const { props } = setup({ expr: '{foo="bar"}' });
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
     // Second autosize input is a Line limit
@@ -54,10 +53,9 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('does not change line limit to invalid numeric value', async () => {
-    const { props } = setup();
+    const { props } = setup({ expr: '{foo="bar"}' });
     // We need to start with some value to be able to change it
     props.query.maxLines = 10;
-    props.query.expr = '{foo="bar"}';
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
     // Second autosize input is a Line limit
@@ -72,10 +70,9 @@ describe('LokiQueryBuilderOptions', () => {
   });
 
   it('does not change line limit to invalid text value', async () => {
-    const { props } = setup();
+    const { props } = setup({ expr: '{foo="bar"}' });
     // We need to start with some value to be able to change it
     props.query.maxLines = 10;
-    props.query.expr = '{foo="bar"}';
 
     await userEvent.click(screen.getByTitle('Click to edit options'));
     // Second autosize input is a Line limit
@@ -87,6 +84,20 @@ describe('LokiQueryBuilderOptions', () => {
       ...props.query,
       maxLines: undefined,
     });
+  });
+
+  it('shows correct options for log query', async () => {
+    setup({ expr: '{foo="bar"}' });
+    expect(screen.getByText('Line limit: 20')).toBeInTheDocument();
+    expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.queryByText(/step/i)).not.toBeInTheDocument();
+  });
+
+  it('shows correct options for metric query', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+    expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
+    expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Step: 1m')).toBeInTheDocument();
   });
 });
 
