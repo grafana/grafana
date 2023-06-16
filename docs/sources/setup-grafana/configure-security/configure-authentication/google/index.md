@@ -110,13 +110,13 @@ With team sync, you can easily add users to teams by utilizing their Google grou
 
 1. Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` configuration:
 
-Example:
+   Example:
 
-```ini
-[auth.google]
-# ..
-scopes = openid email profile https://www.googleapis.com/auth/cloud-identity.groups.readonly
-```
+   ```ini
+   [auth.google]
+   # ..
+   scopes = openid email profile https://www.googleapis.com/auth/cloud-identity.groups.readonly
+   ```
 
 1. Configure team sync in your Grafana team's `External group sync` tab.
    The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
