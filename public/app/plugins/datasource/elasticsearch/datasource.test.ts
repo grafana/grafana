@@ -1333,6 +1333,17 @@ describe('targetContainsTemplate', () => {
     target.metrics = [{ type: 'extended_stats', id: '1', meta: { something: '$something' } }];
     expect(ds.targetContainsTemplate(target)).toBe(true);
   });
+  it('returns true when there are variables in an array inside an object in metrics', () => {
+    target.metrics = [
+      {
+        field: 'counter',
+        id: '1',
+        settings: { percents: ['20', '40', '$qqq'] },
+        type: 'percentiles',
+      },
+    ];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
 });
 
 describe('ElasticDatasource using backend', () => {

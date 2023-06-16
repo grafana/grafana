@@ -829,14 +829,15 @@ export class ElasticDatasource
   }
 
   private objectContainsTemplate(obj: any) {
+    if (typeof obj === 'string') {
+      return this.templateSrv.containsTemplate(obj);
+    }
     if (!obj || typeof obj !== 'object') {
       return false;
     }
 
     for (const key of Object.keys(obj)) {
-      if (typeof obj[key] === 'string' && this.templateSrv.containsTemplate(obj[key])) {
-        return true;
-      } else if (Array.isArray(obj[key])) {
+      if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {
             return true;
