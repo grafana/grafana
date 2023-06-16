@@ -4,16 +4,24 @@ import { Alert } from '@grafana/ui';
 
 type Props = {
   className?: string;
+  angularSupportEnabled?: boolean;
 };
 
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
-export function PluginDetailsAngularDeprecation({ className }: Props): React.ReactElement | null {
+export function PluginDetailsAngularDeprecation({
+  className,
+  angularSupportEnabled,
+}: Props): React.ReactElement | null {
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
       <p>
-        This plugin uses a deprecated, legacy platform based on AngularJS and may be incompatible depending on your
-        Grafana configuration.
+        This plugin uses a deprecated, legacy platform based on AngularJS and
+        {angularSupportEnabled === undefined
+          ? ' may be incompatible depending on your Grafana configuration.'
+          : angularSupportEnabled
+          ? ' will stop working in future releases of Grafana.'
+          : ' is incompatible with your current Grafana configuration.'}
       </p>
 
       <a
