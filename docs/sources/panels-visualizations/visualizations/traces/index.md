@@ -56,7 +56,6 @@ This procedure uses dashboard variables and templates to allow us to enter trace
 1. Enter `${traceId}` in the TraceQL query field to create a dashboard variable. This variable is used as the template query. <br /> {{< figure src="/static/img/docs/panels/traces/screenshot-traces-template-query.png" caption="Add a template query" >}}
 
 1. Select **Apply** in the panel editor to add the panel to the dashboard.
-1. Expand the size of the trace panel so that it fills the width of the dashboard. We’ll now use the dashboard settings to create the variable used in the panel’s template query.
 1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard. <br /> {{< figure  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" maxWidth="25%" caption="Add a Custom variable" >}}
 
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable. <br /> {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in Trace panel" >}}
