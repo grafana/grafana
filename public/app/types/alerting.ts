@@ -123,6 +123,7 @@ export interface NotificationChannelOption {
     | 'input'
     | 'select'
     | 'checkbox'
+    | 'radio'
     | 'textarea'
     | 'subform'
     | 'subform_array'
@@ -137,7 +138,7 @@ export interface NotificationChannelOption {
   secure: boolean;
   selectOptions?: Array<SelectableValue<string>> | null;
   defaultValue?: SelectableValue<string>;
-  showWhen: { field: string; is: string };
+  showWhen: { field: string; is: string | boolean };
   validationRule: string;
   subformOptions?: NotificationChannelOption[];
   dependsOn: string;

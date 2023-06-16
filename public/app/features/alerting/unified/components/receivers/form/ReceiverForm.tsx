@@ -30,6 +30,7 @@ interface Props<R extends ChannelValues> {
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
   isTestable?: boolean;
+  fieldValidators?: Record<string, (value: string) => boolean>;
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -42,6 +43,7 @@ export function ReceiverForm<R extends ChannelValues>({
   onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
+  fieldValidators,
   isEditable,
   isTestable,
 }: Props<R>): JSX.Element {

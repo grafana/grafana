@@ -29,7 +29,10 @@ export const RadioButtonDot = ({ id, name, label, checked, disabled, description
         className={styles.input}
         onChange={() => onChange && onChange(id)}
       />
-      {label}
+      <div>
+        {label}
+        <div className={styles.description}>{description}</div>
+      </div>
     </label>
   );
 };
@@ -84,5 +87,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: grid;
     grid-template-columns: ${theme.spacing(2)} auto;
     gap: ${theme.spacing(1)};
+  `,
+
+  description: css`
+    font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.text.secondary};
   `,
 });

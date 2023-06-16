@@ -3,7 +3,7 @@ import { isEmpty } from 'lodash';
 import React, { FC, useEffect } from 'react';
 import { useFormContext, FieldError, DeepMap } from 'react-hook-form';
 
-import { Checkbox, Field, Input, InputControl, Select, TextArea } from '@grafana/ui';
+import { Checkbox, Field, Input, InputControl, RadioButtonList, Select, TextArea } from '@grafana/ui';
 import { NotificationChannelOption } from 'app/types';
 
 import { KeyValueMapInput } from './KeyValueMapInput';
@@ -138,7 +138,16 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           name={name}
         />
       );
-
+    case 'radio':
+      return (
+        <InputControl
+          render={({ field }) => (
+            <RadioButtonList disabled={readOnly} options={option.selectOptions ?? []} {...field} />
+          )}
+          control={control}
+          name={name}
+        />
+      );
     case 'textarea':
       return (
         <TextArea
