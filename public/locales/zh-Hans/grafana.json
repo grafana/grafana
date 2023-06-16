@@ -163,6 +163,12 @@
       "success": "库面板已保存"
     }
   },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",

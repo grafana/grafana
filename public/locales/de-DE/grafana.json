@@ -163,6 +163,12 @@
       "success": "Bibliotheks-Panel wurde gespeichert"
     }
   },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
