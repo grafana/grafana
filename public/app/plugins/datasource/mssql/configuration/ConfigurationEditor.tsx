@@ -9,6 +9,7 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
+  DataSourceSettings,
 } from '@grafana/data';
 import {
   Alert,
