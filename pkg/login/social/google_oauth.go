@@ -5,14 +5,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const legacyAPIURL = "https://www.googleapis.com/oauth2/v1/userinfo"
 const googleIAMGroupsEndpoint = "https://content-cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups"
+const googleIAMScope = "https://www.googleapis.com/auth/cloud-identity.groups.readonly"
 
 type SocialGoogle struct {
 	*SocialBase
@@ -78,7 +82,6 @@ type googleAPIData struct {
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
 	if strings.HasPrefix(s.apiUrl, legacyAPIURL) {
-		s.log.Warn("Using legacy Google API URL, please update your configuration")
 		data := googleAPIData{}
 		response, err := s.httpGet(ctx, client, s.apiUrl)
 		if err != nil {
@@ -132,7 +135,9 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	s.log.Debug("Received id_token", "raw_json", string(rawJSON))
+	if setting.Env == setting.Dev {
+		s.log.Debug("Received id_token", "raw_json", string(rawJSON))
+	}
 
 	var data googleUserData
 	if err := json.Unmarshal(rawJSON, &data); err != nil {
@@ -154,17 +159,8 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	contains := func(slice []string, item string) bool {
-		for _, s := range slice {
-			if s == item {
-				return true
-			}
-		}
-		return false
-	}
-
 	s.log.Debug("Retrieving groups", "scopes", s.SocialBase.Config.Scopes)
-	if !contains(s.Scopes, "https://www.googleapis.com/auth/cloud-identity.groups.readonly") {
+	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}
 

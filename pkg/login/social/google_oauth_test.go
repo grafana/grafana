@@ -49,15 +49,27 @@ func TestSocialGoogle_retrieveGroups(t *testing.T) {
 		{
 			name: "No groups",
 			fields: fields{
-				Scopes: []string{},
+				Scopes: []string{"https://www.googleapis.com/auth/cloud-identity.groups.readonly"},
 			},
 			args: args{
-				client: &http.Client{},
+				client: &http.Client{
+					Transport: &roundTripperFunc{
+						fn: func(req *http.Request) (*http.Response, error) {
+							resp := httptest.NewRecorder()
+							_, _ = resp.WriteString(`{
+                                "memberships": [
+                                ],
+                                "nextPageToken": ""
+                            }`)
+							return resp.Result(), nil
+						},
+					},
+				},
 				userData: &googleUserData{
 					Email: "test@example.com",
 				},
 			},
-			want:    nil,
+			want:    []string{},
 			wantErr: false,
 		},
 		{
