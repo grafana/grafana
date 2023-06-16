@@ -12,7 +12,7 @@ jest.mock('app/core/core', () => {
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
 import { SystemJS } from '@grafana/runtime';
 
-// Loaded after the `unmock` abve
+// Loaded after the `unmock` above
 import { importAppPlugin } from '../plugin_loader';
 
 class MyCustomApp extends AppPlugin {
@@ -27,14 +27,18 @@ class MyCustomApp extends AppPlugin {
 
 describe('Load App', () => {
   const app = new MyCustomApp();
-  const modulePath = 'my/custom/plugin/module';
+  const modulePath = 'http://localhost:300/public/plugins/my-app-plugin/module.js';
+  // Hook resolver for tests
+  const originalResolve = SystemJS.constructor.prototype.resolve;
+  SystemJS.constructor.prototype.resolve = (x: unknown) => x;
 
   beforeAll(() => {
-    SystemJS.set(modulePath, SystemJS.newModule({ plugin: app }));
+    SystemJS.set(modulePath, { plugin: app });
   });
 
   afterAll(() => {
     SystemJS.delete(modulePath);
+    SystemJS.constructor.prototype.resolve = originalResolve;
   });
 
   it('should call init and set meta', async () => {
