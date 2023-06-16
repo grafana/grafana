@@ -60,7 +60,7 @@ func (m *TracingMiddleware) traceWrap(
 	}
 
 	// Additional attributes from http headers
-	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil && len(reqCtx.Req.Header) > 0 {
+	if reqCtx := contexthandler.FromContext(ctx); reqCtx != nil && reqCtx.Req != nil {
 		if v, err := strconv.Atoi(reqCtx.Req.Header.Get(query.HeaderPanelID)); err == nil {
 			span.SetAttributes("panel_id", v, attribute.Key("panel_id").Int(v))
 		}

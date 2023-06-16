@@ -103,27 +103,43 @@ type ContextHandler struct {
 type ReqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
-func FromContext(c context.Context) *contextmodel.ReqContext {
-	if reqCtx, ok := c.Value(ReqContextKey{}).(*contextmodel.ReqContext); ok {
+func FromContext(ctx context.Context) *contextmodel.ReqContext {
+	if reqCtx, ok := ctx.Value(ReqContextKey{}).(*contextmodel.ReqContext); ok {
 		return reqCtx
 	}
-	return nil
+
+	mContext := web.FromContext(ctx)
+
+	reqContext := &contextmodel.ReqContext{
+		Context: mContext,
+		SignedInUser: &user.SignedInUser{
+			Permissions: map[int64]map[string][]string{},
+		},
+		IsSignedIn:     false,
+		AllowAnonymous: false,
+		SkipDSCache:    false,
+		Logger:         log.New("context"),
+	}
+
+	return reqContext
 }
 
 func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		mContext := web.FromContext(req.Context())
+		//mContext := web.FromContext(req.Context())
 
-		reqContext := &contextmodel.ReqContext{
-			Context: mContext,
-			SignedInUser: &user.SignedInUser{
-				Permissions: map[int64]map[string][]string{},
-			},
-			IsSignedIn:     false,
-			AllowAnonymous: false,
-			SkipDSCache:    false,
-			Logger:         log.New("context"),
-		}
+		// reqContext := &contextmodel.ReqContext{
+		// 	Context: mContext,
+		// 	SignedInUser: &user.SignedInUser{
+		// 		Permissions: map[int64]map[string][]string{},
+		// 	},
+		// 	IsSignedIn:     false,
+		// 	AllowAnonymous: false,
+		// 	SkipDSCache:    false,
+		// 	Logger:         log.New("context"),
+		// }
+
+		reqContext := FromContext(req.Context())
 
 		// Inject ReqContext into http.Request.Context
 		*req = *req.WithContext(context.WithValue(req.Context(), ReqContextKey{}, reqContext))

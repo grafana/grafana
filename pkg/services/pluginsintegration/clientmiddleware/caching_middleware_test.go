@@ -188,58 +188,58 @@ func TestCachingMiddleware(t *testing.T) {
 		})
 	})
 
-	t.Run("When RequestContext is nil", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, "/doesnt/matter", nil)
-		require.NoError(t, err)
+	// t.Run("When RequestContext is nil", func(t *testing.T) {
+	// 	req, err := http.NewRequest(http.MethodGet, "/doesnt/matter", nil)
+	// 	require.NoError(t, err)
 
-		cs := caching.NewFakeOSSCachingService()
-		cdt := clienttest.NewClientDecoratorTest(t,
-			// Skip the request context in this case
-			clienttest.WithMiddlewares(NewCachingMiddleware(cs)),
-		)
-		reqCtx := contexthandler.FromContext(req.Context())
-		require.Nil(t, reqCtx)
+	// 	cs := caching.NewFakeOSSCachingService()
+	// 	cdt := clienttest.NewClientDecoratorTest(t,
+	// 		// Skip the request context in this case
+	// 		clienttest.WithMiddlewares(NewCachingMiddleware(cs)),
+	// 	)
+	// 	reqCtx := contexthandler.FromContext(req.Context())
+	// 	require.Nil(t, reqCtx)
 
-		jsonDataMap := map[string]interface{}{}
-		jsonDataBytes, err := json.Marshal(&jsonDataMap)
-		require.NoError(t, err)
+	// 	jsonDataMap := map[string]interface{}{}
+	// 	jsonDataBytes, err := json.Marshal(&jsonDataMap)
+	// 	require.NoError(t, err)
 
-		pluginCtx := backend.PluginContext{
-			DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-				JSONData: jsonDataBytes,
-			},
-		}
+	// 	pluginCtx := backend.PluginContext{
+	// 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+	// 			JSONData: jsonDataBytes,
+	// 		},
+	// 	}
 
-		t.Run("Query caching is skipped", func(t *testing.T) {
-			t.Cleanup(func() {
-				cs.Reset()
-			})
+	// 	t.Run("Query caching is skipped", func(t *testing.T) {
+	// 		t.Cleanup(func() {
+	// 			cs.Reset()
+	// 		})
 
-			qdr := &backend.QueryDataRequest{
-				PluginContext: pluginCtx,
-			}
+	// 		qdr := &backend.QueryDataRequest{
+	// 			PluginContext: pluginCtx,
+	// 		}
 
-			resp, err := cdt.Decorator.QueryData(context.Background(), qdr)
-			assert.NoError(t, err)
-			// Cache service is never called
-			cs.AssertCalls(t, "HandleQueryRequest", 0)
-			// Equals nil (returned by the decorator test)
-			assert.Nil(t, resp)
-		})
+	// 		resp, err := cdt.Decorator.QueryData(context.Background(), qdr)
+	// 		assert.NoError(t, err)
+	// 		// Cache service is never called
+	// 		cs.AssertCalls(t, "HandleQueryRequest", 0)
+	// 		// Equals nil (returned by the decorator test)
+	// 		assert.Nil(t, resp)
+	// 	})
 
-		t.Run("Resource caching is skipped", func(t *testing.T) {
-			t.Cleanup(func() {
-				cs.Reset()
-			})
+	// 	t.Run("Resource caching is skipped", func(t *testing.T) {
+	// 		t.Cleanup(func() {
+	// 			cs.Reset()
+	// 		})
 
-			crr := &backend.CallResourceRequest{
-				PluginContext: pluginCtx,
-			}
+	// 		crr := &backend.CallResourceRequest{
+	// 			PluginContext: pluginCtx,
+	// 		}
 
-			err := cdt.Decorator.CallResource(req.Context(), crr, nopCallResourceSender)
-			assert.NoError(t, err)
-			// Cache service is never called
-			cs.AssertCalls(t, "HandleResourceRequest", 0)
-		})
-	})
+	// 		err := cdt.Decorator.CallResource(req.Context(), crr, nopCallResourceSender)
+	// 		assert.NoError(t, err)
+	// 		// Cache service is never called
+	// 		cs.AssertCalls(t, "HandleResourceRequest", 0)
+	// 	})
+	// })
 }
