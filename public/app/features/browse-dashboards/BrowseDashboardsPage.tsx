@@ -20,7 +20,7 @@ import CreateNewButton from './components/CreateNewButton';
 import { FolderActionsButton } from './components/FolderActionsButton';
 import { SearchView } from './components/SearchView';
 import { getFolderPermissions } from './permissions';
-import { setAllSelection, useHasSelection } from './state';
+import { setAllSelection, useChildrenByParentUIDState, useHasSelection } from './state';
 
 export interface BrowseDashboardsPageRouteParams {
   uid?: string;
@@ -60,6 +60,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
   }, [isSearching, searchState.result, stateManager]);
 
   const { data: folderDTO } = useGetFolderQuery(folderUID ?? skipToken);
+  const childrenByParentUID = useChildrenByParentUIDState();
   const [saveFolder] = useSaveFolderMutation();
   const navModel = useMemo(() => {
     if (!folderDTO) {
@@ -84,8 +85,11 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
     ? async (newValue: string) => {
         if (folderDTO) {
           const result = await saveFolder({
-            ...folderDTO,
-            title: newValue,
+            folder: {
+              ...folderDTO,
+              title: newValue,
+            },
+            childrenByParentUID,
           });
           if ('error' in result) {
             throw result.error;

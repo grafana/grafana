@@ -10,12 +10,14 @@ import { OpenLibraryPanelModal } from '../library-panels/components/OpenLibraryP
 import { LibraryElementDTO } from '../library-panels/types';
 
 import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { useChildrenByParentUIDState } from './state';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
   const { uid: folderUID } = match.params;
   const { data: folderDTO } = useGetFolderQuery(folderUID);
+  const childrenByParentUID = useChildrenByParentUIDState();
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
   const [saveFolder] = useSaveFolderMutation();
 
@@ -38,8 +40,11 @@ export function BrowseFolderLibraryPanelsPage({ match }: OwnProps) {
     ? async (newValue: string) => {
         if (folderDTO) {
           const result = await saveFolder({
-            ...folderDTO,
-            title: newValue,
+            folder: {
+              ...folderDTO,
+              title: newValue,
+            },
+            childrenByParentUID,
           });
           if ('error' in result) {
             throw result.error;

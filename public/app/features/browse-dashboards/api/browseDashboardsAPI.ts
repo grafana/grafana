@@ -134,9 +134,27 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
-      invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.uid }],
-      query: (folder) => ({
+    saveFolder: builder.mutation<
+      FolderDTO,
+      {
+        folder: FolderDTO;
+        childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
+      }
+    >({
+      invalidatesTags: (_result, _error, { folder, childrenByParentUID }) => {
+        const tagsToInvalidate = [{ type: 'getFolder' as const, id: folder.uid }];
+        function invalidateChildFolders(parentUID: string) {
+          for (const item of childrenByParentUID[parentUID]?.items ?? []) {
+            if (item.kind === 'folder') {
+              tagsToInvalidate.push({ type: 'getFolder' as const, id: item.uid });
+              invalidateChildFolders(item.uid);
+            }
+          }
+        }
+        invalidateChildFolders(folder.uid);
+        return tagsToInvalidate;
+      },
+      query: ({ folder }) => ({
         method: 'PUT',
         url: `/folders/${folder.uid}`,
         data: {
@@ -144,8 +162,8 @@ export const browseDashboardsAPI = createApi({
           version: folder.version,
         },
       }),
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { parentUid } = arg;
+      onQueryStarted: ({ folder }, { queryFulfilled, dispatch }) => {
+        const { parentUid } = folder;
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({

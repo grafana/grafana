@@ -9,12 +9,14 @@ import { AlertsFolderView } from '../alerting/unified/AlertsFolderView';
 
 import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { FolderActionsButton } from './components/FolderActionsButton';
+import { useChildrenByParentUIDState } from './state';
 
 export interface OwnProps extends GrafanaRouteComponentProps<{ uid: string }> {}
 
 export function BrowseFolderAlertingPage({ match }: OwnProps) {
   const { uid: folderUID } = match.params;
   const { data: folderDTO } = useGetFolderQuery(folderUID);
+  const childrenByParentUID = useChildrenByParentUIDState();
   const folder = useSelector((state) => state.folder);
   const [saveFolder] = useSaveFolderMutation();
 
@@ -37,8 +39,11 @@ export function BrowseFolderAlertingPage({ match }: OwnProps) {
     ? async (newValue: string) => {
         if (folderDTO) {
           const result = await saveFolder({
-            ...folderDTO,
-            title: newValue,
+            folder: {
+              ...folderDTO,
+              title: newValue,
+            },
+            childrenByParentUID,
           });
           if ('error' in result) {
             throw result.error;
