@@ -16,7 +16,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.38"
+grabpl_version = "v3.0.39"
 
 trigger_oss = {
     "repo": [
