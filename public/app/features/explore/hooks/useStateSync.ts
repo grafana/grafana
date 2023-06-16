@@ -366,7 +366,7 @@ const urlDiff = (
   };
 };
 
-function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.
