@@ -114,6 +114,7 @@ func FromContext(ctx context.Context) *contextmodel.ReqContext {
 // SetupContext injects `contextmodel.ReqContext` into the request context.
 func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+
 		mContext := web.FromContext(req.Context())
 
 		reqContext := &contextmodel.ReqContext{
@@ -129,6 +130,7 @@ func (h *ContextHandler) SetupContext(next http.Handler) http.Handler {
 
 		// Inject ReqContext into http.Request.Context
 		*req = *req.WithContext(context.WithValue(req.Context(), ReqContextKey{}, reqContext))
+		*reqContext.Req = *reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 
 		next.ServeHTTP(w, req)
 	})
@@ -142,9 +144,12 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 		defer span.End()
 
+		// setups up the request context in case it's missing
+		// TODO: this is only needed for tests and should be refactored /Carl Bergquist
 		reqContext := FromContext(r.Context())
-
-		*reqContext.Req = *reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
+		if reqContext == nil {
+			h.SetupContext(next)
+		}
 
 		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
 		if traceID != "" {
