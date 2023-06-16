@@ -347,6 +347,8 @@ lerna.json @grafana/frontend-ops
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 
+# plugins folder
+/plugins/grafana-test-datasource/ @grafana/grafana-frontend-platform @grafana/grafana-backend-platform
 
 # public folder
 /public/app/core/ @grafana/grafana-frontend-platform
