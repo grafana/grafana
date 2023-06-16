@@ -15,6 +15,7 @@ describe('DerivedField', () => {
   beforeEach(() => {
     setDataSourceSrv({
       get: jest.fn(),
+      getSync: jest.fn(),
       reload: jest.fn(),
       getInstanceSettings: jest.fn(),
       getList: mockList.mockImplementation(() => [

@@ -50,6 +50,7 @@ function getTestContext(variables?: VariableModel[]) {
   const getInstanceSettingsMock = jest.fn().mockReturnValue(undefined);
   setDataSourceSrv({
     get: jest.fn().mockResolvedValue({}),
+    getSync: jest.fn().mockReturnValue({}),
     getList: jest.fn().mockReturnValue([]),
     getInstanceSettings: getInstanceSettingsMock,
     reload: jest.fn(),

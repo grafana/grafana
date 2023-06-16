@@ -102,6 +102,24 @@ export function setupExplore(options?: SetupOptions): {
 
       return Promise.reject();
     },
+    getSync(datasource?: string | DataSourceRef | null): DataSourceApi | null {
+      let ds: DataSourceApi | undefined;
+      if (!datasource) {
+        ds = dsSettings[0]?.api;
+      } else {
+        ds = dsSettings.find((ds) =>
+          typeof datasource === 'string'
+            ? ds.api.name === datasource || ds.api.uid === datasource
+            : ds.api.uid === datasource?.uid
+        )?.api;
+      }
+
+      if (ds) {
+        return ds;
+      }
+
+      return null;
+    },
     reload() {},
   });
 

@@ -232,6 +232,7 @@ describe('DashboardPage', () => {
     beforeEach(() => {
       setDataSourceSrv({
         get: jest.fn().mockResolvedValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
+        getSync: jest.fn().mockReturnValue({ getRef: jest.fn(), query: jest.fn().mockResolvedValue([]) }),
         getInstanceSettings: jest.fn().mockReturnValue({ meta: {} }),
         getList: jest.fn(),
         reload: jest.fn(),

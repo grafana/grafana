@@ -32,6 +32,9 @@ describe('getAlertingValidationMessage', () => {
         get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
+        getSync: (ref: DataSourceRef) => {
+          return getMock(ref.uid);
+        },
         getList(): DataSourceInstanceSettings[] {
           return [];
         },
@@ -75,6 +78,13 @@ describe('getAlertingValidationMessage', () => {
 
           return Promise.resolve(alertingDatasource);
         },
+        getSync: (name: string) => {
+          if (name === datasource.name) {
+            return datasource;
+          }
+
+          return alertingDatasource;
+        },
         getInstanceSettings: jest.fn(),
         getList(): DataSourceInstanceSettings[] {
           return [];
@@ -105,6 +115,9 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {
+          return getMock(ref.uid);
+        },
+        getSync: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getInstanceSettings: jest.fn(),
@@ -142,6 +155,9 @@ describe('getAlertingValidationMessage', () => {
         get: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
+        getSync: (ref: DataSourceRef) => {
+          return getMock(ref.uid);
+        },
         getInstanceSettings: jest.fn(),
         getList(): DataSourceInstanceSettings[] {
           return [];
@@ -174,6 +190,9 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: (ref: DataSourceRef) => {
+          return getMock(ref.uid);
+        },
+        getSync: (ref: DataSourceRef) => {
           return getMock(ref.uid);
         },
         getInstanceSettings: jest.fn(),

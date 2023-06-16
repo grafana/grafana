@@ -73,6 +73,28 @@ export function setupForLogs() {
 
       return ds;
     },
+    getSync() {
+      const ds: DataSourceApi = {
+        name: 'Xray',
+        id: 0,
+        type: '',
+        uid: '',
+        query: function (
+          request: DataQueryRequest<DataQuery>
+        ): Observable<DataQueryResponse> | Promise<DataQueryResponse> {
+          throw new Error('Function not implemented.');
+        },
+        testDatasource: function (): Promise<TestDataSourceResponse> {
+          throw new Error('Function not implemented.');
+        },
+        meta: meta,
+        getRef: function (): DataSourceRef {
+          throw new Error('Function not implemented.');
+        },
+      };
+
+      return ds;
+    },
     getList: function (
       filters?: GetDataSourceListFilters | undefined
     ): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
