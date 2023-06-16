@@ -46,7 +46,9 @@ export function FolderActionsButton({ folder }: Props) {
       },
       source: 'folder_actions',
     });
-    locationService.push(folder.parents && folder.parents[0] ? folder.parents[0].url : '/dashboards');
+    const { parents } = folder;
+    const parentUrl = parents && parents.length ? parents[parents.length - 1].url : '/dashboards';
+    locationService.push(parentUrl);
   };
 
   const showMoveModal = () => {

@@ -57,7 +57,6 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: (_result, _error, { uid }) => [{ type: 'getFolder', id: uid }],
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -156,10 +155,6 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
-      invalidatesTags: (_result, _error, { selectedItems }) => {
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        return selectedFolders.map((folderUID) => ({ type: 'getFolder', id: folderUID }));
-      },
       queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);

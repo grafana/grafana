@@ -28,16 +28,19 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
 
   const onCreateFolder = async (folderName: string) => {
-    await newFolder({
-      title: folderName,
-      parentUid: parentFolder?.uid,
-    });
-    const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
-    reportInteraction('grafana_manage_dashboards_folder_created', {
-      is_subfolder: Boolean(parentFolder?.uid),
-      folder_depth: depth,
-    });
-    setShowNewFolderDrawer(false);
+    try {
+      await newFolder({
+        title: folderName,
+        parentUid: parentFolder?.uid,
+      });
+      const depth = parentFolder?.parents ? parentFolder.parents.length + 1 : 0;
+      reportInteraction('grafana_manage_dashboards_folder_created', {
+        is_subfolder: Boolean(parentFolder?.uid),
+        folder_depth: depth,
+      });
+    } finally {
+      setShowNewFolderDrawer(false);
+    }
   };
 
   const newMenu = (
