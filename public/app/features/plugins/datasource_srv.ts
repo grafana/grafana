@@ -254,7 +254,8 @@ export class DatasourceSrv implements DataSourceService {
           // Support for multi-value variables with only one selected datasource
           dsValue = dsValue[0];
         }
-        const dsSettings = !Array.isArray(dsValue) && this.settingsMapByName[dsValue];
+        const dsSettings =
+          !Array.isArray(dsValue) && (this.settingsMapByName[dsValue] || this.settingsMapByUid[dsValue]);
 
         if (dsSettings) {
           const key = `$\{${variable.name}\}`;
