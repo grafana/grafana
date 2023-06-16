@@ -68,6 +68,9 @@ token_rotation_interval_minutes = 10
 
 # The maximum lifetime (seconds) an API key can be used. If it is set all the API keys should have limited lifetime that is lower than this value.
 api_key_max_seconds_to_live = -1
+
+# Enforce user lookup based on email instead of the unique ID provided by the IdP.
+oauth_allow_insecure_email_lookup = false
 ```
 
 ### Anonymous authentication
@@ -142,4 +145,18 @@ URL to redirect the user to after signing out from Grafana. This can for example
 ```bash
 [auth]
 signout_redirect_url =
+```
+
+### Enable email lookup
+
+Enable user lookup based on email in addition to using unique ID provided by IdPs.
+
+By default, Grafana relies on the user unique ID provided by the identity provider.
+Looking up users by email can be safe for some identity providers (for example, when they are single tenants and unique non-editable, validated emails are provided), as well as in some infrastructures.
+
+We strongly recommend against enabling email lookups, however it is possible to do with the following configuration.
+
+```bash
+[auth]
+oauth_allow_insecure_email_lookup = true
 ```
