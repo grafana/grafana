@@ -40,7 +40,7 @@ export const SpanNullsEditor = ({ value, onChange }: Props) => {
     let val: boolean | number = false;
     if (txt) {
       try {
-        val = rangeUtil.intervalToSeconds(txt) * 1000;
+        val = rangeUtil.intervalToMs(txt);
       } catch (err) {
         console.warn('ERROR', err);
       }
@@ -87,7 +87,7 @@ export const InsertNullsEditor = ({ value, onChange }: Props) => {
     let val: boolean | number = false;
     if (txt) {
       try {
-        val = rangeUtil.intervalToSeconds(txt) * 1000;
+        val = rangeUtil.intervalToMs(txt);
       } catch (err) {
         console.warn('ERROR', err);
       }
