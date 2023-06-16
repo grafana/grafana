@@ -74,7 +74,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.lineInterpolation,
           },
-          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
         })
         .addRadio({
           path: 'barAlignment',
@@ -84,7 +84,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.barAlignment,
           },
-          showIf: (c) => c.drawStyle === GraphDrawStyle.Bars,
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Bars,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -97,7 +97,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             step: 1,
             ariaLabelForHandle: 'Line width',
           },
-          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+          showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
@@ -110,7 +110,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             step: 1,
             ariaLabelForHandle: 'Fill opacity',
           },
-          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+          showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addRadio({
           path: 'gradientMode',
@@ -120,7 +120,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.fillGradient,
           },
-          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+          showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addFieldNamePicker({
           path: 'fillBelowTo',
@@ -136,11 +136,11 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           path: 'lineStyle',
           name: 'Line style',
           category: categoryStyles,
-          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
           process: identityOverrideProcessor,
-          shouldApply: (f) => f.type === FieldType.number,
+          shouldApply: (field) => field.type === FieldType.number,
         })
         .addCustomEditor<void, boolean>({
           id: 'spanNulls',
@@ -150,8 +150,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           defaultValue: false,
           editor: SpanNullsEditor,
           override: SpanNullsEditor,
-          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
-          shouldApply: (f) => f.type !== FieldType.time,
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
+          shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
         })
         .addCustomEditor<void, boolean>({
@@ -162,8 +162,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           defaultValue: false,
           editor: InsertNullsEditor,
           override: InsertNullsEditor,
-          showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
-          shouldApply: (f) => f.type !== FieldType.time,
+          showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
+          shouldApply: (field) => field.type !== FieldType.time,
           process: identityOverrideProcessor,
         })
         .addRadio({
@@ -174,7 +174,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.showPoints,
           },
-          showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+          showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',
@@ -187,7 +187,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             step: 1,
             ariaLabelForHandle: 'Point size',
           },
-          showIf: (c) => c.showPoints !== VisibilityMode.Never || c.drawStyle === GraphDrawStyle.Points,
+          showIf: (config) => config.showPoints !== VisibilityMode.Never || config.drawStyle === GraphDrawStyle.Points,
         });
 
       commonOptionsBuilder.addStackingConfig(builder, cfg.stacking, categoryStyles);
