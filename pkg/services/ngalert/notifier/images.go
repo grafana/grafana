@@ -2,7 +2,7 @@ package notifier
 
 import (
 	"context"
-	"errors"
+	"strings"
 
 	"github.com/grafana/alerting/images"
 
@@ -20,21 +20,27 @@ func newImageStore(store store.ImageStore) images.ImageStore {
 	}
 }
 
-func (i imageStore) GetImage(ctx context.Context, token string) (*images.Image, error) {
-	image, err := i.store.GetImage(ctx, token)
+func (i imageStore) GetImage(ctx context.Context, uri string) (*images.Image, error) {
+	var (
+		image *models.Image
+		err   error
+	)
+
+	// Check whether the uri is a URL or a token to know how to query the DB.
+	if strings.HasPrefix(uri, "http") {
+		image, err = i.store.GetImageByURL(ctx, uri)
+	} else {
+		token := strings.TrimPrefix(uri, "token://")
+		image, err = i.store.GetImage(ctx, token)
+	}
 	if err != nil {
-		if errors.Is(err, models.ErrImageNotFound) {
-			err = images.ErrImageNotFound
-		}
+		return nil, err
 	}
-	var result *images.Image
-	if image != nil {
-		result = &images.Image{
-			Token:     image.Token,
-			Path:      image.Path,
-			URL:       image.URL,
-			CreatedAt: image.CreatedAt,
-		}
-	}
-	return result, err
+
+	return &images.Image{
+		Token:     image.Token,
+		Path:      image.Path,
+		URL:       image.URL,
+		CreatedAt: image.CreatedAt,
+	}, nil
 }

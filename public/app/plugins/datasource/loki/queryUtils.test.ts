@@ -8,7 +8,9 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  requestSupporsChunking,
+  requestSupportsSplitting,
+  isQueryWithDistinct,
+  isQueryWithRangeVariable,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -281,6 +283,40 @@ describe('isQueryWithLabelFormat', () => {
   });
 });
 
+describe('isQueryWithDistinct', () => {
+  it('identifies queries using distinct', () => {
+    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
+    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
+  });
+
+  it('does not return false positives', () => {
+    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
+    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
+  });
+});
+
+describe('isQueryWithRangeVariableDuration', () => {
+  it('identifies queries using $__range variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range])')).toBe(true);
+  });
+
+  it('identifies queries using $__range_s variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range_s])')).toBe(true);
+  });
+
+  it('identifies queries using $__range_ms variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range_ms])')).toBe(true);
+  });
+
+  it('does not return false positives', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"} | logfmt | value="$__range" [5m])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} | logfmt | value="[$__range]" [5m])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$range])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$_range])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$_range_ms])')).toBe(false);
+  });
+});
+
 describe('getParserFromQuery', () => {
   it('returns no parser', () => {
     expect(getParserFromQuery('{job="grafana"}')).toBeUndefined();
@@ -294,7 +330,7 @@ describe('getParserFromQuery', () => {
   });
 });
 
-describe('requestSupporsChunking', () => {
+describe('requestSupportsSplitting', () => {
   it('hidden requests are not partitioned', () => {
     const requests: LokiQuery[] = [
       {
@@ -303,7 +339,7 @@ describe('requestSupporsChunking', () => {
         hide: true,
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('special requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -312,7 +348,7 @@ describe('requestSupporsChunking', () => {
         refId: 'do-not-chunk',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('empty requests are not partitioned', () => {
     const requests: LokiQuery[] = [
@@ -321,7 +357,7 @@ describe('requestSupporsChunking', () => {
         refId: 'A',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(false);
+    expect(requestSupportsSplitting(requests)).toBe(false);
   });
   it('all other requests are partitioned', () => {
     const requests: LokiQuery[] = [
@@ -334,6 +370,6 @@ describe('requestSupporsChunking', () => {
         refId: 'B',
       },
     ];
-    expect(requestSupporsChunking(requests)).toBe(true);
+    expect(requestSupportsSplitting(requests)).toBe(true);
   });
 });

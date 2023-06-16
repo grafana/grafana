@@ -6,7 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
-import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types';
+import { CloudMonitoringOptions, CloudMonitoringSecureJsonData } from '../../types/types';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudMonitoringOptions, CloudMonitoringSecureJsonData>;
 
@@ -27,7 +27,7 @@ export class ConfigEditor extends PureComponent<Props> {
     return (
       <>
         <ConnectionConfig {...this.props} onOptionsChange={this.handleOnOptionsChange}></ConnectionConfig>
-        {config.featureToggles.secureSocksDatasourceProxy && (
+        {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </>

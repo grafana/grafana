@@ -256,7 +256,7 @@ const VariableEditor = (props: Props) => {
             <>
               <Space v={2} />
               <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-                {errorMessage}
+                {errorMessage instanceof Error ? errorMessage.message : errorMessage}
               </Alert>
             </>
           )}
@@ -365,7 +365,7 @@ const VariableEditor = (props: Props) => {
             <>
               <Space v={2} />
               <Alert severity="error" title="An error occurred while requesting metadata from Azure Monitor">
-                {errorMessage}
+                {errorMessage instanceof Error ? errorMessage.message : errorMessage}
               </Alert>
             </>
           )}

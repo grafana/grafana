@@ -6,7 +6,7 @@ const addDataSource = () => {
   e2e.flows.addDataSource({
     type: 'Loki',
     expectedAlertMessage:
-      'Unable to fetch labels from Loki (Failed to call resource), please check the server logs for more details',
+      'Unable to connect with Loki (Failed to call resource). Please check the server logs for more details.',
     name: dataSourceName,
     form: () => {
       e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://loki-url:3100');
@@ -31,13 +31,21 @@ describe('Loki query builder', () => {
   });
 
   it('should be able to use all modes', () => {
-    e2e().intercept(/labels?/, (req) => {
-      req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
-    });
+    e2e()
+      .intercept(/labels\?/, (req) => {
+        req.reply({ status: 'success', data: ['instance', 'job', 'source'] });
+      })
+      .as('labelsRequest');
 
     e2e().intercept(/series?/, (req) => {
       req.reply({ status: 'success', data: [{ instance: 'instance1' }] });
     });
+
+    e2e()
+      .intercept(/values/, (req) => {
+        req.reply({ status: 'success', data: ['instance1', 'instance2'] });
+      })
+      .as('valuesRequest');
 
     // Go to Explore and choose Loki data source
     e2e.pages.Explore.visit();
@@ -62,13 +70,16 @@ describe('Loki query builder', () => {
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('be.visible');
 
     // Add labels to remove error
-    e2e.components.QueryBuilder.labelSelect().should('be.visible').click().type('instance{enter}');
+    e2e.components.QueryBuilder.labelSelect().should('be.visible').click();
+    // wait until labels are loaded and set on the component before starting to type
+    e2e().wait('@labelsRequest');
+    e2e().wait(100);
+    e2e.components.QueryBuilder.labelSelect().type('instance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect().should('be.visible').click().type('=~{enter}');
-    e2e.components.QueryBuilder.valueSelect()
-      .should('be.visible')
-      .click()
-      .type('instance1{enter}')
-      .type('instance2{enter}');
+    e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
+    e2e().wait('@valuesRequest');
+    e2e().wait(100);
+    e2e.components.QueryBuilder.valueSelect().type('instance1{enter}').type('instance2{enter}');
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 

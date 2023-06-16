@@ -27,22 +27,25 @@ You can also [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >
 
 ## Configure the data source
 
-**To access the data source configuration page:**
+To configure basic settings for the data source, complete the following steps:
 
-1. Hover the cursor over the **Configuration** (gear) icon.
-1. Select **Data Sources**.
-1. Select the Jaeger data source.
+1. Click **Connections** in the left-side menu.
+1. Under Your connections, click **Data sources**.
+1. Enter `Jaeger` in the search bar.
+1. Select **Jaeger**.
 
-Set the data source's basic configuration options carefully:
+   The **Settings** tab of the data source is displayed.
 
-| Name           | Description                                                              |
-| -------------- | ------------------------------------------------------------------------ |
-| **Name**       | Sets the name you use to refer to the data source in panels and queries. |
-| **Default**    | Defines whether this data source is pre-selected for new panels.         |
-| **URL**        | Sets the URL of the Jaeger instance, such as `http://localhost:16686`.   |
-| **Basic Auth** | Enables basic authentication for the Jaeger data source.                 |
-| **User**       | Defines the user name for basic authentication.                          |
-| **Password**   | Defines the password for basic authentication.                           |
+1. Set the data source's basic configuration options:
+
+   | Name           | Description                                                              |
+   | -------------- | ------------------------------------------------------------------------ |
+   | **Name**       | Sets the name you use to refer to the data source in panels and queries. |
+   | **Default**    | Defines whether this data source is pre-selected for new panels.         |
+   | **URL**        | Sets the URL of the Jaeger instance, such as `http://localhost:16686`.   |
+   | **Basic Auth** | Enables basic authentication for the Jaeger data source.                 |
+   | **User**       | Defines the user name for basic authentication.                          |
+   | **Password**   | Defines the password for basic authentication.                           |
 
 You can also configure settings specific to the Jaeger data source. These options are described in the sections below.
 
@@ -50,8 +53,10 @@ You can also configure settings specific to the Jaeger data source. These option
 
 ![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
-> **Note:** Available in Grafana v7.4 and higher.
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+Available in Grafana v7.4 and higher.
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Jaeger.
 
@@ -107,8 +112,10 @@ The following table describes the ways in which you can configure your trace to 
 
 ### Trace to metrics
 
-> **Note:** This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `traceToMetrics` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Jaeger.
 
@@ -189,6 +196,10 @@ datasources:
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
       nodeGraph:
         enabled: true
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: '1h'
+        spanEndTimeShift: '-1h'
       spanBar:
         type: 'None'
     secureJsonData:
@@ -285,6 +296,24 @@ If the file has multiple traces, Grafana visualizes its first trace.
   "errors": null
 }
 ```
+
+## Span Filters
+
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
+
+![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
+
+Using span filters, you can filter your spans in the trace timeline viewer. The more filters you add, the more specific are the filtered spans.
+
+You can add one or more of the following filters:
+
+- Service name
+- Span name
+- Duration
+- Tags (which include tags, process tags, and log fields)
 
 ## Link to a trace ID from logs
 

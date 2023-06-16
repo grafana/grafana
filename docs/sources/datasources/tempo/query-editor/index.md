@@ -58,14 +58,25 @@ To configure your Tempo data source to use this feature, refer to the [Tempo doc
 
 To query a particular trace:
 
-1. Select the **TraceID** query type.
-1. Enter the trace's ID into the **Trace ID** field.
+1. Select the **TraceQL** query type.
+1. Enter the trace's ID into the query field.
 
 {{< figure src="/static/img/docs/tempo/query-editor-traceid.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo TraceID query type" >}}
 
 ## Query by TraceQL
 
+Inspired by PromQL and LogQL, TraceQL is a query language designed for selecting traces.
+The default traces search reviews the whole trace.
+TraceQL provides a method for formulating precise queries so you can zoom in to the data you need.
+Query results are returned faster because the queries limit what is searched.
+
 To learn more about how to query by TraceQL, refer to the [TraceQL documentation](/docs/tempo/latest/traceql).
+
+You can create TraceQL queries using the Query editor or using **Search** query type.
+
+[//]: # 'Include content for preview of Search tab featuring TraceQL query builder'
+
+{{< docs/shared source="grafana" lookup="datasources/tempo-search-traceql.md" leveloffset="+1" >}}
 
 ## Query Loki for traces
 

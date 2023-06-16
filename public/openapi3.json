@@ -1,6 +1,19 @@
 {
   "components": {
     "responses": {
+      "GettableHistoricUserConfigs": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableHistoricUserConfig"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "SMTPNotEnabledError": {
         "description": "(empty)"
       },
@@ -779,6 +792,16 @@
         },
         "description": "(empty)"
       },
+      "getFolderDescendantCountsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DescendantCounts"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "getFolderPermissionListResponse": {
         "content": {
           "application/json": {
@@ -954,7 +977,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -964,7 +987,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Preferences"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -975,16 +998,6 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/QueryHistoryDeleteQueryResponse"
-            }
-          }
-        },
-        "description": "(empty)"
-      },
-      "getQueryHistoryMigrationResponse": {
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/QueryHistoryMigrationResponse"
             }
           }
         },
@@ -1724,7 +1737,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Playlist"
+              "$ref": "#/components/schemas/Spec"
             }
           }
         },
@@ -2447,9 +2460,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -2641,6 +2654,10 @@
       "AlertingRule": {
         "description": "adapted from cortex",
         "properties": {
+          "activeAt": {
+            "format": "date-time",
+            "type": "string"
+          },
           "alerts": {
             "items": {
               "$ref": "#/components/schemas/Alert"
@@ -2681,6 +2698,20 @@
             "description": "State can be \"pending\", \"firing\", \"inactive\".",
             "type": "string"
           },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
+          "totalsFiltered": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
+          },
           "type": {
             "$ref": "#/components/schemas/RuleType"
           }
@@ -2692,7 +2723,7 @@
           "type",
           "state",
           "annotations",
-          "alerts"
+          "activeAt"
         ],
         "type": "object"
       },
@@ -3878,6 +3909,9 @@
       "DataLink": {
         "description": "DataLink define what",
         "properties": {
+          "internal": {
+            "$ref": "#/components/schemas/InternalDataLink"
+          },
           "targetBlank": {
             "type": "boolean"
           },
@@ -4132,6 +4166,13 @@
         },
         "type": "object"
       },
+      "DescendantCounts": {
+        "additionalProperties": {
+          "format": "int64",
+          "type": "integer"
+        },
+        "type": "object"
+      },
       "DiscordConfig": {
         "properties": {
           "http_config": {
@@ -4179,8 +4220,8 @@
         "type": "integer"
       },
       "Duration": {
+        "description": "A Duration represents the elapsed time between two instants\nas an int64 nanosecond count. The representation limits the\nlargest representable duration to approximately 290 years.",
         "format": "int64",
-        "title": "Duration is a type used for marshalling durations.",
         "type": "integer"
       },
       "EmailConfig": {
@@ -4403,6 +4444,9 @@
         "type": "object"
       },
       "EvalQueriesResponse": {},
+      "ExplorePanelsState": {
+        "description": "This is an object constructed with the keys as the values of the enum VisType and the value being a bag of properties"
+      },
       "ExtendedReceiver": {
         "properties": {
           "email_configs": {
@@ -4602,6 +4646,13 @@
             "description": "only used if nested folders are enabled",
             "type": "string"
           },
+          "parents": {
+            "description": "the parent folders starting from the root going down",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "type": "array"
+          },
           "title": {
             "type": "string"
           },
@@ -4627,9 +4678,6 @@
       },
       "FolderSearchHit": {
         "properties": {
-          "accessControl": {
-            "$ref": "#/components/schemas/Metadata"
-          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -5067,6 +5115,34 @@
         },
         "type": "object"
       },
+      "GettableHistoricUserConfig": {
+        "properties": {
+          "alertmanager_config": {
+            "$ref": "#/components/schemas/GettableApiAlertingConfig"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_applied": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "template_file_provenances": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "type": "object"
+          },
+          "template_files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
       "GettableNGalertConfig": {
         "properties": {
           "alertmanagersChoice": {
@@ -5498,6 +5574,31 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "InternalDataLink": {
+        "description": "InternalDataLink definition to allow Explore links to be constructed in the backend",
+        "properties": {
+          "datasourceName": {
+            "type": "string"
+          },
+          "datasourceUid": {
+            "type": "string"
+          },
+          "panelsState": {
+            "$ref": "#/components/schemas/ExplorePanelsState"
+          },
+          "query": {},
+          "timeRange": {
+            "$ref": "#/components/schemas/TimeRange"
+          },
+          "transformations": {
+            "items": {
+              "$ref": "#/components/schemas/LinkTransformationConfig"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Item": {
         "properties": {
           "title": {
@@ -5893,6 +5994,23 @@
         "title": "LibraryElementSearchResult is the search result for entities.",
         "type": "object"
       },
+      "LinkTransformationConfig": {
+        "properties": {
+          "expression": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "mapValue": {
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/SupportedTransformationTypes"
+          }
+        },
+        "type": "object"
+      },
       "MassDeleteAnnotationsCmd": {
         "properties": {
           "annotationId": {
@@ -5997,19 +6115,6 @@
           "to",
           "queries"
         ],
-        "type": "object"
-      },
-      "MigrateQueriesToQueryHistoryCommand": {
-        "description": "MigrateQueriesToQueryHistoryCommand is the command used for migration of old queries into query history",
-        "properties": {
-          "queries": {
-            "description": "Array of queries to store in query history.",
-            "items": {
-              "$ref": "#/components/schemas/QueryToMigrate"
-            },
-            "type": "array"
-          }
-        },
         "type": "object"
       },
       "MoveFolderCommand": {
@@ -6641,15 +6746,12 @@
             "type": "integer"
           },
           "interval": {
-            "description": "Interval sets the time between switching views in a playlist.\nFIXME: Is this based on a standardized format or what options are available? Can datemath be used?",
             "type": "string"
           },
           "name": {
-            "description": "Name of the playlist.",
             "type": "string"
           },
           "uid": {
-            "description": "Unique playlist identifier. Generated on creation, either by the\ncreator of the playlist of by the application.",
             "type": "string"
           }
         },
@@ -7062,35 +7164,6 @@
         },
         "type": "object"
       },
-      "Preferences": {
-        "properties": {
-          "homeDashboardUID": {
-            "description": "UID for the home dashboard",
-            "type": "string"
-          },
-          "language": {
-            "description": "Selected language (beta)",
-            "type": "string"
-          },
-          "queryHistory": {
-            "$ref": "#/components/schemas/QueryHistoryPreference"
-          },
-          "theme": {
-            "description": "Theme light, dark, empty is default",
-            "type": "string"
-          },
-          "timezone": {
-            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
-            "type": "string"
-          },
-          "weekStart": {
-            "description": "WeekStart day of the week (sunday, monday, etc)",
-            "type": "string"
-          }
-        },
-        "title": "Preferences defines model for Preferences.",
-        "type": "object"
-      },
       "PrometheusRemoteWriteTargetJSON": {
         "properties": {
           "data_source_uid": {
@@ -7176,9 +7249,9 @@
           },
           "execErrState": {
             "enum": [
+              "OK",
               "Alerting",
-              "Error",
-              "OK"
+              "Error"
             ],
             "type": "string"
           },
@@ -7362,22 +7435,6 @@
         },
         "type": "object"
       },
-      "QueryHistoryMigrationResponse": {
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "starredCount": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "totalCount": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "QueryHistoryPreference": {
         "properties": {
           "homeTab": {
@@ -7508,27 +7565,6 @@
           }
         },
         "title": "QueryStat is used for storing arbitrary statistics metadata related to a query and its result, e.g. total request time, data processing time.",
-        "type": "object"
-      },
-      "QueryToMigrate": {
-        "properties": {
-          "comment": {
-            "type": "string"
-          },
-          "createdAt": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "datasourceUid": {
-            "type": "string"
-          },
-          "queries": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        },
         "type": "object"
       },
       "QuotaDTO": {
@@ -7947,6 +7983,13 @@
               "$ref": "#/components/schemas/RuleGroup"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -7980,6 +8023,13 @@
               "$ref": "#/components/schemas/AlertingRule"
             },
             "type": "array"
+          },
+          "totals": {
+            "additionalProperties": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "object"
           }
         },
         "required": [
@@ -8668,6 +8718,35 @@
       "SmtpNotEnabled": {
         "$ref": "#/components/schemas/ResponseDetails"
       },
+      "Spec": {
+        "properties": {
+          "homeDashboardUID": {
+            "description": "UID for the home dashboard",
+            "type": "string"
+          },
+          "language": {
+            "description": "Selected language (beta)",
+            "type": "string"
+          },
+          "queryHistory": {
+            "$ref": "#/components/schemas/QueryHistoryPreference"
+          },
+          "theme": {
+            "description": "Theme light, dark, empty is default",
+            "type": "string"
+          },
+          "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
+            "type": "string"
+          },
+          "weekStart": {
+            "description": "WeekStart day of the week (sunday, monday, etc)",
+            "type": "string"
+          }
+        },
+        "title": "Spec defines model for Spec.",
+        "type": "object"
+      },
       "State": {
         "type": "string"
       },
@@ -8685,6 +8764,9 @@
           }
         },
         "type": "object"
+      },
+      "SupportedTransformationTypes": {
+        "type": "string"
       },
       "SyncResult": {
         "properties": {
@@ -8799,6 +8881,9 @@
           },
           "permission": {
             "$ref": "#/components/schemas/PermissionType"
+          },
+          "uid": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -8860,6 +8945,9 @@
           "teamId": {
             "format": "int64",
             "type": "integer"
+          },
+          "teamUID": {
+            "type": "string"
           },
           "userId": {
             "format": "int64",
@@ -9055,6 +9143,77 @@
         },
         "type": "object"
       },
+      "TestTemplatesConfigBodyParams": {
+        "properties": {
+          "alerts": {
+            "description": "Alerts to use as data when testing the template.",
+            "items": {
+              "$ref": "#/components/schemas/postableAlert"
+            },
+            "type": "array"
+          },
+          "name": {
+            "description": "Name of the template file.",
+            "type": "string"
+          },
+          "template": {
+            "description": "Template string to test.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesErrorResult": {
+        "properties": {
+          "kind": {
+            "description": "Kind of template error that occurred.",
+            "enum": [
+              "invalid_template",
+              "execution_error"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "description": "Error message.",
+            "type": "string"
+          },
+          "name": {
+            "description": "Name of the associated template for this error. Will be empty if the Kind is \"invalid_template\".",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResult": {
+        "properties": {
+          "name": {
+            "description": "Name of the associated template definition for this result.",
+            "type": "string"
+          },
+          "text": {
+            "description": "Interpolated value of the template.",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TestTemplatesResults": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesErrorResult"
+            },
+            "type": "array"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TestTemplatesResult"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "Threshold": {
         "description": "Threshold a single step on the threshold list",
         "properties": {
@@ -9130,18 +9289,17 @@
         "type": "object"
       },
       "TimeRange": {
-        "description": "For example, 4:00PM to End of the day would Begin at 1020 and End at 1440.",
+        "description": "Redefining this to avoid an import cycle",
         "properties": {
-          "EndMinute": {
-            "format": "int64",
-            "type": "integer"
+          "from": {
+            "format": "date-time",
+            "type": "string"
           },
-          "StartMinute": {
-            "format": "int64",
-            "type": "integer"
+          "to": {
+            "format": "date-time",
+            "type": "string"
           }
         },
-        "title": "TimeRange represents a range of minutes within a 1440 minute day, exclusive of the End minute. A day consists of 1440 minutes.",
         "type": "object"
       },
       "TimeRangeDTO": {
@@ -9341,7 +9499,6 @@
         "type": "string"
       },
       "URL": {
-        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9377,7 +9534,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "A URL represents a parsed URL (technically, a URI reference).",
+        "title": "URL is a custom URL type that allows validation at configuration load time.",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9593,7 +9750,7 @@
             "type": "string"
           },
           "uid": {
-            "description": "NewUID it's an optional parameter used for overriding the existing folder UID",
+            "description": "NewUID it's an optional parameter used for overriding the existing folder UID\nStarting with 10.0, this is deprecated. It will be removed in a future release.\nPlease avoid using it because it can result in folder loosing its permissions.",
             "type": "string"
           },
           "version": {
@@ -10309,6 +10466,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -10419,6 +10577,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -10605,6 +10764,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -14352,7 +14512,7 @@
     },
     "/auth/keys": {
       "get": {
-        "description": "Will return auth keys.",
+        "description": "Will return auth keys.\n\nDeprecated: true.\n\nDeprecated. Please use GET /api/serviceaccounts and GET /api/serviceaccounts/{id}/tokens instead\nsee https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "getAPIkeys",
         "parameters": [
           {
@@ -14388,6 +14548,7 @@
         ]
       },
       "post": {
+        "deprecated": true,
         "description": "Will return details of the created API key.",
         "operationId": "addAPIkey",
         "requestBody": {
@@ -14429,6 +14590,8 @@
     },
     "/auth/keys/{id}": {
       "delete": {
+        "deprecated": true,
+        "description": "Deletes an API key.\nDeprecated. See: https://grafana.com/docs/grafana/next/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts-using-the-api.",
         "operationId": "deleteAPIkey",
         "parameters": [
           {
@@ -16640,7 +16803,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders that the authenticated user has permission to view.\nIf the parameter is not supplied then it returns immediate subfolders under the root\nthat the authenticated user has permission to view.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -16733,7 +16896,8 @@
     },
     "/folders/id/{folder_id}": {
       "get": {
-        "description": "Returns the folder identified by id.",
+        "deprecated": true,
+        "description": "Returns the folder identified by id. This is deprecated.\nPlease refer to [updated API](#/folders/getFolderByUID) instead",
         "operationId": "getFolderByID",
         "parameters": [
           {
@@ -16899,6 +17063,42 @@
           }
         },
         "summary": "Update folder.",
+        "tags": [
+          "folders"
+        ]
+      }
+    },
+    "/folders/{folder_uid}/counts": {
+      "get": {
+        "operationId": "getFolderDescendantCounts",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "folder_uid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/getFolderDescendantCountsResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Gets the count of each descendant of a folder by kind. The folder is identified by UID.",
         "tags": [
           "folders"
         ]
@@ -19106,41 +19306,6 @@
         ]
       }
     },
-    "/query-history/migrate": {
-      "post": {
-        "description": "Adds multiple queries to query history.",
-        "operationId": "migrateQueries",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MigrateQueriesToQueryHistoryCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-originalParamName": "body"
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/getQueryHistoryMigrationResponse"
-          },
-          "400": {
-            "$ref": "#/components/responses/badRequestError"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorisedError"
-          },
-          "500": {
-            "$ref": "#/components/responses/internalServerError"
-          }
-        },
-        "summary": "Migrate queries to query history.",
-        "tags": [
-          "query_history"
-        ]
-      }
-    },
     "/query-history/star/{query_history_uid}": {
       "delete": {
         "description": "Removes star from query in query history as specified by the UID.",
@@ -20912,6 +21077,52 @@
       }
     },
     "/teams/{teamId}/groups": {
+      "delete": {
+        "operationId": "removeTeamGroupApiQuery",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "groupId",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "teamId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/okResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Remove External Group.",
+        "tags": [
+          "sync_team_groups",
+          "enterprise"
+        ]
+      },
       "get": {
         "operationId": "getTeamGroupsApi",
         "parameters": [
@@ -21004,6 +21215,7 @@
     },
     "/teams/{teamId}/groups/{groupId}": {
       "delete": {
+        "deprecated": true,
         "operationId": "removeTeamGroupApi",
         "parameters": [
           {

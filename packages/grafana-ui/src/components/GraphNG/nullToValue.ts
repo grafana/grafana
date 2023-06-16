@@ -1,4 +1,4 @@
-import { ArrayVector, DataFrame } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
 
 export function nullToValue(frame: DataFrame) {
   return {
@@ -7,7 +7,7 @@ export function nullToValue(frame: DataFrame) {
       const noValue = +field.config?.noValue!;
 
       if (!Number.isNaN(noValue)) {
-        const transformedVals = field.values.toArray().slice();
+        const transformedVals = field.values.slice();
 
         for (let i = 0; i < transformedVals.length; i++) {
           if (transformedVals[i] === null) {
@@ -17,7 +17,7 @@ export function nullToValue(frame: DataFrame) {
 
         return {
           ...field,
-          values: new ArrayVector(transformedVals),
+          values: transformedVals,
         };
       } else {
         return field;

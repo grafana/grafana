@@ -92,6 +92,10 @@ func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
 	}
 }
 
+func (t *FakeSpan) contextWithSpan(ctx context.Context) context.Context {
+	return ctx
+}
+
 type FakeTracer struct {
 	Spans []*FakeSpan
 }

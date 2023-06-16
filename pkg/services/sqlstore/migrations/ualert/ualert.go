@@ -2,7 +2,6 @@ package ualert
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,9 +11,7 @@ import (
 	"strings"
 	"time"
 
-	alertingLogging "github.com/grafana/alerting/logging"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
@@ -296,6 +293,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	for _, da := range dashAlerts {
 		l := mg.Logger.New("ruleID", da.Id, "ruleName", da.Name, "dashboardUID", da.DashboardUID, "orgID", da.OrgId)
+		l.Debug("migrating alert rule to Unified Alerting")
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -377,9 +375,9 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(l, *newCond, da, folder.Uid)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
@@ -459,6 +457,9 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 		return err
 	}
 
+	// remove an existing configuration, which could have been left during switching back to legacy alerting
+	_, _ = m.sess.Delete(AlertConfiguration{OrgID: orgID})
+
 	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{
 		AlertmanagerConfiguration: string(rawAmConfig),
@@ -475,32 +476,21 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 }
 
 // validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
-func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUserConfig) error {
+func (m *migration) validateAlertmanagerConfig(config *PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			// First, let's decode the secure settings - given they're stored as base64.
-			secureSettings := make(map[string][]byte, len(gr.SecureSettings))
-			for k, v := range gr.SecureSettings {
-				d, err := base64.StdEncoding.DecodeString(v)
-				if err != nil {
-					return err
-				}
-				secureSettings[k] = d
-			}
-
 			data, err := gr.Settings.MarshalJSON()
 			if err != nil {
 				return err
 			}
 			var (
-				cfg = &receivers.NotificationChannelConfig{
+				cfg = &alertingNotify.GrafanaIntegrationConfig{
 					UID:                   gr.UID,
-					OrgID:                 orgID,
 					Name:                  gr.Name,
 					Type:                  gr.Type,
 					DisableResolveMessage: gr.DisableResolveMessage,
 					Settings:              data,
-					SecureSettings:        secureSettings,
+					SecureSettings:        gr.SecureSettings,
 				}
 			)
 
@@ -517,17 +507,9 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := alertingNotify.Factory(gr.Type)
-			if !exists {
-				return fmt.Errorf("notifier %s is not supported", gr.Type)
-			}
-			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
-				return &alertingLogging.FakeLogger{}
-			}, setting.BuildVersion)
-			if err != nil {
-				return err
-			}
-			_, err = receiverFactory(factoryConfig)
+			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
+			}, decryptFunc)
 			if err != nil {
 				return err
 			}

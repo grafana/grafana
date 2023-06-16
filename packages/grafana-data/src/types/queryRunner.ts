@@ -15,7 +15,7 @@ export interface QueryRunnerOptions {
   datasource: DataSourceRef | DataSourceApi | null;
   queries: DataQuery[];
   panelId?: number;
-  dashboardId?: number;
+  dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display

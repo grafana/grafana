@@ -6,7 +6,13 @@ import { Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import ResponseParser from '../azure_monitor/response_parser';
-import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData, AzureDataSourceSettings } from '../types';
+import {
+  AzureAPIResponse,
+  AzureDataSourceJsonData,
+  AzureDataSourceSecureJsonData,
+  AzureDataSourceSettings,
+  Subscription,
+} from '../types';
 import { routeNames } from '../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
@@ -62,7 +68,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const query = `?api-version=2019-03-01`;
     try {
       const result = await getBackendSrv()
-        .fetch({
+        .fetch<AzureAPIResponse<Subscription>>({
           url: this.baseURL + query,
           method: 'GET',
         })
@@ -97,7 +103,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
             {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
           </Alert>
         )}
-        {config.featureToggles.secureSocksDatasourceProxy && (
+        {config.secureSocksDSProxyEnabled && (
           <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
         )}
       </>

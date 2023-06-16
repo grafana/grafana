@@ -13,12 +13,6 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={styles.container}>
-      <h3 className="page-heading">TraceID query</h3>
-
-      <div className={styles.infoText}>
-        Modify how TraceID queries are run. These settings do not apply to TraceQL queries.
-      </div>
-
       <InlineField
         label="Use time range in query"
         tooltip="The time range can be used when there are performance issues or timeouts since it will narrow down the search to the defined range. Default: disabled"
@@ -83,18 +77,15 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = (theme: GrafanaTheme2) => ({
   infoText: css`
-    label: infoText;
     padding-bottom: ${theme.spacing(2)};
     color: ${theme.colors.text.secondary};
   `,
   container: css`
-    label: container;
     width: 100%;
   `,
   row: css`
-    label: row;
     align-items: baseline;
   `,
 });

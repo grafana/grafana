@@ -7,6 +7,7 @@ import { CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@gra
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
 
 import { AngularPanelOptions } from './AngularPanelOptions';
+import { AngularPanelPluginWarning } from './AngularPanelPluginWarning';
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -100,6 +101,7 @@ export const OptionsPaneOptions = (props: OptionPaneRenderProps) => {
   return (
     <div className={styles.wrapper}>
       <div className={styles.formBox}>
+        {panel.isAngularPlugin() && <AngularPanelPluginWarning plugin={plugin} />}
         <div className={styles.formRow}>
           <FilterInput width={0} value={searchQuery} onChange={setSearchQuery} placeholder={'Search options'} />
         </div>

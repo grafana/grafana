@@ -71,6 +71,11 @@ export interface InfluxQuery extends DataQuery {
   timeEndColumn?: string;
   titleColumn?: string;
   name?: string;
+  matchAny?: boolean;
+  type?: string;
+
   textEditor?: boolean;
   adhocFilters?: AdHocVariableFilter[];
 }
+
+export type MetadataQueryType = 'TAG_KEYS' | 'TAG_VALUES' | 'MEASUREMENTS' | 'FIELDS' | 'RETENTION_POLICIES';

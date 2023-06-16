@@ -1,15 +1,6 @@
-import { isArray } from 'lodash';
 import React from 'react';
 
-import {
-  ArrayVector,
-  FieldType,
-  FieldConfig,
-  getMinMaxAndDelta,
-  FieldSparkline,
-  isDataFrame,
-  Field,
-} from '@grafana/data';
+import { FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame, Field } from '@grafana/data';
 import {
   BarAlignment,
   GraphDrawStyle,
@@ -38,8 +29,7 @@ export const defaultSparklineCellConfig: GraphFieldConfig = {
 };
 
 export const SparklineCell = (props: TableCellProps) => {
-  const { field, innerWidth, tableStyles, cell, cellProps } = props;
-
+  const { field, innerWidth, tableStyles, cell, cellProps, timeRange } = props;
   const sparkline = getSparkline(cell.value);
 
   if (!sparkline) {
@@ -50,10 +40,25 @@ export const SparklineCell = (props: TableCellProps) => {
     );
   }
 
+  // Get the step from the first two values to null-fill the x-axis based on timerange
+  if (sparkline.x && !sparkline.x.config.interval && sparkline.x.values.length > 1) {
+    sparkline.x.config.interval = sparkline.x.values[1] - sparkline.x.values[0];
+  }
+
+  // Remove non-finite values, e.g: NaN, +/-Infinity
+  sparkline.y.values = sparkline.y.values.map((v) => {
+    if (!Number.isFinite(v)) {
+      return null;
+    } else {
+      return v;
+    }
+  });
+
   const range = getMinMaxAndDelta(sparkline.y);
   sparkline.y.config.min = range.min;
   sparkline.y.config.max = range.max;
   sparkline.y.state = { range };
+  sparkline.timeRange = timeRange;
 
   const cellOptions = getTableSparklineCellOptions(field);
 
@@ -79,12 +84,12 @@ export const SparklineCell = (props: TableCellProps) => {
 };
 
 function getSparkline(value: unknown): FieldSparkline | undefined {
-  if (isArray(value)) {
+  if (Array.isArray(value)) {
     return {
       y: {
         name: 'test',
         type: FieldType.number,
-        values: new ArrayVector(value),
+        values: value,
         config: {},
       },
     };
@@ -110,5 +115,5 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
   if (options.type === TableCellDisplayMode.Sparkline) {
     return options;
   }
-  throw new Error(`Excpected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
+  throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 	"xorm.io/xorm"
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -27,13 +28,13 @@ func TestMigrations(t *testing.T) {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
-	err = NewDialect(x).CleanDB()
+	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
 	_, err = x.SQL(query).Get(&result)
 	require.Error(t, err)
 
-	mg := NewMigrator(x, &setting.Cfg{})
+	mg := NewMigrator(x, &setting.Cfg{Raw: ini.Empty()})
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 	expectedMigrations := mg.GetMigrationIDs(true)
@@ -70,14 +71,17 @@ func TestMigrationLock(t *testing.T) {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
-	dialect := NewDialect(x)
+	dialect := NewDialect(x.DriverName())
 
 	sess := x.NewSession()
 	t.Cleanup(func() {
 		sess.Close()
 	})
 
-	cfg := LockCfg{Session: sess}
+	cfg := LockCfg{
+		Session: sess,
+		Key:     "test",
+	}
 
 	t.Run("obtaining lock should succeed", func(t *testing.T) {
 		err := dialect.Lock(cfg)
@@ -116,7 +120,7 @@ func TestMigrationLock(t *testing.T) {
 		require.NoError(t, err)
 		sess2 := x2.NewSession()
 
-		d2 := NewDialect(x2)
+		d2 := NewDialect(x2.DriverName())
 
 		err = dialect.Lock(cfg)
 		require.NoError(t, err)
@@ -138,7 +142,7 @@ func TestMigrationLock(t *testing.T) {
 		x, err := xorm.NewEngine(testDB.DriverName, replaceDBName(t, testDB.ConnStr, dbType))
 		require.NoError(t, err)
 
-		d := NewDialect(x)
+		d := NewDialect(x.DriverName())
 		err = d.Lock(cfg)
 		require.NoError(t, err)
 
@@ -164,7 +168,7 @@ func TestMigratorLocking(t *testing.T) {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
-	err = NewDialect(x).CleanDB()
+	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
 	mg := NewMigrator(x, &setting.Cfg{})
@@ -201,7 +205,7 @@ func TestDatabaseLocking(t *testing.T) {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
-	err = NewDialect(x).CleanDB()
+	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
 	mg1 := NewMigrator(x, &setting.Cfg{})

@@ -2,34 +2,33 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, CoreApp } from '@grafana/data';
+import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
+import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
   app: CoreApp;
-  // Height for flame graph when not used in explore.
-  // This needs to be different to explore flame graph height as we
-  // use panels with user adjustable heights in dashboards etc.
-  flameGraphHeight?: number;
 };
 
 const FlameGraphContainer = (props: Props) => {
-  const [topLevelIndex, setTopLevelIndex] = useState(0);
-  const [selectedBarIndex, setSelectedBarIndex] = useState(0);
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number>();
+
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+
   const theme = useTheme2();
 
   const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
@@ -44,7 +43,7 @@ const FlameGraphContainer = (props: Props) => {
     return [container, nestedSetToLevels(container)];
   }, [props.data, theme]);
 
-  const styles = useStyles2(() => getStyles(props.app, PIXELS_PER_LEVEL * (levels?.length ?? 0)));
+  const styles = useStyles2(getStyles);
 
   // If user resizes window with both as the selected view
   useEffect(() => {
@@ -58,8 +57,7 @@ const FlameGraphContainer = (props: Props) => {
   }, [selectedView, setSelectedView, containerWidth]);
 
   useEffect(() => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
+    setFocusedItemIndex(undefined);
     setRangeMin(0);
     setRangeMax(1);
   }, [props.data]);
@@ -70,60 +68,81 @@ const FlameGraphContainer = (props: Props) => {
         <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
             app={props.app}
-            setTopLevelIndex={setTopLevelIndex}
-            setSelectedBarIndex={setSelectedBarIndex}
-            setRangeMin={setRangeMin}
-            setRangeMax={setRangeMax}
             search={search}
             setSearch={setSearch}
             selectedView={selectedView}
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            onReset={() => {
+              setRangeMin(0);
+              setRangeMax(1);
+              setFocusedItemIndex(undefined);
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={setTextAlign}
           />
 
-          {selectedView !== SelectedView.FlameGraph && (
-            <FlameGraphTopTableContainer
-              data={dataContainer}
-              app={props.app}
-              totalLevels={levels.length}
-              selectedView={selectedView}
-              search={search}
-              setSearch={setSearch}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-            />
-          )}
+          <div className={styles.body}>
+            {selectedView !== SelectedView.FlameGraph && (
+              <FlameGraphTopTableContainer
+                data={dataContainer}
+                app={props.app}
+                totalLevels={levels.length}
+                onSymbolClick={(symbol) => {
+                  if (search === symbol) {
+                    setSearch('');
+                  } else {
+                    reportInteraction('grafana_flamegraph_table_item_selected', {
+                      app: props.app,
+                      grafana_version: config.buildInfo.version,
+                    });
+                    setSearch(symbol);
+                    // Reset selected level in flamegraph when selecting row in top table
+                    setRangeMin(0);
+                    setRangeMax(1);
+                  }
+                }}
+              />
+            )}
 
-          {selectedView !== SelectedView.TopTable && (
-            <FlameGraph
-              data={dataContainer}
-              app={props.app}
-              flameGraphHeight={props.flameGraphHeight}
-              levels={levels}
-              topLevelIndex={topLevelIndex}
-              selectedBarIndex={selectedBarIndex}
-              rangeMin={rangeMin}
-              rangeMax={rangeMax}
-              search={search}
-              setTopLevelIndex={setTopLevelIndex}
-              setSelectedBarIndex={setSelectedBarIndex}
-              setRangeMin={setRangeMin}
-              setRangeMax={setRangeMax}
-              selectedView={selectedView}
-            />
-          )}
+            {selectedView !== SelectedView.TopTable && (
+              <FlameGraph
+                data={dataContainer}
+                levels={levels}
+                rangeMin={rangeMin}
+                rangeMax={rangeMax}
+                search={search}
+                setRangeMin={setRangeMin}
+                setRangeMax={setRangeMax}
+                selectedView={selectedView}
+                onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
+                focusedItemIndex={focusedItemIndex}
+                textAlign={textAlign}
+              />
+            )}
+          </div>
         </div>
       )}
     </>
   );
 };
 
-const getStyles = (app: CoreApp, height: number) => ({
-  container: css`
-    height: ${app === CoreApp.Explore ? height + 'px' : '100%'};
-  `,
-});
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+      gap: theme.spacing(1),
+    }),
+    body: css({
+      display: 'flex',
+      flexGrow: 1,
+      minHeight: 0,
+    }),
+  };
+}
 
 export default FlameGraphContainer;

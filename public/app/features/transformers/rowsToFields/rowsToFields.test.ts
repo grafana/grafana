@@ -83,7 +83,7 @@ describe('Rows to fields', () => {
 
     expect(result.fields[0].name).toBe('Temperature');
     expect(result.fields[0].config).toEqual({});
-    expect(result.fields[0].values.get(0)).toBe(100);
+    expect(result.fields[0].values[0]).toBe(100);
   });
 
   it('Can handle colors', () => {
@@ -150,7 +150,7 @@ describe('Rows to fields', () => {
     );
 
     expect(result.fields[0].name).toEqual('Stockholm');
-    expect(result.fields[0].values.get(0)).toEqual(20);
+    expect(result.fields[0].values[0]).toEqual(20);
   });
 
   it('Can handle number fields as name field', () => {
@@ -172,6 +172,6 @@ describe('Rows to fields', () => {
     );
 
     expect(result.fields[0].name).toEqual('10');
-    expect(result.fields[0].values.get(0)).toEqual(1);
+    expect(result.fields[0].values[0]).toEqual(1);
   });
 });

@@ -144,6 +144,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
   e2e.pages.SaveDashboardAsModal.newName().clear().type(title, { force: true });
   e2e.pages.SaveDashboardAsModal.save().click();
   e2e.flows.assertSuccessNotification();
+  e2e.pages.AddDashboard.itemButton('Create new panel button').should('be.visible');
 
   e2e().logToConsole('Added dashboard with title:', title);
 

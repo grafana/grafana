@@ -10,7 +10,6 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
   const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
   const rowHeight = cellHeight + 2;
   const headerHeight = 28;
-  const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     const cellActionsOverflow: CSSObject = {
@@ -28,7 +27,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       overflow: 'visible',
       width: 'auto !important',
       boxShadow: `0 0 2px ${theme.colors.primary.main}`,
-      background: background ?? rowHoverBg,
+      background: background ?? theme.components.table.rowHoverBackground,
       zIndex: 1,
     };
 
@@ -175,6 +174,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       font-weight: ${theme.typography.fontWeightMedium};
       &:hover {
         text-decoration: underline;
+        color: ${theme.colors.text.link};
       }
     `,
     cellLinkForColoredCell: css`
@@ -230,7 +230,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       border-bottom: 1px solid ${borderColor};
 
       &:hover {
-        background-color: ${rowHoverBg};
+        background-color: ${theme.components.table.rowHoverBackground};
       }
 
       &:last-child {

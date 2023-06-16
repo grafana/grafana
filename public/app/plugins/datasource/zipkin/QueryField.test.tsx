@@ -1,5 +1,4 @@
-import { render, screen } from '@testing-library/react';
-import { act, renderHook } from '@testing-library/react-hooks';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { CascaderOption } from '@grafana/ui';
@@ -38,12 +37,13 @@ describe('useServices', () => {
       },
     } as ZipkinDatasource;
 
-    const { result, waitForNextUpdate } = renderHook(() => useServices(ds));
-    await waitForNextUpdate();
-    expect(result.current.value).toEqual([
-      { label: 'service1', value: 'service1', isLeaf: false },
-      { label: 'service2', value: 'service2', isLeaf: false },
-    ]);
+    const { result } = renderHook(() => useServices(ds));
+    await waitFor(() => {
+      expect(result.current.value).toEqual([
+        { label: 'service1', value: 'service1', isLeaf: false },
+        { label: 'service2', value: 'service2', isLeaf: false },
+      ]);
+    });
   });
 });
 
@@ -62,25 +62,25 @@ describe('useLoadOptions', () => {
       },
     } as ZipkinDatasource;
 
-    const { result, waitForNextUpdate } = renderHook(() => useLoadOptions(ds));
+    const { result } = renderHook(() => useLoadOptions(ds));
     expect(result.current.allOptions).toEqual({});
 
     act(() => {
       result.current.onLoadOptions([{ value: 'service1' } as CascaderOption]);
     });
 
-    await waitForNextUpdate();
-
-    expect(result.current.allOptions).toEqual({ service1: { span1: undefined, span2: undefined } });
+    await waitFor(() => {
+      expect(result.current.allOptions).toEqual({ service1: { span1: undefined, span2: undefined } });
+    });
 
     act(() => {
       result.current.onLoadOptions([{ value: 'service1' } as CascaderOption, { value: 'span1' } as CascaderOption]);
     });
 
-    await waitForNextUpdate();
-
-    expect(result.current.allOptions).toEqual({
-      service1: { span1: { 'trace1 [10 ms]': 'traceId1' }, span2: undefined },
+    await waitFor(() => {
+      expect(result.current.allOptions).toEqual({
+        service1: { span1: { 'trace1 [10 ms]': 'traceId1' }, span2: undefined },
+      });
     });
   });
 });

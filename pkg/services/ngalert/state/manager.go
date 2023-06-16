@@ -351,8 +351,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	}
 
 	logger.Debug("Saving alert states", "count", len(states))
-	instances := make([]ngModels.AlertInstance, 0, len(states))
-
 	for _, s := range states {
 		// Do not save normal state to database and remove transition to Normal state but keep mapped states
 		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
@@ -364,7 +362,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
-		fields := ngModels.AlertInstance{
+		instance := ngModels.AlertInstance{
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
@@ -373,23 +371,11 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateSince: s.StartsAt,
 			CurrentStateEnd:   s.EndsAt,
 		}
-		instances = append(instances, fields)
-	}
 
-	if len(instances) == 0 {
-		return
-	}
-
-	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
-		type debugInfo struct {
-			State  string
-			Labels string
+		err = st.instanceStore.SaveAlertInstance(ctx, instance)
+		if err != nil {
+			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 		}
-		debug := make([]debugInfo, 0)
-		for _, inst := range instances {
-			debug = append(debug, debugInfo{string(inst.CurrentState), data.Labels(inst.Labels).String()})
-		}
-		logger.Error("Failed to save alert states", "states", debug, "error", err)
 	}
 }
 
@@ -436,8 +422,6 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule) []StateTransition {
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
-	var resolvedImage *ngModels.Image
-
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
@@ -455,19 +439,15 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 
 		if oldState == eval.Alerting {
 			s.Resolved = true
-			// If there is no resolved image for this rule then take one
-			if resolvedImage == nil {
-				image, err := takeImage(ctx, st.images, alertRule)
-				if err != nil {
-					logger.Warn("Failed to take an image",
-						"dashboard", alertRule.GetDashboardUID(),
-						"panel", alertRule.GetPanelID(),
-						"error", err)
-				} else if image != nil {
-					resolvedImage = image
-				}
+			image, err := takeImage(ctx, st.images, alertRule)
+			if err != nil {
+				logger.Warn("Failed to take an image",
+					"dashboard", alertRule.GetDashboardUID(),
+					"panel", alertRule.GetPanelID(),
+					"error", err)
+			} else if image != nil {
+				s.Image = image
 			}
-			s.Image = resolvedImage
 		}
 
 		record := StateTransition{

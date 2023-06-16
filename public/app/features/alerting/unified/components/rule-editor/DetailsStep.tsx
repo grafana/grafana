@@ -12,7 +12,7 @@ function getDescription(ruleType: RuleFormType | undefined) {
     return 'Select the Namespace and Group for your recording rule.';
   }
   const docsLink =
-    'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation/#the-values-variable';
+    'https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/variables-label-annotation';
   const LinkToDocs = () => (
     <span>
       Click{' '}
@@ -26,8 +26,7 @@ function getDescription(ruleType: RuleFormType | undefined) {
     return (
       <span>
         {' '}
-        Write a summary to help you better manage your alerts.
-        <LinkToDocs />
+        Write a summary to help you better manage your alerts. <LinkToDocs />
       </span>
     );
   }
@@ -36,7 +35,6 @@ function getDescription(ruleType: RuleFormType | undefined) {
       <span>
         {' '}
         Select the Namespace and evaluation group for your alert. Write a summary to help you better manage your alerts.{' '}
-        <LinkToDocs />
       </span>
     );
   }

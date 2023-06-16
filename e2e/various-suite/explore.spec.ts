@@ -11,7 +11,16 @@ e2e.scenario({
     e2e.pages.Explore.General.container().should('have.length', 1);
     e2e.components.RefreshPicker.runButtonV2().should('have.length', 1);
 
+    // delete query history queries that would be unrelated
+    e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
+    cy.get('button[title="Delete query"]').each((button) => {
+      button.trigger('click');
+    });
+    cy.get('button[title="Delete query"]').should('not.exist');
+    e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
+
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .scrollIntoView()
       .should('be.visible')
       .within(() => {
         e2e().get('input[id*="test-data-scenario-select-"]').should('be.visible').click();
@@ -28,7 +37,7 @@ e2e.scenario({
       cy.get('body').click();
       cy.get('body').type('t{leftarrow}');
 
-      cy.location().then((locPostKeypress) => {
+      cy.location().should((locPostKeypress) => {
         const params = new URLSearchParams(locPostKeypress.search);
         const leftJSON = JSON.parse(params.get('left'));
         // be sure the keypress affected the time window

@@ -43,7 +43,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
                 query={query.query}
                 onChange={onChangeQuery}
                 onRunQuery={onRunQuery}
-                onBlur={() => {}}
                 placeholder={'Enter a Trace ID (run with Shift+Enter)'}
                 portalOrigin="jaeger"
               />

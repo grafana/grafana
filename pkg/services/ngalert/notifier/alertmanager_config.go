@@ -43,6 +43,36 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	return moa.gettableUserConfigFromAMConfigString(ctx, org, amConfig.AlertmanagerConfiguration)
 }
 
+// ActivateHistoricalConfiguration will set the current alertmanager configuration to a previous value based on the provided
+// alert_configuration_history id.
+func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Context, orgId int64, id int64) error {
+	config, err := moa.configStore.GetHistoricalConfiguration(ctx, orgId, id)
+	if err != nil {
+		return fmt.Errorf("failed to get historical alertmanager configuration: %w", err)
+	}
+
+	cfg, err := Load([]byte(config.AlertmanagerConfiguration))
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal historical alertmanager configuration: %w", err)
+	}
+
+	am, err := moa.AlertmanagerFor(orgId)
+	if err != nil {
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
+			return err
+		}
+	}
+
+	if err := am.SaveAndApplyConfig(ctx, cfg); err != nil {
+		moa.logger.Error("unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
+		return AlertmanagerConfigRejectedError{err}
+	}
+	moa.logger.Info("applied historical alertmanager configuration", "org", orgId, "id", id)
+
+	return nil
+}
+
 // GetAppliedAlertmanagerConfigurations returns the last n configurations marked as applied for a given org.
 func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*definitions.GettableHistoricUserConfig, error) {
 	configs, err := moa.configStore.GetAppliedConfigurations(ctx, org, limit)

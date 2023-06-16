@@ -15,18 +15,19 @@ import {
   PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
 import * as DFImport from 'app/features/dataframe-import';
-import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
+import { DataSourceModal } from 'app/features/datasources/components/picker/DataSourceModal';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
-import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
+import { QueryGroupOptions } from 'app/types';
 
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { updateQueries } from '../state/updateQueries';
@@ -50,17 +51,11 @@ interface State {
   helpContent: React.ReactNode;
   isLoadingHelp: boolean;
   isPickerOpen: boolean;
-  isAddingMixed: boolean;
+  isDataSourceModalOpen: boolean;
   data: PanelData;
   isHelpOpen: boolean;
   defaultDataSource?: DataSourceApi;
   scrollElement?: HTMLDivElement;
-  savedQueryUid?: string | null;
-  initialState: {
-    queries: DataQuery[];
-    dataSource?: QueryGroupDataSource;
-    savedQueryUid?: string | null;
-  };
 }
 
 export class QueryGroup extends PureComponent<Props, State> {
@@ -69,17 +64,12 @@ export class QueryGroup extends PureComponent<Props, State> {
   querySubscription: Unsubscribable | null = null;
 
   state: State = {
+    isDataSourceModalOpen: !!locationService.getSearchObject().firstPanel,
     isLoadingHelp: false,
     helpContent: null,
     isPickerOpen: false,
-    isAddingMixed: false,
     isHelpOpen: false,
     queries: [],
-    savedQueryUid: null,
-    initialState: {
-      queries: [],
-      savedQueryUid: null,
-    },
     data: {
       state: LoadingState.NotStarted,
       series: [],
@@ -94,6 +84,31 @@ export class QueryGroup extends PureComponent<Props, State> {
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
+    this.setNewQueriesAndDatasource(options);
+
+    // Clean up the first panel flag since the modal is now open
+    if (!!locationService.getSearchObject().firstPanel) {
+      locationService.partial({ firstPanel: null }, true);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.querySubscription) {
+      this.querySubscription.unsubscribe();
+      this.querySubscription = null;
+    }
+  }
+
+  async componentDidUpdate() {
+    const { options } = this.props;
+
+    const currentDS = await getDataSourceSrv().get(options.dataSource);
+    if (this.state.dataSource && currentDS.uid !== this.state.dataSource?.uid) {
+      this.setNewQueriesAndDatasource(options);
+    }
+  }
+
+  async setNewQueriesAndDatasource(options: QueryGroupOptions) {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
@@ -105,27 +120,15 @@ export class QueryGroup extends PureComponent<Props, State> {
         datasource,
         ...q,
       }));
+
       this.setState({
         queries,
         dataSource: ds,
         dsSettings,
         defaultDataSource,
-        savedQueryUid: options.savedQueryUid,
-        initialState: {
-          queries: options.queries.map((q) => ({ ...q })),
-          dataSource: { ...options.dataSource },
-          savedQueryUid: options.savedQueryUid,
-        },
       });
     } catch (error) {
       console.log('failed to load data source', error);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-      this.querySubscription = null;
     }
   }
 
@@ -142,9 +145,9 @@ export class QueryGroup extends PureComponent<Props, State> {
     const queries = await updateQueries(nextDS, newSettings.uid, this.state.queries, currentDS);
 
     const dataSource = await this.dataSourceSrv.get(newSettings.name);
+
     this.onChange({
       queries,
-      savedQueryUid: null,
       dataSource: {
         name: newSettings.name,
         uid: newSettings.uid,
@@ -155,7 +158,6 @@ export class QueryGroup extends PureComponent<Props, State> {
 
     this.setState({
       queries,
-      savedQueryUid: null,
       dataSource: dataSource,
       dsSettings: newSettings,
     });
@@ -213,34 +215,7 @@ export class QueryGroup extends PureComponent<Props, State> {
           <InlineFormLabel htmlFor="data-source-picker" width={'auto'}>
             Data source
           </InlineFormLabel>
-          <div className={styles.dataSourceRowItem}>
-            {config.featureToggles.drawerDataSourcePicker ? (
-              <DataSourcePickerWithHistory
-                onChange={this.onChangeDataSource}
-                current={options.dataSource}
-                metrics={true}
-                mixed={true}
-                dashboard={true}
-                variables={true}
-                enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
-                fileUploadOptions={{
-                  onDrop: this.onFileDrop,
-                  maxSize: DFImport.maxFileSize,
-                  multiple: false,
-                  accept: DFImport.acceptedFiles,
-                }}
-              ></DataSourcePickerWithHistory>
-            ) : (
-              <DataSourcePicker
-                onChange={this.onChangeDataSource}
-                current={options.dataSource}
-                metrics={true}
-                mixed={true}
-                dashboard={true}
-                variables={true}
-              ></DataSourcePicker>
-            )}
-          </div>
+          <div className={styles.dataSourceRowItem}>{this.renderDataSourcePickerWithPrompt()}</div>
           {dataSource && (
             <>
               <div className={styles.dataSourceRowItem}>
@@ -286,33 +261,67 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ isHelpOpen: false });
   };
 
-  renderMixedPicker = () => {
+  onCloseDataSourceModal = () => {
+    this.setState({ isDataSourceModalOpen: false });
+  };
+
+  renderDataSourcePickerWithPrompt = () => {
+    const { isDataSourceModalOpen } = this.state;
+
+    const commonProps = {
+      enableFileUpload: config.featureToggles.editPanelCSVDragAndDrop,
+      fileUploadOptions: {
+        onDrop: this.onFileDrop,
+        maxSize: DFImport.maxFileSize,
+        multiple: false,
+        accept: DFImport.acceptedFiles,
+      },
+      current: this.props.options.dataSource,
+      onChange: (ds: DataSourceInstanceSettings) => {
+        this.onChangeDataSource(ds);
+        this.onCloseDataSourceModal();
+      },
+    };
+
     return (
-      <DataSourcePicker
-        mixed={false}
-        onChange={this.onAddMixedQuery}
-        current={null}
-        autoFocus={true}
-        variables={true}
-        onBlur={this.onMixedPickerBlur}
-        openMenuOnFocus={true}
-      />
+      <>
+        {isDataSourceModalOpen && config.featureToggles.advancedDataSourcePicker && (
+          <DataSourceModal {...commonProps} onDismiss={this.onCloseDataSourceModal}></DataSourceModal>
+        )}
+        <DataSourcePicker
+          {...commonProps}
+          metrics={true}
+          mixed={true}
+          dashboard={true}
+          variables={true}
+          onClickAddCSV={this.onClickAddCSV}
+        />
+      </>
     );
-  };
-
-  onAddMixedQuery = (datasource: any) => {
-    this.onAddQuery({ datasource: datasource.name });
-    this.setState({ isAddingMixed: false });
-  };
-
-  onMixedPickerBlur = () => {
-    this.setState({ isAddingMixed: false });
   };
 
   onAddQuery = (query: Partial<DataQuery>) => {
     const { dsSettings, queries } = this.state;
     this.onQueriesChange(addQuery(queries, query, { type: dsSettings?.type, uid: dsSettings?.uid }));
     this.onScrollBottom();
+  };
+
+  onClickAddCSV = async () => {
+    const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+    await this.onChangeDataSource(ds!);
+
+    this.onQueriesChange([
+      {
+        refId: 'A',
+        datasource: {
+          type: 'grafana',
+          uid: 'grafana',
+        },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot: [],
+      },
+    ]);
+    this.props.onRunQueries();
   };
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
@@ -390,8 +399,7 @@ export class QueryGroup extends PureComponent<Props, State> {
   }
 
   renderAddQueryRow(dsSettings: DataSourceInstanceSettings, styles: QueriesTabStyles) {
-    const { isAddingMixed } = this.state;
-    const showAddButton = !(isAddingMixed || isSharedDashboardQuery(dsSettings.name));
+    const showAddButton = !isSharedDashboardQuery(dsSettings.name);
 
     return (
       <HorizontalGroup spacing="md" align="flex-start">
