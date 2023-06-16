@@ -1,4 +1,4 @@
-import { findByText, fireEvent, queryByText, render, screen, waitFor } from '@testing-library/react';
+import { findByText, queryByText, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
