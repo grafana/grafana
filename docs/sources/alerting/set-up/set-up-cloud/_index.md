@@ -30,7 +30,7 @@ Grafana Cloud Alerting's Prometheus-style alerts are built by querying directly 
 
 These are set up instructions for Grafana Alerting Cloud.
 
-To set up Grafana Alerting for Open Source, see
+To set up Grafana Alerting for Open Source, see ({{< relref "../set-up" >}})
 
 To set up Alerting, you need to:
 
@@ -53,7 +53,7 @@ The following topics provide you with advanced configuration options for Grafana
 
 ## Provision alert rules using mimirtool
 
-Use mimirtool to create and upload alert and recording rules to your Grafana Cloud instance.
+Use `mimirtool` to create and upload alert and recording rules to your Grafana Cloud instance.
 
 Once created, you can view these alert and recordiing rules from within the Grafana Cloud Alerting page in the UI.
 
@@ -73,12 +73,12 @@ The following sections cover all of these concepts:
 
 ### Download and install mimirtool
 
-mimirtool is a powerful command-line tool for interacting with Grafana Mimir, which powers Grafana Cloud Metrics and Alerts. Use mimirtool to upload your metric and log rules definition and the Alertmanager configuration using YAML files.
+`mimirtool` is a powerful command-line tool for interacting with Grafana Mimir, which powers Grafana Cloud Metrics and Alerts. Use `mimirtool` to upload your metric and log rules definition and the Alertmanager configuration using YAML files.
 
 For more information, including installation instructions, see [Grafana Mimirtool](/docs/mimir/latest/operators-guide/tools/mimirtool).
 
 {{% admonition type="note" %}}
-For mimirtool to interact with Grafana Cloud, you must set the correct configuration variables. Set them using either environment variables or a command line flags.
+For `mimirtool` to interact with Grafana Cloud, you must set the correct configuration variables. Set them using either environment variables or a command line flags.
 {{% /admonition %}}
 
 ### Upload rules definition to your Grafana Cloud Metrics and Logs instance
