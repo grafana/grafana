@@ -160,7 +160,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           path: 'insertNulls',
           name: 'Disconnect values',
           category: categoryStyles,
-          defaultValue: false,
+          defaultValue: undefined,
           editor: InsertNullsEditor,
           override: InsertNullsEditor,
           showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
