@@ -45,7 +45,8 @@ type Cfg struct {
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
-	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool) *Cfg {
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
+	grafanaComURL string) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -60,7 +61,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		LogDatasourceRequests:   logDatasourceRequests,
 		PluginsCDNURLTemplate:   pluginsCDNURLTemplate,
 		Tracing:                 tracing,
-		GrafanaComURL:           "https://grafana.com",
+		GrafanaComURL:           grafanaComURL,
 		Features:                features,
 		AngularSupportEnabled:   angularSupportEnabled,
 	}
