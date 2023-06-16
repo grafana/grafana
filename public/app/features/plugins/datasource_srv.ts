@@ -113,9 +113,24 @@ export class DatasourceSrv implements DataSourceService {
     if (!nameOrUid) {
       return this.get(this.defaultName);
     }
+    const datasource = this.getSync(nameOrUid, scopedVars);
+
+    if (datasource) {
+      return Promise.resolve(datasource);
+    }
+
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
+    return this.loadDatasource(nameOrUid);
+  }
+
+  getSync(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): DataSourceApi | null {
+    let nameOrUid = getNameOrUid(ref);
+    if (!nameOrUid) {
+      return this.getSync(this.defaultName);
+    }
 
     if (isExpressionReference(ref)) {
-      return Promise.resolve(this.datasources[ExpressionDatasourceUID]);
+      return this.datasources[ExpressionDatasourceUID];
     }
 
     // Check if nameOrUid matches a uid and then get the name
@@ -126,21 +141,21 @@ export class DatasourceSrv implements DataSourceService {
 
     // This check is duplicated below, this is here mainly as performance optimization to skip interpolation
     if (this.datasources[nameOrUid]) {
-      return Promise.resolve(this.datasources[nameOrUid]);
+      return this.datasources[nameOrUid];
     }
 
     // Interpolation here is to support template variable in data source selection
     nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
     if (nameOrUid === 'default' && this.defaultName !== 'default') {
-      return this.get(this.defaultName);
+      return this.getSync(this.defaultName);
     }
 
     if (this.datasources[nameOrUid]) {
-      return Promise.resolve(this.datasources[nameOrUid]);
+      return this.datasources[nameOrUid];
     }
 
-    return this.loadDatasource(nameOrUid);
+    return null;
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi<any, any>> {

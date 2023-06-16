@@ -17,6 +17,13 @@ export interface DataSourceSrv {
   get(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
+   * Returns the requested dataSource in a sync way if it was loaded already. If it cannot be found it returns null.
+   * @param ref - The datasource identifier, typically an object with UID and type,
+   * @param scopedVars - variables used to interpolate a templated passed as name.
+   */
+  getSync(ref?: DataSourceRef | string | null, scopedVars?: ScopedVars): DataSourceApi | null;
+
+  /**
    * Get a list of data sources
    */
   getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
