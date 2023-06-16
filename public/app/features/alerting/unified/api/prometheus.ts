@@ -26,7 +26,7 @@ export function prometheusUrlBuilder(dataSourceConfig: PrometheusDataSourceConfi
 
       // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
       // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
-      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME && limitAlerts) {
+      if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
         searchParams.set('limit_alerts', String(limitAlerts));
       }
 
