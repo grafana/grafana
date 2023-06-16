@@ -170,6 +170,75 @@ describe('datasource_srv', () => {
         const ds2 = await dataSourceSrv.get('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
         expect(ds2.uid).toBe(dataSourceInit.aaa.uid);
       });
+
+      it('should throw error if data source is not found', async () => {
+        expect.assertions(1);
+        try {
+          await dataSourceSrv.get('not-found');
+        } catch (err) {
+          expect((err as Error).message).toBe('Datasource not-found was not found');
+        }
+      });
+    });
+
+    describe('when getting data source class instance in a sync way', () => {
+      describe('with preloaded datasources', () => {
+        it('should load plugin and create instance and set meta', async () => {
+          // load datasource initially
+          await dataSourceSrv.loadDatasource('mmm');
+
+          const ds = dataSourceSrv.getSync('mmm') as any;
+          expect(ds.meta).toBe(dataSourceInit.mmm.meta);
+          expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
+
+          // validate that it caches instance
+          const ds2 = dataSourceSrv.getSync('mmm');
+          expect(ds).toBe(ds2);
+        });
+
+        it('should be able to load data source using uid as well', async () => {
+          // load datasource initially
+          await dataSourceSrv.loadDatasource('mmm');
+
+          const dsByUid = dataSourceSrv.getSync('uid-code-mmm');
+          const dsByName = dataSourceSrv.getSync('mmm');
+          expect(dsByUid!.meta).toBe(dsByName!.meta);
+          expect(dsByUid).toBe(dsByName);
+        });
+
+        it('should patch legacy datasources', async () => {
+          // load datasource initially
+          await dataSourceSrv.loadDatasource('mmm');
+
+          expect(TestDataSource instanceof DataSourceApi).toBe(false);
+          const instance = dataSourceSrv.getSync('mmm');
+          expect(instance!.name).toBe('mmm');
+          expect(instance!.type).toBe('test-db');
+          expect(instance!.uid).toBe('uid-code-mmm');
+          expect(instance!.getRef()).toEqual({ type: 'test-db', uid: 'uid-code-mmm' });
+        });
+
+        it('Can get by variable', async () => {
+          // load datasource initially
+          await dataSourceSrv.loadDatasource('BBB');
+
+          const ds = dataSourceSrv.getSync('${datasource}');
+          expect(ds!.meta).toBe(dataSourceInit.BBB.meta);
+
+          // load datasource initially
+          await dataSourceSrv.loadDatasource('uid-code-aaa');
+
+          const ds2 = dataSourceSrv.getSync('${datasource}', { datasource: { text: 'Prom', value: 'uid-code-aaa' } });
+          expect(ds2!.uid).toBe(dataSourceInit.aaa.uid);
+        });
+      });
+    });
+
+    describe('with no preloaded datasources', () => {
+      it('should return null', () => {
+        const ds = dataSourceSrv.getSync('mmm');
+        expect(ds).toBe(null);
+      });
     });
 
     describe('when getting instance settings', () => {
