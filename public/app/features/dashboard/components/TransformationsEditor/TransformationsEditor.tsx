@@ -176,7 +176,12 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
-    reportInteraction('panel_editor_tabs_transformations_management', {
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
       action: 'add',
       transformationId: selectable.value,
     });
@@ -196,21 +201,31 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
     ]);
   };
 
-  onTransformationChange = (idx: number, config: DataTransformerConfig) => {
+  onTransformationChange = (idx: number, dataConfig: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    reportInteraction('panel_editor_tabs_transformations_management', {
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
       action: 'change',
       transformationId: next[idx].transformation.id,
     });
-    next[idx].transformation = config;
+    next[idx].transformation = dataConfig;
     this.onChange(next);
   };
 
   onTransformationRemove = (idx: number) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    reportInteraction('panel_editor_tabs_transformations_management', {
+    let eventName = 'panel_editor_tabs_transformations_management';
+    if (config.featureToggles.transformationsRedesign) {
+      eventName = 'transformations_redesign_' + eventName;
+    }
+
+    reportInteraction(eventName, {
       action: 'remove',
       transformationId: next[idx].transformation.id,
     });

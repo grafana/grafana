@@ -75,7 +75,12 @@ export const TransformationOperationRow = ({
   const instrumentToggleCallback = useCallback(
     (callback: (e: React.MouseEvent) => void, toggleId: string, active: boolean | undefined) =>
       (e: React.MouseEvent) => {
-        reportInteraction('panel_editor_tabs_transformations_toggle', {
+        let eventName = 'panel_editor_tabs_transformations_toggle';
+        if (config.featureToggles.transformationsRedesign) {
+          eventName = 'transformations_redesign_' + eventName;
+        }
+
+        reportInteraction(eventName, {
           action: active ? 'off' : 'on',
           toggleId,
           transformationId: configs[index].transformation.id,
