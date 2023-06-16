@@ -1,9 +1,6 @@
 import 'systemjs/dist/system';
-// Add ability to load plugins bundled as AMD format
+// Add ability to load plugins bundled as AMD format)
 import 'systemjs/dist/extras/amd';
-// Add ability to load css, json, wasm
-import 'systemjs/dist/extras/module-types';
-
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
