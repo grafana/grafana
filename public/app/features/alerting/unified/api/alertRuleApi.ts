@@ -7,7 +7,7 @@ import { arrayKeyValuesToObject } from '../utils/labels';
 import { alertingApi } from './alertingApi';
 
 export type ResponseLabels = {
-  labels: Labels[];
+  labels: AlertInstances[];
 };
 
 export type PreviewResponse = ResponseLabels[];
@@ -37,6 +37,7 @@ export interface Rule {
   labels: Labels;
   annotations: Annotations;
 }
+export type AlertInstances = Record<string, string>;
 
 export const alertRuleApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -62,7 +63,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
               data: alertQueries,
               condition: condition,
               no_data_state: 'Alerting',
-              title: alertName ?? 'no alert name set yet',
+              title: alertName,
               uid: alertUid ?? 'N/A',
             },
             for: '0s',

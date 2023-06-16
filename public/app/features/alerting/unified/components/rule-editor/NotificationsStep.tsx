@@ -12,7 +12,10 @@ import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
-export const NotificationsStep = ({ id }: { id?: string }) => {
+type NotificationsStepProps = {
+  id?: string;
+};
+export const NotificationsStep = ({ id }: NotificationsStepProps) => {
   const styles = useStyles2(getStyles);
   const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
 
@@ -55,16 +58,18 @@ export const NotificationsStep = ({ id }: { id?: string }) => {
           <LabelsField dataSourceName={dataSourceName} />
         </div>
       </div>
-      {shouldRenderPreview && condition && folder && (
-        <NotificationPreview
-          alertQueries={queries}
-          customLabels={labels}
-          condition={condition}
-          folder={folder}
-          alertName={alertName}
-          alertUid={id}
-        />
-      )}
+      {shouldRenderPreview &&
+        condition &&
+        folder && ( // need to check for condition and folder again because of typescript
+          <NotificationPreview
+            alertQueries={queries}
+            customLabels={labels}
+            condition={condition}
+            folder={folder}
+            alertName={alertName}
+            alertUid={id}
+          />
+        )}
     </RuleEditorSection>
   );
 };

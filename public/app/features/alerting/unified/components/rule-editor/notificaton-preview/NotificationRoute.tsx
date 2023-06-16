@@ -122,7 +122,7 @@ export function NotificationRoute({
         <Stack gap={1} direction="column">
           <div className={styles.routeInstances} data-testid="route-matching-instance">
             {instanceMatches.map((instanceMatch) => {
-              const matchArray = Array.from(instanceMatch.labelsMatch.entries());
+              const matchArray = Array.from(instanceMatch.labelsMatch);
               let matchResult = matchArray.map(([label, matchResult]) => ({
                 label: `${label[0]}=${label[1]}`,
                 match: matchResult.match,
