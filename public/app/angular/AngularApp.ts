@@ -8,13 +8,13 @@ import angular from 'angular'; // eslint-disable-line no-duplicate-imports
 import { extend } from 'lodash';
 
 import { getTemplateSrv } from '@grafana/runtime';
-import coreModule, { angularModules } from 'app/angular/core_module';
+import { coreModule, angularModules } from 'app/angular/core_module';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { sandboxPluginDependencies } from 'app/features/plugins/sandbox/plugin_dependencies';
+import { buildImportMap } from 'app/features/plugins/plugin_loader';
 import * as sdk from 'app/plugins/sdk';
 
 import { registerAngularDirectives } from './angular_wrappers';
@@ -26,14 +26,14 @@ import { registerComponents } from './registerComponents';
 // Angular plugin dependencies map
 const importMap = {
   angular: angular,
-  'app/core/utils/promiseToDigest': { promiseToDigest },
-  'app/plugins/sdk': sdk,
   'app/core/core_module': coreModule,
   'app/core/core': {
-    coreModule: coreModule,
     appEvents: appEvents,
     contextSrv: contextSrv,
+    coreModule: coreModule,
   },
+  'app/plugins/sdk': sdk,
+  'app/core/utils/promiseToDigest': { promiseToDigest },
 } as Record<string, System.Module>;
 
 export class AngularApp {
@@ -118,37 +118,8 @@ export class AngularApp {
     registerComponents();
     initAngularRoutingBridge();
 
-    // Angular plugins import this
-    // exposeToPlugin('angular', angular);
-    // exposeToPlugin('app/core/utils/promiseToDigest', { promiseToDigest, __esModule: true });
-    // exposeToPlugin('app/plugins/sdk', sdk);
-    // exposeToPlugin('app/core/core_module', coreModule);
-    // exposeToPlugin('app/core/core', {
-    //   coreModule: coreModule,
-    //   appEvents: appEvents,
-    //   contextSrv: contextSrv,
-    //   __esModule: true,
-    // });
-
-    // TODO: Fix up this copy and paste.
-    const imports = Object.keys(importMap).reduce((acc, key) => {
-      // Use the 'app:' prefix to act as a URL instead of a bare specifier
-      const module_name = `app:${key}`;
-
-      // Set the module in Systemjs
-      window.System.set(module_name, importMap[key]);
-
-      // exposes this dependency to sandboxed plugins too.
-      // the following sandboxPluginDependencies don't depend or interact
-      // with SystemJS in any way.
-      sandboxPluginDependencies.set(key, importMap[key]);
-      acc[key] = module_name;
-
-      return acc;
-    }, {} as Record<string, string>);
-
+    const imports = buildImportMap(importMap);
     // pass the map of module names so systemjs can resolve them
-    // to the imports above.
     window.System.addImportMap({ imports });
 
     // disable tool tip animation
