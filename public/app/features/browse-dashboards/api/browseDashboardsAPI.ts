@@ -8,24 +8,24 @@ import { getFolderChildren } from 'app/features/search/service/folders';
 import { DashboardViewItem } from 'app/features/search/types';
 import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashboardResponseDTO } from 'app/types';
 
+import { refetchChildren } from '../state';
 import { findItem } from '../state/utils';
 import { DashboardTreeSelection, DashboardViewItemCollection } from '../types';
 
-export const ROOT_PAGE_SIZE = 50;
-export const PAGE_SIZE = 999;
+import { PAGE_SIZE, ROOT_PAGE_SIZE } from './services';
 
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
 }
 
-interface BulkDeleteArgs {
+interface DeleteItemsArgs {
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
   rootItems: DashboardViewItem[] | undefined;
   childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
 }
 
-interface BulkMoveArgs extends BulkDeleteArgs {
+interface MoveItemsArgs extends DeleteItemsArgs {
   destinationUID: string;
 }
 
@@ -67,6 +67,17 @@ export const browseDashboardsAPI = createApi({
           forceDeleteRules: false,
         },
       }),
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { parentUid } = arg;
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: parentUid,
+              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+        });
+      },
     }),
     getFolder: builder.query<FolderDTO, string>({
       providesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg }],
@@ -83,6 +94,24 @@ export const browseDashboardsAPI = createApi({
         method: 'POST',
         data: { parentUID: destinationUID },
       }),
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { folder, destinationUID } = arg;
+        const { parentUid } = folder;
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: parentUid,
+              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+          dispatch(
+            refetchChildren({
+              parentUID: destinationUID,
+              pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+        });
+      },
     }),
     saveFolder: builder.mutation<FolderDTO, FolderDTO>({
       invalidatesTags: (_result, _error, args) => [
@@ -98,8 +127,19 @@ export const browseDashboardsAPI = createApi({
           version: folder.version,
         },
       }),
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { parentUid } = arg;
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: parentUid,
+              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+        });
+      },
     }),
-    bulkDelete: builder.mutation<void, BulkDeleteArgs>({
+    deleteItems: builder.mutation<void, DeleteItemsArgs>({
       invalidatesTags: (_result, _error, args) => {
         const { selectedItems, rootItems, childrenByParentUID } = args;
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
@@ -148,8 +188,30 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { selectedItems, rootItems, childrenByParentUID } = arg;
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        queryFulfilled.then(() => {
+          const parentsToRefresh = new Set<string | undefined>();
+          for (const folderUID of selectedFolders) {
+            // find the parent folder uid to invalidate the children
+            const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+            parentsToRefresh.add(folder?.parentUID);
+          }
+
+          for (const dashboardUID of selectedDashboards) {
+            // find the parent folder uid to invalidate the children
+            const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+            parentsToRefresh.add(dashboard?.parentUID);
+          }
+          for (const parentUID of parentsToRefresh) {
+            dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+          }
+        });
+      },
     }),
-    bulkMove: builder.mutation<void, BulkMoveArgs>({
+    moveItems: builder.mutation<void, MoveItemsArgs>({
       invalidatesTags: (_result, _error, args) => {
         const { selectedItems, rootItems, childrenByParentUID } = args;
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
@@ -206,6 +268,29 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { destinationUID, selectedItems, rootItems, childrenByParentUID } = arg;
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        queryFulfilled.then(() => {
+          const parentsToRefresh = new Set<string | undefined>();
+          parentsToRefresh.add(destinationUID);
+          for (const folderUID of selectedFolders) {
+            // find the parent folder uid to invalidate the children
+            const folder = findItem(rootItems ?? [], childrenByParentUID, folderUID);
+            parentsToRefresh.add(folder?.parentUID);
+          }
+
+          for (const dashboardUID of selectedDashboards) {
+            // find the parent folder uid to invalidate the children
+            const dashboard = findItem(rootItems ?? [], childrenByParentUID, dashboardUID);
+            parentsToRefresh.add(dashboard?.parentUID);
+          }
+          for (const parentUID of parentsToRefresh) {
+            dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+          }
+        });
+      },
     }),
     getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
       queryFn: async (selectedItems) => {
@@ -257,6 +342,17 @@ export const browseDashboardsAPI = createApi({
           overwrite: Boolean(overwrite),
         },
       }),
+      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
+        const { folderUid } = arg;
+        queryFulfilled.then(() => {
+          dispatch(
+            refetchChildren({
+              parentUID: folderUid,
+              pageSize: folderUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+        });
+      },
     }),
   }),
 });
@@ -264,12 +360,12 @@ export const browseDashboardsAPI = createApi({
 export const {
   endpoints,
   usePrefetch,
-  useBulkDeleteMutation,
-  useBulkMoveMutation,
   useDeleteFolderMutation,
+  useDeleteItemsMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
   useMoveFolderMutation,
+  useMoveItemsMutation,
   useSaveDashboardMutation,
   useSaveFolderMutation,
 } = browseDashboardsAPI;

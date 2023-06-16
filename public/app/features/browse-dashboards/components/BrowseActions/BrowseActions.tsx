@@ -9,7 +9,7 @@ import { useSearchStateManager } from 'app/features/search/state/SearchStateMana
 import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useBulkDeleteMutation, useBulkMoveMutation } from '../../api/browseDashboardsAPI';
+import { useDeleteItemsMutation, useMoveItemsMutation } from '../../api/browseDashboardsAPI';
 import { childrenByParentUIDSelector, rootItemsSelector, setAllSelection, useActionSelectionState } from '../../state';
 import { DashboardTreeSelection } from '../../types';
 
@@ -26,8 +26,8 @@ export function BrowseActions() {
   const rootItems = useSelector(rootItemsSelector);
   const childrenByParentUID = useSelector(childrenByParentUIDSelector);
 
-  const [bulkDelete] = useBulkDeleteMutation();
-  const [bulkMove] = useBulkMoveMutation();
+  const [deleteItems] = useDeleteItemsMutation();
+  const [moveItems] = useMoveItemsMutation();
 
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
@@ -42,14 +42,14 @@ export function BrowseActions() {
   };
 
   const onDelete = async () => {
-    await bulkDelete({ selectedItems, rootItems: rootItems?.items ?? [], childrenByParentUID });
+    await deleteItems({ selectedItems, rootItems: rootItems?.items ?? [], childrenByParentUID });
 
     trackAction('delete', selectedItems);
     onActionComplete();
   };
 
   const onMove = async (destinationUID: string) => {
-    await bulkMove({
+    await moveItems({
       selectedItems,
       rootItems: rootItems?.items ?? [],
       childrenByParentUID,
