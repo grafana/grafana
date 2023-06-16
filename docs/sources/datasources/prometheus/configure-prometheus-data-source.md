@@ -84,7 +84,7 @@ Following are additional configuration options.
 
 ### Alerting
 
-**Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
+- **Manage alerts via Alerting UI** - Toggle to enable `Alertmanager` integration for this data source.
 
 ### Interval behavior
 
@@ -94,7 +94,7 @@ Following are additional configuration options.
 
 ### Query editor
 
-- **Default editor** - Sets a default editor. Options are `Builder` or `Code`.
+- **Default editor** - Sets a default editor. Options are `Builder` or `Code`. For information on query editor types see [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/).
 
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with large Prometheus instances.
 
