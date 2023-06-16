@@ -57,7 +57,7 @@ export const browseDashboardsAPI = createApi({
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
     deleteFolder: builder.mutation<void, FolderDTO>({
-      invalidatesTags: (_result, _error, folder) => [{ type: 'getFolder', id: folder.uid }],
+      invalidatesTags: (_result, _error, { uid }) => [{ type: 'getFolder', id: uid }],
       query: ({ uid }) => ({
         url: `/folders/${uid}`,
         method: 'DELETE',
@@ -67,8 +67,7 @@ export const browseDashboardsAPI = createApi({
           forceDeleteRules: false,
         },
       }),
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { parentUid } = arg;
+      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -80,18 +79,17 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     getFolder: builder.query<FolderDTO, string>({
-      providesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg }],
+      providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
     }),
     moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
-      invalidatesTags: (_result, _error, arg) => [{ type: 'getFolder', id: arg.folder.uid }],
+      invalidatesTags: (_result, _error, { folder }) => [{ type: 'getFolder', id: folder.uid }],
       query: ({ folder, destinationUID }) => ({
         url: `/folders/${folder.uid}/move`,
         method: 'POST',
         data: { parentUID: destinationUID },
       }),
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { folder, destinationUID } = arg;
+      onQueryStarted: ({ folder, destinationUID }, { queryFulfilled, dispatch }) => {
         const { parentUid } = folder;
         queryFulfilled.then(() => {
           dispatch(
@@ -110,7 +108,7 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
-      invalidatesTags: (_result, _error, args) => [{ type: 'getFolder', id: args.parentUid }],
+      invalidatesTags: (_result, _error, { parentUid }) => [{ type: 'getFolder', id: parentUid }],
       query: ({ title, parentUid }) => ({
         method: 'POST',
         url: '/folders',
@@ -119,8 +117,7 @@ export const browseDashboardsAPI = createApi({
           parentUid,
         },
       }),
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { parentUid } = arg;
+      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(async ({ data: folder }) => {
           await contextSrv.fetchUserPermissions();
           dispatch(notifyApp(createSuccessNotification('Folder Created', 'OK')));
@@ -134,36 +131,20 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    saveFolder: builder.mutation<
-      FolderDTO,
-      {
-        folder: FolderDTO;
-        childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
-      }
-    >({
-      invalidatesTags: (_result, _error, { folder, childrenByParentUID }) => {
-        const tagsToInvalidate = [{ type: 'getFolder' as const, id: folder.uid }];
-        function invalidateChildFolders(parentUID: string) {
-          for (const item of childrenByParentUID[parentUID]?.items ?? []) {
-            if (item.kind === 'folder') {
-              tagsToInvalidate.push({ type: 'getFolder' as const, id: item.uid });
-              invalidateChildFolders(item.uid);
-            }
-          }
-        }
-        invalidateChildFolders(folder.uid);
-        return tagsToInvalidate;
-      },
-      query: ({ folder }) => ({
+    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+      // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
+      // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
+      // instead let's just invalidate all the getFolder calls
+      invalidatesTags: [{ type: 'getFolder' }],
+      query: ({ uid, title, version }) => ({
         method: 'PUT',
-        url: `/folders/${folder.uid}`,
+        url: `/folders/${uid}`,
         data: {
-          title: folder.title,
-          version: folder.version,
+          title,
+          version,
         },
       }),
-      onQueryStarted: ({ folder }, { queryFulfilled, dispatch }) => {
-        const { parentUid } = folder;
+      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
         queryFulfilled.then(() => {
           dispatch(
             refetchChildren({
@@ -175,13 +156,11 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     deleteItems: builder.mutation<void, DeleteItemsArgs>({
-      invalidatesTags: (_result, _error, args) => {
-        const { selectedItems } = args;
+      invalidatesTags: (_result, _error, { selectedItems }) => {
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         return selectedFolders.map((folderUID) => ({ type: 'getFolder', id: folderUID }));
       },
-      queryFn: async (args, _api, _extraOptions, baseQuery) => {
-        const { selectedItems } = args;
+      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         // Delete all the folders sequentially
@@ -208,8 +187,7 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { selectedItems, rootItems, childrenByParentUID } = arg;
+      onQueryStarted: ({ selectedItems, rootItems, childrenByParentUID }, { queryFulfilled, dispatch }) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         queryFulfilled.then(() => {
@@ -232,13 +210,11 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     moveItems: builder.mutation<void, MoveItemsArgs>({
-      invalidatesTags: (_result, _error, args) => {
-        const { selectedItems } = args;
+      invalidatesTags: (_result, _error, { selectedItems }) => {
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
         return selectedFolders.map((folderUID) => ({ type: 'getFolder', id: folderUID }));
       },
-      queryFn: async (args, _api, _extraOptions, baseQuery) => {
-        const { selectedItems, destinationUID } = args;
+      queryFn: async ({ selectedItems, destinationUID }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
@@ -272,8 +248,10 @@ export const browseDashboardsAPI = createApi({
         }
         return { data: undefined };
       },
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { destinationUID, selectedItems, rootItems, childrenByParentUID } = arg;
+      onQueryStarted: (
+        { destinationUID, selectedItems, rootItems, childrenByParentUID },
+        { queryFulfilled, dispatch }
+      ) => {
         queryFulfilled.then(() => {
           const parentsToRefresh = new Set<string | undefined>();
 
@@ -340,8 +318,7 @@ export const browseDashboardsAPI = createApi({
           overwrite: Boolean(overwrite),
         },
       }),
-      onQueryStarted: (arg, { queryFulfilled, dispatch }) => {
-        const { folderUid } = arg;
+      onQueryStarted: ({ folderUid }, { queryFulfilled, dispatch }) => {
         dashboardWatcher.ignoreNextSave();
         queryFulfilled.then(async () => {
           await contextSrv.fetchUserPermissions();
