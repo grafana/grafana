@@ -48,9 +48,6 @@ import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { locateWithCache2, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
-// import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
-// import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
-
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
 // This exposes the same classes on both import paths
@@ -124,7 +121,6 @@ const importMap = {
   react: react,
   'react-dom': reactDom,
   'react-redux': reactRedux,
-
   // Migration - React Router v5 -> v6
   // =================================
   // Plugins that still use "react-router-dom@v5" don't depend on react-router directly, so they will not use this import.
@@ -147,19 +143,22 @@ const importMap = {
   'slate-react': slateReact,
 } as Record<string, System.Module>;
 
-const imports = Object.keys(importMap).reduce((acc, key) => {
-  // Use the 'app:' prefix to act as a URL instead of a bare specifier
-  const module_name = `app:${key}`;
-  SystemJS.set(module_name, importMap[key]);
+export function buildImportMap(importMap: Record<string, System.Module>) {
+  return Object.keys(importMap).reduce((acc, key) => {
+    // Use the 'app:' prefix to act as a URL instead of a bare specifier
+    const module_name = `app:${key}`;
+    // expose dependency to SystemJS
+    SystemJS.set(module_name, importMap[key]);
 
-  // exposes this dependency to sandboxed plugins too.
-  // the following sandboxPluginDependencies don't depend or interact
-  // with SystemJS in any way.
-  sandboxPluginDependencies.set(key, importMap[key]);
+    // expose dependency to sandboxed plugins
+    sandboxPluginDependencies.set(key, importMap[key]);
 
-  acc[key] = module_name;
-  return acc;
-}, {} as Record<string, string>);
+    acc[key] = module_name;
+    return acc;
+  }, {} as Record<string, string>);
+}
+
+const imports = buildImportMap(importMap);
 
 // pass the map of module names so systemjs can resolve them
 // to the imports above.
@@ -184,7 +183,7 @@ const systemJSFetch = systemJSPrototype.fetch;
 systemJSPrototype.fetch = function (url: string, options: Record<string, unknown>) {
   return systemJSFetch(url, options).then(async (res: Response) => {
     const contentType = res.headers.get('content-type') || '';
-    // if it's a JS file on the CDN we need to transform the asset paths in the source
+    // JS files on the CDN need their asset paths transformed in the source
     if (jsContentTypeRegEx.test(contentType) && res.url.startsWith(config.pluginsCDNBaseURL)) {
       const source = await res.text();
       const splitUrl = res.url.split('/public/plugins/');
@@ -200,8 +199,8 @@ systemJSPrototype.fetch = function (url: string, options: Record<string, unknown
 const originalResolve = systemJSPrototype.resolve;
 
 systemJSPrototype.resolve = function (id: string, parentUrl: string) {
-  // CDN paths are unique as they contain the version in the path
   const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
+  // CDN paths are unique as they contain the version in the path
   const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
   const cachedId = shouldUseQueryCache ? locateWithCache2(id) : id;
   // console.log('SystemJS resolve hook:', { id, parentUrl, cachedId }, arguments);
@@ -209,7 +208,7 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
     return originalResolve.apply(this, [cachedId, parentUrl]);
   } catch (err) {
     if (loadPluginCssRegEx.test(id)) {
-      return monkeyPatchLoadPluginCss(id);
+      return patchLoadPluginCssUrl(id);
     }
     console.log(`SystemJS: failed to resolve '${id}'`);
     return id;
@@ -218,7 +217,7 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 
 // For backwards compatiblity with older plugins that use `loadPluginCss`
 // we need to translate the path for systemjs 6.x.x to understand
-const monkeyPatchLoadPluginCss = (id: string) => `./public/${id}`;
+const patchLoadPluginCssUrl = (id: string) => `./public/${id}`;
 
 // TODO: this should replace translateForCDN from './systemjsPlugins/pluginCDN'
 function jsPluginCDNTransform(source: string, baseAddress: string, pluginId: string) {
@@ -321,138 +320,3 @@ export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaDa
     return plugin;
   });
 }
-
-// grafanaRuntime.SystemJS.registry.set('css', grafanaRuntime.SystemJS.newModule({ locate: locateCSS, fetch: fetchCSS }));
-// grafanaRuntime.SystemJS.registry.set('plugin-loader', grafanaRuntime.SystemJS.newModule({ locate: locateWithCache }));
-// grafanaRuntime.SystemJS.registry.set(
-//   'cdn-loader',
-//   grafanaRuntime.SystemJS.newModule({ locate: locateFromCDN, translate: translateForCDN })
-// );
-
-// grafanaRuntime.SystemJS.config({
-//   baseURL: 'public',
-//   defaultExtension: 'js',
-//   packages: {
-//     plugins: {
-//       defaultExtension: 'js',
-//     },
-//     'plugin-cdn': {
-//       defaultExtension: 'js',
-//     },
-//   },
-//   map: {
-//     text: 'vendor/plugin-text/text.js',
-//   },
-//   meta: {
-//     '/*': {
-//       esModule: true,
-//       authorization: true,
-//       loader: 'plugin-loader',
-//     },
-//     '*.css': {
-//       loader: 'css',
-//     },
-//     'plugin-cdn/*': {
-//       esModule: true,
-//       authorization: false,
-//       loader: 'cdn-loader',
-//     },
-//   },
-// });
-
-// export function exposeToPlugin(name: string, component: any) {
-//   grafanaRuntime.SystemJS.registerDynamic(name, [], true, (require: any, exports: any, module: { exports: any }) => {
-//     module.exports = component;
-//   });
-
-//   // exposes this dependency to sandboxed plugins too.
-//   // the following sandboxPluginDependencies don't depend or interact
-//   // with SystemJS in any way.
-//   sandboxPluginDependencies.set(name, component);
-// }
-
-// exposeToPlugin('@grafana/data', grafanaData);
-// exposeToPlugin('@grafana/ui', grafanaUI);
-// exposeToPlugin('@grafana/runtime', grafanaRuntime);
-// exposeToPlugin('lodash', _);
-// exposeToPlugin('moment', moment);
-// exposeToPlugin('jquery', jquery);
-// exposeToPlugin('d3', d3);
-// exposeToPlugin('rxjs', rxjs);
-// exposeToPlugin('rxjs/operators', rxjsOperators);
-
-// Migration - React Router v5 -> v6
-// =================================
-// Plugins that still use "react-router-dom@v5" don't depend on react-router directly, so they will not use this import.
-// (The react-router-dom@v5 that we expose for them depends on the "react-router" package internally from core.)
-//
-// Plugins that would like update to "react-router-dom@v6" will need to bundle "react-router-dom",
-// however they cannot bundle "react-router" - this would mean that we have two instances of "react-router"
-// in the app, which would casue issues. As the "react-router-dom-v5-compat" package re-exports everything from "react-router-dom@v6"
-// which then re-exports everything from "react-router@v6", we are in the lucky state to be able to expose a compatible v6 version of the router to plugins by
-// just exposing "react-router-dom-v5-compat".
-//
-// (This means that we are exposing two versions of the same package).
-// exposeToPlugin('react-router', reactRouterCompat); // react-router-dom@v6, react-router@v6 (included)
-// exposeToPlugin('react-router-dom', reactRouterDom); // react-router-dom@v5
-
-// Experimental modules
-// exposeToPlugin('prismjs', prismjs);
-// exposeToPlugin('slate', slate);
-// exposeToPlugin('slate-react', slateReact);
-// exposeToPlugin('@grafana/slate-react', slateReact); // for backwards compatibility with older plugins
-// exposeToPlugin('slate-plain-serializer', slatePlain);
-// exposeToPlugin('react', react);
-// exposeToPlugin('react-dom', reactDom);
-// exposeToPlugin('react-redux', reactRedux);
-// exposeToPlugin('redux', redux);
-// exposeToPlugin('emotion', emotion);
-// exposeToPlugin('@emotion/css', emotion);
-// exposeToPlugin('@emotion/react', emotionReact);
-
-// exposeToPlugin('app/features/dashboard/impression_store', {
-//   impressions: impressionSrv,
-//   __esModule: true,
-// });
-
-/**
- * NOTE: this is added temporarily while we explore a long term solution
- * If you use this export, only use the:
- *  get/delete/post/patch/request methods
- */
-// exposeToPlugin('app/core/services/backend_srv', {
-//   BackendSrv,
-//   getBackendSrv,
-// });
-
-// exposeToPlugin('app/core/utils/datemath', grafanaData.dateMath);
-// exposeToPlugin('app/core/utils/flatten', flatten);
-// exposeToPlugin('app/core/utils/kbn', kbn);
-// exposeToPlugin('app/core/utils/ticks', ticks);
-// exposeToPlugin('app/core/config', config);
-// exposeToPlugin('app/core/time_series', TimeSeries);
-// exposeToPlugin('app/core/time_series2', TimeSeries);
-// exposeToPlugin('app/core/table_model', TableModel);
-// exposeToPlugin('app/core/app_events', appEvents);
-// exposeToPlugin('app/core/core', {
-//   appEvents: appEvents,
-//   contextSrv: contextSrv,
-//   __esModule: true,
-// });
-
-// const flotDeps = [
-//   'jquery.flot',
-//   'jquery.flot.pie',
-//   'jquery.flot.time',
-//   'jquery.flot.fillbelow',
-//   'jquery.flot.crosshair',
-//   'jquery.flot.stack',
-//   'jquery.flot.selection',
-//   'jquery.flot.stackpercent',
-//   'jquery.flot.events',
-//   'jquery.flot.gauge',
-// ];
-
-// for (const flotDep of flotDeps) {
-//   exposeToPlugin(flotDep, { fakeDep: 1 });
-// }
