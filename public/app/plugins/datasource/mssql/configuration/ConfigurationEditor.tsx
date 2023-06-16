@@ -35,6 +35,14 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
 
+  // const azureAuthSettings = {
+  //   azureAuthSupported: config.azureAuthEnabled,
+  //   getAzureAuthEnabled: (config: DataSourceSettings<any, any>): boolean => hasCredentials(config),
+  //   setAzureAuthEnabled: (config: DataSourceSettings<any, any>, enabled: boolean) =>
+  //     enabled ? setDefaultCredentials(config) : resetCredentials(config),
+  //   azureSettingsUI: AzureAuthSettings,
+  // };
+
   useMigrateDatabaseFields(props);
 
   const onResetPassword = () => {
