@@ -1249,6 +1249,10 @@ Options are "debug", "info", "warn", "error", and "critical". Default is `info`.
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
+### user_facing_default_error
+
+Use this configuration option to set the default error message shown to users. This message is displayed instead of sensitive backend errors, which should be obfuscated. The default message is `Please inspect the Grafana server log for details.`.
+
 <hr>
 
 ## [log.console]
