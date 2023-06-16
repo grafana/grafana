@@ -112,6 +112,12 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+// This is a wrapper over getNormalizedLokiQuery to make returned query type non-nullable
+export function getLokiQueryType(query: LokiQuery): LokiQueryType {
+  const defaultQueryType = LokiQueryType.Range;
+  return getNormalizedLokiQuery(query).queryType ?? defaultQueryType;
+}
+
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
 const partsToKeep = ['__error__', '__interval', '__interval_ms'];
 export function obfuscate(query: string): string {
