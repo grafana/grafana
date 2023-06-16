@@ -29,7 +29,7 @@ For more information about traces and how to use them, refer to the following do
 
 Once you have tracing data available in your Grafana instance, you can add tracing panels to your Grafana dashboards.
 
-Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given Trace ID.
+Using a dashboard variable, `traceID`, lets you create a query to show specific traces for a given trace ID.
 For more information about dashboard variables, see the [Variables documentation]({{< relref "../../../dashboards/variables" >}}).
 
 ### Before you begin
@@ -61,7 +61,7 @@ This procedure uses dashboard variables and templates to allow us to enter trace
 1. Go to the dashboard **Settings** and add a new variable called `traceId`, of variable type **Custom**, giving it a label if required. Select **Apply** to add the variable to the dashboard.
   {{< figure class="float-right"  src="/static/img/docs/panels/traces/screenshot-traces-custom-variable.png" caption="Add a Custom variable" >}}
 
-1. You can verify that the panel works by using a valid Trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
+1. You can verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
   {{< figure class="float-right"  src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" caption="Results of query in Trace panel" >}}
 
 
