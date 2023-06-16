@@ -4,11 +4,7 @@ import { lastValueFrom } from 'rxjs';
 import { isTruthy } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getGrafanaSearcher } from 'app/features/search/service';
 import { getFolderChildren } from 'app/features/search/service/folders';
-import { NestedFolderDTO } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 import { DashboardDTO, DescendantCount, DescendantCountDTO, FolderDTO, SaveDashboardResponseDTO } from 'app/types';
 
@@ -21,6 +17,16 @@ export const PAGE_SIZE = 999;
 interface RequestOptions extends BackendSrvRequest {
   manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
+}
+
+interface BulkDeleteArgs {
+  selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
+  rootItems: DashboardViewItem[] | undefined;
+  childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
+}
+
+interface BulkMoveArgs extends BulkDeleteArgs {
+  destinationUID: string;
 }
 
 function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryFn<RequestOptions> {
@@ -93,14 +99,7 @@ export const browseDashboardsAPI = createApi({
         },
       }),
     }),
-    bulkDelete: builder.mutation<
-      void,
-      {
-        selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-        rootItems: DashboardViewItem[] | undefined;
-        childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
-      }
-    >({
+    bulkDelete: builder.mutation<void, BulkDeleteArgs>({
       invalidatesTags: (_result, _error, args) => {
         const { selectedItems, rootItems, childrenByParentUID } = args;
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
@@ -150,15 +149,7 @@ export const browseDashboardsAPI = createApi({
         return { data: undefined };
       },
     }),
-    bulkMove: builder.mutation<
-      void,
-      {
-        selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-        rootItems: DashboardViewItem[] | undefined;
-        childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
-        destinationUID: string;
-      }
-    >({
+    bulkMove: builder.mutation<void, BulkMoveArgs>({
       invalidatesTags: (_result, _error, args) => {
         const { selectedItems, rootItems, childrenByParentUID } = args;
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
@@ -245,44 +236,6 @@ export const browseDashboardsAPI = createApi({
         return { data: totalCounts };
       },
     }),
-    listFolders: builder.query<
-      DashboardViewItem[],
-      {
-        parentUID?: string;
-        parentTitle?: string;
-        page?: number;
-        pageSize?: number;
-      }
-    >({
-      query: ({ parentUID, page = 1, pageSize = PAGE_SIZE }) => ({
-        url: `/folders`,
-        data: { parentUID, page, limit: pageSize },
-      }),
-      // Only have one cache entry for each parentUID
-      serializeQueryArgs: ({ endpointName, queryArgs }) => {
-        const { parentUID } = queryArgs;
-        return `${endpointName}(${parentUID})`;
-      },
-      // Merge incoming data to the cache entry
-      merge: (currentCache, newItems) => {
-        currentCache.push(...newItems);
-      },
-      // Refetch when the page arg changes
-      forceRefetch({ currentArg, previousArg }) {
-        return (currentArg && currentArg.page) !== (previousArg && previousArg.page);
-      },
-      transformResponse: (response: NestedFolderDTO[], _meta, arg) => {
-        const { parentUID, parentTitle } = arg;
-        return response.map((folder) => ({
-          kind: 'folder',
-          uid: folder.uid,
-          title: folder.title,
-          parentUID,
-          parentTitle,
-          url: `/dashboards/f/${folder.uid}`,
-        }));
-      },
-    }),
     getFolderChildren: builder.query<DashboardViewItem[], string>({
       providesTags: (_result, _error, arg) => [{ type: 'getFolderChildren', id: arg }],
       queryFn: async (folderUID) => {
@@ -290,51 +243,6 @@ export const browseDashboardsAPI = createApi({
         return {
           data: children,
         };
-      },
-    }),
-    listDashboards: builder.query<
-      DashboardViewItem[],
-      {
-        parentUID?: string;
-        page?: number;
-        pageSize?: number;
-      }
-    >({
-      queryFn: async ({ parentUID, page = 1, pageSize = PAGE_SIZE }) => {
-        const searcher = getGrafanaSearcher();
-
-        const dashboardsResults = await searcher.search({
-          kind: ['dashboard'],
-          query: '*',
-          location: parentUID || 'general',
-          from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
-          limit: pageSize,
-        });
-
-        const result = dashboardsResults.view.map((item) => {
-          const viewItem = queryResultToViewItem(item, dashboardsResults.view);
-          // TODO: Once we remove nestedFolders feature flag, undo this and prevent the 'general'
-          // parentUID from being set in searcher
-          if (viewItem.parentUID === GENERAL_FOLDER_UID) {
-            viewItem.parentUID = undefined;
-          }
-          return viewItem;
-        });
-
-        return { data: result };
-      },
-      // Only have one cache entry for each parentUID
-      serializeQueryArgs: ({ endpointName, queryArgs }) => {
-        const { parentUID } = queryArgs;
-        return `${endpointName}(${parentUID})`;
-      },
-      // Merge incoming data to the cache entry
-      merge: (currentCache, newItems) => {
-        currentCache.push(...newItems);
-      },
-      // Refetch when the page arg changes
-      forceRefetch({ currentArg, previousArg }) {
-        return (currentArg && currentArg.page) !== (previousArg && previousArg.page);
       },
     }),
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
@@ -361,8 +269,6 @@ export const {
   useDeleteFolderMutation,
   useGetAffectedItemsQuery,
   useGetFolderQuery,
-  useListDashboardsQuery,
-  useListFoldersQuery,
   useMoveFolderMutation,
   useSaveDashboardMutation,
   useSaveFolderMutation,

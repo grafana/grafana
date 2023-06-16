@@ -4,12 +4,10 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
-import { AccessControlAction, FolderDTO, useDispatch } from 'app/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
-import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
-import { refetchChildren } from '../state';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -19,7 +17,6 @@ interface Props {
 }
 
 export function FolderActionsButton({ folder }: Props) {
-  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
@@ -38,13 +35,6 @@ export function FolderActionsButton({ folder }: Props) {
       },
       source: 'folder_actions',
     });
-    dispatch(refetchChildren({ parentUID: destinationUID, pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
-
-    if (folder.parentUid) {
-      dispatch(
-        refetchChildren({ parentUID: folder.parentUid, pageSize: folder.parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE })
-      );
-    }
   };
 
   const onDelete = async () => {
@@ -56,12 +46,7 @@ export function FolderActionsButton({ folder }: Props) {
       },
       source: 'folder_actions',
     });
-    if (folder.parentUid) {
-      dispatch(
-        refetchChildren({ parentUID: folder.parentUid, pageSize: folder.parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE })
-      );
-    }
-    locationService.push('/dashboards');
+    locationService.push(folder.parents && folder.parents[0] ? folder.parents[0].url : '/dashboards');
   };
 
   const showMoveModal = () => {

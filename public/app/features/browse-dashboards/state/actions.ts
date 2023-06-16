@@ -123,7 +123,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
 
     return {
       children,
-      lastPageOfKind: lastPageOfKind,
+      lastPageOfKind,
       page,
       kind: fetchKind,
     };

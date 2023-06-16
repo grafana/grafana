@@ -8,6 +8,8 @@ import { endpoints } from '../api/browseDashboardsAPI';
 import { ROOT_PAGE_SIZE } from '../api/services';
 import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
 
+import { fetchNextChildrenPage } from './actions';
+
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
 export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
@@ -136,6 +138,26 @@ export function useChildrenByParentUIDState() {
 
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
+}
+
+export function useLoadNextChildrenPage(folderUID: string | undefined) {
+  const dispatch = useDispatch();
+  const requestInFlightRef = useRef(false);
+
+  const handleLoadMore = useCallback(() => {
+    if (requestInFlightRef.current) {
+      return Promise.resolve();
+    }
+
+    requestInFlightRef.current = true;
+
+    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    promise.finally(() => (requestInFlightRef.current = false));
+
+    return promise;
+  }, [dispatch, folderUID]);
+
+  return handleLoadMore;
 }
 
 /**
