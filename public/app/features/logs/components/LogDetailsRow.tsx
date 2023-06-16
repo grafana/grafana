@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
-import React, { PureComponent, useEffect, useState } from 'react';
+import React, { PureComponent, useState } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -9,8 +9,6 @@ import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } f
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
-
-//Components
 
 export interface Props extends Themeable2 {
   parsedValues: string[];
@@ -352,9 +350,12 @@ interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButto
 
 const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
   const [active, setActive] = useState(false);
-  useEffect(() => {
-    isActive().then(setActive);
-  }, [isActive]);
+
+  /**
+   * We purposely want to run this on every render to allow the active state to be updated
+   * when log details remains open between updates.
+   */
+  isActive().then(setActive);
 
   return <IconButton {...rest} variant={active ? 'primary' : undefined} />;
 };
