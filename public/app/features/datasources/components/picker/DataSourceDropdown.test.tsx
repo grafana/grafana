@@ -99,6 +99,62 @@ describe('DataSourceDropdown', () => {
     expect(() => setup()).not.toThrow();
   });
 
+  describe('configuration', () => {
+    const user = userEvent.setup();
+
+    it('should call the dataSourceSrv.getDatasourceList with the correct filters', async () => {
+      const filters = {
+        mixed: true,
+        tracing: true,
+        dashboard: true,
+        metrics: true,
+        type: 'foo',
+        annotations: true,
+        variables: true,
+        alerting: true,
+        pluginId: true,
+        logs: true,
+      };
+
+      const props = {
+        onChange: () => {},
+        current: mockDS.name,
+        ...filters,
+      };
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
+
+      const searchBox = dropdown.container.querySelector('input');
+      expect(searchBox).toBeInTheDocument();
+      await user.click(searchBox!);
+      expect(getListMock.mock.lastCall[0]).toEqual(filters);
+    });
+
+    it('should display the current ds on top and selected', async () => {
+      //Mock ds is set as current, it appears on top, and is selected
+      getInstanceSettingsMock.mockReturnValue(mockDS);
+      await setupOpenDropdown(user, jest.fn(), mockDS.name);
+      let cards = await screen.findAllByTestId('data-source-card');
+      expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
+
+      //xMock ds is set as current, it appears on top, and is selected
+      getInstanceSettingsMock.mockReturnValue(xMockDS);
+      await setupOpenDropdown(user, jest.fn(), xMockDS.name);
+      cards = await screen.findAllByTestId('data-source-card');
+      expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
+    });
+
+    it('should get the sorting function using the correct paramters', async () => {
+      //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
+      const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
+      await setupOpenDropdown(user);
+
+      expect(spy.mock.lastCall).toEqual([mockDS, [xMockDS.name], ['${foo}']]);
+    });
+  });
+
   describe('interactions', () => {
     const user = userEvent.setup();
 
@@ -164,50 +220,6 @@ describe('DataSourceDropdown', () => {
       expect(await screen.findByText('Configure a new data source')).toBeInTheDocument();
     });
 
-    it('should call the dataSourceSrv.getDatasourceList with the correct filters', async () => {
-      const filters = {
-        mixed: true,
-        tracing: true,
-        dashboard: true,
-        metrics: true,
-        type: 'foo',
-        annotations: true,
-        variables: true,
-        alerting: true,
-        pluginId: true,
-        logs: true,
-      };
-
-      const props = {
-        onChange: () => {},
-        current: mockDS.name,
-        ...filters,
-      };
-      window.HTMLElement.prototype.scrollIntoView = jest.fn();
-      const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
-
-      const searchBox = dropdown.container.querySelector('input');
-      expect(searchBox).toBeInTheDocument();
-      await user.click(searchBox!);
-      expect(getListMock.mock.lastCall[0]).toEqual(filters);
-    });
-
-    it('should display the current ds on top and selected', async () => {
-      //Mock ds is set as current, it appears on top, and is selected
-      getInstanceSettingsMock.mockReturnValue(mockDS);
-      await setupOpenDropdown(user, jest.fn(), mockDS.name);
-      let cards = await screen.findAllByTestId('data-source-card');
-      expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
-      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
-
-      //xMock ds is set as current, it appears on top, and is selected
-      getInstanceSettingsMock.mockReturnValue(xMockDS);
-      await setupOpenDropdown(user, jest.fn(), xMockDS.name);
-      cards = await screen.findAllByTestId('data-source-card');
-      expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
-      expect(cards[0].getAttribute('data-selecteditem')).toBeTruthy();
-    });
-
     it('should call onChange with the default query when add csv is clicked', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
@@ -236,14 +248,6 @@ describe('DataSourceDropdown', () => {
       await user.click(await screen.findByText('Open advanced data source picker'));
       expect(await screen.findByText('Select data source')); //Data source modal is open
       expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
-    });
-
-    it('should get the sorting function using the correct paramters', async () => {
-      //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
-      const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
-      await setupOpenDropdown(user);
-
-      expect(spy.mock.lastCall).toEqual([mockDS, [xMockDS.name], ['${foo}']]);
     });
   });
 });

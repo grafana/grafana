@@ -77,25 +77,8 @@ describe('DataSourceDropdown', () => {
     expect(() => setup()).not.toThrow();
   });
 
-  describe('interactions', () => {
+  describe('configuration', () => {
     const user = userEvent.setup();
-
-    it('should be searchable', async () => {
-      setup();
-      const searchBox = await screen.findByRole('searchbox');
-      expect(searchBox).toBeInTheDocument();
-      await user.click(searchBox!);
-
-      await user.keyboard(xMockDS.name); //Search for xMockDS
-
-      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
-      expect(await screen.findByText(xMockDS.name, { selector: 'span' })).toBeInTheDocument();
-
-      await user.keyboard('foobarbaz'); //Search for a DS that should not exist
-
-      expect(await screen.findByText('No data sources found')).toBeInTheDocument();
-    });
-
     it('displays the configure new datasource when the list is empty', async () => {
       setup();
       const searchBox = await screen.findByRole('searchbox');
@@ -118,6 +101,35 @@ describe('DataSourceDropdown', () => {
       expect(screen.queryByText('Drop file here or click to upload')).toBeNull();
     });
 
+    it('should only display built in datasources in the right column', async () => {
+      setup();
+      const dsList = await screen.findByTestId('data-sources-list');
+      const builtInDSList = (await screen.findAllByTestId('built-in-data-sources-list'))[1]; //The second element needs to be selected as the first element is the one on the left, under the regular data sources.
+
+      expect(queryByText(dsList, builtInMockDS.name)).toBeNull();
+      expect(await findByText(builtInDSList, builtInMockDS.name, { selector: 'span' })).toBeInTheDocument();
+    });
+  });
+
+  describe('interactions', () => {
+    const user = userEvent.setup();
+
+    it('should be searchable', async () => {
+      setup();
+      const searchBox = await screen.findByRole('searchbox');
+      expect(searchBox).toBeInTheDocument();
+      await user.click(searchBox!);
+
+      await user.keyboard(xMockDS.name); //Search for xMockDS
+
+      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
+      expect(await screen.findByText(xMockDS.name, { selector: 'span' })).toBeInTheDocument();
+
+      await user.keyboard('foobarbaz'); //Search for a DS that should not exist
+
+      expect(await screen.findByText('No data sources found')).toBeInTheDocument();
+    });
+
     it('calls the onChange with the default query containing the file', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
@@ -135,15 +147,6 @@ describe('DataSourceDropdown', () => {
         file: { path: 'test.csv' },
       });
       config.featureToggles.editPanelCSVDragAndDrop = false;
-    });
-
-    it('should only display built in datasources in the right column', async () => {
-      setup();
-      const dsList = await screen.findByTestId('data-sources-list');
-      const builtInDSList = (await screen.findAllByTestId('built-in-data-sources-list'))[1]; //The second element needs to be selected as the first element is the one on the left, under the regular data sources.
-
-      expect(queryByText(dsList, builtInMockDS.name)).toBeNull();
-      expect(await findByText(builtInDSList, builtInMockDS.name, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('should call the onChange handler with the correct datasource', async () => {
