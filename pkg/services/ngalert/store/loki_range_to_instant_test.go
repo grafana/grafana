@@ -22,66 +22,54 @@ func TestCanBeInstant(t *testing.T) {
 		{
 			name:     "invalid rule where the data array is too short to be migrateable",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data = []models.AlertQuery{r.Data[0]}
-				return r
-			}(),
+			}),
 		},
 		{
 			name:     "invalid rule that is not a range query",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[0].QueryType = "something-else"
-				return r
-			}(),
+			}),
 		},
 		{
 			name:     "invalid rule that does not use a cloud datasource",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[0].DatasourceUID = "something-else"
-				return r
-			}(),
+			}),
 		},
 		{
 			name:     "invalid rule that has no aggregation as second item",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				r.Data[1].DatasourceUID = "something-else"
-				return r
-			}(),
+			}),
 		},
 		{
 			name:     "invalid rule that has not last() as aggregation",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				raw := make(map[string]interface{})
 				err := json.Unmarshal(r.Data[1].Model, &raw)
 				require.NoError(t, err)
 				raw["reducer"] = "avg"
 				r.Data[1].Model, err = json.Marshal(raw)
 				require.NoError(t, err)
-				return r
-			}(),
+			}),
 		},
 		{
 			name:     "invalid rule that has not last() pointing to range query",
 			expected: false,
-			rule: func() *models.AlertRule {
-				r := createMigrateableLokiRule(t)
+			rule: createMigrateableLokiRule(t, func(r *models.AlertRule) {
 				raw := make(map[string]interface{})
 				err := json.Unmarshal(r.Data[1].Model, &raw)
 				require.NoError(t, err)
 				raw["expression"] = "C"
 				r.Data[1].Model, err = json.Marshal(raw)
 				require.NoError(t, err)
-				return r
-			}(),
+			}),
 		},
 	}
 	for _, tc := range tcs {
@@ -93,21 +81,22 @@ func TestCanBeInstant(t *testing.T) {
 
 func TestMigrateLokiQueryToInstant(t *testing.T) {
 	original := createMigrateableLokiRule(t)
-	mirgrated := createMigrateableLokiRule(t)
-	mirgrated.Data[0].QueryType = "instant"
-	mirgrated.Data[0].Model = []byte(`{
-		"datasource": {
-			"type": "loki",
-			"uid": "grafanacloud-logs"
-		},
-		"editorMode": "code",
-		"expr": "1",
-		"hide": false,
-		"intervalMs": 1000,
-		"maxDataPoints": 43200,
-		"queryType": "instant",
-		"refId": "A"
-	}`)
+	mirgrated := createMigrateableLokiRule(t, func(r *models.AlertRule) {
+		r.Data[0].QueryType = "instant"
+		r.Data[0].Model = []byte(`{
+			"datasource": {
+				"type": "loki",
+				"uid": "grafanacloud-logs"
+			},
+			"editorMode": "code",
+			"expr": "1",
+			"hide": false,
+			"intervalMs": 1000,
+			"maxDataPoints": 43200,
+			"queryType": "instant",
+			"refId": "A"
+		}`)
+	})
 
 	require.True(t, canBeInstant(original))
 	require.NoError(t, migrateToInstant(original))
@@ -124,9 +113,9 @@ func TestMigrateLokiQueryToInstant(t *testing.T) {
 	require.False(t, canBeInstant(original))
 }
 
-func createMigrateableLokiRule(t *testing.T) *models.AlertRule {
+func createMigrateableLokiRule(t *testing.T, muts ...func(*models.AlertRule)) *models.AlertRule {
 	t.Helper()
-	return &models.AlertRule{
+	r := &models.AlertRule{
 		Data: []models.AlertQuery{
 			{
 				RefID:         "A",
@@ -186,4 +175,8 @@ func createMigrateableLokiRule(t *testing.T) *models.AlertRule {
 			},
 		},
 	}
+	for _, m := range muts {
+		m(r)
+	}
+	return r
 }
