@@ -157,9 +157,9 @@ If you re-run the configuration, Grafana automatically reloads the plugin.
 
 Configure your code editor to run the following steps:
 
-1. Build the executable file.
+1. Build the executable file with debug flags.
    ```
-   mage build
+   mage build:debug
    ```
 1. Run the plugin's executable file (inside `dist`) with `-standalone` flag.
    ```
