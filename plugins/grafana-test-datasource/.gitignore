@@ -33,3 +33,5 @@ e2e-results/
 .idea
 
 .eslintcache
+
+.yarn
