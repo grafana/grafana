@@ -30,6 +30,7 @@ const meta: Meta<typeof IconButton> = {
     tooltip: 'sample tooltip message',
     tooltipPlacement: 'top',
     variant: 'secondary',
+    ariaLabel: 'this property is deprecated',
     ['aria-label']: 'sample aria-label content',
   },
   argTypes: {

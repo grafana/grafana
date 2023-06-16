@@ -24,3 +24,6 @@ In case you are using the IconButton component in your plugin you will get TypeS
 - Review use cases of IconButton in your plugin.
 - Add a meaningful tooltip which the component will also use as an aria-label.
 - Another option is to set an aria-label. In this case a tooltip will not be shown.
+
+**Please note:**
+The IconButton used to have a property called `ariaLabel` which got deprecated with this change. You can now use the regular property `aria-label` instead.

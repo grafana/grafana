@@ -6,12 +6,13 @@ import { Alert } from '../Alert/Alert';
 
 # IconButton
 
-This component looks just like an icon but behaves like a button. It fulfils an action when you click it and has hover and focus states. You can choose which icon size you would like to use.
+This component looks just like an icon but behaves like a button. It fulfils an action when you click it and has a hover as well a focus states. You can choose which icon size you would like to use.
 
 `IconButton` is best used when you only want an icon instead of a button with text, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the hamburger icon at the top left which opens the new navigation.
 When using `IconButton` right next to a text element consider wrapping both in a flex container and use `align-items: center;` to make them align properly.
 
-Always keep in mind to add text for a tooltip **or** an aria label. The tooltip will be used as the aria-label as well. In case there is an aria-label defined there will **not** be a tooltip.
+Always keep in mind to add text for a tooltip **or** an aria-label. The tooltip content will be used for the aria-label as well. In case there is an aria-label defined there will **not** be a tooltip.
+The IconButton used to have a property called `ariaLabel` which got deprecated. You can now use the regular property `aria-label` instead.
 
 <Alert severity="warning" title={'Please note:'}>
   After reviewing this component we would like you to know that there are only 5 sizes available (sizes xs to xl). Sizes
