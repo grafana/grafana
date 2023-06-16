@@ -3,26 +3,37 @@
   "type": "datasource",
   "name": "TestData",
   "id": "testdata",
+
   "metrics": true,
+  "logs": true,
+  "alerting": true,
+  "annotations": true,
   "backend": true,
   "executable": "gpx_grafanatestdatasource",
+
+  "queryOptions": {
+    "minInterval": true,
+    "maxDataPoints": true
+  },
+
   "info": {
     "description": "Generates test data in different forms",
     "author": {
-      "name": "Grafana"
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
     },
     "keywords": ["datasource"],
     "logos": {
-      "small": "img/logo.svg",
-      "large": "img/logo.svg"
-    },
-    "links": [],
-    "screenshots": [],
-    "version": "%VERSION%",
-    "updated": "%TODAY%"
+      "small": "img/testdata.svg",
+      "large": "img/testdata.svg"
+    }
   },
-  "dependencies": {
-    "grafanaDependency": ">=9.5.3",
-    "plugins": []
-  }
+
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Streaming Example",
+      "path": "dashboards/streaming.json"
+    }
+  ]
 }
