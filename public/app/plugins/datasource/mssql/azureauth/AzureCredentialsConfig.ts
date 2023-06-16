@@ -1,25 +1,27 @@
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, SelectableValue } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
-// JEV: remove unnecessary exports
-export enum AzureCloud {
+// JEV: remove unnecessary
+enum AzureCloud {
   Public = 'AzureCloud',
 }
 
-export type AzureAuthType = 'msi' | 'clientsecret';
+export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: AzureCloud.Public, label: 'Azure' }];
 
-export type ConcealedSecret = symbol;
+type AzureAuthType = 'msi' | 'clientsecret';
+
+type ConcealedSecret = symbol;
 
 interface AzureCredentialsBase {
   authType: AzureAuthType;
   defaultSubscriptionId?: string;
 }
 
-export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
+interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
   authType: 'msi';
 }
 
-export interface AzureClientSecretCredentials extends AzureCredentialsBase {
+interface AzureClientSecretCredentials extends AzureCredentialsBase {
   authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
@@ -29,10 +31,12 @@ export interface AzureClientSecretCredentials extends AzureCredentialsBase {
 
 export type AzureCredentials = AzureManagedIdentityCredentials | AzureClientSecretCredentials;
 
+const concealed: ConcealedSecret = Symbol('Concealed client secret');
+
 export const dataSourceHasCredentials = (options: DataSourceSettings<any, any>): boolean =>
   !!options.jsonData.azureCredentials;
 
-export const setDefaultCredentials = (
+const setDefaultCredentials = (
   dsSettings: DataSourceSettings<any, any>,
   bootConfig: GrafanaBootConfig
 ): Partial<DataSourceSettings<any, any>> => ({
@@ -42,7 +46,7 @@ export const setDefaultCredentials = (
   },
 });
 
-export const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
+const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
   jsonData: {
     ...dsSettings.jsonData,
     azureAuth: undefined,
@@ -62,11 +66,21 @@ const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
   return bootConfig.azure.cloud || AzureCloud.Public;
 };
 
-export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentials => {
+const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentials => {
   if (bootConfig.azure.managedIdentityEnabled) {
     return { authType: 'msi' };
   } else {
     return { authType: 'clientsecret', azureCloud: getDefaultAzureCloud(bootConfig) };
+  }
+};
+
+const getSecret = (dsSettings: DataSourceSettings<any, any>): undefined | string | ConcealedSecret => {
+  if (dsSettings.secureJsonFields.azureClientSecret) {
+    // The secret is concealed on server
+    return concealed;
+  } else {
+    const secret = dsSettings.secureJsonData?.azureClientSecret;
+    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
   }
 };
 
@@ -93,16 +107,68 @@ export const getCredentials = (
         // then we should fallback to an empty app registration (client secret) configuration
         return {
           authType: 'clientsecret',
-          azureCloud: getDefaultAzureCloud(),
+          azureCloud: getDefaultAzureCloud(bootConfig),
         };
       }
     case 'clientsecret':
       return {
         authType: 'clientsecret',
-        azureCloud: credentials.azureCloud || getDefaultAzureCloud(),
+        azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
-        clientSecret: getSecret(options),
+        clientSecret: getSecret(dsSettings),
       };
+  }
+};
+
+export const updateCredentials = (
+  dsSettings: DataSourceSettings<any, any>,
+  bootConfig: GrafanaBootConfig,
+  credentials: AzureCredentials
+): DataSourceSettings<any, any> => {
+  switch (credentials.authType) {
+    case 'msi':
+      if (!bootConfig.azure.managedIdentityEnabled) {
+        throw new Error('Managed Identity authentication is not enabled in Grafana config.');
+      }
+
+      dsSettings = {
+        ...dsSettings,
+        jsonData: {
+          ...dsSettings.jsonData,
+          azureCredentials: {
+            authType: 'msi',
+          },
+        },
+      };
+
+      return dsSettings;
+
+    case 'clientsecret':
+      dsSettings = {
+        ...dsSettings,
+        jsonData: {
+          ...dsSettings.jsonData,
+          azureCredentials: {
+            authType: 'clientsecret',
+            azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
+            tenantId: credentials.tenantId,
+            clientId: credentials.clientId,
+          },
+        },
+        secureJsonData: {
+          ...dsSettings.secureJsonData,
+          azureClientSecret:
+            typeof credentials.clientSecret === 'string' && credentials.clientSecret.length > 0
+              ? credentials.clientSecret
+              : undefined,
+        },
+        secureJsonFields: {
+          ...dsSettings.secureJsonFields,
+          azureClientSecret: typeof credentials.clientSecret === 'symbol',
+        },
+      };
+
+      return dsSettings;
   }
 };

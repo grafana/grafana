@@ -9,7 +9,6 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
-  DataSourceSettings,
 } from '@grafana/data';
 import {
   Alert,
@@ -38,11 +37,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const jsonData = options.jsonData;
   const azureAuthSupported = config.azureAuthEnabled;
 
-  const azureAuthSettings = {
+  const azureAuthSettings: AzureAuthConfigType = {
     azureAuthSupported,
     dataSourceHasCredentials,
     setDataSourceCredentials,
-    azureSettingsUI: AzureAuthSettings,
+    azureAuthSettingsUI: AzureAuthSettings,
   };
 
   useMigrateDatabaseFields(props);

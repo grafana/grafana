@@ -4,26 +4,26 @@ import { config } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
-import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
+import { getCredentials, updateCredentials, KnownAzureClouds, AzureCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
 export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig, onChange } = props;
+  const managedIdentityEnabled = config.azure.managedIdentityEnabled;
 
   const [overrideAudienceAllowed] = useState<boolean>(
     // JEV: FF this feature/or remove?
     config.featureToggles.mssqlAzureOverrideAudience || !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
-  
+
   const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
     !!dataSourceConfig.jsonData.azureEndpointResourceId
   );
 
-  const credentials = useMemo(() => getCredentials(dataSourceConfig), [dataSourceConfig]);
+  const credentials = useMemo(() => getCredentials(dataSourceConfig, config), [dataSourceConfig]);
 
   const onCredentialsChange = (credentials: AzureCredentials): void => {
-    onChange(updateCredentials(dataSourceConfig, credentials));
+    onChange(updateCredentials(dataSourceConfig, config, credentials));
   };
 
   const onOverrideAudienceChange = (ev: FormEvent<HTMLInputElement>): void => {
@@ -49,7 +49,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     <>
       <h6>Azure authentication</h6>
       <AzureCredentialsForm
-        managedIdentityEnabled={config.azure.managedIdentityEnabled}
+        managedIdentityEnabled={managedIdentityEnabled}
         credentials={credentials}
         azureCloudOptions={KnownAzureClouds}
         onCredentialsChange={onCredentialsChange}
