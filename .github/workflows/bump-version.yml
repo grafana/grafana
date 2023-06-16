@@ -49,14 +49,6 @@ jobs:
           echo "branch_name=v${{steps.regex-match.outputs.group1}}" >> $GITHUB_OUTPUT
           echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
-      - name: Check input version is aligned with branch(main)
-        if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(github.event.inputs.version, 'pre') && !contains(steps.intermedia.outputs.short_ref, 'main') }}
-        run: |
-          echo "When you want to deliver a new new minor version, you might want to create a new branch first \
-          with naming convention v[major].[minor].x, and just run the workflow on that branch. \
-          Run the workflow on main only when needed"
-          exit 1
-
       - name: Checkout Actions
         uses: actions/checkout@v3
         with:
