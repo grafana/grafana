@@ -601,7 +601,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom-right-radius: ${theme.shape.borderRadius(2)};
   `,
   matchersRow: css`
-    padding: ${theme.spacing(1.5)};
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
     border-bottom: solid 1px ${theme.colors.border.weak};
   `,
   policyWrapper: (hasFocus = false) => css`

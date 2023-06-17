@@ -13,62 +13,80 @@ import { Strong } from '../Strong';
 // TODO move these icons somewhere else
 import { INTEGRATION_ICONS } from '../notification-policies/Policy';
 
-const ContactPoints = () => (
-  <Stack direction="column">
+const ContactPoints = () => {
+  const styles = useStyles2(getStyles);
+
+  return (
     <Stack direction="column">
-      <ContactPointHeader name={'grafana-default-email'} />
-      <ContactPointReceiver
-        type={'email'}
-        description="gilles.demey@grafana.com"
-        error="could not connect"
-        sendingResolved={true}
-      />
-    </Stack>
-    <Stack direction="column">
-      <ContactPointHeader name={'New school'} />
       <Stack direction="column" gap={1}>
-        <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
-        <ContactPointReceiver type={'discord'} sendingResolved={true} />
+        <ContactPointHeader name={'grafana-default-email'} />
+        <div className={styles.receiversWrapper}>
+          <ContactPointReceiver
+            type={'email'}
+            description="gilles.demey@grafana.com"
+            error="could not connect"
+            sendingResolved={true}
+          />
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <ContactPointHeader name={'New school'} />
+        <div className={styles.receiversWrapper}>
+          <Stack direction="column" gap={1}>
+            <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
+            <ContactPointReceiver type={'discord'} sendingResolved={true} />
+          </Stack>
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <ContactPointHeader name={'Japan 🇯🇵'} />
+        <div className={styles.receiversWrapper}>
+          <ContactPointReceiver type={'line'} sendingResolved={true} />
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <ContactPointHeader name={'Google Stuff'} />
+        <div className={styles.receiversWrapper}>
+          <ContactPointReceiver type={'googlechat'} sendingResolved={true} />
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <ContactPointHeader name={'Chinese Contact Points'} />
+        <div className={styles.receiversWrapper}>
+          <Stack direction="column" gap={1}>
+            <ContactPointReceiver type={'dingding'} sendingResolved={true} />
+            <ContactPointReceiver type={'wecom'} sendingResolved={true} />
+          </Stack>
+        </div>
       </Stack>
     </Stack>
-    <Stack direction="column">
-      <ContactPointHeader name={'🇯🇵 Japan'} />
-      <ContactPointReceiver type={'line'} sendingResolved={true} />
-    </Stack>
-    <Stack direction="column">
-      <ContactPointHeader name={'Google Stuff'} />
-      <ContactPointReceiver type={'googlechat'} sendingResolved={true} />
-    </Stack>
-    <Stack direction="column">
-      <ContactPointHeader name={'Chinese Contact Points'} />
-      <Stack direction="column" gap={1}>
-        <ContactPointReceiver type={'dingding'} sendingResolved={true} />
-        <ContactPointReceiver type={'wecom'} sendingResolved={true} />
-      </Stack>
-    </Stack>
-  </Stack>
-);
+  );
+};
 
 interface ContactPointHeaderProps {
   name: string;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
+  const styles = useStyles2(getStyles);
+
   return (
-    <Stack direction="row">
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        <Icon name="at" />
+    <div className={styles.headerWrapper}>
+      <Stack direction="row" alignItems="center" gap={1}>
         <Strong>{props.name}</Strong>
+        <MetaText>
+          is used by <Strong>2</Strong> notification policies
+        </MetaText>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon="ellipsis-h"
+          type="button"
+          aria-label="more-actions"
+          data-testid="more-actions"
+        />
       </Stack>
-      <Button
-        variant="secondary"
-        size="sm"
-        icon="ellipsis-h"
-        type="button"
-        aria-label="more-actions"
-        data-testid="more-actions"
-      />
-    </Stack>
+    </div>
   );
 };
 
@@ -131,11 +149,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     border-radius: ${theme.shape.borderRadius(2)};
     border: solid 1px ${theme.colors.border.weak};
+  `,
+  headerWrapper: css`
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
+    border: solid 1px ${theme.colors.border.weak};
 
-    margin-left: ${theme.spacing(2)};
+    width: max-content;
+    border-radius: ${theme.shape.borderRadius(2)};
+    background: ${theme.colors.background.secondary};
   `,
   receiverDescriptionRow: css`
-    padding: ${theme.spacing(1.5)};
+    padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
     border-bottom: solid 1px ${theme.colors.border.weak};
   `,
   metadataRow: css`
@@ -144,6 +168,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     border-bottom-left-radius: ${theme.shape.borderRadius(2)};
     border-bottom-right-radius: ${theme.shape.borderRadius(2)};
+  `,
+  receiversWrapper: css`
+    margin-left: ${theme.spacing(3)};
+    position: relative;
+
+    &:before {
+      content: '';
+      position: absolute;
+      height: 100%;
+      border-left: solid 1px rgba(204, 204, 220, 0.12);
+      margin-top: 0;
+      margin-left: -20px;
+    }
   `,
 });
 
