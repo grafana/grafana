@@ -66,6 +66,7 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, original, results)
 
+		//nolint:errorlint
 		multierr, is := err.(interface{ Unwrap() []error })
 		require.True(t, is)
 		unwrappedErrors := multierr.Unwrap()
@@ -102,6 +103,7 @@ func Test_expand(t *testing.T) {
 		require.NotNil(t, err)
 		require.Equal(t, expected, results)
 
+		//nolint:errorlint
 		multierr, is := err.(interface{ Unwrap() []error })
 		require.True(t, is)
 		unwrappedErrors := multierr.Unwrap()
