@@ -22,7 +22,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",
@@ -46,7 +46,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -54,7 +54,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -70,7 +70,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$A",
 								"type": "math"
@@ -86,7 +86,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 								"expression": "$B",
 								"type": "math"
@@ -102,7 +102,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -133,7 +133,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "C",
 							"reducer": "mean",
@@ -157,7 +157,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"type": "classic_conditions",
 							"conditions": [
@@ -188,7 +188,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 					},
 					{
 						RefID:      "B",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "A",
 							"reducer": "mean",
@@ -212,7 +212,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 				Queries: []Query{
 					{
 						RefID:      "A",
-						DataSource: DataSourceModel(),
+						DataSource: dataSourceModel(),
 						JSON: json.RawMessage(`{
 							"expression": "B",
 							"reducer": "mean",

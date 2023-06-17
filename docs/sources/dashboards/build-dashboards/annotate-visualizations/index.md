@@ -82,13 +82,13 @@ In Grafana v5.3+ it's possible to use template variables in the tag query. So if
 
 You can configure the panels to which annotations apply by choosing an option from the **Show in** section. You can select **All panels**, which applies to all panels that support annotations, or filter for specific panels by choosing **Selected panels** or **All panels except**. The annotations are displayed accordingly.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10.png" max-width="600px" caption="Annotation filtering" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-filtering-10-v2.png" max-width="600px" caption="Annotation filtering" >}}
 
 ### Add time region
 
 When adding or editing an annotation, you can define a repeating time region by setting **Query type** to **Time regions**. Then, define the **From** and **To** sections with the preferred days of the week and time. You also have the option to change the timezone, which is set to the dashboard's timezone, by default.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-timeregions-10.png" max-width="600px" caption="Time regions business hours" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-annotation-timeregions-10-v2.png" max-width="600px" caption="Time regions business hours" >}}
 
 The above configuration will produce the following result in the Time series panel:
 

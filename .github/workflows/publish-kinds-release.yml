@@ -1,0 +1,70 @@
+name: "publish-kinds-release"
+
+on:
+  push:
+    branches:
+      - v[0-9]+.[0-9]+.x
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+    paths:
+      - '**/*.cue'
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout Grafana repo"
+        uses: "actions/checkout@v3"
+        with:
+          fetch-depth: 0
+
+      - name: "Setup Go"
+        uses: "actions/setup-go@v4"
+        with:
+          go-version: '1.20.4'
+
+      - name: "Verify kinds"
+        run: go run .github/workflows/scripts/kinds/verify-kinds.go
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - name: "Checkout Actions library"
+        uses: "actions/checkout@v3"
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: "./actions"
+
+      - name: "Install Actions from library"
+        run: "npm install --production --prefix ./actions"
+
+      - name: "Determine if there is a matching release tag"
+        id: "has-matching-release-tag"
+        uses: "./actions/has-matching-release-tag"
+        with:
+          ref_name: "${{ github.ref_name }}"
+          release_tag_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+          release_branch_regexp: "^v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.x$"
+
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
+      - name: "Clone website-sync Action"
+        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+
+      - name: "Publish to kind registry (release)"
+        if: "steps.has-matching-release-tag.outputs.bool == 'true'"
+        uses: "./.github/actions/website-sync"
+        id: "publish-release"
+        with:
+          repository: "grafana/kind-registry"
+          branch: "main"
+          host: "github.com"
+          github_pat: "grafana-delivery-bot:${{ steps.generate_token.outputs.token }}"
+          source_folder: ".github/workflows/scripts/kinds/next"
+          target_folder: "grafana/${{ github.ref_name }}"
