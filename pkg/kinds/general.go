@@ -1,7 +1,6 @@
 package kinds
 
 import (
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -151,35 +150,25 @@ func (m *GrafanaResourceMetadata) SetDescription(v string) {
 }
 
 func (m *GrafanaResourceMetadata) GetTags() []string {
-	var tags []string
 	v, ok := m.Annotations[annoKeyTags]
 	if ok {
-		err := json.Unmarshal([]byte(v), &tags)
-		if err != nil && len(v) > 0 {
-			return strings.Split(v, ",")
+		tags := strings.Split(v, ",")
+		for i := range tags {
+			tags[i] = strings.TrimSpace(tags[i])
 		}
+		return tags
 	}
-	return tags
+	return []string{}
 }
 
+// SetTags will set the tags annotation.  NOTE: any commas in the tags will get replaced with a dash
 func (m *GrafanaResourceMetadata) SetTags(tags []string) {
 	str := ""
 	if len(tags) > 0 {
-		hasComma := false
-		for _, t := range tags {
-			if strings.Contains(t, ",") {
-				hasComma = true
-				break
-			}
+		for i := range tags {
+			tags[i] = strings.ReplaceAll(strings.TrimSpace(tags[i]), ",", "-")
 		}
-		if hasComma {
-			out, err := json.Marshal(tags)
-			if err == nil {
-				str = string(out)
-			}
-		} else {
-			str = strings.Join(tags, ",")
-		}
+		str = strings.Join(tags, ",")
 	}
 	m.set(annoKeyTags, str)
 }
