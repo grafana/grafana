@@ -11,9 +11,6 @@
 
 import * as ui from '@grafana/schema';
 
-/**
- * TODO docs
- */
 export enum HorizontalConstraint {
   Center = 'center',
   Left = 'left',
@@ -22,9 +19,6 @@ export enum HorizontalConstraint {
   Scale = 'scale',
 }
 
-/**
- * TODO docs
- */
 export enum VerticalConstraint {
   Bottom = 'bottom',
   Center = 'center',
@@ -33,17 +27,11 @@ export enum VerticalConstraint {
   TopBottom = 'topbottom',
 }
 
-/**
- * TODO docs
- */
 export interface Constraint {
   horizontal?: HorizontalConstraint;
   vertical?: VerticalConstraint;
 }
 
-/**
- * TODO docs
- */
 export interface Placement {
   bottom?: number;
   height?: number;
@@ -53,9 +41,6 @@ export interface Placement {
   width?: number;
 }
 
-/**
- * TODO docs
- */
 export enum BackgroundImageSize {
   Contain = 'contain',
   Cover = 'cover',
@@ -64,41 +49,26 @@ export enum BackgroundImageSize {
   Tile = 'tile',
 }
 
-/**
- * TODO docs
- */
 export interface BackgroundConfig {
   color?: ui.ColorDimensionConfig;
   image?: ui.ResourceDimensionConfig;
   size?: BackgroundImageSize;
 }
 
-/**
- * TODO docs
- */
 export interface LineConfig {
   color?: ui.ColorDimensionConfig;
   width?: number;
 }
 
-/**
- * TODO docs
- */
 export interface ConnectionCoordinates {
   x: number;
   y: number;
 }
 
-/**
- * TODO docs
- */
 export enum ConnectionPath {
   Straight = 'straight',
 }
 
-/**
- * TODO docs
- */
 export interface CanvasConnection {
   color?: ui.ColorDimensionConfig;
   path: ConnectionPath;
@@ -108,12 +78,12 @@ export interface CanvasConnection {
   targetName?: string;
 }
 
-/**
- * TODO docs
- */
 export interface CanvasElementOptions {
   background?: BackgroundConfig;
   border?: LineConfig;
+  /**
+   * TODO: figure out how to define this (element config(s))
+   */
   config?: unknown;
   connections?: Array<CanvasConnection>;
   constraint?: Constraint;
@@ -132,19 +102,19 @@ export interface Options {
    */
   inlineEditing: boolean;
   /**
-   * TODO docs
+   * The root element of canvas (frame), where all canvas elements are nested
    */
   root: {
     /**
-     * TODO docs
+     * Name of the root element
      */
     name: string;
     /**
-     * TODO docs
+     * Type of root element (frame)
      */
     type: 'frame';
     /**
-     * TODO docs / default elements value?
+     * The list of canvas elements attached to the root element
      */
     elements: Array<CanvasElementOptions>;
   };

@@ -26,17 +26,14 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				// TODO docs
 				HorizontalConstraint: "left" | "right" | "leftright" | "center" | "scale" @cuetsy(kind="enum", memberNames="Left|Right|LeftRight|Center|Scale")
-				// TODO docs
-				VerticalConstraint: "top" | "bottom" | "topbottom" | "center" | "scale" @cuetsy(kind="enum", memberNames="Top|Bottom|TopBottom|Center|Scale")
-				// TODO docs
+				VerticalConstraint:   "top" | "bottom" | "topbottom" | "center" | "scale" @cuetsy(kind="enum", memberNames="Top|Bottom|TopBottom|Center|Scale")
+
 				Constraint: {
 					horizontal?: HorizontalConstraint
 					vertical?:   VerticalConstraint
 				} @cuetsy(kind="interface")
 
-				// TODO docs
 				Placement: {
 					top?:    float64
 					left?:   float64
@@ -46,30 +43,24 @@ composableKinds: PanelCfg: {
 					width?:  float64
 					height?: float64
 				} @cuetsy(kind="interface")
-				// TODO docs
+
 				BackgroundImageSize: "original" | "contain" | "cover" | "fill" | "tile" @cuetsy(kind="enum", memberNames="Original|Contain|Cover|Fill|Tile")
-				// TODO docs
 				BackgroundConfig: {
 					color?: ui.ColorDimensionConfig
 					image?: ui.ResourceDimensionConfig
 					size?:  BackgroundImageSize
 				} @cuetsy(kind="interface")
 
-				// TODO docs
 				LineConfig: {
 					color?: ui.ColorDimensionConfig
 					width?: float64
 				} @cuetsy(kind="interface")
 
-				// TODO docs
 				ConnectionCoordinates: {
 					x: float64
 					y: float64
 				} @cuetsy(kind="interface")
-
-				// TODO docs
 				ConnectionPath: "straight" @cuetsy(kind="enum", memberNames="Straight")
-				// TODO docs
 				CanvasConnection: {
 					source:      ConnectionCoordinates
 					target:      ConnectionCoordinates
@@ -78,10 +69,10 @@ composableKinds: PanelCfg: {
 					color?:      ui.ColorDimensionConfig
 					size?:       ui.ScaleDimensionConfig
 				} @cuetsy(kind="interface")
-				// TODO docs
 				CanvasElementOptions: {
-					name:        string
-					type:        string
+					name: string
+					type: string
+					// TODO: figure out how to define this (element config(s))
 					config?:     _
 					constraint?: Constraint
 					placement?:  Placement
@@ -95,13 +86,13 @@ composableKinds: PanelCfg: {
 					inlineEditing: bool | *true
 					// Show all available element types
 					showAdvancedTypes: bool | *true
-					// TODO docs
+					// The root element of canvas (frame), where all canvas elements are nested
 					root: {
-						// TODO docs
+						// Name of the root element
 						name: string
-						// TODO docs
+						// Type of root element (frame)
 						type: "frame"
-						// TODO docs / default elements value?
+						// The list of canvas elements attached to the root element
 						elements: [...CanvasElementOptions]
 					} @cuetsy(kind="interface")
 				} @cuetsy(kind="interface")
