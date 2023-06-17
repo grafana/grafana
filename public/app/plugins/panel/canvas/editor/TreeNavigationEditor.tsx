@@ -10,7 +10,7 @@ import { ElementState } from 'app/features/canvas/runtime/element';
 
 import { AddLayerButton } from '../../../../core/components/Layers/AddLayerButton';
 import { getGlobalStyles } from '../globalStyles';
-import { Options } from '../models.gen';
+import { Options } from '../panelcfg.gen';
 import { getTreeData, onNodeDrop, TreeElement } from '../tree';
 import { DragNode, DropNode } from '../types';
 import { doSelect, getElementTypes, onAddItem } from '../utils';

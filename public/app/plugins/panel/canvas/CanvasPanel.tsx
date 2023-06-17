@@ -11,7 +11,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
-import { Options } from './models.gen';
+import { Options } from './panelcfg.gen';
 import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
 interface Props extends PanelProps<Options> {}
