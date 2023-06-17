@@ -87,7 +87,7 @@ External alertmanagers should now be configured as data sources using Grafana Co
 
 ## Public dashboards
 
-_Available in Experimental in Grafana Open Source, Enterprise, Cloud Pro, and Cloud Advanced._
+_Available in Experimental in Grafana Open Source, Enterprise, and Cloud._
 _To enable public dashboards, you must enable a feature flag or request this feature from support._
 
 [Public dashboards](/docs/grafana/latest/dashboards/dashboard-public/) launched as an experimental feature in Grafana v9.1.
@@ -112,7 +112,7 @@ Usage Insights now has a "Public Dashboards" tab, which tracks how many people a
 
 ### Use RBAC to allow any user to share dashboards publicly
 
-_RBAC is available in Grafana Enterprise and Cloud Advanced._
+_RBAC is available in Grafana Enterprise and Cloud._
 
 We have introduced a new role called "Public Dashboard writer" that grants access to publish new public dashboards to additional roles and users.
 By default, only admins can share dashboards publicly.
@@ -171,7 +171,7 @@ Previously, teams required at least one Admin user to be in a team.
 
 ### Role-based access control is easier to use
 
-_Generally available in Grafana Enterprise and Grafana Cloud Advanced._
+_Generally available in Grafana Enterprise and Grafana Cloud._
 
 #### Role picker when creating and editing teams
 

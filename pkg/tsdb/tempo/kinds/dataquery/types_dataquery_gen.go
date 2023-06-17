@@ -35,7 +35,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -53,7 +53,7 @@ type DataQuery struct {
 }
 
 // TempoDataQuery defines model for TempoDataQuery.
-type TempoDataQuery = map[string]interface{}
+type TempoDataQuery = map[string]any
 
 // TempoQuery defines model for TempoQuery.
 type TempoQuery struct {
@@ -66,7 +66,7 @@ type TempoQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{}    `json:"datasource,omitempty"`
+	Datasource *any            `json:"datasource,omitempty"`
 	Filters    []TraceqlFilter `json:"filters"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
@@ -126,7 +126,7 @@ type TraceqlFilter struct {
 	Tag *string `json:"tag,omitempty"`
 
 	// The value for the search filter
-	Value *interface{} `json:"value,omitempty"`
+	Value *any `json:"value,omitempty"`
 
 	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 	ValueType *string `json:"valueType,omitempty"`
