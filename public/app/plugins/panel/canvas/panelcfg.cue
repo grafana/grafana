@@ -87,6 +87,7 @@ composableKinds: PanelCfg: {
 					// Show all available element types
 					showAdvancedTypes: bool | *true
 					// The root element of canvas (frame), where all canvas elements are nested
+					// TODO: Figure out how to define a default value for this
 					root: {
 						// Name of the root element
 						name: string

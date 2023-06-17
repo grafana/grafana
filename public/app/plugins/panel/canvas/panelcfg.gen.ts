@@ -104,6 +104,7 @@ export interface Options {
   inlineEditing: boolean;
   /**
    * The root element of canvas (frame), where all canvas elements are nested
+   * TODO: Figure out how to define a default value for this
    */
   root: {
     /**

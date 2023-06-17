@@ -133,15 +133,16 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 
 ### Options
 
-| Property            | Type            | Required | Default | Description                                                              |
-|---------------------|-----------------|----------|---------|--------------------------------------------------------------------------|
-| `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing                                                    |
-| `root`              | [object](#root) | **Yes**  |         | The root element of canvas (frame), where all canvas elements are nested |
-| `showAdvancedTypes` | boolean         | **Yes**  | `true`  | Show all available element types                                         |
+| Property            | Type            | Required | Default | Description                                                                                                                          |
+|---------------------|-----------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing                                                                                                                |
+| `root`              | [object](#root) | **Yes**  |         | The root element of canvas (frame), where all canvas elements are nested<br/>TODO: Figure out how to define a default value for this |
+| `showAdvancedTypes` | boolean         | **Yes**  | `true`  | Show all available element types                                                                                                     |
 
 ### Root
 
 The root element of canvas (frame), where all canvas elements are nested
+TODO: Figure out how to define a default value for this
 
 | Property   | Type                                            | Required | Default | Description                                                    |
 |------------|-------------------------------------------------|----------|---------|----------------------------------------------------------------|
