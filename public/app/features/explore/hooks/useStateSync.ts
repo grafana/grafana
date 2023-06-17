@@ -183,6 +183,7 @@ export function useStateSync(params: ExploreQueryParams) {
                       withUniqueRefIds(queries)
                         // but filter out the ones that are not compatible with the pane datasource
                         .filter(getQueryFilter(paneDatasource))
+                        .map((query) => ({ ...query, datasource: paneDatasource.getRef() }))
                     : getDatasourceSrv()
                         // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
                         .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
@@ -261,10 +262,18 @@ function getQueryFilter(datasource?: DataSourceApi) {
       }
       // Due to legacy URLs, `datasource` in queries may be a string. This logic should probably be in the migration
       if (typeof q.datasource === 'string') {
-        return q.datasource === datasource?.uid;
+        return (
+          q.datasource === datasource?.uid ||
+          // Also for legacy reasons, the datasource name may be used instead of the uid
+          q.datasource === datasource?.name
+        );
       }
 
-      return q.datasource.uid === datasource?.uid;
+      return (
+        q.datasource.uid === datasource?.uid ||
+        // For legacy reasons, the datasource name may be used instead of the uid
+        q.datasource.uid === datasource?.name
+      );
     };
   }
 }
