@@ -432,7 +432,7 @@ interface ContactPointDetailsProps {
   receivers: Receiver[];
 }
 
-const INTEGRATION_ICONS: Record<string, IconName> = {
+export const INTEGRATION_ICONS: Record<string, IconName> = {
   discord: 'discord',
   email: 'envelope',
   googlechat: 'google-hangouts-alt',
