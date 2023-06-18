@@ -21,5 +21,5 @@ type DatasourceInfo struct {
 	// Flight SQL metadata
 	Metadata []map[string]string `json:"metadata"`
 	// FlightSQL grpc connection
-	Secure bool `json:"secureGrpc"`
+	SecureGrpc bool `json:"secureGrpc"`
 }
