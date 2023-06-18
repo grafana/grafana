@@ -269,7 +269,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 		}
 
 		datasourcesByUid[ds.UID] = ds
-		if expr.IsDataSource(ds.UID) {
+		if expr.NodeTypeFromDatasourceUID(ds.UID) != expr.TypeDatasourceNode {
 			req.hasExpression = true
 		} else {
 			req.dsTypes[ds.Type] = true
@@ -321,8 +321,8 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 		return ds, nil
 	}
 
-	if expr.IsDataSource(uid) {
-		return expr.DataSourceModel(), nil
+	if kind := expr.NodeTypeFromDatasourceUID(uid); kind != expr.TypeDatasourceNode {
+		return expr.DataSourceModelFromNodeType(kind)
 	}
 
 	if uid == grafanads.DatasourceUID {
