@@ -26,7 +26,7 @@ func (c *client) FlightClient() flight.Client {
 	return c.Client.Client
 }
 
-func newFlightSQLClient(addr string, token string, metadata []map[string]string, secure bool) (*client, error) {
+func newFlightSQLClient(addr string, metadata metadata.MD, secure bool) (*client, error) {
 	dialOptions, err := grpcDialOptions(secure)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
@@ -35,7 +35,7 @@ func newFlightSQLClient(addr string, token string, metadata []map[string]string,
 	if err != nil {
 		return nil, err
 	}
-	return &client{Client: fsqlClient}, nil
+	return &client{Client: fsqlClient, md: metadata}, nil
 }
 
 func grpcDialOptions(secure bool) ([]grpc.DialOption, error) {

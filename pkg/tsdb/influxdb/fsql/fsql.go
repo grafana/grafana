@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/apache/arrow/go/v12/arrow/flight"
-	"github.com/apache/arrow/go/v12/arrow/flight/flightsql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"google.golang.org/grpc/metadata"
 
@@ -106,11 +105,6 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	}
 	addr := strings.Join([]string{host, port}, ":")
 
-	dialOptions, err := grpcDialOptions(dsInfo.SecureGrpc)
-	if err != nil {
-		return nil, fmt.Errorf("grpc dial options: %s", err)
-	}
-
 	md := metadata.MD{}
 	for _, m := range dsInfo.Metadata {
 		for k, v := range m {
@@ -127,15 +121,12 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 		md.Set("Authorization", fmt.Sprintf("Bearer %s", dsInfo.Token))
 	}
 
-	fsqlClient, err := flightsql.NewClient(addr, nil, nil, dialOptions...)
+	fsqlClient, err := newFlightSQLClient(addr, md, dsInfo.SecureGrpc)
 	if err != nil {
 		return nil, err
 	}
 
 	return &runner{
-		client: &client{
-			Client: fsqlClient,
-			md:     md,
-		},
+		client: fsqlClient,
 	}, nil
 }
