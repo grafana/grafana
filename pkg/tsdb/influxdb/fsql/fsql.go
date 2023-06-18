@@ -106,7 +106,7 @@ func runnerFromDataSource(dsInfo *models.DatasourceInfo) (*runner, error) {
 	}
 	addr := strings.Join([]string{host, port}, ":")
 
-	dialOptions, err := grpcDialOptions(dsInfo.Secure)
+	dialOptions, err := grpcDialOptions(dsInfo.SecureGrpc)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
