@@ -12,6 +12,7 @@ import (
 	"github.com/apache/arrow/go/v12/arrow/memory"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -25,8 +26,8 @@ func (c *client) FlightClient() flight.Client {
 	return c.Client.Client
 }
 
-func newFlightSQLClient(addr string, token string, metadata []map[string]string) (*client, error) {
-	dialOptions, err := grpcDialOptions()
+func newFlightSQLClient(addr string, token string, metadata []map[string]string, secure bool) (*client, error) {
+	dialOptions, err := grpcDialOptions(secure)
 	if err != nil {
 		return nil, fmt.Errorf("grpc dial options: %s", err)
 	}
@@ -37,14 +38,16 @@ func newFlightSQLClient(addr string, token string, metadata []map[string]string)
 	return &client{Client: fsqlClient}, nil
 }
 
-func grpcDialOptions() ([]grpc.DialOption, error) {
-
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return nil, fmt.Errorf("x509: %s", err)
+func grpcDialOptions(secure bool) ([]grpc.DialOption, error) {
+	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if secure {
+		pool, err := x509.SystemCertPool()
+		if err != nil {
+			return nil, fmt.Errorf("x509: %s", err)
+		}
+		transport = grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
 	}
 
-	transport := grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(pool, ""))
 	opts := []grpc.DialOption{
 		transport,
 	}

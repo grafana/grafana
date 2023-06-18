@@ -6,7 +6,7 @@ import (
 
 type DatasourceInfo struct {
 	HTTPClient *http.Client
-	// FlightSQLClient *fsql.Client
+
 	Token string
 	URL   string
 
@@ -18,5 +18,8 @@ type DatasourceInfo struct {
 	Organization  string `json:"organization"`
 	MaxSeries     int    `json:"maxSeries"`
 
+	// Flight SQL metadata
 	Metadata []map[string]string `json:"metadata"`
+	// FlightSQL grpc connection
+	Secure bool `json:"secureGrpc"`
 }

@@ -91,6 +91,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			Organization:  jsonData.Organization,
 			Metadata:      jsonData.Metadata,
 			MaxSeries:     maxSeries,
+			Secure:        jsonData.Secure,
 			Token:         settings.DecryptedSecureJSONData["token"],
 		}
 		return model, nil
