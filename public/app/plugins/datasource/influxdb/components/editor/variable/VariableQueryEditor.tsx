@@ -3,6 +3,7 @@ import React, { PureComponent } from 'react';
 import { InlineFormLabel, TextArea } from '@grafana/ui/src';
 
 import InfluxDatasource from '../../../datasource';
+import { InfluxVersion } from '../../../types';
 import { FluxQueryEditor } from '../query/flux/FluxQueryEditor';
 
 interface Props {
@@ -18,7 +19,7 @@ export default class VariableQueryEditor extends PureComponent<Props> {
 
   render() {
     let { query, datasource, onChange } = this.props;
-    if (datasource.isFlux) {
+    if (datasource.version === InfluxVersion.Flux) {
       return (
         <FluxQueryEditor
           datasource={datasource}

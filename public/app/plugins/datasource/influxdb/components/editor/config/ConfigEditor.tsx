@@ -5,7 +5,6 @@ import {
   DataSourcePluginOptionsEditorProps,
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
-  updateDatasourcePluginResetOption,
 } from '@grafana/data/src';
 import { Alert, DataSourceHttpSettings, InlineField, LegacyForms, Select } from '@grafana/ui/src';
 import { config } from 'app/core/config';
@@ -66,16 +65,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       default:
         return versions[0];
     }
-  };
-
-  // 1x
-  onResetPassword = () => {
-    updateDatasourcePluginResetOption(this.props, 'password');
-  };
-
-  // 2x
-  onResetToken = () => {
-    updateDatasourcePluginResetOption(this.props, 'token');
   };
 
   onVersionChanged = (selected: SelectableValue<InfluxVersion>) => {
