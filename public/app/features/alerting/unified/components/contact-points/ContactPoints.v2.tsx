@@ -21,41 +21,48 @@ const ContactPoints = () => {
       <Stack direction="column" gap={1}>
         <ContactPointHeader name={'grafana-default-email'} />
         <div className={styles.receiversWrapper}>
-          <ContactPointReceiver
-            type={'email'}
-            description="gilles.demey@grafana.com"
-            error="could not connect"
-            sendingResolved={true}
-          />
+          <ContactPointReceiver type={'email'} description="gilles.demey@grafana.com" />
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'New school'} />
+        <ContactPointHeader name={'New school'} provenance={'api'} />
         <div className={styles.receiversWrapper}>
           <Stack direction="column" gap={1}>
             <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
-            <ContactPointReceiver type={'discord'} sendingResolved={true} />
+            <ContactPointReceiver type={'discord'} />
           </Stack>
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
         <ContactPointHeader name={'Japan 🇯🇵'} />
         <div className={styles.receiversWrapper}>
-          <ContactPointReceiver type={'line'} sendingResolved={true} />
+          <ContactPointReceiver type={'line'} />
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
         <ContactPointHeader name={'Google Stuff'} />
         <div className={styles.receiversWrapper}>
-          <ContactPointReceiver type={'googlechat'} sendingResolved={true} />
+          <ContactPointReceiver type={'googlechat'} />
         </div>
       </Stack>
       <Stack direction="column" gap={1}>
         <ContactPointHeader name={'Chinese Contact Points'} />
         <div className={styles.receiversWrapper}>
           <Stack direction="column" gap={1}>
-            <ContactPointReceiver type={'dingding'} sendingResolved={true} />
-            <ContactPointReceiver type={'wecom'} sendingResolved={true} />
+            <ContactPointReceiver type={'dingding'} />
+            <ContactPointReceiver type={'wecom'} error="403 unauthorized" />
+          </Stack>
+        </div>
+      </Stack>
+      <Stack direction="column" gap={1}>
+        <ContactPointHeader
+          name={
+            "This is a very long title to check if we are dealing with it appropriately, it shouldn't cause any layout issues"
+          }
+        />
+        <div className={styles.receiversWrapper}>
+          <Stack direction="column" gap={1}>
+            <ContactPointReceiver type={'dingding'} />
           </Stack>
         </div>
       </Stack>
@@ -65,18 +72,42 @@ const ContactPoints = () => {
 
 interface ContactPointHeaderProps {
   name: string;
+  provenance?: string;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
+  const { name, provenance } = props;
+
   const styles = useStyles2(getStyles);
+  const isProvisioned = Boolean(provenance);
 
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Strong>{props.name}</Strong>
+        <Strong>{name}</Strong>
         <MetaText>
+          {/* TODO make this a link to the notification policies page with the filter applied */}
           is used by <Strong>2</Strong> notification policies
         </MetaText>
+        <Spacer />
+        {isProvisioned && <Badge color="purple" text="Provisioned" />}
+        {!isProvisioned && (
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="edit"
+            type="button"
+            aria-label="edit-action"
+            data-testid="edit-action"
+          >
+            Edit
+          </Button>
+        )}
+        {/* additional actions:
+          copy name,
+          export,
+          delete,
+        */}
         <Button
           variant="secondary"
           size="sm"
@@ -94,17 +125,17 @@ interface ContactPointReceiverProps {
   type: GrafanaNotifierType | string;
   description?: string;
   error?: string;
-  sendingResolved: boolean;
+  sendingResolved?: boolean;
 }
 
 const ContactPointReceiver = (props: ContactPointReceiverProps) => {
-  const { type, description, error, sendingResolved } = props;
+  const { type, description, error, sendingResolved = true } = props;
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
 
   return (
-    <div className={styles.contactPointWrapper}>
+    <div className={styles.integrationWrapper({ error: Boolean(error) })}>
       <Stack direction="column" gap={0}>
         <div className={styles.receiverDescriptionRow}>
           <Stack direction="row" alignItems="center" gap={1}>
@@ -142,32 +173,33 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  contactPointWrapper: css`
+  integrationWrapper: ({ error }: { error: boolean }) => css`
     flex: 1;
     position: relative;
-    background: ${theme.colors.background.secondary};
+    background: ${theme.colors.background.primary};
 
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius()};
     border: solid 1px ${theme.colors.border.weak};
+    ${error &&
+    `
+      border-color: ${theme.colors.error.border};
+    `}
   `,
   headerWrapper: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
     border: solid 1px ${theme.colors.border.weak};
 
-    width: max-content;
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius()};
     background: ${theme.colors.background.secondary};
   `,
   receiverDescriptionRow: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
-    border-bottom: solid 1px ${theme.colors.border.weak};
   `,
   metadataRow: css`
-    background: ${theme.colors.background.primary};
-    padding: ${theme.spacing(1.5)};
+    padding: 0 ${theme.spacing(1.5)} ${theme.spacing(1.5)} ${theme.spacing(1.5)};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius(2)};
-    border-bottom-right-radius: ${theme.shape.borderRadius(2)};
+    border-bottom-left-radius: ${theme.shape.borderRadius()};
+    border-bottom-right-radius: ${theme.shape.borderRadius()};
   `,
   receiversWrapper: css`
     margin-left: ${theme.spacing(3)};
@@ -179,7 +211,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       height: 100%;
       border-left: solid 1px rgba(204, 204, 220, 0.12);
       margin-top: 0;
-      margin-left: -20px;
+      margin-left: -${theme.spacing(2)};
     }
   `,
 });
