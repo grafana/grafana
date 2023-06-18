@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
@@ -120,13 +119,21 @@ func CheckInfluxQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, s *
 }
 
 func CheckSQLHealth(ctx context.Context, dsInfo *models.DatasourceInfo, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	query := sqlutil.Query{
-		RawSQL: "select 1",
-		Format: sqlutil.FormatOptionTable,
-		RefID:  refID,
-	}
-
-	ds, err := fsql.HealthCheckQuery(ctx, dsInfo, query)
+	ds, err := fsql.Query(ctx, dsInfo, backend.QueryDataRequest{
+		PluginContext: req.PluginContext,
+		Queries: []backend.DataQuery{
+			{
+				RefID:         refID,
+				JSON:          []byte(`{ "queryText": "select 1", "format": "table" }`),
+				Interval:      1 * time.Minute,
+				MaxDataPoints: 423,
+				TimeRange: backend.TimeRange{
+					From: time.Now().AddDate(0, 0, -1),
+					To:   time.Now(),
+				},
+			},
+		},
+	})
 
 	if err != nil {
 		return getHealthCheckMessage(logger, "error performing sql query", err)

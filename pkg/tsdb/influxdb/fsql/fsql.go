@@ -10,7 +10,6 @@ import (
 	"github.com/apache/arrow/go/v12/arrow/flight"
 	"github.com/apache/arrow/go/v12/arrow/flight/flightsql"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,35 +26,7 @@ type SQLOptions struct {
 	Token    string              `json:"token"`
 }
 
-func Query(ctx context.Context, dsInfo *models.DatasourceInfo, fsqlQuery backend.QueryDataRequest) (
-	*backend.QueryDataResponse, error) {
-	logger := glog.FromContext(ctx)
-	tRes := backend.NewQueryDataResponse()
-	logger.Debug("Received a query", "query", fsqlQuery)
-	r, err := runnerFromDataSource(dsInfo)
-	if err != nil {
-		return &backend.QueryDataResponse{}, err
-	}
-	defer r.client.Close()
-
-	// timeRange := fsqlQuery.Queries[0].TimeRange
-	for _, query := range fsqlQuery.Queries {
-		qm, err := getQueryModel(query)
-		if err != nil {
-			tRes.Responses[query.RefID] = backend.DataResponse{Error: err}
-			continue
-		}
-
-		// If the default changes also update labels/placeholder in config page.
-		maxSeries := dsInfo.MaxSeries
-		res := executeQuery(ctx, logger, *qm, r, maxSeries)
-
-		tRes.Responses[query.RefID] = res
-	}
-	return tRes, nil
-}
-
-func HealthCheckQuery(ctx context.Context, dsInfo *models.DatasourceInfo, query sqlutil.Query) (
+func Query(ctx context.Context, dsInfo *models.DatasourceInfo, req backend.QueryDataRequest) (
 	*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	tRes := backend.NewQueryDataResponse()
@@ -69,29 +40,37 @@ func HealthCheckQuery(ctx context.Context, dsInfo *models.DatasourceInfo, query 
 		ctx = metadata.NewOutgoingContext(ctx, r.client.md)
 	}
 
-	info, err := r.client.Execute(ctx, query.RawSQL)
-	if err != nil {
-		tRes.Responses[query.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
-		return tRes, nil
-	}
-	if len(info.Endpoint) != 1 {
-		tRes.Responses[query.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("unsupported endpoint count in response: %d", len(info.Endpoint)))
-		return tRes, nil
-	}
+	for _, q := range req.Queries {
+		qm, err := getQueryModel(q)
+		if err != nil {
+			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, "bad request")
+			continue
+		}
 
-	reader, err := r.client.DoGetWithHeaderExtraction(ctx, info.Endpoint[0].Ticket)
-	if err != nil {
-		tRes.Responses[query.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
-		return tRes, nil
-	}
-	defer reader.Release()
+		info, err := r.client.Execute(ctx, qm.RawSQL)
+		if err != nil {
+			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+			return tRes, nil
+		}
+		if len(info.Endpoint) != 1 {
+			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("unsupported endpoint count in response: %d", len(info.Endpoint)))
+			return tRes, nil
+		}
 
-	headers, err := reader.Header()
-	if err != nil {
-		logger.Error(fmt.Sprintf("Failed to extract headers: %s", err))
-	}
+		reader, err := r.client.DoGetWithHeaderExtraction(ctx, info.Endpoint[0].Ticket)
+		if err != nil {
+			tRes.Responses[q.RefID] = backend.ErrDataResponse(backend.StatusInternal, fmt.Sprintf("flightsql: %s", err))
+			return tRes, nil
+		}
+		defer reader.Release()
 
-	tRes.Responses[query.RefID] = newQueryDataResponse(reader, query, headers)
+		headers, err := reader.Header()
+		if err != nil {
+			logger.Error(fmt.Sprintf("Failed to extract headers: %s", err))
+		}
+
+		tRes.Responses[q.RefID] = newQueryDataResponse(reader, *qm.Query, headers)
+	}
 
 	return tRes, nil
 }
