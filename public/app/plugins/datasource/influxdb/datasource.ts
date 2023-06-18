@@ -100,9 +100,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   async getRetentionPolicies(): Promise<string[]> {
     // Only For InfluxQL Mode
-    if (this.version === InfluxVersion.Flux || this.retentionPolicies.length) {
-      return Promise.resolve(this.retentionPolicies);
-    } else {
+    if (this.version === InfluxVersion.InfluxQL && !this.retentionPolicies.length) {
       return getAllPolicies(this).catch((err) => {
         console.error(
           'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
@@ -111,6 +109,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         return Promise.resolve(this.retentionPolicies);
       });
     }
+
+    return Promise.resolve(this.retentionPolicies);
   }
 
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
@@ -171,7 +171,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       return merge(...streams);
     }
 
-    if (this.version === InfluxVersion.Flux) {
+    if (this.version === InfluxVersion.Flux || this.version === InfluxVersion.SQL) {
       return super.query(filteredRequest);
     }
 
