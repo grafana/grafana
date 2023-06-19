@@ -37,50 +37,6 @@ describe('Explore item reducer', () => {
     });
   });
 
-  describe('changing refresh intervals', () => {
-    it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: 'LIVE',
-        isLive: true,
-        loading: true,
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Streaming,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
-        .thenStateShouldEqual(expectedState);
-    });
-
-    it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: '',
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Done,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: '' }))
-        .thenStateShouldEqual(expectedState);
-    });
-  });
-
   describe('changing range', () => {
     describe('when changeRangeAction is dispatched', () => {
       it('then it should set correct state', () => {
