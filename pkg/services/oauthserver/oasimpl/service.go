@@ -176,7 +176,7 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
 	}
-	client.SelfPermissions, err = s.acService.GetUserPermissions(ctx, client.SignedInUser, ac.Options{})
+	client.SelfPermissions, err = s.acService.GetUserPermissions(ctx, client.SignedInUser, ac.Options{ExcludeBasicRolePermissions: true})
 	if err != nil {
 		s.logger.Error("GetExternalService: error fetching permissions", "id", id, "error", err)
 		return nil, err

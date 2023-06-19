@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -901,6 +902,87 @@ func TestService_DeleteExternalServiceRole(t *testing.T) {
 				require.NoError(t, errGetPerms)
 				assert.Empty(t, perms)
 			}
+		})
+	}
+}
+
+func TestService_GetUserPermissions(t *testing.T) {
+	ctx := context.Background()
+	tests := []struct {
+		name                       string
+		options                    accesscontrol.Options
+		orgRoles                   map[int64][]string
+		externalServicePermissions []accesscontrol.Permission
+		want                       []accesscontrol.Permission
+		wantErr                    bool
+	}{
+		{
+			name: "should return the stored permissions and exclude basic role permissions for a user ",
+			options: accesscontrol.Options{
+				ExcludeBasicRolePermissions: true,
+			},
+			orgRoles: map[int64][]string{
+				1: {string(roletype.RoleViewer)},
+			},
+			externalServicePermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionUsersImpersonate, Scope: accesscontrol.ScopeUsersAll},
+			},
+			want: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionUsersImpersonate, Scope: accesscontrol.ScopeUsersAll}},
+		},
+		{
+			name: "should return the stored permissions and basic role permissions for a user",
+			options: accesscontrol.Options{
+				ExcludeBasicRolePermissions: false,
+			},
+			orgRoles: map[int64][]string{
+				1: {string(roletype.RoleViewer)},
+			},
+			externalServicePermissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionUsersImpersonate, Scope: accesscontrol.ScopeUsersAll},
+			},
+			want: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
+				{Action: accesscontrol.ActionUsersImpersonate, Scope: accesscontrol.ScopeUsersAll},
+				{Action: accesscontrol.ActionUsersCreate, Scope: accesscontrol.ScopeUsersAll}},
+		},
+	}
+	ac := setupTestEnv(t)
+
+	ac.registrations.Append(accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			ID:   1,
+			Name: "Test",
+			Permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionUsersCreate, Scope: accesscontrol.ScopeUsersAll},
+			},
+		},
+		Grants: []string{"Viewer"},
+	})
+
+	err := ac.RegisterFixedRoles(context.Background())
+	require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err = ac.store.SaveExternalServiceRole(ctx, accesscontrol.SaveExternalServiceRoleCommand{
+				Global:           true,
+				ServiceAccountID: 1,
+				OrgID:            1,
+				Permissions:      tt.externalServicePermissions,
+			})
+			require.NoError(t, err)
+
+			perms, err := ac.GetUserPermissions(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, OrgRole: roletype.RoleViewer}, tt.options)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, perms, tt.want)
 		})
 	}
 }

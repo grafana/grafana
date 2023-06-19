@@ -52,7 +52,8 @@ type RoleRegistry interface {
 }
 
 type Options struct {
-	ReloadCache bool
+	ReloadCache                 bool
+	ExcludeBasicRolePermissions bool
 }
 
 type SearchOptions struct {

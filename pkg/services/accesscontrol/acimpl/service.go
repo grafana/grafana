@@ -104,9 +104,11 @@ func (s *Service) GetUserPermissions(ctx context.Context, user *user.SignedInUse
 
 func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	permissions := make([]accesscontrol.Permission, 0)
-	for _, builtin := range accesscontrol.GetOrgRoles(user) {
-		if basicRole, ok := s.roles[builtin]; ok {
-			permissions = append(permissions, basicRole.Permissions...)
+	if !options.ExcludeBasicRolePermissions {
+		for _, builtin := range accesscontrol.GetOrgRoles(user) {
+			if basicRole, ok := s.roles[builtin]; ok {
+				permissions = append(permissions, basicRole.Permissions...)
+			}
 		}
 	}
 
