@@ -138,10 +138,8 @@ func (a *State) Resolve(reason string, endsAt time.Time) {
 }
 
 // Maintain updates the end time using the most recent evaluation.
-func (a *State) Maintain(interval int64, evaluatedAt time.Time) time.Time {
-	prevEndsAt := a.EndsAt
+func (a *State) Maintain(interval int64, evaluatedAt time.Time) {
 	a.EndsAt = nextEndsTime(interval, evaluatedAt)
-	return prevEndsAt
 }
 
 // IsNormalStateWithNoReason returns true if the state is Normal and reason is empty
@@ -209,7 +207,8 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger) {
 	switch state.State {
 	case eval.Alerting:
-		prevEndsAt := state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		prevEndsAt := state.EndsAt
+		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 		logger.Debug("Keeping state",
 			"state",
 			state.State,
@@ -270,7 +269,8 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		state.StateReason = "error"
 	case models.ErrorErrState:
 		if state.State == eval.Error {
-			prevEndsAt := state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			prevEndsAt := state.EndsAt
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
 				state.State,
@@ -326,7 +326,8 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 		state.StateReason = models.NoData.String()
 	case models.NoData:
 		if state.State == eval.NoData {
-			prevEndsAt := state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+			prevEndsAt := state.EndsAt
+			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
 			logger.Debug("Keeping state",
 				"state",
 				state.State,

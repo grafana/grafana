@@ -252,16 +252,14 @@ func TestMaintain(t *testing.T) {
 
 	// the interval is less than the resend interval of 30 seconds
 	s := State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
-	prevEndsAt := s.Maintain(10, now.Add(10*time.Second))
+	s.Maintain(10, now.Add(10*time.Second))
 	// 10 seconds + 3 x 30 seconds is 100 seconds
-	assert.Equal(t, now.Add(time.Second), prevEndsAt)
 	assert.Equal(t, now.Add(100*time.Second), s.EndsAt)
 
 	// the interval is above the resend interval of 30 seconds
 	s = State{State: eval.Alerting, StartsAt: now, EndsAt: now.Add(time.Second)}
-	prevEndsAt = s.Maintain(60, now.Add(10*time.Second))
+	s.Maintain(60, now.Add(10*time.Second))
 	// 10 seconds + 3 x 60 seconds is 190 seconds
-	assert.Equal(t, now.Add(time.Second), prevEndsAt)
 	assert.Equal(t, now.Add(190*time.Second), s.EndsAt)
 }
 
