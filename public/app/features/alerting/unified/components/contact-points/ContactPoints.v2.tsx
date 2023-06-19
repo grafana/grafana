@@ -84,7 +84,10 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
   return (
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
-        <Strong>{name}</Strong>
+        <Stack alignItems="center" gap={1}>
+          <Icon name="at" />
+          <Strong>{name}</Strong>
+        </Stack>
         <MetaText>
           {/* TODO make this a link to the notification policies page with the filter applied */}
           is used by <Strong>2</Strong> notification policies
@@ -176,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   integrationWrapper: ({ error }: { error: boolean }) => css`
     flex: 1;
     position: relative;
-    background: ${theme.colors.background.primary};
+    background: ${theme.colors.background.secondary};
 
     border-radius: ${theme.shape.borderRadius()};
     border: solid 1px ${theme.colors.border.weak};
@@ -190,7 +193,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border: solid 1px ${theme.colors.border.weak};
 
     border-radius: ${theme.shape.borderRadius()};
-    background: ${theme.colors.background.secondary};
+    background: ${theme.colors.background.primary};
   `,
   receiverDescriptionRow: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
