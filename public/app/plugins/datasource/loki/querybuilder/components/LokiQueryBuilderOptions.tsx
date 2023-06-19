@@ -190,7 +190,7 @@ function getCollapsedInfo(
 
   if (!isLogQuery) {
     if (query.step) {
-      items.push(`Step: ${isValidStep ? query.step : 'Invalid step'}`);
+      items.push(`Step: ${isValidStep ? query.step : 'Invalid value'}`);
     }
 
     if (query.resolution) {
