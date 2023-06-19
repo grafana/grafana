@@ -108,6 +108,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
         {...partialProps}
       />
     );
@@ -165,6 +166,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
     const button = screen.getByRole('button', {
@@ -202,6 +204,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
@@ -243,6 +246,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
