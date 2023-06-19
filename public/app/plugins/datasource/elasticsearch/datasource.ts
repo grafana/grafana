@@ -599,10 +599,7 @@ export class ElasticDatasource
 
       case SupplementaryQueryType.LogsSample:
         isQuerySuitable = !!(
-          query.metrics?.length === 1 &&
-          query.metrics[0].type !== 'logs' &&
-          query.metrics[0].type !== 'raw_data' &&
-          query.metrics[0].type !== 'raw_document'
+          query.bucketAggs?.length === 1 && query.bucketAggs.some((bucket) => bucket.type === 'date_histogram')
         );
 
         if (!isQuerySuitable) {

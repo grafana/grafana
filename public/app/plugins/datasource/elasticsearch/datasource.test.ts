@@ -978,27 +978,27 @@ describe('ElasticDatasource', () => {
       });
     });
 
-    it('does not return logs samples for log query', () => {
+    it('does not return logs samples for non date_histogram queries', () => {
       expect(
         ds.getSupplementaryQuery(
           { type: SupplementaryQueryType.LogsSample },
           {
             refId: 'A',
-            metrics: [{ type: 'logs', id: '1' }],
+            bucketAggs: [{ type: 'filters', id: '1' }],
             query: '',
           }
         )
       ).toEqual(undefined);
     });
 
-    it('returns logs samples for metric queries', () => {
+    it('returns logs samples for data_histogram queries', () => {
       expect(
         ds.getSupplementaryQuery(
           { type: SupplementaryQueryType.LogsSample },
           {
             refId: 'A',
-            metrics: [{ type: 'count', id: '1' }],
             query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
           }
         )
       ).toEqual({
