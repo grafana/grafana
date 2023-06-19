@@ -18,6 +18,7 @@ export const Page: PageType = ({
   navModel: oldNavProp,
   pageNav,
   renderTitle,
+  onEditTitle,
   actions,
   subTitle,
   children,
@@ -56,6 +57,7 @@ export const Page: PageType = ({
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
+                onEditTitle={onEditTitle}
                 navItem={pageHeaderNav}
                 renderTitle={renderTitle}
                 info={info}

@@ -16,6 +16,7 @@ e2e.scenario({
     cy.get('button[title="Delete query"]').each((button) => {
       button.trigger('click');
     });
+    cy.get('button[title="Delete query"]').should('not.exist');
     e2e.components.QueryTab.queryHistoryButton().should('be.visible').click();
 
     e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
@@ -36,7 +37,7 @@ e2e.scenario({
       cy.get('body').click();
       cy.get('body').type('t{leftarrow}');
 
-      cy.location().then((locPostKeypress) => {
+      cy.location().should((locPostKeypress) => {
         const params = new URLSearchParams(locPostKeypress.search);
         const leftJSON = JSON.parse(params.get('left'));
         // be sure the keypress affected the time window

@@ -80,8 +80,8 @@ export const LayerDragDropList = <T extends LayerElement>({
                             {onDuplicate ? (
                               <IconButton
                                 name="copy"
-                                title={'Duplicate'}
-                                ariaLabel={'Duplicate button'}
+                                tooltip="Duplicate"
+                                ariaLabel="Duplicate button"
                                 className={style.actionIcon}
                                 onClick={() => onDuplicate(element)}
                               />
@@ -89,8 +89,8 @@ export const LayerDragDropList = <T extends LayerElement>({
 
                             <IconButton
                               name="trash-alt"
-                              title={'remove'}
-                              ariaLabel={'Remove button'}
+                              tooltip="Remove"
+                              ariaLabel="Remove button"
                               className={cx(style.actionIcon, style.dragIcon)}
                               onClick={() => onDelete(element)}
                             />

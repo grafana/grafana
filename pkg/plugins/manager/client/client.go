@@ -25,6 +25,11 @@ const (
 
 var _ plugins.Client = (*Service)(nil)
 
+var (
+	errNilRequest = errors.New("req cannot be nil")
+	errNilSender  = errors.New("sender cannot be nil")
+)
+
 type Service struct {
 	pluginRegistry registry.Service
 	cfg            *config.Cfg
@@ -39,7 +44,7 @@ func ProvideService(pluginRegistry registry.Service, cfg *config.Cfg) *Service {
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -87,11 +92,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errNilSender
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -140,7 +145,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 
 func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -165,7 +170,7 @@ func (s *Service) CollectMetrics(ctx context.Context, req *backend.CollectMetric
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -191,7 +196,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%w: %w", backendplugin.ErrHealthCheckFailed, err)
 	}
 
 	return resp, nil
@@ -199,7 +204,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -212,7 +217,7 @@ func (s *Service) SubscribeStream(ctx context.Context, req *backend.SubscribeStr
 
 func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	if req == nil {
-		return nil, fmt.Errorf("req cannot be nil")
+		return nil, errNilRequest
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
@@ -225,11 +230,11 @@ func (s *Service) PublishStream(ctx context.Context, req *backend.PublishStreamR
 
 func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	if req == nil {
-		return fmt.Errorf("req cannot be nil")
+		return errNilRequest
 	}
 
 	if sender == nil {
-		return fmt.Errorf("sender cannot be nil")
+		return errNilSender
 	}
 
 	plugin, exists := s.plugin(ctx, req.PluginContext.PluginID)
