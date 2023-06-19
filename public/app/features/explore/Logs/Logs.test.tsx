@@ -52,8 +52,28 @@ jest.mock('../state/explorePane', () => ({
 }));
 
 describe('Logs', () => {
+  let originalHref = window.location.href;
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: 'http://localhost:3000/explore?test',
+      },
+      writable: true,
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: originalHref,
+      },
+      writable: true,
+    });
   });
 
   const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
@@ -273,12 +293,6 @@ describe('Logs', () => {
     });
 
     it('should call reportInteraction on permalinkClick', async () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          href: 'http://localhost:3000/explore?test',
-        },
-        writable: true, // possibility to override
-      });
       const panelState = { logs: { id: 'not-included' } };
       setup({ loading: false, panelState });
 
@@ -295,12 +309,6 @@ describe('Logs', () => {
     });
 
     it('should call createAndCopyShortLink on permalinkClick', async () => {
-      Object.defineProperty(window, 'location', {
-        value: {
-          href: 'http://localhost:3000/explore?test',
-        },
-        writable: true, // possibility to override
-      });
       const panelState = { logs: { id: 'not-included' } };
       setup({ loading: false, panelState });
 
