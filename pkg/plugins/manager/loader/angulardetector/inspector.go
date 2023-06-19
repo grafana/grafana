@@ -2,6 +2,7 @@ package angulardetector
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
@@ -24,7 +25,11 @@ type PatternsListInspector struct {
 func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) (isAngular bool, err error) {
 	f, err := p.FS.Open("module.js")
 	if err != nil {
-		return false, fmt.Errorf("open module.js: %w", err)
+		if errors.Is(err, plugins.ErrFileNotExist) {
+			// We may not have a module.js for some backend plugins, so ignore the error if module.js does not exist
+			return false, nil
+		}
+		return false, err
 	}
 	defer func() {
 		if closeErr := f.Close(); closeErr != nil && err == nil {
