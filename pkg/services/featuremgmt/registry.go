@@ -62,8 +62,8 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:        "lokiLive",
-			Description: "Support WebSocket streaming for loki (early prototype)",
+			Name:        "lokiExperimentalStreaming",
+			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -563,6 +563,13 @@ var (
 			Description: "Enables writing multiple items from a single query within Recorded Queries",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "alertingLokiRangeToInstant",
+			Description:  "Rewrites eligible loki range queries to instant queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
 		},
 		{
 			Name:        "flameGraphV2",

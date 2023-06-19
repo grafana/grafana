@@ -3,7 +3,6 @@ import { uniqueId } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
@@ -11,7 +10,7 @@ import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { normalizeMatchers, parseMatcher } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration } from './time';
+import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -229,6 +228,14 @@ export function promDurationValidator(duration: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
+
+// function to convert ObjectMatchers to a array of strings
+export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
 
 export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
   if (repeatInterval.length === 0) {
