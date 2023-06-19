@@ -39,6 +39,7 @@ def integration_test_services():
                 "MYSQL_PASSWORD": "password",
             },
             "volumes": [{"name": "mysql57", "path": "/var/lib/mysql"}],
+            "commands": ["docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci"],
         },
         {
             "name": "mysql80",

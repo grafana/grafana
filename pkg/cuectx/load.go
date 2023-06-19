@@ -136,6 +136,9 @@ func LoadGrafanaInstance(relpath string, pkg string, overlay fs.FS) (*build.Inst
 		if err != nil {
 			return nil, err
 		}
+
+		// merge the kindsys filesystem with ours for the kind categories
+		f = merged_fs.NewMergedFS(kindsys.CueSchemaFS, f)
 	}
 
 	if pkg != "" {

@@ -9,7 +9,7 @@ keywords:
   - configure
   - external Alertmanager
 title: Add an external Alertmanager
-weight: 100
+weight: 200
 ---
 
 # Add an external Alertmanager
