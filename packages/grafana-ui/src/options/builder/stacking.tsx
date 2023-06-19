@@ -8,15 +8,7 @@ import {
 } from '@grafana/data';
 import { StackingConfig, StackingMode } from '@grafana/schema';
 
-import {
-  GraphFieldConfig,
-  graphFieldOptions,
-  HorizontalGroup,
-  IconButton,
-  Input,
-  RadioButtonGroup,
-  Tooltip,
-} from '../..';
+import { GraphFieldConfig, graphFieldOptions, HorizontalGroup, IconButton, Input, RadioButtonGroup } from '../..';
 
 export const StackingEditor = ({ value, context, onChange, item }: FieldOverrideEditorProps<StackingConfig, any>) => {
   return (
@@ -35,11 +27,7 @@ export const StackingEditor = ({ value, context, onChange, item }: FieldOverride
         <Input
           type="text"
           placeholder="Group"
-          suffix={
-            <Tooltip content="Name of the stacking group" placement="top">
-              <IconButton name="question-circle" />
-            </Tooltip>
-          }
+          suffix={<IconButton name="question-circle" tooltip="Name of the stacking group" tooltipPlacement="top" />}
           defaultValue={value?.group}
           onChange={(v) => {
             onChange({

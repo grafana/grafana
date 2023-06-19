@@ -61,7 +61,6 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -75,7 +74,8 @@ import { makeAMLink, retryWhile } from '../utils/misc';
 import { AsyncRequestMapSlice, messageFromError, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { safeParseDurationstr } from '../utils/time';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 

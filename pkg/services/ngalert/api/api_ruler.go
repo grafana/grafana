@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -302,9 +303,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return toNamespaceErrorResponse(err)
 	}
 
-	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
-		return srv.conditionValidator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
-	}, srv.cfg)
+	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, srv.cfg)
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -343,6 +342,10 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
+		if err := validateQueries(c.Req.Context(), groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
+			return err
+		}
+
 		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.OrgID, groupChanges); err != nil {
 			return err
 		}
@@ -350,29 +353,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		finalChanges = store.UpdateCalculatedRuleFields(groupChanges)
 		logger.Debug("updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
-		if len(finalChanges.Update) > 0 || len(finalChanges.New) > 0 {
-			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
-			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
-			for _, update := range finalChanges.Update {
-				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
-				updates = append(updates, ngmodels.UpdateRule{
-					Existing: update.Existing,
-					New:      *update.New,
-				})
-			}
-			for _, rule := range finalChanges.New {
-				inserts = append(inserts, *rule)
-			}
-			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
-			if err != nil {
-				return fmt.Errorf("failed to add rules: %w", err)
-			}
-			err = srv.store.UpdateAlertRules(tranCtx, updates)
-			if err != nil {
-				return fmt.Errorf("failed to update rules: %w", err)
-			}
-		}
-
+		// Delete first as this could prevent future unique constraint violations.
 		if len(finalChanges.Delete) > 0 {
 			UIDs := make([]string, 0, len(finalChanges.Delete))
 			for _, rule := range finalChanges.Delete {
@@ -381,6 +362,32 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 			if err = srv.store.DeleteAlertRulesByUID(tranCtx, c.SignedInUser.OrgID, UIDs...); err != nil {
 				return fmt.Errorf("failed to delete rules: %w", err)
+			}
+		}
+
+		if len(finalChanges.Update) > 0 {
+			updates := make([]ngmodels.UpdateRule, 0, len(finalChanges.Update))
+			for _, update := range finalChanges.Update {
+				logger.Debug("updating rule", "rule_uid", update.New.UID, "diff", update.Diff.String())
+				updates = append(updates, ngmodels.UpdateRule{
+					Existing: update.Existing,
+					New:      *update.New,
+				})
+			}
+			err = srv.store.UpdateAlertRules(tranCtx, updates)
+			if err != nil {
+				return fmt.Errorf("failed to update rules: %w", err)
+			}
+		}
+
+		if len(finalChanges.New) > 0 {
+			inserts := make([]ngmodels.AlertRule, 0, len(finalChanges.New))
+			for _, rule := range finalChanges.New {
+				inserts = append(inserts, *rule)
+			}
+			_, err = srv.store.InsertAlertRules(tranCtx, inserts)
+			if err != nil {
+				return fmt.Errorf("failed to add rules: %w", err)
 			}
 		}
 
@@ -503,4 +510,24 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 		return nil
 	}
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
+}
+
+func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user *user.SignedInUser) error {
+	if len(groupChanges.New) > 0 {
+		for _, rule := range groupChanges.New {
+			err := validator.Validate(eval.NewContext(ctx, user), rule.GetEvalCondition())
+			if err != nil {
+				return fmt.Errorf("%w '%s': %s", ngmodels.ErrAlertRuleFailedValidation, rule.Title, err.Error())
+			}
+		}
+	}
+	if len(groupChanges.Update) > 0 {
+		for _, upd := range groupChanges.Update {
+			err := validator.Validate(eval.NewContext(ctx, user), upd.New.GetEvalCondition())
+			if err != nil {
+				return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID, err.Error())
+			}
+		}
+	}
+	return nil
 }

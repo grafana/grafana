@@ -31,7 +31,24 @@ describe('ConfigEditor', () => {
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
 
-    render(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={options} />);
+    const { rerender } = render(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={options} />);
+
+    expect(mockOnOptionsChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jsonData: expect.objectContaining({
+          timeField: '@timestamp',
+          maxConcurrentShardRequests: 5,
+        }),
+      })
+    );
+
+    // Setting options to default should happen on every render, not once.
+    mockOnOptionsChange.mockClear();
+    const updatedOptions = { ...options };
+    updatedOptions.jsonData.timeField = '';
+    // @ts-expect-error
+    updatedOptions.jsonData.maxConcurrentShardRequests = '';
+    rerender(<ConfigEditor onOptionsChange={mockOnOptionsChange} options={updatedOptions} />);
 
     expect(mockOnOptionsChange).toHaveBeenCalledWith(
       expect.objectContaining({

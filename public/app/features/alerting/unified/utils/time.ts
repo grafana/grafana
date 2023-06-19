@@ -95,6 +95,14 @@ export function parsePrometheusDuration(duration: string): number {
   return totalDuration;
 }
 
+export const safeParseDurationstr = (duration: string): number => {
+  try {
+    return parsePrometheusDuration(duration);
+  } catch (e) {
+    return 0;
+  }
+};
+
 export const isNullDate = (date: string) => {
   return date.includes('0001-01-01T00');
 };

@@ -5,10 +5,13 @@ This module returns all the pipelines used in the event of documentation changes
 load(
     "scripts/drone/steps/lib.star",
     "build_docs_website_step",
-    "build_image",
     "codespell_step",
     "identify_runner_step",
     "yarn_install_step",
+)
+load(
+    "scripts/drone/utils/images.star",
+    "images",
 )
 load(
     "scripts/drone/utils/utils.star",
@@ -46,7 +49,7 @@ def docs_pipelines(ver_mode, trigger):
 def lint_docs():
     return {
         "name": "lint-docs",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "yarn-install",
         ],
