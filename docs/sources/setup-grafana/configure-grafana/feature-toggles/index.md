@@ -75,7 +75,7 @@ Experimental features might be changed or removed without prior notice.
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                        |
-| `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                       |
+| `lokiExperimentalStreaming`        | Support new streaming approach for loki (prototype, needs special loki build)                                |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                              |
 | `newTraceViewHeader`               | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                             |

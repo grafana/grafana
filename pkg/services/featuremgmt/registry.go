@@ -62,8 +62,8 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:        "lokiLive",
-			Description: "Support WebSocket streaming for loki (early prototype)",
+			Name:        "lokiExperimentalStreaming",
+			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
