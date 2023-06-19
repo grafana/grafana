@@ -228,6 +228,7 @@ export async function importPluginModule({
 
 function isFrontendSandboxSupported(isAngular?: boolean): boolean {
   // To fast test and debug the sandbox in the browser.
+  const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
   return (
     !isAngular &&
     Boolean(config.featureToggles.pluginsFrontendSandbox) &&
