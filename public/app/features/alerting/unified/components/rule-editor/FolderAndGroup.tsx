@@ -153,7 +153,7 @@ export function FolderAndGroup() {
         <InputControl
           render={({ field: { ref, ...field }, fieldState }) => (
             <AsyncSelect
-              disabled={!folder}
+              disabled={!folder || loading}
               inputId="group"
               key={uniqueId()}
               {...field}
@@ -163,6 +163,7 @@ export function FolderAndGroup() {
               isLoading={loading}
               invalid={Boolean(folder) && !group && Boolean(fieldState.error)}
               loadOptions={debouncedSearch}
+              cacheOptions
               loadingMessage={'Loading groups...'}
               defaultValue={defaultGroupValue}
               defaultOptions={groupOptions}
