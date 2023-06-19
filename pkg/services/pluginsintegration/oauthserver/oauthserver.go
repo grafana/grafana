@@ -20,18 +20,32 @@ func ProvideService(os oauthserver.OAuth2Server) *Service {
 
 // SavePluginExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
 func (s *Service) SavePluginExternalService(ctx context.Context, svcName string, svc *oauth.PluginExternalService) (*oauth.PluginExternalServiceRegistration, error) {
+	impersonation := oauthserver.ImpersonationCfg{
+		Permissions: svc.Impersonation.Permissions,
+	}
+	if svc.Impersonation.Enabled != nil {
+		impersonation.Enabled = *svc.Impersonation.Enabled
+	} else {
+		impersonation.Enabled = true
+	}
+	if svc.Impersonation.Groups != nil {
+		impersonation.Groups = *svc.Impersonation.Groups
+	} else {
+		impersonation.Groups = true
+	}
+	self := oauthserver.SelfCfg{
+		Permissions: svc.Self.Permissions,
+	}
+	if svc.Self.Enabled != nil {
+		self.Enabled = *svc.Self.Enabled
+	} else {
+		self.Enabled = true
+	}
 	extSvc, err := s.os.SaveExternalService(ctx, &oauthserver.ExternalServiceRegistration{
-		Name: svcName,
-		Impersonation: oauthserver.ImpersonationCfg{
-			Enabled:     true,
-			Groups:      true,
-			Permissions: svc.ImpersonationPermissions,
-		},
-		Self: oauthserver.SelfCfg{
-			Enabled:     true,
-			Permissions: svc.SelfPermissions,
-		},
-		Key: &oauthserver.KeyOption{Generate: true},
+		Name:          svcName,
+		Impersonation: impersonation,
+		Self:          self,
+		Key:           &oauthserver.KeyOption{Generate: true},
 	})
 	if err != nil {
 		return nil, err
