@@ -1,0 +1,116 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "10.1.0-pre",
+      "targets": [
+        {
+          "csvContent": "time,x\n2023-06-12T05:49:00Z,10\n2023-06-12T07:01:00Z,20\n2023-06-12T08:13:00Z,NaN\n2023-06-12T09:25:00Z,NaN\n2023-06-12T10:37:00Z,NaN\n2023-06-12T11:49:00Z,30\n2023-06-12T13:01:00Z,20\n2023-06-12T14:13:00Z,10\n2023-06-12T15:25:00Z,Inf\n2023-06-12T16:37:00Z,null\n2023-06-12T17:49:00Z,",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "SparkLineCell with NaNs,Nulls,Infinity",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {}
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "2023-06-12T00:00:00.000Z",
+    "to": "2023-06-12T18:00:00.000Z"
+  },
+  "timepicker": {},
+  "timezone": "utc",
+  "title": "Table with SparklineCell",
+  "uid": "d6373b49-1957-4f00-9218-ee2120d3ecd9",
+  "version": 4,
+  "weekStart": ""
+}

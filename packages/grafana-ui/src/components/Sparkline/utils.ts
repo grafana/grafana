@@ -43,5 +43,9 @@ export function preparePlotFrame(sparkline: FieldSparkline, config?: FieldConfig
     frame = sortDataFrame(frame, 0);
   }
 
-  return applyNullInsertThreshold({ frame });
+  return applyNullInsertThreshold({
+    frame,
+    refFieldPseudoMin: sparkline.timeRange?.from.valueOf(),
+    refFieldPseudoMax: sparkline.timeRange?.to.valueOf(),
+  });
 }
