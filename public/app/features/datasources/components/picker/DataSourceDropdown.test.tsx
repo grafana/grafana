@@ -144,7 +144,7 @@ describe('DataSourceDropdown', () => {
       expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
     });
 
-    it('should get the sorting function using the correct paramters', async () => {
+    it('should get the sorting function using the correct parameters, async () => {
       //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
       const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
       await setupOpenDropdown(user);
