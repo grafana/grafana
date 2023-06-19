@@ -81,7 +81,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       <EditorRow>
         <QueryOptionGroup
           title="Options"
-          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery)}
+          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep)}
           queryStats={queryStats}
         >
           <EditorField
@@ -162,7 +162,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
   }
 );
 
-function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, maxLines: number, isLogQuery: boolean): string[] {
+function getCollapsedInfo(
+  query: LokiQuery,
+  queryType: LokiQueryType,
+  maxLines: number,
+  isLogQuery: boolean,
+  isValidStep: boolean
+): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
@@ -184,7 +190,7 @@ function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, maxLines: 
 
   if (!isLogQuery) {
     if (query.step) {
-      items.push(`Step: ${query.step}`);
+      items.push(`Step: ${isValidStep ? query.step : 'Invalid step'}`);
     }
 
     if (query.resolution) {

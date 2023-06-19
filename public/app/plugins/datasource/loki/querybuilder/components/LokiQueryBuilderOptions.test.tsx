@@ -100,6 +100,13 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
   });
 
+  it('shows correct options for metric query with invalid step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
+    expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
+    expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Step: Invalid step')).toBeInTheDocument();
+  });
+
   it('shows error when invalid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: 'a' });
     await userEvent.click(screen.getByTitle('Click to edit options'));
