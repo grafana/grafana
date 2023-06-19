@@ -372,6 +372,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     reportInteraction('grafana_explore_logs_permalink_clicked', {
       datasourceType: row.datasourceType ?? 'unknown',
       logRowUid: row.uid,
+      logRowLevel: row.logLevel,
     });
   };
 

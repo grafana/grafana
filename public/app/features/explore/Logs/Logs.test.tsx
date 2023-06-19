@@ -305,6 +305,7 @@ describe('Logs', () => {
       expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
         datasourceType: 'unknown',
         logRowUid: '2',
+        logRowLevel: 'debug',
       });
     });
 
