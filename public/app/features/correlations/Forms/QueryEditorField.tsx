@@ -1,24 +1,10 @@
-import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 import { Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
-import { CoreApp, DataQuery, getDefaultTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import {
-  Field,
-  LoadingPlaceholder,
-  Alert,
-  Button,
-  HorizontalGroup,
-  Icon,
-  FieldValidationMessage,
-  useStyles2,
-} from '@grafana/ui';
-
-import { generateKey } from '../../../core/utils/explore';
-import { QueryTransaction } from '../../../types';
-import { runRequest } from '../../query/state/runRequest';
+import { Field, LoadingPlaceholder, Alert } from '@grafana/ui';
 
 interface Props {
   dsUid?: string;
@@ -27,19 +13,7 @@ interface Props {
   error?: string;
 }
 
-function getStyle(theme: GrafanaTheme2) {
-  return {
-    valid: css`
-      color: ${theme.colors.success.text};
-    `,
-  };
-}
-
 export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
-  const [isValidQuery, setIsValidQuery] = useState<boolean | undefined>(undefined);
-
-  const style = useStyles2(getStyle);
-
   const {
     value: datasource,
     loading: dsLoading,
@@ -52,53 +26,6 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
   }, [dsUid]);
 
   const QueryEditor = datasource?.components?.QueryEditor;
-
-  const handleValidation = (value: DataQuery) => {
-    const interval = '1s';
-    const intervalMs = 1000;
-    const id = generateKey();
-    const queries = [{ ...value, refId: 'A' }];
-
-    const transaction: QueryTransaction = {
-      queries,
-      request: {
-        app: CoreApp.Correlations,
-        timezone: 'utc',
-        startTime: Date.now(),
-        interval,
-        intervalMs,
-        targets: queries,
-        range: getDefaultTimeRange(),
-        requestId: 'correlations_' + id,
-        scopedVars: {
-          __interval: { text: interval, value: interval },
-          __interval_ms: { text: intervalMs, value: intervalMs },
-        },
-      },
-      id,
-      done: false,
-    };
-
-    if (datasource) {
-      runRequest(datasource, transaction.request).subscribe((panelData) => {
-        if (
-          !panelData ||
-          panelData.state === 'Error' ||
-          (panelData.state === 'Done' && panelData.series.length === 0)
-        ) {
-          setIsValidQuery(false);
-        } else if (
-          panelData.state === 'Done' &&
-          panelData.series.length > 0 &&
-          Boolean(panelData.series.find((element) => element.length > 0))
-        ) {
-          setIsValidQuery(true);
-        } else {
-          setIsValidQuery(undefined);
-        }
-      });
-    }
-  };
 
   return (
     <Field
@@ -147,27 +74,14 @@ export const QueryEditorField = ({ dsUid, invalid, error, name }: Props) => {
           return (
             <>
               <QueryEditor
+                onRunQuery={() => {}}
                 app={CoreApp.Correlations}
-                onRunQuery={() => handleValidation(value)}
                 onChange={(value) => {
-                  setIsValidQuery(undefined);
                   onChange(value);
                 }}
                 datasource={datasource}
                 query={value}
               />
-              <HorizontalGroup justify="flex-end">
-                {isValidQuery ? (
-                  <div className={style.valid}>
-                    <Icon name="check" /> This query is valid.
-                  </div>
-                ) : isValidQuery === false ? (
-                  <FieldValidationMessage>This query is not valid.</FieldValidationMessage>
-                ) : null}
-                <Button variant="secondary" icon={'check'} type="button" onClick={() => handleValidation(value)}>
-                  Validate query
-                </Button>
-              </HorizontalGroup>
             </>
           );
         }}

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
@@ -30,6 +30,14 @@ const setDerivedFields = makeJsonUpdater('derivedFields');
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
 
+  const updatePredefinedOperations = useCallback(
+    (value: string) => {
+      reportInteraction('grafana_loki_predefined_operations_changed', { value });
+      onOptionsChange(setPredefinedOperations(options, value));
+    },
+    [options, onOptionsChange]
+  );
+
   return (
     <>
       <DataSourceHttpSettings
@@ -46,7 +54,7 @@ export const ConfigEditor = (props: Props) => {
         maxLines={options.jsonData.maxLines || ''}
         onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
         predefinedOperations={options.jsonData.predefinedOperations || ''}
-        onPredefinedOperationsChange={(value) => onOptionsChange(setPredefinedOperations(options, value))}
+        onPredefinedOperationsChange={updatePredefinedOperations}
       />
 
       <DerivedFields
