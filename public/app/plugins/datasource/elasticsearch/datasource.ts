@@ -61,7 +61,7 @@ import {
   TermsQuery,
   Interval,
 } from './types';
-import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
+import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
@@ -598,12 +598,18 @@ export class ElasticDatasource
         };
 
       case SupplementaryQueryType.LogsSample:
-        isQuerySuitable = !!(
-          query.bucketAggs?.length === 1 && query.bucketAggs.some((bucket) => bucket.type === 'date_histogram')
-        );
+        isQuerySuitable = isTimeSeriesQuery(query);
 
         if (!isQuerySuitable) {
           return undefined;
+        }
+
+        if (options.limit) {
+          return {
+            refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+            query: query.query,
+            metrics: [{ type: 'logs', id: '1', settings: { limit: options.limit.toString() } }],
+          };
         }
 
         return {
