@@ -274,12 +274,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           <td className={style.logsDetailsIcon}>
             <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <AsyncIconButton
-                  name="search-plus"
-                  tooltip="Filter for value"
-                  onClick={this.filterLabel}
-                  isActive={this.isFilterLabelActive}
-                />
+                <AsyncIconButton name="search-plus" onClick={this.filterLabel} isActive={this.isFilterLabelActive} />
               )}
               {hasFilteringFunctionality && (
                 <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
@@ -344,7 +339,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
-  tooltip: string;
   isActive(): Promise<boolean>;
 }
 
@@ -357,7 +351,13 @@ const AsyncIconButton = ({ isActive, ...rest }: AsyncIconButtonProps) => {
    */
   isActive().then(setActive);
 
-  return <IconButton {...rest} variant={active ? 'primary' : undefined} />;
+  return (
+    <IconButton
+      {...rest}
+      variant={active ? 'primary' : undefined}
+      tooltip={active ? 'Remove filter' : 'Filter for value'}
+    />
+  );
 };
 
 export const LogDetailsRow = withTheme2(UnThemedLogDetailsRow);

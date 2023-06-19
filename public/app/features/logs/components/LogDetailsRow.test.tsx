@@ -58,10 +58,17 @@ describe('LogDetailsRow', () => {
     it('should render filter label button', () => {
       setup();
       expect(screen.getAllByRole('button', { name: 'Filter for value' })).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Remove filter' })).not.toBeInTheDocument();
     });
     it('should render filter out label button', () => {
       setup();
       expect(screen.getAllByRole('button', { name: 'Filter out value' })).toHaveLength(1);
+    });
+    it('should render remove filter button', async () => {
+      setup({
+        isFilterLabelActive: jest.fn().mockResolvedValue(true),
+      });
+      expect(await screen.findByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
     });
   });
 
