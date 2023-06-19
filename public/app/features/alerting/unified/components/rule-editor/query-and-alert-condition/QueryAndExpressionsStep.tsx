@@ -348,11 +348,13 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
   const newMenu = (
     <Menu>
       {gelTypes.map((type) => (
-        <MenuItem
-          key={type.value}
-          onClick={() => onClickType(type.value ?? ExpressionQueryType.math)}
-          label={type.label ?? ''}
-        />
+        <Tooltip key={type.value} content={type.description ?? ''} placement="right">
+          <MenuItem
+            key={type.value}
+            onClick={() => onClickType(type.value ?? ExpressionQueryType.math)}
+            label={type.label ?? ''}
+          />
+        </Tooltip>
       ))}
     </Menu>
   );
