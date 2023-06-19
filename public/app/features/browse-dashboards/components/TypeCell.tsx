@@ -1,45 +1,61 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 import { CellProps } from 'react-table';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { DashboardsTreeItem } from '../types';
 
 export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeItem, unknown>) {
-  const styles = useStyles2(getStyles);
   const iconName = getIconForKind(data.item.kind);
+  const styles = useStyles2(getStyles);
 
   switch (data.item.kind) {
     case 'dashboard':
       return (
-        <span className={styles.text}>
-          <Icon name={iconName} /> Dashboard
-        </span>
+        <div className={styles.container}>
+          <Icon name={iconName} />
+          <Span variant="body" color="secondary" truncate>
+            Dashboard
+          </Span>
+        </div>
       );
     case 'folder':
       return (
-        <span className={styles.text}>
-          <Icon name={iconName} /> Folder
-        </span>
+        <div className={styles.container}>
+          <Icon name={iconName} />
+          <Span variant="body" color="secondary" truncate>
+            Folder
+          </Span>
+        </div>
       );
     case 'panel':
       return (
-        <span className={styles.text}>
-          <Icon name={iconName} /> Panel
-        </span>
+        <div className={styles.container}>
+          <Icon name={iconName} />
+          <Span variant="body" color="secondary" truncate>
+            Panel
+          </Span>
+        </div>
       );
+    case 'ui':
+      return data.item.uiKind === 'empty-folder' ? null : <Skeleton width={100} />;
     default:
       return null;
   }
 }
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    text: css({
-      color: theme.colors.text.secondary,
-    }),
-  };
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    alignItems: 'center',
+    display: 'flex',
+    flexWrap: 'nowrap',
+    gap: theme.spacing(0.5),
+    // needed for text to truncate correctly
+    overflow: 'hidden',
+  }),
+});

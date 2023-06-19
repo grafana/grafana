@@ -2,12 +2,10 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { dateTime, LoadingState } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
-
-import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { ExploreId, ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
-import { changeRangeAction, changeRefreshIntervalAction, timeReducer, updateTime } from './time';
+import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
 import { makeExplorePaneState } from './utils';
 
 const MOCK_TIME_RANGE = {};
@@ -30,14 +28,10 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('Explore item reducer', () => {
-  silenceConsoleOutput();
-
   describe('When time is updated', () => {
     it('Time service is re-initialized and template service is updated with the new time range', async () => {
-      const { dispatch } = configureStore({
-        ...(createDefaultInitialState() as any),
-      });
-      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      const { dispatch } = configureStore(createDefaultInitialState().defaultInitialState as any);
+      dispatch(updateTime({ exploreId: ExploreId.left }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
     });
@@ -62,7 +56,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
         .thenStateShouldEqual(expectedState);
     });
 
@@ -82,7 +76,7 @@ describe('Explore item reducer', () => {
       };
       reducerTester<ExploreItemState>()
         .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
+        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: '' }))
         .thenStateShouldEqual(expectedState);
     });
   });

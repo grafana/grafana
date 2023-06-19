@@ -65,7 +65,7 @@ export const generateColumns = (
         if (selection('*', '*')) {
           return (
             <div className={styles.checkboxHeader}>
-              <IconButton name="check-square" onClick={clearSelection} />
+              <IconButton name="check-square" onClick={clearSelection} tooltip="Clear selection" />
             </div>
           );
         }
@@ -240,7 +240,7 @@ export const generateColumns = (
       Cell: (p) => {
         return (
           <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
-            {vals.get(p.row.index)}
+            {vals[p.row.index]}
           </div>
         );
       },

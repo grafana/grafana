@@ -1,33 +1,42 @@
 import { css, cx } from '@emotion/css';
-import React, { useMemo } from 'react';
-import { CellProps, Column, TableInstance, useTable } from 'react-table';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { TableInstance, useTable } from 'react-table';
 import { FixedSizeList as List } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Checkbox, useStyles2 } from '@grafana/ui';
-import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
+import { useStyles2 } from '@grafana/ui';
+import { DashboardViewItem } from 'app/features/search/types';
 
-import { DashboardsTreeItem, DashboardTreeSelection, INDENT_AMOUNT_CSS_VAR } from '../types';
+import {
+  DashboardsTreeCellProps,
+  DashboardsTreeColumn,
+  DashboardsTreeItem,
+  INDENT_AMOUNT_CSS_VAR,
+  SelectionState,
+} from '../types';
 
+import CheckboxCell from './CheckboxCell';
+import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
+import { TagsCell } from './TagsCell';
 import { TypeCell } from './TypeCell';
+import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
   items: DashboardsTreeItem[];
   width: number;
   height: number;
-  selectedItems: DashboardTreeSelection;
+  canSelect: boolean;
+  isSelected: (kind: DashboardViewItem | '$all') => SelectionState;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
+  onAllSelectionChange: (newState: boolean) => void;
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
-}
 
-type DashboardsTreeColumn = Column<DashboardsTreeItem>;
-type DashboardsTreeCellProps = CellProps<DashboardsTreeItem, unknown> & {
-  // Note: userProps for cell renderers (e.g. second argument in `cell.render('Cell', foo)` )
-  // aren't typed, so we must be careful when accessing this
-  selectedItems?: DashboardsTreeProps['selectedItems'];
-};
+  isItemLoaded: (itemIndex: number) => boolean;
+  requestLoadMore: (startIndex: number, endIndex: number) => void;
+}
 
 const HEADER_HEIGHT = 35;
 const ROW_HEIGHT = 35;
@@ -36,57 +45,87 @@ export function DashboardsTree({
   items,
   width,
   height,
-  selectedItems,
+  isSelected,
   onFolderClick,
+  onAllSelectionChange,
   onItemSelectionChange,
+  isItemLoaded,
+  requestLoadMore,
+  canSelect = false,
 }: DashboardsTreeProps) {
+  const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    // If the tree changed identity, then some indexes that were previously loaded may now be unloaded,
+    // especially after a refetch after a move/delete.
+    // Clear that cache, and check if we need to trigger another load
+    if (infiniteLoaderRef.current) {
+      infiniteLoaderRef.current.resetloadMoreItemsCache(true);
+    }
+  }, [items]);
 
   const tableColumns = useMemo(() => {
     const checkboxColumn: DashboardsTreeColumn = {
       id: 'checkbox',
-      Header: () => <Checkbox value={false} />,
-      Cell: ({ row: { original: row }, selectedItems }: DashboardsTreeCellProps) => {
-        const item = row.item;
-        if (item.kind === 'ui-empty-folder' || !selectedItems) {
-          return <></>;
-        }
-
-        const isSelected = selectedItems?.[item.kind][item.uid] ?? false;
-        return (
-          <Checkbox
-            data-testid={selectors.pages.BrowseDashbards.table.checkbox(item.uid)}
-            value={isSelected}
-            onChange={(ev) => onItemSelectionChange(item, ev.currentTarget.checked)}
-          />
-        );
-      },
+      width: 0,
+      Header: CheckboxHeaderCell,
+      Cell: CheckboxCell,
     };
 
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
-      Header: <span style={{ paddingLeft: 20 }}>Name</span>,
+      width: 3,
+      Header: <span style={{ paddingLeft: 24 }}>Name</span>,
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
     const typeColumn: DashboardsTreeColumn = {
       id: 'type',
+      width: 1,
       Header: 'Type',
       Cell: TypeCell,
     };
 
-    return [checkboxColumn, nameColumn, typeColumn];
-  }, [onItemSelectionChange, onFolderClick]);
+    const tagsColumns: DashboardsTreeColumn = {
+      id: 'tags',
+      width: 2,
+      Header: 'Tags',
+      Cell: TagsCell,
+    };
+    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
 
-  const table = useTable({ columns: tableColumns, data: items });
+    return columns;
+  }, [onFolderClick, canSelect]);
+
+  const table = useTable({ columns: tableColumns, data: items }, useCustomFlexLayout);
   const { getTableProps, getTableBodyProps, headerGroups } = table;
 
-  const virtualData = useMemo(() => {
-    return {
+  const virtualData = useMemo(
+    () => ({
       table,
-      selectedItems,
-    };
-  }, [table, selectedItems]);
+      isSelected,
+      onAllSelectionChange,
+      onItemSelectionChange,
+    }),
+    // we need this to rerender if items changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [table, isSelected, onAllSelectionChange, onItemSelectionChange, items]
+  );
+
+  const handleIsItemLoaded = useCallback(
+    (itemIndex: number) => {
+      return isItemLoaded(itemIndex);
+    },
+    [isItemLoaded]
+  );
+
+  const handleLoadMore = useCallback(
+    (startIndex: number, endIndex: number) => {
+      requestLoadMore(startIndex, endIndex);
+    },
+    [requestLoadMore]
+  );
 
   return (
     <div {...getTableProps()} className={styles.tableRoot} role="table">
@@ -102,7 +141,7 @@ export function DashboardsTree({
 
               return (
                 <div key={key} {...headerProps} role="columnheader" className={styles.cell}>
-                  {column.render('Header')}
+                  {column.render('Header', { isSelected, onAllSelectionChange })}
                 </div>
               );
             })}
@@ -111,16 +150,26 @@ export function DashboardsTree({
       })}
 
       <div {...getTableBodyProps()}>
-        <List
-          className="virtual list"
-          height={height - HEADER_HEIGHT}
-          width={width}
+        <InfiniteLoader
+          ref={infiniteLoaderRef}
           itemCount={items.length}
-          itemData={virtualData}
-          itemSize={ROW_HEIGHT}
+          isItemLoaded={handleIsItemLoaded}
+          loadMoreItems={handleLoadMore}
         >
-          {VirtualListRow}
-        </List>
+          {({ onItemsRendered, ref }) => (
+            <List
+              ref={ref}
+              height={height - HEADER_HEIGHT}
+              width={width}
+              itemCount={items.length}
+              itemData={virtualData}
+              itemSize={ROW_HEIGHT}
+              onItemsRendered={onItemsRendered}
+            >
+              {VirtualListRow}
+            </List>
+          )}
+        </InfiniteLoader>
       </div>
     </div>
   );
@@ -131,13 +180,15 @@ interface VirtualListRowProps {
   style: React.CSSProperties;
   data: {
     table: TableInstance<DashboardsTreeItem>;
-    selectedItems: Record<DashboardViewItemKind, Record<string, boolean | undefined>>;
+    isSelected: DashboardsTreeCellProps['isSelected'];
+    onAllSelectionChange: DashboardsTreeCellProps['onAllSelectionChange'];
+    onItemSelectionChange: DashboardsTreeCellProps['onItemSelectionChange'];
   };
 }
 
 function VirtualListRow({ index, style, data }: VirtualListRowProps) {
   const styles = useStyles2(getStyles);
-  const { table, selectedItems } = data;
+  const { table, isSelected, onItemSelectionChange } = data;
   const { rows, prepareRow } = table;
 
   const row = rows[index];
@@ -154,7 +205,7 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 
         return (
           <div key={key} {...cellProps} className={styles.cell}>
-            {cell.render('Cell', { selectedItems })}
+            {cell.render('Cell', { isSelected, onItemSelectionChange })}
           </div>
         );
       })}
@@ -163,8 +214,6 @@ function VirtualListRow({ index, style, data }: VirtualListRowProps) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const columnSizing = 'auto 2fr 1fr';
-
   return {
     tableRoot: css({
       // Responsively
@@ -175,17 +224,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
 
-    cell: css({
-      padding: theme.spacing(1),
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    }),
+    // Column flex properties (cell sizing) are set by customFlexTableLayout.ts
 
     row: css({
-      display: 'grid',
-      gridTemplateColumns: columnSizing,
-      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
 
     headerRow: css({
@@ -199,6 +241,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       },
+    }),
+
+    cell: css({
+      padding: theme.spacing(1),
+      overflow: 'hidden', // Required so flex children can do text-overflow: ellipsis
+      display: 'flex',
+      alignItems: 'center',
     }),
 
     link: css({

@@ -26,9 +26,11 @@ enabled = true
 enabled = false
 ```
 
-Installations that have been migrated to Grafana Alerting can [roll back]({{< relref "roll-back/" >}}) to legacy alerting at any time.
+Installations that have been migrated to Grafana Alerting can [roll back]({{< relref "./roll-back" >}}) to legacy alerting at any time.
 
-> **Note:** This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana Alerting for your Grafana Cloud stack.
+{{% admonition type="note" %}}
+This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana Alerting for your Grafana Cloud stack.
+{{% /admonition %}}
 
 The `ngalert` toggle previously used to enable or disable Grafana Alerting is no longer available.
 

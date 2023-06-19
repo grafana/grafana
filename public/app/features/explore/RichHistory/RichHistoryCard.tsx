@@ -23,7 +23,7 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance } = explore[exploreId]!;
+  const { datasourceInstance } = explore.panes[exploreId]!;
   return {
     exploreId,
     datasourceInstance,
@@ -304,18 +304,18 @@ export function RichHistoryCard(props: Props) {
       <IconButton
         name="comment-alt"
         onClick={toggleActiveUpdateComment}
-        title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
+        tooltip={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
-      <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
+      <IconButton name="copy" onClick={onCopyQuery} tooltip="Copy query to clipboard" />
       {value?.dsInstance && (
-        <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
+        <IconButton name="share-alt" onClick={onCreateShortLink} tooltip="Copy shortened link to clipboard" />
       )}
-      <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
+      <IconButton name="trash-alt" title="Delete query" tooltip="Delete query" onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
         iconType={query.starred ? 'mono' : 'default'}
         onClick={onStarrQuery}
-        title={query.starred ? 'Unstar query' : 'Star query'}
+        tooltip={query.starred ? 'Unstar query' : 'Star query'}
       />
     </div>
   );

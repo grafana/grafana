@@ -15,10 +15,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagDatabaseMetrics
-	// Add Prometheus metrics for database tables
-	FlagDatabaseMetrics = "database_metrics"
-
 	// FlagLiveServiceWebWorker
 	// This will use a webworker thread to processes events rather than the main thread
 	FlagLiveServiceWebWorker = "live-service-web-worker"
@@ -43,9 +39,9 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
-	// FlagLokiLive
-	// Support WebSocket streaming for loki (early prototype)
-	FlagLokiLive = "lokiLive"
+	// FlagLokiExperimentalStreaming
+	// Support new streaming approach for loki (prototype, needs special loki build)
+	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -59,25 +55,17 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8S
-	// Explore native k8s integrations
-	FlagK8S = "k8s"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
 
-	// FlagNewTraceView
-	// Shows the new trace view design
-	FlagNewTraceView = "newTraceView"
+	// FlagNewTraceViewHeader
+	// Shows the new trace view header
+	FlagNewTraceViewHeader = "newTraceViewHeader"
 
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
-
-	// FlagCloudWatchDynamicLabels
-	// Use dynamic labels instead of alias patterns in CloudWatch datasource
-	FlagCloudWatchDynamicLabels = "cloudWatchDynamicLabels"
 
 	// FlagDatasourceQueryMultiStatus
 	// Introduce HTTP 207 Multi Status for api/ds/query
@@ -126,10 +114,6 @@ const (
 	// FlagDataConnectionsConsole
 	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
-
-	// FlagInternationalization
-	// Enables internationalization
-	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
 	// Enables new top navigation and page layouts
@@ -183,17 +167,9 @@ const (
 	// Show trace ids for requests
 	FlagShowTraceId = "showTraceId"
 
-	// FlagDatasourceOnboarding
-	// Enable data source onboarding page
-	FlagDatasourceOnboarding = "datasourceOnboarding"
-
 	// FlagEmptyDashboardPage
 	// Enable the redesigned user interface of a dashboard page that includes no panels
 	FlagEmptyDashboardPage = "emptyDashboardPage"
-
-	// FlagAuthnService
-	// Use new auth service to perform authentication
-	FlagAuthnService = "authnService"
 
 	// FlagDisablePrometheusExemplarSampling
 	// Disable Prometheus exemplar sampling
@@ -264,12 +240,24 @@ const (
 	FlagPrometheusDataplane = "prometheusDataplane"
 
 	// FlagLokiMetricDataplane
-	// Changes responses from Loki to be compliant with the dataplane specification.
+	// Changes metric responses from Loki to be compliant with the dataplane specification.
 	FlagLokiMetricDataplane = "lokiMetricDataplane"
+
+	// FlagDataplaneFrontendFallback
+	// Support dataplane contract field name change for transformations and field name matchers where the name is different
+	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+
+	// FlagDisableSSEDataplane
+	// Disables dataplane specific processing in server side expressions.
+	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagAlertStateHistoryLokiSecondary
 	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
 	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
+
+	// FlagAlertingNotificationsPoliciesMatchingInstances
+	// Enables the preview of matching instances for notification policies
+	FlagAlertingNotificationsPoliciesMatchingInstances = "alertingNotificationsPoliciesMatchingInstances"
 
 	// FlagAlertStateHistoryLokiPrimary
 	// Enable a remote Loki instance as the primary source for state history reads.
@@ -278,10 +266,6 @@ const (
 	// FlagAlertStateHistoryLokiOnly
 	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
 	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
-
-	// FlagDisableSSEDataplane
-	// Disables dataplane specific processing in server side expressions.
-	FlagDisableSSEDataplane = "disableSSEDataplane"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -299,9 +283,9 @@ const (
 	// Starts an OAuth2 authentication provider for external services
 	FlagExternalServiceAuth = "externalServiceAuth"
 
-	// FlagDataplaneFrontendFallback
-	// Support dataplane contract field name change for transformations and field name matchers where the name is different
-	FlagDataplaneFrontendFallback = "dataplaneFrontendFallback"
+	// FlagRefactorVariablesTimeRange
+	// Refactor time range variables flow to reduce number of API calls made when query variables are chained
+	FlagRefactorVariablesTimeRange = "refactorVariablesTimeRange"
 
 	// FlagUseCachingService
 	// When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation
@@ -311,19 +295,51 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAuthenticationConfigUI
-	// Enables authentication configuration UI
-	FlagAuthenticationConfigUI = "authenticationConfigUI"
-
-	// FlagPluginsAPIManifestKey
-	// Use grafana.com API to retrieve the public manifest key
-	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
-
 	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order, CSV upload and advanced mode
+	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
-	// FlagOpensearchDetectVersion
-	// Enable version detection in OpenSearch
-	FlagOpensearchDetectVersion = "opensearchDetectVersion"
+	// FlagFaroDatasourceSelector
+	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
+	FlagFaroDatasourceSelector = "faroDatasourceSelector"
+
+	// FlagEnableDatagridEditing
+	// Enables the edit functionality in the datagrid panel
+	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagDataSourcePageHeader
+	// Apply new pageHeader UI in data source edit page
+	FlagDataSourcePageHeader = "dataSourcePageHeader"
+
+	// FlagExtraThemes
+	// Enables extra themes
+	FlagExtraThemes = "extraThemes"
+
+	// FlagLokiPredefinedOperations
+	// Adds predefined query operations to Loki query editor
+	FlagLokiPredefinedOperations = "lokiPredefinedOperations"
+
+	// FlagPluginsFrontendSandbox
+	// Enables the plugins frontend sandbox
+	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
+
+	// FlagSqlDatasourceDatabaseSelection
+	// Enables previous SQL data source dataset dropdown behavior
+	FlagSqlDatasourceDatabaseSelection = "sqlDatasourceDatabaseSelection"
+
+	// FlagCloudWatchLogsMonacoEditor
+	// Enables the Monaco editor for CloudWatch Logs queries
+	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagExploreScrollableLogsContainer
+	// Improves the scrolling behavior of logs in Explore
+	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
+
+	// FlagRecordedQueriesMulti
+	// Enables writing multiple items from a single query within Recorded Queries
+	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+
+	// FlagAlertingLokiRangeToInstant
+	// Rewrites eligible loki range queries to instant queries
+	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 )

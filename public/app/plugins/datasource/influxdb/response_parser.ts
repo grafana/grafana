@@ -171,7 +171,7 @@ export default class ResponseParser {
 function colContainsTag(colText: string, tagsColumn: string): boolean {
   const tags = (tagsColumn || '').replace(' ', '').split(',');
   for (const tag of tags) {
-    if (colText.includes(tag)) {
+    if (tag !== '' && colText.includes(tag)) {
       return true;
     }
   }

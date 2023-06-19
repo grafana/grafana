@@ -93,6 +93,7 @@ export function SelectBase<T>({
   'aria-label': ariaLabel,
   autoFocus = false,
   backspaceRemovesValue = true,
+  blurInputOnSelect,
   cacheOptions,
   className,
   closeMenuOnSelect = true,
@@ -130,6 +131,8 @@ export function SelectBase<T>({
   onCreateOption,
   onInputChange,
   onKeyDown,
+  onMenuScrollToBottom,
+  onMenuScrollToTop,
   onOpenMenu,
   onFocus,
   openMenuOnFocus = false,
@@ -213,7 +216,8 @@ export function SelectBase<T>({
     'aria-label': ariaLabel,
     autoFocus,
     backspaceRemovesValue,
-    captureMenuScroll: false,
+    blurInputOnSelect,
+    captureMenuScroll: onMenuScrollToBottom || onMenuScrollToTop,
     closeMenuOnSelect,
     // We don't want to close if we're actually scrolling the menu
     // So only close if none of the parents are the select menu itself
@@ -250,6 +254,8 @@ export function SelectBase<T>({
     onKeyDown,
     onMenuClose: onCloseMenu,
     onMenuOpen: onOpenMenu,
+    onMenuScrollToBottom: onMenuScrollToBottom,
+    onMenuScrollToTop: onMenuScrollToTop,
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
@@ -351,11 +357,11 @@ export function SelectBase<T>({
             return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
           },
           SingleValue(props: any) {
-            return <SingleValue {...props} disabled={disabled} />;
+            return <SingleValue {...props} isDisabled={disabled} />;
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
-          MultiValueRemove: MultiValueRemove,
+          MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           ...components,
         }}
         styles={selectStyles}

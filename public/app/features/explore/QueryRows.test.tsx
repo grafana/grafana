@@ -50,18 +50,18 @@ function setup(queries: DataQuery[]) {
 
   const leftState = makeExplorePaneState();
   const initialState: ExploreState = {
-    left: {
-      ...leftState,
-      richHistory: [],
-      datasourceInstance: datasources['someDs-uid'],
-      queries,
+    panes: {
+      left: {
+        ...leftState,
+        richHistory: [],
+        datasourceInstance: datasources['someDs-uid'],
+        queries,
+      },
     },
     syncedTimes: false,
     correlations: [],
-    right: undefined,
     richHistoryStorageFull: false,
     richHistoryLimitExceededWarningShown: false,
-    richHistoryMigrationFailed: false,
   };
   const store = configureStore({ explore: initialState, user: { orgId: 1 } as UserState });
 

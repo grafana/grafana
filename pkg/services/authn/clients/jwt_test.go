@@ -307,3 +307,47 @@ func TestJWTTest(t *testing.T) {
 		})
 	}
 }
+
+func TestJWTStripParam(t *testing.T) {
+	jwtService := &jwt.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
+			return jwt.JWTClaims{
+				"sub":                "1234567890",
+				"email":              "eai.doe@cor.po",
+				"preferred_username": "eai-doe",
+				"name":               "Eai Doe",
+				"roles":              "Admin",
+			}, nil
+		},
+	}
+
+	jwtHeaderName := "X-Forwarded-User"
+
+	cfg := &setting.Cfg{
+		JWTAuthEnabled:                 true,
+		JWTAuthHeaderName:              jwtHeaderName,
+		JWTAuthAutoSignUp:              true,
+		JWTAuthAllowAssignGrafanaAdmin: true,
+		JWTAuthURLLogin:                true,
+		JWTAuthRoleAttributeStrict:     false,
+		JWTAuthRoleAttributePath:       "roles",
+		JWTAuthEmailClaim:              "email",
+		JWTAuthUsernameClaim:           "preferred_username",
+	}
+
+	// #nosec G101 -- This is a dummy/test token
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
+
+	httpReq := &http.Request{
+		URL: &url.URL{RawQuery: "auth_token=" + token + "&other_param=other_value"},
+	}
+	jwtClient := ProvideJWT(jwtService, cfg)
+	_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+		OrgID:       1,
+		HTTPRequest: httpReq,
+		Resp:        nil,
+	})
+	require.NoError(t, err)
+	// auth_token should be removed from the query string
+	assert.Equal(t, "other_param=other_value", httpReq.URL.RawQuery)
+}

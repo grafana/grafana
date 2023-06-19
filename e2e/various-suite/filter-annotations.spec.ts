@@ -55,7 +55,7 @@ e2e.scenario({
     e2e.components.Panels.Panel.title('Panel one')
       .should('exist')
       .within(() => {
-        e2e.pages.SoloPanel.Annotations.marker().should('exist').should('have.length', 4);
+        e2e.pages.Dashboard.Annotations.marker().should('exist').should('have.length', 4);
       });
   },
 });

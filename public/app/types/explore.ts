@@ -26,8 +26,8 @@ export enum ExploreId {
 }
 
 export type ExploreQueryParams = {
-  left: string;
-  right: string;
+  left?: string;
+  right?: string;
 };
 
 /**
@@ -38,14 +38,14 @@ export interface ExploreState {
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
-  /**
-   * Explore state of the left split (left is default in non-split view).
-   */
-  left: ExploreItemState;
-  /**
-   * Explore state of the right area in split view.
-   */
-  right?: ExploreItemState;
+
+  // This being optional wouldn't be needed with noUncheckedIndexedAccess set to true, but it cause more than 5k errors currently.
+  // In order to be safe, we declare each item as pssobly undefined to force existence checks.
+  // This will have the side effect of also forcing undefined checks when iterating over this object entries, but
+  // it's better to error on the safer side.
+  panes: {
+    [paneId in ExploreId]?: ExploreItemState;
+  };
 
   correlations?: CorrelationData[];
 
@@ -66,19 +66,14 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
-   * True if a warning message about failed rich history has been shown already in this session.
-   */
-  richHistoryMigrationFailed: boolean;
-
-  /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
-  largerExploreId?: ExploreId;
+  largerExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a maximize pane button is pressed, this indicates which side was maximized. Will be undefined if not split or if it is manually resized
    */
-  maxedExploreId?: ExploreId;
+  maxedExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a minimize pane button is pressed, it will do an even split of panes. Will be undefined if split or on a manual resize
@@ -98,10 +93,6 @@ export interface ExploreItemState {
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance?: DataSourceApi | null;
-  /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
@@ -217,8 +208,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {

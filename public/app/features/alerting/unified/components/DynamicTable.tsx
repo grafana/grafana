@@ -17,6 +17,7 @@ export interface DynamicTableColumnProps<T = unknown> {
 
   renderCell: (item: DynamicTableItemProps<T>, index: number) => ReactNode;
   size?: number | string;
+  className?: string;
 }
 
 export interface DynamicTableItemProps<T = unknown> {
@@ -123,18 +124,19 @@ export const DynamicTable = <T extends object>({
               {isExpandable && (
                 <div className={cx(styles.cell, styles.expandCell)}>
                   <IconButton
-                    aria-label={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
-                    size="lg"
+                    tooltip={`${isItemExpanded ? 'Collapse' : 'Expand'} row`}
                     data-testid="collapse-toggle"
-                    className={styles.expandButton}
                     name={isItemExpanded ? 'angle-down' : 'angle-right'}
                     onClick={() => toggleExpanded(item)}
-                    type="button"
                   />
                 </div>
               )}
               {cols.map((col) => (
-                <div className={cx(styles.cell, styles.bodyCell)} data-column={col.label} key={`${item.id}-${col.id}`}>
+                <div
+                  className={cx(styles.cell, styles.bodyCell, col.className)}
+                  data-column={col.label}
+                  key={`${item.id}-${col.id}`}
+                >
                   {col.renderCell(item, index)}
                 </div>
               ))}
@@ -272,10 +274,6 @@ const getStyles = <T extends unknown>(
         grid-row: auto;
         padding: ${theme.spacing(1)} 0 0 0;
       }
-    `,
-    expandButton: css`
-      margin-right: 0;
-      display: block;
     `,
   });
 };

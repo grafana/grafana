@@ -77,6 +77,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
       title: 'Panel Title',
       datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
+      isNew: true,
     };
 
     dashboard.addPanel(newPanel);
@@ -212,7 +213,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
     <div className={cx(styles.headerRow, 'grid-drag-handle')}>
       {onBack && (
         <div className={styles.backButton}>
-          <IconButton aria-label="Go back" name="arrow-left" onClick={onBack} size="xl" />
+          <IconButton name="arrow-left" onClick={onBack} size="xl" tooltip="Go back" />
         </div>
       )}
       {!onBack && (
@@ -222,7 +223,7 @@ const AddPanelWidgetHandle = ({ children, onBack, onCancel, styles }: AddPanelWi
       )}
       {children && <span>{children}</span>}
       <div className="flex-grow-1" />
-      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} />
+      <IconButton aria-label="Close 'Add Panel' widget" name="times" onClick={onCancel} tooltip="Close widget" />
     </div>
   );
 };

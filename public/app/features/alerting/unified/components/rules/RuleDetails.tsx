@@ -25,7 +25,7 @@ interface Props {
 // The limit is set to 15 in order to upkeep the good performance
 // and to encourage users to go to the rule details page to see the rest of the instances
 // We don't want to paginate the instances list on the alert list page
-const INSTANCES_DISPLAY_LIMIT = 15;
+export const INSTANCES_DISPLAY_LIMIT = 15;
 
 export const RuleDetails = ({ rule }: Props) => {
   const styles = useStyles2(getStyles);

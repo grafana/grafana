@@ -103,6 +103,28 @@ export const SearchResultsTable = React.memo(
 
     const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = useTable(options, useAbsoluteLayout);
 
+    const handleLoadMore = useCallback(
+      async (startIndex: number, endIndex: number) => {
+        await response.loadMoreItems(startIndex, endIndex);
+
+        // After we load more items, select them if the "select all" checkbox
+        // is selected
+        const isAllSelected = selection?.('*', '*');
+        if (!selectionToggle || !selection || !isAllSelected) {
+          return;
+        }
+
+        for (let index = startIndex; index < response.view.length; index++) {
+          const item = response.view.get(index);
+          const itemIsSelected = selection(item.kind, item.uid);
+          if (!itemIsSelected) {
+            selectionToggle(item.kind, item.uid);
+          }
+        }
+      },
+      [response, selection, selectionToggle]
+    );
+
     const RenderRow = useCallback(
       ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
         const row = rows[rowIndex];
@@ -164,7 +186,7 @@ export const SearchResultsTable = React.memo(
             ref={infiniteLoaderRef}
             isItemLoaded={response.isItemLoaded}
             itemCount={rows.length}
-            loadMoreItems={response.loadMoreItems}
+            loadMoreItems={handleLoadMore}
           >
             {({ onItemsRendered, ref }) => (
               <FixedSizeList

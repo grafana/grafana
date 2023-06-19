@@ -68,7 +68,7 @@ const setup = (propOverrides = {}) => {
 describe('ExploreQueryInspector', () => {
   it('should render closable drawer component', () => {
     setup();
-    expect(screen.getByTitle(/close query inspector/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/close query inspector/i)).toBeInTheDocument();
   });
   it('should render 4 Tabs if queryResponse has no error', () => {
     setup();

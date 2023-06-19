@@ -4,11 +4,12 @@ import React, { lazy, RefObject, Suspense, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { AccessControlAction } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
@@ -52,7 +53,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const { refreshInterval, loading, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
     (state: StoreState) => ({
       ...pick(
-        state.explore[exploreId]!,
+        state.explore.panes[exploreId]!,
         'refreshInterval',
         'loading',
         'datasourceInstance',
@@ -65,9 +66,9 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     shallowEqual
   );
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
-  const showSmallTimePicker = useSelector((state) => splitted || state.explore[exploreId]!.containerWidth < 1210);
+  const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
-    (state) => state.explore[exploreId]!.containerWidth < (splitted ? 700 : 800)
+    (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
   const shouldRotateSplitIcon = useMemo(
@@ -88,7 +89,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
-      return dispatch(runQueries(exploreId));
+      return dispatch(runQueries({ exploreId }));
     }
   };
 
@@ -119,8 +120,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const onChangeFiscalYearStartMonth = (fiscalyearStartMonth: number) =>
     dispatch(updateFiscalYearStartMonthForSession(fiscalyearStartMonth));
 
-  const onChangeRefreshInterval = (item: string) => {
-    dispatch(changeRefreshInterval(exploreId, item));
+  const onChangeRefreshInterval = (refreshInterval: string) => {
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
   const showExploreToDashboard = useMemo(
