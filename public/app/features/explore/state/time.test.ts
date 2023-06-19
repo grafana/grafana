@@ -1,12 +1,11 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
-import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
-import { makeExplorePaneState } from './utils';
+import { changeRangeAction, timeReducer, updateTime } from './time';
 
 const MOCK_TIME_RANGE = {};
 
