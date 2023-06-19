@@ -111,6 +111,7 @@ Alpha features might be changed or removed without prior notice.
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
 | `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `opensearchDetectVersion`          | Enable version detection in OpenSearch                                                                       |
+| `alertingLokiRangeToInstant`       | Rewrites eligible loki range queries to instant queries                                                      |
 
 ## Development feature toggles
 

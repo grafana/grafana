@@ -322,4 +322,8 @@ const (
 	// FlagEnableDatagridEditing
 	// Enables the edit functionality in the datagrid panel
 	FlagEnableDatagridEditing = "enableDatagridEditing"
+
+	// FlagAlertingLokiRangeToInstant
+	// Rewrites eligible loki range queries to instant queries
+	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
 )

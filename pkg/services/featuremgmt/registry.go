@@ -533,5 +533,12 @@ var (
 			State:        FeatureStateBeta,
 			Owner:        grafanaBiSquad,
 		},
+		{
+			Name:         "alertingLokiRangeToInstant",
+			Description:  "Rewrites eligible loki range queries to instant queries",
+			State:        FeatureStateAlpha,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
 	}
 )

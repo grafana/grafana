@@ -97,4 +97,5 @@ export interface FeatureToggles {
   advancedDataSourcePicker?: boolean;
   opensearchDetectVersion?: boolean;
   enableDatagridEditing?: boolean;
+  alertingLokiRangeToInstant?: boolean;
 }

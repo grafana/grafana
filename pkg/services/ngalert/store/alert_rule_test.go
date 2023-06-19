@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -92,7 +93,8 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
 		},
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService:  setupFolderService(t, sqlStore, cfg),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
 	rule1 := createRule(t, store)
