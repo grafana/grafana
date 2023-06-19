@@ -103,7 +103,7 @@ type LokiDataQuery struct {
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
-	// Used to scale the interval value.
+	// @deprecated, now use step.
 	Resolution *int64 `json:"resolution,omitempty"`
 
 	// Used to set step value for range queries.

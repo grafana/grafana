@@ -208,12 +208,12 @@ This section is only shown if the `Explain query` switch from the query editor t
 
 ## Configure query settings
 
-| Name           | Description                                                                                                                                                                                                                                                                    |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                  |
-| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                 |
-| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                               |
-| **Resolution** | Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
+| Name           | Description                                                                                                                                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Type**       | Selects the query type to run. The `instant` type queries against a single point in time. We use the "To" time from the time range. The `range` type queries over the selected range of time.                                                                                              |
+| **Line limit** | Defines the upper limit for the number of log lines returned by a query. The default is Loki's configured maximum lines limit.                                                                                                                                                             |
+| **Legend**     | _(Available only in a dashboard)_ Controls the time series name, using a name or pattern. For example, `{{hostname}}` is replaced with the label value for the label `hostname`.                                                                                                           |
+| **Resolution** | Deprecated. Sets the step parameter of Loki metrics range queries. With a resolution of `1/1`, each pixel corresponds to one data point. `1/2` retrieves one data point for every other pixel, `1/10` retrieves one data point per 10 pixels, and so on. Lower resolutions perform better. |
 
 ## Apply annotations
 
