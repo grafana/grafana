@@ -1,5 +1,5 @@
 import { trim } from 'lodash';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -70,6 +70,13 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     const isLogQuery = isLogsQuery(query.expr);
 
+    const isValidStep = useMemo(() => {
+      if (!query.step || isValidDuration(query.step) || !isNaN(Number(query.step))) {
+        return true;
+      }
+      return false;
+    }, [query.step]);
+
     return (
       <EditorRow>
         <QueryOptionGroup
@@ -109,6 +116,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               <EditorField
                 label="Step"
                 tooltip="Use the step parameter when making metric queries to Loki. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
+                invalid={!isValidStep}
+                error={'Invalid step. Example valid values: 1s, 5m, 10h, 1d.'}
               >
                 <AutoSizeInput
                   className="width-6"
