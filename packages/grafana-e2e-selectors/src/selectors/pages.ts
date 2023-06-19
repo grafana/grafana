@@ -114,8 +114,7 @@ export const Pages = {
           newButton: 'Variable editor New variable button',
           table: 'Variable editor Table',
           tableRowNameFields: (variableName: string) => `Variable editor Table Name field ${variableName}`,
-          tableRowDescriptionFields: (variableName: string) =>
-            `Variable editor Table Description field ${variableName}`,
+          tableRowDefinitionFields: (variableName: string) => `Variable editor Table Definition field ${variableName}`,
           tableRowArrowUpButtons: (variableName: string) => `Variable editor Table ArrowUp button ${variableName}`,
           tableRowArrowDownButtons: (variableName: string) => `Variable editor Table ArrowDown button ${variableName}`,
           tableRowDuplicateButtons: (variableName: string) => `Variable editor Table Duplicate button ${variableName}`,

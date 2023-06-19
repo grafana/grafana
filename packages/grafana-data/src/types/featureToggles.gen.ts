@@ -90,8 +90,6 @@ export interface FeatureToggles {
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  authenticationConfigUI?: boolean;
-  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
@@ -101,4 +99,7 @@ export interface FeatureToggles {
   pluginsFrontendSandbox?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
+  exploreScrollableLogsContainer?: boolean;
+  recordedQueriesMulti?: boolean;
+  alertingLokiRangeToInstant?: boolean;
 }

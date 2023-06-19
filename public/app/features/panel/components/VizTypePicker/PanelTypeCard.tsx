@@ -116,7 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: ${theme.colors.action.selected};
     `,
     disabled: css`
-      opacity: ${theme.colors.action.disabledOpacity};
+      opacity: 0.6;
       filter: grayscale(1);
       cursor: default;
       pointer-events: none;

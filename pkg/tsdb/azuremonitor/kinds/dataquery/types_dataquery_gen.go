@@ -207,7 +207,7 @@ type AzureMetricQuery struct {
 }
 
 // AzureMonitorDataQuery defines model for AzureMonitorDataQuery.
-type AzureMonitorDataQuery = map[string]interface{}
+type AzureMonitorDataQuery = map[string]any
 
 // AzureMonitorQuery defines model for AzureMonitorQuery.
 type AzureMonitorQuery struct {
@@ -223,7 +223,7 @@ type AzureMonitorQuery struct {
 
 	// Application Insights Traces sub-query properties
 	AzureTraces               *AzureTracesQuery `json:"azureTraces,omitempty"`
-	GrafanaTemplateVariableFn *interface{}      `json:"grafanaTemplateVariableFn,omitempty"`
+	GrafanaTemplateVariableFn *any              `json:"grafanaTemplateVariableFn,omitempty"`
 	Namespace                 *string           `json:"namespace,omitempty"`
 
 	// Azure Monitor query type.
@@ -306,7 +306,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
