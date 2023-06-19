@@ -69,17 +69,17 @@ var defaultDetectors = []angulardetector.Detector{
 	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`System\.register\(`)},
 }
 
-// newDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (hardcoded) angular
+// newDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
 // detection patterns (defaultDetectors)
 func newDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 	return &angulardetector.StaticDetectorsProvider{Detectors: defaultDetectors}
 }
 
-// newRemoteInspector returns the default remote Inspector, which is a PatternsListInspector that will:
+// newDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
-//  2. If it fails, it will use the hardcoded detections provided by defaultDetectors.
-func newRemoteInspector(cfg *config.Cfg) (Inspector, error) {
-	remoteProvider, err := angulardetector.NewGCOMDetectorsProvider(
+//  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
+func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
+	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(
 		cfg.GrafanaComURL,
 		angulardetector.DefaultGCOMDetectorsProviderTTL,
 	)
@@ -88,21 +88,21 @@ func newRemoteInspector(cfg *config.Cfg) (Inspector, error) {
 	}
 	return &PatternsListInspector{
 		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
-			remoteProvider,
+			dynamicProvider,
 			newDefaultStaticDetectorsProvider(),
 		},
 	}, nil
 }
 
-// newHardcodedInspector returns the default Inspector, which is a PatternsListInspector that only uses the
-// hardcoded (static) angular detection patterns.
-func newHardcodedInspector() (Inspector, error) {
+// newStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
+// static (hardcoded) angular detection patterns.
+func newStaticInspector() (Inspector, error) {
 	return &PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}, nil
 }
 
 func ProvideService(cfg *config.Cfg) (Inspector, error) {
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns) {
-		return newRemoteInspector(cfg)
+	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
+		return newDynamicInspector(cfg)
 	}
-	return newHardcodedInspector()
+	return newStaticInspector()
 }

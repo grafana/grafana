@@ -59,7 +59,7 @@ func NewGCOMDetectorsProvider(baseURL string, ttl time.Duration) (DetectorsProvi
 	}, nil
 }
 
-// tryUpdateRemoteDetectors tries to update the cached detectors value, if the cache has expired.
+// tryUpdateDynamicDetectors tries to update the cached detectors value, if the cache has expired.
 //
 // If the TTL hasn't passed yet, this function returns immediately.
 // Otherwise, it calls fetch and updates the cached detectors value and lastUpdate.
@@ -68,7 +68,7 @@ func NewGCOMDetectorsProvider(baseURL string, ttl time.Duration) (DetectorsProvi
 // However, if there's an error, the cached value is not changed (the previous one is kept).
 //
 // The caller must have acquired g.mux.
-func (p *GCOMDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) error {
+func (p *GCOMDetectorsProvider) tryUpdateDynamicDetectors(ctx context.Context) error {
 	if time.Since(p.lastUpdate) <= p.ttl {
 		// Patterns already fetched
 		return nil
@@ -90,23 +90,23 @@ func (p *GCOMDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) er
 	if err != nil {
 		return fmt.Errorf("detectors: %w", err)
 	}
-	p.log.Debug("Updated remote angular detectors", "detectors", len(detectors))
+	p.log.Debug("Updated dynamic angular detectors", "detectors", len(detectors))
 
 	// Update cached result
 	p.detectors = detectors
 	return nil
 }
 
-// ProvideDetectors gets the remote detections, either from the cache or from the remote source (if TTL has passed).
+// ProvideDetectors gets the dynamic detectors, either from the cache or from the remote source (if TTL has passed).
 // If an error occurs during the cache refresh, the function fails silently and the old cached value is returned
 // instead.
 func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
-	if err := p.tryUpdateRemoteDetectors(ctx); err != nil {
+	if err := p.tryUpdateDynamicDetectors(ctx); err != nil {
 		// Fail silently
-		p.log.Warn("Could not update remote detectors", "error", err)
+		p.log.Warn("Could not update dynamic detectors", "error", err)
 	}
 	return p.detectors
 }
@@ -121,7 +121,7 @@ func (p *GCOMDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error)
 		return nil, fmt.Errorf("url joinpath: %w", err)
 	}
 
-	p.log.Debug("Fetching remote angular detection patterns", "url", reqURL)
+	p.log.Debug("Fetching dynamic angular detection patterns", "url", reqURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("new request with context: %w", err)
@@ -139,7 +139,7 @@ func (p *GCOMDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error)
 	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
 		return nil, fmt.Errorf("json decode: %w", err)
 	}
-	p.log.Debug("Fetched remote angular detection patterns", "patterns", len(out), "duration", time.Since(st))
+	p.log.Debug("Fetched dynamic angular detection patterns", "patterns", len(out), "duration", time.Since(st))
 	return out, nil
 }
 

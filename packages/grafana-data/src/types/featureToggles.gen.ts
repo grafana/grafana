@@ -101,5 +101,5 @@ export interface FeatureToggles {
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
-  pluginsRemoteAngularDetectionPatterns?: boolean;
+  pluginsDynamicAngularDetectionPatterns?: boolean;
 }

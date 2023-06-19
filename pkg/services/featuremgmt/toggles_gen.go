@@ -339,7 +339,7 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
-	// FlagPluginsRemoteAngularDetectionPatterns
+	// FlagPluginsDynamicAngularDetectionPatterns
 	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
-	FlagPluginsRemoteAngularDetectionPatterns = "pluginsRemoteAngularDetectionPatterns"
+	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 )

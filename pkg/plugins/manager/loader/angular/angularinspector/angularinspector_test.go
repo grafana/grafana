@@ -151,9 +151,9 @@ func TestProvideInspector(t *testing.T) {
 		require.Equal(t, defaultDetectors, detectors, "provided detectors should be the hardcoded ones")
 	})
 
-	t.Run("uses remote inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
+	t.Run("uses dynamic inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
 		inspector, err := ProvideService(&config.Cfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns),
+			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 		})
 		require.NoError(t, err)
 		require.IsType(t, inspector, &PatternsListInspector{})

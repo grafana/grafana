@@ -565,7 +565,7 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:         "pluginsRemoteAngularDetectionPatterns",
+			Name:         "pluginsDynamicAngularDetectionPatterns",
 			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
