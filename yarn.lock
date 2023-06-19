@@ -12731,6 +12731,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"app@link:../../public/app::locator=grafana-test-datasource%40workspace%3Aplugins%2Fgrafana-test-datasource":
+  version: 0.0.0-use.local
+  resolution: "app@link:../../public/app::locator=grafana-test-datasource%40workspace%3Aplugins%2Fgrafana-test-datasource"
+  languageName: node
+  linkType: soft
+
 "app@link:./public/app::locator=grafana%40workspace%3A.":
   version: 0.0.0-use.local
   resolution: "app@link:./public/app::locator=grafana%40workspace%3A."
@@ -19812,8 +19818,10 @@ __metadata:
     "@types/lodash": ^4.14.194
     "@types/node": ^18.15.11
     "@types/react": 18.0.28
+    "@types/testing-library__jest-dom": 5.14.5
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
+    app: "link:../../public/app"
     copy-webpack-plugin: ^11.0.0
     css-loader: ^6.7.3
     eslint: 8.34.0
@@ -19826,6 +19834,7 @@ __metadata:
     identity-obj-proxy: 3.0.0
     jest: ^29.5.0
     jest-environment-jsdom: ^29.5.0
+    lodash: 4.17.21
     prettier: ^2.8.7
     react: 18.2.0
     react-dom: 18.2.0
