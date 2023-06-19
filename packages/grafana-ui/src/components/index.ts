@@ -83,6 +83,7 @@ export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
 export {
+  CustomCellRendererProps,
   TableCellDisplayMode,
   type TableSortByFieldState,
   type TableFooterCalc,

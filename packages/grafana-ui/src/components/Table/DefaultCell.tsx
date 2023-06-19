@@ -12,21 +12,14 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
+import { TableCellDisplayMode, TableCellProps, TableFieldOptions, CustomCellRendererProps } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
-  const { field, cell, tableStyles, row, cellProps } = props;
+  const { field, cell, tableStyles, row, cellProps, frame } = props;
 
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const displayValue = field.display!(cell.value);
-
-  let value: string | ReactElement;
-  if (React.isValidElement(cell.value)) {
-    value = cell.value;
-  } else {
-    value = formattedValueToString(displayValue);
-  }
 
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
@@ -34,6 +27,22 @@ export const DefaultCell = (props: TableCellProps) => {
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  let value: string | ReactElement;
+
+  if (cellOptions.type === TableCellDisplayMode.Custom) {
+    //@ts-ignore
+    const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
+    // TODO pass a limited set of props, not the whole TableCellProps
+    // But what to pass? can we access the raw data frame? think field, rowIndex, dataFrame would be enough,
+    // and then we don't expose internal react table types. but not sure how to access dataFrame
+    value = <CustomCellComponent field={field} value={cell.value} index={row.index} frame={frame} />;
+  } else {
+    if (React.isValidElement(cell.value)) {
+      value = cell.value;
+    } else {
+      value = formattedValueToString(displayValue);
+    }
+  }
 
   return (
     <div {...cellProps} className={cellStyle}>

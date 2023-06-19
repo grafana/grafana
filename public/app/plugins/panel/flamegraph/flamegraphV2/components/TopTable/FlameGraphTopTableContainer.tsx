@@ -4,7 +4,14 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Table, TableSortByFieldState, useStyles2 } from '@grafana/ui';
+import {
+  IconButton,
+  Table,
+  TableCellDisplayMode,
+  TableFieldOptions,
+  TableSortByFieldState,
+  useStyles2,
+} from '@grafana/ui';
 
 import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -15,9 +22,22 @@ type Props = {
   app: CoreApp;
   onSymbolClick: (symbol: string) => void;
   height?: number;
+  search?: string;
+  sandwichItem?: string;
+  onSearch: (str: string) => void;
+  onSandwich: (str?: string) => void;
 };
 
-const FlameGraphTopTableContainer = ({ data, app, onSymbolClick, height }: Props) => {
+const FlameGraphTopTableContainer = ({
+  data,
+  app,
+  onSymbolClick,
+  height,
+  search,
+  onSearch,
+  sandwichItem,
+  onSandwich,
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
@@ -30,7 +50,7 @@ const FlameGraphTopTableContainer = ({ data, app, onSymbolClick, height }: Props
             return null;
           }
 
-          const frame = buildTableDataFrame(data, width, onSymbolClick);
+          const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
           return (
             <Table
               initialSortBy={sort}
@@ -58,7 +78,11 @@ const FlameGraphTopTableContainer = ({ data, app, onSymbolClick, height }: Props
 function buildTableDataFrame(
   data: FlameGraphDataContainer,
   width: number,
-  onSymbolClick: (str: string) => void
+  onSymbolClick: (str: string) => void,
+  onSearch: (str: string) => void,
+  onSandwich: (str?: string) => void,
+  search?: string,
+  sandwichItem?: string
 ): DataFrame {
   // Group the data by label
   // TODO: should be by filename + funcName + linenumber?
@@ -71,6 +95,53 @@ function buildTableDataFrame(
     table[label].self = table[label].self ? table[label].self + self : self;
     table[label].total = table[label].total ? table[label].total + value : value;
   }
+
+  const actionFieldTableConfig: TableFieldOptions = {
+    filterable: false,
+    width: 61,
+    hideHeader: true,
+    cellOptions: {
+      type: TableCellDisplayMode.Custom,
+      // @ts-ignore this isn't typed property from Cue
+      cellComponent: (props: CustomCellRendererProps) => {
+        const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.index);
+        const isSearched = search === symbol;
+        const isSandwiched = sandwichItem === symbol;
+
+        return (
+          <div style={{ display: 'flex', height: '24px' }}>
+            <IconButton
+              style={{ width: '24px', marginRight: 0 }}
+              name={'search'}
+              variant={isSearched ? 'primary' : 'secondary'}
+              tooltip={isSearched ? 'Clear search' : 'Search'}
+              onClick={() => {
+                onSearch(isSearched ? '' : symbol);
+              }}
+            />
+            <IconButton
+              style={{ width: '24px', marginRight: 0 }}
+              name={'gf-show-context'}
+              tooltip={isSandwiched ? 'Remove sandwich view' : 'Show sandwich view'}
+              variant={isSandwiched ? 'primary' : 'secondary'}
+              onClick={() => {
+                onSandwich(isSandwiched ? undefined : symbol);
+              }}
+            />
+          </div>
+        );
+      },
+    },
+  };
+
+  const actionField: Field = {
+    type: FieldType.number,
+    name: 'actions',
+    values: [],
+    config: {
+      custom: actionFieldTableConfig,
+    },
+  };
 
   const symbolField: Field = {
     type: FieldType.string,
@@ -107,12 +178,13 @@ function buildTableDataFrame(
   };
 
   for (let key in table) {
+    actionField.values.push(null);
     symbolField.values.push(key);
     selfField.values.push(table[key].self);
     totalField.values.push(table[key].total);
   }
 
-  const frame = { fields: [symbolField, selfField, totalField], length: symbolField.values.length };
+  const frame = { fields: [actionField, symbolField, selfField, totalField], length: symbolField.values.length };
 
   const dataFrames = applyFieldOverrides({
     data: [frame],

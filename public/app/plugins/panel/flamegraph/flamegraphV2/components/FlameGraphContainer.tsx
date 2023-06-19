@@ -106,6 +106,10 @@ const FlameGraphContainer = (props: Props) => {
                   }
                 }}
                 height={selectedView === SelectedView.TopTable ? 600 : undefined}
+                search={search}
+                sandwichItem={sandwichItem}
+                onSandwich={setSandwichItem}
+                onSearch={setSearch}
               />
             )}
 

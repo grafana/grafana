@@ -156,6 +156,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     cellContainer: buildCellContainerStyle(undefined, undefined, true),
     cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false),
     cellText: css`
+      label: cellText;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
