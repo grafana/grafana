@@ -26,6 +26,8 @@ require k8s.io/apimachinery v0.26.2
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
+replace github.com/grafana/grafana/plugins/grafana-test-datasource => ./plugins/grafana-test-datasource
+
 require (
 	cloud.google.com/go/storage v1.28.1
 	cuelang.org/go v0.6.0-0.dev
@@ -62,7 +64,7 @@ require (
 	github.com/grafana/cuetsy v0.1.9
 	github.com/grafana/grafana-aws-sdk v0.15.0
 	github.com/grafana/grafana-azure-sdk-go v1.7.0
-	github.com/grafana/grafana-plugin-sdk-go v0.162.0
+	github.com/grafana/grafana-plugin-sdk-go v0.165.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-plugin v1.4.9
@@ -122,7 +124,7 @@ require (
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/builder v0.3.6
+	xorm.io/builder v0.3.6 // indirect
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.2
 )
@@ -264,6 +266,7 @@ require (
 	github.com/grafana/dataplane/examples v0.0.0-20230404174214-4d6fd58a18ad
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
+	github.com/grafana/grafana/plugins/grafana-test-datasource v0.0.0-00010101000000-000000000000
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
 	github.com/grafana/thema v0.0.0-20230615161902-b6e21996aef8
 	github.com/ory/fosite v0.44.1-0.20230317114349-45a6785cc54f
@@ -418,7 +421,7 @@ require (
 	github.com/xlab/treeprint v1.1.0
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.9.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
