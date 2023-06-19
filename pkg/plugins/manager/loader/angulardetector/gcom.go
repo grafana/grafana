@@ -126,7 +126,7 @@ func (p *gcomDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error)
 	if err != nil {
 		return nil, fmt.Errorf("new request with context: %w", err)
 	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := p.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("http do: %w", err)
 	}
