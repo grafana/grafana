@@ -1245,6 +1245,29 @@ describe('modifyQuery', () => {
   });
 });
 
+describe('inspectQuery()', () => {
+  let ds: ElasticDatasource;
+  beforeEach(() => {
+    ds = getTestContext().ds;
+  });
+  it('returns false for unsupported inspections', () => {
+    const query = { refId: 'A', query: '{a="b"}' };
+    expect(ds.inspectQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
+  });
+  it('inspects queries for filter presence', () => {
+    const query = { refId: 'A', query: 'grafana:"awesome"' };
+    expect(
+      ds.inspectQuery(query, {
+        check: 'HAS_FILTER',
+        attributes: {
+          key: 'grafana',
+          value: 'awesome',
+        },
+      })
+    ).toBe(true);
+  });
+});
+
 describe('addAdhocFilters', () => {
   describe('with invalid filters', () => {
     it('should filter out ad hoc filter without key', () => {

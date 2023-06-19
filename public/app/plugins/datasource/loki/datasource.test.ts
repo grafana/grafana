@@ -1339,6 +1339,30 @@ describe('showContextToggle()', () => {
   });
 });
 
+describe('inspectQuery()', () => {
+  let ds: LokiDatasource;
+  beforeEach(() => {
+    ds = createLokiDatasource(templateSrvStub);
+  });
+  it('returns false for unsupported inspections', () => {
+    const query = { refId: 'A', expr: '{a="b"}' };
+    expect(ds.inspectQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
+  });
+  it('inspects queries for filter presence', () => {
+    const query = { refId: 'A', expr: '{grafana="awesome"}' };
+    expect(
+      ds.inspectQuery(query, {
+        check: 'HAS_FILTER',
+        attributes: {
+          key: 'grafana',
+          operator: '=',
+          value: 'awesome',
+        },
+      })
+    ).toBe(true);
+  });
+});
+
 function assertAdHocFilters(query: string, expectedResults: string, ds: LokiDatasource) {
   const lokiQuery: LokiQuery = { refId: 'A', expr: query };
   const result = ds.addAdHocFilters(lokiQuery.expr);
