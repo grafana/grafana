@@ -625,11 +625,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 0;
     margin-bottom: ${theme.spacing(2)};
   `,
-  // TODO I'm not quite sure why the margins are different for non-child policies, should investigate a bit more
-  addPolicyWrapper: (hasChildPolicies: boolean) => css`
-    margin-top: -${theme.spacing(hasChildPolicies ? 1.5 : 2)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
   gutterIcon: css`
     position: absolute;
 
