@@ -3305,7 +3305,7 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 2)
 		require.Equal(t, "bar", flattened["foo"])
 		require.Equal(t, "qux", flattened["nested.bax.baz"])
@@ -3340,9 +3340,24 @@ func TestFlatten(t *testing.T) {
 			},
 		}
 
-		flattened := flatten(obj)
+		flattened := flatten(obj, 10)
 		require.Len(t, flattened, 1)
 		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+	})
+
+	t.Run("flatten multiple objects of the same max depth", func(t *testing.T) {
+		target := map[string]interface{}{
+			"fieldName": map[string]interface{}{
+				"innerFieldName": "",
+			},
+			"fieldName2": map[string]interface{}{
+				"innerFieldName2": "",
+			},
+		}
+
+		assert.Equal(t, map[string]interface{}{
+			"fieldName.innerFieldName":   "",
+			"fieldName2.innerFieldName2": ""}, flatten(target, 1))
 	})
 }
 
