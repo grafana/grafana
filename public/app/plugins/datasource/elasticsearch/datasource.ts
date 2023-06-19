@@ -51,6 +51,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
+import { isMetricAggregationWithMeta } from './guards';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -60,6 +61,8 @@ import {
   ElasticsearchQuery,
   TermsQuery,
   Interval,
+  ElasticsearchAnnotationQuery,
+  RangeMap,
 } from './types';
 import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
 
@@ -233,17 +236,7 @@ export class ElasticDatasource
     );
   }
 
-  private prepareAnnotationRequest(options: {
-    annotation: {
-      target: ElasticsearchQuery;
-      timeField?: string;
-      timeEndField?: string;
-      titleField?: string;
-      query?: string;
-      index?: string;
-    };
-    range: TimeRange;
-  }) {
+  private prepareAnnotationRequest(options: { annotation: ElasticsearchAnnotationQuery; range: TimeRange }) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -260,7 +253,7 @@ export class ElasticDatasource
     const queryString = annotation.query ?? annotation.target?.query ?? '';
 
     const dateRanges = [];
-    const rangeStart: any = {};
+    const rangeStart: RangeMap = {};
     rangeStart[timeField] = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
@@ -269,7 +262,7 @@ export class ElasticDatasource
     dateRanges.push({ range: rangeStart });
 
     if (timeEndField) {
-      const rangeEnd: any = {};
+      const rangeEnd: RangeMap = {};
       rangeEnd[timeEndField] = {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -279,7 +272,9 @@ export class ElasticDatasource
     }
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
-    const query: any = {
+    const query: {
+      bool: { filter: Array<Record<string, Record<string, string | number | Array<{ range: RangeMap }>>>> };
+    } = {
       bool: {
         filter: [
           {
@@ -299,12 +294,12 @@ export class ElasticDatasource
         },
       });
     }
-    const data: any = {
+    const data = {
       query,
       size: 10000,
     };
 
-    const header: any = {
+    const header: Record<string, string | string[] | boolean> = {
       search_type: 'query_then_fetch',
       ignore_unavailable: true,
     };
@@ -322,17 +317,8 @@ export class ElasticDatasource
   }
 
   private processHitsToAnnotationEvents(
-    annotation: {
-      target: ElasticsearchQuery;
-      timeField?: string;
-      titleField?: string;
-      timeEndField?: string;
-      query?: string;
-      tagsField?: string;
-      textField?: string;
-      index?: string;
-    },
-    hits: Array<{ [key: string]: any }>
+    annotation: ElasticsearchAnnotationQuery,
+    hits: Array<Record<string, string | number | Record<string | number, string | number>>>
   ) {
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
@@ -340,7 +326,7 @@ export class ElasticDatasource
     const tagsField = annotation.tagsField || null;
     const list: AnnotationEvent[] = [];
 
-    const getFieldFromSource = (source: any, fieldName: any) => {
+    const getFieldFromSource = (source: any, fieldName: string | null) => {
       if (!fieldName) {
         return;
       }
@@ -363,7 +349,7 @@ export class ElasticDatasource
       let time = getFieldFromSource(source, timeField);
       if (typeof hits[i].fields !== 'undefined') {
         const fields = hits[i].fields;
-        if (isString(fields[timeField]) || isNumber(fields[timeField])) {
+        if (typeof fields === 'object' && (isString(fields[timeField]) || isNumber(fields[timeField]))) {
           time = fields[timeField];
         }
       }
@@ -419,7 +405,7 @@ export class ElasticDatasource
     return lastValueFrom(
       this.getFields(['date']).pipe(
         mergeMap((dateFields) => {
-          const timeField: any = find(dateFields, { text: this.timeField });
+          const timeField = find(dateFields, { text: this.timeField });
           if (!timeField) {
             return of({
               status: 'error',
@@ -437,8 +423,8 @@ export class ElasticDatasource
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
-    const queryHeader: any = {
+  getQueryHeader(searchType: string, timeFrom?: DateTime, timeTo?: DateTime): string {
+    const queryHeader = {
       search_type: searchType,
       ignore_unavailable: true,
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
@@ -680,8 +666,8 @@ export class ElasticDatasource
         };
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
-        const fieldNameParts: any = [];
-        const fields: any = {};
+        const fieldNameParts: string[] = [];
+        const fields: Record<string, { text: string; type: string }> = {};
 
         function getFieldsRecursively(obj: any) {
           for (const key in obj) {
@@ -778,7 +764,7 @@ export class ElasticDatasource
     return ('_msearch?' + searchParams.toString()).replace(/\?$/, '');
   }
 
-  metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+  metricFindQuery(query: string, options?: { range: TimeRange }): Promise<MetricFindValue[]> {
     const range = options?.range;
     const parsedQuery = JSON.parse(query);
     if (query) {
@@ -801,36 +787,48 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: any) {
+  getTagValues(options: { key: string }) {
     const range = this.timeSrv.timeRange();
     return lastValueFrom(this.getTerms({ field: options.key }, range));
   }
 
-  targetContainsTemplate(target: any) {
+  targetContainsTemplate(target: ElasticsearchQuery) {
     if (this.templateSrv.containsTemplate(target.query) || this.templateSrv.containsTemplate(target.alias)) {
       return true;
     }
 
-    for (const bucketAgg of target.bucketAggs) {
-      if (this.templateSrv.containsTemplate(bucketAgg.field) || this.objectContainsTemplate(bucketAgg.settings)) {
-        return true;
+    if (target.bucketAggs) {
+      for (const bucketAgg of target.bucketAggs) {
+        if (isBucketAggregationWithField(bucketAgg) && this.templateSrv.containsTemplate(bucketAgg.field)) {
+          return true;
+        }
+        if (this.objectContainsTemplate(bucketAgg.settings)) {
+          return true;
+        }
       }
     }
 
-    for (const metric of target.metrics) {
-      if (
-        this.templateSrv.containsTemplate(metric.field) ||
-        this.objectContainsTemplate(metric.settings) ||
-        this.objectContainsTemplate(metric.meta)
-      ) {
-        return true;
+    if (target.metrics) {
+      for (const metric of target.metrics) {
+        if (!isMetricAggregationWithField(metric)) {
+          continue;
+        }
+        if (metric.field && this.templateSrv.containsTemplate(metric.field)) {
+          return true;
+        }
+        if (metric.settings && this.objectContainsTemplate(metric.settings)) {
+          return true;
+        }
+        if (isMetricAggregationWithMeta(metric) && this.objectContainsTemplate(metric.meta)) {
+          return true;
+        }
       }
     }
 
     return false;
   }
 
-  private isPrimitive(obj: any) {
+  private isPrimitive(obj: unknown) {
     if (obj === null || obj === undefined) {
       return true;
     }
