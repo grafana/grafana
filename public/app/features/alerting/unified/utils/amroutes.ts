@@ -3,7 +3,6 @@ import { uniqueId } from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { MatcherOperator, ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { FormAmRoute } from '../types/amroutes';
 import { MatcherFieldValue } from '../types/silence-form';
 
@@ -11,7 +10,7 @@ import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { normalizeMatchers, parseMatcher } from './matchers';
 import { findExistingRoute } from './routeTree';
-import { isValidPrometheusDuration } from './time';
+import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -108,8 +107,8 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     ],
     continue: route.continue ?? false,
     receiver: route.receiver ?? '',
-    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length !== 0,
-    groupBy: route.group_by ?? [],
+    overrideGrouping: Array.isArray(route.group_by) && route.group_by.length > 0,
+    groupBy: route.group_by ?? undefined,
     overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
     groupWaitValue: route.group_wait ?? '',
     groupIntervalValue: route.group_interval ?? '',
@@ -137,16 +136,19 @@ export const formAmRouteToAmRoute = (
     receiver,
   } = formAmRoute;
 
-  const group_by = overrideGrouping && groupBy ? groupBy : [];
+  // "undefined" means "inherit from the parent policy", currently supported by group_by, group_wait, group_interval, and repeat_interval
+  const INHERIT_FROM_PARENT = undefined;
+
+  const group_by = overrideGrouping ? groupBy : INHERIT_FROM_PARENT;
 
   const overrideGroupWait = overrideTimings && groupWaitValue;
-  const group_wait = overrideGroupWait ? groupWaitValue : undefined;
+  const group_wait = overrideGroupWait ? groupWaitValue : INHERIT_FROM_PARENT;
 
   const overrideGroupInterval = overrideTimings && groupIntervalValue;
-  const group_interval = overrideGroupInterval ? groupIntervalValue : undefined;
+  const group_interval = overrideGroupInterval ? groupIntervalValue : INHERIT_FROM_PARENT;
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
-  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : undefined;
+  const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
   const object_matchers = formAmRoute.object_matchers
     ?.filter((route) => route.name && route.value && route.operator)
     .map(({ name, operator, value }) => [name, operator, value] as ObjectMatcher);
@@ -226,6 +228,14 @@ export function promDurationValidator(duration: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
+
+// function to convert ObjectMatchers to a array of strings
+export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
+  return matchers.map((matcher) => {
+    const [name, operator, value] = matcher;
+    return `${name}${operator}${value}`;
+  });
+};
 
 export const repeatIntervalValidator = (repeatInterval: string, groupInterval: string) => {
   if (repeatInterval.length === 0) {

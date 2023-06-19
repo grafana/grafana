@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection } from '@grafana/experimental';
+import { ConfigSection, DataSourceDescription } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
@@ -18,6 +18,14 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
   return (
     <div className={styles.container}>
+      <DataSourceDescription
+        dataSourceName="Zipkin"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/zipkin"
+        hasRequiredFields={false}
+      />
+
+      <Divider />
+
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9411"
         dataSourceConfig={options}
@@ -55,6 +63,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     label: container;
     margin-bottom: ${theme.spacing(2)};
-    max-width: '578px';
+    max-width: 900px;
   `,
 });
