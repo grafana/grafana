@@ -73,8 +73,7 @@ export const selectIsWaitingForData = (exploreId: ExploreId) => {
       return false;
     }
     return panelState.queryResponse
-      ? !!panelState.isLive ||
-          panelState.queryResponse.state === LoadingState.Loading ||
+      ? panelState.queryResponse.state === LoadingState.Loading ||
           panelState.queryResponse.state === LoadingState.Streaming
       : false;
   };
