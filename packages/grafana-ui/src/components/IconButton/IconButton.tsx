@@ -105,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, size, variant: IconButton
     button: css`
       z-index: 0;
       position: relative;
-      margin: 0 ${theme.spacing(0.5)} 0 0;
+      margin: 0;
       box-shadow: none;
       border: none;
       display: inline-flex;
