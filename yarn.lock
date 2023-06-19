@@ -15228,6 +15228,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-plugins@link:./plugins::locator=grafana%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "core-plugins@link:./plugins::locator=grafana%40workspace%3A."
+  languageName: node
+  linkType: soft
+
 "core-util-is@npm:1.0.2":
   version: 1.0.2
   resolution: "core-util-is@npm:1.0.2"
@@ -20024,6 +20030,7 @@ __metadata:
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
     core-js: 3.31.0
+    core-plugins: "link:./plugins"
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 4.2.2
     cypress: 9.5.1
