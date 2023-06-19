@@ -19,6 +19,7 @@ interface Props {
   pathSuffix?: string;
   error?: FieldError | DeepMap<any, FieldError>;
   readOnly?: boolean;
+  customValidator?: (value: string) => boolean | string;
 }
 
 export const OptionField: FC<Props> = ({
@@ -29,6 +30,7 @@ export const OptionField: FC<Props> = ({
   error,
   defaultValue,
   readOnly = false,
+  customValidator,
 }) => {
   const optionPath = `${pathPrefix}${pathSuffix}`;
 
@@ -69,6 +71,7 @@ export const OptionField: FC<Props> = ({
         pathPrefix={optionPath}
         readOnly={readOnly}
         pathIndex={pathPrefix}
+        customValidator={customValidator}
       />
     </Field>
   );
@@ -81,6 +84,7 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
   pathPrefix = '',
   pathIndex = '',
   readOnly = false,
+  customValidator,
 }) => {
   const { control, register, unregister, getValues } = useFormContext();
   const name = `${pathPrefix}${option.propertyName}`;
@@ -114,7 +118,19 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
           type={option.inputType}
           {...register(name, {
             required: determineRequired(option, getValues, pathIndex),
-            validate: (v) => (option.validationRule !== '' ? validateOption(v, option.validationRule) : true),
+            validate: {
+              validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
+              customValidator: (v) => (customValidator ? customValidator(v) : true),
+            },
+            // validate: (v) => {
+            //   if (option.validationRule !== '') {
+            //     return validateOption(v, option.validationRule);
+            //   } else if (customValidator) {
+            //     return customValidator(v);
+            //   } else {
+            //     return true;
+            //   }
+            // },
             setValueAs: option.setValueAs,
           })}
           placeholder={option.placeholder}

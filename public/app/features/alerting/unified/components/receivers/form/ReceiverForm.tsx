@@ -30,7 +30,7 @@ interface Props<R extends ChannelValues> {
   initialValues?: ReceiverFormValues<R>;
   isEditable: boolean;
   isTestable?: boolean;
-  fieldValidators?: Record<string, (value: string) => boolean>;
+  customValidators?: React.ComponentProps<typeof ChannelSubForm>['customValidators'];
 }
 
 export function ReceiverForm<R extends ChannelValues>({
@@ -43,9 +43,9 @@ export function ReceiverForm<R extends ChannelValues>({
   onTestChannel,
   takenReceiverNames,
   commonSettingsComponent,
-  fieldValidators,
   isEditable,
   isTestable,
+  customValidators,
 }: Props<R>): JSX.Element {
   const notifyApp = useAppNotification();
   const styles = useStyles2(getStyles);
@@ -87,6 +87,12 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
+    // console.log(values);
+    //
+    // setError('items.[0].settings.integration_name', {
+    //   type: 'validate',
+    //   message: 'A receiver with this name already exists',
+    // });
     await onSubmit({
       ...values,
       items: values.items.filter((item) => !item.__deleted),
@@ -150,6 +156,7 @@ export function ReceiverForm<R extends ChannelValues>({
               commonSettingsComponent={commonSettingsComponent}
               isEditable={isEditable}
               isTestable={isTestable}
+              customValidators={customValidators}
             />
           );
         })}

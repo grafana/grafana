@@ -17,6 +17,8 @@ export interface Props<R extends ChannelValues> {
   errors?: FieldErrors<R>;
   pathPrefix?: string;
   readOnly?: boolean;
+
+  customValidators?: Record<string, React.ComponentProps<typeof OptionField>['customValidator']>;
 }
 
 export function ChannelOptions<R extends ChannelValues>({
@@ -27,6 +29,7 @@ export function ChannelOptions<R extends ChannelValues>({
   errors,
   pathPrefix = '',
   readOnly = false,
+  customValidators = {},
 }: Props<R>): JSX.Element {
   const { watch } = useFormContext<ReceiverFormValues<R>>();
   const currentFormValues = watch(); // react hook form types ARE LYING!
@@ -78,6 +81,7 @@ export function ChannelOptions<R extends ChannelValues>({
             pathPrefix={pathPrefix}
             pathSuffix={option.secure ? 'secureSettings.' : 'settings.'}
             option={option}
+            customValidator={customValidators[option.propertyName]}
           />
         );
       })}

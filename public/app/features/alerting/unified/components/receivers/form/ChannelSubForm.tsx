@@ -25,6 +25,8 @@ interface Props<R extends FieldValues> {
   onDelete?: () => void;
   isEditable?: boolean;
   isTestable?: boolean;
+
+  customValidators?: React.ComponentProps<typeof ChannelOptions>['customValidators'];
 }
 
 export function ChannelSubForm<R extends ChannelValues>({
@@ -39,6 +41,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
+  customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
   const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
@@ -159,6 +162,7 @@ export function ChannelSubForm<R extends ChannelValues>({
             onResetSecureField={onResetSecureField}
             pathPrefix={pathPrefix}
             readOnly={!isEditable}
+            customValidators={customValidators}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
             <CollapsibleSection label={`Optional ${notifier.name} settings`}>
@@ -175,6 +179,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                 errors={errors}
                 pathPrefix={pathPrefix}
                 readOnly={!isEditable}
+                customValidators={customValidators}
               />
             </CollapsibleSection>
           )}

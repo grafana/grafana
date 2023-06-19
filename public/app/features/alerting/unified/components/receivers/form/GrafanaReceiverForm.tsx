@@ -195,7 +195,11 @@ export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName,
   };
 
   const fieldValidators = {
-    integration_name: (value: string) => !onCallIntegrations.map((i) => i.verbal_name).includes(value),
+    integration_name: (value: string) => {
+      return onCallIntegrations.map((i) => i.verbal_name).includes(value)
+        ? 'Integration of this name already exists in OnCall'
+        : true;
+    },
   };
 
   if (grafanaNotifiers.result) {
@@ -217,7 +221,7 @@ export const GrafanaReceiverForm = ({ existing, prefill, alertManagerSourceName,
           defaultItem={{ ...defaultChannelValues, type: 'oncall' }}
           takenReceiverNames={takenReceiverNames}
           commonSettingsComponent={GrafanaCommonChannelSettings}
-          fieldValidators={fieldValidators}
+          customValidators={fieldValidators}
         />
         <TestContactPointModal
           onDismiss={() => setTestChannelValues(undefined)}
