@@ -251,7 +251,7 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep id={id} />
+                  <NotificationsStep alertUid={id} />
                 </>
               )}
             </div>

@@ -77,9 +77,8 @@ export const NotificationPreview = ({
       </div>
       {!renderHowToPreview && (
         <div className={styles.textMuted}>
-          Based on the labels you have added above and the labels that have been automatically assigned, alert instances
-          are being routed to notification policies in the way listed bellow. Expand the notification policies to see
-          the instances which are going to be routed to them.
+          Based on the labels added, alert instances are routed to the following notification policies. Expand each
+          notification policy below to view more details.
         </div>
       )}
       {isLoading && <div className={styles.textMuted}>Loading...</div>}

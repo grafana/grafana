@@ -51,7 +51,7 @@ const ui = {
   otherAlertManagerLabel: byText(/alert manager:other_am/i),
   seeDetails: byText(/see details/i),
   details: {
-    title: byRole('heading', { name: /alert routing details/i }),
+    title: byRole('heading', { name: /routing details/i }),
     modal: byRole('dialog'),
     linkToContactPoint: byRole('link', { name: /see details/i }),
   },

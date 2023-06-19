@@ -13,9 +13,9 @@ import { RuleEditorSection } from './RuleEditorSection';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
 type NotificationsStepProps = {
-  id?: string;
+  alertUid?: string;
 };
-export const NotificationsStep = ({ id }: NotificationsStepProps) => {
+export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const styles = useStyles2(getStyles);
   const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
 
@@ -67,7 +67,7 @@ export const NotificationsStep = ({ id }: NotificationsStepProps) => {
             condition={condition}
             folder={folder}
             alertName={alertName}
-            alertUid={id}
+            alertUid={alertUid}
           />
         )}
     </RuleEditorSection>

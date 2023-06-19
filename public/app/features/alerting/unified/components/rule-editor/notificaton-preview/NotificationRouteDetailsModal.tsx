@@ -62,14 +62,12 @@ export function NotificationRouteDetailsModal({
     <Modal
       className={styles.detailsModal}
       isOpen={true}
-      title="Alert routing details"
+      title="Routing details"
       onDismiss={onClose}
       onClickBackdrop={onClose}
     >
       <Stack gap={0} direction="column">
-        <div className={cx(styles.textMuted, styles.marginBottom(2))}>
-          Preview how this alert will be routed while firing.
-        </div>
+        <div className={cx(styles.textMuted, styles.marginBottom(2))}>Your alert instances are routed as follows.</div>
         <div>Notification policy path</div>
         {isDefault && <div className={styles.textMuted}>Default policy</div>}
         <div className={styles.separator(1)} />
