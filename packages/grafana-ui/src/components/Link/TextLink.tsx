@@ -10,7 +10,7 @@ import { customColor, customWeight } from '../Text/utils';
 
 import { Link } from './Link';
 
-export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
+interface TextLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   /** url to which redirect the user, external or internal */
   href: string;
   /** Color to use for text */
@@ -31,7 +31,7 @@ export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
   children: string;
 }
 
-export const TextLink = forwardRef<HTMLAnchorElement, Props>(
+export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   ({ href, color = 'link', external = false, inline, variant, weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
@@ -58,10 +58,10 @@ TextLink.displayName = 'TextLink';
 export const getLinkStyles = (
   theme: GrafanaTheme2,
   variant?: keyof ThemeTypographyVariantTypes,
-  weight?: Props['weight'],
-  color?: Props['color'],
+  weight?: TextLinkProps['weight'],
+  color?: TextLinkProps['color'],
   inline = true,
-  textAlignment: Props['textAlignment'] = 'left'
+  textAlignment: TextLinkProps['textAlignment'] = 'left'
 ) => {
   const linkColor = color ? customColor(color, theme) : theme.colors.text.link;
 
@@ -72,23 +72,16 @@ export const getLinkStyles = (
     weight && {
       fontWeight: customWeight(weight, theme),
     },
-    `
-      color: ${linkColor};
-      display: flex;
-      justify-content: ${getFlexAlignment(textAlignment)};
-      &:hover {
-        text-decoration: underline;
-      };
-      & > div {
-        display: flex;
-
-        & > svg {
-          margin-left: ${theme.spacing(1)};
-          align-self: center;
-        }
-      }
-    }
-      `,
+    {
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      color: linkColor,
+      display: 'flex',
+      justifyContent: getFlexAlignment(textAlignment),
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    },
     inline && {
       display: 'inline-flex',
     },
@@ -107,7 +100,7 @@ const getSvgVariantSize = (variant: keyof ThemeTypographyVariantTypes = 'body') 
   }
 };
 
-const getFlexAlignment = (textAlignment: Props['textAlignment']) => {
+const getFlexAlignment = (textAlignment: TextLinkProps['textAlignment']) => {
   if (textAlignment === 'right') {
     return 'flex-end';
   } else if (textAlignment === 'center') {
