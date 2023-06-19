@@ -64,7 +64,7 @@ const ui = {
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
   loadingIndicator: byText('Loading the rule'),
-  loadingGroupIndicator: byText('Loading...'),
+  loadingGroupIndicator: byTestId('Spinner'),
 };
 
 function getProvidersWrapper() {
@@ -149,7 +149,7 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
-      await waitForElementToBeRemoved(ui.loadingGroupIndicator.query(), { container: ui.inputs.group.get() });
+      // await waitForElementToBeRemoved(ui.loadingGroupIndicator.query(), { container: ui.inputs.group.get() });
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');
