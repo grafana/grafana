@@ -26,6 +26,8 @@ require k8s.io/apimachinery v0.26.2
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.43.0
 
+// go mod tidy currently ignores go.work files https://github.com/golang/go/issues/50750
+// so this is a workaround to make go mod tidy happy.
 replace github.com/grafana/grafana/plugins/grafana-test-datasource => ./plugins/grafana-test-datasource
 
 require (
