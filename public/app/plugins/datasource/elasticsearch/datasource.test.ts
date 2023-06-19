@@ -977,6 +977,36 @@ describe('ElasticDatasource', () => {
         timeField: '',
       });
     });
+
+    it('does not return logs samples for log query', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample },
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1' }],
+            query: '',
+          }
+        )
+      ).toEqual(undefined);
+    });
+
+    it('returns logs samples for metric queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample },
+          {
+            refId: 'A',
+            metrics: [{ type: 'count', id: '1' }],
+            query: '',
+          }
+        )
+      ).toEqual({
+        refId: `log-sample-A`,
+        query: '',
+        metrics: [{ type: 'logs', id: '1' }],
+      });
+    });
   });
 });
 
