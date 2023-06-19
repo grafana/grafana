@@ -14,6 +14,9 @@ export interface DataSourceDropdownProps {
   recentlyUsed?: string[];
   hideTextValue?: boolean;
   width?: number;
+  inputId?: string;
+  noDefault?: boolean;
+  disabled?: boolean;
 }
 
 export interface PickerContentProps extends DataSourceDropdownProps {
