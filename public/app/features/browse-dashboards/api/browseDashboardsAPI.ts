@@ -78,7 +78,7 @@ export const browseDashboardsAPI = createApi({
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
     }),
     moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
-      invalidatesTags: (_result, _error, { folder }) => [{ type: 'getFolder', id: folder.uid }],
+      invalidatesTags: ['getFolder'],
       query: ({ folder, destinationUID }) => ({
         url: `/folders/${folder.uid}/move`,
         method: 'POST',
@@ -129,7 +129,7 @@ export const browseDashboardsAPI = createApi({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
       // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
       // instead let's just invalidate all the getFolder calls
-      invalidatesTags: [{ type: 'getFolder' }],
+      invalidatesTags: ['getFolder'],
       query: ({ uid, title, version }) => ({
         method: 'PUT',
         url: `/folders/${uid}`,
@@ -186,10 +186,7 @@ export const browseDashboardsAPI = createApi({
       },
     }),
     moveItems: builder.mutation<void, MoveItemsArgs>({
-      invalidatesTags: (_result, _error, { selectedItems }) => {
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        return selectedFolders.map((folderUID) => ({ type: 'getFolder', id: folderUID }));
-      },
+      invalidatesTags: ['getFolder'],
       queryFn: async ({ selectedItems, destinationUID }, _api, _extraOptions, baseQuery) => {
         const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
         const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
