@@ -110,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: column;
     background: ${theme.components.panel.background};
-    border: 1px solid ${theme.colors.border.strong};
+    border: 1px solid ${theme.colors.border.weak};
     box-shadow: ${theme.shadows.z3};
     z-index: 1000;
     opacity: 1;
@@ -125,7 +125,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     justify-content: center;
     background: ${theme.colors.background.canvas};
-    border: 1px solid ${theme.colors.border.weak};
+    border-bottom: 1px solid ${theme.colors.border.weak};
     height: 40px;
     cursor: move;
   `,

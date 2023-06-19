@@ -256,7 +256,7 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
-	err = migrator.NewDialect(x).CleanDB()
+	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
 	mg := migrator.NewMigrator(x, &setting.Cfg{
