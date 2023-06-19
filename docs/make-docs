@@ -1,6 +1,6 @@
 #!/bin/sh
 # The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
-# 2.0.0 (2023-05-18)
+# 4.1.0 (2023-06-16)
 
 set -ef
 
@@ -13,7 +13,7 @@ readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
 
 readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
 readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
-readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make docs}"
+readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
 # If set, the docs-base image will run a prebuild script that sets up Hugo mounts.
 readonly WEBSITE_MOUNTS="${WEBSITE_MOUNTS:-}"
 
@@ -200,18 +200,14 @@ POSIX_HERESTRING
   unset _project _version
 }
 
-# proj_src returns the host path to content source for a project.
-# It expects a complete project structure as input.
+# repo_path returns the host path to the project repository.
 # It looks for the provided repository name in each of the paths specified in the REPOS_PATH environment variable.
-proj_src() {
-  IFS=: read -r _ _ _repo _path <<POSIX_HERESTRING
-$1
-POSIX_HERESTRING
-
+repo_path() {
+  _repo="$1"
   IFS=:
   for lookup in ${REPOS_PATH}; do
     if [ -d "${lookup}/${_repo}" ]; then
-      echo "${lookup}/${_repo}/${_path}"
+      echo "${lookup}/${_repo}"
       unset _path _repo
       return
     fi
@@ -221,8 +217,22 @@ POSIX_HERESTRING
   echo "ERRR: could not find project '${_repo}' in any of the paths in REPOS_PATH '${REPOS_PATH}'." >&2
   echo "NOTE: you must have a checkout of the project '${_repo}' at '${REPOS_PATH##:*}/${_repo}'." >&2
   echo "NOTE: if you have cloned the repository into a directory with a different name, consider changing it to ${_repo}." >&2
-  unset _path _repo
+  unset _repo
   exit 1
+}
+
+# proj_src returns the host path to content source for a project.
+# It expects a complete project structure as input.
+# It looks for the provided repository name in each of the paths specified in the REPOS_PATH environment variable.
+proj_src() {
+  IFS=: read -r _ _ _repo _path <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  _repo="$(repo_path "${_repo}")"
+  echo "${_repo}/${_path}"
+
+  unset _path _repo
 }
 
 # proj_canonical returns the canonical absolute path partial URI for a project.
@@ -297,6 +307,19 @@ url_src_dst_vers="$(url_src_dst_vers "$@")"
 volumes=""
 redirects=""
 
+for arg in "$@"; do
+  IFS=: read -r _project _ _repo _ <<POSIX_HERESTRING
+${arg}
+POSIX_HERESTRING
+  if [ "${_project}" = website ]; then
+    _repo="$(repo_path website)"
+    volumes="--volume=${_repo}/config:/hugo/config"
+    volumes="${volumes} --volume=${_repo}/layouts/partials:/hugo/layouts/partials"
+    volumes="${volumes} --volume=${_repo}/layouts/shortcodes:/hugo/layouts/shortcodes"
+  fi
+  unset _project _repo
+done
+
 for x in ${url_src_dst_vers}; do
   IFS='^' read -r _url _src _dst _ver <<POSIX_HERESTRING
 $x
@@ -344,8 +367,8 @@ case "${image}" in
       --tty \
       ${volumes} \
       "${DOCS_IMAGE}" \
-      --include="${DOC_VALIDATOR_INCLUDE}" \
-      --skip-checks="${DOC_VALIDATOR_SKIP_CHECKS}" \
+      "--include=${DOC_VALIDATOR_INCLUDE}" \
+      "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
       /hugo/content/docs \
       "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
     ;;
@@ -361,7 +384,7 @@ case "${image}" in
       --tty \
       ${volumes} \
       "${DOCS_IMAGE}" \
-      --minAlertLevel="${VALE_MINALERTLEVEL}" \
+      "--minAlertLevel=${VALE_MINALERTLEVEL}" \
       --config=/etc/vale/.vale.ini \
       --output=line \
       /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
@@ -372,7 +395,7 @@ case "${image}" in
 #!/usr/bin/env bash
 for redirect in ${redirects}; do
   IFS='^' read -r path ver <<<"\${redirect}"
-  echo -e "---\\nredirectURL: \"\${path/\/hugo\/content/}\"\\ntype: redirect\\n---\\n" > "\${path/\${ver}/_index.md}"
+  echo -e "---\\nredirectURL: \"\${path/\/hugo\/content/}\"\\ntype: redirect\\nversioned: true\\n---\\n" > "\${path/\${ver}/_index.md}"
 done
 
 for x in "${url_src_dst_vers}"; do
