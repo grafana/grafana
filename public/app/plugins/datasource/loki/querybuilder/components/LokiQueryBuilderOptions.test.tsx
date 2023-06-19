@@ -104,7 +104,7 @@ describe('LokiQueryBuilderOptions', () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
-    expect(screen.getByText('Step: Invalid step')).toBeInTheDocument();
+    expect(screen.getByText('Step: Invalid value')).toBeInTheDocument();
   });
 
   it('shows error when invalid value in step', async () => {
