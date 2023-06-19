@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import React, { useState } from 'react';
 import { useToggle } from 'react-use';
@@ -40,6 +41,8 @@ function NotificationRouteHeader({
   const onClickDetails = () => {
     setShowDetails(true);
   };
+
+  // @TODO: re-use component ContactPointsHoverDetails from Policy once we have it for cloud AMs.
 
   return (
     <div className={styles.routeHeader}>
@@ -105,6 +108,8 @@ export function NotificationRoute({
 }: NotificationRouteProps) {
   const styles = useStyles2(getStyles);
   const [expandRoute, setExpandRoute] = useToggle(false);
+  // @TODO: The color index might be updated at some point in the future.Maybe we should roll our own tag component,
+  // one that supports a custom function to define the color and allow manual color overrides
   const GREY_COLOR_INDEX = 9;
 
   return (
@@ -133,7 +138,7 @@ export function NotificationRoute({
               const nonMatchingLabels = matchResult.filter((mr) => !mr.match);
 
               return (
-                <div className={styles.tagListCard} key={JSON.stringify(instanceMatch.instance)}>
+                <div className={styles.tagListCard} key={uniqueId()}>
                   {matchArray.length > 0 ? (
                     <>
                       {matchingLabels.length > 0 ? (

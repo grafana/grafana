@@ -4,10 +4,11 @@ import React, { lazy, Suspense } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { H4 } from '@grafana/ui/src/unstable';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
+import { Stack } from 'app/plugins/datasource/parca/QueryEditor/Stack';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { AlertQuery } from '../../../../../../types/unified-alerting-dto';
-import { alertRuleApi } from '../../../api/alertRuleApi';
 import { Folder } from '../RuleFolderPicker';
 
 import { useGetAlertManagersSourceNamesAndImage } from './useGetAlertManagersSourceNamesAndImage';
@@ -26,8 +27,6 @@ interface NotificationPreviewProps {
   alertUid?: string;
 }
 
-export const NOTIFICATION_PREVIEW_TITLE = 'Alert instance routing preview';
-
 export const NotificationPreview = ({
   alertQueries,
   customLabels,
@@ -37,14 +36,13 @@ export const NotificationPreview = ({
   alertUid,
 }: NotificationPreviewProps) => {
   const styles = useStyles2(getStyles);
-  // potential instances are the instances that are going to be routed to the notification policies
-  //const [potentialInstances, setPotentialInstances] = useState<AlertInstances[]>([]);
 
   const { usePreviewMutation } = alertRuleApi;
 
   const [trigger, { data = [], isLoading, isUninitialized: previewUninitialized }] = usePreviewMutation();
-  // any time data is updated from trigger, we need to update the potential instances
-  //  convert data to list of labels: are the representation of the potential instances
+
+  // potential instances are the instances that are going to be routed to the notification policies
+  // convert data to list of labels: are the representation of the potential instances
   const potentialInstances = compact(data.flatMap((label) => label?.labels));
 
   const onPreview = () => {
@@ -68,7 +66,9 @@ export const NotificationPreview = ({
   return (
     <Stack direction="column" gap={2}>
       <div className={styles.routePreviewHeaderRow}>
-        <h4 className={styles.previewHeader}>{NOTIFICATION_PREVIEW_TITLE}</h4>
+        <div className={styles.previewHeader}>
+          <H4>Alert instance routing preview</H4>
+        </div>
         <div className={styles.button}>
           <Button icon="sync" variant="secondary" type="button" onClick={onPreview}>
             Preview routing
@@ -78,8 +78,8 @@ export const NotificationPreview = ({
       {!renderHowToPreview && (
         <div className={styles.textMuted}>
           Based on the labels you have added above and the labels that have been automatically assigned, alert instances
-          are being route to notification policies in the way listed bellow. Expand the notification policies to see the
-          instances which are going to be routed to them.
+          are being routed to notification policies in the way listed bellow. Expand the notification policies to see
+          the instances which are going to be routed to them.
         </div>
       )}
       {isLoading && <div className={styles.textMuted}>Loading...</div>}

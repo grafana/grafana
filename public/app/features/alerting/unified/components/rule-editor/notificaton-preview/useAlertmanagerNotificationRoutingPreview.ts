@@ -65,7 +65,7 @@ export const useAlertmanagerNotificationRoutingPreview = (
   return {
     routesByIdMap,
     receiversByName,
-    matchingMap: matchingMap,
+    matchingMap,
     loading: configLoading || matchingLoading,
     error: configError ?? matchingError,
   };
