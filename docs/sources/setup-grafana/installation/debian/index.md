@@ -4,7 +4,7 @@ aliases:
   - ../../installation/installation/debian/
 description: Install guide for Grafana on Debian or Ubuntu
 title: Install Grafana on Debian or Ubuntu
-menutitle: Debian or Ubuntu
+menuTitle: Debian or Ubuntu
 weight: 100
 ---
 
