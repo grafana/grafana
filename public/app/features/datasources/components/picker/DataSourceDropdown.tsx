@@ -31,7 +31,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, hideTextValue, width, inputId, noDefault, ...restProps } = props;
+  const { current, onChange, hideTextValue, width, inputId, noDefault, disabled, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -43,6 +43,10 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     setOpen(true);
     markerElement?.focus();
   };
+  const currentDataSourceInstanceSettings = useDatasource(current);
+  const currentValue = !current && noDefault ? undefined : currentDataSourceInstanceSettings;
+  const prefixIcon =
+    filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
@@ -68,10 +72,6 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
-
-  const currentDataSourceInstanceSettings = useDatasource(current);
-
-  const currentValue = !current && noDefault ? undefined : currentDataSourceInstanceSettings;
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
@@ -106,7 +106,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   );
   const { dialogProps } = useDialog({}, ref);
 
-  const styles = useStyles2(getStylesDropdown);
+  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
 
   return (
     <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container} style={{ width }}>
@@ -117,7 +117,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
-          prefix={filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />}
+          prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
           placeholder={hideTextValue ? '' : dataSourceLabel(currentValue)}
           onClick={openDropdown}
@@ -135,6 +135,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             setFilterTerm(e.currentTarget.value);
           }}
           ref={setMarkerElement}
+          disabled={disabled}
         ></Input>
       </div>
       {isOpen ? (
@@ -170,20 +171,20 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   );
 }
 
-function getStylesDropdown(theme: GrafanaTheme2) {
+function getStylesDropdown(theme: GrafanaTheme2, props: DataSourceDropdownProps) {
   return {
     container: css`
       position: relative;
+      cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
+      width: ${theme.spacing(props.width || 'auto')};
     `,
     trigger: css`
       cursor: pointer;
+      ${props.disabled && `pointer-events: none;`}
     `,
     input: css`
-      input {
-        cursor: pointer;
-      }
       input::placeholder {
-        color: ${theme.colors.text.primary};
+        color: ${props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary};
       }
     `,
   };
