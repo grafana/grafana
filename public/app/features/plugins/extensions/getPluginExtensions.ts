@@ -72,9 +72,9 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
           type: PluginExtensionTypes.link,
           pluginId: registryItem.pluginId,
           onClick: getLinkExtensionOnClick(extensionConfig, frozenContext),
-          icon: extensionConfig.icon,
 
           // Configurable properties
+          icon: overrides?.icon || extensionConfig.icon,
           title: overrides?.title || extensionConfig.title,
           description: overrides?.description || extensionConfig.description,
           path: overrides?.path || extensionConfig.path,
