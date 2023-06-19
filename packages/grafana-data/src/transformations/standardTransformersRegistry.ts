@@ -44,7 +44,7 @@ export type TransformerCategory =
   | 'combine'
   | 'calculateNewFields'
   | 'createNewVisualization'
-  | 'filterAndReduce'
+  | 'filter'
   | 'performSpatialOperations'
   | 'reformat'
   | 'reorderAndRename';

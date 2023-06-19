@@ -42,7 +42,7 @@ export const categoriesLabels: { [K in TransformerCategory]: string } = {
   combine: 'Combine',
   calculateNewFields: 'Calculate new fields',
   createNewVisualization: 'Create new visualization',
-  filterAndReduce: 'Filter and reduce',
+  filter: 'Filter',
   performSpatialOperations: 'Perform spatial operations',
   reformat: 'Reformat',
   reorderAndRename: 'Reorder and rename',
