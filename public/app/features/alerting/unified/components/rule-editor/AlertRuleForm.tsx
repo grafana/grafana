@@ -20,7 +20,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
+import { getDefaultFormValues, getDefaultQueries, MINUTE, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -69,14 +69,13 @@ const AlertRuleNameInput = () => {
   );
 };
 
-export const MINUTE = '1m';
-
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
+  id?: string;
 };
 
-export const AlertRuleForm = ({ existing, prefill }: Props) => {
+export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -254,7 +253,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep />
+                  <NotificationsStep alertUid={id} />
                 </>
               )}
             </div>
