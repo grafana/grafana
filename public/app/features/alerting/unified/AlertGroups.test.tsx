@@ -12,6 +12,7 @@ import { mockAlertGroup, mockAlertmanagerAlert, mockDataSource, MockDataSourceSr
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     isEditor: true,

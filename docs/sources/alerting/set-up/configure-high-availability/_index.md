@@ -10,7 +10,7 @@ keywords:
   - ha
   - high availability
 title: Enable alerting high availability
-weight: 300
+weight: 400
 ---
 
 # Enable alerting high availability

@@ -217,6 +217,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           <InlineField
             label="Filters"
             labelWidth={20}
+            shrink
             tooltip={
               <>
                 <a
@@ -247,7 +248,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, resourceType: value })}
             label="Resource type"
           />
-          <InlineField label="Tags" labelWidth={20} tooltip="Tags to filter the returned values on.">
+          <InlineField label="Tags" shrink labelWidth={20} tooltip="Tags to filter the returned values on.">
             <MultiFilter
               filters={parsedQuery.tags}
               onChange={(filters) => {
