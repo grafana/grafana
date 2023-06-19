@@ -32,7 +32,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, hideTextValue, width, ...restProps } = props;
+  const { current, onChange, hideTextValue, width, inputId, noDefault, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -81,6 +81,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
+  const currentValue = !current && noDefault ? undefined : currentDataSourceInstanceSettings;
+
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
     modifiers: [
@@ -122,17 +124,12 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
         <Input
+          id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
-          prefix={
-            filterTerm && isOpen ? (
-              <DataSourceLogoPlaceHolder />
-            ) : (
-              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-            )
-          }
+          prefix={filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={hideTextValue ? '' : dataSourceLabel(currentDataSourceInstanceSettings)}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue)}
           onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
@@ -172,7 +169,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
                 onChange(ds, defaultQueries);
               }}
               onClose={onClose}
-              current={currentDataSourceInstanceSettings}
+              current={currentValue}
               style={popper.styles.popper}
               ref={setSelectorElement}
               onClickAddCSV={onClickAddCSV}
