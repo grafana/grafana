@@ -141,6 +141,11 @@ The Azure documentation includes resources to help you learn KQL:
 - [Tutorial: Use Kusto queries in Azure Monitor](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/tutorial?pivots=azuremonitor)
 - [SQL to Kusto cheat sheet](https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/sqlcheatsheet)
 
+> **Implicit dashboard time range usage:** As of Grafana v9.4.12 and v10.0, all Azure Monitor Logs queries
+> will use the specified dashboard or Explore time range by default.
+> Any query making use of a time range explicitly specified in the query body will have their query
+> executed against the intersection of the two time ranges. For more details on this change, refer to the [Azure Monitor Logs API documentation](https://learn.microsoft.com/en-us/rest/api/loganalytics/dataaccess/query/get?tabs=HTTP#uri-parameters).
+
 This example query returns a virtual machine's CPU performance, averaged over 5ms time grains:
 
 ```kusto

@@ -1,3 +1,4 @@
+import { trim } from 'lodash';
 import React, { useState } from 'react';
 
 import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
@@ -61,14 +62,19 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       }
     }
 
-    let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
-    let showMaxLines = isLogsQuery(query.expr);
+    function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
+      onChange({ ...query, step: trim(e.currentTarget.value) });
+      onRunQuery();
+    }
+
+    const queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
+    const isLogQuery = isLogsQuery(query.expr);
 
     return (
       <EditorRow>
         <QueryOptionGroup
           title="Options"
-          collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines, maxLines)}
+          collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery)}
           queryStats={queryStats}
         >
           <EditorField
@@ -86,7 +92,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
           <EditorField label="Type">
             <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
           </EditorField>
-          {showMaxLines && (
+          {isLogQuery && (
             <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
               <AutoSizeInput
                 className="width-4"
@@ -98,18 +104,34 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
               />
             </EditorField>
           )}
-          <EditorField
-            label="Resolution"
-            tooltip="Sets the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
-          >
-            <Select
-              isSearchable={false}
-              onChange={onResolutionChange}
-              options={RESOLUTION_OPTIONS}
-              value={query.resolution || 1}
-              aria-label="Select resolution"
-            />
-          </EditorField>
+          {!isLogQuery && (
+            <>
+              <EditorField
+                label="Step"
+                tooltip="Use the step parameter when making metric queries to Loki. If not filled, Grafana's calculated interval will be used. Example valid values: 1s, 5m, 10h, 1d."
+              >
+                <AutoSizeInput
+                  className="width-6"
+                  placeholder={'auto'}
+                  type="string"
+                  defaultValue={query.step ?? ''}
+                  onCommitChange={onStepChange}
+                />
+              </EditorField>
+              <EditorField
+                label="Resolution"
+                tooltip="Changes the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
+              >
+                <Select
+                  isSearchable={false}
+                  onChange={onResolutionChange}
+                  options={RESOLUTION_OPTIONS}
+                  value={query.resolution || 1}
+                  aria-label="Select resolution"
+                />
+              </EditorField>
+            </>
+          )}
           {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (
             <EditorField
               label="Split Duration"
@@ -131,12 +153,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
   }
 );
 
-function getCollapsedInfo(
-  query: LokiQuery,
-  queryType: LokiQueryType,
-  showMaxLines: boolean,
-  maxLines: number
-): string[] {
+function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, maxLines: number, isLogQuery: boolean): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
@@ -152,8 +169,18 @@ function getCollapsedInfo(
 
   items.push(`Type: ${queryTypeLabel?.label}`);
 
-  if (showMaxLines) {
+  if (isLogQuery) {
     items.push(`Line limit: ${query.maxLines ?? maxLines}`);
+  }
+
+  if (!isLogQuery) {
+    if (query.step) {
+      items.push(`Step: ${query.step}`);
+    }
+
+    if (query.resolution) {
+      items.push(`Resolution: ${resolutionLabel?.label}`);
+    }
   }
 
   return items;

@@ -6,9 +6,9 @@ type panelInfo struct {
 	Description   string          `json:"description,omitempty"`
 	Type          string          `json:"type,omitempty"` // PluginID
 	PluginVersion string          `json:"pluginVersion,omitempty"`
-	Datasource    []DataSourceRef `json:"datasource,omitempty"`  // UIDs
-	Transformer   []string        `json:"transformer,omitempty"` // ids of the transformation steps
-
+	LibraryPanel  string          `json:"libraryPanel,omitempty"` // UID of referenced library panel
+	Datasource    []DataSourceRef `json:"datasource,omitempty"`   // UIDs
+	Transformer   []string        `json:"transformer,omitempty"`  // ids of the transformation steps
 	// Rows define panels as sub objects
 	Collapsed []panelInfo `json:"collapsed,omitempty"`
 }
