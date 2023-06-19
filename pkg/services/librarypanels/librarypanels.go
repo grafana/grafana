@@ -182,6 +182,8 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 	return nil
 }
 
+// CountInFolder is a handler for retrieving the number of library panels contained
+// within a given folder and for a specific organisation.
 func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -197,8 +199,10 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 	})
 }
 
+// DeleteInFolder deletes the library panels contained in a given folder.
 func (lps LibraryPanelService) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user *user.SignedInUser) error {
 	return lps.LibraryElementService.DeleteLibraryElementsInFolder(ctx, user, folderUID)
 }
 
+// Kind returns the name of the library panel type of entity.
 func (lps LibraryPanelService) Kind() string { return entity.StandardKindLibraryPanel }
