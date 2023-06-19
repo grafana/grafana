@@ -64,6 +64,7 @@ export type PluginExtensionLinkConfig<Context extends object = object> = {
         description: string;
         path: string;
         onClick: (event: React.MouseEvent | undefined, helpers: PluginExtensionEventHelpers<Context>) => void;
+        icon: IconName;
       }>
     | undefined;
 

@@ -24,7 +24,7 @@ type Props = {
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId, splitted } = props;
-  const [extension, setExtension] = useState<PluginExtensionLink | undefined>();
+  const [selectedExtension, setSelectedExtension] = useState<PluginExtensionLink | undefined>();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const context = useExtensionPointContext(props);
   const extensions = useExtensionLinks(context);
@@ -59,7 +59,7 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
           label={truncateTitle(extension.title, 25)}
           onClick={(event) => {
             if (extension.path) {
-              return setExtension(extension);
+              return setSelectedExtension(extension);
             }
             extension.onClick?.(event);
           }}
@@ -72,20 +72,20 @@ export function ToolbarExtensionPoint(props: Props): ReactElement | null {
     <>
       <Dropdown onVisibleChange={setIsOpen} placement="bottom-start" overlay={menu}>
         <ToolbarButton
-          aria-label="Add to..."
+          aria-label="Add"
           icon="plus"
           disabled={!Boolean(noQueriesInPane)}
           variant="canvas"
           isOpen={isOpen}
         >
-          {splitted ? ' ' : 'Add to...'}
+          {splitted ? ' ' : 'Add'}
         </ToolbarButton>
       </Dropdown>
-      {!!extension && !!extension.path && (
+      {!!selectedExtension && !!selectedExtension.path && (
         <ConfirmNavigationModal
-          path={extension.path}
-          title={extension.title}
-          onDismiss={() => setExtension(undefined)}
+          path={selectedExtension.path}
+          title={selectedExtension.title}
+          onDismiss={() => setSelectedExtension(undefined)}
         />
       )}
     </>

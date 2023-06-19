@@ -120,7 +120,13 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       return undefined;
     }
 
-    let { title = config.title, description = config.description, path = config.path, ...rest } = overrides;
+    let {
+      title = config.title,
+      description = config.description,
+      path = config.path,
+      icon = config.icon,
+      ...rest
+    } = overrides;
 
     assertIsNotPromise(
       overrides,
@@ -142,6 +148,7 @@ function getLinkExtensionOverrides(pluginId: string, config: PluginExtensionLink
       title,
       description,
       path,
+      icon,
     };
   } catch (error) {
     if (error instanceof Error) {

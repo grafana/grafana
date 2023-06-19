@@ -76,25 +76,25 @@ describe('ToolbarExtensionPoint', () => {
       });
     });
 
-    it('should render "Add to..." extension point menu button', () => {
+    it('should render "Add" extension point menu button', () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={ExploreId.left} timeZone="browser" splitted={false} />);
 
-      expect(screen.getByRole('button', { name: 'Add to...' })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
     });
 
-    it('should render "Add to..." extension point menu button in split mode', async () => {
+    it('should render "Add" extension point menu button in split mode', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={ExploreId.left} timeZone="browser" splitted={true} />);
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add to...' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
     });
 
-    it('should render menu with extensions when "Add to..." is clicked', async () => {
+    it('should render menu with extensions when "Add" is clicked', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={ExploreId.left} timeZone="browser" splitted={false} />);
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add to...' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
       expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
@@ -103,7 +103,7 @@ describe('ToolbarExtensionPoint', () => {
     it('should call onClick from extension when menu item is clicked', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={ExploreId.left} timeZone="browser" splitted={false} />);
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add to...' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(screen.getByRole('menuitem', { name: 'Dashboard' }));
 
       const { extensions } = getPluginLinkExtensions({ extensionPointId: PluginExtensionPoints.ExploreToolbarAction });
@@ -115,7 +115,7 @@ describe('ToolbarExtensionPoint', () => {
     it('should render confirm navigation modal when extension with path is clicked', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={ExploreId.left} timeZone="browser" splitted={false} />);
 
-      await userEvent.click(screen.getByRole('button', { name: 'Add to...' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
       await userEvent.click(screen.getByRole('menuitem', { name: 'ML: Forecast' }));
 
       expect(screen.getByRole('button', { name: 'Open in new tab' })).toBeVisible();
