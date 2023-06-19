@@ -11,6 +11,7 @@ const { grafanaESModules, nodeModulesToTransform } = require('./jest/utils');
 module.exports = {
   moduleNameMapper: {
     '\\.(css|scss|sass)$': 'identity-obj-proxy',
+    '^.+\\.svg$': path.resolve(__dirname, 'jest', 'mocks', 'svg.js'),
     'react-inlinesvg': path.resolve(__dirname, 'jest', 'mocks', 'react-inlinesvg.tsx'),
   },
   modulePaths: ['<rootDir>/src'],

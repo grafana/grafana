@@ -1,3 +1,11 @@
 {
-  "extends": "./.config/.eslintrc"
+  "extends": "./.config/.eslintrc",
+  "overrides": [
+    {
+      "files": ["src/**/*.gen.{ts,tsx}"],
+      "rules": {
+        "@typescript-eslint/array-type": "warn"
+      }
+    }
+  ]
 }
