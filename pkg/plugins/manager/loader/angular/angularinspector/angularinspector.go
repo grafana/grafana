@@ -100,7 +100,7 @@ func newHardcodedInspector() (Inspector, error) {
 	return &PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}, nil
 }
 
-func ProvideInspector(cfg *config.Cfg) (Inspector, error) {
+func ProvideService(cfg *config.Cfg) (Inspector, error) {
 	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns) {
 		return newRemoteInspector(cfg)
 	}

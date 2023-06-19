@@ -140,7 +140,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 
 func TestProvideInspector(t *testing.T) {
 	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
-		inspector, err := ProvideInspector(&config.Cfg{
+		inspector, err := ProvideService(&config.Cfg{
 			Features: featuremgmt.WithFeatures(),
 		})
 		require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestProvideInspector(t *testing.T) {
 	})
 
 	t.Run("uses remote inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
-		inspector, err := ProvideInspector(&config.Cfg{
+		inspector, err := ProvideService(&config.Cfg{
 			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsRemoteAngularDetectionPatterns),
 		})
 		require.NoError(t, err)
