@@ -15,7 +15,7 @@ export function registerPluginInCache({ path, version }: CacheablePlugin): void 
 }
 
 export function invalidatePluginInCache(pluginId: string): void {
-  const path = `plugins/${pluginId}/module`;
+  const path = `./public/plugins/${pluginId}/module.js`;
   if (cache[path]) {
     delete cache[path];
   }
