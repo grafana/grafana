@@ -101,7 +101,8 @@ export const Expression: FC<ExpressionProps> = ({
       className={cx(
         styles.expression.wrapper,
         alertCondition && styles.expression.alertCondition,
-        queryType === ExpressionQueryType.classic && styles.expression.classic
+        queryType === ExpressionQueryType.classic && styles.expression.classic,
+        queryType !== ExpressionQueryType.classic && styles.expression.nonClassic
       )}
     >
       <div className={styles.expression.stack}>
@@ -360,7 +361,7 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
 
   return (
     <div className={styles.expression.resultsRow}>
-      <Stack direction="row" gap={1} alignItems="center">
+      <Stack direction="row" alignItems="center">
         <span className={cx(styles.mutedText, styles.expression.resultLabel)} title={name}>
           {name}
         </span>
@@ -413,6 +414,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     `,
     classic: css`
       flex-basis: 100%;
+      margin-bottom: ${theme.spacing(2)};
+    `,
+    nonClassic: css`
+      max-width: 48%;
+      min-width: 48%;
+      margin-bottom: ${theme.spacing(2)};
     `,
     alertCondition: css``,
     body: css`
