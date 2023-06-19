@@ -1,4 +1,4 @@
-package angulardetector
+package angularinspector
 
 import (
 	"context"
@@ -9,8 +9,80 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
+
+type fakeDetector struct {
+	calls   int
+	returns bool
+}
+
+func (d *fakeDetector) Detect(_ []byte) bool {
+	d.calls += 1
+	return d.returns
+}
+
+func TestPatternsListInspector(t *testing.T) {
+	plugin := &plugins.Plugin{
+		FS: plugins.NewInMemoryFS(map[string][]byte{"module.js": nil}),
+	}
+
+	for _, tc := range []struct {
+		name          string
+		fakeDetectors []*fakeDetector
+		exp           func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector)
+	}{
+		{
+			name: "calls the detectors in sequence until true is returned",
+			fakeDetectors: []*fakeDetector{
+				{returns: false},
+				{returns: true},
+				{returns: false},
+			},
+			exp: func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector) {
+				require.NoError(t, err)
+				require.True(t, r, "inspector should return true")
+				require.Equal(t, 1, fakeDetectors[0].calls, "fake 0 should be called")
+				require.Equal(t, 1, fakeDetectors[1].calls, "fake 1 should be called")
+				require.Equal(t, 0, fakeDetectors[2].calls, "fake 2 should not be called")
+			},
+		},
+		{
+			name: "calls the detectors in sequence and returns false as default",
+			fakeDetectors: []*fakeDetector{
+				{returns: false},
+				{returns: false},
+			},
+			exp: func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector) {
+				require.NoError(t, err)
+				require.False(t, r, "inspector should return false")
+				require.Equal(t, 1, fakeDetectors[0].calls, "fake 0 should not be called")
+				require.Equal(t, 1, fakeDetectors[1].calls, "fake 1 should not be called")
+			},
+		},
+		{
+			name:          "empty detectors should return false",
+			fakeDetectors: nil,
+			exp: func(t *testing.T, r bool, err error, fakeDetectors []*fakeDetector) {
+				require.NoError(t, err)
+				require.False(t, r, "inspector should return false")
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			detectors := make([]angulardetector.Detector, 0, len(tc.fakeDetectors))
+			for _, d := range tc.fakeDetectors {
+				detectors = append(detectors, angulardetector.Detector(d))
+			}
+			inspector := &PatternsListInspector{
+				DetectorsProvider: &angulardetector.StaticDetectorsProvider{Detectors: detectors},
+			}
+			r, err := inspector.Inspect(context.Background(), plugin)
+			tc.exp(t, r, err, tc.fakeDetectors)
+		})
+	}
+}
 
 func TestDefaultStaticDetectorsInspector(t *testing.T) {
 	// Tests the default hardcoded angular patterns
@@ -50,7 +122,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		},
 		exp: false,
 	})
-	inspector := PatternsListInspector{detectorsProvider: newDefaultStaticDetectorsProvider()}
+	inspector := PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
@@ -62,7 +134,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 	t.Run("no module.js", func(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
-		require.ErrorIs(t, err, plugins.ErrFileNotExist)
+		require.NoError(t, err)
 	})
 }
 
@@ -74,7 +146,7 @@ func TestProvideInspector(t *testing.T) {
 		require.NoError(t, err)
 		require.IsType(t, inspector, &PatternsListInspector{})
 		patternsListInspector := inspector.(*PatternsListInspector)
-		detectors := patternsListInspector.detectorsProvider.provideDetectors(context.Background())
+		detectors := patternsListInspector.DetectorsProvider.ProvideDetectors(context.Background())
 		require.NotEmpty(t, detectors, "provided detectors should not be empty")
 		require.Equal(t, defaultDetectors, detectors, "provided detectors should be the hardcoded ones")
 	})
@@ -85,12 +157,12 @@ func TestProvideInspector(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.IsType(t, inspector, &PatternsListInspector{})
-		require.IsType(t, inspector.(*PatternsListInspector).detectorsProvider, sequenceDetectorsProvider{})
-		seq := inspector.(*PatternsListInspector).detectorsProvider.(sequenceDetectorsProvider)
+		require.IsType(t, inspector.(*PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
+		seq := inspector.(*PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
 		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &gcomDetectorsProvider{}, "first detector provided should be gcom")
-		require.IsType(t, seq[1], &staticDetectorsProvider{}, "second detector provided should be static")
-		staticDetectors := seq[1].provideDetectors(context.Background())
+		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first Detector provided should be gcom")
+		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second Detector provided should be static")
+		staticDetectors := seq[1].ProvideDetectors(context.Background())
 		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
 		require.Equal(t, defaultDetectors, staticDetectors, "should provide hardcoded detectors as fallback")
 	})

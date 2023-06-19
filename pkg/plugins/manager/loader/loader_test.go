@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -16,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -1097,18 +1097,18 @@ func TestLoader_Load_Angular(t *testing.T) {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
 				name             string
-				angularInspector angulardetector.Inspector
+				angularInspector angularinspector.Inspector
 				shouldLoad       bool
 			}{
 				{
 					name:             "angular plugin",
-					angularInspector: angulardetector.AlwaysAngularFakeInspector,
+					angularInspector: angularinspector.AlwaysAngularFakeInspector,
 					// angular plugins should load only if allowed by the cfg
 					shouldLoad: cfgTc.cfg.AngularSupportEnabled,
 				},
 				{
 					name:             "non angular plugin",
-					angularInspector: angulardetector.NeverAngularFakeInspector,
+					angularInspector: angularinspector.NeverAngularFakeInspector,
 					// non-angular plugins should always load
 					shouldLoad: true,
 				},
@@ -1438,7 +1438,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	angularInspector, err := angulardetector.ProvideInspector(cfg)
+	angularInspector, err := angularinspector.ProvideInspector(cfg)
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),

@@ -1,4 +1,4 @@
-package angulardetector
+package angularinspector
 
 import (
 	"context"

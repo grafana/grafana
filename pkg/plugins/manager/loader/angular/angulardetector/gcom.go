@@ -17,19 +17,19 @@ import (
 )
 
 const (
-	// defaultGCOMDetectorsProviderTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
-	defaultGCOMDetectorsProviderTTL = time.Hour * 24
+	// DefaultGCOMDetectorsProviderTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
+	DefaultGCOMDetectorsProviderTTL = time.Hour * 24
 
 	// gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
 	gcomAngularPatternsPath = "/api/plugins/angular_patterns"
 )
 
-var _ detectorsProvider = &gcomDetectorsProvider{}
+var _ DetectorsProvider = &GCOMDetectorsProvider{}
 
-// gcomDetectorsProvider is a detectorsProvider which fetches patterns from GCOM, and caches the result for
+// GCOMDetectorsProvider is a DetectorsProvider which fetches patterns from GCOM, and caches the result for
 // the specified ttl. All subsequent calls to provideDetectors will return the cached result until the TTL expires.
 // This struct is safe for concurrent use.
-type gcomDetectorsProvider struct {
+type GCOMDetectorsProvider struct {
 	log log.Logger
 
 	httpClient *http.Client
@@ -40,18 +40,18 @@ type gcomDetectorsProvider struct {
 	lastUpdate time.Time
 
 	mux       sync.Mutex
-	detectors []detector
+	detectors []Detector
 }
 
-// newGCOMDetectorsProvider returns a new gcomDetectorsProvider.
+// NewGCOMDetectorsProvider returns a new GCOMDetectorsProvider.
 // baseURL is the GCOM base url, without /api and without a trailing slash (e.g.: https://grafana.com)
 // A default reasonable value for ttl is defaultGCOMDetectorsProviderTTL.
-func newGCOMDetectorsProvider(baseURL string, ttl time.Duration) (detectorsProvider, error) {
+func NewGCOMDetectorsProvider(baseURL string, ttl time.Duration) (DetectorsProvider, error) {
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
-	return &gcomDetectorsProvider{
+	return &GCOMDetectorsProvider{
 		log:        log.New("plugins.angulardetector.gcom"),
 		baseURL:    baseURL,
 		httpClient: cl,
@@ -68,7 +68,7 @@ func newGCOMDetectorsProvider(baseURL string, ttl time.Duration) (detectorsProvi
 // However, if there's an error, the cached value is not changed (the previous one is kept).
 //
 // The caller must have acquired g.mux.
-func (p *gcomDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) error {
+func (p *GCOMDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) error {
 	if time.Since(p.lastUpdate) <= p.ttl {
 		// Patterns already fetched
 		return nil
@@ -97,10 +97,10 @@ func (p *gcomDetectorsProvider) tryUpdateRemoteDetectors(ctx context.Context) er
 	return nil
 }
 
-// provideDetectors gets the remote detections, either from the cache or from the remote source (if TTL has passed).
+// ProvideDetectors gets the remote detections, either from the cache or from the remote source (if TTL has passed).
 // If an error occurs during the cache refresh, the function fails silently and the old cached value is returned
 // instead.
-func (p *gcomDetectorsProvider) provideDetectors(ctx context.Context) []detector {
+func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 
@@ -113,7 +113,7 @@ func (p *gcomDetectorsProvider) provideDetectors(ctx context.Context) []detector
 
 // fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
-func (p *gcomDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error) {
+func (p *GCOMDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error) {
 	st := time.Now()
 
 	reqURL, err := url.JoinPath(p.baseURL, gcomAngularPatternsPath)
@@ -161,18 +161,18 @@ type gcomPattern struct {
 // errUnknownPatternType is returned when a pattern type is not known.
 var errUnknownPatternType = errors.New("unknown pattern type")
 
-// detector converts a gcomPattern into a detector, based on its Type.
+// Detector converts a gcomPattern into a Detector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
-func (p *gcomPattern) detector() (detector, error) {
+func (p *gcomPattern) detector() (Detector, error) {
 	switch p.Type {
 	case gcomPatternTypeContains:
-		return &containsBytesDetector{pattern: []byte(p.Pattern)}, nil
+		return &ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
 	case gcomPatternTypeRegex:
 		re, err := regexp.Compile(p.Pattern)
 		if err != nil {
 			return nil, fmt.Errorf("%q regexp compile: %w", p.Pattern, err)
 		}
-		return &regexDetector{regex: re}, nil
+		return &RegexDetector{Regex: re}, nil
 	}
 	return nil, fmt.Errorf("%q: %w", p.Type, errUnknownPatternType)
 }
@@ -180,10 +180,10 @@ func (p *gcomPattern) detector() (detector, error) {
 // gcomPatterns is a slice of gcomPattern s.
 type gcomPatterns []gcomPattern
 
-// detectors converts the slice of gcomPattern s into a slice of detectors, by calling detector() on each gcomPattern.
-func (p gcomPatterns) detectors() ([]detector, error) {
+// detectors converts the slice of gcomPattern s into a slice of detectors, by calling Detector() on each gcomPattern.
+func (p gcomPatterns) detectors() ([]Detector, error) {
 	var finalErr error
-	detectors := make([]detector, 0, len(p))
+	detectors := make([]Detector, 0, len(p))
 	for _, pattern := range p {
 		d, err := pattern.detector()
 		if err != nil {

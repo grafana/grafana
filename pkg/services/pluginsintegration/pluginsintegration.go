@@ -2,6 +2,7 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
@@ -52,7 +52,7 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
-	angulardetector.ProvideInspector,
+	angularinspector.ProvideInspector,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),

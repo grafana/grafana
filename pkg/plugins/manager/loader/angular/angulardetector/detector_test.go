@@ -8,18 +8,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var testDetectors = []Detector{
+	&ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
+	&ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
+}
+
 func TestContainsBytesDetector(t *testing.T) {
-	detector := &containsBytesDetector{pattern: []byte("needle")}
+	detector := &ContainsBytesDetector{Pattern: []byte("needle")}
 	t.Run("contains", func(t *testing.T) {
-		require.True(t, detector.detect([]byte("lorem needle ipsum haystack")))
+		require.True(t, detector.Detect([]byte("lorem needle ipsum haystack")))
 	})
 	t.Run("not contains", func(t *testing.T) {
-		require.False(t, detector.detect([]byte("ippif")))
+		require.False(t, detector.Detect([]byte("ippif")))
 	})
 }
 
 func TestRegexDetector(t *testing.T) {
-	detector := &regexDetector{regex: regexp.MustCompile("hello world(?s)")}
+	detector := &RegexDetector{Regex: regexp.MustCompile("hello world(?s)")}
 	for _, tc := range []struct {
 		name string
 		s    string
@@ -31,25 +36,25 @@ func TestRegexDetector(t *testing.T) {
 		{name: "no match", s: "bla bla hello you reading this test code", exp: false},
 	} {
 		t.Run(tc.s, func(t *testing.T) {
-			r := detector.detect([]byte(tc.s))
-			require.Equal(t, tc.exp, r, "detector result should be correct")
+			r := detector.Detect([]byte(tc.s))
+			require.Equal(t, tc.exp, r, "Detector result should be correct")
 		})
 	}
 }
 
 func TestStaticDetectorsProvider(t *testing.T) {
-	p := staticDetectorsProvider{detectors: defaultDetectors}
-	detectors := p.provideDetectors(context.Background())
+	p := StaticDetectorsProvider{Detectors: testDetectors}
+	detectors := p.ProvideDetectors(context.Background())
 	require.NotEmpty(t, detectors)
-	require.Equal(t, defaultDetectors, detectors)
+	require.Equal(t, testDetectors, detectors)
 }
 
 type fakeDetectorsProvider struct {
 	calls   int
-	returns []detector
+	returns []Detector
 }
 
-func (p *fakeDetectorsProvider) provideDetectors(_ context.Context) []detector {
+func (p *fakeDetectorsProvider) ProvideDetectors(_ context.Context) []Detector {
 	p.calls += 1
 	return p.returns
 }
@@ -58,15 +63,15 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 	for _, tc := range []struct {
 		name          string
 		fakeProviders []*fakeDetectorsProvider
-		exp           func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []detector)
+		exp           func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []Detector)
 	}{
 		{
 			name: "returns first non-empty provided detectors (first)",
 			fakeProviders: []*fakeDetectorsProvider{
-				{returns: defaultDetectors},
+				{returns: testDetectors},
 				{returns: nil},
 			},
-			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []detector) {
+			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []Detector) {
 				require.NotEmpty(t, detectors)
 				require.Len(t, detectors, len(fakeProviders[0].returns))
 				require.Equal(t, fakeProviders[0].returns, detectors)
@@ -78,9 +83,9 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 			name: "returns first non-empty provided detectors (second)",
 			fakeProviders: []*fakeDetectorsProvider{
 				{returns: nil},
-				{returns: defaultDetectors},
+				{returns: testDetectors},
 			},
-			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []detector) {
+			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []Detector) {
 				require.NotEmpty(t, detectors)
 				require.Len(t, detectors, len(fakeProviders[1].returns))
 				require.Equal(t, fakeProviders[1].returns, detectors)
@@ -93,9 +98,9 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 			name: "returns nil if all providers return empty",
 			fakeProviders: []*fakeDetectorsProvider{
 				{returns: nil},
-				{returns: []detector{}},
+				{returns: []Detector{}},
 			},
-			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []detector) {
+			exp: func(t *testing.T, fakeProviders []*fakeDetectorsProvider, detectors []Detector) {
 				require.Empty(t, detectors, "should not return any detectors")
 				for i, p := range fakeProviders {
 					require.Equalf(t, 1, p.calls, "fake provider %d should be called", i)
@@ -104,11 +109,11 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			seq := make(sequenceDetectorsProvider, 0, len(tc.fakeProviders))
+			seq := make(SequenceDetectorsProvider, 0, len(tc.fakeProviders))
 			for _, p := range tc.fakeProviders {
-				seq = append(seq, detectorsProvider(p))
+				seq = append(seq, DetectorsProvider(p))
 			}
-			detectors := seq.provideDetectors(context.Background())
+			detectors := seq.ProvideDetectors(context.Background())
 			tc.exp(t, tc.fakeProviders, detectors)
 		})
 	}
