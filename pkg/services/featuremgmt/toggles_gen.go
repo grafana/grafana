@@ -342,4 +342,8 @@ const (
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
+
+	// FlagFlameGraphV2
+	// New version of flame graph with new features
+	FlagFlameGraphV2 = "flameGraphV2"
 )

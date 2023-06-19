@@ -102,4 +102,5 @@ export interface FeatureToggles {
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   alertingLokiRangeToInstant?: boolean;
+  flameGraphV2?: boolean;
 }
