@@ -22,7 +22,7 @@ This section contains how-to topics for extending or enhancing Grafana plugins.
 - [Add distributed tracing for backend plugins]({{< relref "./add-distributed-tracing-for-backend-plugins.md" >}})
 - [Add Explore queries]({{< relref "./add-support-for-explore-queries.md" >}})
 - [Add query editor help]({{< relref "./add-query-editor-help.md" >}})
-- [Add variables]({{< relref "add-support-for-variables.md" >}})
+- [Add variables]({{< relref "./add-support-for-variables.md" >}})
 - [Automate development with CI](https://grafana.github.io/plugin-tools/docs/ci)
 - [Build a custom panel option editor]({{< relref "./custom-panel-option-editors.md" >}})
 - [Create nested plugins](https://grafana.github.io/plugin-tools/docs/nested-plugins)
