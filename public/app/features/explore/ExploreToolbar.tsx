@@ -23,7 +23,7 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
-import { cancelQueries, runQueries } from './state/query';
+import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
 import { isSplit } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
@@ -50,21 +50,14 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const splitted = useSelector(isSplit);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
-  const { refreshInterval, loading, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
+  const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
     (state: StoreState) => ({
-      ...pick(
-        state.explore.panes[exploreId]!,
-        'refreshInterval',
-        'loading',
-        'datasourceInstance',
-        'range',
-        'isLive',
-        'isPaused'
-      ),
+      ...pick(state.explore.panes[exploreId]!, 'refreshInterval', 'datasourceInstance', 'range', 'isLive', 'isPaused'),
       syncedTimes: state.explore.syncedTimes,
     }),
     shallowEqual
   );
+  const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
