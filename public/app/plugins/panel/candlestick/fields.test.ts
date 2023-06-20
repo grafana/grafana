@@ -6,7 +6,7 @@ import { Options, VizDisplayMode } from './types';
 const theme = createTheme();
 
 describe('Candlestick data', () => {
-  const options: Options = {} as Options;
+  const options = {} as Options;
 
   it('require a time field', () => {
     const info = prepareCandlestickFields(
@@ -122,7 +122,7 @@ describe('Candlestick data', () => {
   });
 
   it('will unmap high & low fields in volume-only mode', () => {
-    const options: Options = {
+    const options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: true,
     } as Options;
@@ -184,7 +184,7 @@ describe('Candlestick data', () => {
   });
 
   it('will unmap volume field in candles-only mode', () => {
-    const options: Options = {
+    const options = {
       mode: VizDisplayMode.Candles,
       includeAllFields: false,
     } as Options;
@@ -246,7 +246,7 @@ describe('Candlestick data', () => {
   });
 
   it("will not remove open field from frame when it's also mapped to high in volume-only mode", () => {
-    const options: Options = {
+    const options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: false,
     } as Options;
