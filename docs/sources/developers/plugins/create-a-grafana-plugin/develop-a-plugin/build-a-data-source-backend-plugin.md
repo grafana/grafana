@@ -100,6 +100,14 @@ You now have a new data source instance of your plugin that is ready to use in a
 
 #### Grafana doesn't load my plugin
 
+Ensure that Grafana has been started in development mode. If you are running Grafana from source, you'll need to include the add the following line to your `conf/custom.ini` file (if you don't have one already, go ahead and create this file before proceeding):
+
+```ini
+app_mode = development
+```
+
+You can then start Grafana in development mode by running `mage -v && yarn start` in the repository root. If you are running Grafana from a binary or inside a Docker container, you can start it in development mode by setting the environment variable `GF_DEFAULT_APP_MODE` to `development`.
+
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
 configure Grafana to [allow unsigned plugins](/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
 For more information, refer to [Plugin signature verification](/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
