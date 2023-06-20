@@ -58,7 +58,7 @@ composableKinds: PanelCfg: {
 					// TODO docs
 					fields: CandlestickFieldMap | *{}
 					// TODO docs
-					colors: CandlestickColors
+					colors: CandlestickColors | *{down: "red", up: "green", flat: "gray"}
 					// When enabled, all fields will be sent to the graph
 					includeAllFields?: bool | *false
 				} @cuetsy(kind="interface")

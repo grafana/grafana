@@ -15,7 +15,6 @@ import {
 
 export const defaultOptions: Partial<Options> = {
   ...defaultOptionsBase,
-  colors: defaultCandlestickColors as CandlestickColors,
   // TODO: This should be included in the cue schema in the future.
   legend: {
     displayMode: LegendDisplayMode.List,

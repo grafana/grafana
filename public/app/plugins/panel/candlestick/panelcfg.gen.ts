@@ -91,6 +91,11 @@ export interface Options extends common.OptionsWithLegend {
 }
 
 export const defaultOptions: Partial<Options> = {
+  colors: {
+    down: 'red',
+    up: 'green',
+    flat: 'gray',
+  },
   fields: {},
   includeAllFields: false,
 };
