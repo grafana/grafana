@@ -79,6 +79,7 @@ export const TooltipView = ({
 
   let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
 
+  let color = '#0000';
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
@@ -87,6 +88,10 @@ export const TooltipView = ({
 
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
+
+    if (colorFacet) {
+      color = colorFacet.display!(colorFacet.values[rowIndex]).color!;
+    }
 
     extraFacets = {
       colorFacetFieldName,
@@ -102,7 +107,7 @@ export const TooltipView = ({
     name: getFieldDisplayName(yField, frame),
     val: yField.values[rowIndex],
     field: yField,
-    color: series.pointColor(frame) as string,
+    color,
   };
 
   return (
