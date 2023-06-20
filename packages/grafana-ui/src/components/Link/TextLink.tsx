@@ -4,7 +4,7 @@ import React, { AnchorHTMLAttributes, forwardRef } from 'react';
 import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
-import { IconName } from '../../types';
+import { IconName, IconSize } from '../../types';
 import { Icon } from '../Icon/Icon';
 import { customColor, customWeight } from '../Text/utils';
 
@@ -23,31 +23,40 @@ interface TextLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
-  /** When it is a standalone element, whether to align the text to left, center or right of its block*/
-  textAlignment?: 'left' | 'right' | 'center';
-  /** When the link is inline it won't show an icon.
-   * If it is a standalone element, it will show the icon specified. When this is an external link, the default icon will be 'external-link-alt' */
+  /** Set the icon to be shown. An external link will show the 'external-link-alt' icon as default.*/
   icon?: IconName;
   children: string;
 }
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
-  ({ href, color = 'link', external = false, inline, variant, weight, icon, children, ...rest }, ref) => {
+  ({ href, color = 'link', external = false, inline, variant = 'body', weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
     const theme = useTheme2();
     const styles = getLinkStyles(theme, variant, weight, color, inline);
     const externalIcon = icon || 'external-link-alt';
+    const svgSizes: {
+      [key in keyof ThemeTypographyVariantTypes]: IconSize;
+    } = {
+      h1: 'xl',
+      h2: 'xl',
+      h3: 'lg',
+      h4: 'lg',
+      h5: 'md',
+      h6: 'md',
+      body: 'md',
+      bodySmall: 'xs',
+    };
 
     return external ? (
       <a href={validUrl} ref={ref} target="_blank" rel="noreferrer" {...rest} className={styles}>
         {children}
-        {!inline && <Icon size={getSvgVariantSize(variant)} name={externalIcon} />}
+        <Icon size={svgSizes[variant] || 'md'} name={externalIcon} />
       </a>
     ) : (
       <Link ref={ref} href={validUrl} {...rest} className={styles}>
         {children}
-        {icon && !inline && <Icon name={icon} />}
+        {icon && <Icon name={icon} />}
       </Link>
     );
   }
@@ -60,8 +69,7 @@ export const getLinkStyles = (
   variant?: keyof ThemeTypographyVariantTypes,
   weight?: TextLinkProps['weight'],
   color?: TextLinkProps['color'],
-  inline = true,
-  textAlignment: TextLinkProps['textAlignment'] = 'left'
+  inline = true
 ) => {
   const linkColor = color ? customColor(color, theme) : theme.colors.text.link;
 
@@ -77,7 +85,6 @@ export const getLinkStyles = (
       gap: theme.spacing(1),
       color: linkColor,
       display: 'flex',
-      justifyContent: getFlexAlignment(textAlignment),
       '&:hover': {
         textDecoration: 'underline',
       },
@@ -86,26 +93,4 @@ export const getLinkStyles = (
       display: 'inline-flex',
     },
   ]);
-};
-
-const getSvgVariantSize = (variant: keyof ThemeTypographyVariantTypes = 'body') => {
-  if (variant === 'h1' || variant === 'h2') {
-    return 'xl';
-  } else if (variant === 'h3' || variant === 'h4') {
-    return 'lg';
-  } else if (variant === 'bodySmall') {
-    return 'xs';
-  } else {
-    return 'md';
-  }
-};
-
-const getFlexAlignment = (textAlignment: TextLinkProps['textAlignment']) => {
-  if (textAlignment === 'right') {
-    return 'flex-end';
-  } else if (textAlignment === 'center') {
-    return 'center';
-  } else {
-    return 'flex-start';
-  }
 };
