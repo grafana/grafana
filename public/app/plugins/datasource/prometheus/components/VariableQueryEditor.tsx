@@ -1,4 +1,5 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import { debounce } from 'lodash';
+import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
@@ -8,6 +9,10 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
+import { promQueryModeller } from '../querybuilder/PromQueryModeller';
+import { MetricsLabelsSection } from '../querybuilder/components/MetricsLabelsSection';
+import { QueryBuilderLabelFilter } from '../querybuilder/shared/types';
+import { PromVisualQuery } from '../querybuilder/types';
 import {
   PromOptions,
   PromQuery,
@@ -46,6 +51,9 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
+  // label filters have been added as a filter for metrics in label values query type
+  const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
+
   useEffect(() => {
     if (!query) {
       return;
@@ -57,13 +65,9 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
+    setLabelFilters(query.labelFilters ?? []);
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
-
-    // set the migrated label in the label options
-    if (variableQuery.label) {
-      setLabelOptions([{ label: variableQuery.label, value: variableQuery.label }]);
-    }
   }, [query]);
 
   // set the label names options for the label values var query
@@ -71,15 +75,40 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     if (qryType !== QueryType.LabelValues) {
       return;
     }
+    const variables = datasource.getVariables().map((variable: string) => ({ label: variable, value: variable }));
+    if (!metric) {
+      // get all the labels
+      datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
+        const names = labelNames.map(({ text }) => ({ label: text, value: text }));
+        setLabelOptions([...variables, ...names]);
+      });
+    } else {
+      // fetch the labels filtered by the metric
+      const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
+      const expr = promQueryModeller.renderLabels(labelToConsider);
 
-    datasource.getTagKeys().then((labelNames: Array<{ text: string }>) => {
-      setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
-    });
-  }, [datasource, qryType]);
+      if (datasource.hasLabelsMatchAPISupport()) {
+        datasource.languageProvider.fetchSeriesLabelsMatch(expr).then((labelsIndex: Record<string, string[]>) => {
+          const labelNames = Object.keys(labelsIndex);
+          const names = labelNames.map((value) => ({ label: value, value: value }));
+          setLabelOptions([...variables, ...names]);
+        });
+      } else {
+        datasource.languageProvider.fetchSeriesLabels(expr).then((labelsIndex: Record<string, string[]>) => {
+          const labelNames = Object.keys(labelsIndex);
+          const names = labelNames.map((value) => ({ label: value, value: value }));
+          setLabelOptions([...variables, ...names]);
+        });
+      }
+    }
+  }, [datasource, qryType, metric]);
 
-  const onChangeWithVariableString = (qryType: QueryType) => {
+  const onChangeWithVariableString = (
+    updateVar: { [key: string]: QueryType | string },
+    updLabelFilters?: QueryBuilderLabelFilter[]
+  ) => {
     const queryVar = {
-      qryType: qryType,
+      qryType,
       label,
       metric,
       varQuery,
@@ -87,113 +116,146 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       refId: 'PrometheusVariableQueryEditor-VariableQuery',
     };
 
-    const queryString = migrateVariableEditorBackToVariableSupport(queryVar);
+    const updatedVar = { ...queryVar, ...updateVar };
 
+    const queryString = migrateVariableEditorBackToVariableSupport(updatedVar);
+
+    const lblFltrs = updLabelFilters ? updLabelFilters : labelFilters;
+
+    // setting query.query property allows for update of variable definition
     onChange({
       query: queryString,
+      labelFilters: lblFltrs,
       refId,
     });
   };
 
+  /** Call onchange for label names query type change */
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
     setQryType(newType.value);
     if (newType.value === QueryType.LabelNames) {
-      onChangeWithVariableString(newType.value);
+      onChangeWithVariableString({ qryType: newType.value });
     }
   };
 
+  /** Call onchange for label select when query type is label values */
   const onLabelChange = (newLabel: SelectableValue<string>) => {
-    setLabel(newLabel.value ?? '');
+    const newLabelvalue = newLabel && newLabel.value ? newLabel.value : '';
+    setLabel(newLabelvalue);
+    if (qryType === QueryType.LabelValues && newLabelvalue) {
+      onChangeWithVariableString({ label: newLabelvalue });
+    }
   };
 
-  const onMetricChange = (e: FormEvent<HTMLInputElement>) => {
-    setMetric(e.currentTarget.value);
+  /**
+   * Call onChange for MetricsLabels component change for label values query type
+   * if there is a label (required) and
+   * if the labels or metric are updated.
+   */
+  const metricsLabelsChange = (update: PromVisualQuery) => {
+    setMetric(update.metric);
+    setLabelFilters(update.labels);
+
+    const updMetric = update.metric;
+    const updLabelFilters = update.labels ?? [];
+
+    if (qryType === QueryType.LabelValues && label && (updMetric || updLabelFilters)) {
+      onChangeWithVariableString({ qryType, metric: updMetric }, updLabelFilters);
+    }
   };
 
+  /**
+   * Call onchange for metric change if metrics names (regex) query type
+   * Debounce this because to not call the API for every keystroke.
+   */
+  const onMetricChange = debounce((value: string) => {
+    if (qryType === QueryType.MetricNames && value) {
+      onChangeWithVariableString({ metric: value });
+    }
+  }, 300);
+
+  /**
+   *  Do not call onchange for variable query result when query type is var query result
+   *  because the query may not be finished typing and an error is returned
+   *  for incorrectly formatted series. Call onchange for blur instead.
+   */
   const onVarQueryChange = (e: FormEvent<HTMLTextAreaElement>) => {
     setVarQuery(e.currentTarget.value);
   };
 
+  /**
+   *  Do not call onchange for seriesQuery when query type is series query
+   *  because the series may not be finished typing and an error is returned
+   *  for incorrectly formatted series. Call onchange for blur instead.
+   */
   const onSeriesQueryChange = (e: FormEvent<HTMLInputElement>) => {
     setSeriesQuery(e.currentTarget.value);
   };
 
-  const handleBlur = () => {
-    if (qryType === QueryType.LabelNames) {
-      onChangeWithVariableString(qryType);
-    } else if (qryType === QueryType.LabelValues && label) {
-      onChangeWithVariableString(qryType);
-    } else if (qryType === QueryType.MetricNames && metric) {
-      onChangeWithVariableString(qryType);
-    } else if (qryType === QueryType.VarQueryResult && varQuery) {
-      onChangeWithVariableString(qryType);
-    } else if (qryType === QueryType.SeriesQuery && seriesQuery) {
-      onChangeWithVariableString(qryType);
-    }
-  };
+  const promVisualQuery = useCallback(() => {
+    return { metric: metric, labels: labelFilters, operations: [] };
+  }, [metric, labelFilters]);
 
   return (
-    <InlineFieldRow>
-      <InlineField
-        label="Query Type"
-        labelWidth={20}
-        tooltip={
-          <div>The Prometheus data source plugin provides the following query types for template variables.</div>
-        }
-      >
-        <Select
-          placeholder="Select query type"
-          aria-label="Query type"
-          onChange={onQueryTypeChange}
-          onBlur={handleBlur}
-          value={qryType}
-          options={variableOptions}
-          width={25}
-        />
-      </InlineField>
+    <>
+      <InlineFieldRow>
+        <InlineField
+          label="Query type"
+          labelWidth={20}
+          tooltip={
+            <div>The Prometheus data source plugin provides the following query types for template variables.</div>
+          }
+        >
+          <Select
+            placeholder="Select query type"
+            aria-label="Query type"
+            onChange={onQueryTypeChange}
+            value={qryType}
+            options={variableOptions}
+            width={25}
+          />
+        </InlineField>
+      </InlineFieldRow>
+
       {qryType === QueryType.LabelValues && (
         <>
-          <InlineField
-            label="Label"
-            labelWidth={20}
-            required
-            tooltip={
-              <div>
-                Returns a list of label values for the label name in all metrics unless the metric is specified.
-              </div>
-            }
-          >
-            <Select
-              aria-label="label-select"
-              onChange={onLabelChange}
-              onBlur={handleBlur}
-              value={label}
-              options={labelOptions}
-              width={25}
-              allowCustomValue
-            />
-          </InlineField>
-          <InlineField
-            label="Metric"
-            labelWidth={20}
-            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
-          >
-            <Input
-              type="text"
-              aria-label="Metric selector"
-              placeholder="Optional metric selector"
-              value={metric}
-              onChange={onMetricChange}
-              onBlur={handleBlur}
-              width={25}
-            />
-          </InlineField>
+          <InlineFieldRow>
+            <InlineField
+              label="Label"
+              labelWidth={20}
+              required
+              aria-labelledby="label-select"
+              tooltip={
+                <div>
+                  Returns a list of label values for the label name in all metrics unless the metric is specified.
+                </div>
+              }
+            >
+              <Select
+                aria-label="label-select"
+                onChange={onLabelChange}
+                value={label}
+                options={labelOptions}
+                width={25}
+                allowCustomValue
+                isClearable={true}
+              />
+            </InlineField>
+          </InlineFieldRow>
+          {/* Used to select an optional metric with optional label filters */}
+          <MetricsLabelsSection
+            query={promVisualQuery()}
+            datasource={datasource}
+            onChange={metricsLabelsChange}
+            variableEditor={true}
+          />
         </>
       )}
+
       {qryType === QueryType.MetricNames && (
-        <>
+        <InlineFieldRow>
           <InlineField
-            label="Metric Regex"
+            label="Metric regex"
             labelWidth={20}
             tooltip={<div>Returns a list of metrics matching the specified metric regex.</div>}
           >
@@ -202,15 +264,18 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               aria-label="Metric selector"
               placeholder="Metric Regex"
               value={metric}
-              onChange={onMetricChange}
-              onBlur={handleBlur}
+              onChange={(e) => {
+                setMetric(e.currentTarget.value);
+                onMetricChange(e.currentTarget.value);
+              }}
               width={25}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
+
       {qryType === QueryType.VarQueryResult && (
-        <>
+        <InlineFieldRow>
           <InlineField
             label="Query"
             labelWidth={20}
@@ -227,14 +292,19 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               placeholder="Prometheus Query"
               value={varQuery}
               onChange={onVarQueryChange}
-              onBlur={handleBlur}
+              onBlur={() => {
+                if (qryType === QueryType.VarQueryResult && varQuery) {
+                  onChangeWithVariableString({ qryType });
+                }
+              }}
               cols={100}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
+
       {qryType === QueryType.SeriesQuery && (
-        <>
+        <InlineFieldRow>
           <InlineField
             label="Series Query"
             labelWidth={20}
@@ -253,13 +323,17 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               placeholder="Series Query"
               value={seriesQuery}
               onChange={onSeriesQueryChange}
-              onBlur={handleBlur}
+              onBlur={() => {
+                if (qryType === QueryType.SeriesQuery && seriesQuery) {
+                  onChangeWithVariableString({ qryType });
+                }
+              }}
               width={100}
             />
           </InlineField>
-        </>
+        </InlineFieldRow>
       )}
-    </InlineFieldRow>
+    </>
   );
 };
 

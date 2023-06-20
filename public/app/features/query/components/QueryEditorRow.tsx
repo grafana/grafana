@@ -64,6 +64,7 @@ interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  collapsable?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -491,7 +492,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   render() {
-    const { query, index, visualization } = this.props;
+    const { query, index, visualization, collapsable } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isDisabled = query.hide;
 
@@ -512,6 +513,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         <QueryOperationRow
           id={this.id}
           draggable={true}
+          collapsable={collapsable}
           index={index}
           headerElement={this.renderHeader}
           actions={this.renderActions}
