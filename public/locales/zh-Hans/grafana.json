@@ -1,13 +1,23 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
-  "browse-action": {
-    "delete-button": "",
-    "move-button": ""
-  },
   "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     }
   },
   "clipboard-button": {
@@ -122,13 +132,6 @@
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
       "unmark-favorite": "取消标记为收藏"
-    }
-  },
-  "dashboards-tree": {
-    "browser": {
-      "name-column": "",
-      "tags-column": "",
-      "type-column": ""
     }
   },
   "folder-picker": {
@@ -611,13 +614,6 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
-    }
-  },
-  "type-cell": {
-    "types": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
     }
   },
   "user-orgs": {

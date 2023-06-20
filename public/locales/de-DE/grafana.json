@@ -1,13 +1,23 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
-  "browse-action": {
-    "delete-button": "",
-    "move-button": ""
-  },
   "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     }
   },
   "clipboard-button": {
@@ -122,13 +132,6 @@
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
-    }
-  },
-  "dashboards-tree": {
-    "browser": {
-      "name-column": "",
-      "tags-column": "",
-      "type-column": ""
     }
   },
   "folder-picker": {
@@ -611,13 +614,6 @@
     "zone": {
       "select-aria-label": "Zeitzonen-Auswähler",
       "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
-    }
-  },
-  "type-cell": {
-    "types": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
     }
   },
   "user-orgs": {

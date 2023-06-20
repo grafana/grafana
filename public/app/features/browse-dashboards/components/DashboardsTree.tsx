@@ -74,13 +74,12 @@ export function DashboardsTree({
       Cell: CheckboxCell,
     };
 
-    // const nameColumnTranslation = t('dashboards-tree.browser.name-column','Name');
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
       width: 3,
       Header: (
         <span style={{ paddingLeft: 24 }}>
-          <Trans i18nKey="dashboards-tree.browser.name-column">Name</Trans>
+          <Trans i18nKey="browse-dashboards.dashboards-tree.name-column">Name</Trans>
         </span>
       ),
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
@@ -89,14 +88,14 @@ export function DashboardsTree({
     const typeColumn: DashboardsTreeColumn = {
       id: 'type',
       width: 1,
-      Header: t('dashboards-tree.browser.type-column', 'Type'),
+      Header: t('browse-dashboards.dashboards-tree.type-column', 'Type'),
       Cell: TypeCell,
     };
 
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       width: 2,
-      Header: t('dashboards-tree.browser.tags-column', 'Tags'),
+      Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
     const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);

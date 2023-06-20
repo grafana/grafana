@@ -21,7 +21,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            <Trans i18nKey="type-cell.types.dashboard">Dashboard</Trans>
+            <Trans i18nKey="browse-dashboards.type-cell.dashboard">Dashboard</Trans>
           </Span>
         </div>
       );
@@ -30,7 +30,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            <Trans i18nKey="type-cell.types.folder">Folder</Trans>
+            <Trans i18nKey="browse-dashboards.type-cell.folder">Folder</Trans>
           </Span>
         </div>
       );
@@ -39,7 +39,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            <Trans i18nKey="type-cell.types.panel">Panel</Trans>
+            <Trans i18nKey="browse-dashboards.type-cell.panel">Panel</Trans>
           </Span>
         </div>
       );

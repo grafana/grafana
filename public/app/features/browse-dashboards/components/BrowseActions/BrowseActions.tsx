@@ -131,11 +131,11 @@ export function BrowseActions() {
   return (
     <div className={styles.row} data-testid="manage-actions">
       <Button onClick={showMoveModal} variant="secondary">
-        <Trans i18nKey="browse-action.move-button">Move</Trans>
+        <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
       </Button>
 
       <Button onClick={showDeleteModal} variant="destructive">
-        <Trans i18nKey="browse-action.delete-button">Delete</Trans>
+        <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
       </Button>
     </div>
   );

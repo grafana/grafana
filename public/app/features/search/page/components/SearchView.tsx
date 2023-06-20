@@ -77,7 +77,6 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
       return (
         <div className={styles.noResults}>
           <div>
-            {' '}
             <Trans i18nKey="search-view.no-results.text">No results found for your query.</Trans>
           </div>
           <br />

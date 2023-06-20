@@ -1,13 +1,23 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
-  "browse-action": {
-    "delete-button": "Delete",
-    "move-button": "Move"
-  },
   "browse-dashboards": {
+    "action": {
+      "delete-button": "Delete",
+      "move-button": "Move"
+    },
+    "dashboards-tree": {
+      "name-column": "Name",
+      "tags-column": "Tags",
+      "type-column": "Type"
+    },
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query."
+    },
+    "type-cell": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
     }
   },
   "clipboard-button": {
@@ -122,13 +132,6 @@
       "settings": "Dashboard settings",
       "share": "Share dashboard or panel",
       "unmark-favorite": "Unmark as favorite"
-    }
-  },
-  "dashboards-tree": {
-    "browser": {
-      "name-column": "Name",
-      "tags-column": "Tags",
-      "type-column": "Type"
     }
   },
   "folder-picker": {
@@ -611,13 +614,6 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
-    }
-  },
-  "type-cell": {
-    "types": {
-      "dashboard": "Dashboard",
-      "folder": "Folder",
-      "panel": "Panel"
     }
   },
   "user-orgs": {
