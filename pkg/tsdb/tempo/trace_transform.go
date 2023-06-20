@@ -46,13 +46,18 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
+			data.NewField("kind", nil, []string{}),
+			data.NewField("statusCode", nil, []int64{}),
+			data.NewField("statusMessage", nil, []string{}),
+			data.NewField("instrumentationLibraryName", nil, []string{}),
+			data.NewField("instrumentationLibraryVersion", nil, []string{}),
+			data.NewField("traceState", nil, []string{}),
 			data.NewField("serviceTags", nil, []json.RawMessage{}),
 			data.NewField("startTime", nil, []float64{}),
 			data.NewField("duration", nil, []float64{}),
 			data.NewField("logs", nil, []json.RawMessage{}),
 			data.NewField("references", nil, []json.RawMessage{}),
 			data.NewField("tags", nil, []json.RawMessage{}),
-			data.NewField("intrinsics", nil, []json.RawMessage{}),
 		},
 		Meta: &data.FrameMeta{
 			// TODO: use constant once available in the SDK
@@ -120,6 +125,14 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 	startTime := float64(span.StartTimestamp()) / 1_000_000
 	serviceName, serviceTags := resourceToProcess(resource)
 
+	status := span.Status()
+	statusCode := int64(status.Code())
+	statusMessage := status.Message()
+
+	libraryName := libraryTags.Name()
+	libraryVersion := libraryTags.Version()
+	traceState := getTraceState(span.TraceState())
+
 	serviceTagsJson, err := json.Marshal(serviceTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal service tags: %w", err)
@@ -128,11 +141,6 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 	spanTags, err := json.Marshal(getSpanTags(span))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal span tags: %w", err)
-	}
-
-	intrinsics, err := json.Marshal(getIntrinsics(span, libraryTags))
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal intrinsics: %w", err)
 	}
 
 	logs, err := json.Marshal(spanEventsToLogs(span.Events()))
@@ -153,13 +161,18 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		parentSpanID,
 		span.Name(),
 		serviceName,
+		getSpanKind(span.Kind()),
+		statusCode,
+		statusMessage,
+		libraryName,
+		libraryVersion,
+		traceState,
 		json.RawMessage(serviceTagsJson),
 		startTime,
 		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
 		json.RawMessage(logs),
 		json.RawMessage(references),
 		json.RawMessage(spanTags),
-		json.RawMessage(intrinsics),
 	}, nil
 }
 
@@ -208,50 +221,7 @@ func getSpanTags(span pdata.Span) []*KeyValue {
 	return tags
 }
 
-func getIntrinsics(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
-	var tags []*KeyValue
-
-	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
-	if libraryTags != nil {
-		tags = append(tags, libraryTags...)
-	}
-	status := span.Status()
-	possibleNilTags := []*KeyValue{
-		getTagFromSpanKind(span.Kind()),
-		getTagFromStatusCode(status.Code()),
-		getTagFromStatusMsg(status.Message()),
-		getTagFromTraceState(span.TraceState()),
-	}
-
-	for _, tag := range possibleNilTags {
-		if tag != nil {
-			tags = append(tags, tag)
-		}
-	}
-	return tags
-}
-
-func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyValue {
-	var keyValues []*KeyValue
-	if ilName := il.Name(); ilName != "" {
-		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryName,
-			Value: ilName,
-		}
-		keyValues = append(keyValues, kv)
-	}
-	if ilVersion := il.Version(); ilVersion != "" {
-		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryVersion,
-			Value: ilVersion,
-		}
-		keyValues = append(keyValues, kv)
-	}
-
-	return keyValues
-}
-
-func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
+func getSpanKind(spanKind pdata.SpanKind) string {
 	var tagStr string
 	switch spanKind {
 	case pdata.SpanKindClient:
@@ -265,40 +235,17 @@ func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
 	case pdata.SpanKindInternal:
 		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
 	default:
-		return nil
+		return ""
 	}
 
-	return &KeyValue{
-		Key:   "kind",
-		Value: tagStr,
-	}
+	return tagStr
 }
 
-func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
-	return &KeyValue{
-		Key:   "otel.status_code",
-		Value: int64(statusCode),
-	}
-}
-
-func getTagFromStatusMsg(statusMsg string) *KeyValue {
-	if statusMsg == "" {
-		return nil
-	}
-	return &KeyValue{
-		Key:   "otel.status_description",
-		Value: statusMsg,
-	}
-}
-
-func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
+func getTraceState(traceState pdata.TraceState) string {
 	if traceState != pdata.TraceStateEmpty {
-		return &KeyValue{
-			Key:   tracetranslator.TagW3CTraceState,
-			Value: string(traceState),
-		}
+		return string(traceState)
 	}
-	return nil
+	return ""
 }
 
 func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {

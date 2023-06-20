@@ -24,6 +24,12 @@ describe('filterSpans', () => {
     spanID: spanID0,
     operationName: 'operationName0',
     duration: 3050,
+    kind: 'kind0',
+    statusCode: 0,
+    statusMessage: 'statusMessage0',
+    instrumentationLibraryName: 'libraryName',
+    instrumentationLibraryVersion: 'libraryVersion0',
+    traceState: 'traceState0',
     process: {
       serviceName: 'serviceName0',
       tags: [
@@ -45,16 +51,6 @@ describe('filterSpans', () => {
       {
         key: 'tagKey1',
         value: 'tagValue1',
-      },
-    ],
-    intrinsics: [
-      {
-        key: 'intrinsicKey0',
-        value: 'intrinsicValue0',
-      },
-      {
-        key: 'intrinsicKey1',
-        value: 'intrinsicValue1',
       },
     ],
     logs: [
@@ -79,6 +75,12 @@ describe('filterSpans', () => {
     spanID: spanID2,
     operationName: 'operationName2',
     duration: 5000,
+    kind: 'kind2',
+    statusCode: 2,
+    statusMessage: 'statusMessage2',
+    instrumentationLibraryName: 'libraryName',
+    instrumentationLibraryVersion: 'libraryVersion2',
+    traceState: 'traceState2',
     process: {
       serviceName: 'serviceName2',
       tags: [
@@ -100,16 +102,6 @@ describe('filterSpans', () => {
       {
         key: 'tagKey1',
         value: 'tagValue2',
-      },
-    ],
-    intrinsics: [
-      {
-        key: 'intrinsicKey2',
-        value: 'intrinsicValue1',
-      },
-      {
-        key: 'intrinsicKey1',
-        value: 'intrinsicValue2',
       },
     ],
     logs: [
@@ -198,22 +190,115 @@ describe('filterSpans', () => {
     ).toEqual(new Set([spanID0]));
   });
 
-  it('should return spans whose intrinsics kv.key match a filter', () => {
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion or traceState match a filter', () => {
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey1' }] }, spans)
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind' }] }, spans)
     ).toEqual(new Set([spanID0, spanID2]));
     expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey0' }] }, spans)
-    ).toEqual(new Set([spanID0]));
-    expect(
-      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey2' }] }, spans)
-    ).toEqual(new Set([spanID2]));
-    expect(
       filterSpansNewTraceViewHeader(
-        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'intrinsicKey2', operator: '!=' }] },
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', value: 'kind0' }] },
         spans
       )
     ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'kind', operator: '!=', value: 'kind0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', value: 'unset' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status', operator: '!=', value: 'unset' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'status.message', value: 'statusMessage0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'status.message', operator: '!=', value: 'statusMessage0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.name', value: 'libraryName' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.name', operator: '!=', value: 'libraryName' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'library.version', value: 'libraryVersion0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'library.version', operator: '!=', value: 'libraryVersion0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader({ ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state' }] }, spans)
+    ).toEqual(new Set([spanID0, spanID2]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        { ...defaultFilters, tags: [{ ...defaultTagFilter, key: 'trace.state', value: 'traceState0' }] },
+        spans
+      )
+    ).toEqual(new Set([spanID0]));
+    expect(
+      filterSpansNewTraceViewHeader(
+        {
+          ...defaultFilters,
+          tags: [{ ...defaultTagFilter, key: 'trace.state', operator: '!=', value: 'traceState0' }],
+        },
+        spans
+      )
+    ).toEqual(new Set([spanID2]));
   });
 
   it('should return spans whose process.tags kv.key match a filter', () => {
@@ -571,21 +656,13 @@ describe('filterSpans', () => {
     expect(filterSpans('tagValue1 -tagKey1', spans)).toEqual(new Set([spanID2]));
   });
 
-  it("should return spans whose intrinsics' kv.key match a filter", () => {
-    expect(filterSpans('intrinsicKey1', spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans('intrinsicKey0', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('intrinsicKey2', spans)).toEqual(new Set([spanID2]));
-  });
-
-  it("should return spans whose intrinsics' kv.value match a filter", () => {
-    expect(filterSpans('intrinsicValue1', spans)).toEqual(new Set([spanID0, spanID2]));
-    expect(filterSpans('intrinsicValue0', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('intrinsicValue2', spans)).toEqual(new Set([spanID2]));
-  });
-
-  it("should exclude span whose intrinsics' kv.value or kv.key match a filter if the key matches an excludeKey", () => {
-    expect(filterSpans('intrinsicValue1 -intrinsicKey2', spans)).toEqual(new Set([spanID0]));
-    expect(filterSpans('intrinsicValue1 -intrinsicKey1', spans)).toEqual(new Set([spanID2]));
+  it('should return spans whose kind, statusCode, statusMessage, libraryName, libraryVersion or traceState value match a filter', () => {
+    expect(filterSpans('kind0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('error', spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans('statusMessage0', spans)).toEqual(new Set([spanID0]));
+    expect(filterSpans('libraryName', spans)).toEqual(new Set([spanID0, spanID2]));
+    expect(filterSpans('libraryVersion2', spans)).toEqual(new Set([spanID2]));
+    expect(filterSpans('traceState0', spans)).toEqual(new Set([spanID0]));
   });
 
   it('should return spans whose logs have a field whose kv.key match a filter', () => {

@@ -48,13 +48,12 @@ describe('<SpanDetail>', () => {
     topOfViewRefType: 'Explore',
   };
 
-  span.intrinsics = [
-    {
-      key: 'kind',
-      type: 'String',
-      value: 'producer',
-    },
-  ];
+  span.kind = 'test-kind';
+  span.statusCode = 2;
+  span.statusMessage = 'test-message';
+  span.instrumentationLibraryName = 'test-name';
+  span.instrumentationLibraryVersion = 'test-version';
+  span.traceState = 'test-state';
 
   span.logs = [
     {
@@ -140,6 +139,16 @@ describe('<SpanDetail>', () => {
     expect(screen.getByText('Service:')).toBeInTheDocument();
     expect(screen.getByText('Start Time:')).toBeInTheDocument();
     expect(screen.getByText('Kind:')).toBeInTheDocument();
+    expect(screen.getByText('test-kind')).toBeInTheDocument();
+    expect(screen.getByText('Status:')).toBeInTheDocument();
+    expect(screen.getByText('Status Message:')).toBeInTheDocument();
+    expect(screen.getByText('test-message')).toBeInTheDocument();
+    expect(screen.getByText('Library Name:')).toBeInTheDocument();
+    expect(screen.getByText('test-name')).toBeInTheDocument();
+    expect(screen.getByText('Library Version:')).toBeInTheDocument();
+    expect(screen.getByText('test-version')).toBeInTheDocument();
+    expect(screen.getByText('Trace State:')).toBeInTheDocument();
+    expect(screen.getByText('test-state')).toBeInTheDocument();
   });
 
   it('start time shows the absolute time', () => {

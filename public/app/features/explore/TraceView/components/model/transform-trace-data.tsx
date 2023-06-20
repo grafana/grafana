@@ -154,7 +154,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     span.childSpanCount = node.children.length;
     span.warnings = span.warnings || [];
     span.tags = span.tags || [];
-    span.intrinsics = span.intrinsics || [];
     span.references = span.references || [];
     const tagsInfo = deduplicateTags(span.tags);
     span.tags = orderTags(tagsInfo.dedupedTags, getConfigValue('topTagPrefixes'));

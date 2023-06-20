@@ -22,7 +22,6 @@ import {
   isErrorSpan,
   isServerSpan,
   spanContainsErredSpan,
-  spanHasIntrinsic,
   spanHasTag,
 } from './utils';
 
@@ -57,12 +56,19 @@ describe('TraceTimelineViewer/utils', () => {
     });
   });
 
-  describe('spanHasIntrinsic() and variants', () => {
-    it('returns true if the OTEL key/value pair is found', () => {
+  describe('spanHasTag() and variants', () => {
+    it('returns true if client span', () => {
       const span = traceGenerator.span;
-      span.intrinsics = [{ key: 'kind', value: 'server' }];
-      expect(spanHasIntrinsic('kind', 'client', span)).toBe(false);
-      expect(spanHasIntrinsic('kind', 'server', span)).toBe(true);
+      span.kind = 'client';
+      expect(isServerSpan(span)).toBe(false);
+      expect(isClientSpan(span)).toBe(true);
+      span.kind = 'server';
+      expect(isServerSpan(span)).toBe(true);
+      expect(isClientSpan(span)).toBe(false);
+      span.statusCode = 0;
+      expect(isErrorSpan(span)).toBe(false);
+      span.statusCode = 2;
+      expect(isErrorSpan(span)).toBe(true);
     });
 
     it('returns true if the key/value pair is found', () => {
@@ -70,22 +76,6 @@ describe('TraceTimelineViewer/utils', () => {
       span.tags = [{ key: 'span.kind', value: 'server' }];
       expect(spanHasTag('span.kind', 'client', span)).toBe(false);
       expect(spanHasTag('span.kind', 'server', span)).toBe(true);
-    });
-
-    const spanTypeOtelTestCases = [
-      { fn: isClientSpan, name: 'isClientSpan', key: 'kind', value: 'client' },
-      { fn: isServerSpan, name: 'isServerSpan', key: 'kind', value: 'server' },
-      { fn: isErrorSpan, name: 'isErrorSpan', key: 'otel.status_code', value: 2 },
-    ];
-
-    spanTypeOtelTestCases.forEach((testCase) => {
-      const msg = `${testCase.name}() is true only when a ${testCase.key}=${testCase.value} OTEL tag is present`;
-      it(msg, () => {
-        const span = { intrinsics: traceGenerator.tags() } as TraceSpan;
-        expect(testCase.fn(span)).toBe(false);
-        span.intrinsics!.push(testCase);
-        expect(testCase.fn(span)).toBe(true);
-      });
     });
 
     const spanTypeTestCases = [
@@ -131,14 +121,10 @@ describe('TraceTimelineViewer/utils', () => {
     // Get the expectation, str -> number -> bool
     const expectations = config.map((s) => Boolean(Number(s[0])));
 
-    it('returns true only when a descendant has an OTEL error', () => {
-      const errorTag = { key: 'otel.status_code', type: 'number', value: 2 };
-      const getTags = (withError: number) =>
-        withError ? traceGenerator.tags().concat(errorTag) : traceGenerator.tags();
-
+    it('returns true only when a descendant has an error value', () => {
       const spans = config.map((line) => ({
         depth: line.length,
-        intrinsics: getTags(+line.slice(-1)),
+        statusCode: +line.slice(-1) ? 2 : 0,
       })) as TraceSpan[];
 
       expectations.forEach((target, i) => {
@@ -173,11 +159,11 @@ describe('TraceTimelineViewer/utils', () => {
 
     beforeEach(() => {
       spans = [
-        { depth: 0, intrinsics: [{ key: 'kind', value: 'client' }] },
-        { depth: 1, intrinsics: [] },
-        { depth: 1, intrinsics: [{ key: 'kind', value: 'server' }] },
-        { depth: 1, intrinsics: [{ key: 'kind', value: 'third-kind' }] },
-        { depth: 1, intrinsics: [{ key: 'kind', value: 'server' }] },
+        { depth: 0, kind: 'client' },
+        { depth: 1 },
+        { depth: 1, kind: 'server' },
+        { depth: 1, kind: 'third-kind' },
+        { depth: 1, kind: 'server' },
       ] as TraceSpan[];
     });
 

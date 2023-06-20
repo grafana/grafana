@@ -1,4 +1,4 @@
-import { SpanStatus, SpanStatusCode } from '@opentelemetry/api';
+import { SpanStatus } from '@opentelemetry/api';
 import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
@@ -173,45 +173,63 @@ function getSpanTags(span: collectorTypes.opentelemetryProto.trace.v1.Span): Tra
   return spanTags;
 }
 
-function getIntrinsics(
-  span: collectorTypes.opentelemetryProto.trace.v1.Span,
-  instrumentationLibrary?: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary
-): TraceKeyValuePair[] {
-  const intrinsics: TraceKeyValuePair[] = [];
-
-  if (instrumentationLibrary) {
-    if (instrumentationLibrary.name) {
-      intrinsics.push({ key: 'otel.library.name', value: instrumentationLibrary.name });
-    }
-    if (instrumentationLibrary.version) {
-      intrinsics.push({ key: 'otel.library.version', value: instrumentationLibrary.version });
-    }
+function getSpanKind(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  let kind = undefined;
+  if (span.kind) {
+    const split = span.kind.toString().toLowerCase().split('_');
+    kind = split.length ? split[split.length - 1] : span.kind.toString();
   }
+  return kind;
+}
 
+function getStatusCode(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  let statusCode = undefined;
   if (span.status) {
     if (span.status.code !== undefined) {
-      intrinsics.push({
-        key: 'otel.status_code',
-        value: SpanStatusCode[span.status.code].toLowerCase(),
-      });
-      if (span.status.message) {
-        intrinsics.push({ key: 'otel.status_description', value: span.status.message });
-      }
-    }
-    if (span.status.code === SpanStatusCode.ERROR) {
-      intrinsics.push({ key: 'error', value: true });
+      statusCode = span.status.code;
     }
   }
+  return statusCode;
+}
 
-  if (span.kind !== undefined) {
-    const split = span.kind.toString().toLowerCase().split('_');
-    intrinsics.push({
-      key: 'kind',
-      value: split.length ? split[split.length - 1] : span.kind.toString(),
-    });
+function getStatusMessage(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  let statusMessage = undefined;
+  if (span.status) {
+    if (span.status.message) {
+      statusMessage = span.status.message;
+    }
   }
+  return statusMessage;
+}
 
-  return intrinsics;
+function getLibraryName(instrumentationLibrary?: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary) {
+  let libraryName = undefined;
+  if (instrumentationLibrary) {
+    if (instrumentationLibrary.name) {
+      libraryName = instrumentationLibrary.name;
+    }
+  }
+  return libraryName;
+}
+
+function getLibraryVersion(
+  instrumentationLibrary?: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary
+) {
+  let libraryVersion = undefined;
+  if (instrumentationLibrary) {
+    if (instrumentationLibrary.version) {
+      libraryVersion = instrumentationLibrary.version;
+    }
+  }
+  return libraryVersion;
+}
+
+function getTraceState(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
+  let traceState = undefined;
+  if (span.traceState) {
+    traceState = span.traceState;
+  }
+  return traceState;
 }
 
 function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
@@ -260,13 +278,18 @@ export function transformFromOTLP(
       { name: 'parentSpanID', type: FieldType.string },
       { name: 'operationName', type: FieldType.string },
       { name: 'serviceName', type: FieldType.string },
+      { name: 'kind', type: FieldType.string },
+      { name: 'statusCode', type: FieldType.number },
+      { name: 'statusMessage', type: FieldType.string },
+      { name: 'instrumentationLibraryName', type: FieldType.string },
+      { name: 'instrumentationLibraryVersion', type: FieldType.string },
+      { name: 'traceState', type: FieldType.string },
       { name: 'serviceTags', type: FieldType.other },
       { name: 'startTime', type: FieldType.number },
       { name: 'duration', type: FieldType.number },
       { name: 'logs', type: FieldType.other },
       { name: 'references', type: FieldType.other },
       { name: 'tags', type: FieldType.other },
-      { name: 'intrinsics', type: FieldType.other },
     ],
     meta: {
       preferredVisualisationType: 'trace',
@@ -286,11 +309,16 @@ export function transformFromOTLP(
             parentSpanID: span.parentSpanId || '',
             operationName: span.name || '',
             serviceName,
+            kind: getSpanKind(span),
+            statusCode: getStatusCode(span),
+            statusMessage: getStatusMessage(span),
+            instrumentationLibraryName: getLibraryName(librarySpan.instrumentationLibrary),
+            instrumentationLibraryVersion: getLibraryVersion(librarySpan.instrumentationLibrary),
+            traceState: getTraceState(span),
             serviceTags,
             startTime: span.startTimeUnixNano! / 1000000,
             duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
             tags: getSpanTags(span),
-            intrinsics: getIntrinsics(span, librarySpan.instrumentationLibrary),
             logs: getLogs(span),
             references: getReferences(span),
           } as TraceSpanRow);
@@ -351,11 +379,10 @@ export function transformToOTLP(data: MutableDataFrame): {
 
     // Populate instrumentation library if it exists
     if (!result.batches[batchIndex].instrumentationLibrarySpans[0].instrumentationLibrary) {
-      let libraryName = span.intrinsics.find((t: TraceKeyValuePair) => t.key === 'otel.library.name')?.value;
-      if (libraryName) {
+      if (span.instrumentationLibraryName) {
         result.batches[batchIndex].instrumentationLibrarySpans[0].instrumentationLibrary = {
-          name: libraryName,
-          version: span.intrinsics.find((t: TraceKeyValuePair) => t.key === 'otel.library.version')?.value,
+          name: span.instrumentationLibraryName,
+          version: span.instrumentationLibraryVersion ? span.instrumentationLibraryVersion : '',
         };
       }
     }
@@ -364,16 +391,16 @@ export function transformToOTLP(data: MutableDataFrame): {
       traceId: span.traceID.padStart(32, '0'),
       spanId: span.spanID,
       parentSpanId: span.parentSpanID || '',
-      traceState: '',
+      traceState: span.traceState || '',
       name: span.operationName,
-      kind: getOTLPSpanKind(span.intrinsics) as any,
+      kind: getOTLPSpanKind(span.kind) as any,
       startTimeUnixNano: span.startTime * 1000000,
       endTimeUnixNano: (span.startTime + span.duration) * 1000000,
       attributes: span.tags ? tagsToAttributes(span.tags) : [],
       droppedAttributesCount: 0,
       droppedEventsCount: 0,
       droppedLinksCount: 0,
-      status: getOTLPStatus(span.intrinsics),
+      status: getOTLPStatus(span),
       events: getOTLPEvents(span.logs),
       links: getOTLPReferences(span.references),
     });
@@ -382,27 +409,27 @@ export function transformToOTLP(data: MutableDataFrame): {
   return result;
 }
 
-function getOTLPSpanKind(tags: TraceKeyValuePair[]): string | undefined {
+function getOTLPSpanKind(kind: string): string | undefined {
   let spanKind = undefined;
-  const spanKindTagValue = tags.find((t) => t.key === 'kind')?.value;
-  switch (spanKindTagValue) {
-    case 'server':
-      spanKind = 'SPAN_KIND_SERVER';
-      break;
-    case 'client':
-      spanKind = 'SPAN_KIND_CLIENT';
-      break;
-    case 'producer':
-      spanKind = 'SPAN_KIND_PRODUCER';
-      break;
-    case 'consumer':
-      spanKind = 'SPAN_KIND_CONSUMER';
-      break;
-    case 'internal':
-      spanKind = 'SPAN_KIND_INTERNAL';
-      break;
+  if (kind) {
+    switch (kind) {
+      case 'server':
+        spanKind = 'SPAN_KIND_SERVER';
+        break;
+      case 'client':
+        spanKind = 'SPAN_KIND_CLIENT';
+        break;
+      case 'producer':
+        spanKind = 'SPAN_KIND_PRODUCER';
+        break;
+      case 'consumer':
+        spanKind = 'SPAN_KIND_CONSUMER';
+        break;
+      case 'internal':
+        spanKind = 'SPAN_KIND_INTERNAL';
+        break;
+    }
   }
-
   return spanKind;
 }
 
@@ -443,16 +470,14 @@ function toAttributeValue(tag: TraceKeyValuePair): collectorTypes.opentelemetryP
   return { stringValue: tag.value };
 }
 
-function getOTLPStatus(intrinsics: TraceKeyValuePair[]): SpanStatus | undefined {
+function getOTLPStatus(span: TraceSpanRow): SpanStatus | undefined {
   let status = undefined;
-  const statusCodeTag = intrinsics.find((t) => t.key === 'otel.status_code');
-  if (statusCodeTag) {
+  if (span.statusCode !== undefined) {
     status = {
-      code: statusCodeTag.value,
-      message: intrinsics.find((t) => t.key === 'otel_status_description')?.value,
+      code: span.statusCode,
+      message: span.statusMessage ? span.statusMessage : '',
     };
   }
-
   return status;
 }
 

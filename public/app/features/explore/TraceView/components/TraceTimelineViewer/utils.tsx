@@ -63,29 +63,14 @@ export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
   return span.tags.some((tag) => tag.key === key && tag.value === value);
 }
 
-/**
- * Returns `true` if the `span` has a tag matching `key` = `value`.
- *
- * @param  {string} key         The tag key to match on.
- * @param  {any}    value       The tag value to match.
- * @param  {{intrinsics}} span  An object with a `intrinsics` property of { key, value } items.
- * @returns {boolean}           True if a match was found.
- */
-export function spanHasIntrinsic(key: string, value: unknown, span: TraceSpan) {
-  if (!Array.isArray(span.intrinsics) || !span.intrinsics.length) {
-    return false;
-  }
-  return span.intrinsics.some((tag) => tag.key === key && tag.value === value);
-}
-
-const isClientOtel = spanHasIntrinsic.bind(null, 'kind', 'client');
+const isClientOtel = (span: TraceSpan) => span.kind === 'client';
 const isClient = spanHasTag.bind(null, 'span.kind', 'client');
 export const isClientSpan = (span: TraceSpan) => isClientOtel(span) || isClient(span);
-const isServerOtel = spanHasIntrinsic.bind(null, 'kind', 'server');
+const isServerOtel = (span: TraceSpan) => span.kind === 'server';
 const isServer = spanHasTag.bind(null, 'span.kind', 'server');
 export const isServerSpan = (span: TraceSpan) => isServerOtel(span) || isServer(span);
 
-const isErrorOtel = spanHasIntrinsic.bind(null, 'otel.status_code', 2);
+const isErrorOtel = (span: TraceSpan) => span.statusCode === 2;
 const isErrorBool = spanHasTag.bind(null, 'error', true);
 const isErrorStr = spanHasTag.bind(null, 'error', 'true');
 export const isErrorSpan = (span: TraceSpan) => isErrorOtel(span) || isErrorBool(span) || isErrorStr(span);
@@ -132,8 +117,8 @@ export function findServerChildSpan(spans: TraceSpan[]) {
 }
 
 export const isKindClient = (span: TraceSpan): Boolean => {
-  if (span.intrinsics) {
-    return span.intrinsics.some(({ key, value }) => key === 'kind' && value === 'client');
+  if (span.kind) {
+    return span.kind === 'client';
   }
   return span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
 };
