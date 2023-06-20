@@ -190,6 +190,7 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 	if state.State == eval.Normal {
 		logger.Debug("Keeping state", "state", state.State)
 	} else {
+		nextEndsAt := result.EvaluatedAt
 		logger.Debug("Changing state",
 			"previous_state",
 			state.State,
@@ -198,9 +199,9 @@ func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger 
 			"previous_ends_at",
 			state.EndsAt,
 			"next_ends_at",
-			result.EvaluatedAt)
+			nextEndsAt)
 		// Normal states have the same start and end timestamps
-		state.SetNormal("", result.EvaluatedAt, result.EvaluatedAt)
+		state.SetNormal("", nextEndsAt, nextEndsAt)
 	}
 }
 
