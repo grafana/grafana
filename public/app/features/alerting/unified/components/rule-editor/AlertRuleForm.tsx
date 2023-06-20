@@ -246,7 +246,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                 <>
                   {type === RuleFormType.grafana ? (
                     <GrafanaEvaluationBehavior
-                      initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
