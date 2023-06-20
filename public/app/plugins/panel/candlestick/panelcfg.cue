@@ -26,21 +26,21 @@ composableKinds: PanelCfg: {
 		schemas: [{
 			version: [0, 0]
 			schema: {
-				// TODO docs
 				VizDisplayMode: "candles+volume" | "candles" | "volume" @cuetsy(kind="enum", memberNames="CandlesVolume|Candles|Volume")
-				// TODO docs
-				CandleStyle: "candles" | "ohlcbars" @cuetsy(kind="enum", memberNames="Candles|OHLCBars")
-				// TODO docs
-				ColorStrategy: "open-close" | "close-close" @cuetsy(kind="enum", memberNames="OpenClose|CloseClose")
-				// TODO docs
+				CandleStyle:    "candles" | "ohlcbars"                  @cuetsy(kind="enum", memberNames="Candles|OHLCBars")
+				ColorStrategy:  "open-close" | "close-close"            @cuetsy(kind="enum", memberNames="OpenClose|CloseClose")
 				CandlestickFieldMap: {
-					open?:   string
-					high?:   string
-					low?:    string
-					close?:  string
+					// Corresponds to the starting value of the given period
+					open?: string
+					// Corresponds to the highest value of the given period
+					high?: string
+					// Corresponds to the lowest value of the given period
+					low?: string
+					// Corresponds to the final (end) value of the given period
+					close?: string
+					// Corresponds to the sample count in the given period. (e.g. number of trades)
 					volume?: string
 				} @cuetsy(kind="interface")
-				// TODO docs
 				CandlestickColors: {
 					up:   string | *"green"
 					down: string | *"red"
@@ -49,15 +49,15 @@ composableKinds: PanelCfg: {
 				Options: {
 					common.OptionsWithLegend
 
-					// TODO docs
+					// Sets which dimensions are used for the visualization
 					mode: VizDisplayMode & (*"candles+volume" | _)
-					// TODO docs
+					// Sets the style of the candlesticks
 					candleStyle: CandleStyle & (*"candles" | _)
-					// TODO docs
+					// Sets the color strategy for the candlesticks
 					colorStrategy: ColorStrategy & (*"open-close" | _)
-					// TODO docs
+					// Map fields to appropriate dimension
 					fields: CandlestickFieldMap | *{}
-					// TODO docs
+					// Set which colors are used when the price movement is up or down
 					colors: CandlestickColors | *{down: "red", up: "green", flat: "gray"}
 					// When enabled, all fields will be sent to the graph
 					includeAllFields?: bool | *false

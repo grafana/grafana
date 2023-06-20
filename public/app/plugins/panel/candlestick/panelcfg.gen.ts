@@ -12,45 +12,45 @@ import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-/**
- * TODO docs
- */
 export enum VizDisplayMode {
   Candles = 'candles',
   CandlesVolume = 'candles+volume',
   Volume = 'volume',
 }
 
-/**
- * TODO docs
- */
 export enum CandleStyle {
   Candles = 'candles',
   OHLCBars = 'ohlcbars',
 }
 
-/**
- * TODO docs
- */
 export enum ColorStrategy {
   CloseClose = 'close-close',
   OpenClose = 'open-close',
 }
 
-/**
- * TODO docs
- */
 export interface CandlestickFieldMap {
+  /**
+   * Corresponds to the final (end) value of the given period
+   */
   close?: string;
+  /**
+   * Corresponds to the highest value of the given period
+   */
   high?: string;
+  /**
+   * Corresponds to the lowest value of the given period
+   */
   low?: string;
+  /**
+   * Corresponds to the starting value of the given period
+   */
   open?: string;
+  /**
+   * Corresponds to the sample count in the given period. (e.g. number of trades)
+   */
   volume?: string;
 }
 
-/**
- * TODO docs
- */
 export interface CandlestickColors {
   down: string;
   flat: string;
@@ -65,19 +65,19 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
 
 export interface Options extends common.OptionsWithLegend {
   /**
-   * TODO docs
+   * Sets the style of the candlesticks
    */
   candleStyle: CandleStyle;
   /**
-   * TODO docs
+   * Sets the color strategy for the candlesticks
    */
   colorStrategy: ColorStrategy;
   /**
-   * TODO docs
+   * Set which colors are used when the price movement is up or down
    */
   colors: CandlestickColors;
   /**
-   * TODO docs
+   * Map fields to appropriate dimension
    */
   fields: CandlestickFieldMap;
   /**
@@ -85,7 +85,7 @@ export interface Options extends common.OptionsWithLegend {
    */
   includeAllFields?: boolean;
   /**
-   * TODO docs
+   * Sets which dimensions are used for the visualization
    */
   mode: VizDisplayMode;
 }

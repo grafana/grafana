@@ -13,19 +13,17 @@ title: CandlestickPanelCfg kind
 
 
 
-| Property              | Type                                  | Required | Default | Description                                                               |
-|-----------------------|---------------------------------------|----------|---------|---------------------------------------------------------------------------|
-| `CandleStyle`         | string                                | **Yes**  |         | TODO docs<br/>Possible values are: `candles`, `ohlcbars`.                 |
-| `CandlestickColors`   | [object](#candlestickcolors)          | **Yes**  |         | TODO docs                                                                 |
-| `CandlestickFieldMap` | [object](#candlestickfieldmap)        | **Yes**  |         | TODO docs                                                                 |
-| `ColorStrategy`       | string                                | **Yes**  |         | TODO docs<br/>Possible values are: `open-close`, `close-close`.           |
-| `FieldConfig`         | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs                                                                 |
-| `Options`             | [object](#options)                    | **Yes**  |         |                                                                           |
-| `VizDisplayMode`      | string                                | **Yes**  |         | TODO docs<br/>Possible values are: `candles+volume`, `candles`, `volume`. |
+| Property              | Type                                  | Required | Default | Description                                                 |
+|-----------------------|---------------------------------------|----------|---------|-------------------------------------------------------------|
+| `CandleStyle`         | string                                | **Yes**  |         | Possible values are: `candles`, `ohlcbars`.                 |
+| `CandlestickColors`   | [object](#candlestickcolors)          | **Yes**  |         |                                                             |
+| `CandlestickFieldMap` | [object](#candlestickfieldmap)        | **Yes**  |         |                                                             |
+| `ColorStrategy`       | string                                | **Yes**  |         | Possible values are: `open-close`, `close-close`.           |
+| `FieldConfig`         | [GraphFieldConfig](#graphfieldconfig) | **Yes**  |         | TODO docs                                                   |
+| `Options`             | [object](#options)                    | **Yes**  |         |                                                             |
+| `VizDisplayMode`      | string                                | **Yes**  |         | Possible values are: `candles+volume`, `candles`, `volume`. |
 
 ### CandlestickColors
-
-TODO docs
 
 | Property | Type   | Required | Default | Description |
 |----------|--------|----------|---------|-------------|
@@ -35,15 +33,13 @@ TODO docs
 
 ### CandlestickFieldMap
 
-TODO docs
-
-| Property | Type   | Required | Default | Description |
-|----------|--------|----------|---------|-------------|
-| `close`  | string | No       |         |             |
-| `high`   | string | No       |         |             |
-| `low`    | string | No       |         |             |
-| `open`   | string | No       |         |             |
-| `volume` | string | No       |         |             |
+| Property | Type   | Required | Default | Description                                                                  |
+|----------|--------|----------|---------|------------------------------------------------------------------------------|
+| `close`  | string | No       |         | Corresponds to the final (end) value of the given period                     |
+| `high`   | string | No       |         | Corresponds to the highest value of the given period                         |
+| `low`    | string | No       |         | Corresponds to the lowest value of the given period                          |
+| `open`   | string | No       |         | Corresponds to the starting value of the given period                        |
+| `volume` | string | No       |         | Corresponds to the sample count in the given period. (e.g. number of trades) |
 
 ### GraphFieldConfig
 
@@ -211,12 +207,12 @@ It extends [OptionsWithLegend](#optionswithlegend).
 
 | Property           | Type                                    | Required | Default | Description                                                              |
 |--------------------|-----------------------------------------|----------|---------|--------------------------------------------------------------------------|
-| `candleStyle`      | string                                  | **Yes**  |         | TODO docs                                                                |
-| `colorStrategy`    | string                                  | **Yes**  |         | TODO docs                                                                |
-| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         | TODO docs                                                                |
-| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | TODO docs                                                                |
+| `candleStyle`      | string                                  | **Yes**  |         | Sets the style of the candlesticks                                       |
+| `colorStrategy`    | string                                  | **Yes**  |         | Sets the color strategy for the candlesticks                             |
+| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         |                                                                          |
+| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | Map fields to appropriate dimension                                      |
 | `legend`           | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs |
-| `mode`             | string                                  | **Yes**  |         | TODO docs                                                                |
+| `mode`             | string                                  | **Yes**  |         | Sets which dimensions are used for the visualization                     |
 | `includeAllFields` | boolean                                 | No       | `false` | When enabled, all fields will be sent to the graph                       |
 
 ### OptionsWithLegend
@@ -245,7 +241,7 @@ TODO docs
 
 ### Fields
 
-TODO docs
+Map fields to appropriate dimension
 
 | Property | Type                              | Required | Default | Description |
 |----------|-----------------------------------|----------|---------|-------------|
