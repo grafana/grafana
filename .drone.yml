@@ -1260,11 +1260,39 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -v -run=^$ -timeout=0 -bench=. -benchtime=1x ./pkg/api
+  - go test -v -run=^$ -timeout=30m -bench=. ./pkg/api
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=30m -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.7.4
+  name: postgres-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=30m -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql57
+  image: grafana/build-container:1.7.4
+  name: mysql-integration-benchmarks-5.7
+- commands:
+  - go test -v -run=^$ -timeout=30m -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql8-integration-benchmarks-8.0
 trigger:
   event:
   - pull_request
@@ -7502,6 +7530,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 8d53c2535a48a2fa79444c071a6b65de4fd45374f5cb635c99d4360197314eef
+hmac: 67c16b7d2e3d1b1a7723dc1f3f5675f770401dfc5c157100365b25d3943b379b
 
 ...
