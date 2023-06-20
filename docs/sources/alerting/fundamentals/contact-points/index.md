@@ -51,9 +51,3 @@ The following table lists the contact point integrations supported by Grafana.
 | Cisco Webex Teams                                | `webex`                   | Supported            | Supported                                                                                                |
 | WeCom                                            | `wecom`                   | Supported            | N/A                                                                                                      |
 | [Zenduty](https://www.zenduty.com/)              | `webhook`                 | Supported            | N/A                                                                                                      |
-
-## Useful links
-
-[Manage contact points]({{< relref "../../alerting-rules/manage-contact-points" >}})
-
-[Create and edit notification templates]({{< relref "../../manage-notifications/template-notifications/create-notification-templates" >}})
