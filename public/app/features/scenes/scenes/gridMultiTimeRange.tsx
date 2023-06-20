@@ -1,3 +1,4 @@
+import { TestDataQueryType } from '@grafana-plugins/test-datasource/src/dataquery.gen';
 import {
   VizPanel,
   SceneGridRow,
@@ -7,7 +8,6 @@ import {
   SceneRefreshPicker,
   SceneGridItem,
 } from '@grafana/scenes';
-import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
