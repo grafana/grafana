@@ -43,7 +43,6 @@ def integration_benchmarks(trigger, prefix):
     verify_step = verify_gen_cue_step()
     verify_jsonnet_step = verify_gen_jsonnet_step()
 
-
     # Ensure that verif_gen_cue happens after we clone enterprise
     # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
     verify_step["depends_on"].append("clone-enterprise")
