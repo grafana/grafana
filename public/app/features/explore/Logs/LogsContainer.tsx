@@ -28,6 +28,7 @@ import {
   addResultsToCache,
   clearCache,
   loadSupplementaryQueryData,
+  selectIsWaitingForData,
   setSupplementaryQueryEnabled,
 } from '../state/query';
 import { updateTimeRange } from '../state/time';
@@ -222,7 +223,6 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
   const item: ExploreItemState = explore.panes[exploreId]!;
   const {
     logsResult,
-    loading,
     scanning,
     datasourceInstance,
     isLive,
@@ -232,6 +232,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     absoluteRange,
     supplementaryQueries,
   } = item;
+  const loading = selectIsWaitingForData(exploreId)(state);
   const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
