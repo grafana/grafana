@@ -66,10 +66,10 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/origin/name"
-const annoKeyOriginPath = "grafana.com/origin/path"
-const annoKeyOriginKey = "grafana.com/origin/key"
-const annoKeyOriginTime = "grafana.com/origin/time"
+const annoKeyOriginName = "grafana.com/origin.name"
+const annoKeyOriginPath = "grafana.com/origin.path"
+const annoKeyOriginKey = "grafana.com/origin.key"
+const annoKeyOriginTime = "grafana.com/origin.time"
 
 func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {
