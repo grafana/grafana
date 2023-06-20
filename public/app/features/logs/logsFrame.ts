@@ -20,7 +20,7 @@ export type LogsFrame = {
 
 function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldWithIndex | undefined {
   const field = cache.getFieldByName(name);
-  if (field == null) {
+  if (field === undefined) {
     return undefined;
   }
 
