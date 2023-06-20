@@ -145,19 +145,23 @@ const Policy: FC<PolicyComponentProps> = ({
                 {!readOnly && (
                   <Stack direction="row" gap={0.5}>
                     <Button
-                      icon="edit"
-                      size="sm"
                       variant="secondary"
-                      disabled={!isEditable}
-                      onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                      icon="plus"
+                      size="sm"
+                      onClick={() => onAddPolicy(currentRoute)}
                       type="button"
                     >
-                      Edit
+                      New nested policy
                     </Button>
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item label="New nested policy" icon="plus" onClick={() => onAddPolicy(currentRoute)} />
+                          <Menu.Item
+                            icon="edit"
+                            disabled={!isEditable}
+                            label="Edit"
+                            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                          />
                           {isDeletable && (
                             <>
                               <Menu.Divider />
