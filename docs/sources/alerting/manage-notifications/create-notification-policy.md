@@ -10,11 +10,11 @@ keywords:
   - guide
   - notification policies
   - routes
-title: Manage notification policies
+title: Configure notification policies
 weight: 300
 ---
 
-# Manage notification policies
+# Configure notification policies
 
 Notification policies determine how alerts are routed to contact points.
 

@@ -14,15 +14,8 @@ import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
 import { CandlestickPanel } from './CandlestickPanel';
 import { CandlestickData, candlestickFieldsInfo, FieldPickerInfo, prepareCandlestickFields } from './fields';
-import {
-  defaultColors,
-  CandlestickOptions,
-  VizDisplayMode,
-  ColorStrategy,
-  defaultOptions,
-  CandleStyle,
-} from './models.gen';
 import { CandlestickSuggestionsSupplier } from './suggestions';
+import { defaultCandlestickColors, defaultOptions, Options, VizDisplayMode, ColorStrategy, CandleStyle } from './types';
 
 const modeOptions = [
   { label: 'Candles', value: VizDisplayMode.Candles },
@@ -43,7 +36,7 @@ const colorStrategies = [
 const numericFieldFilter = (f: Field) => f.type === FieldType.number;
 
 function addFieldPicker(
-  builder: PanelOptionsEditorBuilder<CandlestickOptions>,
+  builder: PanelOptionsEditorBuilder<Options>,
   info: FieldPickerInfo,
   data: CandlestickData | null
 ) {
@@ -74,7 +67,7 @@ function addFieldPicker(
   });
 }
 
-export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(CandlestickPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder, context) => {
     const opts = context.options ?? defaultOptions;
@@ -112,12 +105,12 @@ export const plugin = new PanelPlugin<CandlestickOptions, GraphFieldConfig>(Cand
       .addColorPicker({
         path: 'colors.up',
         name: 'Up color',
-        defaultValue: defaultColors.up,
+        defaultValue: defaultCandlestickColors.up,
       })
       .addColorPicker({
         path: 'colors.down',
         name: 'Down color',
-        defaultValue: defaultColors.down,
+        defaultValue: defaultCandlestickColors.down,
       });
 
     addFieldPicker(builder, candlestickFieldsInfo.open, info);

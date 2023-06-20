@@ -28,7 +28,7 @@ export const queryTypeOptions: Array<SelectableValue<LokiQueryType>> = [
   },
 ];
 
-if (config.featureToggles.lokiLive) {
+if (config.featureToggles.lokiExperimentalStreaming) {
   queryTypeOptions.push({
     value: LokiQueryType.Stream,
     label: 'Stream',
