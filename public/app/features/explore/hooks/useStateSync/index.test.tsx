@@ -172,7 +172,7 @@ describe('useStateSync', () => {
     expect(queries?.[0].datasource?.uid).toBe('loki-uid');
   });
 
-  it('inits an the last used datasource from localStorage', async () => {
+  it('inits with the last used datasource from localStorage', async () => {
     setLastUsedDatasourceUID(1, 'elastic-uid');
     const { waitForNextUpdate, store } = setup({
       queryParams: {},
