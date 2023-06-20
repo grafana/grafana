@@ -368,6 +368,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
     const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
     await createAndCopyShortLink(url);
+
+    reportInteraction('grafana_explore_logs_permalink_clicked', {
+      datasourceType: row.datasourceType ?? 'unknown',
+      logRowUid: row.uid,
+      logRowLevel: row.logLevel,
+    });
   };
 
   scrollIntoView = (element: HTMLElement) => {

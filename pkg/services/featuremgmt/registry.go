@@ -571,5 +571,12 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:         "flameGraphV2",
+			Description:  "New version of flame graph with new features",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
 	}
 )
