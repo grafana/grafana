@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourcePicker } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import {
   Button,
@@ -15,6 +14,7 @@ import {
   Legend,
 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {
   DashboardInput,

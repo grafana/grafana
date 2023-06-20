@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { PanelPlugin } from '@grafana/data';
-import { config, DataSourcePicker } from '@grafana/runtime';
+import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TagsInput } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import {
@@ -9,6 +9,7 @@ import {
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
 
 import { AlertList } from './AlertList';
@@ -278,8 +279,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
             type={['prometheus', 'loki', 'grafana']}
             noDefault
             current={props.value}
-            onChange={(ds) => props.onChange(ds.name)}
-            onClear={() => props.onChange(null)}
+            onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
           />
         );
       },

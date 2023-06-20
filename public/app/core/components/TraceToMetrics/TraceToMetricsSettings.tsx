@@ -2,14 +2,15 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
+  DataSourceInstanceSettings,
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
@@ -50,7 +51,7 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.tracesToMetrics?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
                 ...options.jsonData.tracesToMetrics,
                 datasourceUid: ds.uid,
