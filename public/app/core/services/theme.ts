@@ -12,9 +12,6 @@ export async function changeTheme(themeId: string, runtimeOnly?: boolean) {
 
   const newTheme = getThemeById(themeId);
 
-  // Special feature toggle that impact theme/component looks
-  newTheme.flags.topnav = config.featureToggles.topnav;
-
   appEvents.publish(new ThemeChangedEvent(newTheme));
 
   // Add css file for new theme

@@ -39,9 +39,9 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
-	// FlagLokiLive
-	// Support WebSocket streaming for loki (early prototype)
-	FlagLokiLive = "lokiLive"
+	// FlagLokiExperimentalStreaming
+	// Support new streaming approach for loki (prototype, needs special loki build)
+	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -342,4 +342,8 @@ const (
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
+
+	// FlagFlameGraphV2
+	// New version of flame graph with new features
+	FlagFlameGraphV2 = "flameGraphV2"
 )

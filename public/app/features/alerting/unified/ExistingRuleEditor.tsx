@@ -15,9 +15,10 @@ import * as ruleId from './utils/rule-id';
 
 interface ExistingRuleEditorProps {
   identifier: RuleIdentifier;
+  id?: string;
 }
 
-export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
+export function ExistingRuleEditor({ identifier, id }: ExistingRuleEditorProps) {
   useCleanup((state) => (state.unifiedAlerting.ruleForm.existingRule = initialAsyncRequestState));
 
   const {
@@ -61,5 +62,5 @@ export function ExistingRuleEditor({ identifier }: ExistingRuleEditorProps) {
     return <AlertWarning title="Cannot edit rule">Sorry! You do not have permission to edit this rule.</AlertWarning>;
   }
 
-  return <AlertRuleForm existing={result} />;
+  return <AlertRuleForm existing={result} id={id} />;
 }

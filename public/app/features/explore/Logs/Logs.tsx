@@ -136,6 +136,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  logsContainer = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -370,6 +371,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
   };
 
   scrollIntoView = (element: HTMLElement) => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      this.scrollToTopLogs();
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'smooth',
+          top: this.logsContainer.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+        });
+      }
+
+      return;
+    }
     const { scrollElement } = this.props;
 
     if (scrollElement) {
@@ -582,7 +594,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
+            <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
               <LogRows
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
