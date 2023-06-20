@@ -122,6 +122,7 @@ describe('TracePageHeader test', () => {
   it('should render the trace title', () => {
     setup();
     expect(
+      // TODO: fix this as it is failing
       screen.getByRole('heading', {
         name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
       })
