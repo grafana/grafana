@@ -320,6 +320,12 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
 		})
+	scenarioWithLibraryPanel(t, "It should return the correct count of library panels",
+		func(t *testing.T, sc scenarioContext) {
+			count, err := sc.lps.CountInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), count)
+		})
 }
 
 func TestImportLibraryPanelsForDashboard(t *testing.T) {
@@ -611,6 +617,7 @@ type scenarioContext struct {
 	folder         *folder.Folder
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
+	lps            LibraryPanelService
 }
 
 func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
@@ -818,6 +825,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Cfg:                   cfg,
 			SQLStore:              sqlStore,
 			LibraryElementService: elementService,
+			FolderService:         folderService,
 		}
 
 		usr := &user.SignedInUser{
@@ -857,6 +865,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			service:        &service,
 			elementService: elementService,
 			sqlStore:       sqlStore,
+			lps:            service,
 		}
 
 		foldr := createFolder(t, sc, "ScenarioFolder")
