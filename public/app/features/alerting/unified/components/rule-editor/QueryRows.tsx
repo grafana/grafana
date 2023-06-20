@@ -260,7 +260,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
 
   return (
     <EmptyQueryWrapper>
-      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
+      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
         <Card>
           <Card.Heading>This datasource has been removed</Card.Heading>
           <Card.Description>
