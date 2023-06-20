@@ -463,7 +463,7 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || cont
 
 ## Team synchronization
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
 With Team Sync you can map your generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
 
