@@ -95,6 +95,8 @@ v1.tagValues(
   },
 ];
 
+console.log('UnthemedFluxQueryEditor init');
+
 class UnthemedFluxQueryEditor extends PureComponent<Props> {
   onFluxQueryChange = (query: string) => {
     this.props.onChange({ ...this.props.query, query });
@@ -166,6 +168,8 @@ class UnthemedFluxQueryEditor extends PureComponent<Props> {
   };
 
   render() {
+    console.log('UnthemedFluxQueryEditor RENDER');
+
     const { query, theme } = this.props;
     const styles = getStyles(theme);
 
