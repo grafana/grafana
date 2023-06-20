@@ -37,4 +37,4 @@ For information on how to configure contact points, see [Configure contact point
 
 **Configure notification policies**
 
-For information on how to configure notification policies, see [Configure notification policies]({{< relref "./manage-notifications/_index.md" >}})
+For information on how to configure notification policies, see [Configure notification policies]({{< relref "../create-notification-policy" >}})
