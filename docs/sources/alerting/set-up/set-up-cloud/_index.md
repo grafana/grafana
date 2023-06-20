@@ -248,4 +248,4 @@ After you upload a working Alertmanager configuration file, you can access the A
 
 ### Provision alert rules using Terraform
 
-For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform]({{< relref "./provision-alerting-resources/terraform-provisioning" >}}).
+For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform]({{< relref "../provision-alerting-resources/terraform-provisioning" >}}).
