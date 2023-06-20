@@ -182,56 +182,6 @@ function getSpanKind(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   return kind;
 }
 
-function getStatusCode(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
-  let statusCode = undefined;
-  if (span.status) {
-    if (span.status.code !== undefined) {
-      statusCode = span.status.code;
-    }
-  }
-  return statusCode;
-}
-
-function getStatusMessage(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
-  let statusMessage = undefined;
-  if (span.status) {
-    if (span.status.message) {
-      statusMessage = span.status.message;
-    }
-  }
-  return statusMessage;
-}
-
-function getLibraryName(instrumentationLibrary?: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary) {
-  let libraryName = undefined;
-  if (instrumentationLibrary) {
-    if (instrumentationLibrary.name) {
-      libraryName = instrumentationLibrary.name;
-    }
-  }
-  return libraryName;
-}
-
-function getLibraryVersion(
-  instrumentationLibrary?: collectorTypes.opentelemetryProto.common.v1.InstrumentationLibrary
-) {
-  let libraryVersion = undefined;
-  if (instrumentationLibrary) {
-    if (instrumentationLibrary.version) {
-      libraryVersion = instrumentationLibrary.version;
-    }
-  }
-  return libraryVersion;
-}
-
-function getTraceState(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
-  let traceState = undefined;
-  if (span.traceState) {
-    traceState = span.traceState;
-  }
-  return traceState;
-}
-
 function getReferences(span: collectorTypes.opentelemetryProto.trace.v1.Span) {
   const references: TraceSpanReference[] = [];
   if (span.links) {
@@ -310,11 +260,11 @@ export function transformFromOTLP(
             operationName: span.name || '',
             serviceName,
             kind: getSpanKind(span),
-            statusCode: getStatusCode(span),
-            statusMessage: getStatusMessage(span),
-            instrumentationLibraryName: getLibraryName(librarySpan.instrumentationLibrary),
-            instrumentationLibraryVersion: getLibraryVersion(librarySpan.instrumentationLibrary),
-            traceState: getTraceState(span),
+            statusCode: span.status?.code,
+            statusMessage: span.status?.message,
+            instrumentationLibraryName: librarySpan.instrumentationLibrary?.name,
+            instrumentationLibraryVersion: librarySpan.instrumentationLibrary?.version,
+            traceState: span.traceState,
             serviceTags,
             startTime: span.startTimeUnixNano! / 1000000,
             duration: (span.endTimeUnixNano! - span.startTimeUnixNano!) / 1000000,
