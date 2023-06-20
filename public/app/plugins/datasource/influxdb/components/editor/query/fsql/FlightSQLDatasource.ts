@@ -44,7 +44,8 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
-    const tables = await this.runSql<string[]>(buildTableQuery(dataset), { refId: 'tables' });
+    const query = buildTableQuery(dataset);
+    const tables = await this.runSql<string[]>(query, { refId: 'tables' });
     return tables.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
