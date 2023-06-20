@@ -39,6 +39,14 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 			return nil, err
 		}
 
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
@@ -66,6 +74,14 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 
 		if err != nil {
 			return nil, err
+		}
+
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		respD := resp.Responses[q.RefID]

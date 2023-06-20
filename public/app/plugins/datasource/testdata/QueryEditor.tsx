@@ -3,7 +3,8 @@ import { useAsync } from 'react-use';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { selectors as editorSelectors } from '@grafana/e2e-selectors';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, TextArea } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Icon, TextArea } from '@grafana/ui';
+import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { RandomWalkEditor, StreamingClientEditor } from './components';
 import { CSVContentEditor } from './components/CSVContentEditor';
@@ -21,7 +22,6 @@ import { CSVWave, NodesQuery, TestData, TestDataQueryType, USAQuery } from './da
 import { TestDataDataSource } from './datasource';
 import { defaultStreamQuery } from './runStreams';
 
-const showLabelsFor = ['random_walk', 'predictable_pulse'];
 const endpoints = [
   { value: 'datasources', label: 'Data Sources' },
   { value: 'search', label: 'Search' },
@@ -166,6 +166,13 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, csvWave });
   };
 
+  const onDropPercentChanged = (dropPercent: number | undefined) => {
+    if (!dropPercent) {
+      dropPercent = undefined;
+    }
+    onChange({ ...query, dropPercent });
+  };
+
   const options = useMemo(
     () =>
       (scenarioList || [])
@@ -173,7 +180,15 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         .sort((a, b) => a.label.localeCompare(b.label)),
     [scenarioList]
   );
-  const showLabels = useMemo(() => showLabelsFor.includes(query.scenarioId ?? ''), [query]);
+
+  // Common options that can be added to various scenarios
+  const show = useMemo(() => {
+    const scenarioId = query.scenarioId ?? '';
+    return {
+      labels: ['random_walk', 'predictable_pulse'].includes(scenarioId),
+      dropPercent: ['csv_content', 'csv_file'].includes(scenarioId),
+    };
+  }, [query?.scenarioId]);
 
   if (loading) {
     return null;
@@ -217,7 +232,21 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             />
           </InlineField>
         )}
-        {showLabels && (
+        {show.dropPercent && (
+          <InlineField label="Drop" tooltip={'Drop a random set of points'}>
+            <NumberInput
+              min={0}
+              max={100}
+              step={5}
+              width={8}
+              onChange={onDropPercentChanged}
+              placeholder="0"
+              value={query.dropPercent}
+              suffix={<Icon name="percentage" />}
+            />
+          </InlineField>
+        )}
+        {show.labels && (
           <InlineField
             label="Labels"
             labelWidth={14}
