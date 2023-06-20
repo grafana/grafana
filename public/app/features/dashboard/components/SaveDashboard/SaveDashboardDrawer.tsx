@@ -72,14 +72,14 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
 
-    if (state.loading) {
-      console.log('SaveDashboardDrawer rendering Spinner');
-      return (
-        <div>
-          <Spinner />
-        </div>
-      );
-    }
+    // if (state.loading) {
+    //   console.log('SaveDashboardDrawer rendering Spinner');
+    //   return (
+    //     <div>
+    //       <Spinner />
+    //     </div>
+    //   );
+    // }
 
     if (isNew || isCopy) {
       console.log('SaveDashboardDrawer rendering SaveDashboardAsForm', dashboard);
