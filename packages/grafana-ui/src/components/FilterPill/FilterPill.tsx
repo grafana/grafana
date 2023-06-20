@@ -39,6 +39,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       height: 32px;
+      position: relative;
 
       &:hover {
         background: ${theme.colors.action.hover};
@@ -48,6 +49,18 @@ const getStyles = (theme: GrafanaTheme2) => {
     selected: css`
       color: ${theme.colors.text.primary};
       background: ${theme.colors.action.selected};
+
+      &::before {
+        display: block;
+        content: ' ';
+        position: absolute;
+        left: ${theme.spacing(1)};
+        right: ${theme.spacing(1)};
+        height: 2px;
+        bottom: 0px;
+        border-radius: ${theme.shape.radius.default};
+        background-image: ${theme.colors.gradients.brandHorizontal};
+      }
 
       &:hover {
         background: ${theme.colors.action.focus};
