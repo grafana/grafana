@@ -40,9 +40,9 @@ Follow these steps to integrate your OAuth provider with Grafana:
 - `token_url`
 - `api_url`
 
-1. Look at the list of optional Grafana general OAuth configuration options and fill in the desired ones.
+1. (Optional) Look at the list of optional Grafana general OAuth configuration options and fill in the desired ones.
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
-1. Configure [team synchronization]({{< relref "#team-synchronization" >}}) if desired.
+1. (Optional) Configure [team synchronization]({{< relref "#team-synchronization" >}}).
 
 Continue reading this documentation to learn more about [configuring your OAuth2 app]({{< relref "#configuring-your-oauth2-app" >}}) and [configuring Grafana]({{< relref "#configuring-grafana" >}}).
 
@@ -253,6 +253,7 @@ skip_org_role_sync = true
 
 ## Role Mapping
 
+Unless [`skip_org_role_sync` option]({{< relref "#skip-organization-role-sync" >}}) is specified, users role will be set to the role obtained from the auth provider upon user login.
 User role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
 Grafana determines a user's role by following the steps below until it finds a role:
 
