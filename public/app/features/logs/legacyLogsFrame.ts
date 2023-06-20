@@ -18,7 +18,7 @@ function getLabels(frame: DataFrame, cache: FieldCache, lineField: Field): Label
 
   const labelsField = cache.getFieldByName('labels');
 
-  if (labelsField == null) {
+  if (labelsField === undefined) {
     return undefined;
   }
 
