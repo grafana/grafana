@@ -17,7 +17,7 @@ export function useCombinedRule(
   identifier: RuleIdentifier | undefined,
   ruleSourceName: string | undefined
 ): AsyncRequestState<CombinedRule> {
-  const requestState = useCombinedRulesLoader(ruleSourceName);
+  const requestState = useCombinedRulesLoader(ruleSourceName, identifier);
   const combinedRules = useCombinedRuleNamespaces(ruleSourceName);
 
   const rule = useMemo(() => {
@@ -79,7 +79,10 @@ export function useCombinedRulesMatching(
   };
 }
 
-function useCombinedRulesLoader(rulesSourceName: string | undefined): AsyncRequestState<void> {
+function useCombinedRulesLoader(
+  rulesSourceName: string | undefined,
+  identifier?: RuleIdentifier
+): AsyncRequestState<void> {
   const dispatch = useDispatch();
   const promRuleRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const promRuleRequest = getRequestState(rulesSourceName, promRuleRequests);
@@ -91,7 +94,7 @@ function useCombinedRulesLoader(rulesSourceName: string | undefined): AsyncReque
       return;
     }
 
-    await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName }));
+    await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName, identifier }));
   }, [dispatch, rulesSourceName]);
 
   return {
