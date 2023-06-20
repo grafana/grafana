@@ -1,12 +1,11 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
-import { dateTime, LoadingState } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreItemState } from 'app/types';
 
 import { createDefaultInitialState } from './helpers';
-import { changeRangeAction, changeRefreshInterval, timeReducer, updateTime } from './time';
-import { makeExplorePaneState } from './utils';
+import { changeRangeAction, timeReducer, updateTime } from './time';
 
 const MOCK_TIME_RANGE = {};
 
@@ -34,50 +33,6 @@ describe('Explore item reducer', () => {
       dispatch(updateTime({ exploreId: ExploreId.left }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
-    });
-  });
-
-  describe('changing refresh intervals', () => {
-    it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: 'LIVE',
-        isLive: true,
-        loading: true,
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Streaming,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
-        .thenStateShouldEqual(expectedState);
-    });
-
-    it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initialState = makeExplorePaneState();
-      const expectedState = {
-        ...initialState,
-        refreshInterval: '',
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [],
-        },
-        queryResponse: {
-          ...initialState.queryResponse,
-          state: LoadingState.Done,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(timeReducer, initialState)
-        .whenActionIsDispatched(changeRefreshInterval({ exploreId: ExploreId.left, refreshInterval: '' }))
-        .thenStateShouldEqual(expectedState);
     });
   });
 

@@ -8,6 +8,7 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select } from '@grafana/ui';
 
+import { getLokiQueryType } from '../queryUtils';
 import { LokiQuery, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
@@ -51,7 +52,7 @@ export const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOL
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
   const { lineLimitValue, resolution, onRunQuery, runOnBlur, onChange } = props;
   const query = props.query ?? {};
-  let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
+  const queryType = getLokiQueryType(query);
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };

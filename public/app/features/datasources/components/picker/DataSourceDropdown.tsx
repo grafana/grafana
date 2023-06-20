@@ -240,6 +240,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                   enableFileUpload: props.enableFileUpload,
                   fileUploadOptions: props.fileUploadOptions,
                   reportedInteractionFrom: 'ds_picker',
+                  dashboard: props.dashboard,
+                  mixed: props.mixed,
                   current,
                   onDismiss: hideModal,
                   onChange: (ds) => {
