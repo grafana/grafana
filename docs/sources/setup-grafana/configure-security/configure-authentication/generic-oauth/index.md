@@ -44,7 +44,7 @@ Follow these steps to integrate your OAuth provider with Grafana:
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
 1. Configure [team synchronization]({{< relref "#team-synchronization" >}}) if desired.
 
-Continue reading this documentation to learn more about [configuring your OAuth2 app]({{< relref "#configuring-your-oauth-app" >}}) and [configuring Grafana]({{< relref "#configuring-grafana" >}}).
+Continue reading this documentation to learn more about [configuring your OAuth2 app]({{< relref "#configuring-your-oauth2-app" >}}) and [configuring Grafana]({{< relref "#configuring-grafana" >}}).
 
 ## Configuring your OAuth2 app
 
