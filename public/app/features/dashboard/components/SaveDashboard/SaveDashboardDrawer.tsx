@@ -109,7 +109,10 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
+  console.log('SaveDashboardDrawer', state);
+
   if (state.error && isFetchError(state.error) && !state.error.isHandled) {
+    console.log('SaveDashboardDrawer rendering SaveDashboardErrorProxy');
     return (
       <SaveDashboardErrorProxy
         error={state.error}
