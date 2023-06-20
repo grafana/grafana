@@ -76,7 +76,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **Header** - Add a custom header. This allows custom headers to be passed based on the needs of your Prometheus instance.
 
-- **Value** - The actual value of the header.
+- **Value** - The value of the header.
 
 ## Additional settings
 
