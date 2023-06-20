@@ -35,11 +35,11 @@ allow_sign_up = true
 auto_login = false
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
-scopes =
+scopes = user:email
 empty_scopes = false
-auth_url =
-token_url =
-api_url =
+auth_url = YOUR_AUTH_URL
+token_url = YOUR_TOKEN_URL
+api_url = YOUR_API_URL
 allowed_domains = mycompany.com mycompany.org
 allowed_groups = ["Admins", "Software Engineers"]
 tls_skip_verify_insecure = false
@@ -52,14 +52,14 @@ auth_style =
 
 ## Configuring your OAuth2 app
 
-First, you will need to create an OAuth application with your OAuth2 provider. This process will be different depending on the OAuth provider that you want to use.
-We provide some [examples of setting up Generic OAuth]({{< relref "#examples-of-setting-up-generic-oauth" >}}), but please refer to the documentation of OAuth provider to help you with this step.
+First, you will need to create an OAuth application with your OAuth2 provider. This process will differ depending on the OAuth provider that you want to use.
+We provide some [examples of setting up generic OAuth]({{< relref "#examples-of-setting-up-generic-oauth" >}}), but please refer to the documentation of your OAuth provider to help you with this step.
 
 OAuth application will provide you with a client ID and a client secret, which you will use in Grafana's Generic OAuth configuration.
 
 ### Callback URL
 
-When you create the application you will might need to specify a callback URL. Specify this as the callback:
+When you create the application you will need to specify a callback URL. Specify this as the callback:
 
 ```bash
 http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth
@@ -67,7 +67,7 @@ http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be correct. For example in case you are serving Grafana behind a proxy.
+You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
 
 ## Configuration options
 
@@ -126,15 +126,45 @@ Set `empty_scopes` field to true to use an empty scope during authentication.
 
 ### Email address
 
-TODO: WTF double check all of this
+Grafana determines a user's email address by following the steps below until it finds and e-mail address:
 
-Grafana determines a user's email address by querying the OAuth provider until it finds an e-mail address:
-
-1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth `id_token` parameter.
+1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth ID token.
 1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
-1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth `id_token` parameter. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth ID token. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
 1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
 1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
+
+### Login
+
+Grafana determines a user's login by using the [JMESPath](http://jmespath.org/examples.html) specified via the `login_attribute_path` configuration option.
+The order of operations is as follows:
+
+1. Evaluate the `login_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `login_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
+
+### Display name
+
+You can set a user's display name with [JMESPath](http://jmespath.org/examples.html) using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
+
+### Groups
+
+Group mappings are made using [JMESPath](http://jmespath.org/examples.html) from the `groups_attribute_path` configuration option.
+Grafana determines a user's groups by following the steps below until it finds the groups:
+
+1. Evaluate the `groups_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `groups_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
+
+The result of the JMESPath expression should be a string array of groups.
+
+You can limit access to Grafana to only members of a given group or list of groups by setting the `allowed_groups` option.
+
+### Teams
+
+OAuth provider teams are extracted using [JMESPath](http://jmespath.org/examples.html) expression from the `team_ids_attribute_path` configuration option.
+The expression is evaluated against the JSON data obtained from Teams endpoint, which is specified via the `teams_url` configuration option.
+The result should be a string array of OAuth provider team IDs.
+
+If `team_ids` configuration option is set, only users who are members of at least one of the specified teams will be able to authenticate to Grafana using your OAuth provider.
 
 ### SSL/TLS configuration
 
@@ -146,34 +176,7 @@ You can specify the SSL/TLS configuration used by the client.
 
 `tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
-### Groups / Teams
-
-Group mappings are made using [JMESPath](http://jmespath.org/examples.html) with the `groups_attribute_path` configuration option. The `id_token` is attempted first, followed by the UserInfo from the `api_url`. The result of the JMESPath expression should be a string array of groups.
-
-You can limit access to only members of a given group or list of groups by setting the `allowed_groups` option.
-
-### Teams
-
-TODO double-check this as well - are we talking provider teams or Grafana teams?
-
-If `team_ids` configuration option is set, only users who are members of at least one of the specified Grafana teams will be able to log in.
-
-Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
-
-### Login
-
-User login can be cutomized using `login_attribute_path` configuration option. Order of operations is as follows:
-
-1. Grafana evaluates the `login_attribute_path` JMESPath expression against the ID token.
-1. If Grafana finds no value, then Grafana evaluates expression against the JSON data obtained from UserInfo endpoint. The UserInfo endpoint URL is specified in the `api_url` configuration option.
-
-You can customize the attribute name used to extract the ID token from the returned OAuth token with the `id_token_attribute_name` option.
-
-You can set the user's display name with JMESPath using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
-
 ### PKCE
-
-> Available in Grafana v8.3 and later versions.
 
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
 introduces "proof key for code exchange" (PKCE) which provides
@@ -199,7 +202,7 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To configure Generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
+To configure generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
 
 - Extend the `[auth.generic_oauth]` section with additional scopes
 - Enable the refresh token on the provider
@@ -222,7 +225,7 @@ skip_org_role_sync = true
 ``
 ```
 
-## Examples of setting up Generic OAuth
+## Examples of setting up generic OAuth
 
 ### Set up OAuth2 with Auth0
 
