@@ -9,7 +9,7 @@ import { jsonDiff } from '../VersionHistory/utils';
 
 import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
-import { SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
+import { isHandledError, SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
@@ -73,6 +73,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     }
 
     if (state.loading) {
+      console.log('SaveDashboardDrawer rendering Spinner');
       return (
         <div>
           <Spinner />
@@ -81,6 +82,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     }
 
     if (isNew || isCopy) {
+      console.log('SaveDashboardDrawer rendering SaveDashboardAsForm', dashboard);
       return (
         <SaveDashboardAsForm
           dashboard={dashboard}
@@ -111,7 +113,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
 
   console.log('SaveDashboardDrawer', state);
 
-  if (state.error && isFetchError(state.error) && !state.error.isHandled) {
+  if (state.error && isFetchError(state.error) && !state.error.isHandled && isHandledError(state.error.data.status)) {
     console.log('SaveDashboardDrawer rendering SaveDashboardErrorProxy');
     return (
       <SaveDashboardErrorProxy

@@ -109,7 +109,7 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
   );
 };
 
-const isHandledError = (errorStatus: string) => {
+export const isHandledError = (errorStatus: string) => {
   switch (errorStatus) {
     case 'version-mismatch':
     case 'name-exists':
