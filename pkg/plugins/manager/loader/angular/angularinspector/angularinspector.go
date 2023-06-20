@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Inspector can inspect a plugin and determine if it's an Angular plugin or not.
@@ -53,32 +50,16 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	return
 }
 
-// defaultDetectors contains all the detectors to Detect Angular plugins.
-// They are executed in the specified order.
-var defaultDetectors = []angulardetector.Detector{
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("angular.isNumber(")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("editor.html")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("ctrl.annotation")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("getLegacyAngularInjector")},
-
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`System\.register\(`)},
-}
-
-// newDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
-// detection patterns (defaultDetectors)
-func newDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
-	return &angulardetector.StaticDetectorsProvider{Detectors: defaultDetectors}
-}
+// NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
+// static (hardcoded) angular detection patterns.
+/* func NewStaticInspector() (Inspector, error) {
+	return &PatternsListInspector{DetectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}, nil
+} */
 
 // newDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
-func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
+/* func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
 	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(
 		cfg.GrafanaComURL,
 		angulardetector.DefaultGCOMDetectorsProviderTTL,
@@ -94,15 +75,13 @@ func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
 	}, nil
 }
 
-// newStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
-// static (hardcoded) angular detection patterns.
-func newStaticInspector() (Inspector, error) {
-	return &PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}, nil
-}
-
 func ProvideService(cfg *config.Cfg) (Inspector, error) {
 	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
 		return newDynamicInspector(cfg)
 	}
 	return newStaticInspector()
+} */
+
+func ProvideService(detectorsProvider angulardetector.DetectorsProvider) Inspector {
+	return &PatternsListInspector{DetectorsProvider: detectorsProvider}
 }

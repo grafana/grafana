@@ -9,9 +9,6 @@ import (
 var (
 	_ Detector = &ContainsBytesDetector{}
 	_ Detector = &RegexDetector{}
-
-	_ DetectorsProvider = &StaticDetectorsProvider{}
-	_ DetectorsProvider = SequenceDetectorsProvider{}
 )
 
 // Detector implements a check to see if a js file is using angular APIs.
@@ -55,15 +52,24 @@ func (p *StaticDetectorsProvider) ProvideDetectors(_ context.Context) []Detector
 	return p.Detectors
 }
 
-// SequenceDetectorsProvider is a DetectorsProvider that wraps a slice of other DetectorsProvider, and returns the first
-// provided result that isn't empty.
-type SequenceDetectorsProvider []DetectorsProvider
+// defaultDetectors contains all the detectors to Detect Angular plugins.
+// They are executed in the specified order.
+var defaultDetectors = []Detector{
+	&ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
+	&ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
+	&ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
+	&ContainsBytesDetector{Pattern: []byte("angular.isNumber(")},
+	&ContainsBytesDetector{Pattern: []byte("editor.html")},
+	&ContainsBytesDetector{Pattern: []byte("ctrl.annotation")},
+	&ContainsBytesDetector{Pattern: []byte("getLegacyAngularInjector")},
 
-func (p SequenceDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
-	for _, provider := range p {
-		if detectors := provider.ProvideDetectors(ctx); len(detectors) > 0 {
-			return detectors
-		}
-	}
-	return nil
+	&RegexDetector{Regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
+	&RegexDetector{Regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
+	&RegexDetector{Regex: regexp.MustCompile(`System\.register\(`)},
+}
+
+// NewDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
+// detection patterns (defaultDetectors)
+func NewDefaultStaticDetectorsProvider() DetectorsProvider {
+	return &StaticDetectorsProvider{Detectors: defaultDetectors}
 }
