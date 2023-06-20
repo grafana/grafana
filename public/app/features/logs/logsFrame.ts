@@ -11,11 +11,11 @@ export type Attributes = Record<string, unknown>;
 export type LogsFrame = {
   timeField: FieldWithIndex;
   bodyField: FieldWithIndex;
-  timeNanosecondField?: FieldWithIndex;
-  severityField?: FieldWithIndex;
-  idField?: FieldWithIndex;
-  attributes?: Attributes[];
-  getAttributesAsLabels: () => Labels[] | undefined; // temporarily exists to make the labels=>attributes migration simpler
+  timeNanosecondField: FieldWithIndex | null;
+  severityField: FieldWithIndex | null;
+  idField: FieldWithIndex | null;
+  attributes: Attributes[] | null;
+  getAttributesAsLabels: () => Labels[] | null; // temporarily exists to make the labels=>attributes migration simpler
 };
 
 function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldWithIndex | undefined {
@@ -25,6 +25,12 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
   }
 
   return field.type === fieldType ? field : undefined;
+}
+
+const z: undefined | number = undefined;
+
+if (z ?? 0 > 0) {
+  console.log('yo');
 }
 
 const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
@@ -54,11 +60,11 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     return null;
   }
 
-  const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string);
-  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string);
-  const attributesField = getField(cache, DATAPLANE_ATTRIBUTES_NAME, FieldType.other);
+  const severityField = getField(cache, DATAPLANE_SEVERITY_NAME, FieldType.string) ?? null;
+  const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
+  const attributesField = getField(cache, DATAPLANE_ATTRIBUTES_NAME, FieldType.other) ?? null;
 
-  const attributes = attributesField == null ? undefined : attributesField.values;
+  const attributes = attributesField == null ? null : attributesField.values;
 
   return {
     timeField: timestampField,
@@ -66,7 +72,8 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
     severityField,
     idField,
     attributes,
-    getAttributesAsLabels: () => (attributes != null ? attributes.map(attributesToLabels) : undefined),
+    timeNanosecondField: null,
+    getAttributesAsLabels: () => (attributes !== null ? attributes.map(attributesToLabels) : null),
   };
   return null;
 }

@@ -2,7 +2,7 @@ import { DataFrame, FieldCache, FieldType, Field, Labels } from '@grafana/data';
 
 import type { LogsFrame } from './logsFrame';
 
-function getLabels(frame: DataFrame, cache: FieldCache, lineField: Field): Labels[] | undefined {
+function getLabels(frame: DataFrame, cache: FieldCache, lineField: Field): Labels[] | null {
   const useLabelsField = frame.meta?.custom?.frameType === 'LabeledTimeValues';
 
   if (!useLabelsField) {
@@ -12,14 +12,14 @@ function getLabels(frame: DataFrame, cache: FieldCache, lineField: Field): Label
       result.fill(lineLabels);
       return result;
     } else {
-      return undefined;
+      return null;
     }
   }
 
   const labelsField = cache.getFieldByName('labels');
 
   if (labelsField === undefined) {
-    return undefined;
+    return null;
   }
 
   return labelsField.values;
@@ -35,9 +35,9 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     return null;
   }
 
-  const timeNanosecondField = cache.getFieldByName('tsNs');
-  const severityField = cache.getFieldByName('level');
-  const idField = cache.getFieldByName('id');
+  const timeNanosecondField = cache.getFieldByName('tsNs') ?? null;
+  const severityField = cache.getFieldByName('level') ?? null;
+  const idField = cache.getFieldByName('id') ?? null;
 
   const labels = getLabels(frame, cache, bodyField);
 
