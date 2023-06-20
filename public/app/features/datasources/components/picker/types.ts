@@ -13,6 +13,8 @@ export interface DataSourceDropdownProps {
   onClickAddCSV?: () => void;
   recentlyUsed?: string[];
   hideTextValue?: boolean;
+  dashboard?: boolean;
+  mixed?: boolean;
   width?: number;
 }
 
@@ -20,6 +22,8 @@ export interface PickerContentProps extends DataSourceDropdownProps {
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
+  dashboard?: boolean;
+  mixed?: boolean;
   onClose: () => void;
   onDismiss: () => void;
 }
