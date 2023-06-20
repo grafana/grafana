@@ -1,4 +1,5 @@
-import { getNumberEvaluationsToStartAlerting } from './EditRuleGroupModal';
+import { getNumberEvaluationsToStartAlerting } from './rules';
+
 describe('getNumberEvaluationsToStartAlerting method', () => {
   it('should return 0 in case of invalid data', () => {
     expect(getNumberEvaluationsToStartAlerting('sd', 'ksdh')).toBe(0);

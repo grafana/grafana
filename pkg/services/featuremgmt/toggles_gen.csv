@@ -7,7 +7,7 @@ panelTitleSearch,preview,@grafana/grafana-app-platform-squad,false,false,false,f
 prometheusAzureOverrideAudience,preview,@grafana/observability-metrics,false,false,false,false
 publicDashboards,preview,@grafana/dashboards-squad,false,false,false,false
 publicDashboardsEmailSharing,preview,@grafana/dashboards-squad,false,true,false,false
-lokiLive,experimental,@grafana/observability-logs,false,false,false,false
+lokiExperimentalStreaming,experimental,@grafana/observability-logs,false,false,false,false
 featureHighlights,GA,@grafana/grafana-as-code,false,false,false,false
 migrationLocking,preview,@grafana/backend-platform,false,false,false,false
 storage,experimental,@grafana/grafana-app-platform-squad,false,false,false,false
@@ -83,3 +83,4 @@ cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,t
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
+flameGraphV2,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
