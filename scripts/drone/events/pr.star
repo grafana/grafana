@@ -44,6 +44,10 @@ load(
     "scripts/drone/pipelines/lint_frontend.star",
     "lint_frontend_pipeline",
 )
+load(
+    "scripts/drone/pipelines/benchmarks.star",
+    "integration_benchmarks",
+)
 
 ver_mode = "pr"
 trigger = {
@@ -133,6 +137,14 @@ def pr_pipelines():
         ),
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
+        integration_benchmarks(
+            get_pr_trigger(
+                include_paths = [
+                    "pkg/*/*_bench_*",
+                ],
+            ),
+            prefix = ver_mode,
+        ),
     ]
 
 def get_pr_trigger(include_paths = None, exclude_paths = None):
