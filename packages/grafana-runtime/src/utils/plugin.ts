@@ -55,3 +55,13 @@ export function getPluginImportUtils(): PluginImportUtils {
 
   return pluginImportUtils;
 }
+
+// TODO: Clean this up. Should we export the namespace?
+// The AMD extra creates a global define which RequireJS will silently bail on.
+// Grafana currently relies on requirejs for Monaco Editor so we move it
+// elsewhere otherwise monaco will fail to load.
+// @ts-ignore
+window.systemDefine = window.define;
+
+// @ts-ignore
+window.define = undefined;

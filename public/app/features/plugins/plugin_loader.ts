@@ -164,17 +164,15 @@ const imports = buildImportMap(importMap);
 // to the imports above.
 SystemJS.addImportMap({ imports });
 
-const moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
+// const moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
 const loadPluginCssRegEx = /^plugins.+\.css$/i;
 const jsContentTypeRegEx = /^text\/javascript(;|$)/;
 
-// Fetch and eval if assest is not JS or loading from CDN
-// otherwise we load via script for performance and security goodness!
-SystemJS.shouldFetch = function (url: string) {
-  const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && url.startsWith(config.pluginsCDNBaseURL);
-  const isNotJS = moduleTypesRegEx.test(url);
-
-  return isNotJS || isHostedAtCDN;
+// In an ideal world we'd only use this for loading from CDN
+// but Monaco Editors reliance on RequireJS means we need to transform
+// the content of the plugin code at runtime.
+SystemJS.shouldFetch = function () {
+  return true;
 };
 
 const systemJSPrototype = SystemJS.constructor.prototype;
@@ -183,13 +181,20 @@ const systemJSFetch = systemJSPrototype.fetch;
 systemJSPrototype.fetch = function (url: string, options: Record<string, unknown>) {
   return systemJSFetch(url, options).then(async (res: Response) => {
     const contentType = res.headers.get('content-type') || '';
-    // JS files on the CDN need their asset paths transformed in the source
-    if (jsContentTypeRegEx.test(contentType) && res.url.startsWith(config.pluginsCDNBaseURL)) {
+
+    if (jsContentTypeRegEx.test(contentType)) {
       const source = await res.text();
-      const splitUrl = res.url.split('/public/plugins/');
-      const baseAddress = splitUrl[0];
-      const pluginId = splitUrl[1].split('/')[0];
-      const transformedSrc = jsPluginCDNTransform(source, baseAddress, pluginId);
+      const transformedSrc = preventDefineCollision(source);
+
+      // JS files on the CDN need their asset paths transformed in the source
+      if (res.url.startsWith(config.pluginsCDNBaseURL)) {
+        const splitUrl = res.url.split('/public/plugins/');
+        const baseAddress = splitUrl[0];
+        const pluginId = splitUrl[1].split('/')[0];
+        const cdnTransformedSrc = jsPluginCDNTransform(transformedSrc, baseAddress, pluginId);
+        return new Response(new Blob([cdnTransformedSrc], { type: 'text/javascript' }));
+      }
+
       return new Response(new Blob([transformedSrc], { type: 'text/javascript' }));
     }
     return res;
@@ -203,7 +208,6 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   // CDN paths are unique as they contain the version in the path
   const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
   const cachedId = shouldUseQueryCache ? locateWithCache2(id) : id;
-  // console.log('SystemJS resolve hook:', { id, parentUrl, cachedId }, arguments);
   try {
     return originalResolve.apply(this, [cachedId, parentUrl]);
   } catch (err) {
@@ -218,6 +222,14 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 // For backwards compatiblity with older plugins that use `loadPluginCss`
 // we need to translate the path for systemjs 6.x.x to understand
 const patchLoadPluginCssUrl = (id: string) => `./public/${id}`;
+
+// This transform prevents a conflict between systemjs and requirejs which Monaco Editor
+// depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
+function preventDefineCollision(source: string) {
+  let transformedSrc = source;
+  transformedSrc = transformedSrc.replace(/define\(/g, 'systemDefine(');
+  return transformedSrc;
+}
 
 // TODO: this should replace translateForCDN from './systemjsPlugins/pluginCDN'
 function jsPluginCDNTransform(source: string, baseAddress: string, pluginId: string) {
