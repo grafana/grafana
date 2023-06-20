@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
-import { GrafanaTheme2, PanelData } from '@grafana/data';
+import { PanelData } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -68,7 +68,7 @@ export const ExpressionsEditor = ({
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   wrapper: css`
     display: flex;
     flex-direction: row;

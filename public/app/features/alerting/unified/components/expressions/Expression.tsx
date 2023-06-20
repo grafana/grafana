@@ -417,8 +417,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-bottom: ${theme.spacing(2)};
     `,
     nonClassic: css`
-      max-width: 48%;
-      min-width: 48%;
+      max-width: 49%;
+      min-width: 49%;
       margin-bottom: ${theme.spacing(2)};
     `,
     alertCondition: css``,

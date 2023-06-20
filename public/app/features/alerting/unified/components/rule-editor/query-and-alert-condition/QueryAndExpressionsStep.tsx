@@ -1,11 +1,13 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { getDefaultRelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip } from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import { H5 } from '@grafana/ui/src/unstable';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -231,8 +233,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     [dispatch]
   );
 
+  const styles = useStyles2(getStyles);
+
   return (
-    <RuleEditorSection stepNo={2} title="Set a query and alert condition">
+    <RuleEditorSection stepNo={2} title="Define query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
       {/* This is the PromQL Editor for recording rules */}
@@ -274,6 +278,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isGrafanaManagedType && (
         <Stack direction="column">
           {/* Data Queries */}
+          <div className={styles.mutedText}>
+            Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
+            threshold that an alert rule must meet or exceed in order to fire.
+          </div>
+
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
@@ -284,7 +293,23 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             condition={condition}
             onSetCondition={handleSetCondition}
           />
+          <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+            <Button
+              type="button"
+              onClick={() => {
+                dispatch(addNewDataQuery());
+              }}
+              variant="secondary"
+              aria-label={selectors.components.QueryTab.addQuery}
+              disabled={noCompatibleDataSources}
+              className={styles.addQueryButton}
+            >
+              Add query
+            </Button>
+          </Tooltip>
           {/* Expression Queries */}
+          <H5>Expressions</H5>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
@@ -303,21 +328,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* action buttons */}
           <Stack direction="row">
-            <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
-              <Button
-                type="button"
-                icon="plus"
-                onClick={() => {
-                  dispatch(addNewDataQuery());
-                }}
-                variant="secondary"
-                aria-label={selectors.components.QueryTab.addQuery}
-                disabled={noCompatibleDataSources}
-              >
-                Add query
-              </Button>
-            </Tooltip>
-
             {config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
             {isPreviewLoading && (
@@ -370,3 +380,14 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  mutedText: css`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.size.sm};
+    margin-top: ${theme.spacing(-1)};
+  `,
+  addQueryButton: css`
+    width: fit-content;
+  `,
+});
