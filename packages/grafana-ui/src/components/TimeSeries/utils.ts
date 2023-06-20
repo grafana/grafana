@@ -181,6 +181,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
+      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
     builder.addAxis({
@@ -190,6 +191,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
+      formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
 
