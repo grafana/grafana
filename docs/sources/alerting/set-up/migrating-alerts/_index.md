@@ -57,7 +57,7 @@ enabled = true
 enabled = false
 ```
 
-Installations that have been migrated to Grafana Alerting can [roll back]({{< relref "./roll-back" >}}) to legacy alerting at any time.
+Installations that have been migrated to Grafana Alerting can roll back to legacy alerting at any time.
 
 {{% admonition type="note" %}}
 This topic is only relevant for OSS and Enterprise customers. Contact customer support to enable or disable Grafana Alerting for your Grafana Cloud stack.
@@ -158,7 +158,7 @@ longer supported.
 
 4. Notification channels are migrated to an Alertmanager configuration with the appropriate routes and receivers. Default notification channels are added as contact points to the default route. Notification channels not associated with any Dashboard alert go to the `autogen-unlinked-channel-recv` route.
 
-5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points. Refer to [images in notifications]({{< relref "../manage-notifications/images-in-notifications" >}}).
+5. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
 
 6. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
 
