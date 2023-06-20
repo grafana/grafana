@@ -7,7 +7,7 @@ import { Field, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Vert
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { HorizontalConstraint, Placement, VerticalConstraint } from 'app/features/canvas';
 
-import { Options } from '../../models.gen';
+import { Options } from '../../panelcfg.gen';
 
 import { ConstraintSelectionBox } from './ConstraintSelectionBox';
 import { QuickPositioning } from './QuickPositioning';

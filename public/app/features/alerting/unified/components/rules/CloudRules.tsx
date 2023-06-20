@@ -37,7 +37,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     [promRules, dsConfigs, rulesDataSources]
   );
 
-  const hasSomeResults = rulesDataSources.some((ds) => promRules[ds.name]?.result?.length ?? 0 > 0);
+  const hasSomeResults = rulesDataSources.some((ds) => Boolean(promRules[ds.name]?.result?.length));
 
   const hasDataSourcesConfigured = rulesDataSources.length > 0;
   const hasDataSourcesLoading = dataSourcesLoading.length > 0;
