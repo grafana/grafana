@@ -18,10 +18,12 @@ interface BuiltInDataSourceListProps {
   className?: string;
   current: DataSourceRef | string | null | undefined;
   onChange: (ds: DataSourceInstanceSettings) => void;
+  dashboard?: boolean;
+  mixed?: boolean;
 }
 
-export function BuiltInDataSourceList({ className, current, onChange }: BuiltInDataSourceListProps) {
-  const grafanaDataSources = useDatasources({ mixed: true, dashboard: true, filter: (ds) => !!ds.meta.builtIn });
+export function BuiltInDataSourceList({ className, current, onChange, dashboard, mixed }: BuiltInDataSourceListProps) {
+  const grafanaDataSources = useDatasources({ mixed, dashboard, filter: (ds) => !!ds.meta.builtIn });
 
   return (
     <div className={className}>
