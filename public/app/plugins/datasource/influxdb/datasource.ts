@@ -41,6 +41,8 @@ import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
+console.log('datasource loaded');
+
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
   urls: string[];
@@ -94,6 +96,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         prepareAnnotation,
       };
     }
+
+    console.log('datasource constructed');
   }
 
   async getRetentionPolicies(): Promise<string[]> {

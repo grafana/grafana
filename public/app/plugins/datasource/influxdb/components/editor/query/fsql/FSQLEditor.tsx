@@ -37,6 +37,7 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
 
+import { SQLQuery } from '../../../../../../../features/plugins/sql';
 import { SqlQueryEditor } from '../../../../../../../features/plugins/sql/components/QueryEditor';
 import InfluxDatasource from '../../../../datasource';
 import { InfluxQuery } from '../../../../types';
@@ -51,6 +52,7 @@ interface Props extends Themeable2 {
 }
 
 function UnthemedSQLQueryEditor(props: Props) {
+  console.log('UnthemedSQLQueryEditor init');
   const { query, theme, datasource, onRunQuery, onChange } = props;
   const styles = getStyles(theme);
 
@@ -73,9 +75,9 @@ function UnthemedSQLQueryEditor(props: Props) {
     return onRunQuery();
   };
 
-  const onSQLChange = (query: InfluxQuery) => {
-    console.log('query', query);
-    return onChange(query);
+  const onSQLChange = (query: SQLQuery) => {
+    // query => rawSql for now
+    props.onChange({ ...query, query: query.rawSql, resultFormat: query.format });
   };
 
   const helpTooltip = (
