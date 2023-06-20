@@ -2,6 +2,7 @@ package sources
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -36,7 +37,9 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 func corePluginPaths(staticRootPath string) []string {
 	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
 	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
-	return []string{datasourcePaths, panelsPath}
+	pluginsPath, err := filepath.Abs(filepath.Join(staticRootPath, "../plugins"))
+	fmt.Println("failed abs", "error", err)
+	return []string{datasourcePaths, panelsPath, pluginsPath}
 }
 
 // pluginSettingPaths provides plugin file system paths defined in cfg.PluginSettings
