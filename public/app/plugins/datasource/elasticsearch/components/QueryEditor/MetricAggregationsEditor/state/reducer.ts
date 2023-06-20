@@ -155,7 +155,7 @@ export const reducer = (state: ElasticsearchQuery['metrics'], action: Action): E
   }
 
   if (initQuery.match(action)) {
-    if (state?.length || 0 > 0) {
+    if (state && state.length > 0) {
       return state;
     }
     return [defaultMetricAgg('1')];
