@@ -27,8 +27,9 @@ import (
 )
 
 const (
-	viewIndex            = "index"
-	loginErrorCookieName = "login_error"
+	viewIndex               = "index"
+	loginErrorCookieName    = "login_error"
+	postLogoutRedirectParam = "?post_logout_redirect_uri="
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
@@ -250,8 +251,20 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 		}
 	}
 
+	idTokenHint := ""
+	postLogoutRedirect := isPostLogoutRedirectConfigured(setting.SignoutRedirectUrl)
+
 	// Invalidate the OAuth tokens in case the User logged in with OAuth or the last external AuthEntry is an OAuth one
 	if entry, exists, _ := hs.oauthTokenService.HasOAuthEntry(c.Req.Context(), c.SignedInUser); exists {
+		token := hs.oauthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser)
+		if postLogoutRedirect {
+			if token.Valid() {
+				idTokenHint = token.Extra("id_token").(string)
+				hs.log.Debug("post_logout_redirect_uri is configured. id token configured is", "id_token:", idTokenHint)
+			} else {
+				hs.log.Warn("Token is not valid")
+			}
+		}
 		if err := hs.oauthTokenService.InvalidateOAuthTokens(c.Req.Context(), entry); err != nil {
 			hs.log.Warn("failed to invalidate oauth tokens for user", "userId", c.UserID, "error", err)
 		}
@@ -264,8 +277,13 @@ func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 
 	authn.DeleteSessionCookie(c.Resp, hs.Cfg)
 
-	if setting.SignoutRedirectUrl != "" {
-		c.Redirect(setting.SignoutRedirectUrl)
+	rdUrl := setting.SignoutRedirectUrl
+	if rdUrl != "" {
+		if postLogoutRedirect {
+			rdUrl = getPostRedirectUrl(setting.SignoutRedirectUrl, idTokenHint)
+		}
+		hs.log.Debug("Redirect url would be", "signOutUrl", rdUrl)
+		c.Redirect(rdUrl)
 	} else {
 		hs.log.Info("Successful Logout", "User", c.Email)
 		c.Redirect(hs.Cfg.AppSubURL + "/login")
@@ -360,6 +378,7 @@ func getLoginExternalError(err error) string {
 	return err.Error()
 }
 
+
 // Get the first public error message from an error chain.
 func getFirstPublicErrorMessage(err *errutil.Error) string {
 	errPublic := err.Public()
@@ -373,4 +392,29 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+
+func isPostLogoutRedirectConfigured(redirectUrl string) bool {
+	if redirectUrl == "" {
+		return false
+	}
+	if strings.Contains(redirectUrl, postLogoutRedirectParam) {
+		return true
+	}
+
+	return false
+}
+
+func getPostRedirectUrl(rdUrl string, tokenHint string) string {
+	if tokenHint == "" {
+		return rdUrl
+	}
+	if rdUrl == "" {
+		return rdUrl
+	}
+
+	pRdIndex := strings.Index(rdUrl, postLogoutRedirectParam)
+	// increment index by 1 to insert after ?
+	pRdIndex++
+	pRdUrl := rdUrl[:pRdIndex] + "id_token_hint=" + tokenHint + "&" + rdUrl[pRdIndex:]
+	return pRdUrl
 }
