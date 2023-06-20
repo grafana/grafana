@@ -132,4 +132,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export const FSQLEditor = React.memo(withTheme2(UnthemedSQLQueryEditor));
+export const FSQLEditor = withTheme2(UnthemedSQLQueryEditor);
