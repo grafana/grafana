@@ -378,7 +378,6 @@ func getLoginExternalError(err error) string {
 	return err.Error()
 }
 
-
 // Get the first public error message from an error chain.
 func getFirstPublicErrorMessage(err *errutil.Error) string {
 	errPublic := err.Public()
@@ -392,6 +391,7 @@ func getFirstPublicErrorMessage(err *errutil.Error) string {
 	}
 
 	return errPublic.Message
+}
 
 func isPostLogoutRedirectConfigured(redirectUrl string) bool {
 	if redirectUrl == "" {
