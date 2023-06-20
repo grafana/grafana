@@ -54,6 +54,6 @@ The following table lists the contact point integrations supported by Grafana.
 
 ## Useful links
 
-[Manage contact points]({{< relref "../../manage-notifications/manage-contact-points" >}})
+[Manage contact points]({{< relref "../../alerting-rules/manage-contact-points" >}})
 
 [Create and edit notification templates]({{< relref "../../manage-notifications/template-notifications/create-notification-templates" >}})
