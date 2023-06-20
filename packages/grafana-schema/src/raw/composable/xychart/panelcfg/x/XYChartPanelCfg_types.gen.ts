@@ -32,7 +32,8 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
   exclude: [],
 };
 
-export interface ScatterFieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
+  fillOpacity?: number;
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
   lineColor?: common.ColorDimensionConfig;
@@ -40,15 +41,17 @@ export interface ScatterFieldConfig extends common.HideableFieldConfig, common.A
   lineWidth?: number;
   pointColor?: common.ColorDimensionConfig;
   pointSize?: common.ScaleDimensionConfig;
+  pointSymbol?: common.ResourceDimensionConfig;
   show?: ScatterShow;
 }
 
-export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
+export const defaultFieldConfig: Partial<FieldConfig> = {
+  fillOpacity: 0.5,
   label: common.VisibilityMode.Auto,
   show: ScatterShow.Points,
 };
 
-export interface ScatterSeriesConfig extends ScatterFieldConfig {
+export interface ScatterSeriesConfig extends FieldConfig {
   name?: string;
   x?: string;
   y?: string;
