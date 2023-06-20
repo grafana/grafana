@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { config, isFetchError } from '@grafana/runtime';
-import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
+import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { jsonDiff } from '../VersionHistory/utils';
@@ -72,20 +72,11 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
       return <SaveDashboardDiff diff={data.diff} oldValue={previous.value} newValue={data.clone} />;
     }
 
-    // if (state.loading) {
-    //   console.log('SaveDashboardDrawer rendering Spinner');
-    //   return (
-    //     <div>
-    //       <Spinner />
-    //     </div>
-    //   );
-    // }
-
     if (isNew || isCopy) {
-      console.log('SaveDashboardDrawer rendering SaveDashboardAsForm', dashboard);
       return (
         <SaveDashboardAsForm
           dashboard={dashboard}
+          isLoading={state.loading}
           onCancel={onDismiss}
           onSuccess={onSuccess}
           onSubmit={onDashboardSave}
@@ -101,6 +92,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     return (
       <SaveDashboardForm
         dashboard={dashboard}
+        isLoading={state.loading}
         saveModel={data}
         onCancel={onDismiss}
         onSuccess={onSuccess}
@@ -111,10 +103,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  console.log('SaveDashboardDrawer', state);
-
   if (state.error && isFetchError(state.error) && !state.error.isHandled && isHandledError(state.error.data.status)) {
-    console.log('SaveDashboardDrawer rendering SaveDashboardErrorProxy');
     return (
       <SaveDashboardErrorProxy
         error={state.error}
