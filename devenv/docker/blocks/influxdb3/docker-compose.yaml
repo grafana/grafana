@@ -16,7 +16,7 @@
       INFLUX_IOX_BUCKET: "${INFLUX_IOX_BUCKET}"
     volumes:
       # Mount for telegraf config
-      - ./docker/blocks/influxdb2/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - ./docker/blocks/influxdb3/telegraf.conf:/etc/telegraf/telegraf.conf:ro
 
 volumes:
   influxdbv2:
