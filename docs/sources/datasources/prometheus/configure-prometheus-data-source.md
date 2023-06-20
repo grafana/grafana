@@ -104,7 +104,7 @@ Following are additional configuration options.
 
 - **Version** Select the version you are using. Once the Prometheus type has been selected, a list of versions auto-populates using the Prometheus [buildinfo](https://semver.org/) API. The `Cortex` Prometheus type does not support this API so you will need to manually add the version.
 
-- **Incremental querying (beta)** - Beta. Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
+- **Incremental querying (beta)** - Changes the default behavior of relative queries to always request fresh data from the Prometheus instance. Enable this option to decrease database and network load.
 
 ### Other
 
