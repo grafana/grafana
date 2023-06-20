@@ -7,6 +7,13 @@ describe('queryHasFilter', () => {
     expect(queryHasFilter('label : "value"', 'label', 'value')).toBe(true);
     expect(queryHasFilter('label:value', 'label', 'value')).toBe(true);
     expect(queryHasFilter('this:"that" AND label:value', 'label', 'value')).toBe(true);
+    expect(
+      queryHasFilter(
+        'message:"Jun 20 17:19:47 Xtorm syslogd[348]: ASL Sender Statistics"',
+        'message',
+        'Jun 20 17:19:47 Xtorm syslogd[348]: ASL Sender Statistics'
+      )
+    ).toBe(true);
   });
   it('should return false if the query does not contain the positive filter', () => {
     expect(queryHasFilter('label:"value"', 'label', 'otherValue')).toBe(false);

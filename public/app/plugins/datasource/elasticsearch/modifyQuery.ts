@@ -1,3 +1,5 @@
+import { escapeRegex } from '@grafana/data';
+
 type ModifierType = '' | '-';
 
 /**
@@ -31,7 +33,7 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
 }
 
 function getFilterRegex(key: string, value: string) {
-  return new RegExp(`[-]{0,1}\\s*${key}\\s*:\\s*["']{0,1}${value}["']{0,1}`, 'ig');
+  return new RegExp(`[-]{0,1}\\s*${key}\\s*:\\s*["']{0,1}${escapeRegex(value)}["']{0,1}`, 'ig');
 }
 
 /**
