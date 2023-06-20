@@ -251,138 +251,6 @@ skip_org_role_sync = true
 ``
 ```
 
-## Examples of setting up generic OAuth
-
-### Set up OAuth2 with Auth0
-
-1. Create an application using the following parameters:
-
-   - Name: Grafana
-   - Type: Regular Web Application
-
-1. Go to the `Settings` tab and set:
-
-   - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
-
-1. Click `Save Changes`, then use the values from the `Settings` tab to configure Grafana:
-
-   ```bash
-   [auth.generic_oauth]
-   enabled = true
-   allow_sign_up = true
-   auto_login = false
-   team_ids =
-   allowed_organizations =
-   name = Auth0
-   client_id = <client id>
-   client_secret = <client secret>
-   scopes = openid profile email offline_access
-   auth_url = https://<domain>/authorize
-   token_url = https://<domain>/oauth/token
-   api_url = https://<domain>/userinfo
-   use_pkce = true
-   ```
-
-### Set up OAuth2 with Bitbucket
-
-1. Go to the `Settings` > `Workspace setting` > `OAuth consumers`
-
-1. Create an application by selecting `Add consumer` and using the following parameters:
-
-   - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
-
-1. Click `Save`, then use the `Key` and `Secret` from the consumer description to configure Grafana:
-
-```bash
-[auth.generic_oauth]
-name = BitBucket
-enabled = true
-allow_sign_up = true
-auto_login = false
-client_id = <client key>
-client_secret = <client secret>
-scopes = account email
-auth_url = https://bitbucket.org/site/oauth2/authorize
-token_url = https://bitbucket.org/site/oauth2/access_token
-api_url = https://api.bitbucket.org/2.0/user
-teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
-team_ids_attribute_path = values[*].workspace.slug
-team_ids =
-allowed_organizations =
-```
-
-By default, a refresh token is included in the response for the **Authorization Code Grant**.
-
-### Set up OAuth2 with Centrify
-
-1. Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
-
-1. Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
-
-1. Put in other basic configuration (name, description, logo, category)
-
-1. On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
-
-1. Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
-
-1. Add an authorized Redirect URI like `https://your-grafana-server/login/generic_oauth`
-
-1. Set up permissions, policies, etc. just like any other Centrify app
-
-1. Configure Grafana as follows:
-
-   ```bash
-   [auth.generic_oauth]
-   name = Centrify
-   enabled = true
-   allow_sign_up = true
-   auto_login = false
-   client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret>
-   scopes = openid profile email
-   auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
-   token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
-   api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
-   ```
-
-By default, a refresh token is included in the response for the **Authorization Code Grant**.
-
-### Set up OAuth2 with OneLogin
-
-1. Create a new Custom Connector with the following settings:
-
-   - Name: Grafana
-   - Sign On Method: OpenID Connect
-   - Redirect URI: `https://<grafana domain>/login/generic_oauth`
-   - Signing Algorithm: RS256
-   - Login URL: `https://<grafana domain>/login/generic_oauth`
-
-1. Add an App to the Grafana Connector:
-
-   - Display Name: Grafana
-
-1. Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
-
-   Your OneLogin Domain will match the URL you use to access OneLogin.
-
-   Configure Grafana as follows:
-
-   ```bash
-   [auth.generic_oauth]
-   name = OneLogin
-   enabled = true
-   allow_sign_up = true
-   auto_login = false
-   client_id = <client id>
-   client_secret = <client secret>
-   scopes = openid email name
-   auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
-   token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
-   api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
-   team_ids =
-   allowed_organizations =
-   ```
-
 ## Role Mapping
 
 User role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
@@ -522,3 +390,135 @@ Payload:
     ...
 }
 ```
+
+## Examples of setting up generic OAuth
+
+### Set up OAuth2 with Auth0
+
+1. Create an application using the following parameters:
+
+- Name: Grafana
+- Type: Regular Web Application
+
+1. Go to the `Settings` tab and set:
+
+- Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+1. Click `Save Changes`, then use the values from the `Settings` tab to configure Grafana:
+
+   ```bash
+   [auth.generic_oauth]
+   enabled = true
+   allow_sign_up = true
+   auto_login = false
+   team_ids =
+   allowed_organizations =
+   name = Auth0
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid profile email offline_access
+   auth_url = https://<domain>/authorize
+   token_url = https://<domain>/oauth/token
+   api_url = https://<domain>/userinfo
+   use_pkce = true
+   ```
+
+### Set up OAuth2 with Bitbucket
+
+1. Go to the `Settings` > `Workspace setting` > `OAuth consumers`
+
+1. Create an application by selecting `Add consumer` and using the following parameters:
+
+- Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+1. Click `Save`, then use the `Key` and `Secret` from the consumer description to configure Grafana:
+
+```bash
+[auth.generic_oauth]
+name = BitBucket
+enabled = true
+allow_sign_up = true
+auto_login = false
+client_id = <client key>
+client_secret = <client secret>
+scopes = account email
+auth_url = https://bitbucket.org/site/oauth2/authorize
+token_url = https://bitbucket.org/site/oauth2/access_token
+api_url = https://api.bitbucket.org/2.0/user
+teams_url = https://api.bitbucket.org/2.0/user/permissions/workspaces
+team_ids_attribute_path = values[*].workspace.slug
+team_ids =
+allowed_organizations =
+```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
+
+### Set up OAuth2 with Centrify
+
+1. Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
+
+1. Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
+
+1. Put in other basic configuration (name, description, logo, category)
+
+1. On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
+
+1. Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
+
+1. Add an authorized Redirect URI like `https://your-grafana-server/login/generic_oauth`
+
+1. Set up permissions, policies, etc. just like any other Centrify app
+
+1. Configure Grafana as follows:
+
+   ```bash
+   [auth.generic_oauth]
+   name = Centrify
+   enabled = true
+   allow_sign_up = true
+   auto_login = false
+   client_id = <OpenID Connect Client ID from Centrify>
+   client_secret = <your generated OpenID Connect Client Secret>
+   scopes = openid profile email
+   auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
+   token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
+   api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
+   ```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
+
+### Set up OAuth2 with OneLogin
+
+1. Create a new Custom Connector with the following settings:
+
+- Name: Grafana
+- Sign On Method: OpenID Connect
+- Redirect URI: `https://<grafana domain>/login/generic_oauth`
+- Signing Algorithm: RS256
+- Login URL: `https://<grafana domain>/login/generic_oauth`
+
+1. Add an App to the Grafana Connector:
+
+- Display Name: Grafana
+
+1. Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
+
+   Your OneLogin Domain will match the URL you use to access OneLogin.
+
+   Configure Grafana as follows:
+
+   ```bash
+   [auth.generic_oauth]
+   name = OneLogin
+   enabled = true
+   allow_sign_up = true
+   auto_login = false
+   client_id = <client id>
+   client_secret = <client secret>
+   scopes = openid email name
+   auth_url = https://<onelogin domain>.onelogin.com/oidc/2/auth
+   token_url = https://<onelogin domain>.onelogin.com/oidc/2/token
+   api_url = https://<onelogin domain>.onelogin.com/oidc/2/me
+   team_ids =
+   allowed_organizations =
+   ```
