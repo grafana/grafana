@@ -26,8 +26,8 @@ export enum ExploreId {
 }
 
 export type ExploreQueryParams = {
-  left: string;
-  right: string;
+  left?: string;
+  right?: string;
 };
 
 /**
@@ -94,10 +94,6 @@ export interface ExploreItemState {
    */
   datasourceInstance?: DataSourceApi | null;
   /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
-  /**
    * Emitter to send events to the rest of Grafana.
    */
   eventBridge: EventBusExtended;
@@ -139,7 +135,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -211,8 +206,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {

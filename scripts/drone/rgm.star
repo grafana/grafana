@@ -43,7 +43,7 @@ def rgm_build(script = "drone_publish_main.sh"):
         "image": "golang:1.20.3-alpine",
         "commands": [
             # the docker program is a requirement for running dagger programs
-            "apk update && apk add docker",
+            "apk update && apk add docker bash",
             "export GRAFANA_DIR=$$(pwd)",
             "cd rgm && ./scripts/{}".format(script),
         ],
@@ -59,12 +59,22 @@ def rgm_build(script = "drone_publish_main.sh"):
         rgm_build_step,
     ]
 
+docs_paths = {
+    "exclude": [
+        "*.md",
+        "docs/**",
+        "packages/**/*.md",
+        "latest.json",
+    ],
+}
+
 def rgm_main():
     trigger = {
         "event": [
             "push",
         ],
         "branch": "main",
+        "paths": docs_paths,
     }
 
     return pipeline(

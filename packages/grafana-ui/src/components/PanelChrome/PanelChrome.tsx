@@ -140,7 +140,11 @@ export function PanelChrome({
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
           <Tooltip content="Cancel query">
-            <TitleItem className={dragClassCancel} data-testid="panel-cancel-query" onClick={onCancelQuery}>
+            <TitleItem
+              className={cx(dragClassCancel, styles.pointer)}
+              data-testid="panel-cancel-query"
+              onClick={onCancelQuery}
+            >
               <Icon name="sync-slash" size="md" />
             </TitleItem>
           </Tooltip>
@@ -257,14 +261,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
 
       '.show-on-hover': {
-        visibility: 'hidden',
         opacity: '0',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
-          visibility: 'visible',
           opacity: '1',
         },
       },
@@ -296,6 +298,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
+    }),
+    pointer: css({
+      cursor: 'pointer',
     }),
     streaming: css({
       label: 'panel-streaming',

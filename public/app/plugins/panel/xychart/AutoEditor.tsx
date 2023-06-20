@@ -128,6 +128,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
                     exclude,
                   });
                 }}
+                tooltip={v.value ? 'Disable' : 'Enable'}
               />
               {v.label}
             </div>

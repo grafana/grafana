@@ -9,7 +9,6 @@ load(
     "build_docker_images_step",
     "build_frontend_package_step",
     "build_frontend_step",
-    "build_image",
     "build_plugins_step",
     "build_storybook_step",
     "clone_enterprise_step",
@@ -28,7 +27,6 @@ load(
     "package_step",
     "postgres_integration_tests_step",
     "publish_grafanacom_step",
-    "publish_image",
     "publish_images_step",
     "publish_linux_packages_step",
     "redis_integration_tests_step",
@@ -62,6 +60,14 @@ load(
     "test_backend_enterprise",
 )
 load("scripts/drone/vault.star", "from_secret", "prerelease_bucket")
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
+load(
+    "scripts/drone/pipelines/whats_new_checker.star",
+    "whats_new_checker_pipeline",
+)
 
 ver_mode = "release"
 release_trigger = {
@@ -83,7 +89,7 @@ release_trigger = {
 def store_npm_packages_step():
     return {
         "name": "store-npm-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
             "build-frontend-packages",
@@ -98,7 +104,7 @@ def store_npm_packages_step():
 def retrieve_npm_packages_step():
     return {
         "name": "retrieve-npm-packages",
-        "image": publish_image,
+        "image": images["publish_image"],
         "depends_on": [
             "compile-build-cmd",
             "yarn-install",
@@ -114,7 +120,7 @@ def retrieve_npm_packages_step():
 def release_npm_packages_step():
     return {
         "name": "release-npm-packages",
-        "image": build_image,
+        "image": images["build_image"],
         "depends_on": [
             "compile-build-cmd",
             "retrieve-npm-packages",
@@ -208,9 +214,12 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         memcached_integration_tests_step(),
     ]
 
+    pipelines = []
+
     # We don't need to run integration tests at release time since they have
     # been run multiple times before:
     if ver_mode in ("release"):
+        pipelines.append(whats_new_checker_pipeline(release_trigger))
         integration_test_steps = []
         volumes = []
 
@@ -218,7 +227,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         "{}-oss-build-e2e-publish".format(ver_mode),
         "{}-oss-test-frontend".format(ver_mode),
     ]
-    pipelines = [
+    pipelines.extend([
         pipeline(
             name = "{}-oss-build-e2e-publish".format(ver_mode),
             edition = "oss",
@@ -230,7 +239,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
         ),
         test_frontend(trigger, ver_mode),
         test_backend(trigger, ver_mode),
-    ]
+    ])
 
     if ver_mode not in ("release"):
         pipelines.append(pipeline(
@@ -553,7 +562,7 @@ def publish_artifacts_step(mode):
         security = "--security "
     return {
         "name": "publish-artifacts",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -571,7 +580,7 @@ def publish_artifacts_step(mode):
 def publish_static_assets_step():
     return {
         "name": "publish-static-assets",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -586,7 +595,7 @@ def publish_static_assets_step():
 def publish_storybook_step():
     return {
         "name": "publish-storybook",
-        "image": publish_image,
+        "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
@@ -816,7 +825,7 @@ def verify_release_pipeline(
     step = {
         "name": "gsutil-stat",
         "depends_on": ["clone"],
-        "image": "google/cloud-sdk",
+        "image": images["cloudsdk_image"],
         "environment": {
             "BUCKET": bucket,
             "GCP_KEY": gcp_key,
@@ -825,7 +834,7 @@ def verify_release_pipeline(
             "apt-get update && apt-get install -yq gettext",
             "printenv GCP_KEY | base64 -d > /tmp/key.json",
             "gcloud auth activate-service-account --key-file=/tmp/key.json",
-            "VERSION={} ./scripts/list-release-artifacts.sh | xargs -n1 gsutil stat".format(version),
+            "./scripts/list-release-artifacts.sh {} | xargs -n1 gsutil stat".format(version),
         ],
     }
     return pipeline(

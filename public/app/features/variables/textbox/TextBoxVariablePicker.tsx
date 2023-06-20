@@ -1,5 +1,6 @@
 import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useEffect, useState } from 'react';
 
+import { isEmptyObject } from '@grafana/data';
 import { Input } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
@@ -43,7 +44,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
     if (onVariableChange) {
       onVariableChange({
         ...variable,
-        current: { ...variable.current, value: updatedValue },
+        current: isEmptyObject(variable.current) ? {} : { ...variable.current, value: updatedValue },
       });
       return;
     }

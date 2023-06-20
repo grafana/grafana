@@ -12,7 +12,7 @@ weight: 70
 # RBAC role definitions
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 The following tables list permissions associated with basic and fixed roles.

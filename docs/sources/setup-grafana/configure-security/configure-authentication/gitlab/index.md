@@ -32,16 +32,18 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select `read_api` as the scope and submit the form. Note that if you're
-not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select `read_user` instead of `read_api` as
-the scope, thus giving a more restricted access to your GitLab API.
+Finally, select `openid`, `email` and `profile` as the scopes and submit the form.
 
 You'll get an _Application Id_ and a _Secret_ in return; we'll call them
 `GITLAB_APPLICATION_ID` and `GITLAB_SECRET` respectively for the rest of this
 section.
 
 ## Enable GitLab in Grafana
+
+In this example, we'll assume you use the public `gitlab.com` instance, but you
+can use your own instance of GitLab instead by replacing `auth_url`, `token_url` with the URL of your instance.
+
+You can find these URLs in the `well known` configuration file of your GitLab instance, for example `https://gitlab.com/.well-known/openid-configuration`.
 
 Add the following to your Grafana configuration file to enable GitLab
 authentication:
@@ -53,25 +55,24 @@ allow_sign_up = true
 auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = read_api
+scopes = openid email profile
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
-api_url = https://gitlab.com/api/v4
 allowed_groups =
 role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
+use_pkce = true
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana backend for your changes to take effect.
-
-If you use your own instance of GitLab instead of `gitlab.com`, adjust
-`auth_url`, `token_url` and `api_url` accordingly by replacing the `gitlab.com`
-hostname with your own.
 
 With `allow_sign_up` set to `false`, only existing users will be able to login
 using their GitLab account, but with `allow_sign_up` set to `true`, _any_ user
@@ -81,6 +82,14 @@ to login on your Grafana instance.
 
 You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
+
+You can also specify the SSL/TLS configuration used by the client.
+
+- Set `tls_client_cert` to the path of the certificate.
+- Set `tls_client_key` to the path containing the key.
+- Set `tls_client_ca` to the path containing a trusted certificate authority list.
+
+`tls_skip_verify_insecure` controls whether a client verifies the server's certificate chain and host name. If it is true, then SSL/TLS accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.
 
 ### Configure refresh token
 
@@ -133,16 +142,34 @@ allow_sign_up = true
 auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = read_api
+scopes = openid email profile
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
-api_url = https://gitlab.com/api/v4
 allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
 tls_skip_verify_insecure = false
+tls_client_cert =
+tls_client_key =
+tls_client_ca =
+use_pkce = true
 ```
+
+### PKCE
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which provides
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.gitlab]` section.
+
+```
+use_pkce = true
+```
+
+Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
 ### Configure automatic login
 

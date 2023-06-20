@@ -12,7 +12,7 @@ import { InspectStatsTab } from 'app/features/inspector/InspectStatsTab';
 import { QueryInspector } from 'app/features/inspector/QueryInspector';
 import { StoreState, ExploreItemState, ExploreId } from 'app/types';
 
-import { runQueries } from './state/query';
+import { runQueries, selectIsWaitingForData } from './state/query';
 
 interface DispatchProps {
   width: number;
@@ -68,7 +68,9 @@ export function ExploreQueryInspector(props: Props) {
     label: 'Query',
     value: 'query',
     icon: 'info-circle',
-    content: <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries(props.exploreId)} />,
+    content: (
+      <QueryInspector data={dataFrames} onRefreshQuery={() => props.runQueries({ exploreId: props.exploreId })} />
+    ),
   };
 
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
@@ -91,10 +93,10 @@ export function ExploreQueryInspector(props: Props) {
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { loading, queryResponse } = item;
+  const { queryResponse } = item;
 
   return {
-    loading,
+    loading: selectIsWaitingForData(exploreId)(state),
     queryResponse,
   };
 }

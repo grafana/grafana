@@ -66,7 +66,7 @@ export const ExamplesSizes = () => {
                 <div className={rowStyle} key={icon}>
                   {sizes.map((size) => (
                     <span key={icon + size}>
-                      <IconButton name={icon} size={size} variant={variant} />
+                      <IconButton name={icon} size={size} variant={variant} tooltip="Tooltip example" />
                     </span>
                   ))}
                 </div>
@@ -81,7 +81,7 @@ export const ExamplesSizes = () => {
           <div className={rowStyle} key={icon}>
             {sizes.map((size) => (
               <span key={icon + size}>
-                <IconButton name={icon} size={size} disabled />
+                <IconButton name={icon} size={size} tooltip="Tooltip example" disabled />
               </span>
             ))}
           </div>
@@ -121,9 +121,9 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
           `}
         >
           {variants.map((variant) => {
-            return <IconButton name="times" size="xl" variant={variant} key={variant} />;
+            return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip="Tooltip example" />;
           })}
-          <IconButton name="times" size="xl" disabled />
+          <IconButton name="times" size="xl" tooltip="Tooltip example" disabled />
         </div>
       </VerticalGroup>
     </div>

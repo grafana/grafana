@@ -1,4 +1,4 @@
-import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -12,7 +12,7 @@ import { ExploreId } from 'app/types/explore';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { TimeModel } from '../../dashboard/state/TimeModel';
 
-import { syncTimesAction, stateSave } from './main';
+import { syncTimesAction } from './main';
 import { runQueries } from './query';
 
 //
@@ -33,7 +33,7 @@ export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
 }
-export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
+export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 export const updateTimeRange = (options: {
   exploreId: ExploreId;
@@ -45,24 +45,14 @@ export const updateTimeRange = (options: {
     if (syncedTimes) {
       Object.keys(getState().explore.panes).forEach((exploreId) => {
         dispatch(updateTime({ ...options, exploreId: exploreId as ExploreId }));
-        dispatch(runQueries(exploreId as ExploreId, { preserveCache: true }));
+        dispatch(runQueries({ exploreId: exploreId as ExploreId, preserveCache: true }));
       });
     } else {
       dispatch(updateTime({ ...options }));
-      dispatch(runQueries(options.exploreId, { preserveCache: true }));
+      dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
   };
 };
-
-/**
- * Change the refresh interval of Explore. Called from the Refresh picker.
- */
-export function changeRefreshInterval(
-  exploreId: ExploreId,
-  refreshInterval: string
-): PayloadAction<ChangeRefreshIntervalPayload> {
-  return changeRefreshIntervalAction({ exploreId, refreshInterval });
-}
 
 export const updateTime = (config: {
   exploreId: ExploreId;
@@ -126,7 +116,6 @@ export function syncTimes(exploreId: ExploreId): ThunkResult<void> {
 
     const isTimeSynced = getState().explore.syncedTimes;
     dispatch(syncTimesAction({ syncedTimes: !isTimeSynced }));
-    dispatch(stateSave());
   };
 }
 
@@ -145,8 +134,6 @@ export function makeAbsoluteTime(): ThunkResult<void> {
       const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
       dispatch(updateTime({ exploreId: exploreId as ExploreId, absoluteRange }));
     });
-
-    dispatch(stateSave());
   };
 }
 
@@ -159,7 +146,7 @@ export function makeAbsoluteTime(): ThunkResult<void> {
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const timeReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (changeRefreshIntervalAction.match(action)) {
+  if (changeRefreshInterval.match(action)) {
     const { refreshInterval } = action.payload;
     const live = RefreshPicker.isLive(refreshInterval);
     const sortOrder = refreshIntervalToSortOrder(refreshInterval);
@@ -178,7 +165,6 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
       },
       isLive: live,
       isPaused: live ? false : state.isPaused,
-      loading: live,
       logsResult,
     };
   }

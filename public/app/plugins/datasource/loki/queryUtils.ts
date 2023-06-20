@@ -17,6 +17,8 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
+  Distinct,
+  Range,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
@@ -82,32 +84,32 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   return results;
 }
 
-// we are migrating from `.instant` and `.range` to `.queryType`
-// this function returns a new query object that:
-// - has `.queryType`
-// - does not have `.instant`
-// - does not have `.range`
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  //  if queryType field contains invalid data we behave as if the queryType is empty
+  const queryType = getLokiQueryType(query);
+  // instant and range are deprecated, we want to remove them
+  const { instant, range, ...rest } = query;
+  return { ...rest, queryType };
+}
+
+export function getLokiQueryType(query: LokiQuery): LokiQueryType {
+  // we are migrating from `.instant` and `.range` to `.queryType`
+  // this function returns the correct query type
   const { queryType } = query;
   const hasValidQueryType =
     queryType === LokiQueryType.Range || queryType === LokiQueryType.Instant || queryType === LokiQueryType.Stream;
 
   // if queryType exists, it is respected
   if (hasValidQueryType) {
-    const { instant, range, ...rest } = query;
-    return rest;
+    return queryType;
   }
 
   // if no queryType, and instant===true, it's instant
   if (query.instant === true) {
-    const { instant, range, ...rest } = query;
-    return { ...rest, queryType: LokiQueryType.Instant };
+    return LokiQueryType.Instant;
   }
 
   // otherwise it is range
-  const { instant, range, ...rest } = query;
-  return { ...rest, queryType: LokiQueryType.Range };
+  return LokiQueryType.Range;
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
@@ -218,6 +220,7 @@ export function isQueryWithLabelFormat(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LabelFormatExpr) {
         queryWithLabelFormat = true;
+        return false;
       }
     },
   });
@@ -260,10 +263,10 @@ export function isQueryWithLabelFilter(query: string): boolean {
   let hasLabelFilter = false;
 
   tree.iterate({
-    enter: ({ type, node }): false | void => {
+    enter: ({ type }): false | void => {
       if (type.id === LabelFilter) {
         hasLabelFilter = true;
-        return;
+        return false;
       }
     },
   });
@@ -279,12 +282,42 @@ export function isQueryWithLineFilter(query: string): boolean {
     enter: ({ type }): false | void => {
       if (type.id === LineFilter) {
         queryWithLineFilter = true;
-        return;
+        return false;
       }
     },
   });
 
   return queryWithLineFilter;
+}
+
+export function isQueryWithDistinct(query: string): boolean {
+  let hasDistinct = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === Distinct) {
+        hasDistinct = true;
+        return false;
+      }
+    },
+  });
+  return hasDistinct;
+}
+
+export function isQueryWithRangeVariable(query: string): boolean {
+  let hasRangeVariableDuration = false;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ type, from, to }): false | void => {
+      if (type.id === Range) {
+        if (query.substring(from, to).match(/\[\$__range(_s|_ms)?/)) {
+          hasRangeVariableDuration = true;
+          return false;
+        }
+      }
+    },
+  });
+  return hasRangeVariableDuration;
 }
 
 export function getStreamSelectorsFromQuery(query: string): string[] {
