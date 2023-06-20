@@ -28,7 +28,7 @@ const prometheusPlugin = async () =>
 const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
-  await import(/* webpackChunkName: "testDataDSPlugin" */ 'core-plugins/grafana-test-datasource/src/module');
+  await import(/* webpackChunkName: "testDataDSPlugin" */ '@grafana-plugins/test-datasource');
 const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
