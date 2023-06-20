@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   CoreApp,
@@ -1006,6 +1007,72 @@ describe('ElasticDatasource', () => {
         query: '',
         metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
       });
+    });
+  });
+
+  describe('getDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not create a logs sample provider for logs query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does create a logs sample provider for date_histogram query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+    });
+  });
+
+  describe('getLogsSampleDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it("doesn't return a logs sample provider given a log query", () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+    });
+
+    it('returns a logs sample provider given a date_histogram query', () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
     });
   });
 });
