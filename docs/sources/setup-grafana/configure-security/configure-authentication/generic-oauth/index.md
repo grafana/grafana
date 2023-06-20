@@ -229,16 +229,16 @@ skip_org_role_sync = true
 
 ### Set up OAuth2 with Auth0
 
-1. Use the following parameters to create a client in Auth0:
+1. Create an application using the following parameters:
 
    - Name: Grafana
    - Type: Regular Web Application
 
-1. Go to the Settings tab and set:
+1. Go to the `Settings` tab and set:
 
    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
-1. Click Save Changes, then use the values at the top of the page to configure Grafana:
+1. Click `Save Changes`, then use the values from the `Settings` tab to configure Grafana:
 
    ```bash
    [auth.generic_oauth]
@@ -259,13 +259,21 @@ skip_org_role_sync = true
 
 ### Set up OAuth2 with Bitbucket
 
+1. Go to the `Settings` > `Workspace setting` > `OAuth consumers`
+
+1. Create an application by selecting `Add consumer` and using the following parameters:
+
+- Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+1. Click `Save`, then use the `Key` and `Secret` from the consumer description to configure Grafana:
+
 ```bash
 [auth.generic_oauth]
 name = BitBucket
 enabled = true
 allow_sign_up = true
 auto_login = false
-client_id = <client id>
+client_id = <client key>
 client_secret = <client secret>
 scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
@@ -323,13 +331,9 @@ By default, a refresh token is included in the response for the **Authorization 
    - Signing Algorithm: RS256
    - Login URL: `https://<grafana domain>/login/generic_oauth`
 
-   then:
-
 1. Add an App to the Grafana Connector:
 
    - Display Name: Grafana
-
-   then:
 
 1. Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
 
@@ -355,7 +359,14 @@ By default, a refresh token is included in the response for the **Authorization 
 
 ## Role Mapping
 
-Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to the `id_token` first. If there is no match, then the UserInfo endpoint specified via the `api_url` configuration option is tried next. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+User role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
+Grafana determines a user's role by following the steps below until it finds a role:
+
+1. Evaluate the `role_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `role_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
+
+The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
+
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
 For more information, refer to the [role mapping examples](#role=mapping-examples).
@@ -384,7 +395,7 @@ then the user is assigned the role specified by
 
 **Basic example:**
 
-In the following example user will get `Editor` as role when authenticating. The value of the property `role` will be the resulting role if the role is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
+In the following example user will be granted `Editor` role. Role is determined by the value of the property `role` if it is a proper Grafana role, i.e. `Viewer`, `Editor` or `Admin`.
 
 Payload:
 
@@ -404,7 +415,7 @@ role_attribute_path = role
 
 **Advanced example:**
 
-In the following example user will get `Admin` as role when authenticating since it has a role `admin`. If a user has a role `editor` it will get `Editor` as role, otherwise `Viewer`.
+In the following example user will be granted `Admin` role, since it has a role `admin`. If a user has a role `editor`, `Editor` role will be granted, otherwise `Viewer`.
 
 Payload:
 
@@ -452,15 +463,18 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || cont
 
 ## Team synchronization
 
-> Available in Grafana Enterprise v8.1 and later versions.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-With Team Sync you can map your Generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
+With Team Sync you can map your generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
 
 Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
+Refer to [Groups]({{< relref "#groups" >}}) for information on how to configure OAuth groups with Grafana.
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync" >}}).
 
-Config:
+### Team Sync example
+
+Configuration:
 
 ```bash
 groups_attribute_path = info.groups
