@@ -30,7 +30,7 @@ describe('Explore: handle running/not running query', () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki-uid',
-        queries: [{ refId: 'A', expr: '{ label="value"}' }],
+        queries: [{ refId: 'A', expr: '{ label="value"}', datasource: { type: 'logs', uid: 'loki-uid' } }],
         range: { from: 'now-1h', to: 'now' },
       }),
     };

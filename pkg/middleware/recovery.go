@@ -153,7 +153,7 @@ func Recovery(cfg *setting.Cfg) web.Middleware {
 
 					if ctx != nil && ctx.IsApiRequest() {
 						resp := make(map[string]interface{})
-						resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
+						resp["message"] = fmt.Sprintf("Internal Server Error - %s", cfg.UserFacingDefaultError)
 
 						if data.ErrorMsg != "" {
 							resp["error"] = fmt.Sprintf("%v - %v", data.Title, data.ErrorMsg)
