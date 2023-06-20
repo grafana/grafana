@@ -68,8 +68,10 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
         return result;
       } catch (error) {
         if (error instanceof Error) {
+          console.log('useDashboardSave notifyApp');
           notifyApp.error(error.message ?? 'Error saving dashboard');
         }
+        console.log('useDashboardSave throwing', error);
         throw error;
       }
     },
