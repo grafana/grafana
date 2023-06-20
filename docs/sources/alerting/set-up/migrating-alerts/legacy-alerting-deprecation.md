@@ -37,7 +37,7 @@ Legacy alerting will be removed from the code-base in Grafana 11, following the 
 
 ## How do I migrate to the new Grafana alerting?
 
-Refer to our [migration instructions]({{< relref "./opt-in" >}}).
+Refer to our [migration instructions]({{< relref "./_index.md" >}}).
 
 ### Useful links
 
