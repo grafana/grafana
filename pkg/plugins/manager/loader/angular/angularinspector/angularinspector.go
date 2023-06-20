@@ -57,16 +57,14 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 // They are executed in the specified order.
 var defaultDetectors = []angulardetector.Detector{
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
-	&angulardetector.ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("ConfigCtrl")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("angular.isNumber(")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("editor.html")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("ctrl.annotation")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("getLegacyAngularInjector")},
 
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
-	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`System\.register\(`)},
+	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`["']QueryCtrl["']`)},
 }
 
 // newDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
