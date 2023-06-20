@@ -183,7 +183,7 @@ describe('useStateSync', () => {
     expect(Object.values(store.getState().explore.panes)[0]?.datasourceInstance?.uid).toBe('elastic-uid');
   });
 
-  it('inits an the default datasource if the last used in localStorage does not exits', async () => {
+  it('inits with the default datasource if the last used in localStorage does not exits', async () => {
     setLastUsedDatasourceUID(1, 'unknown-ds-uid');
     const { waitForNextUpdate, store } = setup({
       queryParams: {},
