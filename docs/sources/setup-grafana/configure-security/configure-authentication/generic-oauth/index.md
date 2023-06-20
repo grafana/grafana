@@ -369,7 +369,7 @@ The result after evaluation of the `role_attribute_path` JMESPath expression sho
 
 To ease configuration of a proper JMESPath expression, you can test/evaluate expressions with custom payloads at http://jmespath.org/.
 
-For more information, refer to the [role mapping examples](#role=mapping-examples).
+For more information, refer to the [role mapping examples]({{< relref "#role-mapping-examples" >}}).
 
 {{% admonition type="warning" %}}
 Currently if no organization role mapping is found for a user, Grafana doesn't
