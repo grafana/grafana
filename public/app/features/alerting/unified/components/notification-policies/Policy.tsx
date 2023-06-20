@@ -130,7 +130,7 @@ const Policy: FC<PolicyComponentProps> = ({
         <div className={styles.policyItemWrapper}>
           <Stack direction="column" gap={1}>
             {/* Matchers and actions */}
-            <div className={styles.matchersRow}>
+            <div>
               <Stack direction="row" alignItems="center" gap={1}>
                 {isDefaultPolicy ? (
                   <DefaultPolicyIndicator />
