@@ -473,7 +473,7 @@ func TestSocialAzureAD_UserInfo(t *testing.T) {
 				tt.args.client = s.Client(context.Background(), token)
 			}
 
-			got, err := s.UserInfo(tt.args.client, token)
+			got, err := s.UserInfo(context.Background(), tt.args.client, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -617,7 +617,7 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 				tt.args.client = s.Client(context.Background(), token)
 			}
 
-			got, err := s.UserInfo(tt.args.client, token)
+			got, err := s.UserInfo(context.Background(), tt.args.client, token)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -65,45 +65,45 @@ export const QuickPositioning = ({ onPositionChange, element, settings }: Props)
   return (
     <div className={styles.buttonGroup}>
       <IconButton
-        name={'horizontal-align-left'}
+        name="horizontal-align-left"
         onClick={() => onQuickPositioningChange(QuickPlacement.Left)}
         className={styles.button}
-        size={'lg'}
-        tooltip={'Align left'}
+        size="lg"
+        tooltip="Align left"
       />
       <IconButton
-        name={'horizontal-align-center'}
+        name="horizontal-align-center"
         onClick={() => onQuickPositioningChange(QuickPlacement.HorizontalCenter)}
         className={styles.button}
-        size={'lg'}
-        tooltip={'Align horizontal centers'}
+        size="lg"
+        tooltip="Align horizontal centers"
       />
       <IconButton
-        name={'horizontal-align-right'}
+        name="horizontal-align-right"
         onClick={() => onQuickPositioningChange(QuickPlacement.Right)}
         className={styles.button}
-        size={'lg'}
-        tooltip={'Align right'}
+        size="lg"
+        tooltip="Align right"
       />
       <IconButton
-        name={'vertical-align-top'}
+        name="vertical-align-top"
         onClick={() => onQuickPositioningChange(QuickPlacement.Top)}
-        size={'lg'}
-        tooltip={'Align top'}
+        size="lg"
+        tooltip="Align top"
       />
       <IconButton
-        name={'vertical-align-center'}
+        name="vertical-align-center"
         onClick={() => onQuickPositioningChange(QuickPlacement.VerticalCenter)}
         className={styles.button}
-        size={'lg'}
-        tooltip={'Align vertical centers'}
+        size="lg"
+        tooltip="Align vertical centers"
       />
       <IconButton
-        name={'vertical-align-bottom'}
+        name="vertical-align-bottom"
         onClick={() => onQuickPositioningChange(QuickPlacement.Bottom)}
         className={styles.button}
-        size={'lg'}
-        tooltip={'Align bottom'}
+        size="lg"
+        tooltip="Align bottom"
       />
     </div>
   );
