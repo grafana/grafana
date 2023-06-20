@@ -88,7 +88,7 @@ Following are additional configuration options.
 
 ### Interval behavior
 
-- **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is 15s.
+- **Scrape interval** - Set this to the typical scrape and evaluation interval configured in Prometheus. The default is `15s`.
 
 - **Query timeout** - The default is `60s`.
 
