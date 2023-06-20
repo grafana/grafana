@@ -52,11 +52,12 @@ interface Props extends Themeable2 {
 }
 
 class UnthemedSQLQueryEditor extends PureComponent<Props> {
-  render() {
-    const { query, theme, datasource, onRunQuery, onChange } = this.props;
-    const styles = getStyles(theme);
+  datasource: FlightSQLDatasource;
 
-    const flightSQLDatasource = new FlightSQLDatasource({
+  constructor(props: Props) {
+    super(props);
+    const { datasource } = props;
+    this.datasource = new FlightSQLDatasource({
       url: datasource.urls[0],
       access: datasource.access,
       id: datasource.id,
@@ -69,6 +70,11 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
       type: datasource.type,
       uid: datasource.uid,
     });
+  }
+
+  render() {
+    const { query, theme, onRunQuery, onChange } = this.props;
+    const styles = getStyles(theme);
 
     const onRunSQLQuery = () => {
       console.log('RUN');
@@ -90,12 +96,7 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <SqlQueryEditor
-          datasource={flightSQLDatasource}
-          query={query}
-          onRunQuery={onRunSQLQuery}
-          onChange={onSQLChange}
-        />
+        <SqlQueryEditor datasource={this.datasource} query={query} onRunQuery={onRunSQLQuery} onChange={onSQLChange} />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton
             icon="external-link-alt"

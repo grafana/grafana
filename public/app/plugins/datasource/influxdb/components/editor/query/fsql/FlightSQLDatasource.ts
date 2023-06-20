@@ -15,6 +15,7 @@ export class FlightSQLDatasource extends SqlDatasource {
   sqlLanguageDefinition: LanguageDefinition | undefined;
 
   constructor(private instanceSettings: DataSourceInstanceSettings<MySQLOptions>) {
+    console.log('FlightSQLDatasource init', instanceSettings);
     super(instanceSettings);
   }
 
