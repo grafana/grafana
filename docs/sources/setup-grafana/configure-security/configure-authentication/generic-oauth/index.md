@@ -16,10 +16,11 @@ weight: 200
 Grafana has specialised OAuth2 integrations for the following auth providers:
 
 - [Azure AD OAuth]({{< relref "../azuread" >}})
-- [Generic OAuth]({{< relref "../generic-oauth" >}})
 - [GitHub OAuth]({{< relref "../github" >}})
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
+- [Grafana Com OAuth]({{< relref "../grafana-com" >}})
+- [KeyCloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
 If your OAuth2 provider is not among them, you can use generic OAuth authentication to integrate it with Grafana.
@@ -263,7 +264,7 @@ skip_org_role_sync = true
 
 1. Create an application by selecting `Add consumer` and using the following parameters:
 
-- Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+   - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
 
 1. Click `Save`, then use the `Key` and `Secret` from the consumer description to configure Grafana:
 
@@ -299,7 +300,7 @@ By default, a refresh token is included in the response for the **Authorization 
 
 1. Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
 
-1. Add an authorized Redirect URI like https://your-grafana-server/login/generic_oauth
+1. Add an authorized Redirect URI like `https://your-grafana-server/login/generic_oauth`
 
 1. Set up permissions, policies, etc. just like any other Centrify app
 
