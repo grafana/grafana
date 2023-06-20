@@ -1,5 +1,15 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "browse-action": {
+    "delete-button": "",
+    "move-button": ""
+  },
+  "browse-dashboards": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "已复制"
@@ -112,6 +122,13 @@
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
       "unmark-favorite": "取消标记为收藏"
+    }
+  },
+  "dashboards-tree": {
+    "browser": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
     }
   },
   "folder-picker": {
@@ -434,6 +451,12 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -588,6 +611,13 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "type-cell": {
+    "types": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     }
   },
   "user-orgs": {

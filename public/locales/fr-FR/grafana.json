@@ -1,5 +1,15 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "browse-action": {
+    "delete-button": "",
+    "move-button": ""
+  },
+  "browse-dashboards": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copié"
@@ -112,6 +122,13 @@
       "settings": "Paramètres du tableau de bord",
       "share": "Partager le tableau de bord ou le panneau",
       "unmark-favorite": "Supprimer des favoris"
+    }
+  },
+  "dashboards-tree": {
+    "browser": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
     }
   },
   "folder-picker": {
@@ -434,6 +451,12 @@
       "placeholder": "Rechercher des tableaux de bord"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Partager"
@@ -588,6 +611,13 @@
     "zone": {
       "select-aria-label": "Outil de sélection du fuseau horaire",
       "select-search-input": "Tapez pour rechercher (pays, ville, abréviation)"
+    }
+  },
+  "type-cell": {
+    "types": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     }
   },
   "user-orgs": {

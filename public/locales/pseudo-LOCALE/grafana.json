@@ -1,5 +1,15 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "browse-action": {
+    "delete-button": "Đęľęŧę",
+    "move-button": "Mővę"
+  },
+  "browse-dashboards": {
+    "no-results": {
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Cőpįęđ"
@@ -112,6 +122,13 @@
       "settings": "Đäşĥþőäřđ şęŧŧįŉģş",
       "share": "Ŝĥäřę đäşĥþőäřđ őř päŉęľ",
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
+    }
+  },
+  "dashboards-tree": {
+    "browser": {
+      "name-column": "Ńämę",
+      "tags-column": "Ŧäģş",
+      "type-column": "Ŧypę"
     }
   },
   "folder-picker": {
@@ -434,6 +451,12 @@
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Ŝĥäřę"
@@ -588,6 +611,13 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
+    }
+  },
+  "type-cell": {
+    "types": {
+      "dashboard": "Đäşĥþőäřđ",
+      "folder": "Főľđęř",
+      "panel": "Päŉęľ"
     }
   },
   "user-orgs": {

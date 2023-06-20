@@ -1,5 +1,15 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "browse-action": {
+    "delete-button": "",
+    "move-button": ""
+  },
+  "browse-dashboards": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -112,6 +122,13 @@
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
       "unmark-favorite": "Deshacer marca como favorito"
+    }
+  },
+  "dashboards-tree": {
+    "browser": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
     }
   },
   "folder-picker": {
@@ -434,6 +451,12 @@
       "placeholder": "Buscar paneles de control"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartir"
@@ -588,6 +611,13 @@
     "zone": {
       "select-aria-label": "Selector de huso horario",
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
+    }
+  },
+  "type-cell": {
+    "types": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
     }
   },
   "user-orgs": {
