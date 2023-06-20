@@ -33,6 +33,7 @@ interface TooltipPluginProps {
   // Allows custom tooltip content rendering. Exposes aligned data frame with relevant indexes for data inspection
   // Use field.state.origin indexes from alignedData frame field to get access to original data frame and field index.
   renderTooltip?: (alignedFrame: DataFrame, seriesIdx: number | null, datapointIdx: number | null) => React.ReactNode;
+  showCaseProperty?: string;
 }
 
 const TOOLTIP_OFFSET = 10;
@@ -170,6 +171,10 @@ export const TooltipPlugin = ({
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
+
+  if (otherProps.showCaseProperty && otherProps.showCaseProperty !== 'showCaseValue') {
+    throw new Error('This should not happen');
+  }
 
   if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
     return null;

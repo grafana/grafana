@@ -22,10 +22,6 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
     const { eventBus, sync } = this.context as PanelContext;
     const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
-    if (typeof this.props.showCaseAnewProp !== 'number') {
-      throw new Error('showCaseAnewProp is not a number');
-    }
-
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
