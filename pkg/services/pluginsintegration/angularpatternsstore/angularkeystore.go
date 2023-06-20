@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 )
 
 const (
@@ -28,7 +28,7 @@ func ProvideService(kv kvstore.KVStore) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context) (angularinspector.GCOMPatterns, error) {
+func (s *Service) Get(ctx context.Context) (angulardetectorsprovider.GCOMPatterns, error) {
 	data, ok, err := s.kv.Get(ctx, keyPatterns)
 	if err != nil {
 		return nil, fmt.Errorf("kv get: %w", err)
@@ -36,7 +36,7 @@ func (s *Service) Get(ctx context.Context) (angularinspector.GCOMPatterns, error
 	if !ok {
 		return nil, nil
 	}
-	var out angularinspector.GCOMPatterns
+	var out angulardetectorsprovider.GCOMPatterns
 	if err := json.Unmarshal([]byte(data), &out); err != nil {
 		// Ignore decode errors, so we can change the format in future versions
 		// and keep backwards/forwards compatibility
@@ -45,7 +45,7 @@ func (s *Service) Get(ctx context.Context) (angularinspector.GCOMPatterns, error
 	return out, nil
 }
 
-func (s *Service) Set(ctx context.Context, patterns angularinspector.GCOMPatterns) error {
+func (s *Service) Set(ctx context.Context, patterns angulardetectorsprovider.GCOMPatterns) error {
 	b, err := json.Marshal(patterns)
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)

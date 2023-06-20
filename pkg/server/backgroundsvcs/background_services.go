@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever/dynamic"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsmetric "github.com/grafana/grafana/pkg/services/publicdashboards/metric"
@@ -53,7 +52,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
-	dynamicAngularDetector *angularinspector.Dynamic,
+	// dynamicAngularDetector *angulardetectorsprovider.Dynamic,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -91,7 +90,7 @@ func ProvideBackgroundServiceRegistry(
 		bundleService,
 		publicDashboardsMetric,
 		keyRetriever,
-		dynamicAngularDetector,
+		// dynamicAngularDetector,
 	)
 }
 

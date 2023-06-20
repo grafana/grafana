@@ -1,4 +1,4 @@
-package angularinspector
+package angulardetectorsprovider
 
 import (
 	"context"
@@ -14,6 +14,6 @@ func (p *Static) ProvideDetectors(ctx context.Context) []angulardetector.Detecto
 	return p.detectorsProvider.ProvideDetectors(ctx)
 }
 
-func ProvideService() angulardetector.DetectorsProvider {
+func ProvideStatic() *Static {
 	return &Static{detectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}
 }

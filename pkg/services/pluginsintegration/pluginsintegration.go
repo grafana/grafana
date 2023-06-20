@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	angularinspector2 "github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
@@ -53,8 +53,6 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
-	provideAngularDetectorsProvider,
-	angularinspector.ProvideService,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
@@ -80,6 +78,13 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
+
+	angulardetectorsprovider.ProvideStatic,
+	//angularpatternsstore.ProvideService,
+	//angulardetectorsprovider.ProvideDynamic,
+	//angulardetectorsprovider.ProvideDetectorsProvider,
+	wire.Bind(new(angulardetector.DetectorsProvider), new(*angulardetectorsprovider.Static)),
+	angularinspector.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -138,16 +143,4 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
 	return middlewares
-}
-
-func provideAngularDetectorsProvider(
-	features featuremgmt.FeatureToggles,
-	dynamicProvider *angularinspector2.Dynamic, staticProvider *angularinspector2.Static,
-) angulardetector.DetectorsProvider {
-	// This is temporary and will go away once the feature toggle is removed and the sequence provider becomes the default.
-
-	if features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
-		return angularinspector2.SequenceDetectorsProvider{dynamicProvider, staticProvider}
-	}
-	return staticProvider
 }

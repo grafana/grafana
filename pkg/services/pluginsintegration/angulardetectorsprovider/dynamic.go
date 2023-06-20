@@ -1,4 +1,4 @@
-package angularinspector
+package angulardetectorsprovider
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
 const cacheTTL = time.Hour * 1
@@ -29,7 +30,7 @@ type Dynamic struct {
 	mux       sync.Mutex
 }
 
-func ProvideDynamic(cfg *config.Cfg, store plugins.AngularPatternsStore) (*Dynamic, error) {
+func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dynamic, error) {
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)

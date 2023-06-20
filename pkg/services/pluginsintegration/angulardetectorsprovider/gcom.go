@@ -1,4 +1,4 @@
-package angularinspector
+package angulardetectorsprovider
 
 import (
 	"errors"
