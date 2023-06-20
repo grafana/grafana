@@ -22,6 +22,8 @@ func TestAngularDetector_Inspect(t *testing.T) {
 		[]byte(`define(["app/plugins/sdk"],(function(n){return function(n){var t={};function e(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return n[r].call(o.exports,o,o.exports,e),o.l=!0,o.exports}return e.m=n,e.c=t,e.d=function(n,t,r){e.o(n,t)||Object.defineProperty(n,t,{enumerable:!0,get:r})},e.r=function(n){"undefined"!=typeof`),
 		[]byte(`define(["app/plugins/sdk"],(function(n){return function(n){var t={};function e(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return n[r].call(o.exports,o,o.exports,e),o.l=!0,o.exports}return e.m=n,e.c=t,e.d=function(n,t,r){e.o(n,t)||Object.defineProperty(n,t,{enumerable:!0,get:r})},e.r=function(n){"undefined"!=typeof Symbol&&Symbol.toSt`),
 		[]byte(`define(["react","lodash","@grafana/data","@grafana/ui","@emotion/css","@grafana/runtime","moment","app/core/utils/datemath","jquery","app/plugins/sdk","app/core/core_module","app/core/core","app/core/table_model","app/core/utils/kbn","app/core/config","angular"],(function(e,t,r,n,i,a,o,s,u,l,c,p,f,h,d,m){return function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};retur`),
+		[]byte(`exports_1("QueryCtrl", query_ctrl_1.PluginQueryCtrl);`),
+		[]byte(`exports_1('QueryCtrl', query_ctrl_1.PluginQueryCtrl);`),
 	} {
 		tcs = append(tcs, tc{
 			name: "angular " + strconv.Itoa(i),
@@ -34,16 +36,22 @@ func TestAngularDetector_Inspect(t *testing.T) {
 		})
 	}
 
-	// Not angular
-	tcs = append(tcs, tc{
-		name: "not angular",
-		plugin: &plugins.Plugin{
-			FS: plugins.NewInMemoryFS(map[string][]byte{
-				"module.js": []byte(`import { PanelPlugin } from '@grafana/data'`),
-			}),
-		},
-		exp: false,
-	})
+	// Not angular (test against possible false detections)
+	for i, content := range [][]byte{
+		[]byte(`import { PanelPlugin } from '@grafana/data'`),
+		// React ML app
+		[]byte(`==(null===(t=e.components)||void 0===t?void 0:t.QueryCtrl)};function`),
+	} {
+		tcs = append(tcs, tc{
+			name: "not angular " + strconv.Itoa(i),
+			plugin: &plugins.Plugin{
+				FS: plugins.NewInMemoryFS(map[string][]byte{
+					"module.js": content,
+				}),
+			},
+			exp: false,
+		})
+	}
 	inspector := NewDefaultPatternsListInspector()
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {

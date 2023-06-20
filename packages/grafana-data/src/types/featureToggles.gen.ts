@@ -26,7 +26,7 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
-  lokiLive?: boolean;
+  lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
@@ -90,7 +90,6 @@ export interface FeatureToggles {
   refactorVariablesTimeRange?: boolean;
   useCachingService?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  pluginsAPIManifestKey?: boolean;
   advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
@@ -102,4 +101,6 @@ export interface FeatureToggles {
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
+  alertingLokiRangeToInstant?: boolean;
+  flameGraphV2?: boolean;
 }

@@ -10,9 +10,9 @@ import {
   LinkModel,
   TimeRange,
 } from '@grafana/data';
-import { LinkButton, usePanelContext, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
+import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
 import { findField } from 'app/features/dimensions';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { ScatterSeriesConfig, SeriesMapping } from './models.gen';
 import { ScatterSeries } from './types';
@@ -53,7 +53,6 @@ export const TooltipView = ({
   range,
 }: Props) => {
   const style = useStyles2(getStyles);
-  const { onSplitOpen } = usePanelContext();
 
   if (!allSeries || rowIndex == null) {
     return null;
@@ -63,12 +62,20 @@ export const TooltipView = ({
   const frame = series.frame(data);
   const xField = series.x(frame);
   const yField = series.y(frame);
-  const links: Array<LinkModel<Field>> = getFieldLinksForExplore({
-    field: yField,
-    splitOpenFn: onSplitOpen,
-    rowIndex,
-    range,
-  });
+
+  let links: LinkModel[] | undefined = undefined;
+
+  if (yField.getLinks) {
+    const v = yField.values[rowIndex];
+    const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
+    links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
+      if (!linkModel.title) {
+        linkModel.title = getTitleFromHref(linkModel.href);
+      }
+
+      return linkModel;
+    });
+  }
 
   let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
 
@@ -131,7 +138,7 @@ export const TooltipView = ({
               <td>{fmt(field, field.values[rowIndex])}</td>
             </tr>
           ))}
-          {links.length > 0 && (
+          {links && links.length > 0 && (
             <tr>
               <td colSpan={2}>
                 <VerticalGroup>

@@ -62,7 +62,7 @@ func TestService(t *testing.T) {
 		},
 		{
 			RefID:      "B",
-			DataSource: DataSourceModel(),
+			DataSource: dataSourceModel(),
 			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$A * 2" }`),
 		},
 	}
@@ -123,4 +123,9 @@ func (me *mockEndpoint) QueryData(ctx context.Context, req *backend.QueryDataReq
 		Frames: me.Frames,
 	}
 	return resp, nil
+}
+
+func dataSourceModel() *datasources.DataSource {
+	d, _ := DataSourceModelFromNodeType(TypeCMDNode)
+	return d
 }
