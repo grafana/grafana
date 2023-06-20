@@ -8,6 +8,7 @@ import { StoreState } from 'app/types';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from './MetaInfoText';
+import { selectIsWaitingForData } from './state/query';
 import { getFieldLinksForExplore } from './utils/links';
 
 interface TableContainerProps {
@@ -23,7 +24,8 @@ function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) 
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
-  const { loading: loadingInState, tableResult, range } = item;
+  const { tableResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   return { loading, tableResult, range };
 }
