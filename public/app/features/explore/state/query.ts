@@ -1201,7 +1201,7 @@ export const processQueryResponse = (
     showNodeGraph: !!nodeGraphFrames.length,
     showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
-    showCustom: !!customFrames.length,
+    showCustom: !!customFrames?.length,
     clearedAtIndex: state.isLive ? state.clearedAtIndex : null,
   };
 };
