@@ -58,65 +58,58 @@ const (
 	TEAM_MEMBER_NUM    = 5
 )
 
-func BenchmarkFolderService_GetRootFolders(b *testing.B) {
+func BenchmarkNestedFoldersOn(b *testing.B) {
 	start := time.Now()
 	b.Log("setup start")
 	m, orgID, userWithPermissions := setupBench(b)
 	b.Log("setup time:", time.Since(start))
-	req := httptest.NewRequest(http.MethodGet, "/api/folders", nil)
-	req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: userWithPermissions, OrgID: orgID})
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rec := httptest.NewRecorder()
-		m.ServeHTTP(rec, req)
-		require.Equal(b, 200, rec.Code)
-		var resp []dtos.FolderSearchHit
-		err := json.Unmarshal(rec.Body.Bytes(), &resp)
-		require.NoError(b, err)
-		assert.Len(b, resp, LEVEL0_FOLDER_NUM)
-	}
-}
-
-func BenchmarkFolderService_GetSubfolders(b *testing.B) {
-	start := time.Now()
-	b.Log("setup start")
-	m, orgID, userWithPermissions := setupBench(b)
-	b.Log("setup time:", time.Since(start))
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/folders?parentUid=folder%d", LEVEL0_FOLDER_NUM-1), nil)
-	req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: userWithPermissions, OrgID: orgID})
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rec := httptest.NewRecorder()
-		m.ServeHTTP(rec, req)
-		require.Equal(b, 200, rec.Code)
-		var resp []dtos.FolderSearchHit
-		err := json.Unmarshal(rec.Body.Bytes(), &resp)
-		require.NoError(b, err)
-		assert.Len(b, resp, LEVEL1_FOLDER_NUM)
-	}
-}
-
-func BenchmarkFolderService_Search(b *testing.B) {
-	start := time.Now()
-	b.Log("setup start")
-	m, orgID, userWithPermissions := setupBench(b)
-	b.Log("setup time:", time.Since(start))
 	limit := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
-	if limit > 5000 {
+	if limit > 5000 { // the search API handler return 412 if limit > 5000
 		limit = 5000
 	}
-	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit), nil)
-	req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: userWithPermissions, OrgID: orgID})
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		rec := httptest.NewRecorder()
-		m.ServeHTTP(rec, req)
-		require.Equal(b, 200, rec.Code)
-		var resp []dtos.FolderSearchHit
-		err := json.Unmarshal(rec.Body.Bytes(), &resp)
-		require.NoError(b, err)
-		assert.Len(b, resp, limit)
+	benchmarks := []struct {
+		desc        string
+		url         string
+		expectedLen int
+	}{
+		{
+			desc:        "get root folders",
+			url:         "/api/folders",
+			expectedLen: LEVEL0_FOLDER_NUM,
+		},
+		{
+			desc:        "get subfolders",
+			url:         "/api/folders?parentUid=folder0",
+			expectedLen: LEVEL1_FOLDER_NUM,
+		},
+		{
+			desc:        "search inherited dashboards",
+			url:         fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit),
+			expectedLen: limit,
+		},
+		{
+			desc:        "search specific dashboard",
+			url:         fmt.Sprintf("/api/search?type=dash-db&query=dashboard_0_0_0_0&limit=%d", limit),
+			expectedLen: 1,
+		},
+	}
+	for _, bm := range benchmarks {
+		b.Run(bm.desc, func(b *testing.B) {
+			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
+			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: userWithPermissions, OrgID: orgID})
+			b.ResetTimer()
+
+			for i := 0; i < b.N; i++ {
+				rec := httptest.NewRecorder()
+				m.ServeHTTP(rec, req)
+				require.Equal(b, 200, rec.Code)
+				var resp []dtos.FolderSearchHit
+				err := json.Unmarshal(rec.Body.Bytes(), &resp)
+				require.NoError(b, err)
+				assert.Len(b, resp, bm.expectedLen)
+			}
+		})
 	}
 }
 
@@ -229,12 +222,12 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	})
 	require.NoError(b, err)
 
-	foldersCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM
+	foldersCap := LEVEL0_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM
 	folders := make([]*f, 0, foldersCap)
-	dashsCap := foldersCap * LEAF_DASHBOARD_NUM
+	dashsCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
 	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
+	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
-	//dashVersions := make([]dashboards.Dashboard, 0, foldersCap+dashsCap)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
 		f, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f)
@@ -269,8 +262,9 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 
 				for l := 0; l < LEAF_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
+					dashID := rand.Int63()
 					dashs = append(dashs, &dashboards.Dashboard{
-						ID:       rand.Int63(),
+						ID:       dashID,
 						OrgID:    signedInUser.OrgID,
 						IsFolder: false,
 						UID:      str,
@@ -280,6 +274,11 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 						Data:     simplejson.New(),
 						Created:  now,
 						Updated:  now,
+					})
+
+					dashTags = append(dashTags, &dashboardTag{
+						DashboardId: dashID,
+						Term:        fmt.Sprintf("tag%d", l),
 					})
 				}
 			}
@@ -294,6 +293,9 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 		require.NoError(b, err)
 
 		_, err = sess.BulkInsert("permission", permissions, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("dashboard_tag", dashTags, opts)
 		return err
 	})
 	require.NoError(b, err)
@@ -359,6 +361,13 @@ type f struct {
 
 func (f *f) TableName() string {
 	return "folder"
+}
+
+// SQL bean helper to save tags
+type dashboardTag struct {
+	Id          int64
+	DashboardId int64
+	Term        string
 }
 
 func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashboards.Dashboard) {
