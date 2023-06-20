@@ -19,29 +19,40 @@ export interface Props {
   className?: string;
   /** aria-label for the `i`-th Tag component */
   getAriaLabel?: (name: string, i: number) => string;
+  //** Should return an index of a color defined in the TAG_COLORS array */
+  getColorIndex?: (name: string, i: number) => number;
   /** Icon to show next to tag label */
   icon?: IconName;
 }
 
 const TagListComponent = memo(
-  forwardRef<HTMLUListElement, Props>(({ displayMax, tags, icon, onClick, className, getAriaLabel }, ref) => {
-    const theme = useTheme2();
-    const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
-    const numTags = tags.length;
-    const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
-    return (
-      <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
-        {tagsToDisplay.map((tag, i) => (
-          <li className={styles.li} key={tag}>
-            <Tag name={tag} icon={icon} onClick={onClick} aria-label={getAriaLabel?.(tag, i)} data-tag-id={i} />
-          </li>
-        ))}
-        {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
-          <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
-        )}
-      </ul>
-    );
-  })
+  forwardRef<HTMLUListElement, Props>(
+    ({ displayMax, tags, icon, onClick, className, getAriaLabel, getColorIndex }, ref) => {
+      const theme = useTheme2();
+      const styles = getStyles(theme, Boolean(displayMax && displayMax > 0));
+      const numTags = tags.length;
+      const tagsToDisplay = displayMax ? tags.slice(0, displayMax) : tags;
+      return (
+        <ul className={cx(styles.wrapper, className)} aria-label="Tags" ref={ref}>
+          {tagsToDisplay.map((tag, i) => (
+            <li className={styles.li} key={tag}>
+              <Tag
+                name={tag}
+                icon={icon}
+                onClick={onClick}
+                aria-label={getAriaLabel?.(tag, i)}
+                data-tag-id={i}
+                colorIndex={getColorIndex?.(tag, i)}
+              />
+            </li>
+          ))}
+          {displayMax && displayMax > 0 && numTags - displayMax > 0 && (
+            <span className={styles.moreTagsLabel}>+ {numTags - displayMax}</span>
+          )}
+        </ul>
+      );
+    }
+  )
 );
 TagListComponent.displayName = 'TagList';
 

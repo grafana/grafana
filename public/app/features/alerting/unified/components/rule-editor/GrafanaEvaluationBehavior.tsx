@@ -4,23 +4,24 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch, Tooltip, Icon } from '@grafana/ui';
+import { Button, Field, Icon, InlineLabel, Input, InputControl, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleForm, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { MINUTE } from '../../utils/rule-form';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { MINUTE } from './AlertRuleForm';
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
+import { Folder } from './RuleFolderPicker';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
@@ -118,7 +119,7 @@ function FolderGroupAndEvaluationInterval({
   evaluateEvery,
   setEvaluateEvery,
 }: {
-  initialFolder: RuleForm | null;
+  initialFolder: Folder | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
 }) {
@@ -253,7 +254,7 @@ export function GrafanaEvaluationBehavior({
   setEvaluateEvery,
   existing,
 }: {
-  initialFolder: RuleForm | null;
+  initialFolder: Folder | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
   existing: boolean;
