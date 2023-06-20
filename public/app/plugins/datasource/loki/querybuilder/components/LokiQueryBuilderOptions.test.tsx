@@ -119,6 +119,7 @@ describe('LokiQueryBuilderOptions', () => {
     expect(
       screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
     ).toBeInTheDocument();
+  });
 
   it('shows correct options for metric query with invalid step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
