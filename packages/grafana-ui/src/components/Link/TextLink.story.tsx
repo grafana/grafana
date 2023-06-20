@@ -55,7 +55,7 @@ export const Example: StoryFn = () => {
 
 Example.parameters = {
   controls: {
-    exclude: ['variant', 'weight', 'textAlignment', 'truncate', 'color', 'children'],
+    exclude: ['variant', 'weight', 'truncate', 'color', 'children'],
   },
 };
 export const Basic: StoryFn = (args) => {
