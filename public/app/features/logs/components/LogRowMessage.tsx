@@ -128,7 +128,7 @@ export class LogRowMessage extends PureComponent<Props> {
                 aria-label="Copy shortlink"
                 tooltipPlacement="top"
                 size="md"
-                name="share-alt"
+                name="link"
                 onClick={() => onPermalinkClick(row)}
               />
             )}

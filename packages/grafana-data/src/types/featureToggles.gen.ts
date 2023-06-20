@@ -26,7 +26,7 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
-  lokiLive?: boolean;
+  lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
@@ -102,4 +102,5 @@ export interface FeatureToggles {
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
   alertingLokiRangeToInstant?: boolean;
+  flameGraphV2?: boolean;
 }
