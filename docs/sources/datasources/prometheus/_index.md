@@ -127,7 +127,7 @@ To configure exemplars see [Exemplars](/docs/grafana/latest/datasources/promethe
 
 {{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" caption="Exemplars" >}}
 
-## Incremental Dashboard Queries (beta)
+## Incremental dashboard queries (beta)
 
 As of Grafana 10, the Prometheus data source can be configured to query live dashboards incrementally, instead of re-querying the entire duration on each dashboard refresh.
 
