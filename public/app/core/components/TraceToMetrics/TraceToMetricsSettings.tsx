@@ -8,8 +8,8 @@ import {
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';

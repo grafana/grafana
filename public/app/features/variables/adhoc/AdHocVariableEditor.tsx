@@ -2,8 +2,8 @@ import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Alert, Field } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { StoreState } from 'app/types';
 
 import { VariableLegend } from '../editor/VariableLegend';

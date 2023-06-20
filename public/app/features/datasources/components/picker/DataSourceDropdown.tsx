@@ -109,7 +109,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
 
   return (
-    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container} style={{ width }}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
@@ -160,6 +160,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
               current={currentValue}
               style={popper.styles.popper}
               ref={setSelectorElement}
+              width={width}
               {...restProps}
               onDismiss={onClose}
               {...popper.attributes.popper}
@@ -206,7 +207,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
     reportInteraction(INTERACTION_EVENT_NAME, { item: INTERACTION_ITEM.ADD_FILE });
   }, [onClickAddCSV, onClose]);
 
-  const styles = useStyles2(getStylesPickerContent);
+  const styles = useStyles2((theme: GrafanaTheme2) => getStylesPickerContent(theme, props));
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
@@ -264,11 +265,12 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 });
 PickerContent.displayName = 'PickerContent';
 
-function getStylesPickerContent(theme: GrafanaTheme2) {
+function getStylesPickerContent(theme: GrafanaTheme2, props: PickerContentProps) {
   return {
     container: css`
       display: flex;
       flex-direction: column;
+      min-width: ${theme.spacing(props.width || 'auto')};
       max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
