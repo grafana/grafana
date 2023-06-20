@@ -62,8 +62,8 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:        "lokiLive",
-			Description: "Support WebSocket streaming for loki (early prototype)",
+			Name:        "lokiExperimentalStreaming",
+			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -570,6 +570,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "flameGraphV2",
+			Description:  "New version of flame graph with new features",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 	}
 )
