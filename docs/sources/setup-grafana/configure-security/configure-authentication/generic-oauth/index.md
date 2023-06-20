@@ -25,7 +25,51 @@ Grafana has specialised OAuth2 integrations for the following auth providers:
 
 If your OAuth2 provider is not among them, you can use generic OAuth authentication to integrate it with Grafana.
 
-## Example configuration
+## Configuration walkthrough
+
+Follow these steps to integrate your OAuth provider with Grafana:
+
+1. Create an OAuth2 app.
+1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
+1. Update `[auth.generic_oauth]` section of Grafana configuration file with details from you OAuth2 app. You must specify the following configuration options:
+
+- `enabled`
+- `client_id`
+- `client_secret`
+- `auth_url`
+- `token_url`
+- `api_url`
+
+1. Look at the list of optional Grafana general OAuth configuration options and fill in the desired ones.
+1. Configure [role mapping]({{< relref "#role-mapping" >}}).
+1. Configure [team synchronization]({{< relref "#team-synchronization" >}}) if desired.
+
+Continue reading this documentation to learn more about [configuring your OAuth2 app]({{< relref "#configuring-your-oauth-app" >}}) and [configuring Grafana]({{< relref "#configuring-grafana" >}}).
+
+## Configuring your OAuth2 app
+
+The process of creating an OAuth2 app will differ depending on the OAuth provider that you want to use.
+We provide some [examples of setting up generic OAuth]({{< relref "#examples-of-setting-up-generic-oauth" >}}), but please refer to the documentation of your OAuth provider to help you with this step.
+
+OAuth application will provide you with a client ID and a client secret, which you will use in Grafana's Generic OAuth configuration.
+
+### Callback URL
+
+When you create the application you will need to specify a callback URL. Specify this as the callback:
+
+```bash
+http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth
+```
+
+This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
+
+You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
+
+## Configuring Grafana
+
+On Grafana's side generic OAuth integration is configured through Grafana configuration file. See an example configuration below.
+
+Continue reading this document for more details on generic OAuth [configuration options]({{< relref "#configuration-options" >}}).
 
 ```bash
 [auth.generic_oauth]
@@ -50,25 +94,6 @@ tls_client_ca =
 use_pkce = true
 auth_style =
 ```
-
-## Configuring your OAuth2 app
-
-First, you will need to create an OAuth application with your OAuth2 provider. This process will differ depending on the OAuth provider that you want to use.
-We provide some [examples of setting up generic OAuth]({{< relref "#examples-of-setting-up-generic-oauth" >}}), but please refer to the documentation of your OAuth provider to help you with this step.
-
-OAuth application will provide you with a client ID and a client secret, which you will use in Grafana's Generic OAuth configuration.
-
-### Callback URL
-
-When you create the application you will need to specify a callback URL. Specify this as the callback:
-
-```bash
-http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth
-```
-
-This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
-
-You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
 
 ## Configuration options
 
