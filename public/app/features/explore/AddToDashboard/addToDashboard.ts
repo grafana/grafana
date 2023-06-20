@@ -81,7 +81,7 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
       return 'traces';
     }
     if (queryResponse.customFrames.some(hasQueryRefId)) {
-      return queryResponse.customFrames[0].meta?.custom?.pluginID ?? 'table';
+      return queryResponse.customFrames[0].meta?.preferredVisualisationPluginId ?? 'table';
     }
   }
 

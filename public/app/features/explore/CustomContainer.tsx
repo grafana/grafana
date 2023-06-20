@@ -4,16 +4,19 @@ import { AbsoluteTimeRange, DataFrame, dateTime, LoadingState } from '@grafana/d
 import { PanelRenderer } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 
+import { getPanelPluginMeta } from '../plugins/importPanelPlugin';
+
 export interface Props {
   width: number;
   height: number;
   timeZone: string;
-  frame: DataFrame;
+  pluginId: string;
+  frames: DataFrame[];
   absoluteRange: AbsoluteTimeRange;
   state: LoadingState;
 }
 
-export function CustomContainer({ width, height, timeZone, state, frame, absoluteRange }: Props) {
+export function CustomContainer({ width, height, timeZone, state, pluginId, frames, absoluteRange }: Props) {
   const timeRange = {
     from: dateTime(absoluteRange.from),
     to: dateTime(absoluteRange.to),
@@ -23,21 +26,13 @@ export function CustomContainer({ width, height, timeZone, state, frame, absolut
     },
   };
 
-  let title = 'Custom Panel';
-  if (frame.meta?.custom?.title) {
-    title = frame.meta?.custom?.title;
-  }
-
-  let pluginId = 'table';
-  if (frame.meta?.custom?.pluginID) {
-    pluginId = frame.meta?.custom?.pluginID;
-  }
+  const plugin = getPanelPluginMeta(pluginId);
 
   return (
-    <PanelChrome title={title} width={width} height={height} loadingState={state}>
+    <PanelChrome title={plugin.name} width={width} height={height} loadingState={state}>
       {(innerWidth, innerHeight) => (
         <PanelRenderer
-          data={{ series: [frame], state: state, timeRange }}
+          data={{ series: frames, state: state, timeRange }}
           pluginId={pluginId}
           title=""
           width={innerWidth}

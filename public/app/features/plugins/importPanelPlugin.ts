@@ -28,6 +28,14 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
   return promiseCache[id];
 }
 
+export function hasPanelPlugin(id: string): boolean {
+  return !!getPanelPluginMeta(id);
+}
+
+export function getPanelPluginMeta(id: string): PanelPluginMeta {
+  return config.panels[id] || Object.values(config.panels).find((p) => p.alias === id);
+}
+
 export function importPanelPluginFromMeta(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return getPanelPlugin(meta);
 }

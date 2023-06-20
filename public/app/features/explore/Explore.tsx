@@ -15,6 +15,7 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
+  DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -287,12 +288,24 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderCustom(width: number) {
     const { timeZone, queryResponse, absoluteRange } = this.props;
 
-    return queryResponse?.customFrames.map((frame, index) => {
+    const groupedByPlugin = queryResponse?.customFrames.reduce((acc: Record<string, DataFrame[]>, cur) => {
+      // cur.meta?.preferredVisualisationPluginId could be undefined by the API, but it won't be if we
+      // got here as it is checked in decorators.ts
+      if (!acc[`${cur.meta?.preferredVisualisationPluginId}`]) {
+        acc[`${cur.meta?.preferredVisualisationPluginId}`] = [cur];
+      } else {
+        acc[`${cur.meta?.preferredVisualisationPluginId}`].push(cur);
+      }
+      return acc;
+    }, {});
+
+    return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
         <CustomContainer
           key={index}
           timeZone={timeZone}
-          frame={frame}
+          pluginId={pluginId}
+          frames={frames}
           state={queryResponse.state}
           absoluteRange={absoluteRange}
           height={400}
@@ -301,7 +314,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       );
     });
   }
-        
+
   renderGraphPanel(width: number) {
     const { graphResult, absoluteRange, timeZone, queryResponse, loading, showFlameGraph } = this.props;
 

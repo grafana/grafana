@@ -20,6 +20,7 @@ import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { sortLogsResult } from '../../logs/utils';
+import { hasPanelPlugin } from '../../plugins/importPanelPlugin';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -37,6 +38,10 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
+    if (frame.meta?.preferredVisualisationPluginId && canFindPanel(frame)) {
+      customFrames.push(frame);
+      continue;
+    }
     switch (frame.meta?.preferredVisualisationType) {
       case 'logs':
         logsFrames.push(frame);
@@ -59,11 +64,6 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       case 'flamegraph':
         flameGraphFrames.push(frame);
         break;
-      case 'plugin':
-        if (canFindPanel(frame)) {
-          customFrames.push(frame);
-          break;
-        }
       default:
         if (isTimeSeries(frame)) {
           graphFrames.push(frame);
@@ -285,5 +285,8 @@ function isTimeSeries(frame: DataFrame): boolean {
  * @param frame
  */
 function canFindPanel(frame: DataFrame): boolean {
-  return !!frame.meta?.custom?.pluginID;
+  if (!!frame.meta?.preferredVisualisationPluginId) {
+    return hasPanelPlugin(frame.meta?.preferredVisualisationPluginId);
+  }
+  return false;
 }
