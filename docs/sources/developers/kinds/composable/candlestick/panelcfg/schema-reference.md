@@ -209,15 +209,15 @@ TODO docs
 
 It extends [OptionsWithLegend](#optionswithlegend).
 
-| Property           | Type                                    | Required | Default | Description                                                               |
-|--------------------|-----------------------------------------|----------|---------|---------------------------------------------------------------------------|
-| `candleStyle`      | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `candles`, `ohlcbars`.                 |
-| `colorStrategy`    | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `open-close`, `close-close`.           |
-| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         | TODO docs                                                                 |
-| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | TODO docs                                                                 |
-| `legend`           | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs  |
-| `mode`             | string                                  | **Yes**  |         | TODO docs<br/>Possible values are: `candles+volume`, `candles`, `volume`. |
-| `includeAllFields` | boolean                                 | No       | `false` | When enabled, all fields will be sent to the graph                        |
+| Property           | Type                                    | Required | Default | Description                                                              |
+|--------------------|-----------------------------------------|----------|---------|--------------------------------------------------------------------------|
+| `candleStyle`      | string                                  | **Yes**  |         | TODO docs                                                                |
+| `colorStrategy`    | string                                  | **Yes**  |         | TODO docs                                                                |
+| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         | TODO docs                                                                |
+| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | TODO docs                                                                |
+| `legend`           | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs |
+| `mode`             | string                                  | **Yes**  |         | TODO docs                                                                |
+| `includeAllFields` | boolean                                 | No       | `false` | When enabled, all fields will be sent to the graph                       |
 
 ### OptionsWithLegend
 

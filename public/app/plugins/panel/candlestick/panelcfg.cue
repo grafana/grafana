@@ -50,11 +50,11 @@ composableKinds: PanelCfg: {
 					common.OptionsWithLegend
 
 					// TODO docs
-					mode: VizDisplayMode
+					mode: VizDisplayMode & (*"candles+volume" | _)
 					// TODO docs
-					candleStyle: CandleStyle
+					candleStyle: CandleStyle & (*"candles" | _)
 					// TODO docs
-					colorStrategy: ColorStrategy
+					colorStrategy: ColorStrategy & (*"open-close" | _)
 					// TODO docs
 					fields: CandlestickFieldMap | *{}
 					// TODO docs

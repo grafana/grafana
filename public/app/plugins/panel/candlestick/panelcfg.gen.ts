@@ -91,6 +91,8 @@ export interface Options extends common.OptionsWithLegend {
 }
 
 export const defaultOptions: Partial<Options> = {
+  candleStyle: CandleStyle.Candles,
+  colorStrategy: ColorStrategy.OpenClose,
   colors: {
     down: 'red',
     up: 'green',
@@ -98,6 +100,7 @@ export const defaultOptions: Partial<Options> = {
   },
   fields: {},
   includeAllFields: false,
+  mode: VizDisplayMode.CandlesVolume,
 };
 
 export interface FieldConfig extends common.GraphFieldConfig {}
