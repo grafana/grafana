@@ -7502,6 +7502,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2cfe53f430c7cfec1b422a329b009b7c81cd52e897abb7a940115e524796178a
+hmac: 8d53c2535a48a2fa79444c071a6b65de4fd45374f5cb635c99d4360197314eef
 
 ...
