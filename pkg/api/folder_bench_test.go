@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -59,6 +60,7 @@ const (
 
 func BenchmarkFolderService_GetRootFolders(b *testing.B) {
 	start := time.Now()
+	b.Log("setup start")
 	m, orgID, userWithPermissions := setupBench(b)
 	b.Log("setup time:", time.Since(start))
 	req := httptest.NewRequest(http.MethodGet, "/api/folders", nil)
@@ -78,6 +80,7 @@ func BenchmarkFolderService_GetRootFolders(b *testing.B) {
 
 func BenchmarkFolderService_GetSubfolders(b *testing.B) {
 	start := time.Now()
+	b.Log("setup start")
 	m, orgID, userWithPermissions := setupBench(b)
 	b.Log("setup time:", time.Since(start))
 	req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/folders?parentUid=folder%d", LEVEL0_FOLDER_NUM-1), nil)
@@ -96,6 +99,7 @@ func BenchmarkFolderService_GetSubfolders(b *testing.B) {
 
 func BenchmarkFolderService_Search(b *testing.B) {
 	start := time.Now()
+	b.Log("setup start")
 	m, orgID, userWithPermissions := setupBench(b)
 	b.Log("setup time:", time.Since(start))
 	limit := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
@@ -119,6 +123,9 @@ func BenchmarkFolderService_Search(b *testing.B) {
 func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	b.Helper()
 	db := sqlstore.InitTestDB(b)
+
+	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
+
 	quotaService := quotatest.New(false, nil)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	cfg := setting.NewCfg()
@@ -164,108 +171,110 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 
 	now := time.Now()
 	roles := make([]accesscontrol.Role, 0, TEAM_NUM)
+	teams := make([]team.Team, 0, TEAM_NUM)
+	teamMembers := make([]team.TeamMember, 0, TEAM_MEMBER_NUM)
 	teamRoles := make([]accesscontrol.TeamRole, 0, TEAM_NUM)
-	for i := 0; i <= TEAM_NUM; i++ {
-		t, err := teamSvc.CreateTeam(fmt.Sprintf("team%d", i), "", orgID)
-		require.NoError(b, err)
-		require.NotZero(b, t.ID)
-		signedInUser.Teams = append(signedInUser.Teams, t.ID)
+	for i := 1; i < TEAM_NUM+1; i++ {
+		teamID := int64(i)
+		teams = append(teams, team.Team{
+			UID:     fmt.Sprintf("team%d", i),
+			ID:      teamID,
+			Name:    fmt.Sprintf("team%d", i),
+			OrgID:   orgID,
+			Created: now,
+			Updated: now,
+		})
+		signedInUser.Teams = append(signedInUser.Teams, teamID)
 
 		for _, userID := range userIDs {
-			teamSvc.AddTeamMember(userID, orgID, t.ID, false, dashboards.PERMISSION_VIEW)
+			teamMembers = append(teamMembers, team.TeamMember{
+				UserID:     userID,
+				TeamID:     teamID,
+				OrgID:      orgID,
+				Permission: dashboards.PERMISSION_VIEW,
+				Created:    now,
+				Updated:    now,
+			})
 		}
 
 		name := fmt.Sprintf("managed_team_role_%d", i)
 		roles = append(roles, accesscontrol.Role{
-			ID:      int64(i) + 1,
+			ID:      int64(i),
 			UID:     name,
+			OrgID:   orgID,
 			Name:    name,
 			Updated: now,
 			Created: now,
 		})
 
 		teamRoles = append(teamRoles, accesscontrol.TeamRole{
-			RoleID:  int64(i) + 1,
+			RoleID:  int64(i),
 			OrgID:   orgID,
-			TeamID:  t.ID,
+			TeamID:  teamID,
 			Created: now,
 		})
 	}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		_, err := sess.InsertMulti(roles)
+		_, err := sess.BulkInsert("team", teams, opts)
 		require.NoError(b, err)
 
-		_, err = sess.InsertMulti(teamRoles)
+		_, err = sess.BulkInsert("team_member", teamMembers, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("role", roles, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("team_role", teamRoles, opts)
 		return err
 	})
 	require.NoError(b, err)
 
-	var roleID int64 = 1
+	foldersCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM
+	folders := make([]*f, 0, foldersCap)
+	dashsCap := foldersCap * LEAF_DASHBOARD_NUM
+	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
+	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
+	//dashVersions := make([]dashboards.Dashboard, 0, foldersCap+dashsCap)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
-		f0, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-			OrgID:        orgID,
-			UID:          fmt.Sprintf("folder%d", i),
-			Title:        fmt.Sprintf("folder%d", i),
-			SignedInUser: &signedInUser,
-		})
-		require.NoError(b, err)
+		f, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
+		folders = append(folders, f)
+		dashs = append(dashs, d)
 
-		permissions := []accesscontrol.Permission{
-			{
-				RoleID:  roleID,
-				Action:  dashboards.ActionFoldersRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-				Updated: now,
-				Created: now,
-			},
-			{
+		roleID := int64(i%TEAM_NUM + 1)
+		permissions = append(permissions, accesscontrol.Permission{
+			RoleID:  roleID,
+			Action:  dashboards.ActionFoldersRead,
+			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
+			Updated: now,
+			Created: now,
+		},
+			accesscontrol.Permission{
 				RoleID:  roleID,
 				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
 				Updated: now,
 				Created: now,
 			},
-		}
-
-		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err = sess.InsertMulti(permissions)
-			return err
-		})
-		require.NoError(b, err)
-
-		// advance idx
-		roleID++
-		if roleID == TEAM_NUM {
-			// restart
-			roleID = 1
-		}
+		)
 
 		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
-			f1, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-				OrgID:        orgID,
-				Title:        fmt.Sprintf("folder%d_%d", i, j),
-				ParentUID:    f0.UID,
-				SignedInUser: &signedInUser,
-			})
-			require.NoError(b, err)
+			f1, d1 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d", i, j), &f.UID)
+			folders = append(folders, f1)
+			dashs = append(dashs, d1)
 
 			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
-				f1, err := folderServiceWithFlagOn.Create(context.Background(), &folder.CreateFolderCommand{
-					OrgID:        orgID,
-					Title:        fmt.Sprintf("folder%d_%d_%d", i, j, k),
-					ParentUID:    f1.UID,
-					SignedInUser: &signedInUser,
-				})
-				require.NoError(b, err)
+				f2, d2 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
+				folders = append(folders, f2)
+				dashs = append(dashs, d2)
 
-				dashes := make([]dashboards.Dashboard, 0, LEAF_DASHBOARD_NUM)
 				for l := 0; l < LEAF_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
-					dashes = append(dashes, dashboards.Dashboard{
+					dashs = append(dashs, &dashboards.Dashboard{
+						ID:       rand.Int63(),
 						OrgID:    signedInUser.OrgID,
 						IsFolder: false,
 						UID:      str,
-						FolderID: f1.ID,
+						FolderID: f2.ID,
 						Slug:     str,
 						Title:    str,
 						Data:     simplejson.New(),
@@ -273,14 +282,21 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 						Updated:  now,
 					})
 				}
-				err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-					_, err := sess.InsertMulti(dashes)
-					return err
-				})
-				require.NoError(b, err)
 			}
 		}
 	}
+
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.BulkInsert("folder", folders, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("dashboard", dashs, opts)
+		require.NoError(b, err)
+
+		_, err = sess.BulkInsert("permission", permissions, opts)
+		return err
+	})
+	require.NoError(b, err)
 
 	m := web.New()
 	initCtx := &contextmodel.ReqContext{}
@@ -327,4 +343,47 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	m.Get("/api/search", hs.Search)
 
 	return m, orgID, userIDs[len(userIDs)-1]
+}
+
+type f struct {
+	ID          int64   `xorm:"pk autoincr 'id'"`
+	OrgID       int64   `xorm:"org_id"`
+	UID         string  `xorm:"uid"`
+	ParentUID   *string `xorm:"parent_uid"`
+	Title       string
+	Description string
+
+	Created time.Time
+	Updated time.Time
+}
+
+func (f *f) TableName() string {
+	return "folder"
+}
+
+func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashboards.Dashboard) {
+	now := time.Now()
+	title := uid
+	f := &f{
+		OrgID:     orgID,
+		UID:       uid,
+		Title:     title,
+		ID:        id,
+		Created:   now,
+		Updated:   now,
+		ParentUID: parentUID,
+	}
+
+	d := &dashboards.Dashboard{
+		ID:       id,
+		OrgID:    orgID,
+		UID:      uid,
+		Version:  1,
+		Title:    title,
+		Data:     simplejson.NewFromAny(map[string]interface{}{"schemaVersion": 17, "title": title, "uid": uid, "version": 1}),
+		IsFolder: true,
+		Created:  now,
+		Updated:  now,
+	}
+	return f, d
 }
