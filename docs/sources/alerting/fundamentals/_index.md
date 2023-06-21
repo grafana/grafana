@@ -1,4 +1,5 @@
 ---
+menuTitle: Introduction
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
