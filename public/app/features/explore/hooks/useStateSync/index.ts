@@ -351,7 +351,6 @@ async function getPaneDatasource(
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
  * side effects needed.
- * TODO: this should also handle panelsState changes
  */
 const urlDiff = (
   oldUrlState: ExploreUrlState | undefined,
