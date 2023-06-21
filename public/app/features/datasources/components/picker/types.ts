@@ -20,8 +20,6 @@ export interface DataSourceDropdownProps {
   logs?: boolean;
   recentlyUsed?: string[];
   hideTextValue?: boolean;
-  dashboard?: boolean;
-  mixed?: boolean;
   width?: number;
 }
 
