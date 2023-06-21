@@ -55,12 +55,6 @@ func newDefaultGCOMScenario() *gcomScenario {
 	return &gcomScenario{gcomHTTPHandlerFunc: mockGCOMHTTPHandlerFunc}
 }
 
-func newError500GCOMScenario() *gcomScenario {
-	return &gcomScenario{gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusInternalServerError)
-	}}
-}
-
 func TestGCOMDetectorsProvider(t *testing.T) {
 	t.Run("returns value returned from gcom api", func(t *testing.T) {
 		scenario := newDefaultGCOMScenario()
