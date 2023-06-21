@@ -20,7 +20,7 @@ const ContactPoints = () => {
     <Stack direction="column">
       <div className={styles.contactPointWrapper}>
         <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'grafana-default-email'} />
+          <ContactPointHeader name={'grafana-default-email'} policies={['', '']} />
           <div className={styles.receiversWrapper}>
             <ContactPointReceiver type={'email'} description="gilles.demey@grafana.com" />
           </div>
@@ -90,10 +90,11 @@ const ContactPoints = () => {
 interface ContactPointHeaderProps {
   name: string;
   provenance?: string;
+  policies?: string[]; // some array of policies that refer to this contact point
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, provenance } = props;
+  const { name, provenance, policies = [] } = props;
 
   const styles = useStyles2(getStyles);
   const isProvisioned = Boolean(provenance);
@@ -104,10 +105,14 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         <Stack alignItems="center" gap={1}>
           <Span variant="body">{name}</Span>
         </Stack>
-        <MetaText>
-          {/* TODO make this a link to the notification policies page with the filter applied */}
-          is used by <Strong>2</Strong> notification policies
-        </MetaText>
+        {policies.length > 0 ? (
+          <MetaText>
+            {/* TODO make this a link to the notification policies page with the filter applied */}
+            is used by <Strong>{policies.length}</Strong> notification policies
+          </MetaText>
+        ) : (
+          <MetaText>is not used</MetaText>
+        )}
         <Spacer />
         {isProvisioned && <Badge color="purple" text="Provisioned" />}
         {!isProvisioned && (
