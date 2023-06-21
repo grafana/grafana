@@ -33,7 +33,7 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.Detector) {
+func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.AngularDetector) {
 	require.Len(t, detectors, 2)
 	d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 	require.True(t, ok)
@@ -147,7 +147,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 				gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 				detectors := gcomProvider.ProvideDetectors(context.Background())
 				require.Equal(t, 1, tc.gcomHTTPCalls, "gcom should be called")
-				require.Empty(t, detectors, "returned detectors should be empty")
+				require.Empty(t, detectors, "returned AngularDetectors should be empty")
 			})
 		}
 	})

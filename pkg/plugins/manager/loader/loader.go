@@ -183,7 +183,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	// initialize plugins
 	initializedPlugins := make([]*plugins.Plugin, 0, len(verifiedPlugins))
 	for _, p := range verifiedPlugins {
-		// Detect angular for external plugins
+		// detect angular for external plugins
 		if p.IsExternalPlugin() {
 			var err error
 

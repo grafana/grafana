@@ -7,54 +7,54 @@ import (
 )
 
 var (
-	_ Detector = &ContainsBytesDetector{}
-	_ Detector = &RegexDetector{}
+	_ AngularDetector = &ContainsBytesDetector{}
+	_ AngularDetector = &RegexDetector{}
 )
 
-// Detector implements a check to see if a js file is using angular APIs.
-type Detector interface {
-	// Detect takes the content of a js file and returns true if the plugin is using Angular.
-	Detect(js []byte) bool
+// AngularDetector implements a check to see if a js file is using angular APIs.
+type AngularDetector interface {
+	// DetectAngular takes the content of a js file and returns true if the plugin is using Angular.
+	DetectAngular(js []byte) bool
 }
 
-// ContainsBytesDetector is a Detector that returns true if module.js contains the "pattern" string.
+// ContainsBytesDetector is an AngularDetector that returns true if module.js contains the "pattern" string.
 type ContainsBytesDetector struct {
 	Pattern []byte
 }
 
-// Detect returns true if moduleJs contains the byte slice d.pattern.
-func (d *ContainsBytesDetector) Detect(moduleJs []byte) bool {
+// DetectAngular returns true if moduleJs contains the byte slice d.pattern.
+func (d *ContainsBytesDetector) DetectAngular(moduleJs []byte) bool {
 	return bytes.Contains(moduleJs, d.Pattern)
 }
 
-// RegexDetector is a Detector that returns true if the module.js content matches a regular expression.
+// RegexDetector is an AngularDetector that returns true if the module.js content matches a regular expression.
 type RegexDetector struct {
 	Regex *regexp.Regexp
 }
 
-// Detect returns true if moduleJs matches the regular expression d.regex.
-func (d *RegexDetector) Detect(moduleJs []byte) bool {
+// DetectAngular returns true if moduleJs matches the regular expression d.regex.
+func (d *RegexDetector) DetectAngular(moduleJs []byte) bool {
 	return d.Regex.Match(moduleJs)
 }
 
-// DetectorsProvider can provide multiple detectors used for Angular detection.
+// DetectorsProvider can provide multiple AngularDetectors used for Angular detection.
 type DetectorsProvider interface {
-	// ProvideDetectors returns a slice of detectors.
-	ProvideDetectors(ctx context.Context) []Detector
+	// ProvideDetectors returns a slice of AngularDetector.
+	ProvideDetectors(ctx context.Context) []AngularDetector
 }
 
-// StaticDetectorsProvider is a DetectorsProvider that always returns a pre-defined slice of detectors.
+// StaticDetectorsProvider is a DetectorsProvider that always returns a pre-defined slice of AngularDetector.
 type StaticDetectorsProvider struct {
-	Detectors []Detector
+	Detectors []AngularDetector
 }
 
-func (p *StaticDetectorsProvider) ProvideDetectors(_ context.Context) []Detector {
+func (p *StaticDetectorsProvider) ProvideDetectors(_ context.Context) []AngularDetector {
 	return p.Detectors
 }
 
 // defaultDetectors contains all the detectors to Detect Angular plugins.
 // They are executed in the specified order.
-var defaultDetectors = []Detector{
+var defaultDetectors = []AngularDetector{
 	&ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
 	&ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
 	&ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
@@ -66,10 +66,4 @@ var defaultDetectors = []Detector{
 	&RegexDetector{Regex: regexp.MustCompile(`['"](app/core/utils/promiseToDigest)|(app/plugins/.*?)|(app/core/core_module)['"]`)},
 	&RegexDetector{Regex: regexp.MustCompile(`from\s+['"]grafana\/app\/`)},
 	&RegexDetector{Regex: regexp.MustCompile(`System\.register\(`)},
-}
-
-// NewDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
-// detection patterns (defaultDetectors)
-func NewDefaultStaticDetectorsProvider() DetectorsProvider {
-	return &StaticDetectorsProvider{Detectors: defaultDetectors}
 }

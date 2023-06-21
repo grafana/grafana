@@ -1438,7 +1438,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
-	angularInspector, err := angularinspector.ProvideService(cfg)
+	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),

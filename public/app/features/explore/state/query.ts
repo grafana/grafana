@@ -43,6 +43,7 @@ import {
   ExploreItemState,
   ExplorePanelData,
   QueryTransaction,
+  StoreState,
   ThunkDispatch,
   ThunkResult,
 } from 'app/types';
@@ -53,14 +54,30 @@ import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
 import {
+  getSupplementaryQueryProvider,
   storeSupplementaryQueryEnabled,
   supplementaryQueryTypes,
-  getSupplementaryQueryProvider,
 } from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, filterLogRowsByIndex } from './utils';
+import { createCacheKey, filterLogRowsByIndex, getResultsFromCache } from './utils';
+
+/**
+ * Derives from explore state if a given Explore pane is waiting for more data to be received
+ */
+export const selectIsWaitingForData = (exploreId: ExploreId) => {
+  return (state: StoreState) => {
+    const panelState = state.explore.panes[exploreId];
+    if (!panelState) {
+      return false;
+    }
+    return panelState.queryResponse
+      ? panelState.queryResponse.state === LoadingState.Loading ||
+          panelState.queryResponse.state === LoadingState.Streaming
+      : false;
+  };
+};
 
 /**
  * Adds a query row after the row with the given index.
@@ -878,7 +895,10 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
     return {
       ...state,
-      loading: false,
+      queryResponse: {
+        ...state.queryResponse,
+        state: LoadingState.Done,
+      },
     };
   }
 
@@ -1024,7 +1044,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
         ...state.queryResponse,
         state: loadingState,
       },
-      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     };
   }
 
@@ -1140,7 +1159,6 @@ export const processQueryResponse = (
   const { response } = action.payload;
   const {
     request,
-    state: loadingState,
     series,
     error,
     graphResult,
@@ -1154,14 +1172,8 @@ export const processQueryResponse = (
   } = response;
 
   if (error) {
-    if (error.type === DataQueryErrorType.Timeout) {
-      return {
-        ...state,
-        queryResponse: response,
-        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-      };
-    } else if (error.type === DataQueryErrorType.Cancelled) {
-      return state;
+    if (error.type === DataQueryErrorType.Timeout || error.type === DataQueryErrorType.Cancelled) {
+      return { ...state };
     }
 
     // Send error to Angular editors
@@ -1192,7 +1204,6 @@ export const processQueryResponse = (
       state.isLive && logsResult
         ? { ...logsResult, rows: filterLogRowsByIndex(state.clearedAtIndex, logsResult.rows) }
         : logsResult,
-    loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult?.length,

@@ -42,7 +42,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
 	for _, d := range i.DetectorsProvider.ProvideDetectors(ctx) {
-		if d.Detect(b) {
+		if d.DetectAngular(b) {
 			isAngular = true
 			break
 		}
@@ -56,7 +56,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	return &PatternsListInspector{DetectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}, nil
 } */
 
-// newDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
+// NewDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
 /* func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
@@ -65,12 +65,12 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 		angulardetector.DefaultGCOMDetectorsProviderTTL,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("newGCOMDetectorsProvider: %w", err)
+		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
 	}
 	return &PatternsListInspector{
 		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
 			dynamicProvider,
-			newDefaultStaticDetectorsProvider(),
+			NewDefaultStaticDetectorsProvider(),
 		},
 	}, nil
 }

@@ -32,7 +32,7 @@ type Dynamic struct {
 
 	cacheTTL time.Duration
 
-	detectors []angulardetector.Detector
+	detectors []angulardetector.AngularDetector
 	mux       sync.RWMutex
 }
 
@@ -86,7 +86,7 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 // fetchAndStoreDetectors fetches the patterns from GCOM, converts them into detectors, stores the new patterns into
 // the store and returns the detectors. If the patterns cannot be converted to detectors, the store is not altered.
 // The function returns the resulting detectors.
-func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector.Detector, error) {
+func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector.AngularDetector, error) {
 	// Fetch patterns from GCOM
 	patterns, err := d.fetch(ctx)
 	if err != nil {
@@ -108,7 +108,7 @@ func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector
 	return newDetectors, nil
 }
 
-func (d *Dynamic) setDetectors(newDetectors []angulardetector.Detector) {
+func (d *Dynamic) setDetectors(newDetectors []angulardetector.AngularDetector) {
 	d.mux.Lock()
 	d.detectors = newDetectors
 	d.mux.Unlock()
@@ -198,7 +198,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
-func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.Detector {
+func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
 	d.mux.RLock()
 	r := d.detectors
 	d.mux.RUnlock()

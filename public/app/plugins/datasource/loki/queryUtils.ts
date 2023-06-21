@@ -84,32 +84,32 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
   return results;
 }
 
-// we are migrating from `.instant` and `.range` to `.queryType`
-// this function returns a new query object that:
-// - has `.queryType`
-// - does not have `.instant`
-// - does not have `.range`
 export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
-  //  if queryType field contains invalid data we behave as if the queryType is empty
+  const queryType = getLokiQueryType(query);
+  // instant and range are deprecated, we want to remove them
+  const { instant, range, ...rest } = query;
+  return { ...rest, queryType };
+}
+
+export function getLokiQueryType(query: LokiQuery): LokiQueryType {
+  // we are migrating from `.instant` and `.range` to `.queryType`
+  // this function returns the correct query type
   const { queryType } = query;
   const hasValidQueryType =
     queryType === LokiQueryType.Range || queryType === LokiQueryType.Instant || queryType === LokiQueryType.Stream;
 
   // if queryType exists, it is respected
   if (hasValidQueryType) {
-    const { instant, range, ...rest } = query;
-    return rest;
+    return queryType;
   }
 
   // if no queryType, and instant===true, it's instant
   if (query.instant === true) {
-    const { instant, range, ...rest } = query;
-    return { ...rest, queryType: LokiQueryType.Instant };
+    return LokiQueryType.Instant;
   }
 
   // otherwise it is range
-  const { instant, range, ...rest } = query;
-  return { ...rest, queryType: LokiQueryType.Range };
+  return LokiQueryType.Range;
 }
 
 const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];

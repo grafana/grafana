@@ -67,7 +67,7 @@ func TestCallResource(t *testing.T) {
 	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	reg := registry.ProvideService()
-	angularInspector, err := angularinspector.ProvideService(pCfg)
+	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),

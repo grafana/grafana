@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type fakeDetector struct {
@@ -18,7 +16,7 @@ type fakeDetector struct {
 	returns bool
 }
 
-func (d *fakeDetector) Detect(_ []byte) bool {
+func (d *fakeDetector) DetectAngular(_ []byte) bool {
 	d.calls += 1
 	return d.returns
 }
@@ -71,9 +69,9 @@ func TestPatternsListInspector(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			detectors := make([]angulardetector.Detector, 0, len(tc.fakeDetectors))
+			detectors := make([]angulardetector.AngularDetector, 0, len(tc.fakeDetectors))
 			for _, d := range tc.fakeDetectors {
-				detectors = append(detectors, angulardetector.Detector(d))
+				detectors = append(detectors, angulardetector.AngularDetector(d))
 			}
 			inspector := &PatternsListInspector{
 				DetectorsProvider: &angulardetector.StaticDetectorsProvider{Detectors: detectors},
@@ -100,6 +98,8 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		[]byte(`define(["app/plugins/sdk"],(function(n){return function(n){var t={};function e(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return n[r].call(o.exports,o,o.exports,e),o.l=!0,o.exports}return e.m=n,e.c=t,e.d=function(n,t,r){e.o(n,t)||Object.defineProperty(n,t,{enumerable:!0,get:r})},e.r=function(n){"undefined"!=typeof`),
 		[]byte(`define(["app/plugins/sdk"],(function(n){return function(n){var t={};function e(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return n[r].call(o.exports,o,o.exports,e),o.l=!0,o.exports}return e.m=n,e.c=t,e.d=function(n,t,r){e.o(n,t)||Object.defineProperty(n,t,{enumerable:!0,get:r})},e.r=function(n){"undefined"!=typeof Symbol&&Symbol.toSt`),
 		[]byte(`define(["react","lodash","@grafana/data","@grafana/ui","@emotion/css","@grafana/runtime","moment","app/core/utils/datemath","jquery","app/plugins/sdk","app/core/core_module","app/core/core","app/core/table_model","app/core/utils/kbn","app/core/config","angular"],(function(e,t,r,n,i,a,o,s,u,l,c,p,f,h,d,m){return function(e){var t={};function r(n){if(t[n])return t[n].exports;var i=t[n]={i:n,l:!1,exports:{}};retur`),
+		[]byte(`exports_1("QueryCtrl", query_ctrl_1.PluginQueryCtrl);`),
+		[]byte(`exports_1('QueryCtrl', query_ctrl_1.PluginQueryCtrl);`),
 	} {
 		tcs = append(tcs, tc{
 			name: "angular " + strconv.Itoa(i),
@@ -112,17 +112,23 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		})
 	}
 
-	// Not angular
-	tcs = append(tcs, tc{
-		name: "not angular",
-		plugin: &plugins.Plugin{
-			FS: plugins.NewInMemoryFS(map[string][]byte{
-				"module.js": []byte(`import { PanelPlugin } from '@grafana/data'`),
-			}),
-		},
-		exp: false,
-	})
-	inspector := PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}
+	// Not angular (test against possible false detections)
+	for i, content := range [][]byte{
+		[]byte(`import { PanelPlugin } from '@grafana/data'`),
+		// React ML app
+		[]byte(`==(null===(t=e.components)||void 0===t?void 0:t.QueryCtrl)};function`),
+	} {
+		tcs = append(tcs, tc{
+			name: "not angular " + strconv.Itoa(i),
+			plugin: &plugins.Plugin{
+				FS: plugins.NewInMemoryFS(map[string][]byte{
+					"module.js": content,
+				}),
+			},
+			exp: false,
+		})
+	}
+	inspector := PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
@@ -135,35 +141,5 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
 		require.NoError(t, err)
-	})
-}
-
-func TestProvideInspector(t *testing.T) {
-	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
-		inspector, err := ProvideService(&config.Cfg{
-			Features: featuremgmt.WithFeatures(),
-		})
-		require.NoError(t, err)
-		require.IsType(t, inspector, &PatternsListInspector{})
-		patternsListInspector := inspector.(*PatternsListInspector)
-		detectors := patternsListInspector.DetectorsProvider.ProvideDetectors(context.Background())
-		require.NotEmpty(t, detectors, "provided detectors should not be empty")
-		require.Equal(t, defaultDetectors, detectors, "provided detectors should be the hardcoded ones")
-	})
-
-	t.Run("uses dynamic inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
-		inspector, err := ProvideService(&config.Cfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
-		})
-		require.NoError(t, err)
-		require.IsType(t, inspector, &PatternsListInspector{})
-		require.IsType(t, inspector.(*PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
-		seq := inspector.(*PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
-		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first Detector provided should be gcom")
-		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second Detector provided should be static")
-		staticDetectors := seq[1].ProvideDetectors(context.Background())
-		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
-		require.Equal(t, defaultDetectors, staticDetectors, "should provide hardcoded detectors as fallback")
 	})
 }
