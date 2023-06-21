@@ -75,6 +75,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   };
 
   // JEV update
+  const updateJSONOnAzureAuthSelect = (value: SelectableValue) => {};
+
   const onAuthenticationMethodChanged = (value: SelectableValue) => {
     onOptionsChange({
       ...dsSettings,
@@ -91,11 +93,21 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     updateDatasourcePluginJsonDataOption(props, 'connectionTimeout', connectionTimeout ?? 0);
   };
 
-  const authenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
-    { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
-    { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
-    { value: MSSQLAuthenticationType.azureAuth, label: 'Azure AD Authentication' },
-  ];
+  const buildAuthenticationOptions = (): Array<SelectableValue<MSSQLAuthenticationType>> => {
+    const basicAuthenticationOptions: Array<SelectableValue<MSSQLAuthenticationType>> = [
+      { value: MSSQLAuthenticationType.sqlAuth, label: 'SQL Server Authentication' },
+      { value: MSSQLAuthenticationType.windowsAuth, label: 'Windows Authentication' },
+    ];
+
+    if (azureAuthIsSupported) {
+      return [
+        ...basicAuthenticationOptions,
+        { value: MSSQLAuthenticationType.azureAuth, label: 'Azure AD Authentication' },
+      ];
+    }
+
+    return basicAuthenticationOptions;
+  };
 
   const encryptOptions: Array<SelectableValue<string>> = [
     { value: MSSQLEncryptOptions.disable, label: 'disable' },
@@ -152,7 +164,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             // Default to basic authentication of none is set
             value={jsonData.authenticationType || MSSQLAuthenticationType.sqlAuth}
             inputId="authenticationType"
-            options={authenticationOptions}
+            options={buildAuthenticationOptions()}
             onChange={onAuthenticationMethodChanged}
           ></Select>
         </InlineField>
