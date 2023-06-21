@@ -9,7 +9,7 @@ import { jsonDiff } from '../VersionHistory/utils';
 
 import DashboardValidation from './DashboardValidation';
 import { SaveDashboardDiff } from './SaveDashboardDiff';
-import { isHandledError, SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
+import { proxyHandlesError, SaveDashboardErrorProxy } from './SaveDashboardErrorProxy';
 import { SaveDashboardAsForm } from './forms/SaveDashboardAsForm';
 import { SaveDashboardForm } from './forms/SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './forms/SaveProvisionedDashboardForm';
@@ -103,7 +103,12 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     );
   };
 
-  if (state.error && isFetchError(state.error) && !state.error.isHandled && isHandledError(state.error.data.status)) {
+  if (
+    state.error &&
+    isFetchError(state.error) &&
+    !state.error.isHandled &&
+    proxyHandlesError(state.error.data.status)
+  ) {
     return (
       <SaveDashboardErrorProxy
         error={state.error}
