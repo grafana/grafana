@@ -1,5 +1,6 @@
 import { Meta, ArgTypes } from '@storybook/blocks';
 import { IconButton } from './IconButton';
+import { Icon } from '../Icon/Icon';
 import { Alert } from '../Alert/Alert';
 
 <Meta title="MDX|IconButton" component={IconButton} />
@@ -11,7 +12,11 @@ This component looks just like an icon but behaves like a button. It fulfils an 
 `IconButton` is best used when you only want an icon instead of a button with text, for example when you want to place a solitary clickable icon next to text. An example where an `IconButton` is used in Grafana is the hamburger icon at the top left which opens the new navigation.
 When using `IconButton` right next to a text element consider wrapping both in a flex container and use `align-items: center;` to make them align properly.
 
-Always keep in mind to add text for a tooltip **or** an aria-label. The tooltip content will be used for the aria-label as well. In case there is an aria-label defined there will **not** be a tooltip.
+There are two options to use the IconButton:
+
+- with `Tooltip`: This is the preferred option since we don't want to rely on assumptions when it comes to the meaning an `Icon` has. Add a text for the `Tooltip`. It will be used for the `aria-label` as well.
+- without `Tooltip`: This is an option for use cases where the `Icon` is unambiguous e.g <Icon name="angle-down" /> for expanding a folder. Add a text for the `aria-label` and there will **not** be a `Tooltip`.
+
 The IconButton used to have a property called `ariaLabel` which got deprecated. You can now use the regular property `aria-label` instead.
 
 <Alert severity="warning" title={'Please note:'}>

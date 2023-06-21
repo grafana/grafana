@@ -15,7 +15,7 @@ export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
 
 type LimitedIconSize = ComponentSize | 'xl';
 
-interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
+export interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
   /** Name of the icon **/
   name: IconName;
   /** Icon size - sizes xxl and xxxl are deprecated and when used being decreased to xl*/
@@ -26,14 +26,14 @@ interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 
   variant?: IconButtonVariant;
 }
 
-interface BasePropsWithTooltip extends BaseProps {
+export interface BasePropsWithTooltip extends BaseProps {
   /** Tooltip content to display on hover and as the aria-label */
   tooltip: PopoverContent;
   /** Position of the tooltip */
   tooltipPlacement?: TooltipPlacement;
 }
 
-interface BasePropsWithAriaLabel extends BaseProps {
+export interface BasePropsWithAriaLabel extends BaseProps {
   /** @deprecated use aria-label instead*/
   ariaLabel?: string;
   /** Text available only for screen readers. No tooltip will be set in this case. */

@@ -7,33 +7,22 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import {
-  BaseProps,
-  BasePropsWithAriaLabel,
-  IconButton,
-  IconButtonVariant,
-  Props as IconButtonProps,
-} from './IconButton';
+import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
+import { basicArgs } from './IconButton.story';
 
 interface ScenarioProps {
   background: 'canvas' | 'primary' | 'secondary';
 }
 
-export const basicArgs: BaseProps = {
-  name: 'apps',
-  size: 'md',
-  iconType: 'default',
-  variant: 'secondary',
-};
-
-const argsWithoutTooltip: BasePropsWithAriaLabel = {
+const argsWithTooltip: BasePropsWithTooltip = {
   ...basicArgs,
-  ['aria-label']: 'sample aria-label content',
+  tooltip: 'sample tooltip message',
+  tooltipPlacement: 'top',
 };
 
 const meta: Meta<typeof IconButton> = {
-  title: 'Buttons/IconButton/IconButton without Tooltip',
+  title: 'Buttons/IconButton/IconButton with Tooltip',
   component: IconButton,
   decorators: [withCenteredStory],
   parameters: {
@@ -41,7 +30,12 @@ const meta: Meta<typeof IconButton> = {
       page: mdx,
     },
   },
-  args: argsWithoutTooltip,
+  args: argsWithTooltip,
+  argTypes: {
+    tooltip: {
+      control: 'text',
+    },
+  },
 };
 
 export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
@@ -71,7 +65,7 @@ export const ExamplesSizes = () => {
                 <div className={rowStyle} key={icon}>
                   {sizes.map((size) => (
                     <span key={icon + size}>
-                      <IconButton name={icon} size={size} variant={variant} aria-label="aria label example" />
+                      <IconButton name={icon} size={size} variant={variant} tooltip="Tooltip example" />
                     </span>
                   ))}
                 </div>
