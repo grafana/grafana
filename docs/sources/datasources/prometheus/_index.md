@@ -20,7 +20,7 @@ Grafana provides native support for Prometheus.
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
-Only users with the organization administrator role can add data sources.
+Only users with the organization `administrator` role can add data sources and edit existing data sources.
 Administrators can also [configure the data source via YAML]({{< relref "#provision-the-data-source" >}}) with Grafana's provisioning system.
 
 Once you've added the Prometheus data source, you can [configure it](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}), use [Explore]({{< relref "../../explore/" >}}), and [annotate visualizations]({{< relref "./query-editor/#apply-annotations" >}}).
@@ -44,6 +44,10 @@ For more information on how to query other Prometheus-compatible projects from G
 
 You can define and configure the data source in YAML files as part of Grafana's provisioning system.
 For more information about provisioning, and for available configuration options, refer to [Provisioning Grafana]({{< relref "../../administration/provisioning/#data-sources" >}}).
+
+{{% admonition type="note" %}}
+Once you have provisioned a data source you cannot edit it.
+{{% /admonition %}}
 
 ### Provisioning example
 
