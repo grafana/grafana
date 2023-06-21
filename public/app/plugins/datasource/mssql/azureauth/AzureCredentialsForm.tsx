@@ -1,18 +1,27 @@
-import React, { ChangeEvent, useEffect, useReducer, useState } from 'react';
+import React, {
+  ChangeEvent,
+  // useEffect,
+  // useReducer,
+  // useState
+} from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { InlineFormLabel, Button } from '@grafana/ui/src/components';
 import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
 import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
 
-import { AzureCredentials, AzureAuthType, isCredentialsComplete } from './AzureCredentials';
+import {
+  AzureCredentials,
+  AzureAuthType,
+  // isCredentialsComplete
+} from './AzureCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
-  getSubscriptions?: () => Promise<SelectableValue[]>;
+  // getSubscriptions?: () => Promise<SelectableValue[]>;
   disabled?: boolean;
 }
 
@@ -28,48 +37,55 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 ];
 
 export const AzureCredentialsForm = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, getSubscriptions, disabled } = props;
-  const hasRequiredFields = isCredentialsComplete(credentials);
+  const {
+    managedIdentityEnabled,
+    credentials,
+    azureCloudOptions,
+    onCredentialsChange,
+    // getSubscriptions,
+    disabled,
+  } = props;
+  // const hasRequiredFields = isCredentialsComplete(credentials);
 
-  const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
-  const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
-  useEffect(() => {
-    if (!getSubscriptions || !hasRequiredFields) {
-      updateSubscriptions([]);
-      return;
-    }
-    let canceled = false;
-    getSubscriptions().then((result) => {
-      if (!canceled) {
-        updateSubscriptions(result, loadSubscriptionsClicked);
-      }
-    });
-    return () => {
-      canceled = true;
-    };
-    // This effect is intended to be called only once initially and on Load Subscriptions click
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadSubscriptionsClicked]);
+  // const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
+  // const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
+  // useEffect(() => {
+  //   if (!getSubscriptions || !hasRequiredFields) {
+  //     updateSubscriptions([]);
+  //     return;
+  //   }
+  //   let canceled = false;
+  //   getSubscriptions().then((result) => {
+  //     if (!canceled) {
+  //       updateSubscriptions(result, loadSubscriptionsClicked);
+  //     }
+  //   });
+  //   return () => {
+  //     canceled = true;
+  //   };
+  //   // This effect is intended to be called only once initially and on Load Subscriptions click
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [loadSubscriptionsClicked]);
 
-  const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
-    setSubscriptions(received);
-    if (getSubscriptions) {
-      if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
-        // Selecting the default subscription if subscriptions received but no default subscription selected
-        onSubscriptionChange(received[0]);
-      } else if (credentials.defaultSubscriptionId) {
-        const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
-        if (!found) {
-          // Unselecting the default subscription if it isn't found among the received subscriptions
-          onSubscriptionChange(undefined);
-        }
-      }
-    }
-  };
+  // const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
+  //   setSubscriptions(received);
+  //   if (getSubscriptions) {
+  //     if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
+  //       // Selecting the default subscription if subscriptions received but no default subscription selected
+  //       onSubscriptionChange(received[0]);
+  //     } else if (credentials.defaultSubscriptionId) {
+  //       const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
+  //       if (!found) {
+  //         // Unselecting the default subscription if it isn't found among the received subscriptions
+  //         onSubscriptionChange(undefined);
+  //       }
+  //     }
+  //   }
+  // };
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         authType: selected.value || 'msi',
@@ -81,7 +97,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
@@ -93,7 +109,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
@@ -105,7 +121,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
@@ -117,7 +133,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
@@ -129,7 +145,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretReset = () => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      setSubscriptions([]);
+      // setSubscriptions([]);
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
@@ -139,19 +155,19 @@ export const AzureCredentialsForm = (props: Props) => {
     }
   };
 
-  const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
-    if (onCredentialsChange) {
-      const updated: AzureCredentials = {
-        ...credentials,
-        defaultSubscriptionId: selected?.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
+  // const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
+  //   if (onCredentialsChange) {
+  //     const updated: AzureCredentials = {
+  //       ...credentials,
+  //       defaultSubscriptionId: selected?.value,
+  //     };
+  //     onCredentialsChange(updated);
+  //   }
+  // };
 
   return (
     <div className="gf-form-group">
-      {props.managedIdentityEnabled && (
+      {managedIdentityEnabled && (
         <div className="gf-form-inline">
           <div className="gf-form">
             <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">
@@ -249,7 +265,7 @@ export const AzureCredentialsForm = (props: Props) => {
           )}
         </>
       )}
-      {getSubscriptions && (
+      {/* {getSubscriptions && (
         <>
           <div className="gf-form-inline">
             <div className="gf-form">
@@ -284,7 +300,7 @@ export const AzureCredentialsForm = (props: Props) => {
             </div>
           </div>
         </>
-      )}
+      )} */}
     </div>
   );
 };

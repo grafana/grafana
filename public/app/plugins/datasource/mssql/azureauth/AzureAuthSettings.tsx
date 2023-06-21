@@ -1,7 +1,7 @@
-import React, { FormEvent, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import { config } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
+// import { InlineField, InlineFieldRow, InlineSwitch, Input } from '@grafana/ui';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
 import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
@@ -12,14 +12,14 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
 
-  const [overrideAudienceAllowed] = useState<boolean>(
-    // JEV: FF this feature/or remove?
-    config.featureToggles.prometheusAzureOverrideAudience || !!dsSettings.jsonData.azureEndpointResourceId
-  );
+  // const [overrideAudienceAllowed] = useState<boolean>(
+  //   // JEV: FF this feature/or remove?
+  //   config.featureToggles.prometheusAzureOverrideAudience || !!dsSettings.jsonData.azureEndpointResourceId
+  // );
 
-  const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
-    !!dsSettings.jsonData.azureEndpointResourceId
-  );
+  // const [overrideAudienceChecked, setOverrideAudienceChecked] = useState<boolean>(
+  //   !!dsSettings.jsonData.azureEndpointResourceId
+  // );
 
   const credentials = useMemo(() => getCredentials(dsSettings, config), [dsSettings]);
 
@@ -27,24 +27,24 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
     onChange(updateCredentials(dsSettings, config, credentials));
   };
 
-  const onOverrideAudienceChange = (ev: FormEvent<HTMLInputElement>): void => {
-    setOverrideAudienceChecked(ev.currentTarget.checked);
-    if (!ev.currentTarget.checked) {
-      onChange({
-        ...dsSettings,
-        jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: undefined },
-      });
-    }
-  };
+  // const onOverrideAudienceChange = (ev: FormEvent<HTMLInputElement>): void => {
+  //   setOverrideAudienceChecked(ev.currentTarget.checked);
+  //   if (!ev.currentTarget.checked) {
+  //     onChange({
+  //       ...dsSettings,
+  //       jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: undefined },
+  //     });
+  //   }
+  // };
 
-  const onResourceIdChange = (ev: FormEvent<HTMLInputElement>): void => {
-    if (overrideAudienceChecked) {
-      onChange({
-        ...dsSettings,
-        jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: ev.currentTarget.value },
-      });
-    }
-  };
+  // const onResourceIdChange = (ev: FormEvent<HTMLInputElement>): void => {
+  //   if (overrideAudienceChecked) {
+  //     onChange({
+  //       ...dsSettings,
+  //       jsonData: { ...dsSettings.jsonData, azureEndpointResourceId: ev.currentTarget.value },
+  //     });
+  //   }
+  // };
 
   return (
     <>
@@ -56,7 +56,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
         onCredentialsChange={onCredentialsChange}
         disabled={dsSettings.readOnly}
       />
-      {overrideAudienceAllowed && (
+      {/* {overrideAudienceAllowed && (
         <>
           <h6>Azure configuration</h6>
           <div className="gf-form-group">
@@ -78,7 +78,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
             )}
           </div>
         </>
-      )}
+      )} */}
     </>
   );
 };

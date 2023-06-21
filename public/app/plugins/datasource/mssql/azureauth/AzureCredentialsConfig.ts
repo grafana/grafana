@@ -6,45 +6,45 @@ import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredential
 
 export type AzureAuthConfigType = {
   azureAuthIsSupported: boolean;
-  dataSourceHasCredentials: (options: DataSourceSettings<any, any>) => boolean;
-  setDataSourceCredentials: (
-    dsSettings: DataSourceSettings<any, any>,
-    bootConfig: GrafanaBootConfig,
-    enabled: boolean
-  ) => Partial<DataSourceSettings<any, any>>;
+  // dataSourceHasCredentials: (options: DataSourceSettings<any, any>) => boolean;
+  // setDataSourceCredentials: (
+  //   dsSettings: DataSourceSettings<any, any>,
+  //   bootConfig: GrafanaBootConfig,
+  //   enabled: boolean
+  // ) => Partial<DataSourceSettings<any, any>>;
   azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
 };
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-export const dataSourceHasCredentials = (dsSettings: DataSourceSettings<any, any>): boolean =>
-  !!dsSettings.jsonData.azureCredentials;
+// export const dataSourceHasCredentials = (dsSettings: DataSourceSettings<any, any>): boolean =>
+//   !!dsSettings.jsonData.azureCredentials;
 
-const setDefaultCredentials = (
-  dsSettings: DataSourceSettings<any, any>,
-  bootConfig: GrafanaBootConfig
-): Partial<DataSourceSettings<any, any>> => ({
-  jsonData: {
-    ...dsSettings.jsonData,
-    azureCredentials: getDefaultCredentials(bootConfig),
-  },
-});
+// const setDefaultCredentials = (
+//   dsSettings: DataSourceSettings<any, any>,
+//   bootConfig: GrafanaBootConfig
+// ): Partial<DataSourceSettings<any, any>> => ({
+//   jsonData: {
+//     ...dsSettings.jsonData,
+//     azureCredentials: getDefaultCredentials(bootConfig),
+//   },
+// });
 
-const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
-  jsonData: {
-    ...dsSettings.jsonData,
-    azureAuth: undefined,
-    azureCredentials: undefined,
-    azureEndpointResourceId: undefined,
-  },
-});
+// const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
+//   jsonData: {
+//     ...dsSettings.jsonData,
+//     azureAuth: undefined,
+//     azureCredentials: undefined,
+//     azureEndpointResourceId: undefined,
+//   },
+// });
 
-export const setDataSourceCredentials = (
-  dsSettings: DataSourceSettings<any, any>,
-  bootConfig: GrafanaBootConfig,
-  enabled: boolean
-): Partial<DataSourceSettings<any, any>> =>
-  enabled ? setDefaultCredentials(dsSettings, bootConfig) : resetCredentials(dsSettings);
+// export const setDataSourceCredentials = (
+//   dsSettings: DataSourceSettings<any, any>,
+//   bootConfig: GrafanaBootConfig,
+//   enabled: boolean
+// ): Partial<DataSourceSettings<any, any>> =>
+//   enabled ? setDefaultCredentials(dsSettings, bootConfig) : resetCredentials(dsSettings);
 
 const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
   return bootConfig.azure.cloud || AzureCloud.Public;

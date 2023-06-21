@@ -30,8 +30,8 @@ import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/co
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {
-  dataSourceHasCredentials,
-  setDataSourceCredentials,
+  // dataSourceHasCredentials,
+  // setDataSourceCredentials,
   AzureAuthConfigType,
 } from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
@@ -42,6 +42,8 @@ const LABEL_WIDTH_SSL = 25;
 const LABEL_WIDTH_DETAILS = 20;
 
 export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<MssqlOptions>) => {
+  useMigrateDatabaseFields(props);
+
   const { options: dsSettings, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
   const jsonData = dsSettings.jsonData;
@@ -49,12 +51,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const azureAuthSettings: AzureAuthConfigType = {
     azureAuthIsSupported,
-    dataSourceHasCredentials,
-    setDataSourceCredentials,
+    // dataSourceHasCredentials,
+    // setDataSourceCredentials,
     azureAuthSettingsUI: AzureAuthSettings,
   };
-
-  useMigrateDatabaseFields(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -75,7 +75,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   };
 
   // JEV update
-  const updateJSONOnAzureAuthSelect = (value: SelectableValue) => {};
+  // const updateJSONOnAzureAuthSelect = (value: SelectableValue) => {};
 
   const onAuthenticationMethodChanged = (value: SelectableValue) => {
     onOptionsChange({
@@ -115,8 +115,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.true, label: 'true' },
   ];
 
-  const azureAuthEnabled: boolean =
-    azureAuthSettings?.azureAuthIsSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
+  // const azureAuthEnabled: boolean =
+  //   azureAuthSettings?.azureAuthIsSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
 
   return (
     <>
@@ -154,9 +154,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                 <i>Windows Authentication</i> Windows Integrated Security - single sign on for users who are already
                 logged onto Windows and have enabled this option for MS SQL Server.
               </li>
-              <li>
-                <i>Azure Authentication</i> JEV: TODO DESCRIPTION
-              </li>
+              {azureAuthIsSupported && (
+                <li>
+                  <i>Azure Authentication</i> JEV: TODO DESCRIPTION
+                </li>
+              )}
             </ul>
           }
         >
@@ -269,9 +271,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      {azureAuthEnabled && (
+      {azureAuthIsSupported && (
         <FieldSet label="Azure Authentication Settings">
-          <div className="gf-form-inline">
+          {/* <div className="gf-form-inline">
             <InlineField
               label="Azure Authentication"
               tooltip="Use Azure authentication for Azure endpoint."
@@ -287,9 +289,10 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
                     ...azureAuthSettings.setDataSourceCredentials(dsSettings, config, event!.currentTarget.checked),
                   });
                 }}
+                disabled={dsSettings.readOnly}
               />
             </InlineField>
-          </div>
+          </div> */}
 
           <azureAuthSettings.azureAuthSettingsUI dataSourceConfig={dsSettings} onChange={onOptionsChange} />
         </FieldSet>
