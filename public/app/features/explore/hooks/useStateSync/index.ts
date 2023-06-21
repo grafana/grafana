@@ -17,6 +17,7 @@ import { selectPanes } from '../../state/selectors';
 import { changeRangeAction, updateTime } from '../../state/time';
 import { DEFAULT_RANGE } from '../../state/utils';
 import { withUniqueRefIds } from '../../utils/queries';
+import { isFulfilled } from '../utils';
 
 import { parseURL } from './parseURL';
 
@@ -346,9 +347,6 @@ async function getPaneDatasource(
       .catch(() => undefined)
   );
 }
-
-const isFulfilled = <T>(promise: PromiseSettledResult<T>): promise is PromiseFulfilledResult<T> =>
-  promise.status === 'fulfilled';
 
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the

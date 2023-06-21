@@ -2,6 +2,8 @@ import { ExploreUrlState } from '@grafana/data';
 import { generateExploreId, safeParseJson } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
+import { hasKey } from '../../utils';
+
 import { BaseExploreURL, MigrationHandler } from './types';
 import { ExploreURLV0 } from './v0';
 
@@ -84,9 +86,4 @@ function applyDefaults(input: unknown): ExploreUrlState {
       typeof input.range.from === 'string' &&
       typeof input.range.to === 'string' && { range: { from: input.range.from, to: input.range.to } }),
   };
-}
-
-// TS<5 does not support `in` operator for type narrowing. once we upgrade to TS5, we can remove this function and just use the in operator instead.
-function hasKey<K extends string, T extends object>(k: K, o: T): o is T & Record<K, unknown> {
-  return k in o;
 }

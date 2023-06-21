@@ -7,6 +7,8 @@ import { safeParseJson } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { ExploreQueryParams } from 'app/types';
 
+import { isFulfilled, hasKey } from './utils';
+
 export function useExplorePageTitle(params: ExploreQueryParams) {
   const navModel = useRef<NavModel>();
   navModel.current = useNavModel('explore');
@@ -49,11 +51,3 @@ export function useExplorePageTitle(params: ExploreQueryParams) {
       });
   }, [params.panes]);
 }
-
-// TS<5 does not support `in` operator for type narrowing. once we upgrade to TS5, we can remove this function and just use the in operator instead.
-function hasKey<K extends string, T extends object>(k: K, o: T): o is T & Record<K, unknown> {
-  return k in o;
-}
-
-const isFulfilled = <T>(promise: PromiseSettledResult<T>): promise is PromiseFulfilledResult<T> =>
-  promise.status === 'fulfilled';
