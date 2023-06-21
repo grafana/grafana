@@ -46,6 +46,9 @@ const (
 	// in the folder registry service.
 	StandardKindAlertRule = "alertrule"
 
+	// StandardKindLibraryPanel is for library panels
+	StandardKindLibraryPanel = "librarypanel"
+
 	//----------------------------------------
 	// References are referenced from objects
 	//----------------------------------------

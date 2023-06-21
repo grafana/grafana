@@ -49,8 +49,10 @@ export const UsersActionBarUnconnected = ({
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasAccess(AccessControlAction.OrgUsersAdd, canInvite);
-  // Hide Invite button in case users are managed externally
-  const showInviteButton: boolean = canAddToOrg && !config.externalUserMngInfo;
+  // Show invite button in the following cases:
+  // 1) the instance is not a hosted Grafana instance (!config.externalUserMngInfo)
+  // 2) new basic auth users can be created for this instance (!config.disableLoginForm).
+  const showInviteButton: boolean = canAddToOrg && !(config.disableLoginForm && config.externalUserMngInfo);
 
   return (
     <div className="page-action-bar" data-testid="users-action-bar">

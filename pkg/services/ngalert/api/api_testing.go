@@ -55,9 +55,6 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 			UID:   body.NamespaceUID,
 			Title: body.NamespaceTitle,
 		},
-		func(condition ngmodels.Condition) error {
-			return srv.evaluator.Validate(eval.NewContext(c.Req.Context(), c.SignedInUser), condition)
-		},
 		srv.cfg,
 	)
 	if err != nil {

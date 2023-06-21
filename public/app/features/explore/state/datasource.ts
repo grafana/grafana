@@ -8,7 +8,6 @@ import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { ExploreItemState, ThunkResult } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
@@ -25,7 +24,7 @@ import { createEmptyQueryResponse, getDatasourceUIDs, loadAndInitDatasource } fr
  * Updates datasource instance before datasource loading has started
  */
 export interface UpdateDatasourceInstancePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   datasourceInstance: DataSourceApi;
   history: HistoryItem[];
 }
@@ -41,7 +40,7 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  * Loads a new datasource identified by the given name.
  */
 export function changeDatasource(
-  exploreId: ExploreId,
+  exploreId: string,
   datasource: string | DataSourceRef,
   options?: { importQueries: boolean }
 ): ThunkResult<Promise<void>> {
@@ -111,7 +110,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       logsResult: null,
       supplementaryQueries: loadSupplementaryQueries(),
       queryResponse: createEmptyQueryResponse(),
-      loading: false,
       queryKeys: [],
       history,
     };

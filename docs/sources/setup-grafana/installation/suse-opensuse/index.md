@@ -2,7 +2,7 @@
 description: Install guide for Grafana on SUSE or openSUSE.
 title: Install Grafana on SUSE or openSUSE
 menuTitle: SUSE or openSUSE
-weight: 450
+weight: 300
 ---
 
 # Install Grafana on SUSE or openSUSE

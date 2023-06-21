@@ -39,9 +39,9 @@ const (
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
-	// FlagLokiLive
-	// Support WebSocket streaming for loki (early prototype)
-	FlagLokiLive = "lokiLive"
+	// FlagLokiExperimentalStreaming
+	// Support new streaming approach for loki (prototype, needs special loki build)
+	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
@@ -295,14 +295,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAuthenticationConfigUI
-	// Enables authentication configuration UI
-	FlagAuthenticationConfigUI = "authenticationConfigUI"
-
-	// FlagPluginsAPIManifestKey
-	// Use grafana.com API to retrieve the public manifest key
-	FlagPluginsAPIManifestKey = "pluginsAPIManifestKey"
-
 	// FlagAdvancedDataSourcePicker
 	// Enable a new data source picker with contextual information, recently used order and advanced mode
 	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
@@ -338,4 +330,20 @@ const (
 	// FlagCloudWatchLogsMonacoEditor
 	// Enables the Monaco editor for CloudWatch Logs queries
 	FlagCloudWatchLogsMonacoEditor = "cloudWatchLogsMonacoEditor"
+
+	// FlagExploreScrollableLogsContainer
+	// Improves the scrolling behavior of logs in Explore
+	FlagExploreScrollableLogsContainer = "exploreScrollableLogsContainer"
+
+	// FlagRecordedQueriesMulti
+	// Enables writing multiple items from a single query within Recorded Queries
+	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+
+	// FlagAlertingLokiRangeToInstant
+	// Rewrites eligible loki range queries to instant queries
+	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
+
+	// FlagFlameGraphV2
+	// New version of flame graph with new features
+	FlagFlameGraphV2 = "flameGraphV2"
 )

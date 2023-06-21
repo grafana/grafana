@@ -56,6 +56,7 @@ function getStyles(theme: GrafanaTheme2) {
       line-break: anywhere;
       margin-top: -${theme.spacing(0.25)};
       margin-right: ${theme.spacing(4)};
+      min-height: ${theme.spacing(4)};
     `,
     ui: css`
       background-color: ${theme.colors.background.secondary};

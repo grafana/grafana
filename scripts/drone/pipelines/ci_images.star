@@ -11,8 +11,8 @@ load(
     "from_secret",
 )
 load(
-    "scripts/drone/utils/images.star",
-    "images",
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
 )
 
 def publish_ci_windows_test_image_pipeline():
@@ -28,7 +28,7 @@ def publish_ci_windows_test_image_pipeline():
         steps = [
             {
                 "name": "clone",
-                "image": images["wix_image"],
+                "image": windows_images["wix_image"],
                 "environment": {
                     "GITHUB_TOKEN": from_secret("github_token"),
                 },
@@ -39,7 +39,7 @@ def publish_ci_windows_test_image_pipeline():
             },
             {
                 "name": "build-and-publish",
-                "image": images["windows_server_core_image"],
+                "image": windows_images["windows_server_core_image"],
                 "environment": {
                     "DOCKER_USERNAME": from_secret("docker_username"),
                     "DOCKER_PASSWORD": from_secret("docker_password"),
