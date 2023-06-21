@@ -188,7 +188,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
                 <MetaText icon="clock-nine">
                   Last delivery attempt <Strong>25 minutes ago</Strong>
                 </MetaText>
-                <MetaText icon="hourglass">
+                <MetaText icon="stopwatch">
                   took <Strong>2s</Strong>
                 </MetaText>
               </>
