@@ -96,13 +96,13 @@ We have seen how field configs contain type information, and they also have anot
 
 A data transformation is any function that accepts a data frame as input, and returns another data frame as output. By using data frames in your plugin, you get a range of transformations for free.
 
-To learn more about data transformations in Grafana, refer to [Transform data](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data).
+To learn more about data transformations in Grafana, refer to [Transform data](/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data).
 
 ## Data frames as time series
 
 A data frame with at least one time field is considered a _time series_.
 
-For more information on time series, refer to our [Introduction to time series]({{< relref "../../fundamentals/timeseries" >}}).
+For more information on time series, refer to our [Introduction to time series]({{< relref "../../../fundamentals/timeseries" >}}).
 
 ### Wide format
 

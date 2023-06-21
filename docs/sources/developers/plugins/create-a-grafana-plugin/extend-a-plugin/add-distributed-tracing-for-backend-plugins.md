@@ -34,7 +34,7 @@ tracing = true
 Grafana supports [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. If Grafana is configured to use a deprecated tracing system (Jaeger or OpenTracing), then tracing is disabled in the plugin provided by the SDK and configured when calling `datasource.Manage | app.Manage`.
 
 OpenTelemetry must be enabled and configured for the Grafana instance. Please refer to the [Grafana configuration documentation](
-{{< relref "../../setup-grafana/configure-grafana/#tracingopentelemetry" >}}) for more information.
+{{< relref "../../../../setup-grafana/configure-grafana#tracingopentelemetry" >}}) for more information.
 
 Refer to the [OpenTelemetry Go SDK](https://pkg.go.dev/go.opentelemetry.io/otel) for in-depth documentation about all the features provided by OpenTelemetry.
 

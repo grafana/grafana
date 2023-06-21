@@ -14,6 +14,6 @@ weight: 400
 
 This section contains topics related to publishing Grafana plugins.
 
-- [Publish or update a plugin]({{< relref "./publish-or-update-a-plugin.md">}})
-- [Package a plugin]({{< relref "./package-a-plugin.md">}})
-- [Publishing and signing criteria]({{< relref "./publishing-and-signing-criteria.md">}})
+- [Publish or update a plugin]({{< relref "./publish-or-update-a-plugin.md" >}})
+- [Package a plugin]({{< relref "./package-a-plugin.md" >}})
+- [Publishing and signing criteria]({{< relref "./publishing-and-signing-criteria.md" >}})

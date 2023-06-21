@@ -2,6 +2,7 @@
 title: Add authentication for data source plugins
 aliases:
   - ../../../plugins/add-authentication-for-data-source-plugins/
+description: How to add authentication for data source plugins.
 keywords: 
   - grafana
   - plugins
@@ -125,11 +126,11 @@ Once the user has saved the configuration for a data source, the secret data sou
 
 The Grafana server comes with a proxy that lets you define templates for your requests: _proxy routes_. Grafana sends the proxy route to the server, decrypts the secrets along with other configuration, and adds them to the request before sending it.
 
-> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../setup-grafana/configure-security/configure-authentication/auth-proxy/" >}}). The data source proxy is used to authenticate a data source, while the auth proxy is used to log into Grafana itself.
+> **Note:** Be sure not to confuse the data source proxy with the [auth proxy]({{< relref "../../../../setup-grafana/configure-security/configure-authentication/auth-proxy/index.md" >}}). The data source proxy is used to authenticate a data source, while the auth proxy is used to log into Grafana itself.
 
 ### Add a proxy route to your plugin
 
-To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file.
+To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](/docs/grafana/developers/plugins/metadata.md) file.
 
 1. Add the route to `plugin.json`:
 
@@ -294,7 +295,7 @@ While the data source proxy supports the most common authentication methods for 
 - Proxy routes only support HTTP or HTTPS.
 - Proxy routes don't support custom token authentication.
 
-If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "backend/" >}}). Because backend plugins run on the server, they can access decrypted secrets, which makes it easier to implement custom authentication methods.
+If any of these limitations apply to your plugin, you need to add a [backend plugin]({{< relref "../../introduction-to-plugin-development/backend" >}}). Because backend plugins run on the server, they can access decrypted secrets, which makes it easier to implement custom authentication methods.
 
 The decrypted secrets are available from the `DecryptedSecureJSONData` field in the instance settings.
 
@@ -312,7 +313,7 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 ## Forward OAuth identity for the logged-in user
 
-If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../setup-grafana/configure-security/configure-authentication/generic-oauth/" >}}), then your data source plugin can reuse the access token for the logged-in Grafana user.
+If your data source uses the same OAuth provider as Grafana itself, for example using [Generic OAuth Authentication]({{< relref "../../../../setup-grafana/configure-security/configure-authentication/generic-oauth" >}}), then your data source plugin can reuse the access token for the logged-in Grafana user.
 
 To allow Grafana to pass the access token to the plugin, update the data source configuration and set the `jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) settings provide a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
 
@@ -436,7 +437,7 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 ## Forward user header for the logged-in user
 
-When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana passes the user header to the plugin using the `X-Grafana-User` header. You can forward this header as well as [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
+When [send_user_header]({{< relref "../../../../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana passes the user header to the plugin using the `X-Grafana-User` header. You can forward this header as well as [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
 
 **`QueryData`**
 

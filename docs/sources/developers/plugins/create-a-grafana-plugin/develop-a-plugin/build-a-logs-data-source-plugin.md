@@ -2,8 +2,7 @@
 title: Build a logs data source plugin
 aliases:
   - ../../../plugins/build-a-logs-data-source-plugin/
-description:
-  - 'How to build a logs data source plugin.'
+description: How to build a logs data source plugin.
 keywords:
   - grafana
   - plugins
@@ -62,7 +61,7 @@ frame.add({ time: 1589189388597, content: 'user registered' });
 frame.add({ time: 1589189406480, content: 'user logged in' });
 ```
 
-That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../../../../explore" >}}) or by adding a [Logs panel]({{< relref "../../../../../panels-visualizations/visualizations/logs" >}}).
+That's all you need to start returning log data from your data source. Go ahead and try it out in [Explore]({{< relref "../../../../explore" >}}) or by adding a [Logs panel]({{< relref "../../../../panels-visualizations/visualizations/logs" >}}).
 
 Congratulations, you just wrote your first logs data source plugin! Next, let's look at a couple of features that can further improve the experience for the user.
 
@@ -114,7 +113,7 @@ frame.add({ time: 1589189406480, content: 'user logged in' });
 
 Add additional information about each log line by supplying more data frame fields.
 
-If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Grafana treats subsequent text fields as [detected fields]({{< relref "../../explore#labels-and-detected-fields" >}}).
+If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Grafana treats subsequent text fields as [detected fields]({{< relref "../../../../explore#labels-and-detected-fields" >}}).
 
 Any number of custom fields can be added to your data frame; Grafana comes with two dedicated fields: `levels` and `id`.
 

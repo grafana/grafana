@@ -22,7 +22,7 @@ You can use the Plugin extensions API with your Grafana app plugins to add links
 Be sure your plugin meets the following requirements before proceeding:
 
 - It must be an app plugin.
-- It must be preloaded (by setting the [preload property]({{< relref "./metadata" >}}) to `true` in the `plugin.json`
+- It must be preloaded (by setting the [preload property]({{< relref "../../metadata.md" >}}) to `true` in the `plugin.json`
 - It must be installed and enabled.
 
 ## Available extension points within Grafana

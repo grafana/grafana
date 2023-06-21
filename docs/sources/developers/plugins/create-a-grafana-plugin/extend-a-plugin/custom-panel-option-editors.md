@@ -2,6 +2,7 @@
 title: Build a custom panel option editor
 aliases:
   - ../../../plugins/custom-panel-option-editors/
+description: How to build a custom panel option editor.
 keywords:
   - grafana
   - plugins

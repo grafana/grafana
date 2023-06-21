@@ -119,7 +119,7 @@ To submit an **update** for an already published plugin:
 
 ### Can I distribute my plugin somewhere else other than the Grafana plugin catalog?
 
-- The official method for distributing Grafana plugins is through our catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
+- The official method for distributing Grafana plugins is through our catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide]({{< relref "../../../administration/plugin-management#install-plugin-on-local-grafana" >}}).
 
 ### Can I still use Angular for my plugin?
 

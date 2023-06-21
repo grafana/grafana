@@ -1,5 +1,5 @@
 ---
-title: Migrate plugins from AngularJS to React
+title: Migrate a plugin from AngularJS to React
 menuTitle: Angular to React
 description: Guide for migrating plugins from AngularJS to React.
 keywords:

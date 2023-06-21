@@ -2,6 +2,7 @@
 title: Work with data frames
 aliases:
   - ../../../plugins/working-with-data-frames/
+description: How to work with data frames.
 keywords:
   - grafana
   - plugins
@@ -13,11 +14,11 @@ weight: 900
 
 # Work with data frames
 
-The [data frame]({{< relref "data-frames" >}}) is a columnar data structure that allows for efficient querying of large amounts of data. Since data frames are a central concept when developing plugins for Grafana, in this guide we'll look at some ways you can use them.
+The [data frame]({{< relref "../../introduction-to-plugin-development/data-frames" >}}) is a columnar data structure that allows for efficient querying of large amounts of data. Since data frames are a central concept when developing plugins for Grafana, in this guide we'll look at some ways you can use them.
 
 The `DataFrame` interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
-> **Note:** If you want to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "migration-guide/#migrate-to-data-frames" >}}).
+> **Note:** If you want to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "../../migration-guide#migrate-to-data-frames" >}}).
 
 ## Create a data frame
 

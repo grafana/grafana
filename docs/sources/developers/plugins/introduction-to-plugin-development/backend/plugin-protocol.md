@@ -26,7 +26,7 @@ If you choose to develop against the plugin protocol directly, you can do so usi
 Grafana's plugin protocol protobufs are available in the [GitHub repository](https://github.com/grafana/grafana-plugin-sdk-go/blob/master/proto/backend.proto).
 
 {{% admonition type="note" %}}
-The plugin protocol lives in the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) because Grafana itself uses parts of the SDK as a dependency.
+The plugin protocol lives in the [Grafana Plugin SDK for Go]({{< relref "./grafana-plugin-sdk-for-go/" >}}) because Grafana itself uses parts of the SDK as a dependency.
 {{% /admonition %}}
 
 ## Versioning

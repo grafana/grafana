@@ -59,7 +59,7 @@ Grafana's backend plugin system exposes several key capabilities, or building bl
 
 #### Query data
 
-The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../dashboards" >}}), [Explore]({{< relref "../../../explore" >}}) or [Grafana Alerting]({{< relref "../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces.
+The query data capability allows a backend plugin to handle data source queries that are submitted from a [dashboard]({{< relref "../../../../dashboards" >}}), [Explore]({{< relref "../../../../explore" >}}) or [Grafana Alerting]({{< relref "../../../../alerting" >}}). The response contains [data frames]({{< relref "../data-frames.md" >}}), which are used to visualize metrics, logs, and traces.
 
 {{% admonition type="note" %}} Backend data source plugins are required to implement the query data capability.{{%
 /admonition %}}
@@ -74,7 +74,7 @@ Compared to the query data capability, where the response contains data frames, 
 
 Examples of use cases for implementing resources:
 
-- Implement a custom data source proxy to provide certain authentication, authorization, or other requirements that are not supported in Grafana's [built-in data proxy]({{< relref "../../http_api/data_source/#data-source-proxy-calls" >}}).
+- Implement a custom data source proxy to provide certain authentication, authorization, or other requirements that are not supported in Grafana's [built-in data proxy]({{< relref "../../../http_api/data_source#data-source-proxy-calls" >}}).
 - Return data or information in a format suitable for use within a data source query editor to provide auto-complete functionality.
 - Return static resources such as images or files.
 - Send a command to a device, such as a microcontroller or IoT device.
@@ -90,10 +90,10 @@ A plugin's health check endpoint is exposed in the Grafana HTTP API and allows e
 
 #### Collect metrics
 
-A backend plugin can collect and return runtime, process, and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you're using the [Grafana Plugin SDK for Go]({{< relref "grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in. This SDK gives you Go runtime metrics and process metrics out of the box. You can use the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) to add custom metrics to instrument your backend plugin.
+A backend plugin can collect and return runtime, process, and custom metrics using the text-based Prometheus [exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). If you're using the [Grafana Plugin SDK for Go]({{< relref "./grafana-plugin-sdk-for-go/" >}}) to implement your backend plugin, then the [Prometheus instrumentation library for Go applications](https://github.com/prometheus/client_golang) is built-in. This SDK gives you Go runtime metrics and process metrics out of the box. You can use the [Prometheus instrumentation library](https://github.com/prometheus/client_golang) to add custom metrics to instrument your backend plugin.
 
 The Grafana HTTP API offers an endpoint (`/api/plugins/<plugin id>/metrics`) that allows you to configure a Prometheus instance to scrape the metrics.
 
 #### Streaming
 
-The streaming capability allows a backend plugin to handle data source queries that are streaming. For more information, refer to [Build a streaming data source plugin]({{<relref  "../build-a-streaming-data-source-plugin.md">}})
+The streaming capability allows a backend plugin to handle data source queries that are streaming. For more information, refer to [Build a streaming data source plugin]({{<relref  "../create-a-grafana-plugin/develop-a-plugin/build-a-streaming-data-source-plugin.md">}})
