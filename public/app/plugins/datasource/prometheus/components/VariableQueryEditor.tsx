@@ -182,11 +182,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
    * Call onchange for metric change if metrics names (regex) query type
    * Debounce this because to not call the API for every keystroke.
    */
-  const onMetricChange = debounce((value: string) => {
+  const onMetricChange = (value: string) => {
     if (qryType === QueryType.MetricNames && value) {
       onChangeWithVariableString({ metric: value });
     }
-  }, 300);
+  };
 
   /**
    *  Do not call onchange for variable query result when query type is var query result
