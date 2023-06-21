@@ -12,11 +12,11 @@ keywords:
   - guide
   - contact point
   - templating
-title: Manage contact points
-weight: 200
+title: Configure contact points
+weight: 410
 ---
 
-# Manage contact points
+# Configure contact points
 
 Use contact points to define how your contacts are notified when an alert rule fires. You can create, edit, delete, and test a contact point.
 
