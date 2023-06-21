@@ -1,17 +1,25 @@
 import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
-import { GrafanaPlugin, PluginMeta } from '@grafana/data';
+import { PluginMeta } from '@grafana/data';
 
 import { getPluginSettings } from '../pluginSettings';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
+import {
+  getSafeSandboxDomElement,
+  isDomElement,
+  isLiveTarget,
+  markDomElementStyleAsALiveTarget,
+} from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
+import { sandboxPluginComponents } from './sandbox_components';
+import { CompartmentDependencyModule, PluginFactoryFunction } from './types';
 
-type CompartmentDependencyModule = unknown;
-type PluginFactoryFunction = (...args: CompartmentDependencyModule[]) => {
-  plugin: GrafanaPlugin;
-};
+// Loads near membrane custom formatter for near membrane proxy objects.
+if (process.env.NODE_ENV !== 'production') {
+  require('@locker/near-membrane-dom/custom-devtools-formatter');
+}
 
 const pluginImportCache = new Map<string, Promise<unknown>>();
 
@@ -30,8 +38,22 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
 async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown> {
   const generalDistortionMap = getGeneralSandboxDistortionMap();
 
-  function distortionCallback(v: ProxyTarget): ProxyTarget {
-    return generalDistortionMap.get(v) ?? v;
+  /*
+   * this function is executed every time a plugin calls any DOM API
+   * it must be kept as lean and performant as possible and sync
+   */
+  function distortionCallback(originalValue: ProxyTarget): ProxyTarget {
+    if (isDomElement(originalValue)) {
+      const element = getSafeSandboxDomElement(originalValue, meta.id);
+      // the element.style attribute should be a live target to work in chrome
+      markDomElementStyleAsALiveTarget(element);
+      return element;
+    }
+    const distortion = generalDistortionMap.get(originalValue);
+    if (distortion) {
+      return distortion(originalValue) as ProxyTarget;
+    }
+    return originalValue;
   }
 
   return new Promise(async (resolve, reject) => {
@@ -40,6 +62,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
+      liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
         // Plugins builds use the AMD module system. Their code consists
@@ -47,11 +70,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
         // This is that `define` function the plugin will call.
         // More info about how AMD works https://github.com/amdjs/amdjs-api/blob/master/AMD.md
         // Plugins code normally use the "anonymous module" signature: define(depencies, factoryFunction)
-        define(
+        async define(
           idOrDependencies: string | string[],
           maybeDependencies: string[] | PluginFactoryFunction,
           maybeFactory?: PluginFactoryFunction
-        ): void {
+        ): Promise<void> {
           let dependencies: string[];
           let factory: PluginFactoryFunction;
           if (Array.isArray(idOrDependencies)) {
@@ -65,10 +88,11 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
           try {
             const resolvedDeps = resolvePluginDependencies(dependencies);
             // execute the plugin's code
-            const pluginExports: { plugin: GrafanaPlugin } = factory.apply(null, resolvedDeps);
+            const pluginExportsRaw = factory.apply(null, resolvedDeps);
             // only after the plugin has been executed
             // we can return the plugin exports.
             // This is what grafana effectively gets.
+            const pluginExports = await sandboxPluginComponents(pluginExportsRaw, meta);
             resolve(pluginExports);
           } catch (e) {
             reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
