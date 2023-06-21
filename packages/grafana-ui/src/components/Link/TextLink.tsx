@@ -29,7 +29,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
 }
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
-  ({ href, color = 'link', external = false, inline, variant = 'body', weight, icon, children, ...rest }, ref) => {
+  ({ href, color, external = false, inline, variant = 'body', weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
     const theme = useTheme2();
@@ -71,7 +71,12 @@ export const getLinkStyles = (
   color?: TextLinkProps['color'],
   inline = true
 ) => {
-  const linkColor = color ? customColor(color, theme) : theme.colors.text.link;
+  const getLinkColor = (color: TextLinkProps['color'], inline: boolean) => {
+    if (color) {
+      return customColor(color, theme);
+    }
+    return inline ? theme.colors.text.link : theme.colors.text.primary;
+  };
 
   return css([
     variant && {
@@ -83,14 +88,19 @@ export const getLinkStyles = (
     {
       alignItems: 'center',
       gap: '0.25em',
-      color: linkColor,
+      color: getLinkColor(color, inline),
       display: 'flex',
       '&:hover': {
         textDecoration: 'underline',
+        color: theme.colors.text.link,
       },
     },
     inline && {
       display: 'inline-flex',
+      textDecoration: 'underline',
+      '&:hover': {
+        textDecoration: 'none',
+      },
     },
   ]);
 };
