@@ -240,9 +240,8 @@ export class TimeSrv {
     if (interval === AutoRefreshInterval) {
       intervalMs = this.getAutoRefreshInteval();
     } else {
-      const validInterval = this.contextSrv.getValidInterval(interval);
-      intervalMs = rangeUtil.intervalToMs(validInterval);
-      refresh = validInterval;
+      refresh = this.contextSrv.getValidInterval(interval);
+      intervalMs = rangeUtil.intervalToMs(refresh);
     }
 
     this.refreshMS = intervalMs;
