@@ -77,10 +77,7 @@ func newDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
 func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
-	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(
-		cfg.GrafanaComURL,
-		angulardetector.DefaultGCOMDetectorsProviderTTL,
-	)
+	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
 	if err != nil {
 		return nil, fmt.Errorf("newGCOMDetectorsProvider: %w", err)
 	}
