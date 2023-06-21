@@ -3,13 +3,14 @@ package teamtest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
 )
 
 type FakeService struct {
 	ExpectedTeam        team.Team
 	ExpectedIsMember    bool
+	ExpectedIsAdmin     bool
 	ExpectedTeamDTO     *team.TeamDTO
 	ExpectedTeamsByUser []*team.TeamDTO
 	ExpectedMembers     []*team.TeamMemberDTO
@@ -44,7 +45,7 @@ func (s *FakeService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsBy
 	return s.ExpectedTeamsByUser, s.ExpectedError
 }
 
-func (s *FakeService) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func (s *FakeService) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	return s.ExpectedError
 }
 
@@ -60,14 +61,14 @@ func (s *FakeService) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeam
 	return s.ExpectedError
 }
 
+func (s *FakeService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
+	return s.ExpectedError
+}
+
 func (s *FakeService) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
 	return s.ExpectedMembers, s.ExpectedError
 }
 
 func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.ExpectedMembers, s.ExpectedError
-}
-
-func (s *FakeService) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	return false, s.ExpectedError
 }

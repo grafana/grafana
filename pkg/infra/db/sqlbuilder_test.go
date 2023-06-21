@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,94 +25,209 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
 	t.Run("WriteDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{User: true, Permission: models.PERMISSION_VIEW},
-				Search{RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("user ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 
 		t.Run("role ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleViewer, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleViewer, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleEditor, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Role: org.RoleEditor, Permission: models.PERMISSION_VIEW},
-				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("role ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
+				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 
 		t.Run("team ACL", func(t *testing.T) {
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_VIEW},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_VIEW},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: true, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{},
-				&DashboardPermission{Team: true, Permission: models.PERMISSION_EDIT},
-				Search{UserFromACL: false, RequiredPermission: models.PERMISSION_EDIT},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: false, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("team ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{},
+				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
+				Search{UserFromACL: false, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 
@@ -120,29 +235,67 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 			test(t,
 				DashboardProps{},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_VIEW},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: models.PERMISSION_EDIT},
+				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
 				DashboardProps{OrgId: -1},
 				nil,
-				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: models.PERMISSION_EDIT},
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
+			)
+		})
+
+		t.Run("defaults for user ACL with nested folders", func(t *testing.T) {
+			test(t,
+				DashboardProps{},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
+			)
+
+			test(t,
+				DashboardProps{OrgId: -1},
+				nil,
+				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
+				shouldNotFind,
+				featuremgmt.WithFeatures(featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)),
 			)
 		})
 	})
@@ -159,13 +312,13 @@ type DashboardPermission struct {
 	User       bool
 	Team       bool
 	Role       org.RoleType
-	Permission models.PermissionType
+	Permission dashboards.PermissionType
 }
 
 type Search struct {
 	UsersOrgRole       org.RoleType
 	UserFromACL        bool
-	RequiredPermission models.PermissionType
+	RequiredPermission dashboards.PermissionType
 	OrgId              int64
 }
 
@@ -173,7 +326,7 @@ type dashboardResponse struct {
 	Id int64
 }
 
-func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool) {
+func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool, features featuremgmt.FeatureToggles) {
 	t.Helper()
 
 	t.Run("", func(t *testing.T) {
@@ -184,14 +337,14 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 
 		var aclUserID int64
 		if dashboardPermission != nil {
-			aclUserID = createDummyACL(t, sqlStore, dashboardPermission, search, dashboard.Id)
+			aclUserID = createDummyACL(t, sqlStore, dashboardPermission, search, dashboard.ID)
 			t.Logf("Created ACL with user ID %d\n", aclUserID)
 		}
-		dashboards := getDashboards(t, sqlStore, search, aclUserID)
+		dashboards := getDashboards(t, sqlStore, search, aclUserID, features)
 
 		if shouldFind {
 			require.Len(t, dashboards, 1, "Should return one dashboard")
-			assert.Equal(t, dashboard.Id, dashboards[0].Id, "Should return created dashboard")
+			assert.Equal(t, dashboard.ID, dashboards[0].Id, "Should return created dashboard")
 		} else {
 			assert.Empty(t, dashboards, "Should not return any dashboard")
 		}
@@ -218,7 +371,8 @@ func createDummyUser(t *testing.T, sqlStore DB) *user.User {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		sess.UseBool("is_admin")
 		var err error
-		id, err = sess.Insert(usr)
+		_, err = sess.Insert(usr)
+		id = usr.ID
 		return err
 	})
 	require.NoError(t, err)
@@ -226,40 +380,40 @@ func createDummyUser(t *testing.T, sqlStore DB) *user.User {
 	return usr
 }
 
-func createDummyDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardProps DashboardProps) *models.Dashboard {
+func createDummyDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardProps DashboardProps) *dashboards.Dashboard {
 	t.Helper()
 
 	json, err := simplejson.NewJson([]byte(`{"schemaVersion":17,"title":"gdev dashboards","uid":"","version":1}`))
 	require.NoError(t, err)
 
-	saveDashboardCmd := models.SaveDashboardCommand{
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		Dashboard:    json,
-		UserId:       0,
+		UserID:       0,
 		Overwrite:    false,
 		Message:      "",
 		RestoredFrom: 0,
-		PluginId:     "",
-		FolderId:     0,
+		PluginID:     "",
+		FolderID:     0,
 		IsFolder:     false,
 		UpdatedAt:    time.Time{},
 	}
 	if dashboardProps.OrgId != 0 {
-		saveDashboardCmd.OrgId = dashboardProps.OrgId
+		saveDashboardCmd.OrgID = dashboardProps.OrgId
 	} else {
-		saveDashboardCmd.OrgId = 1
+		saveDashboardCmd.OrgID = 1
 	}
 
-	dash := insertTestDashboard(t, sqlStore, "", saveDashboardCmd.OrgId, 0, false, nil)
+	dash := insertTestDashboard(t, sqlStore, "", saveDashboardCmd.OrgID, 0, false, nil)
 	require.NoError(t, err)
 
-	t.Logf("Created dashboard with ID %d and org ID %d\n", dash.Id, dash.OrgId)
+	t.Logf("Created dashboard with ID %d and org ID %d\n", dash.ID, dash.OrgID)
 	return dash
 }
 
 func createDummyACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
 	t.Helper()
 
-	acl := &models.DashboardACL{
+	acl := &dashboards.DashboardACL{
 		OrgID:       1,
 		Created:     time.Now(),
 		Updated:     time.Now(),
@@ -292,7 +446,7 @@ func createDummyACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPermissi
 	return 0
 }
 
-func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, aclUserID int64) []*dashboardResponse {
+func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, aclUserID int64, features featuremgmt.FeatureToggles) []*dashboardResponse {
 	t.Helper()
 
 	old := sqlStore.Cfg.RBACEnabled
@@ -301,7 +455,10 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 		sqlStore.Cfg.RBACEnabled = old
 	}()
 
-	builder := NewSqlBuilder(sqlStore.Cfg, sqlStore.GetDialect())
+	recursiveQueriesAreSupported, err := sqlStore.RecursiveQueriesAreSupported()
+	require.NoError(t, err)
+
+	builder := NewSqlBuilder(sqlStore.Cfg, features, sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	signedInUser := &user.SignedInUser{
 		UserID: 9999999999,
 	}
@@ -325,18 +482,18 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
 	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
-	err := sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
+	err = sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)
 	return res
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
 func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:    orgId,
+		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -345,25 +502,25 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 		}),
 	}
 
-	var dash *models.Dashboard
+	var dash *dashboards.Dashboard
 	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
-		dash.Uid = util.GenerateShortUID()
+		dash.UID = util.GenerateShortUID()
 		_, err := sess.Insert(dash)
 		return err
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
 		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.Id,
+			DashboardID:   dash.ID,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
@@ -388,7 +545,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*dashboards.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {
@@ -401,11 +558,11 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardACLInfoMissing
+				return dashboards.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
+				return dashboards.ErrDashboardPermissionDashboardEmpty
 			}
 
 			sess.Nullable("user_id", "team_id")
@@ -415,7 +572,7 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 		}
 
 		// Update dashboard HasACL flag
-		dashboard := models.Dashboard{HasACL: true}
+		dashboard := dashboards.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})

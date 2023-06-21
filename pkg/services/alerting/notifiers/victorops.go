@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -154,7 +154,7 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	data, _ := bodyJSON.MarshalJSON()
-	cmd := &models.SendWebhookSync{Url: vn.URL, Body: string(data)}
+	cmd := &notifications.SendWebhookSync{Url: vn.URL, Body: string(data)}
 
 	if err := vn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		vn.log.Error("Failed to send Victorops notification", "error", err, "webhook", vn.Name)

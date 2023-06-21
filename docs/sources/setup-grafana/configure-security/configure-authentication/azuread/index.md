@@ -15,12 +15,21 @@ weight: 600
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
-- [Azure AD OAuth2 authentication](#azure-ad-oauth2-authentication)
+- [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
+    - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
+    - [Configure refresh token](#configure-refresh-token)
     - [Configure allowed groups](#configure-allowed-groups)
     - [Configure allowed domains](#configure-allowed-domains)
+    - [PKCE](#pkce)
+    - [Configure automatic login](#configure-automatic-login)
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
+  - [Common troubleshooting](#common-troubleshooting)
+    - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
+    - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
+    - [Map roles](#map-roles)
+  - [Skip organization role sync](#skip-organization-role-sync)
 
 ## Create the Azure AD application
 
@@ -99,22 +108,6 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
-### Map roles
-
-By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
-
-If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
-
-**On every login** the user organization role will be reset to match AzureAD's application role and
-their organization membership will be reset to the default organization.
-
-If Azure AD authentication is not intended to sync user roles and organization membership,
-`oauth_skip_org_role_update_sync` should be enabled.
-See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
-
 ### Assign server administrator privileges
 
 > Available in Grafana v9.2 and later versions.
@@ -141,13 +134,14 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Enable Azure AD OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
 ```
 [auth.azuread]
 name = Azure AD
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = APPLICATION_ID
 client_secret = CLIENT_SECRET
 scopes = openid email profile
@@ -157,6 +151,8 @@ allowed_domains =
 allowed_groups =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
+skip_org_role_sync = false
+use_pkce = true
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -166,7 +162,7 @@ GF_AUTH_AZUREAD_CLIENT_ID
 GF_AUTH_AZUREAD_CLIENT_SECRET
 ```
 
-**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana/#root-url" >}}) is set in your Azure Application Redirect URLs.
+**Note:** Verify that the Grafana [root_url]({{< relref "../../../configure-grafana#root_url" >}}) is set in your Azure Application Redirect URLs.
 
 ### Configure refresh token
 
@@ -205,6 +201,24 @@ The `allowed_domains` option limits access to users who belong to specific domai
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### PKCE
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which provides
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.azuread]` section.
+
+### Configure automatic login
+
+To bypass the login screen and log in automatically, enable the "auto_login" feature.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ### Team Sync (Enterprise only)
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
@@ -212,7 +226,7 @@ the correct teams.
 
 You can reference Azure AD groups by group object ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d`.
 
-To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync/" >}}) documentation.
+To learn more, refer to the [Team Sync]({{< relref "../../configure-team-sync" >}}) documentation.
 
 ## Common troubleshooting
 
@@ -229,7 +243,7 @@ If a user is member of more groups than the
 overage limit (200), then
 Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
 
-> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim)
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.
@@ -243,4 +257,28 @@ To force fetching groups from Microsoft Graph API instead of the `id_token`. You
 
 ```
 force_use_graph_api = true
+```
+
+### Map roles
+
+By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
+
+If no application role is found, the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+**On every login** the user organization role will be reset to match AzureAD's application role and
+their organization membership will be reset to the default organization.
+
+## Skip organization role sync
+
+If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}}) for more details.
+
+```ini
+[auth.azuread]
+# ..
+# prevents the sync of org roles from AzureAD
+skip_org_role_sync = true
 ```

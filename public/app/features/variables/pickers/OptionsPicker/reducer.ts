@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { cloneDeep, isString, trim } from 'lodash';
+import { cloneDeep, isString, trimStart } from 'lodash';
 
 import { applyStateChanges } from '../../../../core/utils/applyStateChanges';
 import { ALL_VARIABLE_VALUE } from '../../constants';
@@ -167,7 +167,7 @@ const optionsPickerSlice = createSlice({
       let nextIndex = state.highlightIndex + action.payload;
 
       if (nextIndex < 0) {
-        nextIndex = 0;
+        nextIndex = -1;
       } else if (nextIndex >= state.options.length) {
         nextIndex = state.options.length - 1;
       }
@@ -197,7 +197,7 @@ const optionsPickerSlice = createSlice({
       return state;
     },
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      const searchQuery = trim((state.queryValue ?? '').toLowerCase());
+      const searchQuery = trimStart((state.queryValue ?? '').toLowerCase());
 
       state.options = action.payload.filter((option) => {
         const optionsText = option.text ?? '';

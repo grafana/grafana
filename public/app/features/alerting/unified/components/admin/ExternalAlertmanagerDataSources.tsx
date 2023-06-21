@@ -62,7 +62,7 @@ export function ExternalAMdataSourceCard({ alertmanager, inactive }: ExternalAMd
       <Card.Heading className={styles.externalHeading}>
         {dataSource.name}{' '}
         {statusInconclusive && (
-          <Tooltip content="Multiple Alertmangers have the same URL configured. The state might be inconclusive.">
+          <Tooltip content="Multiple Alertmanagers have the same URL configured. The state might be inconclusive.">
             <Icon name="exclamation-triangle" size="md" className={styles.externalWarningIcon} />
           </Tooltip>
         )}

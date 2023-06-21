@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/metadata"
 )
 
 var (
@@ -133,7 +133,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 	fakeUser := store.GetUserIDString(testCtx.user)
 	firstVersion := "1"
-	kind := models.StandardKindJSONObj
+	kind := entity.StandardKindJSONObj
 	grn := &entity.GRN{
 		Kind: kind,
 		UID:  "my-test-entity",
@@ -314,7 +314,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		uid2 := "uid2"
 		uid3 := "uid3"
 		uid4 := "uid4"
-		kind2 := models.StandardKindPlaylist
+		kind2 := entity.StandardKindPlaylist
 		w1, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
 			GRN:  grn,
 			Body: body,
@@ -394,7 +394,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	})
 
 	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
-		kind := models.StandardKindDashboard
+		kind := entity.StandardKindDashboard
 		_, err := testCtx.client.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				Kind: kind,

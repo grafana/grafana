@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +30,7 @@ func TestAlertQuery(t *testing.T) {
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 			},
 			expectedIsExpression: true,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),

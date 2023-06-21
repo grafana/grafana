@@ -9,8 +9,8 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -89,7 +89,7 @@ func NewTelegramNotifier(model *models.AlertNotification, fn alerting.GetDecrypt
 	}, nil
 }
 
-func (tn *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, sendImageInline bool) (*models.SendWebhookSync, error) {
+func (tn *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, sendImageInline bool) (*notifications.SendWebhookSync, error) {
 	if sendImageInline {
 		cmd, err := tn.buildMessageInlineImage(evalContext)
 		if err == nil {
@@ -102,7 +102,7 @@ func (tn *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, send
 	return tn.buildMessageLinkedImage(evalContext)
 }
 
-func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalContext) (*models.SendWebhookSync, error) {
+func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalContext) (*notifications.SendWebhookSync, error) {
 	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
 
 	ruleURL, err := evalContext.GetRuleURL()
@@ -132,7 +132,7 @@ func (tn *TelegramNotifier) buildMessageLinkedImage(evalContext *alerting.EvalCo
 	})
 }
 
-func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalContext) (*models.SendWebhookSync, error) {
+func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalContext) (*notifications.SendWebhookSync, error) {
 	var imageFile *os.File
 	var err error
 
@@ -169,7 +169,7 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 	})
 }
 
-func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField string, apiAction string, extraConf func(writer *multipart.Writer)) (*models.SendWebhookSync, error) {
+func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField string, apiAction string, extraConf func(writer *multipart.Writer)) (*notifications.SendWebhookSync, error) {
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
 	defer func() {
@@ -203,7 +203,7 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
 	url := fmt.Sprintf(telegramAPIURL, tn.BotToken, apiAction)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        url,
 		Body:       body.String(),
 		HttpMethod: "POST",
@@ -260,7 +260,7 @@ func appendIfPossible(tlog log.Logger, message string, extra string, sizeLimit i
 
 // Notify send an alert notification to Telegram.
 func (tn *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
-	var cmd *models.SendWebhookSync
+	var cmd *notifications.SendWebhookSync
 	var err error
 	if evalContext.ImagePublicURL == "" && tn.UploadImage {
 		cmd, err = tn.buildMessage(evalContext, true)

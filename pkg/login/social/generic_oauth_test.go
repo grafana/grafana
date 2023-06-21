@@ -1,17 +1,18 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/go-kit/log/level"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -247,6 +248,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 
 		tests := []struct {
 			Name                    string
+			SkipOrgRoleSync         bool
 			AllowAssignGrafanaAdmin bool
 			ResponseBody            interface{}
 			OAuth2Extra             interface{}
@@ -447,11 +449,29 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				ExpectedEmail:     "john.doe@example.com",
 				ExpectedRole:      "Editor",
 			},
+			{
+				Name:            "Given skip org role sync set to true, with a valid id_token, a valid advanced JMESPath role path, a valid API response, no org role should be set",
+				SkipOrgRoleSync: true,
+				OAuth2Extra: map[string]interface{}{
+					// { "email": "john.doe@example.com",
+					//   "info": { "roles": [ "dev", "engineering" ] }}
+					"id_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImpvaG4uZG9lQGV4YW1wbGUuY29tIiwiaW5mbyI6eyJyb2xlcyI6WyJkZXYiLCJlbmdpbmVlcmluZyJdfX0.RmmQfv25eXb4p3wMrJsvXfGQ6EXhGtwRXo6SlCFHRNg",
+				},
+				ResponseBody: map[string]interface{}{
+					"info": map[string]interface{}{
+						"roles": []string{"engineering", "SRE"},
+					},
+				},
+				RoleAttributePath: "contains(info.roles[*], 'SRE') && 'Admin' || contains(info.roles[*], 'dev') && 'Editor' || 'Viewer'",
+				ExpectedEmail:     "john.doe@example.com",
+				ExpectedRole:      "",
+			},
 		}
 
 		for _, test := range tests {
 			provider.roleAttributePath = test.RoleAttributePath
 			provider.allowAssignGrafanaAdmin = test.AllowAssignGrafanaAdmin
+			provider.skipOrgRoleSync = test.SkipOrgRoleSync
 
 			t.Run(test.Name, func(t *testing.T) {
 				body, err := json.Marshal(test.ResponseBody)
@@ -471,7 +491,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedEmail, actualResult.Email)
 				require.Equal(t, test.ExpectedEmail, actualResult.Login)
@@ -569,7 +589,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedLogin, actualResult.Login)
 			})
@@ -667,7 +687,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 				}
 
 				token := staticToken.WithExtra(test.OAuth2Extra)
-				actualResult, err := provider.UserInfo(ts.Client(), token)
+				actualResult, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				require.NoError(t, err)
 				require.Equal(t, test.ExpectedName, actualResult.Name)
 			})
@@ -736,7 +756,7 @@ func TestUserInfoSearchesForGroup(t *testing.T) {
 					Expiry:       time.Now(),
 				}
 
-				userInfo, err := provider.UserInfo(ts.Client(), token)
+				userInfo, err := provider.UserInfo(context.Background(), ts.Client(), token)
 				assert.NoError(t, err)
 				assert.Equal(t, test.expectedResult, userInfo.Groups)
 			})

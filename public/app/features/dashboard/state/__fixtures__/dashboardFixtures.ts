@@ -22,12 +22,12 @@ export function createDashboardModelFixture(
     editable: true,
     graphTooltip: defaultDashboardCursorSync,
     schemaVersion: 1,
-    revision: 1,
     style: 'dark',
+    timezone: '',
     ...dashboardInput,
   };
 
-  return new DashboardModel(dashboardJson, meta, getVariablesFromState);
+  return new DashboardModel(dashboardJson, meta, { getVariablesFromState });
 }
 
 export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {
@@ -46,13 +46,12 @@ export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | 
 }
 
 export function createAnnotationJSONFixture(annotationInput: Partial<AnnotationQuery>): AnnotationQuery {
+  // @ts-expect-error
   return {
-    builtIn: 0, // ??
     datasource: {
       type: 'foo',
       uid: 'bar',
     },
-    showIn: 2,
     enable: true,
     type: 'anno',
     ...annotationInput,

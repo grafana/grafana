@@ -15,13 +15,23 @@ weight: 200
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
 
-- [Generic OAuth authentication](#generic-oauth-authentication)
+- [Configure generic OAuth authentication](#configure-generic-oauth-authentication)
+  - [Email address](#email-address)
+  - [Groups / Teams](#groups--teams)
+  - [Login](#login)
+  - [PKCE](#pkce)
+  - [Configure refresh token](#configure-refresh-token)
+  - [Configure automatic login](#configure-automatic-login)
   - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
   - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
   - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
   - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
-  - [Role mapping](#role-mapping)
+  - [Role Mapping](#role-mapping)
+    - [JMESPath examples](#jmespath-examples)
+      - [Map user organization role](#map-user-organization-role)
+      - [Map server administrator privileges](#map-server-administrator-privileges)
   - [Team synchronization](#team-synchronization)
+  - [Skip organization role sync](#skip-organization-role-sync)
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
@@ -35,6 +45,8 @@ Example config:
 name = OAuth
 icon = signin
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -43,7 +55,7 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
+allowed_groups = ["Admins", "Software Engineers"]
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
@@ -84,6 +96,8 @@ Similarly, group mappings are made using [JMESPath](http://jmespath.org/examples
 
 Furthermore, Grafana will check for the presence of at least one of the teams specified via the `team_ids` configuration option using the [JMESPath](http://jmespath.org/examples.html) specified via the `team_ids_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the Teams endpoint specified via the `teams_url` configuration option (using `/teams` as a fallback endpoint). The result should be a string array of Grafana Team IDs. Using this setting ensures that only certain teams is allowed to authenticate to Grafana using your OAuth provider.
 
+You can limit access to only members of a given group or list of groups by setting the `allowed_groups` option.
+
 ### Login
 
 Customize user login using `login_attribute_path` configuration option. Order of operations is as follows:
@@ -102,7 +116,7 @@ You can set the user's display name with JMESPath using the `name_attribute_path
 > Available in Grafana v8.3 and later versions.
 
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
-introduces "proof key for code exchange" (PKCE) which introduces
+introduces "proof key for code exchange" (PKCE) which provides
 additional protection against some forms of authorization code
 interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
 
@@ -130,6 +144,15 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 - Extend the `[auth.generic_oauth]` section with additional scopes
 - Enable the refresh token on the provider
 
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ## Set up OAuth2 with Auth0
 
 1. Use the following parameters to create a client in Auth0:
@@ -147,6 +170,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
    [auth.generic_oauth]
    enabled = true
    allow_sign_up = true
+   auto_login = false
    team_ids =
    allowed_organizations =
    name = Auth0
@@ -166,6 +190,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 name = BitBucket
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = <client id>
 client_secret = <client secret>
 scopes = account email
@@ -203,8 +228,9 @@ By default, a refresh token is included in the response for the **Authorization 
    name = Centrify
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret"
+   client_secret = <your generated OpenID Connect Client Secret>
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
@@ -242,6 +268,7 @@ By default, a refresh token is included in the response for the **Authorization 
    name = OneLogin
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <client id>
    client_secret = <client secret>
    scopes = openid email name
@@ -258,19 +285,23 @@ Grafana checks for the presence of a role using the [JMESPath](http://jmespath.o
 
 For more information, refer to the [JMESPath examples](#jmespath-examples).
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't
+update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+enable the `skip_org_role_sync` option.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authgeneric_oauth" >}}) for more information.
+{{% /admonition %}}
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-> then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+then the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
 ### JMESPath examples
 
@@ -354,7 +385,7 @@ With Team Sync you can map your Generic OAuth groups to teams in Grafana so that
 
 Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
 
 Config:
 
@@ -377,4 +408,17 @@ Payload:
     },
     ...
 }
+```
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
+
+```ini
+[auth.generic_oauth]
+# ..
+# prevents the sync of org roles from the Oauth provider
+skip_org_role_sync = true
+``
 ```

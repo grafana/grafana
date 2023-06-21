@@ -3,43 +3,24 @@ package validation
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidatePublicDashboard(t *testing.T) {
-	t.Run("Returns validation error when dashboard has template variables", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": [
-				   {
-					  "name": "templateVariableName"
-				   }
-				]
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+	t.Run("Returns no error when valid shareType value is received", func(t *testing.T) {
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: EmailShareType}}
 
-		err := ValidatePublicDashboard(dto, dashboard)
-		require.ErrorContains(t, err, ErrPublicDashboardHasTemplateVariables.Error())
+		err := ValidatePublicDashboard(dto)
+		require.NoError(t, err)
 	})
 
-	t.Run("Returns no validation error when dashboard has no template variables", func(t *testing.T) {
-		templateVars := []byte(`{
-			"templating": {
-				 "list": []
-			}
-		}`)
-		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := models.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+	t.Run("Returns error when invalid shareType value", func(t *testing.T) {
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", UserId: 1, PublicDashboard: &PublicDashboardDTO{Share: "invalid"}}
 
-		err := ValidatePublicDashboard(dto, dashboard)
-		require.NoError(t, err)
+		err := ValidatePublicDashboard(dto)
+		require.Error(t, err)
 	})
 }
 
@@ -59,7 +40,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 				req: PublicDashboardQueryDTO{
 					IntervalMs:    1000,
 					MaxDataPoints: 1000,
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "now-1h",
 						To:   "now",
 					},
@@ -107,7 +88,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "invalid",
 						To:   "1622560000000",
 					},
@@ -122,7 +103,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range to is invalid",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "1622560000000",
 						To:   "invalid",
 					},
@@ -137,7 +118,7 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			name: "Returns validation error when time range from or to is blank",
 			args: args{
 				req: PublicDashboardQueryDTO{
-					TimeRange: TimeSettings{
+					TimeRange: TimeRangeDTO{
 						From: "",
 						To:   "",
 					},
@@ -156,4 +137,36 @@ func TestValidateQueryPublicDashboardRequest(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidAccessToken(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		uuid := "da82510c2aa64d78a2e87fef36c58e89"
+		assert.True(t, IsValidAccessToken(uuid))
+	})
+
+	t.Run("false when blank", func(t *testing.T) {
+		assert.False(t, IsValidAccessToken(""))
+	})
+
+	t.Run("false when can't be parsed by uuid lib", func(t *testing.T) {
+		// too long
+		assert.False(t, IsValidAccessToken("0123456789012345678901234567890123456789"))
+	})
+}
+
+// we just check base cases since this wraps utils.IsValidShortUID which has
+// test coverage
+func TestValidUid(t *testing.T) {
+	t.Run("true", func(t *testing.T) {
+		assert.True(t, IsValidShortUID("afqrz7jZZ"))
+	})
+
+	t.Run("false when blank", func(t *testing.T) {
+		assert.False(t, IsValidShortUID(""))
+	})
+
+	t.Run("false when invalid chars", func(t *testing.T) {
+		assert.False(t, IsValidShortUID("afqrz7j%%"))
+	})
 }

@@ -7,7 +7,8 @@ export class ThresholdFormCtrl {
   panel: any;
   disabled = false;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor(private $scope: any) {}
 
   $onInit() {

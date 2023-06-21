@@ -12,8 +12,10 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "condition": "A",
     "data": [],
     "exec_err_state": "Error",
+    "is_paused": false,
     "no_data_state": "NoData",
     "title": "",
+    "uid": "",
   },
   "labels": {
     "": "",
@@ -49,8 +51,10 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
       },
     ],
     "exec_err_state": "Error",
+    "is_paused": false,
     "no_data_state": "NoData",
     "title": "",
+    "uid": "",
   },
   "labels": {
     "": "",

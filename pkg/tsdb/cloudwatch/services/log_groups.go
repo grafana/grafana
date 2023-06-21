@@ -33,20 +33,28 @@ func (s *LogGroupsService) GetLogGroups(req resources.LogGroupsRequest) ([]resou
 			input.AccountIdentifiers = []*string{req.AccountId}
 		}
 	}
-	response, err := s.logGroupsAPI.DescribeLogGroups(input)
-	if err != nil || response == nil {
-		return nil, err
-	}
+	result := []resources.ResourceResponse[resources.LogGroup]{}
 
-	var result []resources.ResourceResponse[resources.LogGroup]
-	for _, logGroup := range response.LogGroups {
-		result = append(result, resources.ResourceResponse[resources.LogGroup]{
-			Value: resources.LogGroup{
-				Arn:  *logGroup.Arn,
-				Name: *logGroup.LogGroupName,
-			},
-			AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
-		})
+	for {
+		response, err := s.logGroupsAPI.DescribeLogGroups(input)
+		if err != nil || response == nil {
+			return nil, err
+		}
+
+		for _, logGroup := range response.LogGroups {
+			result = append(result, resources.ResourceResponse[resources.LogGroup]{
+				Value: resources.LogGroup{
+					Arn:  *logGroup.Arn,
+					Name: *logGroup.LogGroupName,
+				},
+				AccountId: utils.Pointer(getAccountId(*logGroup.Arn)),
+			})
+		}
+
+		if !req.ListAllLogGroups || response.NextToken == nil {
+			break
+		}
+		input.NextToken = response.NextToken
 	}
 
 	return result, nil

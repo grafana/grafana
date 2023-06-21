@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -47,7 +48,7 @@ type fakeInstance struct {
 	fakeRoundTripper RoundTripper
 }
 
-func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	fp := &fakeHttpClientProvider{
 		opts: sdkhttpclient.Options{
 			Timeouts: &sdkhttpclient.DefaultTimeoutOptions,
@@ -68,7 +69,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		HTTPClient:    client,
 		Token:         "sometoken",
 		URL:           "https://awesome-influx.com",
-		Database:      "testdb",
+		DbName:        "testdb",
 		Version:       f.version,
 		HTTPMode:      "GET",
 		TimeInterval:  "10s",
@@ -78,7 +79,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 	}, nil
 }
 
-func (f *fakeInstance) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f *fakeInstance) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }
 

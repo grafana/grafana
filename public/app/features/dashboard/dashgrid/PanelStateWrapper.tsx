@@ -8,8 +8,10 @@ import {
   AnnotationEventUIModel,
   CoreApp,
   DashboardCursorSync,
+  DataFrame,
   EventFilterOptions,
   FieldConfigSource,
+  getDataSourceRef,
   getDefaultTimeRange,
   LoadingState,
   PanelData,
@@ -28,14 +30,17 @@ import {
   PanelChrome,
   PanelContext,
   PanelContextProvider,
-  PanelPadding,
   SeriesVisibilityChangeMode,
+  AdHocFilterItem,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
-import { InspectTab } from 'app/features/inspector/types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
+import { onUpdatePanelSnapshotData } from 'app/plugins/datasource/grafana/utils';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
@@ -43,10 +48,11 @@ import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annota
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
+import { getPanelChromeProps } from '../utils/getPanelChromeProps';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
@@ -59,10 +65,12 @@ export interface Props {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+  isDraggable?: boolean;
   width: number;
   height: number;
   onInstanceStateChange: (value: any) => void;
   timezone?: string;
+  hideMenu?: boolean;
 }
 
 export interface State {
@@ -104,6 +112,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        onAddAdHocFilter: this.onAddAdHocFilter,
+        onUpdateData: this.onUpdateData,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -133,6 +143,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return CoreApp.Dashboard;
   }
+
+  onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
+    return onUpdatePanelSnapshotData(this.props.panel, frames);
+  };
 
   onSeriesColorChange = (label: string, color: string) => {
     this.onFieldConfigChange(changeSeriesColorConfigFactory(label, color, this.props.panel.fieldConfig));
@@ -289,8 +303,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Error:
-        const { error } = data;
-        if (error) {
+        const { error, errors } = data;
+        if (errors?.length) {
+          if (errors.length === 1) {
+            errorMessage = errors[0].message;
+          } else {
+            errorMessage = 'Multiple errors found. Click for more details';
+          }
+        } else if (error) {
           if (errorMessage !== error.message) {
             errorMessage = error.message;
           }
@@ -330,7 +350,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         this.setState({ refreshWhenInView: false });
       }
       panel.runAllPanelQueries({
-        dashboardId: dashboard.id,
         dashboardUID: dashboard.uid,
         dashboardTimezone: dashboard.getTimezone(),
         publicDashboardAccessToken: dashboard.meta.publicDashboardAccessToken,
@@ -428,7 +447,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   };
 
   shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
-    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
+    return loadingState === LoadingState.Done || loadingState === LoadingState.Error || pluginMeta.skipDataQuery;
   }
 
   skipFirstRender(loadingState: LoadingState) {
@@ -439,6 +458,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)
     );
   }
+
+  onAddAdHocFilter = (filter: AdHocFilterItem) => {
+    const { key, value, operator } = filter;
+
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(this.props.panel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
+  };
 
   renderPanelContent(innerWidth: number, innerHeight: number) {
     const { panel, plugin, dashboard } = this.props;
@@ -567,57 +600,53 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     return !panel.hasTitle();
   }
 
-  onOpenErrorInspect(e: React.SyntheticEvent, tab: string) {
-    e.stopPropagation();
-    locationService.partial({ inspect: this.props.panel.id, inspectTab: tab });
-  }
-
   render() {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
 
     const alertState = data.alertState?.state;
+    const hasHoverHeader = this.hasOverlayHeader();
 
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
       'panel-container--transparent': transparent,
-      'panel-container--no-title': this.hasOverlayHeader(),
+      'panel-container--no-title': hasHoverHeader,
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
-    const title = panel.getDisplayTitle();
-    const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
-
-    let menu;
-    if (!dashboard.meta.publicDashboardAccessToken) {
-      menu = (
-        <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapper
-            style={{ top: 0 }}
-            panel={panel}
-            dashboard={dashboard}
-            loadingState={data.state}
-            onClose={() => {}}
-          />
-        </div>
-      );
-    }
+    const panelChromeProps = getPanelChromeProps({ ...this.props, data });
 
     if (config.featureToggles.newPanelChromeUI) {
+      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      const menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+        </div>
+      );
+
       return (
         <PanelChrome
           width={width}
           height={height}
-          padding={padding}
-          title={title}
-          menu={menu}
+          title={panelChromeProps.title}
           loadingState={data.state}
-          status={{
-            message: errorMessage,
-            onClick: (e: React.SyntheticEvent) => this.onOpenErrorInspect(e, InspectTab.Error),
-          }}
+          statusMessage={errorMessage}
+          statusMessageOnClick={panelChromeProps.onOpenErrorInspect}
+          description={panelChromeProps.description}
+          titleItems={panelChromeProps.titleItems}
+          menu={this.props.hideMenu ? undefined : menu}
+          dragClass={panelChromeProps.dragClass}
+          dragClassCancel="grid-drag-cancel"
+          padding={panelChromeProps.padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={panelChromeProps.hasOverlayHeader()}
+          displayMode={transparent ? 'transparent' : 'default'}
+          onCancelQuery={panelChromeProps.onCancelQuery}
+          onOpenMenu={panelChromeProps.onOpenMenu}
         >
           {(innerWidth, innerHeight) => (
             <>

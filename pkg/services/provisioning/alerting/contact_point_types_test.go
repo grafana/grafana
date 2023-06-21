@@ -3,9 +3,10 @@ package alerting
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/provisioning/values"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
 func TestReceivers(t *testing.T) {

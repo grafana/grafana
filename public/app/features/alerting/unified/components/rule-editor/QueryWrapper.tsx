@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { FC, useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
-  DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
   GrafanaTheme2,
@@ -14,16 +14,28 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { RelativeTimeRangePicker, useStyles2, Tooltip, Icon, GraphTresholdsStyleMode } from '@grafana/ui';
-import { isExpressionQuery } from 'app/features/expressions/guards';
+import { DataQuery } from '@grafana/schema';
+import {
+  GraphTresholdsStyleMode,
+  Icon,
+  InlineFormLabel,
+  Input,
+  RelativeTimeRangePicker,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import { QueryEditorRow } from 'app/features/query/components/QueryEditorRow';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { TABLE, TIMESERIES } from '../../utils/constants';
-import { SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 import { AlertConditionIndicator } from '../expressions/AlertConditionIndicator';
 
 import { VizWrapper } from './VizWrapper';
+
+export const DEFAULT_MAX_DATA_POINTS = 43200;
+
+export interface AlertQueryOptions {
+  maxDataPoints?: number | undefined;
+}
 
 interface Props {
   data: PanelData;
@@ -43,9 +55,10 @@ interface Props {
   onChangeThreshold?: (thresholds: ThresholdsConfig, index: number) => void;
   condition: string | null;
   onSetCondition: (refId: string) => void;
+  onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
 }
 
-export const QueryWrapper: FC<Props> = ({
+export const QueryWrapper = ({
   data,
   error,
   dsSettings,
@@ -63,10 +76,16 @@ export const QueryWrapper: FC<Props> = ({
   onChangeThreshold,
   condition,
   onSetCondition,
-}) => {
+  onChangeQueryOptions,
+}: Props) => {
   const styles = useStyles2(getStyles);
-  const isExpression = isExpressionQuery(query.model);
-  const [pluginId, changePluginId] = useState<SupportedPanelPlugins>(isExpression ? TABLE : TIMESERIES);
+  const [dsInstance, setDsInstance] = useState<DataSourceApi>();
+  const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
+
+  const queryWithDefaults = {
+    ...defaults,
+    ...cloneDeep(query.model),
+  };
 
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
@@ -96,61 +115,70 @@ export const QueryWrapper: FC<Props> = ({
 
   // TODO add a warning label here too when the data looks like time series data and is used as an alert condition
   function HeaderExtras({ query, error, index }: { query: AlertQuery; error?: Error; index: number }) {
-    if (isExpressionQuery(query.model)) {
-      return null;
-    } else {
-      return (
-        <Stack direction="row" alignItems="center" gap={1}>
-          <SelectingDataSourceTooltip />
-          {onChangeTimeRange && (
-            <RelativeTimeRangePicker
-              timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-              onChange={(range) => onChangeTimeRange(range, index)}
-            />
-          )}
-          <AlertConditionIndicator
-            onSetCondition={() => onSetCondition(query.refId)}
-            enabled={condition === query.refId}
-            error={error}
+    const queryOptions: AlertQueryOptions = { maxDataPoints: query.model.maxDataPoints };
+    const alertQueryOptions: AlertQueryOptions = {
+      maxDataPoints: queryOptions.maxDataPoints,
+    };
+
+    return (
+      <Stack direction="row" alignItems="baseline" gap={1}>
+        <SelectingDataSourceTooltip />
+        {onChangeTimeRange && (
+          <RelativeTimeRangePicker
+            timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+            onChange={(range) => onChangeTimeRange(range, index)}
           />
-        </Stack>
-      );
-    }
+        )}
+        <div className={styles.queryOptions}>
+          <MaxDataPointsOption
+            options={alertQueryOptions}
+            onChange={(options) => onChangeQueryOptions(options, index)}
+          />
+        </div>
+        <AlertConditionIndicator
+          onSetCondition={() => onSetCondition(query.refId)}
+          enabled={condition === query.refId}
+          error={error}
+        />
+      </Stack>
+    );
   }
 
+  const showVizualisation = data.state !== LoadingState.NotStarted;
+
   return (
-    <div className={styles.wrapper}>
-      <QueryEditorRow<DataQuery>
-        alerting
-        dataSource={dsSettings}
-        onChangeDataSource={!isExpression ? (settings) => onChangeDataSource(settings, index) : undefined}
-        id={query.refId}
-        index={index}
-        key={query.refId}
-        data={data}
-        query={cloneDeep(query.model)}
-        onChange={(query) => onChangeQuery(query, index)}
-        onRemoveQuery={onRemoveQuery}
-        onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
-        onRunQuery={onRunQueries}
-        queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
-        app={CoreApp.UnifiedAlerting}
-        visualization={
-          data.state !== LoadingState.NotStarted ? (
-            <VizWrapper
-              data={data}
-              changePanel={changePluginId}
-              currentPanel={pluginId}
-              thresholds={thresholds}
-              thresholdsType={thresholdsType}
-              onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
-            />
-          ) : null
-        }
-        hideDisableQuery={true}
-      />
-    </div>
+    <Stack direction="column" gap={0.5}>
+      <div className={styles.wrapper}>
+        <QueryEditorRow<DataQuery>
+          alerting
+          collapsable={false}
+          dataSource={dsSettings}
+          onDataSourceLoaded={setDsInstance}
+          onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
+          id={query.refId}
+          index={index}
+          key={query.refId}
+          data={data}
+          query={queryWithDefaults}
+          onChange={(query) => onChangeQuery(query, index)}
+          onRemoveQuery={onRemoveQuery}
+          onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
+          onRunQuery={onRunQueries}
+          queries={queries}
+          renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+          app={CoreApp.UnifiedAlerting}
+          hideDisableQuery={true}
+        />
+      </div>
+      {showVizualisation && (
+        <VizWrapper
+          data={data}
+          thresholds={thresholds}
+          thresholdsType={thresholdsType}
+          onThresholdsChange={onChangeThreshold ? (thresholds) => onChangeThreshold(thresholds, index) : undefined}
+        />
+      )}
+    </Stack>
   );
 };
 
@@ -159,12 +187,62 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   return <div className={styles.wrapper}>{children}</div>;
 };
 
+function MaxDataPointsOption({
+  options,
+  onChange,
+}: {
+  options: AlertQueryOptions;
+  onChange: (options: AlertQueryOptions) => void;
+}) {
+  const value = options.maxDataPoints ?? '';
+
+  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const maxDataPointsNumber = parseInt(event.target.value, 10);
+
+    const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
+
+    if (maxDataPoints !== options.maxDataPoints) {
+      onChange({
+        ...options,
+        maxDataPoints,
+      });
+    }
+  };
+
+  return (
+    <Stack direction="row" alignItems="baseline" gap={1}>
+      <InlineFormLabel
+        width={8}
+        tooltip={
+          <>
+            The maximum data points per series. Used directly by some data sources and used in calculation of auto
+            interval. With streaming data this value is used for the rolling buffer.
+          </>
+        }
+      >
+        Max data points
+      </InlineFormLabel>
+      <Input
+        type="number"
+        className="width-6"
+        placeholder={DEFAULT_MAX_DATA_POINTS.toLocaleString()}
+        spellCheck={false}
+        onBlur={onMaxDataPointsBlur}
+        defaultValue={value}
+      />
+    </Stack>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     border-radius: ${theme.shape.borderRadius(1)};
+  `,
+  queryOptions: css`
+    margin-bottom: -${theme.spacing(2)};
   `,
   dsTooltip: css`
     display: flex;

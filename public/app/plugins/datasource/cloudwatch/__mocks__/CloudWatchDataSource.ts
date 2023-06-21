@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import {
+  CustomVariableModel,
   DataSourceInstanceSettings,
   DataSourcePluginMeta,
   PluginMetaInfo,
@@ -11,7 +12,6 @@ import { getBackendSrv, setBackendSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from 'app/features/variables/custom/reducer';
-import { CustomVariableModel } from 'app/features/variables/types';
 
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData } from '../types';
@@ -80,12 +80,12 @@ export function setupMockedDataSource({
   const timeSrv = getTimeSrv();
   const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
-  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
-  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-  datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
-  datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
+  datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
+  datasource.resources.getLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
@@ -193,7 +193,7 @@ export const logGroupNamesVariable: CustomVariableModel = {
   id: 'groups',
   name: 'groups',
   current: {
-    value: ['templatedGroup-1', 'templatedGroup-2'],
+    value: ['templatedGroup-arn-1', 'templatedGroup-arn-2'],
     text: ['templatedGroup-1', 'templatedGroup-2'],
     selected: true,
   },
@@ -254,5 +254,13 @@ export const accountIdVariable: CustomVariableModel = {
     selected: true,
   },
   options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
+};
+
+export const statisticVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'statistic',
+  name: 'statistic',
+  current: { value: 'some stat', text: 'some stat', selected: true },
   multi: false,
 };

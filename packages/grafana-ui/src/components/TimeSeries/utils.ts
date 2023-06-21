@@ -105,8 +105,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     return builder; // empty frame with no options
   }
 
-  let seriesIndex = 0;
-
   const xScaleKey = 'x';
   let xScaleUnit = '_x';
   let yScaleKey = '';
@@ -183,6 +181,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       scaleKey: xScaleKey,
       orientation: ScaleOrientation.Horizontal,
       direction: ScaleDirection.Right,
+      range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
     });
 
     builder.addAxis({
@@ -192,6 +191,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       label: xField.config.custom?.axisLabel,
       theme,
       grid: { show: xField.config.custom?.axisGridShow },
+      formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
     });
   }
 
@@ -216,9 +216,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     if (field === xField || field.type !== FieldType.number) {
       continue;
     }
-
-    // TODO: skip this for fields with custom renderers?
-    field.state!.seriesIndex = seriesIndex++;
 
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {

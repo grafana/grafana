@@ -8,11 +8,13 @@ import { config } from '@grafana/runtime';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanelsChangedEvent } from 'app/types/events';
 
+import { AddLibraryPanelWidget } from '../components/AddLibraryPanelWidget';
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
 import { DashboardModel, PanelModel } from '../state';
 import { GridPos } from '../state/PanelModel';
 
+import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export interface Props {
@@ -20,13 +22,9 @@ export interface Props {
   isEditable: boolean;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  hidePanelMenus?: boolean;
 }
-
-export interface State {
-  isLayoutInitialized: boolean;
-}
-
-export class DashboardGrid extends PureComponent<Props, State> {
+export class DashboardGrid extends PureComponent<Props> {
   private panelMap: { [key: string]: PanelModel } = {};
   private eventSubs = new Subscription();
   private windowHeight = 1200;
@@ -34,13 +32,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private gridWidth = 0;
   /** Used to keep track of mobile panel layout position */
   private lastPanelBottom = 0;
+  private isLayoutInitialized = false;
 
   constructor(props: Props) {
     super(props);
-
-    this.state = {
-      isLayoutInitialized: false,
-    };
   }
 
   componentDidMount() {
@@ -90,15 +85,14 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
   onLayoutChange = (newLayout: ReactGridLayout.Layout[]) => {
     for (const newPos of newLayout) {
-      this.panelMap[newPos.i!].updateGridPos(newPos, this.state.isLayoutInitialized);
+      this.panelMap[newPos.i!].updateGridPos(newPos, this.isLayoutInitialized);
+    }
+
+    if (this.isLayoutInitialized) {
+      this.isLayoutInitialized = true;
     }
 
     this.props.dashboard.sortPanelsByGridPos();
-
-    // This is called on grid mount as it can correct invalid initial grid positions
-    if (!this.state.isLayoutInitialized) {
-      this.setState({ isLayoutInitialized: true });
-    }
   };
 
   triggerForceUpdate = () => {
@@ -139,7 +133,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return { top, bottom: this.lastPanelBottom };
   }
 
-  renderPanels(gridWidth: number) {
+  renderPanels(gridWidth: number, isDashboardDraggable: boolean) {
     const panelElements = [];
 
     // Reset last panel bottom
@@ -168,7 +162,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
           isViewing={panel.isViewing}
         >
           {(width: number, height: number) => {
-            return this.renderPanel(panel, width, height);
+            return this.renderPanel(panel, width, height, isDashboardDraggable);
           }}
         </GrafanaGridItem>
       );
@@ -177,13 +171,18 @@ export class DashboardGrid extends PureComponent<Props, State> {
     return panelElements;
   }
 
-  renderPanel(panel: PanelModel, width: number, height: number) {
+  renderPanel(panel: PanelModel, width: number, height: number, isDraggable: boolean) {
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
+    // Todo: Remove this when we remove the emptyDashboardPage toggle
     if (panel.type === 'add-panel') {
       return <AddPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
+    }
+
+    if (panel.type === 'add-library-panel') {
+      return <AddLibraryPanelWidget key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }
 
     return (
@@ -194,14 +193,32 @@ export class DashboardGrid extends PureComponent<Props, State> {
         dashboard={this.props.dashboard}
         isEditing={panel.isEditing}
         isViewing={panel.isViewing}
+        isDraggable={isDraggable}
         width={width}
         height={height}
+        hideMenu={this.props.hidePanelMenus}
       />
     );
   }
 
+  /**
+   * Without this hack the move animations are triggered on initial load and all panels fly into position.
+   * This can be quite distracting and make the dashboard appear to less snappy.
+   */
+  onGetWrapperDivRef = (ref: HTMLDivElement | null) => {
+    if (ref) {
+      setTimeout(() => {
+        ref.classList.add('react-grid-layout--enable-move-animations');
+      }, 50);
+    }
+  };
+
   render() {
-    const { isEditable } = this.props;
+    const { isEditable, dashboard } = this.props;
+
+    if (config.featureToggles.emptyDashboardPage && dashboard.panels.length === 0) {
+      return <DashboardEmpty dashboard={dashboard} canCreate={isEditable} />;
+    }
 
     /**
      * We have a parent with "flex: 1 1 0" we need to reset it to "flex: 1 1 auto" to have the AutoSizer
@@ -216,37 +233,35 @@ export class DashboardGrid extends PureComponent<Props, State> {
               return null;
             }
 
-            const draggable = width <= 769 ? false : isEditable;
+            // Disable draggable if mobile device, solving an issue with unintentionally
+            // moving panels. https://github.com/grafana/grafana/issues/18497
+            const draggable = width <= config.theme2.breakpoints.values.md ? false : isEditable;
 
-            /*
-            Disable draggable if mobile device, solving an issue with unintentionally
-            moving panels. https://github.com/grafana/grafana/issues/18497
-            theme.breakpoints.md = 769
-          */
             return (
               /**
                * The children is using a width of 100% so we need to guarantee that it is wrapped
                * in an element that has the calculated size given by the AutoSizer. The AutoSizer
                * has a width of 0 and will let its content overflow its div.
                */
-              <div style={{ width: `${width}px`, height: '100%' }}>
+              <div style={{ width: width, height: '100%' }} ref={this.onGetWrapperDivRef}>
                 <ReactGridLayout
                   width={width}
                   isDraggable={draggable}
                   isResizable={isEditable}
                   containerPadding={[0, 0]}
-                  useCSSTransforms={false}
+                  useCSSTransforms={true}
                   margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
                   cols={GRID_COLUMN_COUNT}
                   rowHeight={GRID_CELL_HEIGHT}
                   draggableHandle=".grid-drag-handle"
+                  draggableCancel=".grid-drag-cancel"
                   layout={this.buildLayout()}
                   onDragStop={this.onDragStop}
                   onResize={this.onResize}
                   onResizeStop={this.onResizeStop}
                   onLayoutChange={this.onLayoutChange}
                 >
-                  {this.renderPanels(width)}
+                  {this.renderPanels(width, draggable)}
                 </ReactGridLayout>
               </div>
             );
@@ -257,10 +272,10 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 }
 
-interface GrafanaGridItemProps extends Record<string, any> {
+interface GrafanaGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   gridWidth?: number;
   gridPos?: GridPos;
-  isViewing: string;
+  isViewing: boolean;
   windowHeight: number;
   windowWidth: number;
   children: any;
@@ -291,8 +306,15 @@ const GrafanaGridItem = React.forwardRef<HTMLDivElement, GrafanaGridItemProps>((
     style.width = '100%';
   } else {
     // Normal grid layout. The grid framework passes width and height directly to children as style props.
-    width = parseFloat(props.style.width);
-    height = parseFloat(props.style.height);
+    if (props.style) {
+      const { width: styleWidth, height: styleHeight } = props.style;
+      if (styleWidth != null) {
+        width = typeof styleWidth === 'number' ? styleWidth : parseFloat(styleWidth);
+      }
+      if (styleHeight != null) {
+        height = typeof styleHeight === 'number' ? styleHeight : parseFloat(styleHeight);
+      }
+    }
   }
 
   // props.children[0] is our main children. RGL adds the drag handle at props.children[1]

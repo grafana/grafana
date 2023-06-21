@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -17,7 +17,7 @@ interface Props {
   defaultCollapsed?: boolean;
 }
 
-export const RuleListStateSection: FC<Props> = ({ rules, state, defaultCollapsed = false }) => {
+export const RuleListStateSection = ({ rules, state, defaultCollapsed = false }: Props) => {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const styles = useStyles2(getStyles);
   return (

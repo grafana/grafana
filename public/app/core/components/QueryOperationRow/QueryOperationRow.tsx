@@ -20,6 +20,7 @@ export interface QueryOperationRowProps {
   children: React.ReactNode;
   isOpen?: boolean;
   draggable?: boolean;
+  collapsable?: boolean;
   disabled?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function QueryOperationRow({
   isOpen,
   disabled,
   draggable,
+  collapsable,
   index,
   id,
 }: QueryOperationRowProps) {
@@ -90,7 +92,6 @@ export function QueryOperationRow({
     },
   };
 
-  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
@@ -107,12 +108,13 @@ export function QueryOperationRow({
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
+                    collapsable={collapsable}
                     dragHandleProps={provided.dragHandleProps}
                     headerElement={headerElementRendered}
                     isContentVisible={isContentVisible}
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
-                    titleElement={titleElement}
+                    title={title}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -131,11 +133,12 @@ export function QueryOperationRow({
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}
+        collapsable={collapsable}
         headerElement={headerElementRendered}
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
-        titleElement={titleElement}
+        title={title}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>

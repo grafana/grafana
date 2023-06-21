@@ -1,32 +1,28 @@
-import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
-
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
   EventBusExtended,
-  ExploreUrlState,
   getDefaultTimeRange,
   HistoryItem,
   LoadingState,
+  LogRowModel,
   PanelData,
+  RawTimeRange,
+  TimeFragment,
+  TimeRange,
+  dateMath,
+  DateTime,
+  isDateTime,
+  toUtc,
 } from '@grafana/data';
+import { DataSourceRef, TimeZone } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
+import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { SETTINGS_KEYS } from '../utils/logs';
-import { toRawTimeRange } from '../utils/time';
-
-export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
-
-// Used to match supplementaryQueryType to corresponding local storage key
-// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
-const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
-  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
-};
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -38,34 +34,12 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
-  if (supplementaryQuerySettings[type]) {
-    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
-  }
-};
-
-export const loadSupplementaryQueries = (): SupplementaryQueries => {
-  // We default to true for all supp queries
-  let supplementaryQueries: SupplementaryQueries = {
-    [SupplementaryQueryType.LogsVolume]: { enabled: true },
-  };
-
-  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-    // Only if "false" value in local storage, we disable it
-    if (store.get(supplementaryQuerySettings[type]) === 'false') {
-      supplementaryQueries[type] = { enabled: false };
-    }
-  }
-  return supplementaryQueries;
-};
-
 /**
  * Returns a fresh Explore area state
  */
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  datasourceMissing: false,
   history: [],
   queries: [],
   initialized: false,
@@ -79,7 +53,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  loading: false,
   queryKeys: [],
   isLive: false,
   isPaused: false,
@@ -87,6 +60,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  clearedAtIndex: null,
   rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
@@ -139,31 +113,8 @@ export async function loadAndInitDatasource(
   const history = store.getObject<HistoryItem[]>(historyKey, []);
   // Save last-used datasource
 
-  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.uid);
+  setLastUsedDatasourceUID(orgId, instance.uid);
   return { history, instance };
-}
-
-// recursively walks an object, removing keys where the value is undefined
-// if the resulting object is empty, returns undefined
-function pruneObject(obj: object): object | undefined {
-  let pruned = mapValues(obj, (value) => (isObject(value) ? pruneObject(value) : value));
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
-  if (isEmpty(pruned)) {
-    return undefined;
-  }
-  return pruned;
-}
-
-export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
-  return {
-    // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
-    // lets just fallback instead of crashing.
-    datasource: pane.datasourceInstance?.uid || '',
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
-    // don't include panelsState in the url unless a piece of state is actually set
-    panelsState: pruneObject(pane.panelsState),
-  };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {
@@ -187,3 +138,70 @@ export function getResultsFromCache(
   const cacheValue = cacheIdx >= 0 ? cache[cacheIdx].value : undefined;
   return cacheValue;
 }
+
+export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
+  const raw = {
+    from: parseRawTime(range.from)!,
+    to: parseRawTime(range.to)!,
+  };
+
+  return {
+    from: dateMath.parse(raw.from, false, timeZone)!,
+    to: dateMath.parse(raw.to, true, timeZone)!,
+    raw,
+  };
+}
+
+function parseRawTime(value: string | DateTime): TimeFragment | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
+  }
+
+  if (value.indexOf('now') !== -1) {
+    return value;
+  }
+  if (value.length === 8) {
+    return toUtc(value, 'YYYYMMDD');
+  }
+  if (value.length === 15) {
+    return toUtc(value, 'YYYYMMDDTHHmmss');
+  }
+  // Backward compatibility
+  if (value.length === 19) {
+    return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
+  }
+
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
+    const epoch = parseInt(value, 10);
+    return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
+  }
+
+  return null;
+}
+
+export const filterLogRowsByIndex = (
+  clearedAtIndex: ExploreItemState['clearedAtIndex'],
+  logRows?: LogRowModel[]
+): LogRowModel[] => {
+  if (!logRows) {
+    return [];
+  }
+
+  if (clearedAtIndex) {
+    const filteredRows = logRows.slice(clearedAtIndex + 1);
+    return filteredRows;
+  }
+
+  return logRows;
+};

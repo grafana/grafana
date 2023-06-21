@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -15,7 +15,7 @@ import (
 )
 
 // createShortURL handles requests to create short URLs.
-func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) createShortURL(c *contextmodel.ReqContext) response.Response {
 	cmd := dtos.CreateShortURLCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Err(shorturls.ErrShortURLBadRequest.Errorf("bad request data: %w", err))
@@ -37,7 +37,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
+func (hs *HTTPServer) redirectFromShortURL(c *contextmodel.ReqContext) {
 	shortURLUID := web.Params(c.Req)[":uid"]
 
 	if !util.IsValidShortUID(shortURLUID) {

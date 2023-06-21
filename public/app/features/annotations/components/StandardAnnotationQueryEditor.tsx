@@ -22,7 +22,7 @@ import { AnnotationQueryResponse } from '../types';
 
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
-interface Props {
+export interface Props {
   datasource: DataSourceApi;
   datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
@@ -132,7 +132,7 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
         icon = 'exclamation-triangle';
         text = 'No events found';
       } else {
-        const frame = panelData?.series[0];
+        const frame = panelData?.series?.[0] ?? panelData?.annotations?.[0];
 
         text = `${events.length} events (from ${frame?.fields.length} fields)`;
       }
@@ -186,7 +186,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = annotation.target ?? { refId: 'Anno' };
+    const query = {
+      ...datasource.annotations?.getDefaultQuery?.(),
+      ...(annotation.target ?? { refId: 'Anno' }),
+    };
+
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>

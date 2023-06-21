@@ -30,7 +30,7 @@ describe('FileUpload', () => {
     const testFileName = 'grafana.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} />);
+    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     let uploader = getByTestId(selectors.components.FileUpload.inputField);
     await waitFor(() =>
       fireEvent.change(uploader, {
@@ -45,7 +45,7 @@ describe('FileUpload', () => {
     const testFileName = 'longFileName.something.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} />);
+    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
     let uploader = getByTestId(selectors.components.FileUpload.inputField);
     await waitFor(() =>
       fireEvent.change(uploader, {

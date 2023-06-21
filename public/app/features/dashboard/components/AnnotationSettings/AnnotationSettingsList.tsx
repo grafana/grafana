@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DeleteButton, Icon, IconButton, VerticalGroup } from '@grafana/ui';
+import { Button, DeleteButton, IconButton, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -33,7 +33,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.enable === false) {
       return (
         <>
-          <Icon name="times" /> &nbsp;<em className="muted">(Disabled) &nbsp; {anno.name}</em>
+          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
         </>
       );
     }
@@ -41,16 +41,12 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.builtIn) {
       return (
         <>
-          <Icon name="comment-alt" /> &nbsp;<em className="muted">{anno.name} (Built-in)</em>
+          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
         </>
       );
     }
 
-    return (
-      <>
-        <Icon name="comment-alt" /> &nbsp;{anno.name}
-      </>
-    );
+    return <>{anno.name}</>;
   };
 
   const dataSourceSrv = getDataSourceSrv();
@@ -70,22 +66,26 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               <tr key={`${annotation.name}-${idx}`}>
                 {annotation.builtIn ? (
                   <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
-                    {getAnnotationName(annotation)}
+                    <Button size="sm" fill="text" variant="secondary">
+                      {getAnnotationName(annotation)}
+                    </Button>
                   </td>
                 ) : (
                   <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
-                    {getAnnotationName(annotation)}
+                    <Button size="sm" fill="text" variant="secondary">
+                      {getAnnotationName(annotation)}
+                    </Button>
                   </td>
                 )}
                 <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                   {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>
-                  {idx !== 0 && <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => onMove(idx, -1)} />}
+                  {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>
                   {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
-                    <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => onMove(idx, 1)} />
+                    <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
                   ) : null}
                 </td>
                 <td role="gridcell" style={{ width: '1%' }}>

@@ -1,12 +1,17 @@
 ---
-title: Custom panel option editors
+title: Build a custom panel option editor
 ---
 
-# Custom panel option editors
+# Build a custom panel option editor
 
-The Grafana plugin platform comes with a range of editors that allow your users to customize a panel. The standard editors cover the most common types of options, such as text input and boolean switches. If you don't find the editor you're looking for, you can build your own. In this guide, you'll learn how to build your own panel option editor.
+The Grafana plugin platform comes with a range of editors that allow your users to customize a panel. The standard editors cover the most common types of options, such as text input and boolean switches. If you don't find the editor you're looking for, you can build your own.
 
-The simplest editor is a React component that accepts two props: `value` and `onChange`. `value` contains the current value of the option, and `onChange` updates it.
+## Panel option editor basics
+
+The simplest editor is a React component that accepts two props:
+
+- **`value`**: the current value of the option
+- **`onChange`**: updates the option's value
 
 The editor in the example below lets the user toggle a boolean value by clicking a button:
 
@@ -17,12 +22,12 @@ import React from 'react';
 import { Button } from '@grafana/ui';
 import { StandardEditorProps } from '@grafana/data';
 
-export const SimpleEditor: React.FC<StandardEditorProps<boolean>> = ({ value, onChange }) => {
+export const SimpleEditor = ({ value, onChange }: StandardEditorProps<boolean>) => {
   return <Button onClick={() => onChange(!value)}>{value ? 'Disable' : 'Enable'}</Button>;
 };
 ```
 
-To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUIBuilder` object in your `module.ts` file. Configure the editor to use by setting the `editor` property to the `SimpleEditor` component.
+To use a custom panel option editor, use the `addCustomEditor` on the `OptionsUIBuilder` object in your `module.ts` file and set the `editor` property to the name of your custom editor component.
 
 **module.ts**
 
@@ -39,9 +44,9 @@ export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOption
 
 ## Add settings to your panel option editor
 
-If you're using your custom editor to configure multiple options, you might want to be able to customize it. Add settings to your editor by setting the second template variable of `StandardEditorProps` to an interface that contains the settings you want to be able to configure.
+You can use your custom editor to customize multiple possible settings. To add settings to your editor, set the second template variable of `StandardEditorProps` to an interface that contains the settings you want to configure. Access the editor settings through the `item` prop.
 
-You can access the editor settings through the `item` prop. Here's an example of an editor that populates a drop-down with a range of numbers. The range is defined by the `from` and `to` properties in the `Settings` interface.
+Here's an example of an editor that populates a drop-down with a range of numbers. The `Settings` interface defines the range of the `from` and `to` properties.
 
 **SimpleEditor.tsx**
 
@@ -51,7 +56,9 @@ interface Settings {
   to: number;
 }
 
-export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>> = ({ item, value, onChange }) => {
+type Props = StandardEditorProps<number, Settings>;
+
+export const SimpleEditor = ({ item, value, onChange }: Props) => {
   const options: Array<SelectableValue<number>> = [];
 
   // Default values
@@ -69,7 +76,7 @@ export const SimpleEditor: React.FC<StandardEditorProps<number, Settings>> = ({ 
 };
 ```
 
-You can now configure the editor for each option, by configuring the `settings` property in the call to `addCustomEditor`.
+You can now configure the editor for each option by configuring the `settings` property to call `addCustomEditor`:
 
 ```ts
 export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOptions((builder) => {
@@ -88,16 +95,14 @@ export const plugin = new PanelPlugin<SimpleOptions>(SimplePanel).setPanelOption
 
 ## Use query results in your panel option editor
 
-Option editors can access the results from the last query. This lets you update your editor dynamically, based on the data returned by the data source.
-
-> **Note:** This feature was introduced in 7.0.3. Anyone using an older version of Grafana will see an error when using your plugin.
+Option editors can access the results from the last query. This lets you update your editor dynamically based on the data returned by the data source.
 
 The editor context is available through the `context` prop. The data frames returned by the data source are available under `context.data`.
 
 **SimpleEditor.tsx**
 
 ```ts
-export const SimpleEditor: React.FC<StandardEditorProps<string>> = ({ item, value, onChange, context }) => {
+export const SimpleEditor = ({ item, value, onChange, context }: StandardEditorProps<string>) => {
   const options: SelectableValue<string>[] = [];
 
   if (context.data) {
@@ -114,5 +119,3 @@ export const SimpleEditor: React.FC<StandardEditorProps<string>> = ({ item, valu
   return <Select options={options} value={value} onChange={(selectableValue) => onChange(selectableValue.value)} />;
 };
 ```
-
-Have you built a custom editor that you think would be useful to other plugin developers? Consider contributing it as a standard editor!

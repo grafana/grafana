@@ -39,7 +39,7 @@
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "query",
               "hide": false,
@@ -57,7 +57,7 @@
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "$reduced > 10",
               "hide": false,
@@ -102,7 +102,7 @@
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "$A",
               "intervalMs": 2000,

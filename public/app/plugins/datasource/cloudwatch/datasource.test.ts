@@ -14,10 +14,10 @@ import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
 import {
+  CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchDefaultQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
@@ -280,7 +280,7 @@ describe('datasource', () => {
           },
         ]),
       }).datasource;
-      const allMetrics = await datasource.api.getAllMetrics({ region: 'us-east-2' });
+      const allMetrics = await datasource.resources.getAllMetrics({ region: 'us-east-2' });
       expect(allMetrics[0].metricName).toEqual('CPUUtilization');
       expect(allMetrics[0].namespace).toEqual('AWS/EC2');
       expect(allMetrics[1].metricName).toEqual('CPUPercentage');
@@ -338,9 +338,9 @@ describe('datasource', () => {
 
       datasource.interpolateVariablesInQueries([metricsQuery], {});
 
-      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, and `nameSpace` in CloudWatchMetricsQuery
+      // We interpolate `expression`, `sqlExpression`, `region`, `period`, `alias`, `metricName`, `dimensions`, and `nameSpace` in CloudWatchMetricsQuery
       expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(7);
+      expect(templateService.replace).toHaveBeenCalledTimes(8);
 
       expect(templateService.getVariableName).toHaveBeenCalledWith(`$${variableName}`);
       expect(templateService.getVariableName).toHaveBeenCalledTimes(1);

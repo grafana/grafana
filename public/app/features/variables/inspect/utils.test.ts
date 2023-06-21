@@ -1,4 +1,4 @@
-import { PanelModel } from 'app/features/dashboard/state';
+import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { variableAdapters } from '../adapters';
 import { createCustomVariableAdapter } from '../custom/adapter';
@@ -303,7 +303,7 @@ describe('flattenPanels', () => {
   });
 });
 
-const dashWithRepeatsAndRows: any = {
+const dashWithRepeatsAndRows = {
   annotations: {
     list: [
       {
@@ -1163,9 +1163,9 @@ const dashWithRepeatsAndRows: any = {
   title: 'Variables update POC',
   uid: 'tISItwInz',
   version: 2,
-};
+} as unknown as DashboardModel;
 
-const dashWithTemplateDependenciesAndPanels: any = {
+const dashWithTemplateDependenciesAndPanels = {
   annotations: {
     list: [
       {
@@ -1490,8 +1490,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
       {
         current: {
           selected: false,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1624,8 +1624,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         allValue: null,
         current: {
           selected: true,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1637,8 +1637,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         options: [
           {
             selected: true,
-            text: 'TestData DB',
-            value: 'TestData DB',
+            text: 'TestData',
+            value: 'TestData',
           },
           {
             selected: false,
@@ -1646,7 +1646,7 @@ const dashWithTemplateDependenciesAndPanels: any = {
             value: 'gdev-testdata',
           },
         ],
-        query: 'TestData DB, gdev-testdata',
+        query: 'TestData, gdev-testdata',
         queryValue: '',
         skipUrlSync: false,
         type: 'custom',
@@ -1662,9 +1662,9 @@ const dashWithTemplateDependenciesAndPanels: any = {
   title: 'Variables dependencies update POC',
   uid: 'n60iRMNnk',
   version: 6,
-};
+} as unknown as DashboardModel;
 
-const dashWithAllVariables: any = {
+const dashWithAllVariables = {
   annotations: {
     list: [
       {
@@ -1967,4 +1967,4 @@ const dashWithAllVariables: any = {
   uid: 'XkBHMzF7z',
   version: 6,
   weekStart: '',
-};
+} as unknown as DashboardModel;

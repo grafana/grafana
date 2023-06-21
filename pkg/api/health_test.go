@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestHealthAPI_Version(t *testing.T) {
@@ -84,7 +85,7 @@ func TestHealthAPI_DatabaseUnhealthy(t *testing.T) {
 
 	m, hs := setupHealthAPITestEnvironment(t)
 	hs.Cfg.AnonymousHideVersion = true
-	hs.SQLStore.(*mockstore.SQLStoreMock).ExpectedError = errors.New("bad")
+	hs.SQLStore.(*dbtest.FakeDB).ExpectedError = errors.New("bad")
 
 	healthy, found := hs.CacheService.Get(cacheKey)
 	require.False(t, found)
@@ -157,7 +158,7 @@ func setupHealthAPITestEnvironment(t *testing.T, cbs ...func(*setting.Cfg)) (*we
 	hs := &HTTPServer{
 		CacheService: localcache.New(5*time.Minute, 10*time.Minute),
 		Cfg:          cfg,
-		SQLStore:     mockstore.NewSQLStoreMock(),
+		SQLStore:     dbtest.NewFakeDB(),
 	}
 
 	m.Get("/api/health", hs.apiHealthHandler)

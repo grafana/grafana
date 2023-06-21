@@ -15,14 +15,14 @@ interface CellActionProps extends TableCellProps {
 
 interface CommonButtonProps {
   size: IconSize;
+  showFilters?: boolean;
   tooltipPlacement: TooltipPlacement;
 }
 
-export function CellActions({ field, cell, previewMode, onCellFilterAdded }: CellActionProps) {
+export function CellActions({ field, cell, previewMode, showFilters, onCellFilterAdded }: CellActionProps) {
   const [isInspecting, setIsInspecting] = useState(false);
 
   const isRightAligned = getTextAlign(field) === 'flex-end';
-  const showFilters = Boolean(field.config.filterable) && cell.value !== undefined;
   const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
   const commonButtonProps: CommonButtonProps = {
     size: 'sm',

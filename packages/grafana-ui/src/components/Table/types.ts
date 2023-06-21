@@ -2,7 +2,8 @@ import { Property } from 'csstype';
 import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
@@ -19,9 +20,9 @@ export interface TableRow {
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
-export type FilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
-export type FilterItem = { key: string; value: string; operator: FilterOperator };
-export type TableFilterActionCallback = (item: FilterItem) => void;
+export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 
@@ -83,6 +84,9 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
+  cellHeight?: TableCellHeight;
   /** @alpha */
   subData?: DataFrame[];
+  /** @alpha Used by SparklineCell when provided */
+  timeRange?: TimeRange;
 }

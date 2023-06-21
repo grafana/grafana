@@ -13,13 +13,11 @@ import {
   TypeaheadOutput,
   withTheme2,
 } from '@grafana/ui';
-import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLanguageProvider } from '../language_provider';
-import syntax from '../syntax';
+import syntax from '../language/cloudwatch-logs/syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -31,7 +29,7 @@ export interface CloudWatchLogsQueryFieldProps
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  exploreId: ExploreId;
+  exploreId: string;
   query: CloudWatchLogsQuery;
 }
 const plugins: Array<Plugin<Editor>> = [
@@ -68,11 +66,10 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       return { suggestions: [] };
     }
 
-    const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
     const { history, absoluteRange } = props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    return await cloudwatchLanguageProvider.provideCompletionItems(
+    return await datasource.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       {
         history,

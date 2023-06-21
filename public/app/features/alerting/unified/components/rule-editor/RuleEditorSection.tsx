@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FieldSet, useStyles2 } from '@grafana/ui';
@@ -7,7 +7,7 @@ import { FieldSet, useStyles2 } from '@grafana/ui';
 export interface RuleEditorSectionProps {
   title: string;
   stepNo: number;
-  description?: string;
+  description?: string | ReactElement;
 }
 
 export const RuleEditorSection = ({
@@ -57,7 +57,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.spacing(4)};
     height: ${theme.spacing(4)};
     line-height: ${theme.spacing(4)};
-    border-radius: ${theme.spacing(4)};
+    border-radius: 100%;
     text-align: center;
     color: ${theme.colors.text.maxContrast};
     background-color: ${theme.colors.background.canvas};

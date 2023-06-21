@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/hashicorp/go-plugin"
+
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/hashicorp/go-plugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type pluginClient interface {
@@ -51,7 +52,7 @@ func (p *grpcPlugin) Logger() log.Logger {
 	return p.logger
 }
 
-func (p *grpcPlugin) Start(ctx context.Context) error {
+func (p *grpcPlugin) Start(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -84,7 +85,7 @@ func (p *grpcPlugin) Start(ctx context.Context) error {
 	return nil
 }
 
-func (p *grpcPlugin) Stop(ctx context.Context) error {
+func (p *grpcPlugin) Stop(_ context.Context) error {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -108,8 +109,8 @@ func (p *grpcPlugin) Exited() bool {
 }
 
 func (p *grpcPlugin) Decommission() error {
-	p.mutex.RLock()
-	defer p.mutex.RUnlock()
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
 
 	p.decommissioned = true
 
@@ -117,7 +118,13 @@ func (p *grpcPlugin) Decommission() error {
 }
 
 func (p *grpcPlugin) IsDecommissioned() bool {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
 	return p.decommissioned
+}
+
+func (p *grpcPlugin) Target() backendplugin.Target {
+	return backendplugin.TargetLocal
 }
 
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {

@@ -18,6 +18,7 @@ args=("$@")
 
 CMD="start"
 PARAMS=""
+CLEANUP=""
 
 declare -A env=(
   [BASE_URL]=${BASE_URL:-"http://$HOST:$PORT"}
@@ -25,6 +26,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
+rootForEnterpriseSuite="extensions-suite"
 
 declare -A cypressConfig=(
   [integrationFolder]=../../e2e
@@ -64,6 +66,27 @@ case "$1" in
         cypressConfig[screenshotsFolder]=../../e2e/benchmarks/"${args[1]}"/screenshots
         cypressConfig[testFiles]=$testFilesForSingleSuite
         ;;
+    "enterprise")
+        echo "Enterprise"
+        CLEANUP="rm -rf ../../e2e/extensions-suite"
+        SETUP="cp -Lr ../../e2e/extensions ../../e2e/extensions-suite"
+        enterpriseSuite=$(basename "${args[1]}")
+        case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="open"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+        esac
+        cypressConfig[testFiles]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
+        $CLEANUP && $SETUP
+        ;;
     "")
         ;;
     *)
@@ -96,3 +119,5 @@ function join () {
 yarn $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
+
+$CLEANUP

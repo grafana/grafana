@@ -25,12 +25,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -120,7 +121,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		jd, err := ds.JsonData.Map()
 		require.NoError(t, err)
 		dsInfo := DSInfo{
-			ID:       ds.Id,
+			ID:       ds.ID,
 			Updated:  ds.Updated,
 			JSONData: jd,
 			DecryptedSecureJSONData: map[string]string{
@@ -128,10 +129,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			},
 		}
 
-		setUp := func() (*models.ReqContext, *http.Request) {
+		setUp := func() (*contextmodel.ReqContext, *http.Request) {
 			req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 			require.NoError(t, err)
-			ctx := &models.ReqContext{
+			ctx := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 			}
@@ -286,7 +287,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
-		ctx := &models.ReqContext{
+		ctx := &contextmodel.ReqContext{
 			Context:      &web.Context{Req: req},
 			SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 		}
@@ -306,7 +307,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				jd, err := ds.JsonData.Map()
 				require.NoError(t, err)
 				dsInfo := DSInfo{
-					ID:       ds.Id,
+					ID:       ds.ID,
 					Updated:  ds.Updated,
 					JSONData: jd,
 					DecryptedSecureJSONData: map[string]string{
@@ -371,8 +372,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 	t.Run("When proxying graphite", func(t *testing.T) {
 		var routes []*plugins.Route
-		ds := &datasources.DataSource{Url: "htttp://graphite:8080", Type: datasources.DS_GRAPHITE}
-		ctx := &models.ReqContext{}
+		ds := &datasources.DataSource{URL: "htttp://graphite:8080", Type: datasources.DS_GRAPHITE}
+		ctx := &contextmodel.ReqContext{}
 
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -396,12 +397,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying InfluxDB", func(t *testing.T) {
 		ds := &datasources.DataSource{
 			Type:     datasources.DS_INFLUXDB_08,
-			Url:      "http://influxdb:8083",
+			URL:      "http://influxdb:8083",
 			Database: "site",
 			User:     "user",
 		}
 
-		ctx := &models.ReqContext{}
+		ctx := &contextmodel.ReqContext{}
 		var routes []*plugins.Route
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -425,11 +426,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ds := &datasources.DataSource{
 			Type:     datasources.DS_GRAPHITE,
-			Url:      "http://graphite:8086",
+			URL:      "http://graphite:8086",
 			JsonData: json,
 		}
 
-		ctx := &models.ReqContext{}
+		ctx := &contextmodel.ReqContext{}
 		var routes []*plugins.Route
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -457,11 +458,11 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		ds := &datasources.DataSource{
 			Type:     datasources.DS_GRAPHITE,
-			Url:      "http://graphite:8086",
+			URL:      "http://graphite:8086",
 			JsonData: json,
 		}
 
-		ctx := &models.ReqContext{}
+		ctx := &contextmodel.ReqContext{}
 		var pluginRoutes []*plugins.Route
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -486,9 +487,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying a custom datasource", func(t *testing.T) {
 		ds := &datasources.DataSource{
 			Type: "custom-datasource",
-			Url:  "http://host/root/",
+			URL:  "http://host/root/",
 		}
-		ctx := &models.ReqContext{}
+		ctx := &contextmodel.ReqContext{}
 		var routes []*plugins.Route
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
@@ -514,7 +515,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When proxying a datasource that has OAuth token pass-through enabled", func(t *testing.T) {
 		ds := &datasources.DataSource{
 			Type: "custom-datasource",
-			Url:  "http://host/root/",
+			URL:  "http://host/root/",
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"oauthPassThru": true,
 			}),
@@ -522,7 +523,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
-		ctx := &models.ReqContext{
+		ctx := &contextmodel.ReqContext{
 			SignedInUser: &user.SignedInUser{UserID: 1},
 			Context:      &web.Context{Req: req},
 		}
@@ -563,7 +564,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -576,7 +577,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When SendUserHeader config is disabled", func(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -590,7 +591,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	t.Run("When SendUserHeader config is enabled but user is anonymous", func(t *testing.T) {
 		req := getDatasourceProxiedRequest(
 			t,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{IsAnonymous: true},
 			},
 			&setting.Cfg{SendUserHeader: true},
@@ -635,7 +636,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		writeCb func(w http.ResponseWriter, r *http.Request)
 	}
 
-	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *datasources.DataSource) {
+	setUp := func(t *testing.T, cfgs ...setUpCfg) (*contextmodel.ReqContext, *datasources.DataSource) {
 		writeErr = nil
 
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -656,7 +657,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 		}))
 		t.Cleanup(backend.Close)
 
-		ds := &datasources.DataSource{Url: backend.URL, Type: datasources.DS_GRAPHITE}
+		ds := &datasources.DataSource{URL: backend.URL, Type: datasources.DS_GRAPHITE}
 
 		responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
@@ -668,7 +669,7 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			}
 		}
 
-		return &models.ReqContext{
+		return &contextmodel.ReqContext{
 			SignedInUser: &user.SignedInUser{},
 			Context: &web.Context{
 				Req:  httptest.NewRequest("GET", "/render", nil),
@@ -822,13 +823,13 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 }
 
 func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
-	ctx := models.ReqContext{
+	ctx := contextmodel.ReqContext{
 		Context:      &web.Context{},
 		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
 	ds := datasources.DataSource{
 		Type: "test",
-		Url:  "://host/root",
+		URL:  "://host/root",
 	}
 	cfg := &setting.Cfg{}
 	tracer := tracing.InitializeTracerForTest()
@@ -846,13 +847,13 @@ func TestNewDataSourceProxy_InvalidURL(t *testing.T) {
 }
 
 func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
-	ctx := models.ReqContext{
+	ctx := contextmodel.ReqContext{
 		Context:      &web.Context{},
 		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
 	ds := datasources.DataSource{
 		Type: "test",
-		Url:  "127.0.01:5432",
+		URL:  "127.0.01:5432",
 	}
 	cfg := &setting.Cfg{}
 	tracer := tracing.InitializeTracerForTest()
@@ -871,7 +872,7 @@ func TestNewDataSourceProxy_ProtocolLessURL(t *testing.T) {
 
 // Test wth MSSQL type data sources.
 func TestNewDataSourceProxy_MSSQL(t *testing.T) {
-	ctx := models.ReqContext{
+	ctx := contextmodel.ReqContext{
 		Context:      &web.Context{},
 		SignedInUser: &user.SignedInUser{OrgRole: org.RoleEditor},
 	}
@@ -900,7 +901,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 			cfg := &setting.Cfg{}
 			ds := datasources.DataSource{
 				Type: "mssql",
-				Url:  tc.url,
+				URL:  tc.url,
 			}
 
 			var routes []*plugins.Route
@@ -915,7 +916,7 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, &url.URL{
 					Scheme: "sqlserver",
-					Host:   ds.Url,
+					Host:   ds.URL,
 				}, p.targetUrl)
 			} else {
 				require.Error(t, err)
@@ -926,10 +927,10 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 }
 
 // getDatasourceProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.Cfg) *http.Request {
+func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, cfg *setting.Cfg) *http.Request {
 	ds := &datasources.DataSource{
 		Type: "custom",
-		Url:  "http://host/root/",
+		URL:  "http://host/root/",
 	}
 	tracer := tracing.InitializeTracerForTest()
 
@@ -998,12 +999,12 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 
 	test := &testCase{
 		datasource: &datasources.DataSource{
-			Id:       1,
-			OrgId:    1,
+			ID:       1,
+			OrgID:    1,
 			Name:     fmt.Sprintf("%s,%s,%s,%s", dsType, url, authType, authCheck),
 			Type:     dsType,
 			JsonData: simplejson.New(),
-			Url:      url,
+			URL:      url,
 		},
 	}
 	var message string
@@ -1016,7 +1017,7 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		err = secretsStore.Set(context.Background(), test.datasource.OrgID, test.datasource.Name, "datasource", string(secureJsonData))
 		require.NoError(t, err)
 	} else {
 		message = fmt.Sprintf("%v should add basic auth username and password", dsType)
@@ -1027,7 +1028,7 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), test.datasource.OrgId, test.datasource.Name, "datasource", string(secureJsonData))
+		err = secretsStore.Set(context.Background(), test.datasource.OrgID, test.datasource.Name, "datasource", string(secureJsonData))
 		require.NoError(t, err)
 	}
 	require.NoError(t, err)
@@ -1052,7 +1053,7 @@ func createAuthTest(t *testing.T, secretsStore secretskvs.SecretsKVStore, dsType
 }
 
 func runDatasourceAuthTest(t *testing.T, secretsService secrets.Service, secretsStore secretskvs.SecretsKVStore, cfg *setting.Cfg, test *testCase) {
-	ctx := &models.ReqContext{}
+	ctx := &contextmodel.ReqContext{}
 	tracer := tracing.InitializeTracerForTest()
 
 	var routes []*plugins.Route
@@ -1089,10 +1090,10 @@ func Test_PathCheck(t *testing.T) {
 	}
 	tracer := tracing.InitializeTracerForTest()
 
-	setUp := func() (*models.ReqContext, *http.Request) {
+	setUp := func() (*contextmodel.ReqContext, *http.Request) {
 		req, err := http.NewRequest("GET", "http://localhost/asd", nil)
 		require.NoError(t, err)
-		ctx := &models.ReqContext{
+		ctx := &contextmodel.ReqContext{
 			Context:      &web.Context{Req: req},
 			SignedInUser: &user.SignedInUser{OrgRole: org.RoleViewer},
 		}
@@ -1125,14 +1126,14 @@ func (m *mockOAuthTokenService) IsOAuthPassThruEnabled(ds *datasources.DataSourc
 	return m.oAuthEnabled
 }
 
-func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+func (m *mockOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
 	return nil, false, nil
 }
 
-func (m *mockOAuthTokenService) TryTokenRefresh(context.Context, *models.UserAuth) error {
+func (m *mockOAuthTokenService) TryTokenRefresh(context.Context, *login.UserAuth) error {
 	return nil
 }
 
-func (m *mockOAuthTokenService) InvalidateOAuthTokens(context.Context, *models.UserAuth) error {
+func (m *mockOAuthTokenService) InvalidateOAuthTokens(context.Context, *login.UserAuth) error {
 	return nil
 }

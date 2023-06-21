@@ -17,7 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -68,46 +70,78 @@ func genPKCECode() (string, string, error) {
 	return string(ascii), pkce, nil
 }
 
-func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
-	loginInfo := models.LoginInfo{
-		AuthModule: "oauth",
+func (hs *HTTPServer) OAuthLogin(reqCtx *contextmodel.ReqContext) {
+	name := web.Params(reqCtx.Req)[":name"]
+	loginInfo := loginservice.LoginInfo{AuthModule: name}
+
+	if errorParam := reqCtx.Query("error"); errorParam != "" {
+		errorDesc := reqCtx.Query("error_description")
+		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
+		return
 	}
-	name := web.Params(ctx.Req)[":name"]
-	loginInfo.AuthModule = name
+
+	code := reqCtx.Query("code")
+
+	if hs.Cfg.AuthBrokerEnabled {
+		req := &authn.Request{HTTPRequest: reqCtx.Req, Resp: reqCtx.Resp}
+		if code == "" {
+			redirect, err := hs.authnService.RedirectURL(reqCtx.Req.Context(), authn.ClientWithPrefix(name), req)
+			if err != nil {
+				reqCtx.Redirect(hs.redirectURLWithErrorCookie(reqCtx, err))
+				return
+			}
+
+			if pkce := redirect.Extra[authn.KeyOAuthPKCE]; pkce != "" {
+				cookies.WriteCookie(reqCtx.Resp, OauthPKCECookieName, pkce, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			}
+
+			cookies.WriteCookie(reqCtx.Resp, OauthStateCookieName, redirect.Extra[authn.KeyOAuthState], hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			reqCtx.Redirect(redirect.URL)
+			return
+		}
+
+		identity, err := hs.authnService.Login(reqCtx.Req.Context(), authn.ClientWithPrefix(name), req)
+		// NOTE: always delete these cookies, even if login failed
+		cookies.DeleteCookie(reqCtx.Resp, OauthPKCECookieName, hs.CookieOptionsFromCfg)
+		cookies.DeleteCookie(reqCtx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
+
+		if err != nil {
+			reqCtx.Redirect(hs.redirectURLWithErrorCookie(reqCtx, err))
+			return
+		}
+
+		metrics.MApiLoginOAuth.Inc()
+		authn.HandleLoginRedirect(reqCtx.Req, reqCtx.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
+		return
+	}
+
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
 	if provider == nil {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, errors.New("OAuth not enabled"))
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, errors.New("OAuth not enabled"))
 		return
 	}
 
 	connect, err := hs.SocialService.GetConnector(name)
 	if err != nil {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, fmt.Errorf("no OAuth with name %s configured", name))
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, fmt.Errorf("no OAuth with name %s configured", name))
 		return
 	}
 
-	errorParam := ctx.Query("error")
-	if errorParam != "" {
-		errorDesc := ctx.Query("error_description")
-		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
-		return
-	}
-
-	code := ctx.Query("code")
 	if code == "" {
 		var opts []oauth2.AuthCodeOption
 		if provider.UsePKCE {
 			ascii, pkce, err := genPKCECode()
 			if err != nil {
-				ctx.Logger.Error("Generating PKCE failed", "error", err)
-				hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+				reqCtx.Logger.Error("Generating PKCE failed", "error", err)
+				hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 					HttpStatus:    http.StatusInternalServerError,
 					PublicMessage: "An internal error occurred",
 				})
+				return
 			}
 
-			cookies.WriteCookie(ctx.Resp, OauthPKCECookieName, ascii, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+			cookies.WriteCookie(reqCtx.Resp, OauthPKCECookieName, ascii, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 
 			opts = append(opts,
 				oauth2.SetAuthURLParam("code_challenge", pkce),
@@ -117,8 +151,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 		state, err := GenStateString()
 		if err != nil {
-			ctx.Logger.Error("Generating state string failed", "err", err)
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			reqCtx.Logger.Error("Generating state string failed", "err", err)
+			hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: "An internal error occurred",
 			})
@@ -126,32 +160,32 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 
 		hashedState := hs.hashStatecode(state, provider.ClientSecret)
-		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+		cookies.WriteCookie(reqCtx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if provider.HostedDomain != "" {
 			opts = append(opts, oauth2.SetAuthURLParam("hd", provider.HostedDomain))
 		}
 
-		ctx.Redirect(connect.AuthCodeURL(state, opts...))
+		reqCtx.Redirect(connect.AuthCodeURL(state, opts...))
 		return
 	}
 
-	cookieState := ctx.GetCookie(OauthStateCookieName)
+	cookieState := reqCtx.GetCookie(OauthStateCookieName)
 
 	// delete cookie
-	cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
+	cookies.DeleteCookie(reqCtx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 	if cookieState == "" {
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+		hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(missing saved state)",
 		})
 		return
 	}
 
-	queryState := hs.hashStatecode(ctx.Query("state"), provider.ClientSecret)
+	queryState := hs.hashStatecode(reqCtx.Query("state"), provider.ClientSecret)
 	oauthLogger.Info("state check", "queryState", queryState, "cookieState", cookieState)
 	if cookieState != queryState {
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+		hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(state mismatch)",
 		})
@@ -160,19 +194,20 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	oauthClient, err := hs.SocialService.GetOAuthHttpClient(name)
 	if err != nil {
-		ctx.Logger.Error("Failed to create OAuth http client", "error", err)
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+		reqCtx.Logger.Error("Failed to create OAuth http client", "error", err)
+		hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(" + err.Error() + ")",
 		})
 		return
 	}
 
-	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
+	ctx := reqCtx.Req.Context()
+	oauthCtx := context.WithValue(ctx, oauth2.HTTPClient, oauthClient)
 	opts := []oauth2.AuthCodeOption{}
 
-	codeVerifier := ctx.GetCookie(OauthPKCECookieName)
-	cookies.DeleteCookie(ctx.Resp, OauthPKCECookieName, hs.CookieOptionsFromCfg)
+	codeVerifier := reqCtx.GetCookie(OauthPKCECookieName)
+	cookies.DeleteCookie(reqCtx.Resp, OauthPKCECookieName, hs.CookieOptionsFromCfg)
 	if codeVerifier != "" {
 		opts = append(opts,
 			oauth2.SetAuthURLParam("code_verifier", codeVerifier),
@@ -182,7 +217,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code, opts...)
 	if err != nil {
-		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+		hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
 			PublicMessage: "login.OAuthLogin(NewTransportWithCode)",
 			Err:           err,
@@ -211,13 +246,13 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	client := connect.Client(oauthCtx, token)
 
 	// get user info
-	userInfo, err := connect.UserInfo(client, token)
+	userInfo, err := connect.UserInfo(ctx, client, token)
 	if err != nil {
 		var sErr *social.Error
 		if errors.As(err, &sErr) {
-			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
+			hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, sErr)
 		} else {
-			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
+			hs.handleOAuthLoginError(reqCtx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: fmt.Sprintf("login.OAuthLogin(get info from %s)", name),
 				Err:           err,
@@ -230,50 +265,41 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	// validate that we got at least an email address
 	if userInfo.Email == "" {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrNoEmail)
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, login.ErrNoEmail)
 		return
 	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, login.ErrEmailNotAllowed)
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, login.ErrEmailNotAllowed)
 		return
 	}
 
 	loginInfo.ExternalUser = *hs.buildExternalUserInfo(token, userInfo, name)
-	loginInfo.User, err = hs.SyncUser(ctx, &loginInfo.ExternalUser, connect)
+	loginInfo.User, err = hs.SyncUser(reqCtx, &loginInfo.ExternalUser, connect)
 	if err != nil {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, err)
 		return
 	}
 
 	// login
-	if err := hs.loginUserWithUser(loginInfo.User, ctx); err != nil {
-		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
+	if err := hs.loginUserWithUser(loginInfo.User, reqCtx); err != nil {
+		hs.handleOAuthLoginErrorWithRedirect(reqCtx, loginInfo, err)
 		return
 	}
 
 	loginInfo.HTTPStatus = http.StatusOK
-	hs.HooksService.RunLoginHook(&loginInfo, ctx)
+	hs.HooksService.RunLoginHook(&loginInfo, reqCtx)
 	metrics.MApiLoginOAuth.Inc()
 
-	if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			ctx.Redirect(redirectTo)
-			return
-		}
-		ctx.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-	}
-
-	ctx.Redirect(setting.AppSubUrl + "/")
+	reqCtx.Redirect(hs.GetRedirectURL(reqCtx))
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
-func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
+func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *loginservice.ExternalUserInfo {
 	oauthLogger.Debug("Building external user info from OAuth user info")
 
-	extUser := &models.ExternalUserInfo{
+	extUser := &loginservice.ExternalUserInfo{
 		AuthModule:     fmt.Sprintf("oauth_%s", name),
 		OAuthToken:     token,
 		AuthId:         userInfo.Id,
@@ -308,35 +334,36 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 
 // SyncUser syncs a Grafana user profile with the corresponding OAuth profile.
 func (hs *HTTPServer) SyncUser(
-	ctx *models.ReqContext,
-	extUser *models.ExternalUserInfo,
+	ctx *contextmodel.ReqContext,
+	extUser *loginservice.ExternalUserInfo,
 	connect social.SocialConnector,
 ) (*user.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
 	// add/update user in Grafana
-	cmd := &models.UpsertUserCommand{
+	cmd := &loginservice.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: loginservice.UserLookupParams{
 			Email:  &extUser.Email,
 			UserID: nil,
 			Login:  nil,
 		},
 	}
 
-	if err := hs.Login.UpsertUser(ctx.Req.Context(), cmd); err != nil {
+	upsertedUser, err := hs.Login.UpsertUser(ctx.Req.Context(), cmd)
+	if err != nil {
 		return nil, err
 	}
 
 	// Do not expose disabled status,
 	// just show incorrect user credentials error (see #17947)
-	if cmd.Result.IsDisabled {
-		oauthLogger.Warn("User is disabled", "user", cmd.Result.Login)
+	if upsertedUser.IsDisabled {
+		oauthLogger.Warn("User is disabled", "user", upsertedUser.Login)
 		return nil, login.ErrInvalidCredentials
 	}
 
-	return cmd.Result, nil
+	return upsertedUser, nil
 }
 
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
@@ -350,21 +377,27 @@ type LoginError struct {
 	Err           error
 }
 
-func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
+func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err LoginError) {
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
-	info.Error = err.Err
-	if info.Error == nil {
-		info.Error = errors.New(err.PublicMessage)
-	}
-	info.HTTPStatus = err.HttpStatus
+	// login hooks is handled by authn.Service
+	if !hs.Cfg.AuthBrokerEnabled {
+		info.Error = err.Err
+		if info.Error == nil {
+			info.Error = errors.New(err.PublicMessage)
+		}
+		info.HTTPStatus = err.HttpStatus
 
-	hs.HooksService.RunLoginHook(&info, ctx)
+		hs.HooksService.RunLoginHook(&info, ctx)
+	}
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
-	info.Error = err
-	hs.HooksService.RunLoginHook(&info, ctx)
+	// login hooks is handled by authn.Service
+	if !hs.Cfg.AuthBrokerEnabled {
+		info.Error = err
+		hs.HooksService.RunLoginHook(&info, ctx)
+	}
 }

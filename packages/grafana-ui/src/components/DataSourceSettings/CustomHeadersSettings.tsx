@@ -55,7 +55,7 @@ const getCustomHeaderRowStyles = stylesFactory(() => {
   };
 });
 
-const CustomHeaderRow: React.FC<CustomHeaderRowProps> = ({ header, onBlur, onChange, onRemove, onReset }) => {
+const CustomHeaderRow = ({ header, onBlur, onChange, onRemove, onReset }: CustomHeaderRowProps) => {
   const styles = getCustomHeaderRowStyles();
   return (
     <div className={styles.layout}>

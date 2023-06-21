@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestResolver(t *testing.T) {
@@ -19,17 +20,17 @@ func TestResolver(t *testing.T) {
 	ds := &fakeDatasources.FakeDataSourceService{
 		DataSources: []*datasources.DataSource{
 			{
-				Id:        123,
-				OrgId:     1,
+				ID:        123,
+				OrgID:     1,
 				Type:      "influx",
-				Uid:       "influx-uid",
+				UID:       "influx-uid",
 				IsDefault: true,
 			},
 			{
-				Id:    234,
-				OrgId: 1,
+				ID:    234,
+				OrgID: 1,
 				Type:  "influx",
-				Uid:   "influx-uid2",
+				UID:   "influx-uid2",
 				Name:  "Influx2",
 			},
 		},
@@ -49,34 +50,34 @@ func TestResolver(t *testing.T) {
 
 	scenarios := []struct {
 		name   string
-		given  *models.EntityExternalReference
+		given  *entity.EntityExternalReference
 		expect ResolutionInfo
 		err    string
 		ctx    context.Context
 	}{
 		{
 			name: "Missing datasource without type",
-			given: &models.EntityExternalReference{
-				Kind: models.StandardKindDataSource,
-				UID:  "xyz",
+			given: &entity.EntityExternalReference{
+				Family:     entity.StandardKindDataSource,
+				Identifier: "xyz",
 			},
 			expect: ResolutionInfo{OK: false},
 			ctx:    ctxOrg1,
 		},
 		{
 			name: "OK datasource",
-			given: &models.EntityExternalReference{
-				Kind: models.StandardKindDataSource,
-				Type: "influx",
-				UID:  "influx-uid",
+			given: &entity.EntityExternalReference{
+				Family:     entity.StandardKindDataSource,
+				Type:       "influx",
+				Identifier: "influx-uid",
 			},
 			expect: ResolutionInfo{OK: true, Key: "influx-uid"},
 			ctx:    ctxOrg1,
 		},
 		{
 			name: "Get the default datasource",
-			given: &models.EntityExternalReference{
-				Kind: models.StandardKindDataSource,
+			given: &entity.EntityExternalReference{
+				Family: entity.StandardKindDataSource,
 			},
 			expect: ResolutionInfo{
 				OK:      true,
@@ -87,9 +88,9 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "Get the default datasource (with type)",
-			given: &models.EntityExternalReference{
-				Kind: models.StandardKindDataSource,
-				Type: "influx",
+			given: &entity.EntityExternalReference{
+				Family: entity.StandardKindDataSource,
+				Type:   "influx",
 			},
 			expect: ResolutionInfo{
 				OK:  true,
@@ -99,9 +100,9 @@ func TestResolver(t *testing.T) {
 		},
 		{
 			name: "Lookup by name",
-			given: &models.EntityExternalReference{
-				Kind: models.StandardKindDataSource,
-				UID:  "Influx2",
+			given: &entity.EntityExternalReference{
+				Family:     entity.StandardKindDataSource,
+				Identifier: "Influx2",
 			},
 			expect: ResolutionInfo{
 				OK:      true,

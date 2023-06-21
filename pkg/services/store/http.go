@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -57,7 +57,7 @@ func (s *standardStorageService) RegisterHTTPRoutes(storageRoute routing.RouteRe
 	storageRoute.Get("/config", reqGrafanaAdmin, routing.Wrap(s.getConfig))
 }
 
-func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doWrite(c *contextmodel.ReqContext) response.Response {
 	scope, path := getPathAndScope(c)
 	cmd := &WriteValueRequest{}
 	if err := web.Bind(c.Req, cmd); err != nil {
@@ -71,7 +71,7 @@ func (s *standardStorageService) doWrite(c *models.ReqContext) response.Response
 	return response.JSON(200, rsp)
 }
 
-func (s *standardStorageService) doUpload(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doUpload(c *contextmodel.ReqContext) response.Response {
 	type rspInfo struct {
 		Message string `json:"message,omitempty"`
 		Path    string `json:"path,omitempty"`
@@ -158,7 +158,7 @@ func getMultipartFormValue(req *http.Request, key string) string {
 	return v[0]
 }
 
-func (s *standardStorageService) read(c *models.ReqContext) response.Response {
+func (s *standardStorageService) read(c *contextmodel.ReqContext) response.Response {
 	// full path is api/storage/read/upload/example.jpg, but we only want the part after read
 	scope, path := getPathAndScope(c)
 	file, err := s.Read(c.Req.Context(), c.SignedInUser, scope+"/"+path)
@@ -177,7 +177,7 @@ func (s *standardStorageService) read(c *models.ReqContext) response.Response {
 	return response.Respond(200, file.Contents)
 }
 
-func (s *standardStorageService) getOptions(c *models.ReqContext) response.Response {
+func (s *standardStorageService) getOptions(c *contextmodel.ReqContext) response.Response {
 	scope, path := getPathAndScope(c)
 	opts, err := s.getWorkflowOptions(c.Req.Context(), c.SignedInUser, scope+"/"+path)
 	if err != nil {
@@ -186,7 +186,7 @@ func (s *standardStorageService) getOptions(c *models.ReqContext) response.Respo
 	return response.JSON(200, opts)
 }
 
-func (s *standardStorageService) doDelete(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doDelete(c *contextmodel.ReqContext) response.Response {
 	// full path is api/storage/delete/upload/example.jpg, but we only want the part after upload
 	scope, path := getPathAndScope(c)
 
@@ -201,7 +201,7 @@ func (s *standardStorageService) doDelete(c *models.ReqContext) response.Respons
 	})
 }
 
-func (s *standardStorageService) doDeleteFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doDeleteFolder(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -230,7 +230,7 @@ func (s *standardStorageService) doDeleteFolder(c *models.ReqContext) response.R
 	})
 }
 
-func (s *standardStorageService) doCreateFolder(c *models.ReqContext) response.Response {
+func (s *standardStorageService) doCreateFolder(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -257,7 +257,7 @@ func (s *standardStorageService) doCreateFolder(c *models.ReqContext) response.R
 	})
 }
 
-func (s *standardStorageService) list(c *models.ReqContext) response.Response {
+func (s *standardStorageService) list(c *contextmodel.ReqContext) response.Response {
 	params := web.Params(c.Req)
 	path := params["*"]
 	frame, err := s.List(c.Req.Context(), c.SignedInUser, path)
@@ -270,7 +270,7 @@ func (s *standardStorageService) list(c *models.ReqContext) response.Response {
 	return response.JSONStreaming(http.StatusOK, frame)
 }
 
-func (s *standardStorageService) getConfig(c *models.ReqContext) response.Response {
+func (s *standardStorageService) getConfig(c *contextmodel.ReqContext) response.Response {
 	roots := make([]RootStorageMeta, 0)
 	orgId := c.OrgID
 	t := s.tree

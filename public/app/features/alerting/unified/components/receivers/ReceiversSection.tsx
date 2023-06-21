@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Button, useStyles2 } from '@grafana/ui';
 
 interface Props {
@@ -25,11 +26,11 @@ export const ReceiversSection = ({
 }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   return (
-    <>
+    <Stack direction="column" gap={2}>
       <div className={cx(styles.heading, className)}>
         <div>
           <h4>{title}</h4>
-          <p className={styles.description}>{description}</p>
+          <div className={styles.description}>{description}</div>
         </div>
         {showButton && (
           <Link to={addButtonTo}>
@@ -40,7 +41,7 @@ export const ReceiversSection = ({
         )}
       </div>
       {children}
-    </>
+    </Stack>
   );
 };
 
@@ -48,6 +49,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   heading: css`
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
   `,
   description: css`
     color: ${theme.colors.text.secondary};

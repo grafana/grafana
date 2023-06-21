@@ -33,7 +33,7 @@ func ProvideRouteOperationName(name string) web.Handler {
 
 func addRouteNameToContext(req *http.Request, operationName string) *http.Request {
 	// don't set route name if it's set
-	if _, exists := routeOperationName(req); exists {
+	if _, exists := RouteOperationName(req); exists {
 		return req
 	}
 
@@ -55,8 +55,8 @@ var unnamedHandlers = []struct {
 	{handler: "/debug/pprof-handlers", pathPattern: regexp.MustCompile("^/debug/pprof")},
 }
 
-// routeOperationName receives the route operation name from context, if set.
-func routeOperationName(req *http.Request) (string, bool) {
+// RouteOperationName receives the route operation name from context, if set.
+func RouteOperationName(req *http.Request) (string, bool) {
 	if val := req.Context().Value(routeOperationNameKey); val != nil {
 		op, ok := val.(string)
 		return op, ok
@@ -90,7 +90,7 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			// Only call span.Finish when a route operation name have been set,
 			// meaning that not set the span would not be reported.
 			// TODO: do not depend on web.Context from the future
-			if routeOperation, exists := routeOperationName(web.FromContext(req.Context()).Req); exists {
+			if routeOperation, exists := RouteOperationName(web.FromContext(req.Context()).Req); exists {
 				defer span.End()
 				span.SetName(fmt.Sprintf("HTTP %s %s", req.Method, routeOperation))
 			}

@@ -9,8 +9,8 @@ import (
 )
 
 type TemplateV1 struct {
-	OrgID    values.Int64Value           `json:"orgId" yaml:"orgId"`
-	Template definitions.MessageTemplate `json:",inline" yaml:",inline"`
+	OrgID    values.Int64Value                `json:"orgId" yaml:"orgId"`
+	Template definitions.NotificationTemplate `json:",inline" yaml:",inline"`
 }
 
 func (v1 *TemplateV1) mapToModel() Template {
@@ -26,7 +26,7 @@ func (v1 *TemplateV1) mapToModel() Template {
 
 type Template struct {
 	OrgID int64
-	Data  definitions.MessageTemplate
+	Data  definitions.NotificationTemplate
 }
 
 type DeleteTemplateV1 struct {

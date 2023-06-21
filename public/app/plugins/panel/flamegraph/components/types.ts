@@ -1,11 +1,15 @@
-export type TooltipData = {
-  name: string;
-  percentTitle: string;
+export type ClickedItemData = {
+  posX: number;
+  posY: number;
+  itemIndex: number;
+  label: string;
+  start: number;
+};
+
+export type Metadata = {
   percentValue: number;
-  percentSelf: number;
   unitTitle: string;
   unitValue: string;
-  unitSelf: string;
   samples: string;
 };
 
@@ -42,3 +46,5 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export type TextAlign = 'left' | 'right';

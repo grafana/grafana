@@ -5,7 +5,6 @@ import { createTheme, GrafanaTheme2 } from '../../themes';
 import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
 import { roundDecimals } from '../../utils';
-import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
 import { AlignedData, join } from './joinDataFrames';
@@ -152,24 +151,24 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
 
   // guess bucket size from single explicit bucket field
   if (!xMax && xMin && xMin.values.length > 1) {
-    let vals = xMin.values.toArray();
+    let vals = xMin.values;
     let bucketSize = roundDecimals(vals[1] - vals[0], 6);
 
     xMax = {
       ...xMin,
       name: histogramFrameBucketMaxFieldName,
-      values: new ArrayVector(vals.map((v) => v + bucketSize)),
+      values: vals.map((v) => v + bucketSize),
     };
   }
 
   if (!xMin && xMax && xMax?.values.length > 1) {
-    let vals = xMax.values.toArray();
+    let vals = xMax.values;
     let bucketSize = roundDecimals(vals[1] - vals[0], 6);
 
     xMin = {
       ...xMax,
       name: histogramFrameBucketMinFieldName,
-      values: new ArrayVector(vals.map((v) => v - bucketSize)),
+      values: vals.map((v) => v - bucketSize),
     };
   }
 
@@ -200,7 +199,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     for (const frame of frames) {
       for (const field of frame.fields) {
         if (field.type === FieldType.number) {
-          allValues = allValues.concat(field.values.toArray());
+          allValues = allValues.concat(field.values);
         }
       }
     }
@@ -254,7 +253,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   for (const frame of frames) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
-        let fieldHist = histogram(field.values.toArray(), getBucket, histFilter, histSort) as AlignedData;
+        let fieldHist = histogram(field.values, getBucket, histFilter, histSort) as AlignedData;
         histograms.push(fieldHist);
         counts.push({
           ...field,
@@ -291,7 +290,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
   const xMin: Field = {
     name: histogramFrameBucketMinFieldName,
-    values: new ArrayVector(joinedHists[0]),
+    values: joinedHists[0],
     type: FieldType.number,
     state: undefined,
     config:
@@ -305,7 +304,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   const xMax = {
     ...xMin,
     name: histogramFrameBucketMaxFieldName,
-    values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
+    values: joinedHists[0].map((v) => v + bucketSize!),
   };
 
   if (options?.combine) {
@@ -319,14 +318,14 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
       {
         ...counts[0],
         name: 'count',
-        values: new ArrayVector(vals),
+        values: vals,
         type: FieldType.number,
         state: undefined,
       },
     ];
   } else {
     counts.forEach((field, i) => {
-      field.values = new ArrayVector(joinedHists[i + 1]);
+      field.values = joinedHists[i + 1];
     });
   }
 

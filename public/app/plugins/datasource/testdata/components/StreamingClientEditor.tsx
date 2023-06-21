@@ -4,7 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { StreamingQuery } from '../types';
+import { StreamingQuery } from '../dataquery.gen';
 
 const streamingClientFields = [
   { label: 'Speed (ms)', id: 'speed', placeholder: 'value', min: 10, step: 10 },

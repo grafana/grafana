@@ -1,14 +1,13 @@
 import {
   MapLayerRegistryItem,
-  MapLayerOptions,
   PanelData,
   GrafanaTheme2,
-  FrameGeometrySourceMode,
   EventBus,
   PluginState,
   FieldType,
   Field,
 } from '@grafana/data';
+import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
@@ -172,13 +171,13 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
           if (config.src) {
             const srcField: Field | undefined = findField(frame, config.src);
             if (srcField) {
-              images = srcField?.values.toArray();
+              images = srcField?.values;
             }
           } else {
             for (let i = 0; i < frame.fields.length; i++) {
               const field = frame.fields[i];
               if (field.type === FieldType.string) {
-                images = field.values.toArray();
+                images = field.values;
                 break;
               }
             }

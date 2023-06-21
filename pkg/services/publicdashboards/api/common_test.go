@@ -15,18 +15,21 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/query"
+	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -82,11 +85,11 @@ type testContext struct {
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,
-			SkipCache:    true,
+			SkipDSCache:  true,
 			Logger:       log.New("publicdashboards-test"),
 		}
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), reqCtx))
@@ -104,7 +107,7 @@ func callAPI(server *web.Mux, method, path string, body io.Reader, t *testing.T)
 
 // helper to query.Service
 // allows us to stub the cache and plugin clients
-func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.Service {
+func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakePluginClient, store db.DB) *query.ServiceImpl {
 	//	build database if we need one
 	if store == nil {
 		store = db.InitTestDB(t)
@@ -129,13 +132,24 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 		}
 	}
 
+	ds := &fakeDatasources.FakeDataSourceService{}
+	pCtxProvider := plugincontext.ProvideService(localcache.ProvideService(), &plugins.FakePluginStore{
+		PluginList: []plugins.PluginDTO{
+			{
+				JSONData: plugins.JSONData{
+					ID: "mysql",
+				},
+			},
+		},
+	}, ds, pluginSettings.ProvideService(store, fakeSecrets.NewFakeSecretsService()))
+
 	return query.ProvideService(
 		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
-		&fakeDatasources.FakeDataSourceService{},
 		fpc,
+		pCtxProvider,
 	)
 }
 

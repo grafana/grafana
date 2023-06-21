@@ -1,0 +1,19 @@
+{
+  "results": {
+    "tables": {
+      "status": 200,
+      "frames": [
+        {
+          "schema": {
+            "refId": "tables",
+            "meta": {
+              "executedQueryString": "SELECT table_name FROM information_schema.tables WHERE table_schema = 'DataMaker' ORDER BY table_name"
+            },
+            "fields": [{ "name": "TABLE_NAME", "type": "string", "typeInfo": { "frame": "string", "nullable": true } }]
+          },
+          "data": { "values": [["normalTable", "table-name"]] }
+        }
+      ]
+    }
+  }
+}

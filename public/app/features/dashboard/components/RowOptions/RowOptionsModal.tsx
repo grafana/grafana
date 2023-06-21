@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { Modal, stylesFactory } from '@grafana/ui';
 
@@ -12,7 +12,7 @@ export interface RowOptionsModalProps {
   onUpdate: OnRowOptionsUpdate;
 }
 
-export const RowOptionsModal: FC<RowOptionsModalProps> = ({ repeat, title, onDismiss, onUpdate }) => {
+export const RowOptionsModal = ({ repeat, title, onDismiss, onUpdate }: RowOptionsModalProps) => {
   const styles = getStyles();
   return (
     <Modal isOpen={true} title="Row options" icon="copy" onDismiss={onDismiss} className={styles.modal}>

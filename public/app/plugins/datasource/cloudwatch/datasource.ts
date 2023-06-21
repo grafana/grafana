@@ -9,6 +9,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   LoadingState,
+  LogRowContextOptions,
   LogRowModel,
   ScopedVars,
 } from '@grafana/data';
@@ -16,18 +17,16 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { RowContextOptions } from '../../../features/logs/components/LogRowContextProvider';
-
 import { CloudWatchAnnotationSupport } from './annotationSupport';
-import { CloudWatchAPI } from './api';
-import { SQLCompletionItemProvider } from './cloudwatch-sql/completion/CompletionItemProvider';
 import { DEFAULT_METRICS_QUERY, getDefaultLogsQuery } from './defaultQueries';
 import { isCloudWatchAnnotationQuery, isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from './guards';
-import { CloudWatchLanguageProvider } from './language_provider';
-import { MetricMathCompletionItemProvider } from './metric-math/completion/CompletionItemProvider';
+import { CloudWatchLogsLanguageProvider } from './language/cloudwatch-logs/CloudWatchLogsLanguageProvider';
+import { SQLCompletionItemProvider } from './language/cloudwatch-sql/completion/CompletionItemProvider';
+import { MetricMathCompletionItemProvider } from './language/metric-math/completion/CompletionItemProvider';
 import { CloudWatchAnnotationQueryRunner } from './query-runner/CloudWatchAnnotationQueryRunner';
 import { CloudWatchLogsQueryRunner } from './query-runner/CloudWatchLogsQueryRunner';
 import { CloudWatchMetricsQueryRunner } from './query-runner/CloudWatchMetricsQueryRunner';
+import { ResourcesAPI } from './resources/ResourcesAPI';
 import {
   CloudWatchAnnotationQuery,
   CloudWatchJsonData,
@@ -42,7 +41,7 @@ export class CloudWatchDatasource
   implements DataSourceWithLogsContextSupport<CloudWatchLogsQuery>
 {
   defaultRegion?: string;
-  languageProvider: CloudWatchLanguageProvider;
+  languageProvider: CloudWatchLogsLanguageProvider;
   sqlCompletionItemProvider: SQLCompletionItemProvider;
   metricMathCompletionItemProvider: MetricMathCompletionItemProvider;
   defaultLogGroups?: string[];
@@ -52,7 +51,7 @@ export class CloudWatchDatasource
   private metricsQueryRunner: CloudWatchMetricsQueryRunner;
   private annotationQueryRunner: CloudWatchAnnotationQueryRunner;
   logsQueryRunner: CloudWatchLogsQueryRunner;
-  api: CloudWatchAPI;
+  resources: ResourcesAPI;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
@@ -61,14 +60,14 @@ export class CloudWatchDatasource
   ) {
     super(instanceSettings);
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
-    this.api = new CloudWatchAPI(instanceSettings, templateSrv);
-    this.languageProvider = new CloudWatchLanguageProvider(this);
-    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.api, this.templateSrv);
-    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.api, this.templateSrv);
+    this.resources = new ResourcesAPI(instanceSettings, templateSrv);
+    this.languageProvider = new CloudWatchLogsLanguageProvider(this);
+    this.sqlCompletionItemProvider = new SQLCompletionItemProvider(this.resources, this.templateSrv);
+    this.metricMathCompletionItemProvider = new MetricMathCompletionItemProvider(this.resources, this.templateSrv);
     this.metricsQueryRunner = new CloudWatchMetricsQueryRunner(instanceSettings, templateSrv);
     this.logsQueryRunner = new CloudWatchLogsQueryRunner(instanceSettings, templateSrv, timeSrv);
     this.annotationQueryRunner = new CloudWatchAnnotationQueryRunner(instanceSettings, templateSrv);
-    this.variables = new CloudWatchVariableSupport(this.api);
+    this.variables = new CloudWatchVariableSupport(this.resources);
     this.annotations = CloudWatchAnnotationSupport;
   }
 
@@ -136,7 +135,7 @@ export class CloudWatchDatasource
 
   getLogRowContext = async (
     row: LogRowModel,
-    context?: RowContextOptions,
+    context?: LogRowContextOptions,
     query?: CloudWatchLogsQuery
   ): Promise<{ data: DataFrame[] }> => {
     return this.logsQueryRunner.getLogRowContext(row, context, query);
@@ -167,7 +166,7 @@ export class CloudWatchDatasource
 
   // public
   getVariables() {
-    return this.api.getVariables();
+    return this.resources.getVariables();
   }
 
   getActualRegion(region?: string) {

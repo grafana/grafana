@@ -3,13 +3,14 @@ import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromSeries, getThresholdsForQueries } from './util';
 
 interface Props {
@@ -46,6 +47,21 @@ export class QueryRows extends PureComponent<Props> {
         return {
           ...item,
           relativeTimeRange: timeRange,
+        };
+      })
+    );
+  };
+
+  onChangeQueryOptions = (options: AlertQueryOptions, index: number) => {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+        return {
+          ...item,
+          model: { ...item.model, maxDataPoints: options.maxDataPoints },
         };
       })
     );
@@ -127,58 +143,61 @@ export class QueryRows extends PureComponent<Props> {
           {(provided) => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {queries.map((query, index) => {
-                  const data: PanelData = this.props.data?.[query.refId] ?? {
-                    series: [],
-                    state: LoadingState.NotStarted,
-                  };
-                  const dsSettings = this.getDataSourceSettings(query);
+                <Stack direction="column">
+                  {queries.map((query, index) => {
+                    const data: PanelData = this.props.data?.[query.refId] ?? {
+                      series: [],
+                      state: LoadingState.NotStarted,
+                    };
+                    const dsSettings = this.getDataSourceSettings(query);
 
-                  const isAlertCondition = this.props.condition === query.refId;
-                  const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
+                    const isAlertCondition = this.props.condition === query.refId;
+                    const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
 
-                  if (!dsSettings) {
+                    if (!dsSettings) {
+                      return (
+                        <DatasourceNotFound
+                          key={`${query.refId}-${index}`}
+                          index={index}
+                          model={query.model}
+                          onUpdateDatasource={() => {
+                            const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
+                            if (defaultDataSource) {
+                              this.onChangeDataSource(defaultDataSource, index);
+                            }
+                          }}
+                          onRemoveQuery={() => {
+                            this.onRemoveQuery(query);
+                          }}
+                        />
+                      );
+                    }
+
                     return (
-                      <DatasourceNotFound
-                        key={`${query.refId}-${index}`}
+                      <QueryWrapper
                         index={index}
-                        model={query.model}
-                        onUpdateDatasource={() => {
-                          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-                          if (defaultDataSource) {
-                            this.onChangeDataSource(defaultDataSource, index);
-                          }
-                        }}
-                        onRemoveQuery={() => {
-                          this.onRemoveQuery(query);
-                        }}
+                        key={query.refId}
+                        dsSettings={dsSettings}
+                        data={data}
+                        error={error}
+                        query={query}
+                        onChangeQuery={this.onChangeQuery}
+                        onRemoveQuery={this.onRemoveQuery}
+                        queries={[...queries, ...expressions]}
+                        onChangeDataSource={this.onChangeDataSource}
+                        onDuplicateQuery={this.props.onDuplicateQuery}
+                        onChangeTimeRange={this.onChangeTimeRange}
+                        onChangeQueryOptions={this.onChangeQueryOptions}
+                        thresholds={thresholdByRefId[query.refId]?.config}
+                        thresholdsType={thresholdByRefId[query.refId]?.mode}
+                        onRunQueries={this.props.onRunQueries}
+                        condition={this.props.condition}
+                        onSetCondition={this.props.onSetCondition}
                       />
                     );
-                  }
-
-                  return (
-                    <QueryWrapper
-                      index={index}
-                      key={query.refId}
-                      dsSettings={dsSettings}
-                      data={data}
-                      error={error}
-                      query={query}
-                      onChangeQuery={this.onChangeQuery}
-                      onRemoveQuery={this.onRemoveQuery}
-                      queries={queries}
-                      onChangeDataSource={this.onChangeDataSource}
-                      onDuplicateQuery={this.props.onDuplicateQuery}
-                      onChangeTimeRange={this.onChangeTimeRange}
-                      thresholds={thresholdByRefId[query.refId]?.config}
-                      thresholdsType={thresholdByRefId[query.refId]?.mode}
-                      onRunQueries={this.props.onRunQueries}
-                      condition={this.props.condition}
-                      onSetCondition={this.props.onSetCondition}
-                    />
-                  );
-                })}
-                {provided.placeholder}
+                  })}
+                  {provided.placeholder}
+                </Stack>
               </div>
             );
           }}
@@ -241,7 +260,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
 
   return (
     <EmptyQueryWrapper>
-      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen>
+      <QueryOperationRow title={refId} draggable index={index} id={refId} isOpen collapsable={false}>
         <Card>
           <Card.Heading>This datasource has been removed</Card.Heading>
           <Card.Description>

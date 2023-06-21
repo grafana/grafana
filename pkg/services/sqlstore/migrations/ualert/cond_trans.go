@@ -187,7 +187,7 @@ func transConditions(set dashAlertSettings, orgID int64, dsUIDMap dsUIDLookup) (
 	ccAlertQuery := alertQuery{
 		RefID:         ccRefID,
 		Model:         exprModelJSON,
-		DatasourceUID: "-100",
+		DatasourceUID: expressionDatasourceUID,
 	}
 
 	newCond.Data = append(newCond.Data, ccAlertQuery)

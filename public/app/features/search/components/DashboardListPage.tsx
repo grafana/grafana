@@ -3,11 +3,12 @@ import React, { memo } from 'react';
 import { useAsync } from 'react-use';
 
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import NewBrowseDashboardsPage from 'app/features/browse-dashboards/BrowseDashboardsPage';
 import { FolderDTO } from 'app/types';
 
-import { GrafanaRouteComponentProps } from '../../../core/navigation/types';
 import { loadFolderPage } from '../loaders';
 
 import ManageDashboardsNew from './ManageDashboardsNew';
@@ -19,10 +20,20 @@ export interface DashboardListPageRouteParams {
 
 interface Props extends GrafanaRouteComponentProps<DashboardListPageRouteParams> {}
 
-export const DashboardListPage = memo(({ match, location }: Props) => {
+export const DashboardListPageFeatureToggle = memo((props: Props) => {
+  if (config.featureToggles.nestedFolders) {
+    return <NewBrowseDashboardsPage {...props} />;
+  }
+
+  return <DashboardListPage {...props} />;
+});
+DashboardListPageFeatureToggle.displayName = 'DashboardListPageFeatureToggle';
+
+const DashboardListPage = memo(({ match, location }: Props) => {
   const { loading, value } = useAsync<() => Promise<{ folder?: FolderDTO; pageNav?: NavModelItem }>>(() => {
     const uid = match.params.uid;
     const url = location.pathname;
+
     if (!uid || !url.startsWith('/dashboards')) {
       return Promise.resolve({});
     }
@@ -56,4 +67,4 @@ export const DashboardListPage = memo(({ match, location }: Props) => {
 
 DashboardListPage.displayName = 'DashboardListPage';
 
-export default DashboardListPage;
+export default DashboardListPageFeatureToggle;

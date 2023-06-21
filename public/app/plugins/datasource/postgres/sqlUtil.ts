@@ -1,6 +1,7 @@
 import { isEmpty } from 'lodash';
 
-import { RAQBFieldTypes, SQLExpression, SQLQuery } from 'app/features/plugins/sql/types';
+import { RAQBFieldTypes, SQLQuery } from 'app/features/plugins/sql/types';
+import { createSelectClause, haveColumns } from 'app/features/plugins/sql/utils/sql.utils';
 
 export function getFieldConfig(type: string): { raqbFieldType: RAQBFieldTypes; icon: string } {
   switch (type) {
@@ -82,31 +83,3 @@ export function toRawSql({ sql, table }: SQLQuery): string {
   }
   return rawQuery;
 }
-
-function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): string {
-  const columns = sqlColumns.map((c) => {
-    let rawColumn = '';
-    if (c.name && c.alias) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)}) AS ${c.alias}`;
-    } else if (c.name) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)})`;
-    } else if (c.alias) {
-      rawColumn += `${c.parameters?.map((p) => `${p.name}`)} AS ${c.alias}`;
-    } else {
-      rawColumn += `${c.parameters?.map((p) => `${p.name}`)}`;
-    }
-    return rawColumn;
-  });
-
-  return `SELECT ${columns.join(', ')} `;
-}
-
-export const haveColumns = (columns: SQLExpression['columns']): columns is NonNullable<SQLExpression['columns']> => {
-  if (!columns) {
-    return false;
-  }
-
-  const haveColumn = columns.some((c) => c.parameters?.length || c.parameters?.some((p) => p.name));
-  const haveFunction = columns.some((c) => c.name);
-  return haveColumn || haveFunction;
-};

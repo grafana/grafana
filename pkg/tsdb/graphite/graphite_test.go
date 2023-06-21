@@ -14,9 +14,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestFixIntervalFormat(t *testing.T) {
@@ -290,10 +291,10 @@ func TestConvertResponses(t *testing.T) {
 
 type fakeInstanceManager struct{}
 
-func (f fakeInstanceManager) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
+func (f fakeInstanceManager) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	return datasourceInfo{}, nil
 }
 
-func (f fakeInstanceManager) Do(pluginContext backend.PluginContext, fn instancemgmt.InstanceCallbackFunc) error {
+func (f fakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ instancemgmt.InstanceCallbackFunc) error {
 	return nil
 }

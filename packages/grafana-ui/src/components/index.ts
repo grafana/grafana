@@ -14,6 +14,7 @@ export { Tooltip } from './Tooltip/Tooltip';
 export type { PopoverContent } from './Tooltip/types';
 export { PopoverController } from './Tooltip/PopoverController';
 export { Popover } from './Tooltip/Popover';
+export { Toggletip } from './Toggletip/Toggletip';
 export { Portal, getPortalContainer, PortalContainer } from './Portal/Portal';
 export { CustomScrollbar, type ScrollbarPosition } from './CustomScrollbar/CustomScrollbar';
 export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContainer';
@@ -33,6 +34,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
 export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
@@ -45,6 +47,7 @@ export { DateTimePicker } from './DateTimePickers/DateTimePicker/DateTimePicker'
 export { List } from './List/List';
 export { InteractiveTable } from './InteractiveTable/InteractiveTable';
 export { TagsInput } from './TagsInput/TagsInput';
+export { AutoSaveField } from './AutoSaveField/AutoSaveField';
 export { Pagination } from './Pagination/Pagination';
 export { Tag, type OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
@@ -79,7 +82,12 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableCellDisplayMode, type TableSortByFieldState, type TableFooterCalc } from './Table/types';
+export {
+  TableCellDisplayMode,
+  type TableSortByFieldState,
+  type TableFooterCalc,
+  type AdHocFilterItem,
+} from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
@@ -141,10 +149,6 @@ export { Alert, type AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
-export { LogLabels } from './Logs/LogLabels';
-export { LogMessageAnsi } from './Logs/LogMessageAnsi';
-export { LogRows } from './Logs/LogRows';
-export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { DataLinkButton } from './DataLinks/DataLinkButton';
 export { FieldLinkList } from './DataLinks/FieldLinkList';
 // Panel editors
@@ -178,7 +182,9 @@ export {
 } from './ErrorBoundary/ErrorBoundary';
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { CustomHeadersSettings } from './DataSourceSettings/CustomHeadersSettings';
 export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
+export { SecureSocksProxySettings } from './DataSourceSettings/SecureSocksProxySettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
@@ -243,7 +249,8 @@ export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDis
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
-
+export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
+export { type UserView } from './UsersIndicator/types';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 

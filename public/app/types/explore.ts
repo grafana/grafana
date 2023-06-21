@@ -9,27 +9,19 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
+  UrlQueryMap,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
-export enum ExploreId {
-  left = 'left',
-  right = 'right',
-}
-
-export type ExploreQueryParams = {
-  left: string;
-  right: string;
-};
-
+export type ExploreQueryParams = UrlQueryMap;
 /**
  * Global Explore state
  */
@@ -38,14 +30,8 @@ export interface ExploreState {
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
-  /**
-   * Explore state of the left split (left is default in non-split view).
-   */
-  left: ExploreItemState;
-  /**
-   * Explore state of the right area in split view.
-   */
-  right?: ExploreItemState;
+
+  panes: Record<string, ExploreItemState | undefined>;
 
   correlations?: CorrelationData[];
 
@@ -66,19 +52,14 @@ export interface ExploreState {
   richHistoryLimitExceededWarningShown: boolean;
 
   /**
-   * True if a warning message about failed rich history has been shown already in this session.
-   */
-  richHistoryMigrationFailed: boolean;
-
-  /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
-  largerExploreId?: ExploreId;
+  largerExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a maximize pane button is pressed, this indicates which side was maximized. Will be undefined if not split or if it is manually resized
    */
-  maxedExploreId?: ExploreId;
+  maxedExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a minimize pane button is pressed, it will do an even split of panes. Will be undefined if split or on a manual resize
@@ -87,7 +68,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
+export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
 
 export interface ExploreItemState {
   /**
@@ -98,10 +79,6 @@ export interface ExploreItemState {
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance?: DataSourceApi | null;
-  /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
@@ -144,7 +121,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -174,6 +150,12 @@ export interface ExploreItemState {
    * If true, the live tailing view is paused.
    */
   isPaused: boolean;
+
+  /**
+   * Index of the last item in the list of logs
+   * when the live tailing views gets cleared.
+   */
+  clearedAtIndex: number | null;
 
   querySubscription?: Unsubscribable;
 
@@ -210,8 +192,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -230,11 +210,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -267,7 +244,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
+export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;
@@ -279,7 +256,3 @@ export interface SupplementaryQuery {
 export type SupplementaryQueries = {
   [key in SupplementaryQueryType]: SupplementaryQuery;
 };
-
-export enum SupplementaryQueryType {
-  LogsVolume = 'LogsVolume',
-}

@@ -85,11 +85,9 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	if len(sess.events) > 0 {
-		for _, e := range sess.events {
-			if err = bus.Publish(ctx, e); err != nil {
-				ctxLogger.Error("Failed to publish event after commit.", "error", err)
-			}
+	for _, e := range sess.events {
+		if err = bus.Publish(ctx, e); err != nil {
+			ctxLogger.Error("Failed to publish event after commit.", "error", err)
 		}
 	}
 

@@ -1,13 +1,21 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css`
     display: flex;
     margin: 16px 0;
     justify-content: space-between;
+
+    position: sticky;
+    top: 0;
+    background-color: ${theme.colors.background.primary};
+    z-index: 2;
+    padding: ${theme.spacing(2)};
+    margin: 0 -${theme.spacing(2)};
   `,
 });
 

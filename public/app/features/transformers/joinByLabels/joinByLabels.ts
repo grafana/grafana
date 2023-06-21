@@ -1,13 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import {
-  ArrayVector,
-  DataFrame,
-  DataTransformerID,
-  Field,
-  FieldType,
-  SynchronousDataTransformerInfo,
-} from '@grafana/data';
+import { DataFrame, DataTransformerID, Field, FieldType, SynchronousDataTransformerInfo } from '@grafana/data';
 
 import { getDistinctLabels } from '../utils';
 
@@ -72,7 +65,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
           found.set(key, item);
         }
         const name = field.labels[options.value];
-        const vals = field.values.toArray();
+        const vals = field.values;
         const old = item.values[name];
         if (old) {
           item.values[name] = old.concat(vals);
@@ -117,7 +110,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
       name: join[i],
       config: {},
       type: FieldType.string,
-      values: new ArrayVector(joinValues[i]),
+      values: joinValues[i],
     });
   }
 
@@ -127,7 +120,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
       name: allNames[i],
       config: {},
       type: old.type ?? FieldType.number,
-      values: new ArrayVector(nameValues[i]),
+      values: nameValues[i],
     });
   }
 
@@ -139,7 +132,7 @@ function getErrorFrame(text: string): DataFrame {
     meta: {
       notices: [{ severity: 'error', text }],
     },
-    fields: [{ name: 'Error', type: FieldType.string, config: {}, values: new ArrayVector([text]) }],
+    fields: [{ name: 'Error', type: FieldType.string, config: {}, values: [text] }],
     length: 0,
   };
 }

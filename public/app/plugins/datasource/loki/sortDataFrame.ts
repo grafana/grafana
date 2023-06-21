@@ -1,6 +1,9 @@
 import { DataFrame, Field, SortedVector } from '@grafana/data';
 
-type SortDirection = 'ASCENDING' | 'DESCENDING';
+export enum SortDirection {
+  Ascending,
+  Descending,
+}
 
 // creates the `index` for the sorting.
 // this is needed by the `SortedVector`.
@@ -13,7 +16,7 @@ type SortDirection = 'ASCENDING' | 'DESCENDING';
 // - the first row will become the second
 // - the second row will become the third
 function makeIndex(field: Field<string>, dir: SortDirection): number[] {
-  const fieldValues: string[] = field.values.toArray();
+  const fieldValues: string[] = field.values;
 
   // we first build an array which is [0,1,2,3....]
   const index = Array(fieldValues.length);
@@ -21,7 +24,7 @@ function makeIndex(field: Field<string>, dir: SortDirection): number[] {
     index[i] = i;
   }
 
-  const isAsc = dir === 'ASCENDING';
+  const isAsc = dir === SortDirection.Ascending;
 
   index.sort((a: number, b: number): number => {
     // we need to answer this question:
@@ -62,7 +65,7 @@ export function sortDataFrameByTime(frame: DataFrame, dir: SortDirection): DataF
     ...rest,
     fields: fields.map((field) => ({
       ...field,
-      values: new SortedVector(field.values, index),
+      values: new SortedVector(field.values, index).toArray(),
     })),
   };
 

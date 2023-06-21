@@ -69,10 +69,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if version == "" {
 			version = influxVersionInfluxQL
 		}
+		database := jsonData.DbName
+		if database == "" {
+			database = settings.Database
+		}
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
-			Database:      settings.Database,
+			DbName:        database,
 			Version:       version,
 			HTTPMode:      httpMode,
 			TimeInterval:  jsonData.TimeInterval,
@@ -89,7 +93,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	logger := logger.FromContext(ctx)
 	logger.Debug("Received a query request", "numQueries", len(req.Queries))
 
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +105,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	logger.Debug("Making a non-Flux type query")
 
 	var allRawQueries string
-	var queries []Query
+	queries := make([]Query, 0, len(req.Queries))
 
 	for _, reqQuery := range req.Queries {
 		query, err := s.queryParser.Parse(reqQuery)
@@ -175,10 +179,8 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 		return nil, ErrInvalidHttpMode
 	}
 
-	req.Header.Set("User-Agent", "Grafana")
-
 	params := req.URL.Query()
-	params.Set("db", dsInfo.Database)
+	params.Set("db", dsInfo.DbName)
 	params.Set("epoch", "ms")
 
 	if httpMode == "GET" {
@@ -193,8 +195,8 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 	return req, nil
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (*models.DatasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (*models.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}

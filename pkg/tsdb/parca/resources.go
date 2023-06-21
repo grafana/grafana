@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net/url"
 
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 )
 
 type ProfileType struct {
@@ -28,7 +28,7 @@ func (d *ParcaDatasource) callProfileTypes(ctx context.Context, req *backend.Cal
 		return err
 	}
 
-	var types []*ProfileType
+	types := make([]*ProfileType, 0, len(res.Msg.Types))
 	for _, t := range res.Msg.Types {
 		var id string
 		if t.Delta {

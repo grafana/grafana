@@ -183,11 +183,13 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 
   render() {
     const { user, org, isExternalUser, theme } = this.props;
+    const authSource = user?.authLabels?.length && user?.authLabels[0];
+    const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
     const canChangeRole = contextSrv.hasPermission(AccessControlAction.OrgUsersWrite);
-    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove);
+    const canRemoveFromOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersRemove) && !isExternalUser;
     const rolePickerDisabled = isExternalUser || !canChangeRole;
 
     const inputId = `${org.name}-input`;
@@ -209,7 +211,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   basicRoleDisabled={rolePickerDisabled}
                 />
               </div>
-              {isExternalUser && <ExternalUserTooltip />}
+              {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
             </div>
           </td>
         ) : (
@@ -225,6 +227,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
               <div className="pull-right">
                 {canChangeRole && (
                   <ChangeOrgButton
+                    lockMessage={lockMessage}
                     isExternalUser={isExternalUser}
                     onChangeRoleClick={this.onChangeRoleClick}
                     onCancelClick={this.onCancelClick}
@@ -324,9 +327,11 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
         if (this.state.pendingUserId) {
           await updateUserRoles(this.state.pendingRoles, this.state.pendingUserId!, this.state.pendingOrgId!);
           // clear pending state
-          this.state.pendingOrgId = null;
-          this.state.pendingRoles = [];
-          this.state.pendingUserId = null;
+          this.setState({
+            pendingOrgId: null,
+            pendingRoles: [],
+            pendingUserId: null,
+          });
         }
       }
     }
@@ -402,6 +407,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
 }
 
 interface ChangeOrgButtonProps {
+  lockMessage?: string;
   isExternalUser?: boolean;
   onChangeRoleClick: () => void;
   onCancelClick: () => void;
@@ -415,9 +421,18 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   tooltipItemLink: css`
     color: ${theme.v1.palette.blue95};
   `,
+  lockMessageClass: css`
+    font-style: italic;
+    margin-left: 1.8rem;
+    margin-right: 0.6rem;
+  `,
+  icon: css`
+    line-height: 2;
+  `,
 });
 
 export function ChangeOrgButton({
+  lockMessage,
   onChangeRoleClick,
   isExternalUser,
   onOrgRoleSave,
@@ -426,46 +441,57 @@ export function ChangeOrgButton({
   const styles = useStyles2(getChangeOrgButtonTheme);
   return (
     <div className={styles.disabledTooltip}>
-      <ConfirmButton
-        confirmText="Save"
-        onClick={onChangeRoleClick}
-        onCancel={onCancelClick}
-        onConfirm={onOrgRoleSave}
-        disabled={isExternalUser}
-      >
-        Change role
-      </ConfirmButton>
-      {isExternalUser && (
-        <Tooltip
-          placement="right-end"
-          content={
-            <div>
-              This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-              the&nbsp;
-              <a
-                className={styles.tooltipItemLink}
-                href={'https://grafana.com/docs/grafana/latest/auth'}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Grafana authentication docs
-              </a>
-              &nbsp;for details.
+      {isExternalUser ? (
+        <>
+          <span className={styles.lockMessageClass}>{lockMessage}</span>
+          <Tooltip
+            placement="right-end"
+            interactive={true}
+            content={
+              <div>
+                This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                the&nbsp;
+                <a
+                  className={styles.tooltipItemLink}
+                  href={'https://grafana.com/docs/grafana/latest/auth'}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Grafana authentication docs
+                </a>
+                &nbsp;for details.
+              </div>
+            }
+          >
+            <div className={styles.icon}>
+              <Icon name="question-circle" />
             </div>
-          }
+          </Tooltip>
+        </>
+      ) : (
+        <ConfirmButton
+          confirmText="Save"
+          onClick={onChangeRoleClick}
+          onCancel={onCancelClick}
+          onConfirm={onOrgRoleSave}
+          disabled={isExternalUser}
         >
-          <Icon name="question-circle" />
-        </Tooltip>
+          Change role
+        </ConfirmButton>
       )}
     </div>
   );
 }
+interface ExternalUserTooltipProps {
+  lockMessage?: string;
+}
 
-const ExternalUserTooltip = () => {
+const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (
     <div className={styles.disabledTooltip}>
+      <span className={styles.lockMessageClass}>{lockMessage}</span>
       <Tooltip
         placement="right-end"
         interactive={true}
@@ -497,5 +523,10 @@ const getTooltipStyles = (theme: GrafanaTheme2) => ({
   `,
   tooltipItemLink: css`
     color: ${theme.v1.palette.blue95};
+  `,
+  lockMessageClass: css`
+    font-style: italic;
+    margin-left: 1.8rem;
+    margin-right: 0.6rem;
   `,
 });

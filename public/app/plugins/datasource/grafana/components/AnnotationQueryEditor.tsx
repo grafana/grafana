@@ -1,12 +1,16 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
-import { Field, FieldSet, Select, Switch } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Field, FieldSet, Select, Switch, useStyles2 } from '@grafana/ui';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
+import { TimeRegionConfig } from 'app/core/utils/timeRegions';
 import { getAnnotationTags } from 'app/features/annotations/api';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from '../types';
+import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from '../types';
+
+import { TimeRegionEditor } from './TimeRegionEditor';
 
 const matchTooltipContent = 'Enabling this returns annotations that match any of the tags specified below';
 
@@ -14,7 +18,7 @@ const tagsTooltipContent = (
   <div>Specify a list of tags to match. To specify a key and value tag use `key:value` syntax.</div>
 );
 
-const annotationTypes = [
+const annotationTypes: Array<SelectableValue<GrafanaAnnotationType>> = [
   {
     label: 'Dashboard',
     value: GrafanaAnnotationType.Dashboard,
@@ -24,6 +28,19 @@ const annotationTypes = [
     label: 'Tags',
     value: GrafanaAnnotationType.Tags,
     description: 'This will fetch any annotation events that match the tags filter',
+  },
+];
+
+const queryTypes: Array<SelectableValue<GrafanaQueryType>> = [
+  {
+    label: 'Annotations & Alerts',
+    value: GrafanaQueryType.Annotations,
+    description: 'Show annotations or alerts managed by grafana',
+  },
+  {
+    label: 'Time regions',
+    value: GrafanaQueryType.TimeRegions,
+    description: 'Configure a repeating time region',
   },
 ];
 
@@ -39,8 +56,10 @@ interface Props {
 
 export default function AnnotationQueryEditor({ query, onChange }: Props) {
   const annotationQuery = query as GrafanaAnnotationQuery;
-  const { limit, matchAny, tags, type } = annotationQuery;
-  const styles = getStyles();
+  const { limit, matchAny, tags, type, queryType } = annotationQuery;
+  let grafanaQueryType = queryType ?? GrafanaQueryType.Annotations;
+  const defaultTimezone = useMemo(() => getDashboardSrv().dashboard?.getTimezone(), []);
+  const styles = useStyles2(getStyles);
 
   const onFilterByChange = (newValue: SelectableValue<GrafanaAnnotationType>) =>
     onChange({
@@ -66,49 +85,86 @@ export default function AnnotationQueryEditor({ query, onChange }: Props) {
       tags,
     });
 
+  const onQueryTypeChange = (newValue: SelectableValue<GrafanaQueryType>) => {
+    const newQuery: GrafanaAnnotationQuery = { ...annotationQuery, queryType: newValue.value! };
+    if (newQuery.queryType === GrafanaQueryType.TimeRegions) {
+      if (!newQuery.timeRegion) {
+        newQuery.timeRegion = {
+          timezone: defaultTimezone,
+        };
+      }
+    } else {
+      delete newQuery.timeRegion;
+    }
+
+    onChange(newQuery);
+  };
+  const onTimeRegionChange = (timeRegion?: TimeRegionConfig) => {
+    onChange({
+      ...annotationQuery,
+      timeRegion,
+    });
+  };
+
   return (
     <FieldSet className={styles.container}>
-      <Field label="Filter by">
+      <Field label="Query type">
         <Select
-          inputId="grafana-annotations__filter-by"
-          options={annotationTypes}
-          value={type}
-          onChange={onFilterByChange}
+          inputId="grafana-annotations__query-type"
+          options={queryTypes}
+          value={grafanaQueryType}
+          onChange={onQueryTypeChange}
         />
       </Field>
-      <Field label="Max limit">
-        <Select
-          inputId="grafana-annotations__limit"
-          width={16}
-          options={limitOptions}
-          value={limit}
-          onChange={onMaxLimitChange}
-        />
-      </Field>
-      {type === GrafanaAnnotationType.Tags && (
+      {grafanaQueryType === GrafanaQueryType.Annotations && (
         <>
-          <Field label="Match any" description={matchTooltipContent}>
-            <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
-          </Field>
-          <Field label="Tags" description={tagsTooltipContent}>
-            <TagFilter
-              allowCustomValue
-              inputId="grafana-annotations__tags"
-              onChange={onTagsChange}
-              tagOptions={getAnnotationTags}
-              tags={tags ?? []}
+          <Field label="Filter by">
+            <Select
+              inputId="grafana-annotations__filter-by"
+              options={annotationTypes}
+              value={type}
+              onChange={onFilterByChange}
             />
           </Field>
+          <Field label="Max limit">
+            <Select
+              inputId="grafana-annotations__limit"
+              width={16}
+              options={limitOptions}
+              value={limit}
+              onChange={onMaxLimitChange}
+            />
+          </Field>
+          {type === GrafanaAnnotationType.Tags && (
+            <>
+              <Field label="Match any" description={matchTooltipContent}>
+                <Switch id="grafana-annotations__match-any" value={matchAny} onChange={onMatchAnyChange} />
+              </Field>
+              <Field label="Tags" description={tagsTooltipContent}>
+                <TagFilter
+                  allowCustomValue
+                  inputId="grafana-annotations__tags"
+                  onChange={onTagsChange}
+                  tagOptions={getAnnotationTags}
+                  tags={tags ?? []}
+                />
+              </Field>
+            </>
+          )}
         </>
+      )}
+      {grafanaQueryType === GrafanaQueryType.TimeRegions && annotationQuery.timeRegion && (
+        <TimeRegionEditor value={annotationQuery.timeRegion} onChange={onTimeRegionChange} />
       )}
     </FieldSet>
   );
 }
 
-const getStyles = () => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      max-width: 600px;
-    `,
+    container: css({
+      maxWidth: theme.spacing(60),
+      marginBottom: theme.spacing(2),
+    }),
   };
 };

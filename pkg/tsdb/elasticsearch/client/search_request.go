@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	highlightPreTagsString  = "@HIGHLIGHT@"
-	highlightPostTagsString = "@/HIGHLIGHT@"
-	highlightFragmentSize   = 2147483647
+	HighlightPreTagsString  = "@HIGHLIGHT@"
+	HighlightPostTagsString = "@/HIGHLIGHT@"
+	HighlightFragmentSize   = 2147483647
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
@@ -73,10 +73,21 @@ func (b *SearchRequestBuilder) Size(size int) *SearchRequestBuilder {
 	return b
 }
 
-// SortDesc adds a sort to the search request
-func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchRequestBuilder {
+type SortOrder string
+
+const (
+	SortOrderAsc  SortOrder = "asc"
+	SortOrderDesc SortOrder = "desc"
+)
+
+// Sort adds a "asc" | "desc" sort to the search request
+func (b *SearchRequestBuilder) Sort(order SortOrder, field string, unmappedType string) *SearchRequestBuilder {
+	if order != SortOrderAsc && order != SortOrderDesc {
+		return b
+	}
+
 	props := map[string]string{
-		"order": "desc",
+		"order": string(order),
 	}
 
 	if unmappedType != "" {
@@ -85,6 +96,12 @@ func (b *SearchRequestBuilder) SortDesc(field, unmappedType string) *SearchReque
 
 	b.sort[field] = props
 
+	return b
+}
+
+// AddTimeFieldWithStandardizedFormat adds a time field to fields with standardized time format
+func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField string) *SearchRequestBuilder {
+	b.customProps["fields"] = []map[string]string{{"field": timeField, "format": "strict_date_optional_time_nanos"}}
 	return b
 }
 
@@ -103,10 +120,20 @@ func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
 		"fields": map[string]interface{}{
 			"*": map[string]interface{}{},
 		},
-		"pre_tags":      []string{highlightPreTagsString},
-		"post_tags":     []string{highlightPostTagsString},
-		"fragment_size": highlightFragmentSize,
+		"pre_tags":      []string{HighlightPreTagsString},
+		"post_tags":     []string{HighlightPostTagsString},
+		"fragment_size": HighlightFragmentSize,
 	}
+	return b
+}
+
+func (b *SearchRequestBuilder) AddSearchAfter(value interface{}) *SearchRequestBuilder {
+	if b.customProps["search_after"] == nil {
+		b.customProps["search_after"] = []interface{}{value}
+	} else {
+		b.customProps["search_after"] = append(b.customProps["search_after"].([]interface{}), value)
+	}
+
 	return b
 }
 
@@ -270,6 +297,7 @@ type AggBuilder interface {
 	Histogram(key, field string, fn func(a *HistogramAgg, b AggBuilder)) AggBuilder
 	DateHistogram(key, field string, fn func(a *DateHistogramAgg, b AggBuilder)) AggBuilder
 	Terms(key, field string, fn func(a *TermsAggregation, b AggBuilder)) AggBuilder
+	Nested(key, path string, fn func(a *NestedAggregation, b AggBuilder)) AggBuilder
 	Filters(key string, fn func(a *FiltersAggregation, b AggBuilder)) AggBuilder
 	GeoHashGrid(key, field string, fn func(a *GeoHashGridAggregation, b AggBuilder)) AggBuilder
 	Metric(key, metricType, field string, fn func(a *MetricAggregation)) AggBuilder
@@ -375,6 +403,26 @@ func (b *aggBuilderImpl) Terms(key, field string, fn func(a *TermsAggregation, b
 			innerAgg.Order["_key"] = orderBy
 			delete(innerAgg.Order, termsOrderTerm)
 		}
+	}
+
+	b.aggDefs = append(b.aggDefs, aggDef)
+
+	return b
+}
+
+func (b *aggBuilderImpl) Nested(key, field string, fn func(a *NestedAggregation, b AggBuilder)) AggBuilder {
+	innerAgg := &NestedAggregation{
+		Path: field,
+	}
+	aggDef := newAggDef(key, &aggContainer{
+		Type:        "nested",
+		Aggregation: innerAgg,
+	})
+
+	if fn != nil {
+		builder := newAggBuilder()
+		aggDef.builders = append(aggDef.builders, builder)
+		fn(innerAgg, builder)
 	}
 
 	b.aggDefs = append(b.aggDefs, aggDef)

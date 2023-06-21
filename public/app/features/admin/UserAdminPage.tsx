@@ -39,8 +39,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth'];
-
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
     const { match, loadAdminUserPage } = this.props;
@@ -108,35 +106,11 @@ export class UserAdminPage extends PureComponent<Props> {
     const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
-    const isOAuthUserWithSkippableSync =
-      user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
-    const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
-    const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
-    const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
-    const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
-    // isGrafanaComUser true
-    // isOAuthUserWithSkippableSync true
-    const isUserSynced =
-      !config.auth.DisableSyncLock &&
-      ((user?.isExternal &&
-        !(
-          isAuthProxyUser ||
-          isGoogleUser ||
-          isOAuthUserWithSkippableSync ||
-          isSAMLUser ||
-          isLDAPUser ||
-          isGrafanaComUser
-        )) ||
-        (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
-        (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
-        (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser) ||
-        // both OAuthSkipOrgRoleUpdateSync and GrafanaComSkipOrgRoleSync needs to be false for a GrafanaComUser to be synced
-        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser));
+    const isUserSynced = !config.auth.DisableSyncLock && user?.isExternallySynced;
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
       icon: 'shield',
-      breadcrumbs: [{ title: 'Users', url: 'admin/users' }],
       subTitle: 'Manage settings for an individual user.',
     };
 
@@ -153,13 +127,9 @@ export class UserAdminPage extends PureComponent<Props> {
                 onUserEnable={this.onUserEnable}
                 onPasswordChange={this.onPasswordChange}
               />
-              {!config.auth.LDAPSkipOrgRoleSync &&
-                isLDAPUser &&
-                featureEnabled('ldapsync') &&
-                ldapSyncInfo &&
-                canReadLDAPStatus && (
-                  <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
-                )}
+              {isLDAPUser && isUserSynced && featureEnabled('ldapsync') && ldapSyncInfo && canReadLDAPStatus && (
+                <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={this.onUserSync} />
+              )}
               <UserPermissions isGrafanaAdmin={user.isGrafanaAdmin} onGrafanaAdminChange={this.onGrafanaAdminChange} />
             </>
           )}

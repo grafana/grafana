@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpan } from './components';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.

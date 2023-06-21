@@ -3,9 +3,9 @@
 package store
 
 import (
-	filestorage "github.com/grafana/grafana/pkg/infra/filestorage"
 	mock "github.com/stretchr/testify/mock"
 
+	filestorage "github.com/grafana/grafana/pkg/infra/filestorage"
 	user "github.com/grafana/grafana/pkg/services/user"
 )
 

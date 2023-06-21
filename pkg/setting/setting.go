@@ -21,16 +21,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/gobwas/glob"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -47,7 +47,6 @@ const (
 	DefaultHTTPAddr  = "0.0.0.0"
 	Dev              = "development"
 	Prod             = "production"
-	Test             = "test"
 	ApplicationName  = "Grafana"
 )
 
@@ -87,12 +86,6 @@ var (
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
 
-	// Snapshots
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
-	SnapShotRemoveExpired bool
-
 	// Dashboard history
 	DashboardVersionsToKeep int
 	MinRefreshInterval      string
@@ -100,33 +93,18 @@ var (
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
-	AutoAssignOrg           bool
-	AutoAssignOrgId         int
-	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
 	PasswordHint            string
-	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	OAuthAutoLogin          bool
-	ViewersCanEdit          bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
 	AzureAuthEnabled bool
-
-	AnonymousEnabled bool
-
-	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderProperty string
-
-	// Basic Auth
-	BasicAuthEnabled bool
 
 	// Global setting objects.
 	Raw *ini.File
@@ -135,24 +113,6 @@ var (
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
-
-	// analytics
-	GoogleAnalyticsId                   string
-	GoogleAnalytics4Id                  string
-	GoogleAnalytics4SendManualPageViews bool
-	GoogleTagManagerId                  string
-	RudderstackDataPlaneUrl             string
-	RudderstackWriteKey                 string
-	RudderstackSdkUrl                   string
-	RudderstackConfigUrl                string
-
-	// LDAP
-	LDAPEnabled           bool
-	LDAPSkipOrgRoleSync   bool
-	LDAPConfigFile        string
-	LDAPSyncCron          string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
 
 	// Alerting
 	AlertingEnabled            *bool
@@ -175,20 +135,18 @@ var (
 	// Profile UI
 	ProfileEnabled bool
 
+	// News Feed
+	NewsFeedEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
 	ImageUploadProvider string
 )
 
-// AddChangePasswordLink returns if login form is disabled or not since
-// the same intention can be used to hide both features.
-func AddChangePasswordLink() bool {
-	return !DisableLoginForm
-}
-
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -211,6 +169,7 @@ type Cfg struct {
 	ReadTimeout      time.Duration
 	EnableGzip       bool
 	EnforceDomain    bool
+	MinTLSVersion    string
 
 	// Security settings
 	SecretKey             string
@@ -281,6 +240,11 @@ type Cfg struct {
 	PluginCatalogHiddenPlugins       []string
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
+	PluginForcePublicKeyDownload     bool
+	PluginSkipPublicKeyDownload      bool
+
+	PluginsCDNURLTemplate    string
+	PluginLogBackendRequests bool
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -303,12 +267,19 @@ type Cfg struct {
 	SigV4AuthEnabled             bool
 	SigV4VerboseLogging          bool
 	AzureAuthEnabled             bool
+	AzureSkipOrgRoleSync         bool
 	BasicAuthEnabled             bool
 	AdminUser                    string
 	AdminPassword                string
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
+	DisableLoginForm             bool
+	// Not documented & not supported
+	// stand in until a more complete solution is implemented
+	AuthConfigUIAdminAccess bool
+	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
+	AuthBrokerEnabled bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -330,6 +301,7 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
+	OAuthAutoLogin    bool
 	OAuthCookieMaxAge int
 
 	// JWT Auth
@@ -347,6 +319,12 @@ type Cfg struct {
 	JWTAuthRoleAttributePath       string
 	JWTAuthRoleAttributeStrict     bool
 	JWTAuthAllowAssignGrafanaAdmin bool
+	JWTAuthSkipOrgRoleSync         bool
+
+	// Extended JWT Auth
+	ExtendedJWTAuthEnabled    bool
+	ExtendedJWTExpectIssuer   string
+	ExtendedJWTExpectAudience string
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -361,10 +339,12 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxyUserAgent             string
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
 
+	ViewersCanEdit  bool
 	EditorsCanAdmin bool
 
 	ApiKeyMaxSecondsToLive int64
@@ -395,16 +375,24 @@ type Cfg struct {
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 
-	// Sentry config
-	Sentry Sentry
-
 	// GrafanaJavascriptAgent config
 	GrafanaJavascriptAgent GrafanaJavascriptAgent
 
 	// Data sources
 	DataSourceLimit int
 
+	// SQL Data sources
+	SqlDatasourceMaxOpenConnsDefault    int
+	SqlDatasourceMaxIdleConnsDefault    int
+	SqlDatasourceMaxConnLifetimeDefault int
+
 	// Snapshots
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotRemoveExpired bool
+
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -422,10 +410,40 @@ type Cfg struct {
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
 
+	// Frontend analytics
+	GoogleAnalyticsID                   string
+	GoogleAnalytics4ID                  string
+	GoogleAnalytics4SendManualPageViews bool
+	GoogleTagManagerID                  string
+	RudderstackDataPlaneURL             string
+	RudderstackWriteKey                 string
+	RudderstackSDKURL                   string
+	RudderstackConfigURL                string
+	IntercomSecret                      string
+
+	// AzureAD
+	AzureADEnabled         bool
+	AzureADSkipOrgRoleSync bool
+
+	// Google
+	GoogleAuthEnabled     bool
+	GoogleSkipOrgRoleSync bool
+
+	// Gitlab
+	GitLabAuthEnabled     bool
+	GitLabSkipOrgRoleSync bool
+
+	// Generic OAuth
+	GenericOAuthAuthEnabled     bool
+	GenericOAuthSkipOrgRoleSync bool
+
 	// LDAP
-	LDAPEnabled         bool
-	LDAPSkipOrgRoleSync bool
-	LDAPAllowSignup     bool
+	LDAPAuthEnabled       bool
+	LDAPSkipOrgRoleSync   bool
+	LDAPConfigFilePath    string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
+	LDAPSyncCron          string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -456,12 +474,18 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
+	// GitHub OAuth
+	GitHubAuthEnabled     bool
+	GitHubSkipOrgRoleSync bool
+
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
 	// in case API is not publicly accessible.
 	// Defaults to GrafanaComURL setting + "/api" if unset.
 	GrafanaComAPIURL string
+	// Grafana.com Auth enabled
+	GrafanaComAuthEnabled bool
 	// GrafanaComSkipOrgRoleSync can be set for
 	// letting users set org roles from within Grafana and
 	// skip the org roles coming from GrafanaCom
@@ -477,13 +501,26 @@ type Cfg struct {
 	// Query history
 	QueryHistoryEnabled bool
 
-	DashboardPreviews DashboardPreviewsSettings
-
 	Storage StorageSettings
 
 	Search SearchSettings
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
+
+	// SAML Auth
+	SAMLAuthEnabled     bool
+	SAMLSkipOrgRoleSync bool
+
+	// Okta OAuth
+	OktaAuthEnabled     bool
+	OktaSkipOrgRoleSync bool
+
+	// OAuth2 Server
+	OAuth2ServerEnabled bool
+
+	// OAuth2Server supports the two recommended key types from the RFC https://www.rfc-editor.org/rfc/rfc7518#section-3.1: RS256 and ES256
+	OAuth2ServerGeneratedKeyTypeForClient string
+	OAuth2ServerAccessTokenLifespan       time.Duration
 
 	// Access Control
 	RBACEnabled         bool
@@ -492,12 +529,28 @@ type Cfg struct {
 	RBACPermissionValidationEnabled bool
 	// Reset basic roles permissions on start-up
 	RBACResetBasicRoles bool
+
 	// GRPC Server.
 	GRPCServerNetwork   string
 	GRPCServerAddress   string
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+
+	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
+	UserFacingDefaultError string
+
+	// DatabaseInstrumentQueries is used to decide if database queries
+	// should be instrumented with metrics, logs and traces.
+	// This needs to be on the global object since its used in the
+	// sqlstore package and HTTP middlewares.
+	DatabaseInstrumentQueries bool
+}
+
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func (cfg *Cfg) AddChangePasswordLink() bool {
+	return !cfg.DisableLoginForm
 }
 
 type CommandLineArgs struct {
@@ -506,7 +559,7 @@ type CommandLineArgs struct {
 	Args     []string
 }
 
-func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
+func (cfg *Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 
 	if appUrl[len(appUrl)-1] != '/' {
@@ -529,6 +582,10 @@ func ToAbsUrl(relativeUrl string) string {
 }
 
 func RedactedValue(key, value string) string {
+	if value == "" {
+		return ""
+	}
+
 	uppercased := strings.ToUpper(key)
 	// Sensitive information: password, secrets etc
 	for _, pattern := range []string{
@@ -725,7 +782,7 @@ func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	}
 }
 
-func (cfg Cfg) getCommandLineProperties(args []string) map[string]string {
+func (cfg *Cfg) getCommandLineProperties(args []string) map[string]string {
 	props := make(map[string]string)
 
 	for _, arg := range args {
@@ -897,6 +954,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -955,6 +1013,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1001,6 +1061,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	if err := readAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+
+	readOAuth2ServerSettings(cfg)
+
 	readAccessControlSettings(iniFile, cfg)
 	if err := cfg.readRenderingSettings(iniFile); err != nil {
 		return err
@@ -1015,15 +1078,16 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
-	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
-	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
-	GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
 
-	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
-	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
-	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
-	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+	cfg.GoogleAnalyticsID = analytics.Key("google_analytics_ua_id").String()
+	cfg.GoogleAnalytics4ID = analytics.Key("google_analytics_4_id").String()
+	cfg.GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
+	cfg.GoogleTagManagerID = analytics.Key("google_tag_manager_id").String()
+	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
+	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1049,6 +1113,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	profile := iniFile.Section("profile")
 	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
+	news := iniFile.Section("news")
+	NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
+
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
@@ -1072,6 +1139,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readSAMLConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1089,8 +1157,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readSqlDataSourceSettings()
 
-	cfg.DashboardPreviews = readDashboardPreviewsSettings(iniFile)
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 
@@ -1105,7 +1173,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	// check old key  name
+	// check old key name
 	GrafanaComUrl = valueAsString(iniFile.Section("grafana_net"), "url", "")
 	if GrafanaComUrl == "" {
 		GrafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
@@ -1148,7 +1216,6 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
 
 	cfg.readDateFormats()
-	cfg.readSentryConfig()
 	cfg.readGrafanaJavascriptAgentConfig()
 
 	if err := cfg.readLiveSettings(iniFile); err != nil {
@@ -1156,6 +1223,12 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	}
 
 	cfg.LogConfigSources()
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+
+	logSection := iniFile.Section("log")
+	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	return nil
 }
@@ -1171,17 +1244,20 @@ type RemoteCacheOptions struct {
 	Encryption bool
 }
 
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LDAPConfigFile = ldapSec.Key("config_file").String()
-	LDAPSyncCron = ldapSec.Key("sync_cron").String()
-	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
-	cfg.LDAPEnabled = LDAPEnabled
-	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
-	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
-	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
-	cfg.LDAPAllowSignup = LDAPAllowSignup
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPAuthEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) handleAWSConfig() {
@@ -1250,6 +1326,7 @@ func (cfg *Cfg) LogConfigSources() {
 		}
 	}
 
+	cfg.Logger.Info("Target", "target", cfg.Target)
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
@@ -1354,10 +1431,46 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	return nil
 }
+func readAuthAzureADSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.azuread")
+	cfg.AzureADEnabled = sec.Key("enabled").MustBool(false)
+	cfg.AzureADSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
 
-func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
-	sec := iniFile.Section("auth.grafana_com")
+func readAuthGrafanaComSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.grafana_com")
+	cfg.GrafanaComAuthEnabled = sec.Key("enabled").MustBool(false)
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGithubSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.github")
+	cfg.GitHubAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GitHubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGoogleSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.google")
+	cfg.GoogleAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGitlabSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.gitlab")
+	cfg.GitLabAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readGenericOAuthSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.generic_oauth")
+	cfg.GenericOAuthAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthOktaSettings(cfg *Cfg) {
+	sec := cfg.SectionWithEnvOverrides("auth.okta")
+	cfg.OktaAuthEnabled = sec.Key("enabled").MustBool(false)
+	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
@@ -1389,12 +1502,26 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
-	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	// Do not use
+	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
+	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
+
+	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
-	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+
+	// Deprecated
+	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if cfg.OAuthAutoLogin {
+		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
+	}
+
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	if cfg.OAuthSkipOrgRoleUpdateSync {
+		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside the auth provider section instead.")
+	}
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
@@ -1406,18 +1533,35 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Azure Auth
 	AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
 	cfg.AzureAuthEnabled = AzureAuthEnabled
+	readAuthAzureADSettings(cfg)
+
+	// Google Auth
+	readAuthGoogleSettings(cfg)
+
+	// GitLab Auth
+	readAuthGitlabSettings(cfg)
+
+	// Generic OAuth
+	readGenericOAuthSettings(cfg)
+
+	// Okta Auth
+	readAuthOktaSettings(cfg)
+
+	// GrafanaCom
+	readAuthGrafanaComSettings(cfg)
+
+	// Github
+	readAuthGithubSettings(cfg)
 
 	// anonymous access
-	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousEnabled = AnonymousEnabled
+	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
-	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-	cfg.BasicAuthEnabled = BasicAuthEnabled
+	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// JWT auth
 	authJWT := iniFile.Section("auth.jwt")
@@ -1435,14 +1579,20 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
 	cfg.JWTAuthRoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
 	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
+	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
+	// Extended JWT auth
+	authExtendedJWT := iniFile.Section("auth.extended_jwt")
+	cfg.ExtendedJWTAuthEnabled = authExtendedJWT.Key("enabled").MustBool(false)
+	cfg.ExtendedJWTExpectAudience = authExtendedJWT.Key("expect_audience").MustString("")
+	cfg.ExtendedJWTExpectIssuer = authExtendedJWT.Key("expect_issuer").MustString("")
+
+	// Auth Proxy
 	authProxy := iniFile.Section("auth.proxy")
-	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	cfg.AuthProxyEnabled = AuthProxyEnabled
+	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
 	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
+	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
@@ -1462,16 +1612,22 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
-	readAuthGrafanaComSettings(iniFile, cfg)
 	return nil
 }
 
 func readAccessControlSettings(iniFile *ini.File, cfg *Cfg) {
 	rbac := iniFile.Section("rbac")
-	cfg.RBACEnabled = rbac.Key("enabled").MustBool(true)
+	cfg.RBACEnabled = true
 	cfg.RBACPermissionCache = rbac.Key("permission_cache").MustBool(true)
 	cfg.RBACPermissionValidationEnabled = rbac.Key("permission_validation_enabled").MustBool(false)
 	cfg.RBACResetBasicRoles = rbac.Key("reset_basic_roles").MustBool(false)
+}
+
+func readOAuth2ServerSettings(cfg *Cfg) {
+	oauth2Srv := cfg.SectionWithEnvOverrides("oauth2_server")
+	cfg.OAuth2ServerEnabled = oauth2Srv.Key("enabled").MustBool(false)
+	cfg.OAuth2ServerGeneratedKeyTypeForClient = strings.ToUpper(oauth2Srv.Key("generated_key_type_for_client").In("ECDSA", []string{"RSA", "ECDSA"}))
+	cfg.OAuth2ServerAccessTokenLifespan = oauth2Srv.Key("access_token_lifespan").MustDuration(time.Minute * 3)
 }
 
 func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1479,14 +1635,11 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrg = cfg.AutoAssignOrg
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgId = cfg.AutoAssignOrgId
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
-	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
-	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)
+	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
@@ -1497,7 +1650,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
 
-	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
@@ -1651,11 +1804,13 @@ func IsLegacyAlertingEnabled() bool {
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
-	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
-	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
 
-	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+
+	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
@@ -1692,6 +1847,11 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
 		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
 		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
+	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {
+		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
 	}
 
 	cfg.Domain = valueAsString(server, "domain", "localhost")
@@ -1748,9 +1908,16 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }
 
+func (cfg *Cfg) readSqlDataSourceSettings() {
+	sqlDatasources := cfg.Raw.Section("sql_datasources")
+	cfg.SqlDatasourceMaxOpenConnsDefault = sqlDatasources.Key("max_open_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxIdleConnsDefault = sqlDatasources.Key("max_idle_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxConnLifetimeDefault = sqlDatasources.Key("max_conn_lifetime_default").MustInt(14400)
+}
+
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
-	var originGlobs []glob.Glob
 	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
 	for _, originPattern := range allowedOrigins {
 		g, err := glob.Compile(originPattern)
 		if err != nil {

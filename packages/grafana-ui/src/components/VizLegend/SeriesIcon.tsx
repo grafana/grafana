@@ -30,7 +30,7 @@ export const SeriesIcon = React.memo(
       background: cssColor,
       width: '14px',
       height: '4px',
-      borderRadius: '1px',
+      borderRadius: theme.shape.radius.pill,
       display: 'inline-block',
       marginRight: '8px',
     };

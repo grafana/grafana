@@ -11,7 +11,7 @@ apiVersion: 1
 #     folder: my_first_folder
 #     # <duration, required> interval of the rule group evaluation
 #     interval: 60s
-#     # <list, required> list of rules that are part of the rule group  
+#     # <list, required> list of rules that are part of the rule group
 #     rules:
 #       # <string, required> unique identifier for the rule
 #     - uid: my_id_1
@@ -23,7 +23,7 @@ apiVersion: 1
 #       #                  evaluation - should be obtained via the API
 #       data:
 #       - refId: A
-#         datasourceUid: "-100"
+#         datasourceUid: "__expr__"
 #         model:
 #           conditions:
 #           - evaluator:
@@ -40,7 +40,7 @@ apiVersion: 1
 #             type: query
 #           datasource:
 #             type: __expr__
-#             uid: "-100"
+#             uid: "__expr__"
 #           expression: 1==0
 #           intervalMs: 1000
 #           maxDataPoints: 43200
@@ -53,7 +53,7 @@ apiVersion: 1
 #       # <string> state of the alert rule when no data is returned
 #       #          possible values: "NoData", "Alerting", "OK", default = NoData
 #       noDataState: Alerting
-#       # <string> state of the alert rule when the query execution 
+#       # <string> state of the alert rule when the query execution
 #       #          fails - possible values: "Error", "Alerting", "OK"
 #       #          default = Alerting
 #       executionErrorState: Alerting
@@ -62,10 +62,11 @@ apiVersion: 1
 #       # <map<string, string>> map of strings to attach arbitrary custom data
 #       annotations:
 #         some_key: some_value
-#       # <map<string, string> map of strings to filter and 
+#       # <map<string, string> map of strings to filter and
 #       #                      route alerts
 #       labels:
 #         team: sre_team_1
+#       isPaused: false
 
 # # List of alert rule UIDs that should be deleted
 # deleteRules:
@@ -103,7 +104,7 @@ apiVersion: 1
 #     # <list<string>> The labels by which incoming alerts are grouped together. For example,
 #     #        multiple alerts coming in for cluster=A and alertname=LatencyHigh would
 #     #        be batched into a single group.
-#     # 
+#     #
 #     #        To aggregate by all possible labels, use the special value '...' as
 #     #        the sole label name, for example:
 #     #        group_by: ['...']
@@ -127,7 +128,7 @@ apiVersion: 1
 #     mute_time_intervals:
 #     - abc
 #     # <duration> How long to initially wait to send a notification for a group
-#     #            of alerts. Allows to collect more initial alerts for the same group. 
+#     #            of alerts. Allows to collect more initial alerts for the same group.
 #     #            (Usually ~0s to few minutes), default = 30s
 #     group_wait: 30s
 #     # <duration> How long to wait before sending a notification about new alerts that
@@ -138,7 +139,7 @@ apiVersion: 1
 #     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
 #     repeat_interval: 4h
 #     # <list> Zero or more child routes
-#     routes: 
+#     routes:
 #     ...
 
 # # List of orgIds that should be reset to the default policy

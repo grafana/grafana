@@ -6,13 +6,16 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconSize } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../Tooltip';
 
 type CommonProps = {
   /** Icon name */
   icon?: IconName | React.ReactNode;
+  /** Icon size */
+  iconSize?: IconSize;
   /** Tooltip */
   tooltip?: string;
   /** For image icons */
@@ -42,6 +45,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     {
       tooltip,
       icon,
+      iconSize,
       className,
       children,
       imgSrc,
@@ -83,7 +87,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-expanded={isOpen}
         {...rest}
       >
-        {renderIcon(icon)}
+        {renderIcon(icon, iconSize)}
         {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
@@ -108,13 +112,13 @@ function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | und
   return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
 }
 
-function renderIcon(icon: IconName | React.ReactNode) {
+function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size="lg" />;
+    return <Icon name={icon} size={`${iconSize ? iconSize : 'lg'}`} />;
   }
 
   return icon;
@@ -125,23 +129,13 @@ const getStyles = (theme: GrafanaTheme2) => {
   const destructiveVariant = getPropertiesForVariant(theme, 'destructive', 'solid');
 
   const defaultOld = css`
-    color: ${theme.colors.text.secondary};
-    background-color: ${theme.colors.background.primary};
+    color: ${theme.colors.text.primary};
+    background: ${theme.colors.secondary.main};
 
     &:hover {
       color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
-  const defaultTopNav = css`
-    color: ${theme.colors.text.secondary};
-    background-color: transparent;
-    border-color: transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
+      background: ${theme.colors.secondary.shade};
+      border: 1px solid ${theme.colors.border.medium};
     }
   `;
 
@@ -156,7 +150,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border-radius: ${theme.shape.borderRadius()};
       line-height: ${theme.components.height.md * theme.spacing.gridSize - 2}px;
       font-weight: ${theme.typography.fontWeightMedium};
-      border: 1px solid ${theme.colors.border.weak};
+      border: 1px solid ${theme.colors.secondary.border};
       white-space: nowrap;
       transition: ${theme.transitions.create(['background', 'box-shadow', 'border-color', 'color'], {
         duration: theme.transitions.duration.short,
@@ -190,7 +184,16 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
-    default: theme.flags.topnav ? defaultTopNav : defaultOld,
+    default: css`
+      color: ${theme.colors.text.secondary};
+      background: transparent;
+      border: 1px solid transparent;
+
+      &:hover {
+        color: ${theme.colors.text.primary};
+        background: ${theme.colors.background.secondary};
+      }
+    `,
     canvas: defaultOld,
     active: css`
       color: ${theme.v1.palette.orangeDark};

@@ -3,7 +3,7 @@ import React, { PureComponent, useState } from 'react';
 import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { defaultCSVWaveQuery } from '../constants';
-import type { CSVWave } from '../types';
+import type { CSVWave } from '../dataquery.gen';
 
 interface WavesProps {
   waves?: CSVWave[];

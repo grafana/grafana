@@ -3,6 +3,7 @@ package alerting
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
 
@@ -15,7 +16,7 @@ type OrgID int64
 type AlertingFile struct {
 	configVersion
 	Filename            string
-	Groups              []AlertRuleGroup
+	Groups              []models.AlertRuleGroupWithFolderTitle
 	DeleteRules         []RuleDelete
 	ContactPoints       []ContactPoint
 	DeleteContactPoints []DeleteContactPoint

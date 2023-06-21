@@ -1,1 +1,1 @@
-export const standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount'];
+export const standardStatistics = ['Average', 'Maximum', 'Minimum', 'Sum', 'SampleCount', 'IQM'];

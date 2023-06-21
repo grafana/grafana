@@ -47,18 +47,6 @@ export interface LicenseInfo {
 }
 
 /**
- * Describes Sentry integration config
- *
- * @public
- */
-export interface SentryConfig {
-  enabled: boolean;
-  dsn: string;
-  customEndpoint: string;
-  sampleRate: number;
-}
-
-/**
  * Describes GrafanaJavascriptAgentConfig integration config
  *
  * @public
@@ -74,17 +62,11 @@ export interface GrafanaJavascriptAgentConfig {
 
 export interface UnifiedAlertingConfig {
   minInterval: string;
+  // will be undefined if alerStateHistory is not enabled
+  alertStateHistoryBackend?: string;
+  // will be undefined if implementation is not "multiple"
+  alertStateHistoryPrimary?: string;
 }
-
-/**
- * Describes the plugins that should be preloaded prior to start Grafana.
- *
- * @public
- */
-export type PreloadPlugin = {
-  path: string;
-  version: string;
-};
 
 /** Supported OAuth services
  *
@@ -106,6 +88,16 @@ export type OAuth =
  */
 export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
 
+/**
+ * Information needed for analytics providers
+ *
+ * @internal
+ */
+export interface AnalyticsSettings {
+  identifier: string;
+  intercomIdentifier?: string;
+}
+
 /** Current user info included in bootData
  *
  * @internal
@@ -117,7 +109,7 @@ export interface CurrentUserDTO {
   login: string;
   email: string;
   name: string;
-  lightTheme: boolean;
+  theme: string; // dark | light | system
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -129,6 +121,10 @@ export interface CurrentUserDTO {
   locale: string;
   language: string;
   permissions?: Record<string, boolean>;
+  analytics: AnalyticsSettings;
+
+  /** @deprecated Use theme instead */
+  lightTheme: boolean;
 }
 
 /** Contains essential user and config info
@@ -152,6 +148,7 @@ export interface BootData {
  */
 export interface GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   auth: AuthSettings;
@@ -176,6 +173,7 @@ export interface GrafanaConfig {
   queryHistoryEnabled: boolean;
   helpEnabled: boolean;
   profileEnabled: boolean;
+  newsFeedEnabled: boolean;
   ldapEnabled: boolean;
   sigV4AuthEnabled: boolean;
   azureAuthEnabled: boolean;
@@ -191,16 +189,17 @@ export interface GrafanaConfig {
   viewersCanEdit: boolean;
   editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
+  trustedTypesDefaultPolicyEnabled: boolean;
+  cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[];
+  anonymousEnabled: boolean;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
-  sentry: SentryConfig;
   grafanaJavascriptAgent: GrafanaJavascriptAgentConfig;
   customTheme?: any;
   geomapDefaultBaseLayer?: MapLayerOptions;
@@ -210,6 +209,8 @@ export interface GrafanaConfig {
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
+  supportBundlesEnabled: boolean;
+  secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;
@@ -217,12 +218,26 @@ export interface GrafanaConfig {
   rudderstackDataPlaneUrl: string | undefined;
   rudderstackSdkUrl: string | undefined;
   rudderstackConfigUrl: string | undefined;
+  sqlConnectionLimits: SqlConnectionLimits;
+}
+
+export interface SqlConnectionLimits {
+  maxOpenConns: number;
+  maxIdleConns: number;
+  connMaxLifetime: number;
 }
 
 export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
+  JWTAuthSkipOrgRoleSync?: boolean;
   GrafanaComSkipOrgRoleSync?: boolean;
+  GithubSkipOrgRoleSync?: boolean;
+  GitLabSkipOrgRoleSync?: boolean;
+  OktaSkipOrgRoleSync?: boolean;
+  AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
+  GenericOAuthSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

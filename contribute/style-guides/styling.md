@@ -13,12 +13,12 @@ To access the theme in your styles, use the `useStyles` hook. It provides basic 
 > Please remember to put `getStyles` function at the end of the file!
 
 ```tsx
-import React, { FC } from 'react';
+import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { css } from '@emotion/css';
 
-const Foo: FC<FooProps> = () => {
+const Foo = (props: FooProps) => {
   const styles = useStyles2(getStyles);
 
   // Use styles with classNames
@@ -34,13 +34,14 @@ const getStyles = (theme: GrafanaTheme2) =>
 ### Styling complex components
 
 In more complex cases, especially when you need to style multiple DOM elements in one component, or when using styles that depend on properties and/or state you
-can have your getStyles function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/emotion#cx) to compose them.
+can have your getStyles function return an object with many class names and use [Emotion's `cx` function](https://emotion.sh/docs/@emotion/css#cx) to compose them.
 
 Let's say you need to style a component that has a different background depending on the `isActive` property :
 
 ```tsx
-import React from 'react';
 import { css, cx } from '@emotion/css';
+import React from 'react';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
@@ -48,9 +49,8 @@ interface ComponentAProps {
   isActive: boolean;
 }
 
-const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
-  const theme = useTheme();
-  const styles = useStyles2(theme);
+const ComponentA = ({ isActive }: ComponentAProps) => {
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.wrapper, isActive && styles.active)}>
@@ -64,15 +64,15 @@ const ComponentA: React.FC<ComponentAProps> = ({ isActive }) => {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      background: theme.colors.background.secondary;
+      background: theme.colors.background.secondary,
     }),
     active: css({
       background: theme.colors.primary.main,
       text: theme.colors.primary.contrastText,
-    },
+    }),
     icon: css({
-      fontSize: theme.typography.bodySmall.fontSize;
-    })
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
   };
 };
 ```

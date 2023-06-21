@@ -78,7 +78,7 @@ const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<
       searchParams[key] = searchParamsToUpdate[key];
     }
   }
-  return urlUtil.renderUrl(location.pathname, searchParams);
+  return assureBaseUrl(urlUtil.renderUrl(location.pathname, searchParams));
 };
 
 /**

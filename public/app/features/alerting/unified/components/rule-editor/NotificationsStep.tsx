@@ -10,25 +10,42 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import LabelsField from './LabelsField';
 import { RuleEditorSection } from './RuleEditorSection';
+import { NotificationPreview } from './notificaton-preview/NotificationPreview';
 
-export const NotificationsStep = () => {
+type NotificationsStepProps = {
+  alertUid?: string;
+};
+export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
   const styles = useStyles2(getStyles);
   const { watch, getValues } = useFormContext<RuleFormValues & { location?: string }>();
 
-  const type = watch('type');
+  const [type, labels, queries, condition, folder, alertName] = watch([
+    'type',
+    'labels',
+    'queries',
+    'condition',
+    'folder',
+    'name',
+  ]);
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const hasLabelsDefined = getNonEmptyLabels(getValues('labels')).length > 0;
 
+  const shouldRenderPreview = Boolean(condition) && Boolean(folder) && type === RuleFormType.grafana;
+
   return (
     <RuleEditorSection
       stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title="Notifications"
-      description="Grafana handles the notifications for alerts by assigning labels to alerts. These labels connect alerts to contact points and silence alert instances that have matching labels."
+      title={type === RuleFormType.cloudRecording ? 'Labels' : 'Notifications'}
+      description={
+        type === RuleFormType.cloudRecording
+          ? 'Add labels to help you better manage your recording rules'
+          : 'Grafana handles the notifications for alerts by assigning labels to alerts. These labels connect alerts to contact points and silence alert instances that have matching labels.'
+      }
     >
       <div className={styles.contentWrapper}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {!hasLabelsDefined && (
+          {!hasLabelsDefined && type !== RuleFormType.cloudRecording && (
             <Card className={styles.card}>
               <Card.Heading>Root route – default for all alerts</Card.Heading>
               <Card.Description>
@@ -41,6 +58,18 @@ export const NotificationsStep = () => {
           <LabelsField dataSourceName={dataSourceName} />
         </div>
       </div>
+      {shouldRenderPreview &&
+        condition &&
+        folder && ( // need to check for condition and folder again because of typescript
+          <NotificationPreview
+            alertQueries={queries}
+            customLabels={labels}
+            condition={condition}
+            folder={folder}
+            alertName={alertName}
+            alertUid={alertUid}
+          />
+        )}
     </RuleEditorSection>
   );
 };

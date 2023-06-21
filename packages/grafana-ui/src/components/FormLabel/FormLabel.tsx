@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import React, { FunctionComponent, ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 import { Icon } from '../Icon/Icon';
 import { Tooltip, PopoverContent } from '../Tooltip';
@@ -16,7 +16,7 @@ interface Props {
   interactive?: boolean;
 }
 
-export const FormLabel: FunctionComponent<Props> = ({
+export const FormLabel = ({
   children,
   isFocused,
   isInvalid,
@@ -26,7 +26,7 @@ export const FormLabel: FunctionComponent<Props> = ({
   width,
   interactive,
   ...rest
-}) => {
+}: Props) => {
   const classes = classNames(className, `gf-form-label width-${width ? width : '10'}`, {
     'gf-form-label--is-focused': isFocused,
     'gf-form-label--is-invalid': isInvalid,

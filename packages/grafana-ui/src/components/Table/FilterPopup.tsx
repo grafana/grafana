@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
@@ -17,7 +17,7 @@ interface Props {
   field?: Field;
 }
 
-export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }) => {
+export const FilterPopup = ({ column: { preFilteredRows, filterValue, setFilter }, onClose, field }: Props) => {
   const theme = useTheme2();
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(preFilteredRows, field), [preFilteredRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -50,6 +50,8 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
+      {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
@@ -98,11 +100,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     max-height: 400px;
     background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     padding: ${theme.spacing(2)};
     margin: ${theme.spacing(1)} 0;
-    box-shadow: 0px 0px 20px ${theme.v1.palette.black};
-    border-radius: ${theme.spacing(0.5)};
+    box-shadow: ${theme.shadows.z3};
+    border-radius: ${theme.shape.radius.default};
   `,
   listDivider: css`
     label: listDivider;

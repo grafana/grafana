@@ -5,38 +5,43 @@ import (
 	"sync"
 
 	{{range .Kinds }}
-	"{{ $.KindPackagePrefix }}/{{ .Properties.MachineName }}"{{end}}
+	"{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}"{{end}}
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
-// Base is a registry of kindsys.Interface. It provides two modes for accessing
-// kinds: individually via literal named methods, or as a slice returned from
-// an All*() method.
+// Base is a registry of all Grafana core kinds. It is designed for use both inside
+// of Grafana itself, and for import by external Go programs wanting to work with Grafana's
+// kind system.
+//
+// The registry provides two modes for accessing core kinds:
+//  * Per-kind methods, which return the kind-specific type, e.g. Dashboard() returns [dashboard.Dashboard].
+//  * All(), which returns a slice of [kindsys.Core].
 //
 // Prefer the individual named methods for use cases where the particular kind(s) that
 // are needed are known to the caller. For example, a dashboard linter can know that it
 // specifically wants the dashboard kind.
 //
-// Prefer All*() methods when performing operations generically across all kinds.
-// For example, a validation HTTP middleware for any kind-schematized object type.
+// Prefer All() when performing operations generically across all kinds. For example,
+// a generic HTTP middleware for validating request bodies expected to contain some
+// kind-schematized type.
 type Base struct {
 	all []kindsys.Core
 	{{- range .Kinds }}
-	{{ .Properties.MachineName }} *{{ .Properties.MachineName }}.Kind{{end}}
+	{{ .Props.MachineName }} *{{ .Props.MachineName }}.Kind{{end}}
 }
 
 // type guards
 var (
 {{- range .Kinds }}
-	_ kindsys.Core = &{{ .Properties.MachineName }}.Kind{}{{end}}
+	_ kindsys.Core = &{{ .Props.MachineName }}.Kind{}{{end}}
 )
 
 {{range .Kinds }}
-// {{ .Properties.Name }} returns the [kindsys.Interface] implementation for the {{ .Properties.MachineName }} kind.
-func (b *Base) {{ .Properties.Name }}() *{{ .Properties.MachineName }}.Kind {
-	return b.{{ .Properties.MachineName }}
+// {{ .Props.Name }} returns the [kindsys.Interface] implementation for the {{ .Props.MachineName }} kind.
+func (b *Base) {{ .Props.Name }}() *{{ .Props.MachineName }}.Kind {
+	return b.{{ .Props.MachineName }}
 }
 {{end}}
 
@@ -45,11 +50,11 @@ func doNewBase(rt *thema.Runtime) *Base {
 	reg := &Base{}
 
 {{range .Kinds }}
-	reg.{{ .Properties.MachineName }}, err = {{ .Properties.MachineName }}.NewKind(rt)
+	reg.{{ .Props.MachineName }}, err = {{ .Props.MachineName }}.NewKind(rt)
 	if err != nil {
-		panic(fmt.Sprintf("error while initializing the {{ .Properties.MachineName }} Kind: %s", err))
+		panic(fmt.Sprintf("error while initializing the {{ .Props.MachineName }} Kind: %s", err))
 	}
-  reg.all = append(reg.all, reg.{{ .Properties.MachineName }})
+  reg.all = append(reg.all, reg.{{ .Props.MachineName }})
 {{end}}
 
 	return reg

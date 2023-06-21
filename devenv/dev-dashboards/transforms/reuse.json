@@ -521,7 +521,10 @@
     ],
     "schemaVersion": 37,
     "style": "dark",
-    "tags": ["devenv"],
+    "tags": [
+      "gdev",
+      "transform"
+    ],
     "templating": {
       "list": []
     },
@@ -531,6 +534,6 @@
     },
     "timepicker": {},
     "timezone": "",
-    "title": "Reuse dashboard queries",
+    "title": "Transforms - Reuse dashboard queries",
     "uid": "fYGWTVW4k"
   }

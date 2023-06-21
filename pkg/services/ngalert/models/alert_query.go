@@ -88,13 +88,17 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
 	DatasourceUID string `json:"datasourceUid"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
 	modelProps map[string]interface{}
+}
+
+func (aq *AlertQuery) String() string {
+	return fmt.Sprintf("refID: %s, queryType: %s, datasourceUID: %s", aq.RefID, aq.QueryType, aq.DatasourceUID)
 }
 
 func (aq *AlertQuery) setModelProps() error {
@@ -109,7 +113,7 @@ func (aq *AlertQuery) setModelProps() error {
 
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	return expr.IsDataSource(aq.DatasourceUID), nil
+	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

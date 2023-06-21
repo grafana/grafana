@@ -1,5 +1,6 @@
 import {
   DataQuery,
+  DataSourceInstanceSettings,
   DataSourceRef,
   getDefaultRelativeTimeRange,
   IntervalValues,
@@ -10,10 +11,11 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
-import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -29,7 +31,6 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
-import { MINUTE } from '../components/rule-editor/AlertRuleForm';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
@@ -39,11 +40,16 @@ import { arrayToRecord, recordToArray } from './misc';
 import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './rules';
 import { parseInterval } from './time';
 
+export type PromOrLokiQuery = PromQuery | LokiQuery;
+
+export const MINUTE = '1m';
+
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
 
   return Object.freeze({
     name: '',
+    uid: '',
     labels: [{ key: '', value: '' }],
     annotations: [
       { key: Annotation.summary, value: '' },
@@ -57,6 +63,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     // grafana
     folder: null,
     queries: [],
+    recordingRulesQueries: [],
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
@@ -96,15 +103,17 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
   if (condition) {
     return {
       grafana_alert: {
         title: name,
+        uid: values.uid,
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -121,9 +130,11 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
   if (isGrafanaRulesSource(ruleSourceName)) {
     if (isGrafanaRulerRule(rule)) {
       const ga = rule.grafana_alert;
+
       return {
         ...defaultFormValues,
         name: ga.title,
+        uid: ga.uid,
         type: RuleFormType.grafana,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
@@ -134,7 +145,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
-        folder: { title: namespace, id: ga.namespace_id },
+        folder: { title: namespace, uid: ga.namespace_uid },
+        isPaused: ga.is_paused,
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -213,10 +225,27 @@ export const getDefaultQueries = (): AlertQuery[] => {
       relativeTimeRange,
       model: {
         refId: 'A',
-        hide: false,
       },
     },
     ...getDefaultExpressions('B', 'C'),
+  ];
+};
+
+export const getDefaultRecordingRulesQueries = (
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>
+): AlertQuery[] => {
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  return [
+    {
+      refId: 'A',
+      datasourceUid: rulesSourcesWithRuler[0]?.uid || '',
+      queryType: '',
+      relativeTimeRange,
+      model: {
+        refId: 'A',
+      },
+    },
   ];
 };
 
@@ -226,7 +255,6 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
 
   const reduceExpression: ExpressionQuery = {
     refId: refIds[0],
-    hide: false,
     type: ExpressionQueryType.reduce,
     datasource: {
       uid: ExpressionDatasourceUID,
@@ -257,7 +285,6 @@ const getDefaultExpressions = (...refIds: [string, string]): AlertQuery[] => {
 
   const thresholdExpression: ExpressionQuery = {
     refId: refTwo,
-    hide: false,
     type: ExpressionQueryType.threshold,
     datasource: {
       uid: ExpressionDatasourceUID,
@@ -393,14 +420,14 @@ export const panelToRuleFormValues = async (
     queries.push(thresholdExpression);
   }
 
-  const { folderId, folderTitle } = dashboard.meta;
+  const { folderTitle, folderUid } = dashboard.meta;
 
   const formValues = {
     type: RuleFormType.grafana,
     folder:
-      folderId && folderTitle
+      folderUid && folderTitle
         ? {
-            id: folderId,
+            uid: folderUid,
             title: folderTitle,
           }
         : undefined,
@@ -452,4 +479,8 @@ export function fixBothInstantAndRangeQuery(query: AlertQuery) {
 
 function isPromQuery(model: AlertDataQuery): model is PromQuery {
   return 'expr' in model && 'instant' in model && 'range' in model;
+}
+
+export function isPromOrLokiQuery(model: AlertDataQuery): model is PromOrLokiQuery {
+  return 'expr' in model;
 }

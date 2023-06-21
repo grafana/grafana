@@ -1,14 +1,15 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
-
-	"golang.org/x/oauth2"
 )
 
 type SocialGrafanaCom struct {
@@ -43,7 +44,7 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 }
 
 // UserInfo is used for login credentials for the user
-func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGrafanaCom) UserInfo(ctx context.Context, client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int         `json:"id"`
 		Name  string      `json:"name"`
@@ -53,7 +54,8 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	response, err := s.httpGet(client, s.url+"/api/oauth2/user")
+	response, err := s.httpGet(ctx, client, s.url+"/api/oauth2/user")
+
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

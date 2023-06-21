@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -160,8 +160,10 @@ describe('RuleEditor grafana managed rules', () => {
               condition: 'B',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
+              is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
+              uid: '',
             },
           },
         ],

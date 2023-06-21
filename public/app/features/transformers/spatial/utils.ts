@@ -3,14 +3,14 @@ import { Geometry, LineString, Point } from 'ol/geom';
 import { toLonLat } from 'ol/proj';
 import { getArea, getLength } from 'ol/sphere';
 
-import { ArrayVector, Field, FieldType } from '@grafana/data';
+import { Field, FieldType } from '@grafana/data';
 
 import { SpatialCalculation, SpatialCalculationOption } from './models.gen';
 
 /** Will return a field with a single row */
 export function toLineString(field: Field<Geometry | undefined>): LineString {
   const coords: number[][] = [];
-  for (const geo of field.values.toArray()) {
+  for (const geo of field.values) {
     if (geo) {
       coords.push(getCenterPoint(geo));
     }
@@ -55,7 +55,7 @@ export function getCenterPointWGS84(geo?: Geometry): number[] | undefined {
 
 /** Will return a new field with calculated values */
 export function doGeomeryCalculation(field: Field<Geometry | undefined>, options: SpatialCalculationOption): Field {
-  const values = field.values.toArray();
+  const values = field.values;
   const buffer = new Array(field.values.length);
   const op = options.calc ?? SpatialCalculation.Heading;
   const name = options.field ?? op;
@@ -74,7 +74,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'areaM2',
         },
-        values: new ArrayVector(buffer),
+        values: buffer,
       };
     }
     case SpatialCalculation.Distance: {
@@ -90,7 +90,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'lengthm',
         },
-        values: new ArrayVector(buffer),
+        values: buffer,
       };
     }
 
@@ -103,7 +103,7 @@ export function doGeomeryCalculation(field: Field<Geometry | undefined>, options
         config: {
           unit: 'degree',
         },
-        values: new ArrayVector(calculateBearings(values)),
+        values: calculateBearings(values),
       };
     }
   }

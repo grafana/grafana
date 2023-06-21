@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -100,7 +101,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 		dsActionsByUid = make(map[string][]string)
 	}
 
-	var out [][]allowedActions
+	out := make([][]allowedActions, 0, len(references))
 	for _, ref := range references {
 		var actions []allowedActions
 

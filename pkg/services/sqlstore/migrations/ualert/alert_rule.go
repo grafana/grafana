@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	legacymodels "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
@@ -37,6 +37,7 @@ type alertRule struct {
 	Updated         time.Time
 	Annotations     map[string]string
 	Labels          map[string]string
+	IsPaused        bool
 }
 
 type alertRuleVersion struct {
@@ -61,6 +62,7 @@ type alertRuleVersion struct {
 	For         duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
@@ -84,6 +86,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		For:             a.For,
 		Annotations:     a.Annotations,
 		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
 	}
 }
 
@@ -103,7 +106,7 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	return lbls, annotations
 }
 
-func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
+func (m *migration) makeAlertRule(l log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
 	annotations["message"] = da.Message
 	var err error
@@ -120,6 +123,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	name := normalizeRuleName(da.Name, uid)
 
+	isPaused := false
+	if da.State == "paused" {
+		isPaused = true
+	}
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
 		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
@@ -135,16 +143,9 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Annotations:     annotations,
 		Labels:          lbls,
 		RuleGroupIndex:  1,
-	}
-
-	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)
-	if err != nil {
-		return nil, err
-	}
-
-	ar.ExecErrState, err = transExecErr(da.ParsedSettings.ExecutionErrorState)
-	if err != nil {
-		return nil, err
+		IsPaused:        isPaused,
+		NoDataState:     transNoData(l, da.ParsedSettings.NoDataState),
+		ExecErrState:    transExecErr(l, da.ParsedSettings.ExecutionErrorState),
 	}
 
 	// Label for routing and silences.
@@ -171,7 +172,7 @@ func migrateAlertRuleQueries(data []alertQuery) ([]alertQuery, error) {
 	result := make([]alertQuery, 0, len(data))
 	for _, d := range data {
 		// queries that are expression are not relevant, skip them.
-		if d.DatasourceUID == expr.OldDatasourceUID {
+		if d.DatasourceUID == expressionDatasourceUID {
 			result = append(result, d)
 			continue
 		}
@@ -263,32 +264,36 @@ func ruleAdjustInterval(freq int64) int64 {
 	return freq - (freq % baseFreq)
 }
 
-func transNoData(s string) (string, error) {
+func transNoData(l log.Logger, s string) string {
 	switch legacymodels.NoDataOption(s) {
 	case legacymodels.NoDataSetOK:
-		return string(ngmodels.OK), nil // values from ngalert/models/rule
+		return string(ngmodels.OK) // values from ngalert/models/rule
 	case "", legacymodels.NoDataSetNoData:
-		return string(ngmodels.NoData), nil
+		return string(ngmodels.NoData)
 	case legacymodels.NoDataSetAlerting:
-		return string(ngmodels.Alerting), nil
+		return string(ngmodels.Alerting)
 	case legacymodels.NoDataKeepState:
-		return string(ngmodels.NoData), nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+		return string(ngmodels.NoData) // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
+	default:
+		l.Warn("Unable to translate execution of NoData state. Using default execution", "old", s, "new", ngmodels.NoData)
+		return string(ngmodels.NoData)
 	}
-	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
-func transExecErr(s string) (string, error) {
+func transExecErr(l log.Logger, s string) string {
 	switch legacymodels.ExecutionErrorOption(s) {
 	case "", legacymodels.ExecutionErrorSetAlerting:
-		return string(ngmodels.AlertingErrState), nil
+		return string(ngmodels.AlertingErrState)
 	case legacymodels.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
-		return string(ngmodels.ErrorErrState), nil
+		return string(ngmodels.ErrorErrState)
 	case legacymodels.ExecutionErrorSetOk:
-		return string(ngmodels.OkErrState), nil
+		return string(ngmodels.OkErrState)
+	default:
+		l.Warn("Unable to translate execution of Error state. Using default execution", "old", s, "new", ngmodels.ErrorErrState)
+		return string(ngmodels.ErrorErrState)
 	}
-	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
 }
 
 func normalizeRuleName(daName string, uid string) string {

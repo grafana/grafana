@@ -1,10 +1,9 @@
 import { cloneDeep, extend, groupBy, has, isString, map as _map, omit, pick, reduce } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { defer, lastValueFrom, merge, mergeMap, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
 import {
   AnnotationEvent,
-  ArrayVector,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -30,87 +29,17 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
+import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
+import { getAllPolicies } from './influxql_metadata_query';
+import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
-import { buildRawQuery } from './queryUtils';
-import { InfluxQueryBuilder } from './query_builder';
+import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
-
-// we detect the field type based on the value-array
-function getFieldType(values: unknown[]): FieldType {
-  // the values-array may contain a lot of nulls.
-  // we need the first not-null item
-  const firstNotNull = values.find((v) => v !== null);
-
-  if (firstNotNull === undefined) {
-    // we could not find any not-null values
-    return FieldType.number;
-  }
-
-  const valueType = typeof firstNotNull;
-
-  switch (valueType) {
-    case 'string':
-      return FieldType.string;
-    case 'boolean':
-      return FieldType.boolean;
-    case 'number':
-      return FieldType.number;
-    default:
-      // this should never happen, influxql values
-      // can only be numbers, strings and booleans.
-      throw new Error(`InfluxQL: invalid value type ${valueType}`);
-  }
-}
-
-// this conversion function is specialized to work with the timeseries
-// data returned by InfluxDatasource.getTimeSeries()
-function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
-  const times: number[] = [];
-  const values: unknown[] = [];
-
-  // the data we process here is not correctly typed.
-  // the typescript types say every data-point is number|null,
-  // but in fact it can be string or boolean too.
-
-  const points = timeSeries.datapoints;
-  for (const point of points) {
-    values.push(point[0]);
-    times.push(point[1] as number);
-  }
-
-  const timeField = {
-    name: TIME_SERIES_TIME_FIELD_NAME,
-    type: FieldType.time,
-    config: {},
-    values: new ArrayVector<number>(times),
-  };
-
-  const valueField = {
-    name: TIME_SERIES_VALUE_FIELD_NAME,
-    type: getFieldType(values),
-    config: {
-      displayNameFromDS: timeSeries.title,
-    },
-    values: new ArrayVector<unknown>(values),
-    labels: timeSeries.tags,
-  };
-
-  const fields = [timeField, valueField];
-
-  return {
-    name: timeSeries.target,
-    refId: timeSeries.refId,
-    meta: timeSeries.meta,
-    fields,
-    length: values.length,
-  };
-}
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
   type: string;
@@ -118,19 +47,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   username: string;
   password: string;
   name: string;
-  database: any;
-  basicAuth: any;
-  withCredentials: any;
+  database?: string;
+  basicAuth?: string;
+  withCredentials?: boolean;
   access: 'direct' | 'proxy';
-  interval: any;
-  responseParser: any;
+  responseParser: ResponseParser;
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
+  retentionPolicies: string[];
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -142,16 +71,17 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.username = instanceSettings.username ?? '';
     this.password = instanceSettings.password ?? '';
     this.name = instanceSettings.name;
-    this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.access = instanceSettings.access;
-    const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    const settingsData: InfluxOptions = instanceSettings.jsonData ?? {};
+    this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
     this.isFlux = settingsData.version === InfluxVersion.Flux;
     this.isProxyAccess = instanceSettings.access === 'proxy';
+    this.retentionPolicies = [];
 
     if (this.isFlux) {
       // When flux, use an annotation processor rather than the `annotationQuery` lifecycle
@@ -166,11 +96,51 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
   }
 
+  async getRetentionPolicies(): Promise<string[]> {
+    // Only For InfluxQL Mode
+    if (this.isFlux || this.retentionPolicies.length) {
+      return Promise.resolve(this.retentionPolicies);
+    } else {
+      return getAllPolicies(this).catch((err) => {
+        console.error(
+          'Unable to fetch retention policies. Queries will be run without specifying retention policy.',
+          err
+        );
+        return Promise.resolve(this.retentionPolicies);
+      });
+    }
+  }
+
   query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     if (!this.isProxyAccess) {
       const error = new Error(BROWSER_MODE_DISABLED_MESSAGE);
       return throwError(() => error);
     }
+
+    // When the dashboard first load or on dashboard panel edit mode
+    // PanelQueryRunner runs the queries to have a visualization on the panel.
+    // At that point datasource doesn't have the retention policies fetched.
+    // So hardcoded policy is being sent. Which causes problems.
+    // To overcome this we check/load policies first and then do the query.
+    return defer(() => this.getRetentionPolicies()).pipe(
+      mergeMap((allPolicies) => {
+        this.retentionPolicies = allPolicies;
+        const policyFixedRequests = {
+          ...request,
+          targets: request.targets.map((t) => {
+            t.policy = t.policy ? this.templateSrv.replace(t.policy, {}, 'regex') : '';
+            return {
+              ...t,
+              policy: replaceHardCodedRetentionPolicy(t.policy, this.retentionPolicies),
+            };
+          }),
+        };
+        return this._query(policyFixedRequests);
+      })
+    );
+  }
+
+  _query(request: DataQueryRequest<InfluxQuery>): Observable<DataQueryResponse> {
     // for not-flux queries we call `this.classicQuery`, and that
     // handles the is-hidden situation.
     // for the flux-case, we do the filtering here
@@ -246,7 +216,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars;
+    const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
     if (this.isFlux) {
       return {
@@ -255,11 +225,334 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       };
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, scopedVars, rest);
     }
 
     return query;
+  }
+
+  targetContainsTemplate(target: any) {
+    // for flux-mode we just take target.query,
+    // for influxql-mode we use InfluxQueryModel to create the text-representation
+    const queryText = this.isFlux ? target.query : buildRawQuery(target);
+
+    return this.templateSrv.containsTemplate(queryText);
+  }
+
+  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
+    if (!queries || queries.length === 0) {
+      return [];
+    }
+
+    return queries.map((query) => {
+      if (this.isFlux) {
+        return {
+          ...query,
+          datasource: this.getRef(),
+          query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
+        };
+      }
+
+      return {
+        ...query,
+        datasource: this.getRef(),
+        ...this.applyVariables(query, scopedVars, scopedVars),
+      };
+    });
+  }
+
+  applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
+    const expandedQuery = { ...query };
+    if (query.groupBy) {
+      expandedQuery.groupBy = query.groupBy.map((groupBy) => {
+        return {
+          ...groupBy,
+          params: groupBy.params?.map((param) => {
+            return this.templateSrv.replace(param.toString(), undefined, 'regex');
+          }),
+        };
+      });
+    }
+
+    if (query.select) {
+      expandedQuery.select = query.select.map((selects) => {
+        return selects.map((select: any) => {
+          return {
+            ...select,
+            params: select.params?.map((param: any) => {
+              return this.templateSrv.replace(param.toString(), undefined, 'regex');
+            }),
+          };
+        });
+      });
+    }
+
+    if (query.tags) {
+      expandedQuery.tags = query.tags.map((tag) => {
+        return {
+          ...tag,
+          value: this.templateSrv.replace(tag.value, scopedVars, 'regex'),
+        };
+      });
+    }
+
+    return {
+      ...expandedQuery,
+      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
+      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
+      alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
+      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
+      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
+      policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
+      slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
+      tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
+    };
+  }
+
+  async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
+    return lastValueFrom(
+      super.query({
+        targets: [target],
+      } as DataQueryRequest)
+    ).then((rsp) => {
+      if (rsp.data?.length) {
+        return frameToMetricFindValue(rsp.data[0]);
+      }
+      return [];
+    });
+  }
+
+  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
+    if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
+      const target: InfluxQuery = {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      };
+      return lastValueFrom(
+        super.query({
+          ...options, // includes 'range'
+          targets: [target],
+        } as DataQueryRequest)
+      ).then((rsp) => {
+        if (rsp.data?.length) {
+          return frameToMetricFindValue(rsp.data[0]);
+        }
+        return [];
+      });
+    }
+
+    const interpolated = new InfluxQueryModel(
+      {
+        refId: 'metricFindQuery',
+        query,
+        rawQuery: true,
+      },
+      this.templateSrv,
+      options.scopedVars
+    ).render(true);
+
+    return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
+      return this.responseParser.parse(query, resp);
+    });
+  }
+
+  // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
+  // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
+  getTagKeys(options: any = {}) {
+    const query = buildMetadataQuery({
+      type: 'TAG_KEYS',
+      templateService: this.templateSrv,
+      database: this.database,
+      measurement: options.measurement || '',
+      tags: [],
+    });
+    return this.metricFindQuery(query, options);
+  }
+
+  getTagValues(options: any = {}) {
+    const query = buildMetadataQuery({
+      type: 'TAG_VALUES',
+      templateService: this.templateSrv,
+      database: this.database,
+      withKey: options.key,
+      measurement: options.measurement || '',
+      tags: [],
+    });
+    return this.metricFindQuery(query, options);
+  }
+
+  _seriesQuery(query: string, options?: any) {
+    if (!query) {
+      return of({ results: [] });
+    }
+
+    if (options && options.range) {
+      const timeFilter = this.getTimeFilter({ rangeRaw: options.range, timezone: options.timezone });
+      query = query.replace('$timeFilter', timeFilter);
+    }
+
+    return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
+  }
+
+  serializeParams(params: any) {
+    if (!params) {
+      return '';
+    }
+
+    return reduce(
+      params,
+      (memo, value, key) => {
+        if (value === null || value === undefined) {
+          return memo;
+        }
+        memo.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
+        return memo;
+      },
+      [] as string[]
+    ).join('&');
+  }
+
+  _influxRequest(method: string, url: string, data: any, options?: any) {
+    const currentUrl = this.urls.shift()!;
+    this.urls.push(currentUrl);
+
+    const params: any = {};
+
+    if (this.username) {
+      params.u = this.username;
+      params.p = this.password;
+    }
+
+    if (options && options.database) {
+      params.db = options.database;
+    } else if (this.database) {
+      params.db = this.database;
+    }
+
+    if (options?.policy) {
+      params.rp = options.policy;
+    }
+
+    const { q } = data;
+
+    if (method === 'POST' && has(data, 'q')) {
+      // verb is POST and 'q' param is defined
+      extend(params, omit(data, ['q']));
+      data = this.serializeParams(pick(data, ['q']));
+    } else if (method === 'GET' || method === 'POST') {
+      // verb is GET, or POST without 'q' param
+      extend(params, data);
+      data = null;
+    }
+
+    const req: any = {
+      method: method,
+      url: currentUrl + url,
+      params: params,
+      data: data,
+      precision: 'ms',
+      inspect: { type: 'influxdb' },
+      paramSerializer: this.serializeParams,
+    };
+
+    req.headers = req.headers || {};
+    if (this.basicAuth || this.withCredentials) {
+      req.withCredentials = true;
+    }
+    if (this.basicAuth) {
+      req.headers.Authorization = this.basicAuth;
+    }
+
+    if (method === 'POST') {
+      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
+    }
+
+    return getBackendSrv()
+      .fetch(req)
+      .pipe(
+        map((result: any) => {
+          const { data } = result;
+          if (data) {
+            data.executedQueryString = q;
+            if (data.results) {
+              const errors = result.data.results.filter((elem: any) => elem.error);
+
+              if (errors.length > 0) {
+                throw {
+                  message: 'InfluxDB Error: ' + errors[0].error,
+                  data,
+                };
+              }
+            }
+          }
+          return data;
+        }),
+        catchError((err) => {
+          if (err.cancelled) {
+            return of(err);
+          }
+
+          return throwError(this.handleErrors(err));
+        })
+      );
+  }
+
+  handleErrors(err: any) {
+    const error: DataQueryError = {
+      message:
+        (err && err.status) ||
+        (err && err.message) ||
+        'Unknown error during query transaction. Please check JS console logs.',
+    };
+
+    if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
+      if (err.data && err.data.error) {
+        error.message = 'InfluxDB Error: ' + err.data.error;
+        error.data = err.data;
+        // @ts-ignore
+        error.config = err.config;
+      } else {
+        error.message = 'Network Error: ' + err.statusText + '(' + err.status + ')';
+        error.data = err.data;
+        // @ts-ignore
+        error.config = err.config;
+      }
+    }
+
+    return error;
+  }
+
+  getTimeFilter(options: any) {
+    const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
+    const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
+
+    return 'time >= ' + from + ' and time <= ' + until;
+  }
+
+  getInfluxTime(date: any, roundUp: any, timezone: any) {
+    if (isString(date)) {
+      if (date === 'now') {
+        return 'now()';
+      }
+
+      const parts = /^now-(\d+)([dhms])$/.exec(date);
+      if (parts) {
+        const amount = parseInt(parts[1], 10);
+        const unit = parts[2];
+        return 'now() - ' + amount + unit;
+      }
+      date = dateMath.parse(date, roundUp, timezone);
+    }
+
+    return date.valueOf() + 'ms';
+  }
+
+  // ------------------------ Legacy Code - Before Backend Migration ---------------
+
+  isMigrationToggleOnAndIsAccessProxy() {
+    return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
   }
 
   /**
@@ -395,7 +688,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       });
     }
 
-    if (config.featureToggles.influxdbBackendMigration && this.access === 'proxy') {
+    if (this.isMigrationToggleOnAndIsAccessProxy()) {
       // We want to send our query to the backend as a raw query
       const target: InfluxQuery = {
         refId: 'metricFindQuery',
@@ -440,287 +733,75 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       }).getAnnotations();
     });
   }
+}
 
-  targetContainsTemplate(target: any) {
-    // for flux-mode we just take target.query,
-    // for influxql-mode we use InfluxQueryModel to create the text-representation
-    const queryText = this.isFlux ? target.query : buildRawQuery(target);
+// we detect the field type based on the value-array
+function getFieldType(values: unknown[]): FieldType {
+  // the values-array may contain a lot of nulls.
+  // we need the first not-null item
+  const firstNotNull = values.find((v) => v !== null);
 
-    return this.templateSrv.containsTemplate(queryText);
+  if (firstNotNull === undefined) {
+    // we could not find any not-null values
+    return FieldType.number;
   }
 
-  interpolateVariablesInQueries(queries: InfluxQuery[], scopedVars: ScopedVars): InfluxQuery[] {
-    if (!queries || queries.length === 0) {
-      return [];
-    }
+  const valueType = typeof firstNotNull;
 
-    return queries.map((query) => {
-      if (this.isFlux) {
-        return {
-          ...query,
-          datasource: this.getRef(),
-          query: this.templateSrv.replace(query.query ?? '', scopedVars, 'regex'), // The raw query text
-        };
-      }
+  switch (valueType) {
+    case 'string':
+      return FieldType.string;
+    case 'boolean':
+      return FieldType.boolean;
+    case 'number':
+      return FieldType.number;
+    default:
+      // this should never happen, influxql values
+      // can only be numbers, strings and booleans.
+      throw new Error(`InfluxQL: invalid value type ${valueType}`);
+  }
+}
 
-      return {
-        ...query,
-        datasource: this.getRef(),
-        ...this.applyVariables(query, scopedVars, scopedVars),
-      };
-    });
+// this conversion function is specialized to work with the timeseries
+// data returned by InfluxDatasource.getTimeSeries()
+function timeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
+  const times: number[] = [];
+  const values: unknown[] = [];
+
+  // the data we process here is not correctly typed.
+  // the typescript types say every data-point is number|null,
+  // but in fact it can be string or boolean too.
+
+  const points = timeSeries.datapoints;
+  for (const point of points) {
+    values.push(point[0]);
+    times.push(point[1] as number);
   }
 
-  applyVariables(query: InfluxQuery, scopedVars: ScopedVars, rest: ScopedVars) {
-    const expandedQuery = { ...query };
-    if (query.groupBy) {
-      expandedQuery.groupBy = query.groupBy.map((groupBy) => {
-        return {
-          ...groupBy,
-          params: groupBy.params?.map((param) => {
-            return this.templateSrv.replace(param.toString(), undefined, 'regex');
-          }),
-        };
-      });
-    }
+  const timeField = {
+    name: TIME_SERIES_TIME_FIELD_NAME,
+    type: FieldType.time,
+    config: {},
+    values: times,
+  };
 
-    if (query.select) {
-      expandedQuery.select = query.select.map((selects) => {
-        return selects.map((select: any) => {
-          return {
-            ...select,
-            params: select.params?.map((param: any) => {
-              return this.templateSrv.replace(param.toString(), undefined, 'regex');
-            }),
-          };
-        });
-      });
-    }
+  const valueField = {
+    name: TIME_SERIES_VALUE_FIELD_NAME,
+    type: getFieldType(values),
+    config: {
+      displayNameFromDS: timeSeries.title,
+    },
+    values: values,
+    labels: timeSeries.tags,
+  };
 
-    if (query.tags) {
-      expandedQuery.tags = query.tags.map((tag) => {
-        return {
-          ...tag,
-          value: this.templateSrv.replace(tag.value, scopedVars, 'regex'),
-        };
-      });
-    }
+  const fields = [timeField, valueField];
 
-    return {
-      ...expandedQuery,
-      adhocFilters: this.templateSrv.getAdhocFilters(this.name) ?? [],
-      query: this.templateSrv.replace(query.query ?? '', rest, 'regex'), // The raw query text
-      alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
-      limit: this.templateSrv.replace(query.limit?.toString() ?? '', scopedVars, 'regex'),
-      measurement: this.templateSrv.replace(query.measurement ?? '', scopedVars, 'regex'),
-      policy: this.templateSrv.replace(query.policy ?? '', scopedVars, 'regex'),
-      slimit: this.templateSrv.replace(query.slimit?.toString() ?? '', scopedVars, 'regex'),
-      tz: this.templateSrv.replace(query.tz ?? '', scopedVars),
-    };
-  }
-
-  async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
-    if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
-      const target: InfluxQuery = {
-        refId: 'metricFindQuery',
-        query,
-        rawQuery: true,
-      };
-      return lastValueFrom(
-        super.query({
-          ...options, // includes 'range'
-          targets: [target],
-        } as DataQueryRequest)
-      ).then((rsp) => {
-        if (rsp.data?.length) {
-          return frameToMetricFindValue(rsp.data[0]);
-        }
-        return [];
-      });
-    }
-
-    const interpolated = this.templateSrv.replace(query, undefined, 'regex');
-
-    return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
-      return this.responseParser.parse(query, resp);
-    });
-  }
-
-  getTagKeys(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_KEYS');
-    return this.metricFindQuery(query, options);
-  }
-
-  getTagValues(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
-    return this.metricFindQuery(query, options);
-  }
-
-  _seriesQuery(query: string, options?: any) {
-    if (!query) {
-      return of({ results: [] });
-    }
-
-    if (options && options.range) {
-      const timeFilter = this.getTimeFilter({ rangeRaw: options.range, timezone: options.timezone });
-      query = query.replace('$timeFilter', timeFilter);
-    }
-
-    return this._influxRequest(this.httpMode, '/query', { q: query, epoch: 'ms' }, options);
-  }
-
-  serializeParams(params: any) {
-    if (!params) {
-      return '';
-    }
-
-    return reduce(
-      params,
-      (memo, value, key) => {
-        if (value === null || value === undefined) {
-          return memo;
-        }
-        memo.push(encodeURIComponent(key) + '=' + encodeURIComponent(value));
-        return memo;
-      },
-      [] as string[]
-    ).join('&');
-  }
-
-  _influxRequest(method: string, url: string, data: any, options?: any) {
-    const currentUrl = this.urls.shift()!;
-    this.urls.push(currentUrl);
-
-    const params: any = {};
-
-    if (this.username) {
-      params.u = this.username;
-      params.p = this.password;
-    }
-
-    if (options && options.database) {
-      params.db = options.database;
-    } else if (this.database) {
-      params.db = this.database;
-    }
-
-    const { q } = data;
-
-    if (method === 'POST' && has(data, 'q')) {
-      // verb is POST and 'q' param is defined
-      extend(params, omit(data, ['q']));
-      data = this.serializeParams(pick(data, ['q']));
-    } else if (method === 'GET' || method === 'POST') {
-      // verb is GET, or POST without 'q' param
-      extend(params, data);
-      data = null;
-    }
-
-    const req: any = {
-      method: method,
-      url: currentUrl + url,
-      params: params,
-      data: data,
-      precision: 'ms',
-      inspect: { type: 'influxdb' },
-      paramSerializer: this.serializeParams,
-    };
-
-    req.headers = req.headers || {};
-    if (this.basicAuth || this.withCredentials) {
-      req.withCredentials = true;
-    }
-    if (this.basicAuth) {
-      req.headers.Authorization = this.basicAuth;
-    }
-
-    if (method === 'POST') {
-      req.headers['Content-type'] = 'application/x-www-form-urlencoded';
-    }
-
-    return getBackendSrv()
-      .fetch(req)
-      .pipe(
-        map((result: any) => {
-          const { data } = result;
-          if (data) {
-            data.executedQueryString = q;
-            if (data.results) {
-              const errors = result.data.results.filter((elem: any) => elem.error);
-
-              if (errors.length > 0) {
-                throw {
-                  message: 'InfluxDB Error: ' + errors[0].error,
-                  data,
-                };
-              }
-            }
-          }
-          return data;
-        }),
-        catchError((err) => {
-          if (err.cancelled) {
-            return of(err);
-          }
-
-          return throwError(this.handleErrors(err));
-        })
-      );
-  }
-
-  handleErrors(err: any) {
-    const error: DataQueryError = {
-      message:
-        (err && err.status) ||
-        (err && err.message) ||
-        'Unknown error during query transaction. Please check JS console logs.',
-    };
-
-    if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
-      if (err.data && err.data.error) {
-        error.message = 'InfluxDB Error: ' + err.data.error;
-        error.data = err.data;
-        // @ts-ignore
-        error.config = err.config;
-      } else {
-        error.message = 'Network Error: ' + err.statusText + '(' + err.status + ')';
-        error.data = err.data;
-        // @ts-ignore
-        error.config = err.config;
-      }
-    }
-
-    return error;
-  }
-
-  getTimeFilter(options: any) {
-    const from = this.getInfluxTime(options.rangeRaw.from, false, options.timezone);
-    const until = this.getInfluxTime(options.rangeRaw.to, true, options.timezone);
-
-    return 'time >= ' + from + ' and time <= ' + until;
-  }
-
-  getInfluxTime(date: any, roundUp: any, timezone: any) {
-    if (isString(date)) {
-      if (date === 'now') {
-        return 'now()';
-      }
-
-      const parts = /^now-(\d+)([dhms])$/.exec(date);
-      if (parts) {
-        const amount = parseInt(parts[1], 10);
-        const unit = parts[2];
-        return 'now() - ' + amount + unit;
-      }
-      date = dateMath.parse(date, roundUp, timezone);
-    }
-
-    return date.valueOf() + 'ms';
-  }
-
-  isMigrationToggleOnAndIsAccessProxy() {
-    return config.featureToggles.influxdbBackendMigration && this.access === 'proxy';
-  }
+  return {
+    name: timeSeries.target,
+    refId: timeSeries.refId,
+    meta: timeSeries.meta,
+    fields,
+    length: values.length,
+  };
 }

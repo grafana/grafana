@@ -1,0 +1,79 @@
+import { ArgTypes } from '@storybook/blocks';
+import { Toggletip } from './Toggletip';
+
+# Toggletip
+
+Toggletips, similar to Tooltips, provide contextual support for users when needed. They are hidden by default, a UI trigger or text link are clicked to set them to their visible state.
+Toggletips, unlike tooltips, are persistent until a user takes action to dismiss them by clicking on the required “X” (close) trigger.
+Toggletips are capable of containing varying types of complex content including interactive components, buttons, and dropdowns.
+
+## When to use
+
+- Users need further context to understand or learn a topic
+- Links to supporting documentation or content are needed to provide
+- When an interactive element must be placed within the popover
+- When content needs to persist for consumption until the user dismisses it
+
+## When not to use
+
+- When only a primary label or an auxiliary clarification is needed to be displayed (see: Tooltip)
+- Do not house information critical to user’s task completion
+- Do not request required information from a user to complete a task or workflow
+
+## Content
+
+Toggletips are able to house various types of content. Below is a potential list:
+
+- Buttons
+- Text links
+- Dropdowns
+- Selects
+- Images/gifs/videos
+- Various combinations of elements — ex: strings of text with buttons and an image
+
+## Theme
+
+There are currently 2 themes available for the Toggletip.
+
+- Info
+- Error
+
+### Info
+
+This is the default theme, usually used in forms to show more information.
+
+### Error
+
+Tooltip with a red background.
+
+## Triggers
+
+- Toggletips display on
+  - user click of UI trigger
+  - pressing ENTER or SPACE on a keyboard while the trigger element has focus
+- Toggletips dismiss by:
+  - user click of close icon (x) — optional
+  - clicking outside of the popover container
+  - pressing the ESC key
+
+### Usage
+
+```tsx
+function onClose() {
+  // code to execute when the toggletip is closed
+}
+
+return (
+  <Toogletip
+    content="Toggletip body"
+    title="This is the title of the Toggletip"
+    footer="Toggletip footer text"
+    closeButton={true}
+    onClose={onClose}
+  >
+    <IconButton name="question-circle" tooltip="IconButton containing a Toggletip" />
+  </Toogletip>
+);
+```
+
+<ArgTypes of={Toggletip} />

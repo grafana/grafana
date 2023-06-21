@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
@@ -19,7 +20,7 @@ import (
 func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
 	opts, err := settings.HTTPClientOptions()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
 
 	jsonData, err := utils.GetJsonData(settings)

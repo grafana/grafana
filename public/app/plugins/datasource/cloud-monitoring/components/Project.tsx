@@ -22,7 +22,6 @@ export function Project({ refId, projectName, datasource, onChange, templateVari
 
   const projectsWithTemplateVariables = useMemo(
     () => [
-      projects,
       {
         label: 'Template Variables',
         options: templateVariableOptions,

@@ -3,11 +3,11 @@ package pushws
 import (
 	"net/http"
 
+	"github.com/gorilla/websocket"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
-
-	"github.com/gorilla/websocket"
 )
 
 // PipelinePushHandler handles WebSocket client connections that push data to Live Pipeline.

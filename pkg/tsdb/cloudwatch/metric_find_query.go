@@ -1,6 +1,7 @@
 package cloudwatch
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,11 +9,9 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -24,8 +23,6 @@ type suggestData struct {
 	Value string `json:"value"`
 	Label string `json:"label,omitempty"`
 }
-
-var regionCache sync.Map
 
 func parseMultiSelectValue(input string) []string {
 	trimmedInput := strings.TrimSpace(input)
@@ -43,61 +40,58 @@ func parseMultiSelectValue(input string) []string {
 
 // Whenever this list is updated, the frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	instance, err := e.getInstance(pluginCtx)
+func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+	instance, err := e.getInstance(ctx, pluginCtx)
 	if err != nil {
 		return nil, err
 	}
 
 	profile := instance.Settings.Profile
-	if cache, ok := regionCache.Load(profile); ok {
+	if cache, ok := e.regionCache.Load(profile); ok {
 		if cache2, ok2 := cache.([]suggestData); ok2 {
 			return cache2, nil
 		}
 	}
 
-	client, err := e.getEC2Client(pluginCtx, defaultRegion)
+	client, err := e.getEC2Client(ctx, pluginCtx, defaultRegion)
 	if err != nil {
 		return nil, err
 	}
-	regions := constants.Regions
-	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
+	regions := constants.Regions()
+	ec2Regions, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
 		logger.Error("Failed to get regions", "error", err)
 	} else {
-		for _, region := range r.Regions {
-			exists := false
-
-			for _, existingRegion := range regions {
-				if existingRegion == *region.RegionName {
-					exists = true
-					break
-				}
-			}
-
-			if !exists {
-				regions = append(regions, *region.RegionName)
-			}
-		}
+		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
 	}
-	sort.Strings(regions)
 
 	result := make([]suggestData, 0)
-	for _, region := range regions {
+	for region := range regions {
 		result = append(result, suggestData{Text: region, Value: region, Label: region})
 	}
-	regionCache.Store(profile, result)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
+	e.regionCache.Store(profile, result)
 
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func mergeEC2RegionsAndConstantRegions(regions map[string]struct{}, ec2Regions []*ec2.Region) {
+	for _, region := range ec2Regions {
+		if _, ok := regions[*region.RegionName]; !ok {
+			regions[*region.RegionName] = struct{}{}
+		}
+	}
+}
+
+func (e *cloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	instanceId := parameters.Get("instanceId")
 
 	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
-	instances, err := e.ec2DescribeInstances(pluginCtx, region, nil, instanceIds)
+	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +108,7 @@ func (e *cloudWatchExecutor) handleGetEbsVolumeIds(pluginCtx backend.PluginConte
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	attributeName := parameters.Get("attributeName")
 	filterJson := parameters.Get("filters")
@@ -141,7 +135,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.Plu
 		}
 	}
 
-	instances, err := e.ec2DescribeInstances(pluginCtx, region, filters, nil)
+	instances, err := e.ec2DescribeInstances(ctx, pluginCtx, region, filters, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +193,7 @@ func (e *cloudWatchExecutor) handleGetEc2InstanceAttribute(pluginCtx backend.Plu
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
+func (e *cloudWatchExecutor) handleGetResourceArns(ctx context.Context, pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
 	region := parameters.Get("region")
 	resourceType := parameters.Get("resourceType")
 	tagsJson := parameters.Get("tags")
@@ -229,7 +223,7 @@ func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginConte
 	var resourceTypes []*string
 	resourceTypes = append(resourceTypes, &resourceType)
 
-	resources, err := e.resourceGroupsGetResources(pluginCtx, region, filters, resourceTypes)
+	resources, err := e.resourceGroupsGetResources(ctx, pluginCtx, region, filters, resourceTypes)
 	if err != nil {
 		return nil, err
 	}
@@ -243,13 +237,13 @@ func (e *cloudWatchExecutor) handleGetResourceArns(pluginCtx backend.PluginConte
 	return result, nil
 }
 
-func (e *cloudWatchExecutor) ec2DescribeInstances(pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+func (e *cloudWatchExecutor) ec2DescribeInstances(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
-	client, err := e.getEC2Client(pluginCtx, region)
+	client, err := e.getEC2Client(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -265,14 +259,14 @@ func (e *cloudWatchExecutor) ec2DescribeInstances(pluginCtx backend.PluginContex
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
+func (e *cloudWatchExecutor) resourceGroupsGetResources(ctx context.Context, pluginCtx backend.PluginContext, region string, filters []*resourcegroupstaggingapi.TagFilter,
 	resourceTypes []*string) (*resourcegroupstaggingapi.GetResourcesOutput, error) {
 	params := &resourcegroupstaggingapi.GetResourcesInput{
 		ResourceTypeFilters: resourceTypes,
 		TagFilters:          filters,
 	}
 
-	client, err := e.getRGTAClient(pluginCtx, region)
+	client, err := e.getRGTAClient(ctx, pluginCtx, region)
 	if err != nil {
 		return nil, err
 	}
@@ -287,45 +281,4 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.Plugin
 	}
 
 	return &resp, nil
-}
-
-func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	var nextToken *string
-
-	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
-
-	var err error
-	logsClient, err := e.getCWLogsClient(pluginCtx, parameters.Get("region"))
-	if err != nil {
-		return nil, err
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	result := make([]suggestData, 0)
-	for {
-		input := &cloudwatchlogs.DescribeLogGroupsInput{
-			Limit:     aws.Int64(defaultLogGroupLimit),
-			NextToken: nextToken,
-		}
-		if len(logGroupNamePrefix) > 0 {
-			input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
-		}
-		response, err = logsClient.DescribeLogGroups(input)
-
-		if err != nil || response == nil {
-			return nil, err
-		}
-
-		for _, logGroup := range response.LogGroups {
-			logGroupName := *logGroup.LogGroupName
-			result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
-		}
-
-		if response.NextToken == nil {
-			break
-		}
-		nextToken = response.NextToken
-	}
-
-	return result, nil
 }

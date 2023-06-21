@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -17,7 +17,7 @@ interface Props {
   panel: PanelModel;
 }
 
-export const PanelAlertTabContent: FC<Props> = ({ dashboard, panel }) => {
+export const PanelAlertTabContent = ({ dashboard, panel }: Props) => {
   const styles = useStyles2(getStyles);
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboard,

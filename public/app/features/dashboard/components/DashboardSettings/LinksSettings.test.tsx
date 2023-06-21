@@ -1,5 +1,4 @@
-import { within } from '@testing-library/dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -114,23 +113,23 @@ describe('LinksSettings', () => {
     setup(dashboard);
 
     // Check that we have sorting buttons
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-up' })).not.toBeInTheDocument();
-    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'Move link up' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[0]).queryByRole('button', { name: 'Move link down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'arrow-down' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'Move link up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[1]).queryByRole('button', { name: 'Move link down' })).toBeInTheDocument();
 
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-up' })).toBeInTheDocument();
-    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'arrow-down' })).not.toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'Move link up' })).toBeInTheDocument();
+    expect(within(getTableBodyRows()[2]).queryByRole('button', { name: 'Move link down' })).not.toBeInTheDocument();
 
     // Checking the original order
     assertRowHasText(0, links[0].title);
     assertRowHasText(1, links[1].title);
     assertRowHasText(2, links[2].url);
 
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[0]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-down' })[1]);
-    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'arrow-up' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[0]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link down' })[1]);
+    await userEvent.click(within(getTableBody()).getAllByRole('button', { name: 'Move link up' })[0]);
 
     // Checking if it has changed the sorting accordingly
     assertRowHasText(0, links[2].url);

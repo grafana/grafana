@@ -1,7 +1,6 @@
 import { VariableRefresh } from '@grafana/data';
 import {
   SceneCanvasText,
-  SceneSubMenu,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
@@ -10,13 +9,14 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
-  EmbeddedScene,
+  SceneRefreshPicker,
+  SceneFlexItem,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
-export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getQueryVariableDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Query variable',
     $variables: new SceneVariableSet({
       variables: [
@@ -26,7 +26,7 @@ export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene
         }),
         new DataSourceVariable({
           name: 'datasource',
-          query: 'prometheus',
+          pluginId: 'prometheus',
         }),
         new QueryVariable({
           name: 'instance (using datasource variable)',
@@ -51,24 +51,18 @@ export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
-        new SceneFlexLayout({
-          children: [
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'metric: ${metric}',
-              fontSize: 20,
-              align: 'center',
-            }),
-          ],
+        new SceneFlexItem({
+          width: '40%',
+          body: new SceneCanvasText({
+            text: 'metric: ${metric}',
+            fontSize: 20,
+            align: 'center',
+          }),
         }),
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
+    controls: [new VariableValueSelectors({})],
+  });
 }

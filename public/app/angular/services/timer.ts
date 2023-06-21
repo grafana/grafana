@@ -8,7 +8,8 @@ import coreModule from 'app/angular/core_module';
 export class Timer {
   timers: Array<angular.IPromise<any>> = [];
 
-  /** @ngInject */
+  static $inject = ['$timeout'];
+
   constructor(private $timeout: ITimeoutService) {}
 
   register(promise: angular.IPromise<any>) {

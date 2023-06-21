@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, LinkButton, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Alert, LinkButton } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
@@ -18,17 +17,17 @@ interface Props {
   alertManagerName: string;
 }
 
-export const ReceiversAndTemplatesView: FC<Props> = ({ config, alertManagerName }) => {
+export const ReceiversAndTemplatesView = ({ config, alertManagerName }: Props) => {
   const isCloud = alertManagerName !== GRAFANA_RULES_SOURCE_NAME;
-  const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
+
   return (
-    <>
-      {!isVanillaAM && <TemplatesTable config={config} alertManagerName={alertManagerName} />}
+    <Stack direction="column" gap={4}>
       <ReceiversTable config={config} alertManagerName={alertManagerName} />
+      {!isVanillaAM && <TemplatesTable config={config} alertManagerName={alertManagerName} />}
       {isCloud && (
         <Authorize actions={[AccessControlAction.AlertingNotificationsExternalWrite]}>
-          <Alert className={styles.section} severity="info" title="Global config for contact points">
+          <Alert severity="info" title="Global config for contact points">
             <p>
               For each external Alertmanager you can define global settings, like server addresses, usernames and
               password, for all the supported contact points.
@@ -39,12 +38,6 @@ export const ReceiversAndTemplatesView: FC<Props> = ({ config, alertManagerName 
           </Alert>
         </Authorize>
       )}
-    </>
+    </Stack>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-top: ${theme.spacing(4)};
-  `,
-});

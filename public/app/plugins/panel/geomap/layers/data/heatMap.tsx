@@ -10,10 +10,11 @@ import {
 import Map from 'ol/Map';
 import * as layer from 'ol/layer';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
-import { ScaleDimensionConfig, getScaledDimension } from 'app/features/dimensions';
+import { getScaledDimension } from 'app/features/dimensions';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { Point } from 'ol/geom';
+import { ScaleDimensionConfig } from '@grafana/schema';
 
 // Configuration options for Heatmap overlays
 export interface HeatmapConfig {

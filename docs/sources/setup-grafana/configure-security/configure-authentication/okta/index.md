@@ -34,7 +34,7 @@ Before you can sign a user in, you need to create an Okta application from the O
 
 ## Enable Okta OAuth in Grafana
 
-1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana/#config-file-locations" >}}):
+1. Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
 ```ini
 [auth.okta]
@@ -51,7 +51,17 @@ api_url = https://<tenant-id>.okta.com/oauth2/v1/userinfo
 allowed_domains =
 allowed_groups =
 role_attribute_path =
+use_pkce = true
 ```
+
+### PKCE
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which provides
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.okta]` section.
 
 ### Configure refresh token
 
@@ -81,37 +91,47 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 ### Map roles
 
 Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
 
-Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions/" >}}).
+Grafana uses JSON obtained from querying the `/userinfo` endpoint for the path lookup. The result after evaluating the `role_attribute_path` JMESPath expression needs to be a valid Grafana role, i.e. `Viewer`, `Editor` or `Admin`. For more information about roles and permissions in Grafana, refer to [Roles and permissions]({{< relref "../../../../administration/roles-and-permissions" >}}).
 
-> **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
-> update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+{{% admonition type="warning" %}}
+Currently if no organization role mapping is found for a user, Grafana doesn't
+update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
+enable the `skip_org_role_sync` option.
+See [Configure Grafana]({{< relref "../../../configure-grafana#authokta" >}}) for more information.
+{{% /admonition %}}
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
 You can disable this default role assignment by setting `role_attribute_strict = true`.
 It denies user access if no role or an invalid role is returned.
 
-> **Warning**: With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
-> then the user is assigned the role specified by
-> [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% admonition type="warning" %}}
+With Grafana 10, **on every login**, if the`role_attribute_path` property does not return a role,
+then the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+{{% /admonition %}}
 
-Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "generic-oauth/#jmespath-examples" >}}).
+Read about how to [add custom claims](https://developer.okta.com/docs/guides/customize-tokens-returned-from-okta/add-custom-claim/) to the user info in Okta. Also, check Generic OAuth page for [JMESPath examples]({{< relref "../generic-oauth#jmespath-examples" >}}).
 
 #### Map server administrator privileges
 
 > Available in Grafana v9.2 and later versions.
 
-If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
-This is useful if you want to grant server administrator privileges to a subset of users.  
+If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.
+This is useful if you want to grant server administrator privileges to a subset of users.
 Grafana also assigns the user the `Admin` role of the default organization.
 
-The setting `allow_assign_grafana_admin` under `[auth.okta]` must be set to `true` for this to work.  
+The setting `allow_assign_grafana_admin` under `[auth.okta]` must be set to `true` for this to work.
 If the setting is set to `false`, the user is assigned the role of `Admin` of the default organization, but not server administrator privileges.
 
 ```ini
@@ -124,6 +144,17 @@ Example:
 role_attribute_path = contains(groups[*], 'admin') && 'GrafanaAdmin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
+## Skip organization role sync
+
+To prevent the sync of org roles from Okta, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+
+```ini
+[auth.okta]
+# ..
+# prevents the sync of org roles from Okta
+skip_org_role_sync = true
+```
+
 ### Team Sync (Enterprise only)
 
 Map your Okta groups to teams in Grafana so that your users will automatically be added to
@@ -131,4 +162,4 @@ the correct teams.
 
 Okta groups can be referenced by group name, like `Admins`.
 
-[Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+[Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})

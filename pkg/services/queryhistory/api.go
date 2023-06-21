@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -20,8 +20,6 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 		entities.Post("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.starHandler))
 		entities.Delete("/star/:uid", middleware.ReqSignedIn, routing.Wrap(s.unstarHandler))
 		entities.Patch("/:uid", middleware.ReqSignedIn, routing.Wrap(s.patchCommentHandler))
-		// Remove migrate endpoint in Grafana v10 as breaking change
-		entities.Post("/migrate", middleware.ReqSignedIn, routing.Wrap(s.migrateHandler))
 	})
 }
 
@@ -36,7 +34,7 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -62,7 +60,7 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 // 200: getQueryHistorySearchResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
 	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
@@ -94,7 +92,7 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 // 200: getQueryHistoryDeleteQueryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -122,7 +120,7 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) patchCommentHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -151,7 +149,7 @@ func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response
 // 200: getQueryHistoryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -175,7 +173,7 @@ func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Respons
 // 200: getQueryHistoryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -187,31 +185,6 @@ func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Respo
 	}
 
 	return response.JSON(http.StatusOK, QueryHistoryResponse{Result: query})
-}
-
-// swagger:route POST /query-history/migrate query_history migrateQueries
-//
-// Migrate queries to query history.
-//
-// Adds multiple queries to query history.
-//
-// Responses:
-// 200: getQueryHistoryMigrationResponse
-// 400: badRequestError
-// 401: unauthorisedError
-// 500: internalServerError
-func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Response {
-	cmd := MigrateQueriesToQueryHistoryCommand{}
-	if err := web.Bind(c.Req, &cmd); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
-	}
-
-	totalCount, starredCount, err := s.MigrateQueriesToQueryHistory(c.Req.Context(), c.SignedInUser, cmd)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to migrate query history", err)
-	}
-
-	return response.JSON(http.StatusOK, QueryHistoryMigrationResponse{Message: "Query history successfully migrated", TotalCount: totalCount, StarredCount: starredCount})
 }
 
 // swagger:parameters starQuery patchQueryComment deleteQuery unstarQuery
@@ -275,13 +248,6 @@ type PatchQueryCommentParams struct {
 	Body PatchQueryCommentInQueryHistoryCommand `json:"body"`
 }
 
-// swagger:parameters migrateQueries
-type MigrateQueriesParams struct {
-	// in:body
-	// required:true
-	Body MigrateQueriesToQueryHistoryCommand `json:"body"`
-}
-
 //swagger:response getQueryHistorySearchResponse
 type GetQueryHistorySearchResponse struct {
 	// in: body
@@ -298,10 +264,4 @@ type GetQueryHistoryResponse struct {
 type GetQueryHistoryDeleteQueryResponse struct {
 	// in: body
 	Body QueryHistoryDeleteQueryResponse `json:"body"`
-}
-
-// swagger:response getQueryHistoryMigrationResponse
-type GetQueryHistoryMigrationResponse struct {
-	// in: body
-	Body QueryHistoryMigrationResponse `json:"body"`
 }

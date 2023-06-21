@@ -3,9 +3,11 @@ package codegen
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
@@ -33,18 +35,17 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	tsf := &tsast.File{}
 
 	for _, im := range decl.Imports {
-		if tsim, err := convertImport(im); err != nil {
+		if tsim, err := cuectx.ConvertImport(im); err != nil {
 			return nil, err
 		} else if tsim.From.Value != "" {
 			tsf.Imports = append(tsf.Imports, tsim)
 		}
 	}
 
-	slotname := decl.SchemaInterface.Name()
 	v := decl.Lineage.Latest().Version()
 
 	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", slotname, v[0], v[1]),
+		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", decl.SchemaInterface.Name(), v[0], v[1]),
 	})
 
 	jf, err := j.inner.Generate(decl)
@@ -56,7 +57,7 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		Data: string(jf.Data),
 	})
 
-	path := filepath.Join(j.root, decl.PluginPath, "models.gen.ts")
+	path := filepath.Join(j.root, decl.PluginPath, fmt.Sprintf("%s.gen.ts", strings.ToLower(decl.SchemaInterface.Name())))
 	data := []byte(tsf.String())
 	data = data[:len(data)-1] // remove the additional line break added by the inner jenny
 

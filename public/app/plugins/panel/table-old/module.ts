@@ -54,7 +54,8 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
     sort: { col: 0, desc: true },
   };
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector', 'annotationsSrv', '$sanitize'];
+
   constructor($scope: any, $injector: any, private annotationsSrv: any, private $sanitize: any) {
     super($scope, $injector);
 

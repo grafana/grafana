@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -45,7 +44,7 @@ type ImportDashboardService struct {
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	var draftDashboard *models.Dashboard
+	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
 			PluginID:  req.PluginId,
@@ -57,7 +56,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 			draftDashboard = resp.Dashboard
 		}
 	} else {
-		draftDashboard = models.NewDashboardFromJson(req.Dashboard)
+		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
 	}
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
@@ -106,17 +105,17 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		req.FolderUid = folder.UID
 	}
 
-	saveCmd := models.SaveDashboardCommand{
+	saveCmd := dashboards.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgID,
-		UserId:    req.User.UserID,
+		OrgID:     req.User.OrgID,
+		UserID:    req.User.UserID,
 		Overwrite: req.Overwrite,
-		PluginId:  req.PluginId,
-		FolderId:  req.FolderId,
+		PluginID:  req.PluginId,
+		FolderID:  req.FolderId,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
-		OrgId:     saveCmd.OrgId,
+		OrgID:     saveCmd.OrgID,
 		Dashboard: saveCmd.GetDashboardModel(),
 		Overwrite: saveCmd.Overwrite,
 		User:      req.User,
@@ -137,19 +136,20 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
+	revision := savedDashboard.Data.Get("revision").MustInt64(0)
 	return &dashboardimport.ImportDashboardResponse{
-		UID:              savedDashboard.Uid,
+		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
-		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDashboard.FolderId,
+		Revision:         revision, // only used for plugin version tracking
+		FolderId:         savedDashboard.FolderID,
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
-		ImportedUrl:      savedDashboard.GetUrl(),
-		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
+		ImportedUrl:      savedDashboard.GetURL(),
+		ImportedRevision: revision,
 		Imported:         true,
-		DashboardId:      savedDashboard.Id,
+		DashboardId:      savedDashboard.ID,
 		Slug:             savedDashboard.Slug,
 	}, nil
 }

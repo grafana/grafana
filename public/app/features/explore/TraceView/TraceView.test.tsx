@@ -1,17 +1,16 @@
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
 import { DataFrame, MutableDataFrame, getDefaultTimeRange, LoadingState } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
+import { TraceData, TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -23,10 +22,10 @@ function getTraceView(frames: DataFrame[]) {
   };
   const topOfViewRef = createRef<HTMLDivElement>();
 
-  const traceView = (
+  return (
     <Provider store={store}>
       <TraceView
-        exploreId={ExploreId.left}
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
@@ -39,7 +38,6 @@ function getTraceView(frames: DataFrame[]) {
       />
     </Provider>
   );
-  return traceView;
 }
 
 function renderTraceView(frames = [frameOld]) {
@@ -63,7 +61,7 @@ describe('TraceView', () => {
       getInstanceSettings() {
         return undefined;
       },
-    } as any);
+    } as DataSourceSrv);
   });
 
   it('renders TraceTimelineViewer', () => {
@@ -92,14 +90,14 @@ describe('TraceView', () => {
 
   it('toggles detailState', async () => {
     renderTraceViewNew();
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
     const spanView = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[0];
     await userEvent.click(spanView);
-    expect(screen.queryByText(/Attributes/)).toBeTruthy();
+    expect(screen.queryByText(/Span Attributes/)).toBeTruthy();
 
     await userEvent.click(spanView);
-    screen.debug(screen.queryAllByText(/Attributes/));
-    expect(screen.queryByText(/Attributes/)).toBeFalsy();
+    screen.debug(screen.queryAllByText(/Span Attributes/));
+    expect(screen.queryByText(/Span Attributes/)).toBeFalsy();
   });
 
   it('shows timeline ticks', () => {

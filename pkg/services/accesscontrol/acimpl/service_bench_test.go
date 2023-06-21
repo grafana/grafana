@@ -3,77 +3,20 @@ package acimpl
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
-
-const concurrency = 10
-const batchSize = 1000
-
-type bounds struct {
-	start, end int
-}
-
-// concurrentBatch spawns the requested amount of workers then ask them to run eachFn on chunks of the requested size
-func concurrentBatch(workers, count, size int, eachFn func(start, end int) error) error {
-	var wg sync.WaitGroup
-	alldone := make(chan bool) // Indicates that all workers have finished working
-	chunk := make(chan bounds) // Gives the workers the bounds they should work with
-	ret := make(chan error)    // Allow workers to notify in case of errors
-	defer close(ret)
-
-	// Launch all workers
-	for x := 0; x < workers; x++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for ck := range chunk {
-				if err := eachFn(ck.start, ck.end); err != nil {
-					ret <- err
-					return
-				}
-			}
-		}()
-	}
-
-	go func() {
-		// Tell the workers the chunks they have to work on
-		for i := 0; i < count; {
-			end := i + size
-			if end > count {
-				end = count
-			}
-
-			chunk <- bounds{start: i, end: end}
-
-			i = end
-		}
-		close(chunk)
-
-		// Wait for the workers
-		wg.Wait()
-		close(alldone)
-	}()
-
-	// wait for an error or for all workers to be done
-	select {
-	case err := <-ret:
-		return err
-	case <-alldone:
-		break
-	}
-	return nil
-}
 
 // setupBenchEnv will create userCount users, userCount managed roles with resourceCount managed permission each
 // Example: setupBenchEnv(b, 2, 3):
@@ -102,7 +45,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 	require.NoError(b, err)
 
 	// Populate users, roles and assignments
-	if errInsert := concurrentBatch(concurrency, usersCount, batchSize, func(start, end int) error {
+	if errInsert := actest.ConcurrentBatch(actest.Concurrency, usersCount, actest.BatchSize, func(start, end int) error {
 		n := end - start
 		users := make([]user.User, 0, n)
 		orgUsers := make([]org.OrgUser, 0, n)
@@ -157,13 +100,13 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		})
 		return err
 	}); errInsert != nil {
-		require.NoError(b, err, "could not insert users and roles")
+		require.NoError(b, errInsert, "could not insert users and roles")
 		return nil, nil
 	}
 
 	// Populate permissions
 	action2 := "resources:action2"
-	if errInsert := concurrentBatch(concurrency, resourceCount*usersCount, batchSize, func(start, end int) error {
+	if errInsert := actest.ConcurrentBatch(actest.Concurrency, resourceCount*usersCount, actest.BatchSize, func(start, end int) error {
 		permissions := make([]accesscontrol.Permission, 0, end-start)
 		for i := start; i < end; i++ {
 			permissions = append(permissions, accesscontrol.Permission{
@@ -180,7 +123,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 			return err
 		})
 	}); errInsert != nil {
-		require.NoError(b, err, "could not insert permissions")
+		require.NoError(b, errInsert, "could not insert permissions")
 		return nil, nil
 	}
 

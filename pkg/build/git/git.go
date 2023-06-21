@@ -8,8 +8,9 @@ import (
 	"regexp"
 
 	"github.com/google/go-github/v45/github"
-	"github.com/grafana/grafana/pkg/build/stringutil"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/build/stringutil"
 )
 
 const (

@@ -27,8 +27,31 @@ interface PlotLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProps, '
   config: UPlotConfigBuilder;
 }
 
-export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
-  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }) => {
+/**
+ * mostly duplicates logic in PlotLegend below :(
+ *
+ * @internal
+ */
+export function hasVisibleLegendSeries(config: UPlotConfigBuilder, data: DataFrame[]) {
+  return config.getSeries().some((s) => {
+    const fieldIndex = s.props.dataFrameFieldIndex;
+
+    if (!fieldIndex) {
+      return false;
+    }
+
+    const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+    if (!field || field.config.custom?.hideFrom?.legend) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export const PlotLegend = React.memo(
+  ({ data, config, placement, calcs, displayMode, ...vizLayoutLegendProps }: PlotLegendProps) => {
     const theme = useTheme2();
     const legendItems = config
       .getSeries()
@@ -56,7 +79,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
           fieldIndex,
           color: seriesColor,
           label,
-          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+          yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => {
             if (!calcs?.length) {
               return [];
@@ -127,6 +150,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
         />
       </VizLayout.Legend>
     );

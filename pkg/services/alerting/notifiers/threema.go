@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -152,7 +152,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        url,
 		Body:       body,
 		HttpMethod: "POST",

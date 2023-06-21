@@ -11,8 +11,8 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	alertingModels "github.com/grafana/alerting/models"
 
-	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -109,6 +109,9 @@ const (
 const (
 	StateReasonMissingSeries = "MissingSeries"
 	StateReasonError         = "Error"
+	StateReasonPaused        = "Paused"
+	StateReasonUpdated       = "Updated"
+	StateReasonRuleDeleted   = "RuleDeleted"
 )
 
 var (
@@ -131,6 +134,13 @@ type AlertRuleGroup struct {
 	Interval   int64
 	Provenance Provenance
 	Rules      []AlertRule
+}
+
+// AlertRuleGroupWithFolderTitle extends AlertRuleGroup with orgID and folder title
+type AlertRuleGroupWithFolderTitle struct {
+	*AlertRuleGroup
+	OrgID       int64
+	FolderTitle string
 }
 
 // AlertRule is the model for alert rules in unified alerting.
@@ -156,7 +166,50 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
+
+// AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
+// object is created in an early validation step without knowledge about current alert rule fields or if they need to be
+// overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
+// nor its possible value.
+type AlertRuleWithOptionals struct {
+	AlertRule
+	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
+	// DB in case it was not sent.
+	HasPause bool
+}
+
+// AlertsRulesBy is a function that defines the ordering of alert rules.
+type AlertRulesBy func(a1, a2 *AlertRule) bool
+
+func (by AlertRulesBy) Sort(rules []*AlertRule) {
+	sort.Sort(AlertRulesSorter{rules: rules, by: by})
+}
+
+// AlertRulesByIndex orders alert rules by rule group index. You should
+// make sure that all alert rules belong to the same rule group (have the
+// same RuleGroupKey) before using this ordering.
+func AlertRulesByIndex(a1, a2 *AlertRule) bool {
+	return a1.RuleGroupIndex < a2.RuleGroupIndex
+}
+
+func AlertRulesByGroupKeyAndIndex(a1, a2 *AlertRule) bool {
+	k1, k2 := a1.GetGroupKey(), a2.GetGroupKey()
+	if k1 == k2 {
+		return a1.RuleGroupIndex < a2.RuleGroupIndex
+	}
+	return AlertRuleGroupKeyByNamespaceAndRuleGroup(&k1, &k2)
+}
+
+type AlertRulesSorter struct {
+	rules []*AlertRule
+	by    AlertRulesBy
+}
+
+func (s AlertRulesSorter) Len() int           { return len(s.rules) }
+func (s AlertRulesSorter) Swap(i, j int)      { s.rules[i], s.rules[j] = s.rules[j], s.rules[i] }
+func (s AlertRulesSorter) Less(i, j int) bool { return s.by(s.rules[i], s.rules[j]) }
 
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
@@ -261,6 +314,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithVersionAndPauseStatus struct {
+	IsPaused                bool
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64
@@ -275,6 +333,29 @@ func (k AlertRuleGroupKey) String() string {
 func (k AlertRuleKey) String() string {
 	return fmt.Sprintf("{orgID: %d, UID: %s}", k.OrgID, k.UID)
 }
+
+// AlertRuleGroupKeyBy is a function that defines the ordering of alert rule group keys.
+type AlertRuleGroupKeyBy func(a1, a2 *AlertRuleGroupKey) bool
+
+func (by AlertRuleGroupKeyBy) Sort(keys []AlertRuleGroupKey) {
+	sort.Sort(AlertRuleGroupKeySorter{keys: keys, by: by})
+}
+
+func AlertRuleGroupKeyByNamespaceAndRuleGroup(k1, k2 *AlertRuleGroupKey) bool {
+	if k1.NamespaceUID == k2.NamespaceUID {
+		return k1.RuleGroup < k2.RuleGroup
+	}
+	return k1.NamespaceUID < k2.NamespaceUID
+}
+
+type AlertRuleGroupKeySorter struct {
+	keys []AlertRuleGroupKey
+	by   AlertRuleGroupKeyBy
+}
+
+func (s AlertRuleGroupKeySorter) Len() int           { return len(s.keys) }
+func (s AlertRuleGroupKeySorter) Swap(i, j int)      { s.keys[i], s.keys[j] = s.keys[j], s.keys[i] }
+func (s AlertRuleGroupKeySorter) Less(i, j int) bool { return s.by(&s.keys[i], &s.keys[j]) }
 
 // GetKey returns the alert definitions identifier
 func (alertRule *AlertRule) GetKey() AlertRuleKey {
@@ -335,22 +416,19 @@ type AlertRuleVersion struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
 type GetAlertRuleByUIDQuery struct {
 	UID   string
 	OrgID int64
-
-	Result *AlertRule
 }
 
 // GetAlertRulesGroupByRuleUIDQuery is the query for retrieving a group of alerts by UID of a rule that belongs to that group
 type GetAlertRulesGroupByRuleUIDQuery struct {
 	UID   string
 	OrgID int64
-
-	Result []*AlertRule
 }
 
 // ListAlertRulesQuery is the query for listing alert rules
@@ -364,8 +442,6 @@ type ListAlertRulesQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
-
-	Result RulesGroup
 }
 
 // CountAlertRulesQuery is the query for counting alert rules
@@ -376,6 +452,7 @@ type CountAlertRulesQuery struct {
 
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
+	RuleGroups      []string
 
 	ResultRules         []*AlertRule
 	ResultFoldersTitles map[string]string
@@ -386,8 +463,6 @@ type ListNamespaceAlertRulesQuery struct {
 	OrgID int64
 	// Namespace is the folder slug
 	NamespaceUID string
-
-	Result []*AlertRule
 }
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
@@ -400,8 +475,6 @@ type ListOrgRuleGroupsQuery struct {
 	// to return just those for a dashboard and panel.
 	DashboardUID string
 	PanelID      int64
-
-	Result [][]string
 }
 
 type UpdateRule struct {
@@ -433,7 +506,7 @@ func (c Condition) IsValid() bool {
 //   - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
-func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
@@ -458,6 +531,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if !ruleToPatch.HasPause {
+		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 }
 

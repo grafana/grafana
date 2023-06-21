@@ -6,13 +6,13 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataSourceRef,
-  DataTransformerConfig,
   FieldConfigSource,
   FieldMatcherID,
   FieldType,
   getActiveThreshold,
   getDataSourceRef,
   isDataSourceRef,
+  isEmptyObject,
   MappingType,
   PanelPlugin,
   SpecialValueMatch,
@@ -26,8 +26,9 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
-import { AxisPlacement, GraphFieldConfig, TableCellDisplayMode } from '@grafana/ui';
+import { DataTransformerConfig } from '@grafana/schema';
+import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -584,6 +585,9 @@ export class DashboardMigrator {
           continue;
         }
         const { multi, current } = variable;
+        if (isEmptyObject(current)) {
+          continue;
+        }
         variable.current = alignCurrentWithMulti(current, multi);
       }
     }
@@ -818,20 +822,21 @@ export class DashboardMigrator {
           // Update field configuration
           if (displayMode !== undefined) {
             // Migrate any options for the panel
-            panel.fieldConfig.defaults.custom.cellOptions = migrateTableCellConfig(displayMode);
+            panel.fieldConfig.defaults.custom.cellOptions = migrateTableDisplayModeToCellOptions(displayMode);
 
             // Delete the legacy field
             delete panel.fieldConfig.defaults.custom.displayMode;
           }
 
           // Update any overrides referencing the cell display mode
-          for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
-            for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
-              let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
-
-              if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
-                panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
-                panel.fieldConfig.overrides[i].properties[j].value = migrateTableCellConfig(overrideDisplayMode);
+          if (panel.fieldConfig?.overrides) {
+            for (const override of panel.fieldConfig.overrides) {
+              for (let j = 0; j < override.properties?.length ?? 0; j++) {
+                let overrideDisplayMode = override.properties[j].value;
+                if (override.properties[j].id === 'custom.displayMode') {
+                  override.properties[j].id = 'custom.cellOptions';
+                  override.properties[j].value = migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+                }
               }
             }
           }
@@ -1363,51 +1368,4 @@ function ensureXAxisVisibility(panel: PanelModel) {
   }
 
   return panel;
-}
-
-/**
- * Migrates table cell display mode to new object format.
- *
- * @param displayMode The display mode of the cell
- * @returns TableCellOptions object in the correct format
- * relative to the old display mode.
- */
-function migrateTableCellConfig(displayMode: TableCellDisplayMode): TableCellOptions {
-  switch (displayMode) {
-    // In the case of the gauge we move to a different option
-    case 'basic':
-    case 'gradient-gauge':
-    case 'lcd-gauge':
-      let gaugeMode = BarGaugeDisplayMode.Basic;
-
-      if (displayMode === 'gradient-gauge') {
-        gaugeMode = BarGaugeDisplayMode.Gradient;
-      } else if (displayMode === 'lcd-gauge') {
-        gaugeMode = BarGaugeDisplayMode.Lcd;
-      }
-
-      return {
-        type: TableCellDisplayMode.Gauge,
-        mode: gaugeMode,
-      };
-    // Also true in the case of the color background
-    case 'color-background':
-    case 'color-background-solid':
-      let mode = TableCellBackgroundDisplayMode.Basic;
-
-      // Set the new mode field, somewhat confusingly the
-      // color-background mode is for gradient display
-      if (displayMode === 'color-background') {
-        mode = TableCellBackgroundDisplayMode.Gradient;
-      }
-
-      return {
-        type: TableCellDisplayMode.ColorBackground,
-        mode: mode,
-      };
-    default:
-      return {
-        type: displayMode,
-      };
-  }
 }

@@ -17,93 +17,91 @@ export interface PromExploreExtraFieldProps {
   datasource: PrometheusDatasource;
 }
 
-export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
-  ({ query, datasource, onChange, onRunQuery }) => {
-    const rangeOptions = getQueryTypeOptions(true);
-    const prevQuery = usePrevious(query);
+export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQuery }: PromExploreExtraFieldProps) => {
+  const rangeOptions = getQueryTypeOptions(true);
+  const prevQuery = usePrevious(query);
 
-    const onExemplarChange = useCallback(
-      (exemplar: boolean) => {
-        if (!isEqual(query, prevQuery) || exemplar !== query.exemplar) {
-          onChange({ ...query, exemplar });
-        }
-      },
-      [prevQuery, query, onChange]
-    );
-
-    function onChangeQueryStep(interval: string) {
-      onChange({ ...query, interval });
-    }
-
-    function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
-      if (e.currentTarget.value !== query.interval) {
-        onChangeQueryStep(e.currentTarget.value);
+  const onExemplarChange = useCallback(
+    (exemplar: boolean) => {
+      if (!isEqual(query, prevQuery) || exemplar !== query.exemplar) {
+        onChange({ ...query, exemplar });
       }
-    }
+    },
+    [prevQuery, query, onChange]
+  );
 
-    function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-      if (e.key === 'Enter' && e.shiftKey) {
-        onRunQuery();
-      }
-    }
-
-    const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
-
-    return (
-      <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
-        {/*Query type field*/}
-        <div
-          data-testid={testIds.queryTypeField}
-          className={cx(
-            'gf-form explore-input-margin',
-            css`
-              flex-wrap: nowrap;
-            `
-          )}
-          aria-label="Query type field"
-        >
-          <InlineFormLabel width="auto">Query type</InlineFormLabel>
-
-          <RadioButtonGroup
-            options={rangeOptions}
-            value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
-            onChange={onQueryTypeChange}
-          />
-        </div>
-        {/*Step field*/}
-        <div
-          data-testid={testIds.stepField}
-          className={cx(
-            'gf-form',
-            css`
-              flex-wrap: nowrap;
-            `
-          )}
-          aria-label="Step field"
-        >
-          <InlineFormLabel
-            width={6}
-            tooltip={
-              'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
-            }
-          >
-            Min step
-          </InlineFormLabel>
-          <input
-            type={'text'}
-            className="gf-form-input width-4"
-            placeholder={'auto'}
-            onChange={onStepChange}
-            onKeyDown={onReturnKeyDown}
-            value={query.interval ?? ''}
-          />
-        </div>
-
-        <PromExemplarField onChange={onExemplarChange} datasource={datasource} query={query} />
-      </div>
-    );
+  function onChangeQueryStep(interval: string) {
+    onChange({ ...query, interval });
   }
-);
+
+  function onStepChange(e: React.SyntheticEvent<HTMLInputElement>) {
+    if (e.currentTarget.value !== query.interval) {
+      onChangeQueryStep(e.currentTarget.value);
+    }
+  }
+
+  function onReturnKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' && e.shiftKey) {
+      onRunQuery();
+    }
+  }
+
+  const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
+
+  return (
+    <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
+      {/*Query type field*/}
+      <div
+        data-testid={testIds.queryTypeField}
+        className={cx(
+          'gf-form explore-input-margin',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Query type field"
+      >
+        <InlineFormLabel width="auto">Query type</InlineFormLabel>
+
+        <RadioButtonGroup
+          options={rangeOptions}
+          value={query.range && query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          onChange={onQueryTypeChange}
+        />
+      </div>
+      {/*Step field*/}
+      <div
+        data-testid={testIds.stepField}
+        className={cx(
+          'gf-form',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Step field"
+      >
+        <InlineFormLabel
+          width={6}
+          tooltip={
+            'Time units and built-in variables can be used here, for example: $__interval, $__rate_interval, 5s, 1m, 3h, 1d, 1y (Default if no unit is specified: s)'
+          }
+        >
+          Min step
+        </InlineFormLabel>
+        <input
+          type={'text'}
+          className="gf-form-input width-4"
+          placeholder={'auto'}
+          onChange={onStepChange}
+          onKeyDown={onReturnKeyDown}
+          value={query.interval ?? ''}
+        />
+      </div>
+
+      <PromExemplarField onChange={onExemplarChange} datasource={datasource} query={query} />
+    </div>
+  );
+});
 
 PromExploreExtraField.displayName = 'PromExploreExtraField';
 

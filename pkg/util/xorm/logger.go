@@ -78,22 +78,12 @@ var _ core.ILogger = &SimpleLogger{}
 
 // NewSimpleLogger use a special io.Writer as logger output
 func NewSimpleLogger(out io.Writer) *SimpleLogger {
-	return NewSimpleLogger2(out, DEFAULT_LOG_PREFIX, DEFAULT_LOG_FLAG)
-}
-
-// NewSimpleLogger2 let you customrize your logger prefix and flag
-func NewSimpleLogger2(out io.Writer, prefix string, flag int) *SimpleLogger {
-	return NewSimpleLogger3(out, prefix, flag, DEFAULT_LOG_LEVEL)
-}
-
-// NewSimpleLogger3 let you customrize your logger prefix and flag and logLevel
-func NewSimpleLogger3(out io.Writer, prefix string, flag int, l core.LogLevel) *SimpleLogger {
 	return &SimpleLogger{
-		DEBUG: log.New(out, fmt.Sprintf("%s [debug] ", prefix), flag),
-		ERR:   log.New(out, fmt.Sprintf("%s [error] ", prefix), flag),
-		INFO:  log.New(out, fmt.Sprintf("%s [info]  ", prefix), flag),
-		WARN:  log.New(out, fmt.Sprintf("%s [warn]  ", prefix), flag),
-		level: l,
+		DEBUG: log.New(out, fmt.Sprintf("%s [debug] ", DEFAULT_LOG_PREFIX), DEFAULT_LOG_FLAG),
+		ERR:   log.New(out, fmt.Sprintf("%s [error] ", DEFAULT_LOG_PREFIX), DEFAULT_LOG_FLAG),
+		INFO:  log.New(out, fmt.Sprintf("%s [info]  ", DEFAULT_LOG_PREFIX), DEFAULT_LOG_FLAG),
+		WARN:  log.New(out, fmt.Sprintf("%s [warn]  ", DEFAULT_LOG_PREFIX), DEFAULT_LOG_FLAG),
+		level: DEFAULT_LOG_LEVEL,
 	}
 }
 
@@ -102,7 +92,6 @@ func (s *SimpleLogger) Error(v ...interface{}) {
 	if s.level <= core.LOG_ERR {
 		s.ERR.Output(2, fmt.Sprint(v...))
 	}
-	return
 }
 
 // Errorf implement core.ILogger
@@ -110,7 +99,6 @@ func (s *SimpleLogger) Errorf(format string, v ...interface{}) {
 	if s.level <= core.LOG_ERR {
 		s.ERR.Output(2, fmt.Sprintf(format, v...))
 	}
-	return
 }
 
 // Debug implement core.ILogger
@@ -118,7 +106,6 @@ func (s *SimpleLogger) Debug(v ...interface{}) {
 	if s.level <= core.LOG_DEBUG {
 		s.DEBUG.Output(2, fmt.Sprint(v...))
 	}
-	return
 }
 
 // Debugf implement core.ILogger
@@ -126,7 +113,6 @@ func (s *SimpleLogger) Debugf(format string, v ...interface{}) {
 	if s.level <= core.LOG_DEBUG {
 		s.DEBUG.Output(2, fmt.Sprintf(format, v...))
 	}
-	return
 }
 
 // Info implement core.ILogger
@@ -134,7 +120,6 @@ func (s *SimpleLogger) Info(v ...interface{}) {
 	if s.level <= core.LOG_INFO {
 		s.INFO.Output(2, fmt.Sprint(v...))
 	}
-	return
 }
 
 // Infof implement core.ILogger
@@ -142,7 +127,6 @@ func (s *SimpleLogger) Infof(format string, v ...interface{}) {
 	if s.level <= core.LOG_INFO {
 		s.INFO.Output(2, fmt.Sprintf(format, v...))
 	}
-	return
 }
 
 // Warn implement core.ILogger
@@ -150,7 +134,6 @@ func (s *SimpleLogger) Warn(v ...interface{}) {
 	if s.level <= core.LOG_WARNING {
 		s.WARN.Output(2, fmt.Sprint(v...))
 	}
-	return
 }
 
 // Warnf implement core.ILogger
@@ -158,7 +141,6 @@ func (s *SimpleLogger) Warnf(format string, v ...interface{}) {
 	if s.level <= core.LOG_WARNING {
 		s.WARN.Output(2, fmt.Sprintf(format, v...))
 	}
-	return
 }
 
 // Level implement core.ILogger
@@ -169,7 +151,6 @@ func (s *SimpleLogger) Level() core.LogLevel {
 // SetLevel implement core.ILogger
 func (s *SimpleLogger) SetLevel(l core.LogLevel) {
 	s.level = l
-	return
 }
 
 // ShowSQL implement core.ILogger

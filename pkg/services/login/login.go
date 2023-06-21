@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -15,10 +14,10 @@ var (
 	ErrSignupNotAllowed   = errors.New("system administrator has disabled signup")
 )
 
-type TeamSyncFunc func(user *user.User, externalUser *models.ExternalUserInfo) error
+type TeamSyncFunc func(user *user.User, externalUser *ExternalUserInfo) error
 
 type Service interface {
-	UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error
+	UpsertUser(ctx context.Context, cmd *UpsertUserCommand) (*user.User, error)
 	DisableExternalUser(ctx context.Context, username string) error
 	SetTeamSyncFunc(TeamSyncFunc)
 }

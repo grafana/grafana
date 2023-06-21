@@ -9,18 +9,21 @@ import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
 export interface Props {
   message?: string;
   onClick?: (e: React.SyntheticEvent) => void;
+  ariaLabel?: string;
 }
 
-export function PanelStatus({ message, onClick }: Props) {
+export function PanelStatus({ message, onClick, ariaLabel = 'status' }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <ToolbarButton
+      className={styles.buttonStyles}
       onClick={onClick}
       variant={'destructive'}
-      className={styles.buttonStyles}
       icon="exclamation-triangle"
+      iconSize="md"
       tooltip={message || ''}
+      aria-label={ariaLabel}
     />
   );
 }
@@ -37,7 +40,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(padding),
       width: theme.spacing(headerHeight),
       height: theme.spacing(headerHeight),
-      borderRadius: 0,
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };

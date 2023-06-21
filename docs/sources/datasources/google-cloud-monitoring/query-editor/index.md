@@ -177,7 +177,9 @@ An expected result would look like: `gce_instance - compute.googleapis.com/insta
 
 ### Deep-link from Grafana panels to the Google Cloud Console Metrics Explorer
 
-> **Note:** Available in Grafana v7.1 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.1 and higher.
+{{% /admonition %}}
 
 {{< figure src="/static/img/docs/v71/cloudmonitoring_deep_linking.png" max-width="500px" class="docs-image--no-shadow" caption="Google Cloud Monitoring deep linking" >}}
 
@@ -199,7 +201,9 @@ If the query editor rows return different units, Grafana uses the unit from the 
 
 ### Use the Monitoring Query Language
 
-> **Note:** Available in Grafana v7.4 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.4 and higher.
+{{% /admonition %}}
 
 The Monitoring Query Language (MQL) query builder helps you query and display MQL results in time series format.
 To understand basic MQL concepts, refer to [Introduction to Monitoring Query Language](https://cloud.google.com/monitoring/mql).
@@ -222,7 +226,9 @@ However, `{{metric.service}}` is not supported, and `{{metric.type}}` and `{{met
 
 ## Query Service Level Objectives
 
-> **Note:** Available in Grafana v7.0 and higher.
+{{% admonition type="note" %}}
+Available in Grafana v7.0 and higher.
+{{% /admonition %}}
 
 {{< figure src="/static/img/docs/google-cloud-monitoring/slo-query-builder-8-0.png" max-width="400px" class="docs-image--no-shadow" caption="Service Level Objectives (SLO) query editor" >}}
 

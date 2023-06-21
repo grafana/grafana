@@ -8,6 +8,7 @@ import { Tooltip } from '../../../Tooltip/Tooltip';
 export interface Props {
   label: string;
   checked: boolean;
+  disabled?: boolean;
   className?: string;
   labelClass?: string;
   switchClass?: string;
@@ -37,6 +38,7 @@ export class Switch extends PureComponent<Props, State> {
       switchClass = '',
       label,
       checked,
+      disabled,
       transparent,
       className,
       tooltip,
@@ -63,7 +65,13 @@ export class Switch extends PureComponent<Props, State> {
             </div>
           )}
           <div className={switchClassName}>
-            <input id={labelId} type="checkbox" checked={checked} onChange={this.internalOnChange} />
+            <input
+              disabled={disabled}
+              id={labelId}
+              type="checkbox"
+              checked={checked}
+              onChange={this.internalOnChange}
+            />
             <span className="gf-form-switch__slider" />
           </div>
         </label>

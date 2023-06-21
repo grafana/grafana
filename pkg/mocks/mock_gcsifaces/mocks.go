@@ -10,9 +10,10 @@ import (
 
 	storage "cloud.google.com/go/storage"
 	gomock "github.com/golang/mock/gomock"
-	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
 	google "golang.org/x/oauth2/google"
 	jwt "golang.org/x/oauth2/jwt"
+
+	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
 )
 
 // MockStorageClient is a mock of StorageClient interface

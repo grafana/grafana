@@ -1,11 +1,13 @@
 import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
+import { safeStringifyValue } from 'app/core/utils/explore';
+import { ExploreFieldLinkModel } from 'app/features/explore/utils/links';
 
-type FieldDef = {
-  key: string;
-  value: string;
-  links?: Array<LinkModel<Field>>;
+export type FieldDef = {
+  keys: string[];
+  values: string[];
+  links?: Array<LinkModel<Field>> | ExploreFieldLinkModel[];
   fieldIndex: number;
 };
 
@@ -16,7 +18,11 @@ type FieldDef = {
 export const getAllFields = memoizeOne(
   (
     row: LogRowModel,
-    getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
+    getFieldLinks?: (
+      field: Field,
+      rowIndex: number,
+      dataFrame: DataFrame
+    ) => Array<LinkModel<Field>> | ExploreFieldLinkModel[]
   ) => {
     const dataframeFields = getDataframeFields(row, getFieldLinks);
 
@@ -25,9 +31,36 @@ export const getAllFields = memoizeOne(
 );
 
 /**
+ * A log line may contain many links that would all need to go on their own logs detail row
+ * This iterates through and creates a FieldDef (row) per link.
+ */
+export const createLogLineLinks = memoizeOne((hiddenFieldsWithLinks: FieldDef[]): FieldDef[] => {
+  let fieldsWithLinksFromVariableMap: FieldDef[] = [];
+  hiddenFieldsWithLinks.forEach((linkField) => {
+    linkField.links?.forEach((link: ExploreFieldLinkModel) => {
+      if (link.variables) {
+        const variableKeys = link.variables.map((variable) => {
+          const varName = variable.variableName;
+          const fieldPath = variable.fieldPath ? `.${variable.fieldPath}` : '';
+          return `${varName}${fieldPath}`;
+        });
+        const variableValues = link.variables.map((variable) => (variable.found ? variable.value : ''));
+        fieldsWithLinksFromVariableMap.push({
+          keys: variableKeys,
+          values: variableValues,
+          links: [link],
+          fieldIndex: linkField.fieldIndex,
+        });
+      }
+    });
+  });
+  return fieldsWithLinksFromVariableMap;
+});
+
+/**
  * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
  */
-const getDataframeFields = memoizeOne(
+export const getDataframeFields = memoizeOne(
   (
     row: LogRowModel,
     getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>
@@ -37,9 +70,14 @@ const getDataframeFields = memoizeOne(
       .filter((field, index) => !shouldRemoveField(field, index, row))
       .map((field) => {
         const links = getFieldLinks ? getFieldLinks(field, row.rowIndex, row.dataFrame) : [];
+        const fieldVal = field.values[row.rowIndex];
+        const outputVal =
+          typeof fieldVal === 'string' || typeof fieldVal === 'number'
+            ? fieldVal.toString()
+            : safeStringifyValue(fieldVal);
         return {
-          key: field.name,
-          value: field.values.get(row.rowIndex).toString(),
+          keys: [field.name],
+          values: [outputVal],
           links: links,
           fieldIndex: field.index,
         };
@@ -50,22 +88,18 @@ const getDataframeFields = memoizeOne(
 function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   // Remove field if it is:
   // "labels" field that is in Loki used to store all labels
-  if (field.name === 'labels' && field.type === FieldType.other) {
+  if (field.name === 'labels' && field.type === FieldType.other && (field.config.links?.length || 0) === 0) {
     return true;
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
   if (field.name === 'id' || field.name === 'tsNs') {
     return true;
   }
-  // entry field which we are showing as the log message
-  if (row.entryFieldIndex === index) {
-    return true;
-  }
   const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
   if (
     field.name === firstTimeField?.name &&
     field.type === FieldType.time &&
-    field.values.get(0) === firstTimeField.values.get(0)
+    field.values[0] === firstTimeField.values[0]
   ) {
     return true;
   }
@@ -74,7 +108,7 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
     return true;
   }
   // field that has empty value (we want to keep 0 or empty string)
-  if (field.values.get(row.rowIndex) == null) {
+  if (field.values[row.rowIndex] == null) {
     return true;
   }
   return false;

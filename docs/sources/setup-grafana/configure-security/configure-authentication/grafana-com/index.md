@@ -14,7 +14,7 @@ To enable GrafanaCom as your authentication provider, you configure it to genera
 
 To use GrafanaCom authentication:
 
-1. Log in to [GrafanaCom](https://grafana.com).
+1. Log in to [GrafanaCom](/).
 1. To create an OAuth client, locate your organization and click **OAuth Clients**.
 1. Click **Add OAuth Client Application**.
 1. Add the name and URL of your running Grafana instance.
@@ -27,11 +27,21 @@ The following snippet shows an example configuration:
 [auth.grafana_com]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = 450bc21c10dc2194879d
 client_secret = eyJ0Ijoib2F1dGgyYyIhlmlkIjoiNzUwYmMzM2MxMGRjMjE6NDh3OWQiLCJ2IjoiZmI1YzVlYmIwYzFmN2ZhYzZmNjIwOGI1NmVkYTRlNWYxMzgwM2NkMiJ9
 scopes = user:email
 allowed_organizations = sampleorganization
 enabled = true
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ## Skip organization role sync

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -41,7 +41,7 @@ func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUser
 	return s.store.GetByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
 }
 
@@ -57,14 +57,14 @@ func (s *Service) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeamMemb
 	return s.store.RemoveMember(ctx, cmd)
 }
 
+func (s *Service) RemoveUsersMemberships(ctx context.Context, userID int64) error {
+	return s.store.RemoveUsersMemberships(ctx, userID)
+}
+
 func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMemberships(ctx, orgID, userID, external)
 }
 
 func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMembers(ctx, query)
-}
-
-func (s *Service) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
-	return s.store.IsAdmin(ctx, query)
 }

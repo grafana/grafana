@@ -3,7 +3,7 @@ import createMockRaf from 'mock-raf';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 
 import { UPlotChart } from './Plot';
@@ -34,14 +34,14 @@ const mockData = () => {
   data.addField({
     type: FieldType.time,
     name: 'Time',
-    values: new ArrayVector([1602630000000, 1602633600000, 1602637200000]),
+    values: [1602630000000, 1602633600000, 1602637200000],
     config: {},
   });
 
   data.addField({
     type: FieldType.number,
     name: 'Value',
-    values: new ArrayVector([10, 20, 5]),
+    values: [10, 20, 5],
     config: {
       custom: {
         drawStyle: GraphDrawStyle.Line,

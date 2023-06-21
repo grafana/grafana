@@ -8,7 +8,7 @@ Useful for testing a second implementation
 
 - [x] LDAP
 - [x] SAML
-- [ ] OAuth
+- [x] OAuth
 
 ## Deployment
 
@@ -44,8 +44,9 @@ active_sync_enabled = true
 
 Grafana expects SLO support to be communicated in the metadata
 
-Single Logout is not supported by authentik.
-https://github.com/goauthentik/authentik/issues/3321 
+Single Logout is now supported by authentik in versions `2023.1` and higher;
+
+Source: <https://goauthentik.io/docs/releases/2023.1#new-features>
 
 **Warning** Client signature validation
 
@@ -65,12 +66,29 @@ assertion_attribute_email = http://schemas.xmlsoap.org/ws/2005/05/identity/claim
 assertion_attribute_groups = http://schemas.xmlsoap.org/claims/Group
 assertion_attribute_org = http://schemas.xmlsoap.org/claims/Group
 allow_sign_up = true
-single_logout = false # not supported by authentik
+single_logout = true # supported by authentik v2023.1 and newer
 signature_algorithm = rsa-sha256
 allow_idp_initiated = true
 org_mapping = admin:1:Admin, editor:1:Editor, viewer:1:Viewer
 ```
 
+# OAuth Setup
+
+```ini
+[auth.generic_oauth]
+name = authentik
+enabled = true
+client_id = 43e8d2746fe2e508325a23cdf816d6ddd12e94f1
+client_secret = e50440f14a010fd69dfed85bc6c071653f22c73e2c6c8d7ba96a936937d92040936b7e5a4bcc1bf40d5cf1dc019b1db327a1a00e2183c53471fb7530d4a09d7e
+scopes = openid email profile
+auth_url = http://localhost:9000/application/o/authorize/
+token_url = http://localhost:9000/application/o/token/
+api_url = http://localhost:9000/application/o/userinfo/
+role_attribute_path = contains(groups[*], 'admin') && 'Admin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
+
+[auth]
+signout_redirect_url = http://localhost:9000/application/o/grafana-oidc/end-session/
+```
 
 ## Available users and groups
 

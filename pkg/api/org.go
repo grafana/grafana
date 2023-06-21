@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -25,7 +25,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	return hs.getOrgHelper(c.Req.Context(), c.OrgID)
 }
 
@@ -41,7 +41,7 @@ func (hs *HTTPServer) GetCurrentOrg(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgByID(c *contextmodel.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -61,7 +61,7 @@ func (hs *HTTPServer) GetOrgByID(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgByName(c *contextmodel.ReqContext) response.Response {
 	orga, err := hs.orgService.GetByName(c.Req.Context(), &org.GetOrgByNameQuery{Name: web.Params(c.Req)[":name"]})
 	if err != nil {
 		if errors.Is(err, org.ErrOrgNotFound) {
@@ -126,7 +126,7 @@ func (hs *HTTPServer) getOrgHelper(ctx context.Context, orgID int64) response.Re
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.CreateOrgCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -163,7 +163,7 @@ func (hs *HTTPServer) CreateOrg(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateCurrentOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -184,7 +184,7 @@ func (hs *HTTPServer) UpdateCurrentOrg(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrg(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -218,7 +218,7 @@ func (hs *HTTPServer) updateOrgHelper(ctx context.Context, form dtos.UpdateOrgFo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateCurrentOrgAddress(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateCurrentOrgAddress(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -236,7 +236,7 @@ func (hs *HTTPServer) UpdateCurrentOrgAddress(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgAddress(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgAddress(c *contextmodel.ReqContext) response.Response {
 	form := dtos.UpdateOrgAddressForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -282,7 +282,7 @@ func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.Upda
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteOrgByID(c *contextmodel.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -314,7 +314,7 @@ func (hs *HTTPServer) DeleteOrgByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) SearchOrgs(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgs(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000

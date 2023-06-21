@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/library_element/
+canonical: /docs/grafana/latest/developers/http_api/library_element/
 description: Grafana Library Element HTTP API
 keywords:
   - grafana
@@ -436,7 +437,9 @@ Status Codes:
 
 Deletes an existing library element as specified by the UID. This operation cannot be reverted.
 
-> **Note:** You cannot delete a library element that is connected. This operation cannot be reverted.
+{{% admonition type="note" %}}
+You cannot delete a library element that is connected. This operation cannot be reverted.
+{{% /admonition %}}
 
 **Example Request**:
 

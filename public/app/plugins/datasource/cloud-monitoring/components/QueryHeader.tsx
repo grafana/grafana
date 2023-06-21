@@ -3,7 +3,7 @@ import React from 'react';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/experimental';
 
 import { QUERY_TYPES } from '../constants';
-import { CloudMonitoringQuery } from '../types';
+import { CloudMonitoringQuery } from '../types/query';
 
 export interface QueryEditorHeaderProps {
   query: CloudMonitoringQuery;

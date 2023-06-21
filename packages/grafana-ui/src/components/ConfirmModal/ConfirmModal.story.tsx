@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
@@ -10,7 +10,7 @@ import mdx from './ConfirmModal.mdx';
 
 const defaultExcludes = ['onConfirm', 'onDismiss', 'onAlternative'];
 
-const meta: ComponentMeta<typeof ConfirmModal> = {
+const meta: Meta<typeof ConfirmModal> = {
   title: 'Overlays/ConfirmModal',
   component: ConfirmModal,
   decorators: [withCenteredStory],
@@ -41,7 +41,7 @@ const defaultActions = {
   },
 };
 
-export const Basic: ComponentStory<typeof ConfirmModal> = ({
+export const Basic: StoryFn<typeof ConfirmModal> = ({
   title,
   body,
   description,
@@ -85,7 +85,7 @@ Basic.args = {
   isOpen: true,
 };
 
-export const AlternativeAction: ComponentStory<typeof ConfirmModal> = ({
+export const AlternativeAction: StoryFn<typeof ConfirmModal> = ({
   title,
   body,
   description,
@@ -129,7 +129,7 @@ AlternativeAction.args = {
   isOpen: true,
 };
 
-export const WithConfirmation: ComponentStory<typeof ConfirmModal> = ({
+export const WithConfirmation: StoryFn<typeof ConfirmModal> = ({
   title,
   body,
   description,
