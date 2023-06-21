@@ -64,7 +64,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 
 - **With credentials** - Toggle on to enable credentials such as cookies or auth headers to be sent with cross-site requests.
 
-- **TLS client authentication** - Toggle on to use client authentication. When enabled, add the `Server name`, `Client cert` and `Client key`. The server provides a certificate that is validated by the client to establish the server's trusted identity. The client key encrypts the data between client and server.
+- **TLS client authentication** - Toggle on to use client authentication. When enabled, add the `Server name`, `Client cert` and `Client key`. The client provides a certificate that is validated by the server to establish the client's trusted identity. The client key encrypts the data between client and server.
 
 - **With CA cert** - Authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
 
