@@ -152,8 +152,6 @@ export function TraceView(props: Props) {
     ? props.scrollElement
     : document.getElementsByClassName(props.scrollElementClass ?? '')[0];
 
-  console.log('new trace view header', config.featureToggles.newTraceViewHeader);
-
   return (
     <>
       {props.dataFrames?.length && traceProp ? (
