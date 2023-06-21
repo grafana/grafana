@@ -33,6 +33,11 @@ const styles = {
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   useTimeSrvFix();
   useStateSync(props.queryParams);
+  // We want  to set the title according to the URL and not to the state because the URL itself may lag
+  // (due to how useStateSync above works) by a few milliseconds.
+  // When a URL is pushed to the history, the browser also saves the title of the page and
+  // if we were to update the URL on state change, the title would not match the URL.
+  // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
   useExplorePageTitle(props.queryParams);
   useExploreCorrelations();
   const dispatch = useDispatch();
