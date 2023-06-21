@@ -125,10 +125,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
 
     let lblFltrs = updLabelFilters ? updLabelFilters : labelFilters;
 
-    if (labelNamesMatch) {
-      lblFltrs = [...lblFltrs, { label: '__name__', op: '=~', value: labelNamesMatch }];
-    }
-
     // setting query.query property allows for update of variable definition
     onChange({
       query: queryString,
