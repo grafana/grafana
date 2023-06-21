@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/plugins/config"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
@@ -19,6 +19,9 @@ import (
 
 const cacheTTL = time.Hour * 1
 
+// Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
+// converts them to detectors and caches them for all future calls. It also provides a background service
+// that will periodically refresh the patterns from GCOM.
 type Dynamic struct {
 	log   log.Logger
 	store *angularpatternsstore.Service
@@ -27,10 +30,11 @@ type Dynamic struct {
 	baseURL    string
 
 	detectors []angulardetector.Detector
-	mux       sync.Mutex
+	mux       sync.RWMutex
 }
 
 func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dynamic, error) {
+	// TODO: standardize gcom client
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
@@ -43,7 +47,7 @@ func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dyna
 	}, nil
 }
 
-// fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
+// fetch fetches the angular patterns from GCOM and returns them as GCOMPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
 func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 	st := time.Now()
@@ -75,6 +79,9 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 	return out, nil
 }
 
+// fetchAndStoreDetectors fetches the patterns from GCOM, converts them into detectors, stores the new patterns into
+// the store and returns the detectors. If the patterns cannot be converted to detectors, the store is not altered.
+// The function returns the resulting detectors.
 func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector.Detector, error) {
 	// Fetch patterns from GCOM
 	patterns, err := d.fetch(ctx)
@@ -103,6 +110,7 @@ func (d *Dynamic) setDetectors(newDetectors []angulardetector.Detector) {
 	d.mux.Unlock()
 }
 
+// tryUpdateDetectors will attempt to fetch the detectors from GCOM, store the patterns in,
 func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
 	st := time.Now()
 	d.log.Debug("Updating patterns")
@@ -124,6 +132,7 @@ func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
 	d.setDetectors(newDetectors)
 }
 
+// Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
 	if err != nil {
@@ -152,9 +161,10 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	}
 }
 
+// ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
 func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.Detector {
-	d.mux.Lock()
+	d.mux.RLock()
 	r := d.detectors
-	d.mux.Unlock()
+	d.mux.RUnlock()
 	return r
 }

@@ -45,6 +45,7 @@ func (p *GCOMPattern) detector() (angulardetector.Detector, error) {
 	return nil, fmt.Errorf("%q: %w", p.Type, errUnknownPatternType)
 }
 
+// GCOMPatterns is a slice of GCOMPattern
 type GCOMPatterns []GCOMPattern
 
 // Detectors converts the slice of GCOMPattern into a slice of angulardetector.Detector, by calling Detector() on each GCOMPattern.

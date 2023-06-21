@@ -27,7 +27,7 @@ func newDynamicWithStaticFallbackDetectorsProvider(dynamic *Dynamic, static *Sta
 	return SequenceDetectorsProvider{dynamic, static}
 }
 
-// ProvideDetectorsProvider provides the implementation of angulardetector.DetectorsProvider depending on the feature
+// ProvideDetectorsProvider provides an implementation of angulardetector.DetectorsProvider depending on the feature
 // flags.
 func ProvideDetectorsProvider(features featuremgmt.FeatureToggles, dynamic *Dynamic, static *Static) angulardetector.DetectorsProvider {
 	if features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {

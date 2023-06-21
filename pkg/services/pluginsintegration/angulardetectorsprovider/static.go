@@ -1,19 +1,16 @@
 package angulardetectorsprovider
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 )
 
+// Static is an angulardetector.DetectorsProvider that always calls the underlying angulardetector.DetectorsProvider.
 type Static struct {
-	detectorsProvider angulardetector.DetectorsProvider
+	angulardetector.DetectorsProvider
 }
 
-func (p *Static) ProvideDetectors(ctx context.Context) []angulardetector.Detector {
-	return p.detectorsProvider.ProvideDetectors(ctx)
-}
-
+// ProvideStatic provides the *Static wire service, which is an angulardetector.DetectorsProvider that returns the
+// default (static, hardcoded) angular detection patterns.
 func ProvideStatic() *Static {
-	return &Static{detectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}
+	return &Static{angulardetector.NewDefaultStaticDetectorsProvider()}
 }

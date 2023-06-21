@@ -11,20 +11,25 @@ import (
 )
 
 const (
+	kvNamespace = "plugin.angularpatterns"
+
 	keyPatterns    = "angular_patterns"
 	keyLastUpdated = "last_updated"
 )
 
+// Service allows to cache GCOM angular patterns into the database, as a cache.
 type Service struct {
 	kv *kvstore.NamespacedKVStore
 }
 
 func ProvideService(kv kvstore.KVStore) *Service {
 	return &Service{
-		kv: kvstore.WithNamespace(kv, 0, "plugin.angularpatterns"),
+		kv: kvstore.WithNamespace(kv, 0, kvNamespace),
 	}
 }
 
+// Get returns the cached angular detection patterns. If the value cannot be unmarshalled correctly, it returns an
+// empty result.
 func (s *Service) Get(ctx context.Context) (angulardetectorsprovider.GCOMPatterns, error) {
 	data, ok, err := s.kv.Get(ctx, keyPatterns)
 	if err != nil {
@@ -43,6 +48,7 @@ func (s *Service) Get(ctx context.Context) (angulardetectorsprovider.GCOMPattern
 
 }
 
+// Set sets the cached angular detection patterns and the latest update time to time.Now().
 func (s *Service) Set(ctx context.Context, patterns angulardetectorsprovider.GCOMPatterns) error {
 	b, err := json.Marshal(patterns)
 	if err != nil {
@@ -57,6 +63,8 @@ func (s *Service) Set(ctx context.Context, patterns angulardetectorsprovider.GCO
 	return nil
 }
 
+// GetLastUpdated returns the time when Set was last called. If the value cannot be unmarshalled correctly,
+// it returns a zero-value time.Time.
 func (s *Service) GetLastUpdated(ctx context.Context) (time.Time, error) {
 	v, ok, err := s.kv.Get(ctx, keyLastUpdated)
 	if err != nil {
