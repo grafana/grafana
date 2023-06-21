@@ -252,6 +252,8 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                 onClose();
                 showModal(DataSourceModal, {
                   reportedInteractionFrom: 'ds_picker',
+                  dashboard: props.dashboard,
+                  mixed: props.mixed,
                   current,
                   onDismiss: hideModal,
                   onChange: (ds, defaultQueries) => {

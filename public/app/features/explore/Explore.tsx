@@ -61,6 +61,7 @@ import {
   modifyQueries,
   scanStart,
   scanStopAction,
+  selectIsWaitingForData,
   setQueries,
   setSupplementaryQueryEnabled,
 } from './state/query';
@@ -284,11 +285,10 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderGraphPanel(width: number) {
-    const { graphResult, absoluteRange, timeZone, queryResponse, loading, showFlameGraph } = this.props;
+    const { graphResult, absoluteRange, timeZone, queryResponse, showFlameGraph } = this.props;
 
     return (
       <GraphContainer
-        loading={loading}
         data={graphResult!}
         height={showFlameGraph ? 180 : 400}
         width={width}
@@ -551,11 +551,11 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queryResponse,
     showNodeGraph,
     showFlameGraph,
-    loading,
     showRawPrometheus,
     supplementaryQueries,
   } = item;
 
+  const loading = selectIsWaitingForData(exploreId)(state);
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
   // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));

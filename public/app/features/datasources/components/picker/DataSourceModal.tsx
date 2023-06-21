@@ -40,10 +40,19 @@ interface DataSourceModalProps {
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
+  dashboard?: boolean;
+  mixed?: boolean;
   reportedInteractionFrom?: string;
 }
 
-export function DataSourceModal({ onChange, current, onDismiss, reportedInteractionFrom }: DataSourceModalProps) {
+export function DataSourceModal({
+  dashboard,
+  mixed,
+  onChange,
+  current,
+  onDismiss,
+  reportedInteractionFrom,
+}: DataSourceModalProps) {
   const styles = useStyles2(getDataSourceModalStyles);
   const [search, setSearch] = useState('');
   const analyticsInteractionSrc = reportedInteractionFrom || 'modal';
@@ -127,6 +136,8 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
             }
           />
           <BuiltInDataSourceList
+            dashboard={dashboard}
+            mixed={mixed}
             className={styles.appendBuiltInDataSourcesList}
             onChange={onChangeDataSource}
             current={current}
@@ -136,7 +147,12 @@ export function DataSourceModal({ onChange, current, onDismiss, reportedInteract
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+            <BuiltInDataSourceList
+              onChange={onChangeDataSource}
+              current={current}
+              dashboard={dashboard}
+              mixed={mixed}
+            />
           </CustomScrollbar>
           {config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
