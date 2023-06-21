@@ -258,7 +258,7 @@ export class TimeSrv {
   private getAutoRefreshInteval() {
     const resolution = window?.innerWidth ?? 2000;
     const v = rangeUtil.calculateInterval(this.timeRange(), resolution, config.minRefreshInterval);
-    console.log('Get AUTO Interval', v);
+    // console.log('Get AUTO Interval', v);
     return v.intervalMs;
   }
 
