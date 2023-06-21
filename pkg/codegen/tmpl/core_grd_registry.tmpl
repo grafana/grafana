@@ -178,7 +178,7 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 
 func versionString(version thema.SyntacticVersion) string {
   // TODO: v0.0-alpha throws the apiservice registration off in aggregated mode
-  // Cannot use dot in the DNS subdomain prefix in front of *.kinds.grafana.com
+  // Cannot use dot in the DNS subdomain prefix in front of .dashboard.kinds.grafana.com
 	return fmt.Sprintf("v%d", version[0]) // , version[1]
 }
 

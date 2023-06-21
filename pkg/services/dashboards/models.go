@@ -191,8 +191,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 
 // UpdateSlug updates the slug
 func (d *Dashboard) UpdateSlug() {
-	d.Title = d.Data.Get("title").MustString()
-	d.Slug = slugify.Slugify(d.Title)
+	title := d.Data.Get("title").MustString()
+	d.Slug = slugify.Slugify(title)
 }
 
 // GetURL return the html url for a folder if it's folder, otherwise for a dashboard

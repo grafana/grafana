@@ -36,7 +36,6 @@ const MaxUpdateAttempts = 30
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
-	dualWrite    DualWriter
 	store        entity.EntityStoreServer
 	kind         kindsys.Core
 	gr           schema.GroupResource
@@ -58,7 +57,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
-	dualWriter DualWriter,
+	store entity.EntityStoreServer,
 	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
@@ -71,8 +70,7 @@ func NewEntityStorage(
 ) (storage.Interface, factory.DestroyFunc, error) {
 	ws := NewWatchSet()
 	return &entityStorage{
-			dualWrite:    dualWriter,
-			store:        entity.WireCircularDependencyHack,
+			store:        store,
 			kind:         kind,
 			gr:           config.GroupResource,
 			codec:        config.Codec,
@@ -189,11 +187,6 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		key = strings.ReplaceAll(key, old, grn.UID)
 	}
 
-	uObj, err = s.dualWrite.Create(uObj)
-	if err != nil {
-		return err
-	}
-
 	rsp, err := s.write(ctx, grn, uObj)
 	if err != nil {
 		return err
@@ -248,11 +241,6 @@ func (s *entityStorage) Delete(
 	}
 
 	if err := validateDeletion(ctx, out); err != nil {
-		return err
-	}
-
-	err = s.dualWrite.Delete("namespace", "name") // TODO
-	if err != nil {
 		return err
 	}
 
@@ -404,7 +392,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = "core.kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
+	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
@@ -462,7 +450,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = "core.kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
 		res.Kind = s.kind.Name()
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
@@ -540,11 +528,6 @@ func (s *entityStorage) GuaranteedUpdate(
 		uObj, ok := updatedObj.(*unstructured.Unstructured)
 		if !ok {
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
-		}
-
-		uObj, err = s.dualWrite.Update(uObj)
-		if err != nil {
-			return err
 		}
 
 		rsp, err := s.write(ctx, grn, uObj)

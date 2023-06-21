@@ -81,8 +81,4 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
-
-	// Unlike #SaveDashboard, this will depend on the UID from dash, and save the metadata directly rather than
-	// calculating new metadata based on the cmd payload.
-	SaveDashboardWithMetadata(ctx context.Context, msg string, dash *Dashboard, provisioning *DashboardProvisioning) (*Dashboard, error)
 }
