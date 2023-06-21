@@ -218,7 +218,6 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
-    console.log('setAutoRefresh', interval);
     if (this.timeModel) {
       this.timeModel.refresh = interval;
     }

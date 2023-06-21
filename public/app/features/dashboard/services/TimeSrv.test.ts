@@ -298,6 +298,11 @@ describe('timeSrv', () => {
       timeSrv.resumeAutoRefresh();
       expect(timeSrv.refreshTimer).not.toBeUndefined();
     });
+
+    it('should allow an auto refresh value', () => {
+      timeSrv.setAutoRefresh('auto');
+      expect(timeSrv.refreshTimer).not.toBeUndefined();
+    });
   });
 
   describe('isRefreshOutsideThreshold', () => {

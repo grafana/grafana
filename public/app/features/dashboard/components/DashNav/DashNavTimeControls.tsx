@@ -81,7 +81,6 @@ export class DashNavTimeControls extends Component<Props> {
     const { dashboard, isOnCanvas } = this.props;
     const { refresh_intervals } = dashboard.timepicker;
     const intervals = getTimeSrv().getValidIntervals(refresh_intervals || defaultIntervals);
-    intervals.push('view');
 
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
