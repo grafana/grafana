@@ -3,12 +3,14 @@ package angularpatternsstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 )
+
+var ErrNoCachedValue = errors.New("no cached value")
 
 const (
 	kvNamespace = "plugin.angularpatterns"
@@ -28,28 +30,23 @@ func ProvideService(kv kvstore.KVStore) *Service {
 	}
 }
 
-// Get returns the cached angular detection patterns. If the value cannot be unmarshalled correctly, it returns an
-// empty result.
-func (s *Service) Get(ctx context.Context) (angulardetectorsprovider.GCOMPatterns, error) {
+// Get returns the raw cached angular detection patterns. The returned value is a JSON-encoded string.
+// If no value is present, ErrNoCachedValue is returned.
+func (s *Service) Get(ctx context.Context) (string, error) {
 	data, ok, err := s.kv.Get(ctx, keyPatterns)
 	if err != nil {
-		return nil, fmt.Errorf("kv get: %w", err)
+		return "", fmt.Errorf("kv get: %w", err)
 	}
 	if !ok {
-		return nil, nil
+		return "", ErrNoCachedValue
 	}
-	var out angulardetectorsprovider.GCOMPatterns
-	if err := json.Unmarshal([]byte(data), &out); err != nil {
-		// Ignore decode errors, so we can change the format in future versions
-		// and keep backwards/forwards compatibility
-		return nil, nil
-	}
-	return out, nil
+	return data, nil
 
 }
 
 // Set sets the cached angular detection patterns and the latest update time to time.Now().
-func (s *Service) Set(ctx context.Context, patterns angulardetectorsprovider.GCOMPatterns) error {
+// patterns must implement json.Marshaler.
+func (s *Service) Set(ctx context.Context, patterns any) error {
 	b, err := json.Marshal(patterns)
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)

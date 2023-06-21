@@ -3,6 +3,7 @@ package angulardetectorsprovider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
-const cacheTTL = time.Hour * 1
+const defaultCacheTTL = time.Hour * 1
 
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls. It also provides a background service
@@ -28,6 +29,8 @@ type Dynamic struct {
 
 	httpClient *http.Client
 	baseURL    string
+
+	cacheTTL time.Duration
 
 	detectors []angulardetector.Detector
 	mux       sync.RWMutex
@@ -44,6 +47,7 @@ func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dyna
 		store:      store,
 		httpClient: cl,
 		baseURL:    cfg.GrafanaComURL,
+		cacheTTL:   defaultCacheTTL,
 	}, nil
 }
 
@@ -110,7 +114,8 @@ func (d *Dynamic) setDetectors(newDetectors []angulardetector.Detector) {
 	d.mux.Unlock()
 }
 
-// tryUpdateDetectors will attempt to fetch the detectors from GCOM, store the patterns in,
+// tryUpdateDetectors will attempt to fetch the patterns from GCOM, convert them to detectors,
+// store the patterns in the database and update the cached detectors.
 func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
 	st := time.Now()
 	d.log.Debug("Updating patterns")
@@ -132,18 +137,49 @@ func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
 	d.setDetectors(newDetectors)
 }
 
+func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
+	var cachedPatterns GCOMPatterns
+	rawCached, err := d.store.Get(ctx)
+	switch {
+	case errors.Is(err, angularpatternsstore.ErrNoCachedValue):
+		// Swallow ErrNoCachedValue without changing cache
+		return nil
+	case err == nil:
+		// Try to unmarshal, convert to detectors and set local cachje
+		if err := json.Unmarshal([]byte(rawCached), &cachedPatterns); err != nil {
+			return fmt.Errorf("json unmarshal: %w", err)
+		}
+		cachedDetectors, err := cachedPatterns.Detectors()
+		if err != nil {
+			return fmt.Errorf("convert to detectors: %w", err)
+		}
+		d.setDetectors(cachedDetectors)
+		return nil
+	default:
+		// Other error
+		return fmt.Errorf("get cached value: %w", err)
+	}
+}
+
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
+	// Set initial value by restoring cache
+	opCtx, canc := context.WithTimeout(ctx, time.Minute*1)
+	if err := d.setDetectorsFromCache(opCtx); err != nil {
+		d.log.Warn("Could not set detectors from cache, ignoring cache", "error", err)
+	}
+	canc()
+
+	// Determine when next run is, and check if we should run immediately
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
 	if err != nil {
 		return fmt.Errorf("get last updated: %w", err)
 	}
-
-	// Determine when next run is, and check if we should run immediately
-	nextRunUntil := time.Until(lastUpdate.Add(cacheTTL))
+	nextRunUntil := time.Until(lastUpdate.Add(d.cacheTTL))
 	if nextRunUntil <= 0 {
+		// Restore from GCOM
 		d.tryUpdateDetectors(ctx)
-		nextRunUntil = cacheTTL
+		nextRunUntil = d.cacheTTL
 	}
 
 	// Keep running periodically
@@ -153,8 +189,8 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			d.tryUpdateDetectors(ctx)
-			// Use default TTL if we run with a shorter interval the first time
-			ticker.Reset(cacheTTL)
+			// Restore default TTL if we run with a shorter interval the first time
+			ticker.Reset(d.cacheTTL)
 		case <-ctx.Done():
 			return ctx.Err()
 		}
