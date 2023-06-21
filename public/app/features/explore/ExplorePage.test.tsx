@@ -88,14 +88,15 @@ describe('ExplorePage', () => {
       const urlParams = {
         left: serializeStateToUrlParam({
           datasource: 'loki-uid',
-          queries: [{ refId: 'A', expr: '{ label="value"}' }],
+          queries: [{ refId: 'A', expr: '{ label="value"}', datasource: { type: 'logs', uid: 'loki-uid' } }],
           range: { from: 'now-1h', to: 'now' },
         }),
         right: serializeStateToUrlParam({
           datasource: 'elastic-uid',
-          queries: [{ refId: 'A', expr: 'error' }],
+          queries: [{ refId: 'A', expr: 'error', datasource: { type: 'logs', uid: 'elastic-uid' } }],
           range: { from: 'now-1h', to: 'now' },
         }),
+        orgId: '1',
       };
 
       const { datasources } = setupExplore({ urlParams });

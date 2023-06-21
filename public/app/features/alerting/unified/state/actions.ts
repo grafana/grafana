@@ -61,7 +61,6 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -75,7 +74,8 @@ import { makeAMLink, retryWhile } from '../utils/misc';
 import { AsyncRequestMapSlice, messageFromError, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { safeParseDurationstr } from '../utils/time';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -107,12 +107,14 @@ export const fetchPromRulesAction = createAsyncThunk(
       limitAlerts,
       matcher,
       state,
+      identifier,
     }: {
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
       matcher?: Matcher[];
       state?: string[];
+      identifier?: RuleIdentifier;
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
@@ -123,7 +125,9 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
+    return await withSerializedError(
+      fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
+    );
   }
 );
 
@@ -239,12 +243,18 @@ export const fetchRulerRulesAction = createAsyncThunk(
   }
 );
 
-export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
+export function fetchPromAndRulerRulesAction({
+  rulesSourceName,
+  identifier,
+}: {
+  rulesSourceName: string;
+  identifier?: RuleIdentifier;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName }));
+    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { isEmptyObject, SelectableValue } from '@grafana/data';
 import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -155,10 +155,16 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     });
 
     // remove template queries
-    dash.getVariables().forEach((variable: any) => {
-      variable.query = '';
-      variable.options = variable.current ? [variable.current] : [];
-      variable.refresh = VariableRefresh.never;
+    dash.getVariables().forEach((variable) => {
+      if ('query' in variable) {
+        variable.query = '';
+      }
+      if ('options' in variable) {
+        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
+      }
+      if ('refresh' in variable) {
+        variable.refresh = VariableRefresh.never;
+      }
     });
 
     // snapshot single panel
