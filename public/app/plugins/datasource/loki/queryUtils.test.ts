@@ -11,6 +11,8 @@ import {
   requestSupportsSplitting,
   isQueryWithDistinct,
   isQueryWithRangeVariable,
+  isQueryPipelineErrorFiltering,
+  getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -391,5 +393,26 @@ describe('requestSupportsSplitting', () => {
       },
     ];
     expect(requestSupportsSplitting(requests)).toBe(true);
+  });
+});
+
+describe('isQueryPipelineErrorFiltering', () => {
+  it('identifies pipeline error filters', () => {
+    expect(isQueryPipelineErrorFiltering('{job="grafana"} | logfmt | __error__=""')).toBe(true);
+    expect(isQueryPipelineErrorFiltering('{job="grafana"} | logfmt | error=""')).toBe(false);
+  });
+});
+
+describe('getLogQueryFromMetricsQuery', () => {
+  it('returns the log query from a metric query', () => {
+    expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} | logfmt | label="value" [1m])')).toBe(
+      '{job="grafana"} | logfmt | label="value"'
+    );
+    expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} [1m])')).toBe('{job="grafana"}');
+    expect(
+      getLogQueryFromMetricsQuery(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
+      )
+    ).toBe('{label="$var"} | logfmt | __error__=``');
   });
 });
