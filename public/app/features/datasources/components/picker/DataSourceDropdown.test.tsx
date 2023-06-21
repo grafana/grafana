@@ -38,13 +38,13 @@ function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanc
   };
 }
 
-const mockDS = createDS('mockDS', 1, false);
-const xMockDS = createDS('xMockDS', 2, false);
-const builtInMockDS = createDS('builtInMockDS', 3, true);
+const mockDS1 = createDS('mock.datasource.1', 1, false);
+const mockDS2 = createDS('mock.datasource.2', 2, false);
+const MockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
-const mockDSList = [mockDS, xMockDS, builtInMockDS];
+const mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
 
-const setup = (onChange = () => {}, current = mockDS.name) => {
+const setup = (onChange = () => {}, current = mockDS1.name) => {
   const props = { onChange, current };
   window.HTMLElement.prototype.scrollIntoView = jest.fn();
   return render(<DataSourceDropdown {...props}></DataSourceDropdown>);
@@ -83,7 +83,7 @@ jest.mock('../../hooks', () => {
   const actual = jest.requireActual('../../hooks');
   return {
     ...actual,
-    useRecentlyUsedDataSources: () => [[xMockDS.name], pushRecentlyUsedDataSourceMock],
+    useRecentlyUsedDataSources: () => [[mockDS2.name], pushRecentlyUsedDataSourceMock],
   };
 });
 
@@ -91,7 +91,7 @@ const getListMock = jest.fn();
 const getInstanceSettingsMock = jest.fn();
 beforeEach(() => {
   getListMock.mockReturnValue(mockDSList);
-  getInstanceSettingsMock.mockReturnValue(mockDS);
+  getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
 
 describe('DataSourceDropdown', () => {
@@ -112,13 +112,13 @@ describe('DataSourceDropdown', () => {
         annotations: true,
         variables: true,
         alerting: true,
-        pluginId: true,
+        pluginId: 'pluginid',
         logs: true,
       };
 
       const props = {
         onChange: () => {},
-        current: mockDS.name,
+        current: mockDS1.name,
         ...filters,
       };
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
@@ -132,24 +132,24 @@ describe('DataSourceDropdown', () => {
 
     it('should display the current ds on top', async () => {
       //Mock ds is set as current, it appears on top
-      getInstanceSettingsMock.mockReturnValue(mockDS);
-      await setupOpenDropdown(user, jest.fn(), mockDS.name);
+      getInstanceSettingsMock.mockReturnValue(mockDS1);
+      await setupOpenDropdown(user, jest.fn(), mockDS1.name);
       let cards = await screen.findAllByTestId('data-source-card');
-      expect(await findByText(cards[0], mockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(await findByText(cards[0], mockDS1.name, { selector: 'span' })).toBeInTheDocument();
 
       //xMock ds is set as current, it appears on top
-      getInstanceSettingsMock.mockReturnValue(xMockDS);
-      await setupOpenDropdown(user, jest.fn(), xMockDS.name);
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      await setupOpenDropdown(user, jest.fn(), mockDS2.name);
       cards = await screen.findAllByTestId('data-source-card');
-      expect(await findByText(cards[0], xMockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
     });
 
-    it('should get the sorting function using the correct parameters, async () => {
+    it('should get the sorting function using the correct parameters', async () => {
       //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
       const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
       await setupOpenDropdown(user);
 
-      expect(spy.mock.lastCall).toEqual([mockDS, [xMockDS.name], ['${foo}']]);
+      expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
     });
   });
 
@@ -158,24 +158,24 @@ describe('DataSourceDropdown', () => {
 
     it('should open when clicked', async () => {
       await setupOpenDropdown(user);
-      expect(await screen.findByText(mockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(await screen.findByText(mockDS1.name, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('should call onChange when a data source is clicked', async () => {
       const onChange = jest.fn();
       await setupOpenDropdown(user, onChange);
 
-      await user.click(await screen.findByText(xMockDS.name, { selector: 'span' }));
-      expect(onChange.mock.lastCall[0]['name']).toEqual(xMockDS.name);
-      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
+      await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
+      expect(onChange.mock.lastCall[0]['name']).toEqual(mockDS2.name);
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
 
     it('should push recently used datasources when a data source is clicked', async () => {
       const onChange = jest.fn();
       await setupOpenDropdown(user, onChange);
 
-      await user.click(await screen.findByText(xMockDS.name, { selector: 'span' }));
-      expect(pushRecentlyUsedDataSourceMock.mock.lastCall[0]).toEqual(xMockDS);
+      await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
+      expect(pushRecentlyUsedDataSourceMock.mock.lastCall[0]).toEqual(mockDS2);
     });
 
     it('should be navigatable by keyboard', async () => {
@@ -184,30 +184,30 @@ describe('DataSourceDropdown', () => {
 
       await user.keyboard('[ArrowDown]');
       //Arrow down, second item is selected
-      const xMockDSElement = getCard(await screen.findByText(xMockDS.name, { selector: 'span' }));
+      const xMockDSElement = getCard(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(xMockDSElement?.dataset.selecteditem).toEqual('true');
-      let mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
+      let mockDSElement = getCard(await screen.findByText(mockDS1.name, { selector: 'span' }));
       expect(mockDSElement?.dataset.selecteditem).toEqual('false');
 
       await user.keyboard('[ArrowUp]');
       //Arrow up, first item is selected again
-      mockDSElement = getCard(await screen.findByText(mockDS.name, { selector: 'span' }));
+      mockDSElement = getCard(await screen.findByText(mockDS1.name, { selector: 'span' }));
       expect(mockDSElement?.dataset.selecteditem).toEqual('true');
 
       await user.keyboard('[ArrowDown]');
       await user.keyboard('[Enter]');
       //Arrow down to navigate to xMock, enter to select it. Assert onChange called with correct DS and dropdown closed.
-      expect(onChange.mock.lastCall[0]['name']).toEqual(xMockDS.name);
-      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
+      expect(onChange.mock.lastCall[0]['name']).toEqual(mockDS2.name);
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
 
     it('should be searchable', async () => {
       await setupOpenDropdown(user);
 
-      await user.keyboard(xMockDS.name); //Search for xMockDS
+      await user.keyboard(mockDS2.name); //Search for xMockDS
 
-      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
-      const xMockCard = getCard(await screen.findByText(xMockDS.name, { selector: 'span' }));
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+      const xMockCard = getCard(await screen.findByText(mockDS2.name, { selector: 'span' }));
       expect(xMockCard).toBeInTheDocument();
 
       expect(xMockCard?.dataset.selecteditem).toEqual('true'); //The first search result is selected
@@ -230,7 +230,7 @@ describe('DataSourceDropdown', () => {
     });
 
     it('should open the modal when open advanced is clicked', async () => {
-      const props = { onChange: jest.fn(), current: mockDS.name };
+      const props = { onChange: jest.fn(), current: mockDS1.name };
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
       render(
         <ModalsProvider>

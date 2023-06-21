@@ -34,14 +34,14 @@ function createDS(name: string, id: number, builtIn: boolean): DataSourceInstanc
   };
 }
 
-const mockDS = createDS('mockDS', 1, false);
-const xMockDS = createDS('xMockDS', 2, false);
-const builtInMockDS = createDS('builtInMockDS', 3, true);
+const mockDS1 = createDS('mock.datasource.1', 1, false);
+const mockDS2 = createDS('mock.datasource.2', 2, false);
+const mockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
-const mockDSList = [mockDS, xMockDS, builtInMockDS];
+const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
 
 const setup = (onChange = () => {}, onDismiss = () => {}) => {
-  const props = { onChange, onDismiss, current: mockDS.name };
+  const props = { onChange, onDismiss, current: mockDS1.name };
   window.HTMLElement.prototype.scrollIntoView = function () {};
   return render(<DataSourceModal {...props}></DataSourceModal>);
 };
@@ -67,7 +67,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
         }
         return mockDSList;
       },
-      getInstanceSettings: () => mockDS,
+      getInstanceSettings: () => mockDS1,
     }),
   };
 });
@@ -106,8 +106,8 @@ describe('DataSourceDropdown', () => {
       const dsList = await screen.findByTestId('data-sources-list');
       const builtInDSList = (await screen.findAllByTestId('built-in-data-sources-list'))[1]; //The second element needs to be selected as the first element is the one on the left, under the regular data sources.
 
-      expect(queryByText(dsList, builtInMockDS.name)).toBeNull();
-      expect(await findByText(builtInDSList, builtInMockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(queryByText(dsList, mockDSBuiltIn.name)).toBeNull();
+      expect(await findByText(builtInDSList, mockDSBuiltIn.name, { selector: 'span' })).toBeInTheDocument();
     });
   });
 
@@ -120,10 +120,10 @@ describe('DataSourceDropdown', () => {
       expect(searchBox).toBeInTheDocument();
       await user.click(searchBox!);
 
-      await user.keyboard(xMockDS.name); //Search for xMockDS
+      await user.keyboard(mockDS2.name); //Search for xMockDS
 
-      expect(screen.queryByText(mockDS.name, { selector: 'span' })).toBeNull();
-      expect(await screen.findByText(xMockDS.name, { selector: 'span' })).toBeInTheDocument();
+      expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
+      expect(await screen.findByText(mockDS2.name, { selector: 'span' })).toBeInTheDocument();
 
       await user.keyboard('foobarbaz'); //Search for a DS that should not exist
 
@@ -152,8 +152,8 @@ describe('DataSourceDropdown', () => {
     it('should call the onChange handler with the correct datasource', async () => {
       const onChange = jest.fn();
       setup(onChange);
-      await user.click(await screen.findByText(xMockDS.name, { selector: 'span' }));
-      expect(onChange.mock.lastCall[0].name).toEqual(xMockDS.name);
+      await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
+      expect(onChange.mock.lastCall[0].name).toEqual(mockDS2.name);
     });
   });
 });
