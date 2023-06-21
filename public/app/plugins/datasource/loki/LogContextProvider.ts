@@ -14,6 +14,7 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
+import { LabelParser, LabelFilter, LineFilters, PipelineStage } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -24,7 +25,13 @@ import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery, getStreamSelectorsFromQuery, isQueryWithParser } from './queryUtils';
+import {
+  getNodeExpressionFromQuery,
+  getNodesFromQuery,
+  getParserFromQuery,
+  getStreamSelectorsFromQuery,
+  isQueryWithParser,
+} from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
@@ -109,7 +116,9 @@ export class LogContextProvider {
     direction: LogRowContextQueryDirection,
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
+    let expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
+    expr = this.processPipelineStagesToExpr(expr, origQuery);
+
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection =
@@ -214,6 +223,26 @@ export class LogContextProvider {
     }
 
     return expr;
+  };
+
+  processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined) => {
+    let newExpr = currentExpr;
+    const origExpr = query?.expr ?? '';
+
+    const pipelineStages = getNodesFromQuery(origExpr, [PipelineStage]);
+
+    for (const pipelineStage of pipelineStages) {
+      const pipelineStageExpr = getNodeExpressionFromQuery(origExpr, pipelineStage);
+      const allSubNodeTypes = getNodesFromQuery(`{} ${pipelineStageExpr}`).map((node) => node.type.id);
+      // don't apply this pipeline stage if it contains any of these sub nodes
+      if ([LabelParser, LineFilters, LabelFilter].some((nodeType) => allSubNodeTypes.includes(nodeType))) {
+        continue;
+      }
+
+      newExpr += ` ${pipelineStageExpr}`;
+    }
+
+    return newExpr;
   };
 
   getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {

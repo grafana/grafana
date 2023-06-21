@@ -145,12 +145,12 @@ export function isQueryWithNode(query: string, nodeType: number): boolean {
   return isQueryWithNode;
 }
 
-export function getNodesFromQuery(query: string, nodeTypes: number[]): SyntaxNode[] {
+export function getNodesFromQuery(query: string, nodeTypes?: number[]): SyntaxNode[] {
   const nodes: SyntaxNode[] = [];
   const tree = parser.parse(query);
   tree.iterate({
     enter: (node): false | void => {
-      if (nodeTypes.includes(node.type.id)) {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
         nodes.push(node.node);
       }
     },
@@ -161,6 +161,10 @@ export function getNodesFromQuery(query: string, nodeTypes: number[]): SyntaxNod
 export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
   const nodes = getNodesFromQuery(query, [nodeType]);
   return nodes.length > 0 ? nodes[0] : undefined;
+}
+
+export function getNodeExpressionFromQuery(query: string, node: SyntaxNode): string {
+  return query.substring(node.from, node.to);
 }
 
 export function isValidQuery(query: string): boolean {

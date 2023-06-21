@@ -1,4 +1,4 @@
-import { SyntaxNode } from '@lezer/common';
+import { NodeType, SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
 import {
@@ -12,6 +12,7 @@ import {
   Matcher,
   parser,
   PipelineExpr,
+  PipelineStage,
   Selector,
   UnwrapExpr,
 } from '@grafana/lezer-logql';
@@ -22,7 +23,7 @@ import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
-export type Position = { from: number; to: number };
+export type Position = { from: number; to: number; type?: NodeType };
 /**
  * Adds label filter to existing query. Useful for query modification for example for ad hoc filters.
  *

@@ -200,6 +200,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
   // Currently we support adding of parser and showing parsed labels only if there is 1 parser
   const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
 
+  let queryExpr = logContextProvider.processContextFiltersToExpr(
+    row,
+    contextFilters.filter(({ enabled }) => enabled),
+    origQuery
+  );
+  queryExpr = logContextProvider.processPipelineStagesToExpr(queryExpr, origQuery);
+
   return (
     <div className={styles.wrapper}>
       <Tooltip content={'Revert to initial log context query.'}>
@@ -242,15 +249,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
           <div className={styles.rawQueryContainer}>
             {initialized ? (
               <>
-                <RawQuery
-                  lang={{ grammar: lokiGrammar, name: 'loki' }}
-                  query={logContextProvider.processContextFiltersToExpr(
-                    row,
-                    contextFilters.filter(({ enabled }) => enabled),
-                    origQuery
-                  )}
-                  className={styles.rawQuery}
-                />
+                <RawQuery lang={{ grammar: lokiGrammar, name: 'loki' }} query={queryExpr} className={styles.rawQuery} />
                 <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
                   <Icon name="info-circle" size="sm" className={styles.queryDescription} />
                 </Tooltip>
