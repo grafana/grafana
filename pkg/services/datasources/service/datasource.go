@@ -172,6 +172,10 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
+	if err := cmd.Validate(); err != nil {
+		return dataSource, err
+	}
+
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
@@ -231,6 +235,11 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
+
+	if err := cmd.Validate(); err != nil {
+		return dataSource, err
+	}
+
 	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 

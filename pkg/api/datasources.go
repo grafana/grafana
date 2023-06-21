@@ -393,6 +393,11 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 			return response.Error(409, err.Error(), err)
 		}
 
+		var validationErr datasources.ValidationError
+		if errors.As(err, &validationErr) {
+			return response.Error(400, "Failed to add datasource: "+validationErr.Error(), err)
+		}
+
 		if errors.As(err, &secretsPluginError) {
 			return response.Error(500, "Failed to add datasource: "+err.Error(), err)
 		}
@@ -518,6 +523,11 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 
 		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)
+		}
+
+		var validationErr datasources.ValidationError
+		if errors.As(err, &validationErr) {
+			return response.Error(400, "Failed to add datasource: "+validationErr.Error(), err)
 		}
 
 		if errors.As(err, &secretsPluginError) {

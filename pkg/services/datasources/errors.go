@@ -12,3 +12,11 @@ var (
 	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 )
+
+type ValidationError struct {
+	Reason string
+}
+
+func (e ValidationError) Error() string {
+	return e.Reason
+}

@@ -48,6 +48,36 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func TestService_AddDataSource(t *testing.T) {
+	cfg := &setting.Cfg{}
+
+	t.Run("should return validation error if command validation failed", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
+		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
+		quotaService := quotatest.New(false, nil)
+		mockPermission := acmock.NewMockedPermissionsService()
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
+		require.NoError(t, err)
+
+		cmd := &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			Name:  string(make([]byte, 256)),
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "datasource name is too long, max length is 255")
+
+		cmd = &datasources.AddDataSourceCommand{
+			OrgID: 1,
+			URL:   string(make([]byte, 256)),
+		}
+
+		_, err = dsService.AddDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "datasource url is too long, max length is 255")
+	})
+}
+
 func TestService_UpdateDataSource(t *testing.T) {
 
 	cfg := &setting.Cfg{}
@@ -71,7 +101,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		require.ErrorIs(t, err, datasources.ErrDataSourceNotFound)
 	})
 
-	t.Run("should return no error if updated datasource", func(t *testing.T) {
+	t.Run("should return validation error if command validation failed", func(t *testing.T) {
 		sqlStore := db.InitTestDB(t)
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
@@ -80,21 +110,23 @@ func TestService_UpdateDataSource(t *testing.T) {
 		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), actest.FakeAccessControl{}, mockPermission, quotaService)
 		require.NoError(t, err)
 
-		mockPermission.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
-
-		ds, err := dsService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1,
-			Name:  "test-datasource",
-		})
-		require.NoError(t, err)
-
 		cmd := &datasources.UpdateDataSourceCommand{
-			ID:    ds.ID,
-			OrgID: ds.OrgID,
+			ID:    1,
+			OrgID: 1,
+			Name:  string(make([]byte, 256)),
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
-		require.NoError(t, err)
+		require.EqualError(t, err, "datasource name is too long, max length is 255")
+
+		cmd = &datasources.UpdateDataSourceCommand{
+			ID:    1,
+			OrgID: 1,
+			URL:   string(make([]byte, 256)),
+		}
+
+		_, err = dsService.UpdateDataSource(context.Background(), cmd)
+		require.EqualError(t, err, "datasource url is too long, max length is 255")
 	})
 
 	t.Run("should return no error if updated datasource", func(t *testing.T) {
