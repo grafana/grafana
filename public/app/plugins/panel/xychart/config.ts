@@ -8,10 +8,10 @@ import {
 import { LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 import { MediaType, ResourceFolderName } from 'app/features/dimensions';
-import { ResourceDimensionEditor } from 'app/features/dimensions/editors';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
+import { SymbolEditor } from './SymbolEditor';
 import { FieldConfig, ScatterShow, defaultFieldConfig } from './panelcfg.gen';
 
 export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsArgs<FieldConfig> {
@@ -71,7 +71,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             },
             showIf: (c) => c.show !== ScatterShow.Lines,
           },
-          ResourceDimensionEditor
+          SymbolEditor // ResourceDimensionEditor
         )
         .addSliderInput({
           path: 'fillOpacity',
