@@ -29,7 +29,7 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockGCOMResponse(t *testing.T, detectors []Detector) {
+func checkMockGCOMResponse(t *testing.T, detectors []AngularDetector) {
 	require.Len(t, detectors, 2)
 	d, ok := detectors[0].(*ContainsBytesDetector)
 	require.True(t, ok)
@@ -101,7 +101,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 				require.NoError(t, err)
 				detectors := gcomProvider.ProvideDetectors(context.Background())
 				require.Equal(t, 1, tc.gcomHTTPCalls, "gcom should be called")
-				require.Empty(t, detectors, "returned detectors should be empty")
+				require.Empty(t, detectors, "returned AngularDetectors should be empty")
 			})
 		}
 	})
@@ -122,7 +122,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		defer canc()
 		detectors := gcomProvider.ProvideDetectors(ctx)
 		require.Zero(t, gcomScenario.gcomHTTPCalls, "gcom should be not called due to request timing out")
-		require.Empty(t, detectors, "returned detectors should be empty")
+		require.Empty(t, detectors, "returned AngularDetectors should be empty")
 	})
 
 	t.Run("unknown pattern types do not break decoding", func(t *testing.T) {
@@ -140,7 +140,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		require.NoError(t, err)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
-		require.Len(t, detectors, 1, "should have decoded only 1 Detector")
+		require.Len(t, detectors, 1, "should have decoded only 1 AngularDetector")
 		d, ok := detectors[0].(*ContainsBytesDetector)
 		require.True(t, ok, "decoded pattern should be of the correct type")
 		require.Equal(t, []byte("PanelCtrl"), d.Pattern, "decoded value for known pattern should be correct")

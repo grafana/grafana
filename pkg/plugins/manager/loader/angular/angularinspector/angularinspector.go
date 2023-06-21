@@ -45,7 +45,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
 	for _, d := range i.DetectorsProvider.ProvideDetectors(ctx) {
-		if d.Detect(b) {
+		if d.DetectAngular(b) {
 			isAngular = true
 			break
 		}
@@ -53,9 +53,9 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	return
 }
 
-// defaultDetectors contains all the detectors to Detect Angular plugins.
+// defaultDetectors contains all the detectors to DetectAngular Angular plugins.
 // They are executed in the specified order.
-var defaultDetectors = []angulardetector.Detector{
+var defaultDetectors = []angulardetector.AngularDetector{
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("QueryCtrl")},
 	&angulardetector.ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},

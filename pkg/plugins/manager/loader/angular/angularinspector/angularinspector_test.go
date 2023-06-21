@@ -18,7 +18,7 @@ type fakeDetector struct {
 	returns bool
 }
 
-func (d *fakeDetector) Detect(_ []byte) bool {
+func (d *fakeDetector) DetectAngular(_ []byte) bool {
 	d.calls += 1
 	return d.returns
 }
@@ -71,9 +71,9 @@ func TestPatternsListInspector(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			detectors := make([]angulardetector.Detector, 0, len(tc.fakeDetectors))
+			detectors := make([]angulardetector.AngularDetector, 0, len(tc.fakeDetectors))
 			for _, d := range tc.fakeDetectors {
-				detectors = append(detectors, angulardetector.Detector(d))
+				detectors = append(detectors, angulardetector.AngularDetector(d))
 			}
 			inspector := &PatternsListInspector{
 				DetectorsProvider: &angulardetector.StaticDetectorsProvider{Detectors: detectors},
@@ -160,8 +160,8 @@ func TestProvideInspector(t *testing.T) {
 		require.IsType(t, inspector.(*PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
 		seq := inspector.(*PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
 		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first Detector provided should be gcom")
-		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second Detector provided should be static")
+		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first AngularDetector provided should be gcom")
+		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second AngularDetector provided should be static")
 		staticDetectors := seq[1].ProvideDetectors(context.Background())
 		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
 		require.Equal(t, defaultDetectors, staticDetectors, "should provide hardcoded detectors as fallback")

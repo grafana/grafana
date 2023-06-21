@@ -45,24 +45,24 @@ func NewGCOMDetectorsProvider(baseURL string) (DetectorsProvider, error) {
 	}, nil
 }
 
-// ProvideDetectors gets the dynamic detectors from the remote source.
-// If an error occurs, the function fails silently by logging an error and it returns nil.
-func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
+// ProvideDetectors gets the dynamic angular detectors from the remote source.
+// If an error occurs, the function fails silently by logging an error, and it returns nil.
+func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []AngularDetector {
 	patterns, err := p.fetch(ctx)
 	if err != nil {
 		p.log.Warn("Could not fetch remote angular patterns", "error", err)
 		return nil
 	}
-	detectors, err := patterns.detectors()
+	detectors, err := patterns.angularDetectors()
 	if err != nil {
-		p.log.Warn("Could not convert angular patterns to detectors", "error", err)
+		p.log.Warn("Could not convert angular patterns to angularDetectors", "error", err)
 		return nil
 	}
 	return detectors
 }
 
 // fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
-// Call detectors() on the returned value to get the corresponding detectors.
+// Call angularDetectors() on the returned value to get the corresponding angular detectors.
 func (p *GCOMDetectorsProvider) fetch(ctx context.Context) (gcomPatterns, error) {
 	st := time.Now()
 
@@ -111,9 +111,9 @@ type gcomPattern struct {
 // errUnknownPatternType is returned when a pattern type is not known.
 var errUnknownPatternType = errors.New("unknown pattern type")
 
-// Detector converts a gcomPattern into a Detector, based on its Type.
+// angularDetector converts a gcomPattern into an AngularDetector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
-func (p *gcomPattern) detector() (Detector, error) {
+func (p *gcomPattern) angularDetector() (AngularDetector, error) {
 	switch p.Type {
 	case gcomPatternTypeContains:
 		return &ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
@@ -130,12 +130,12 @@ func (p *gcomPattern) detector() (Detector, error) {
 // gcomPatterns is a slice of gcomPattern s.
 type gcomPatterns []gcomPattern
 
-// detectors converts the slice of gcomPattern s into a slice of detectors, by calling Detector() on each gcomPattern.
-func (p gcomPatterns) detectors() ([]Detector, error) {
+// angularDetectors converts the slice of gcomPattern s into a slice of AngularDetector, by calling AngularDetector() on each gcomPattern.
+func (p gcomPatterns) angularDetectors() ([]AngularDetector, error) {
 	var finalErr error
-	detectors := make([]Detector, 0, len(p))
+	detectors := make([]AngularDetector, 0, len(p))
 	for _, pattern := range p {
-		d, err := pattern.detector()
+		d, err := pattern.angularDetector()
 		if err != nil {
 			// Fail silently in case of an errUnknownPatternType.
 			// This allows us to introduce new pattern types without breaking old Grafana versions
