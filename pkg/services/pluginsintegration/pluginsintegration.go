@@ -58,7 +58,6 @@ var WireSet = wire.NewSet(
 	angulardetectorsprovider.ProvideStatic,
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
-	angulardetectorsprovider.ProvideDetectorsProvider,
 	angularinspector.ProvideService,
 	wire.Bind(new(pAngularInspector.Inspector), new(*angularinspector.Service)),
 

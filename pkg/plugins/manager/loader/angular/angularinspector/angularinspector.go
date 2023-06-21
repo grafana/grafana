@@ -52,36 +52,6 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 
 // NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
 // static (hardcoded) angular detection patterns.
-/* func NewStaticInspector() (Inspector, error) {
+func NewStaticInspector() (Inspector, error) {
 	return &PatternsListInspector{DetectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}, nil
-} */
-
-// NewDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
-//  1. Try to get the Angular detectors from GCOM
-//  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
-/* func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
-	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(
-		cfg.GrafanaComURL,
-		angulardetector.DefaultGCOMDetectorsProviderTTL,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
-	}
-	return &PatternsListInspector{
-		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
-			dynamicProvider,
-			NewDefaultStaticDetectorsProvider(),
-		},
-	}, nil
-}
-
-func ProvideService(cfg *config.Cfg) (Inspector, error) {
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
-		return newDynamicInspector(cfg)
-	}
-	return newStaticInspector()
-} */
-
-func ProvideService(detectorsProvider angulardetector.DetectorsProvider) Inspector {
-	return &PatternsListInspector{DetectorsProvider: detectorsProvider}
 }
