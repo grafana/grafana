@@ -118,7 +118,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	require.NoError(t, err)
 	reg := registry.ProvideService()
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
-	angularInspector, err := angularinspector.ProvideService(pCfg)
+	angularInspector, err := angularinspector.NewStaticInspector()
 	require.NoError(t, err)
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), finder.NewLocalFinder(pCfg), fakes.NewFakeRoleRegistry(),

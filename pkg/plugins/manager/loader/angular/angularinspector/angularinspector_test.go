@@ -8,9 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type fakeDetector struct {
@@ -130,7 +128,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 			exp: false,
 		})
 	}
-	inspector := PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}
+	inspector := PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)
@@ -143,35 +141,5 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 		p := &plugins.Plugin{FS: plugins.NewInMemoryFS(map[string][]byte{})}
 		_, err := inspector.Inspect(context.Background(), p)
 		require.NoError(t, err)
-	})
-}
-
-func TestProvideInspector(t *testing.T) {
-	t.Run("uses hardcoded inspector if feature flag is not present", func(t *testing.T) {
-		inspector, err := ProvideService(&config.Cfg{
-			Features: featuremgmt.WithFeatures(),
-		})
-		require.NoError(t, err)
-		require.IsType(t, inspector, &PatternsListInspector{})
-		patternsListInspector := inspector.(*PatternsListInspector)
-		detectors := patternsListInspector.DetectorsProvider.ProvideDetectors(context.Background())
-		require.NotEmpty(t, detectors, "provided detectors should not be empty")
-		require.Equal(t, defaultDetectors, detectors, "provided detectors should be the hardcoded ones")
-	})
-
-	t.Run("uses dynamic inspector with hardcoded fallback if feature flag is present", func(t *testing.T) {
-		inspector, err := ProvideService(&config.Cfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
-		})
-		require.NoError(t, err)
-		require.IsType(t, inspector, &PatternsListInspector{})
-		require.IsType(t, inspector.(*PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
-		seq := inspector.(*PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
-		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first AngularDetector provided should be gcom")
-		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second AngularDetector provided should be static")
-		staticDetectors := seq[1].ProvideDetectors(context.Background())
-		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
-		require.Equal(t, defaultDetectors, staticDetectors, "should provide hardcoded detectors as fallback")
 	})
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // Inspector can inspect a plugin and determine if it's an Angular plugin or not.
@@ -67,37 +66,30 @@ var defaultDetectors = []angulardetector.AngularDetector{
 	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`["']QueryCtrl["']`)},
 }
 
-// newDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
+// NewDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
 // detection patterns (defaultDetectors)
-func newDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
+func NewDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 	return &angulardetector.StaticDetectorsProvider{Detectors: defaultDetectors}
 }
 
-// newDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
+// NewDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
-func newDynamicInspector(cfg *config.Cfg) (Inspector, error) {
+func NewDynamicInspector(cfg *config.Cfg) (Inspector, error) {
 	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
 	if err != nil {
-		return nil, fmt.Errorf("newGCOMDetectorsProvider: %w", err)
+		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
 	}
 	return &PatternsListInspector{
 		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
 			dynamicProvider,
-			newDefaultStaticDetectorsProvider(),
+			NewDefaultStaticDetectorsProvider(),
 		},
 	}, nil
 }
 
-// newStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
+// NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
 // static (hardcoded) angular detection patterns.
-func newStaticInspector() (Inspector, error) {
-	return &PatternsListInspector{DetectorsProvider: newDefaultStaticDetectorsProvider()}, nil
-}
-
-func ProvideService(cfg *config.Cfg) (Inspector, error) {
-	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
-		return newDynamicInspector(cfg)
-	}
-	return newStaticInspector()
+func NewStaticInspector() (Inspector, error) {
+	return &PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}, nil
 }
