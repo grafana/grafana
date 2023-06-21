@@ -6,6 +6,7 @@ import { CellProps } from 'react-table';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
+import { Trans } from 'app/core/internationalization';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import { DashboardsTreeItem } from '../types';
@@ -20,7 +21,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            Dashboard
+            <Trans i18nKey="browse-dashboards.type-cell.dashboard">Dashboard</Trans>
           </Span>
         </div>
       );
@@ -29,7 +30,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            Folder
+            <Trans i18nKey="browse-dashboards.type-cell.folder">Folder</Trans>
           </Span>
         </div>
       );
@@ -38,7 +39,7 @@ export function TypeCell({ row: { original: data } }: CellProps<DashboardsTreeIt
         <div className={styles.container}>
           <Icon name={iconName} />
           <Span variant="body" color="secondary" truncate>
-            Panel
+            <Trans i18nKey="browse-dashboards.type-cell.panel">Panel</Trans>
           </Span>
         </div>
       );
