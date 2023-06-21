@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Icon, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import { GrafanaNotifierType } from 'app/types/alerting';
 
@@ -179,7 +179,15 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
                 {/* TODO show error details on hover or elsewhere */}
                 <Span color="error" variant="bodySmall" weight="bold">
                   <Stack direction="row" alignItems={'center'} gap={0.5}>
-                    <Icon name="exclamation-circle" /> Last delivery attempt failed
+                    <Tooltip
+                      content={
+                        'failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused'
+                      }
+                    >
+                      <span>
+                        <Icon name="exclamation-circle" /> Last delivery attempt failed
+                      </span>
+                    </Tooltip>
                   </Stack>
                 </Span>
               </>
