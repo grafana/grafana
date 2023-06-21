@@ -26,6 +26,7 @@ import { useDispatch } from 'app/types';
 import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
+import { LoadingIndicator } from './LoadingIndicator';
 import { LogContextButtons } from './LogContextButtons';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -63,6 +64,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       max-height: 75%;
       align-self: stretch;
       display: inline-block;
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.radius.default};
       & > table {
         min-width: 100%;
       }
@@ -100,6 +103,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       :hover {
         color: ${theme.colors.text.link};
       }
+    `,
+    loadingCell: css`
+      position: sticky;
+      left: 50%;
+      display: inline-block;
+      transform: translateX(-50%);
     `,
   };
 };
@@ -411,25 +420,27 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         <table>
           <tbody>
             <tr>
+              <td className={styles.loadingCell}>
+                <div ref={topElement}>
+                  <LoadingIndicator place="top" />
+                </div>
+              </td>
+            </tr>
+            <tr>
               <td className={styles.noMarginBottom}>
-                <>
-                  <div ref={topElement}>
-                    <LoadingIndicator place="top" />
-                  </div>
-                  <LogRows
-                    logRows={context.after}
-                    dedupStrategy={LogsDedupStrategy.none}
-                    showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                    showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                    wrapLogMessage={wrapLines}
-                    prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                    enableLogDetails={true}
-                    timeZone={timeZone}
-                    displayedFields={displayedFields}
-                    onClickShowField={showField}
-                    onClickHideField={hideField}
-                  />
-                </>
+                <LogRows
+                  logRows={context.after}
+                  dedupStrategy={LogsDedupStrategy.none}
+                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                  wrapLogMessage={wrapLines}
+                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                  enableLogDetails={true}
+                  timeZone={timeZone}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                />
               </td>
             </tr>
             <tr ref={preEntryElement}></tr>
@@ -466,10 +477,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                   />
-                  <div ref={bottomElement}>
-                    <LoadingIndicator place="bottom" />
-                  </div>
                 </>
+              </td>
+            </tr>
+            <tr>
+              <td className={styles.loadingCell}>
+                <div ref={bottomElement}>
+                  <LoadingIndicator place="bottom" />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -515,23 +530,5 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         )}
       </Modal.ButtonRow>
     </Modal>
-  );
-};
-
-const loadingIndicatorStyles = css`
-  display: flex;
-  justify-content: center;
-`;
-
-// ideally we'd use `@grafana/ui/LoadingPlaceholder`, but that
-// one has a large margin-bottom.
-const LoadingIndicator = ({ place }: { place: 'top' | 'bottom' }) => {
-  const text = place === 'top' ? 'Loading newer logs...' : 'Loading older logs...';
-  return (
-    <div className={loadingIndicatorStyles}>
-      <div>
-        {text} <Spinner inline />
-      </div>
-    </div>
   );
 };
