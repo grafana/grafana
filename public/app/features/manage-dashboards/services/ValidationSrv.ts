@@ -17,7 +17,11 @@ export class ValidationSrv {
   }
 
   validateNewFolderName(name?: string) {
-    return this.validate(0, name, 'A folder or dashboard in the general folder with the same name already exists');
+    return this.validate(
+      this.rootName,
+      name,
+      'A folder or dashboard in the general folder with the same name already exists'
+    );
   }
 
   private async validate(folderUID: string, name: string | undefined, existingErrorMessage: string) {
