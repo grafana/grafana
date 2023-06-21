@@ -4,11 +4,28 @@ import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Collapse, Icon, Label, MultiSelect, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Collapse,
+  Icon,
+  InlineField,
+  InlineFieldRow,
+  InlineSwitch,
+  Label,
+  MultiSelect,
+  Spinner,
+  Tooltip,
+  useStyles2,
+} from '@grafana/ui';
 import store from 'app/core/store';
 
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { LogContextProvider, LOKI_LOG_CONTEXT_PRESERVED_LABELS, PreservedLabels } from '../LogContextProvider';
+import {
+  LogContextProvider,
+  LOKI_LOG_CONTEXT_PRESERVED_LABELS,
+  PreservedLabels,
+  SHOULD_INCLUDE_PIPELINE_OPERATIONS,
+} from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
 import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
@@ -88,6 +105,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(store.getBool(IS_LOKI_LOG_CONTEXT_UI_OPEN, false));
+  const [includePipelineOperations, setIncludePipelineOperations] = useState(
+    store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
+  );
 
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
@@ -205,7 +225,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
     contextFilters.filter(({ enabled }) => enabled),
     origQuery
   );
-  queryExpr = logContextProvider.processPipelineStagesToExpr(queryExpr, origQuery);
+  if (includePipelineOperations) {
+    queryExpr = logContextProvider.processPipelineStagesToExpr(queryExpr, origQuery);
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -229,6 +251,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
               store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+              store.delete(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
             }}
           />
         </div>
@@ -344,6 +367,26 @@ export function LokiContextUi(props: LokiContextUiProps) {
               />
             </>
           )}
+          <div>
+            <InlineFieldRow>
+              <InlineField label="Include LogQL pipeline operations">
+                <InlineSwitch
+                  value={includePipelineOperations}
+                  showLabel={true}
+                  transparent={true}
+                  onChange={(e) => {
+                    reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
+                      logRowUid: row.uid,
+                      action: e.currentTarget.checked ? 'enable' : 'disable',
+                    });
+                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                    setIncludePipelineOperations(e.currentTarget.checked);
+                    updateFilter(contextFilters.filter(({ enabled }) => enabled));
+                  }}
+                />
+              </InlineField>
+            </InlineFieldRow>
+          </div>
         </div>
       </Collapse>
     </div>

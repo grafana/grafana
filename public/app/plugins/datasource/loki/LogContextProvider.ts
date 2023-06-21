@@ -36,6 +36,8 @@ import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
+export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'shouldIncludePipelineOperations';
+
 export type PreservedLabels = {
   removedLabels: string[];
   selectedExtractedLabels: string[];
@@ -117,7 +119,9 @@ export class LogContextProvider {
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     let expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
-    expr = this.processPipelineStagesToExpr(expr, origQuery);
+    if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
+      expr = this.processPipelineStagesToExpr(expr, origQuery);
+    }
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
