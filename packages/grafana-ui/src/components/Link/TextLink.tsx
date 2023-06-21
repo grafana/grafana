@@ -10,7 +10,7 @@ import { customColor, customWeight } from '../Text/utils';
 
 import { Link } from './Link';
 
-interface TextLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
+interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'target' | 'rel'> {
   /** url to which redirect the user, external or internal */
   href: string;
   /** Color to use for text */
@@ -82,7 +82,7 @@ export const getLinkStyles = (
     },
     {
       alignItems: 'center',
-      gap: theme.spacing(1),
+      gap: '0.25em',
       color: linkColor,
       display: 'flex',
       '&:hover': {
