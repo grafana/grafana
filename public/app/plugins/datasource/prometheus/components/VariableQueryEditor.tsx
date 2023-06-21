@@ -64,6 +64,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     // 2. jsonnet grafana as code passes a variable as a string
     const variableQuery = variableMigration(query);
 
+    setLabelNamesMatch(variableQuery.match ?? '');
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
