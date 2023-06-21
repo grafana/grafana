@@ -10,7 +10,7 @@ keywords:
   - contact point
   - templating
 title: Configure the webhook notifier
-weight: 1000
+weight: 200
 ---
 
 ### Configure the webhook notifier

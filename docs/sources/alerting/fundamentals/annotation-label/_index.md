@@ -10,7 +10,7 @@ keywords:
   - rules
   - create
 title: Labels and annotations
-weight: 401
+weight: 110
 ---
 
 # Labels and annotations
