@@ -113,6 +113,7 @@ export function TraceViewContainer(props: Props) {
     return null;
   }
 
+  // TODO: remove this once we figure out where links button should be placed
   const testLinks = [
     {
       url: 'https://www.google.com',
