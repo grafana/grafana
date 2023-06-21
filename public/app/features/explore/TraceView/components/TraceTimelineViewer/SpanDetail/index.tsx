@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 import React from 'react';
 
@@ -23,6 +24,7 @@ import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui'
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
@@ -167,7 +169,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     stackTraces,
   } = span;
   const { timeZone } = props;
-  const overviewItems = [
+  let overviewItems = [
     {
       key: 'svc',
       label: 'Service:',
@@ -193,6 +195,50 @@ export default function SpanDetail(props: SpanDetailProps) {
         ]
       : []),
   ];
+
+  if (span.kind) {
+    overviewItems.push({
+      key: KIND,
+      label: 'Kind:',
+      value: span.kind,
+    });
+  }
+  if (span.statusCode !== undefined) {
+    overviewItems.push({
+      key: STATUS,
+      label: 'Status:',
+      value: SpanStatusCode[span.statusCode].toLowerCase(),
+    });
+  }
+  if (span.statusMessage) {
+    overviewItems.push({
+      key: STATUS_MESSAGE,
+      label: 'Status Message:',
+      value: span.statusMessage,
+    });
+  }
+  if (span.instrumentationLibraryName) {
+    overviewItems.push({
+      key: LIBRARY_NAME,
+      label: 'Library Name:',
+      value: span.instrumentationLibraryName,
+    });
+  }
+  if (span.instrumentationLibraryVersion) {
+    overviewItems.push({
+      key: LIBRARY_VERSION,
+      label: 'Library Version:',
+      value: span.instrumentationLibraryVersion,
+    });
+  }
+  if (span.traceState) {
+    overviewItems.push({
+      key: TRACE_STATE,
+      label: 'Trace State:',
+      value: span.traceState,
+    });
+  }
+
   const styles = useStyles2(getStyles);
 
   let logLinkButton: JSX.Element | undefined = undefined;

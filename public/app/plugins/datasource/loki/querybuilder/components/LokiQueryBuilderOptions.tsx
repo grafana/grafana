@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { CoreApp, isValidDuration, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
+import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
@@ -127,18 +127,26 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
                   onCommitChange={onStepChange}
                 />
               </EditorField>
-              <EditorField
-                label="Resolution"
-                tooltip="Changes the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
-              >
-                <Select
-                  isSearchable={false}
-                  onChange={onResolutionChange}
-                  options={RESOLUTION_OPTIONS}
-                  value={query.resolution || 1}
-                  aria-label="Select resolution"
-                />
-              </EditorField>
+              {query.resolution !== undefined && query.resolution > 1 && (
+                <>
+                  <EditorField
+                    label="Resolution"
+                    tooltip="Changes the step parameter of Loki metrics range queries. With a resolution of 1/1, each pixel corresponds to one data point. 1/10 retrieves one data point per 10 pixels. Lower resolutions perform better."
+                  >
+                    <Select
+                      isSearchable={false}
+                      onChange={onResolutionChange}
+                      options={RESOLUTION_OPTIONS}
+                      value={query.resolution || 1}
+                      aria-label="Select resolution"
+                    />
+                  </EditorField>
+                  <Alert
+                    severity="warning"
+                    title="The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter."
+                  />
+                </>
+              )}
             </>
           )}
           {config.featureToggles.lokiQuerySplittingConfig && config.featureToggles.lokiQuerySplitting && (

@@ -163,6 +163,12 @@
       "success": "Panneau de bibliothèque enregistré"
     }
   },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
