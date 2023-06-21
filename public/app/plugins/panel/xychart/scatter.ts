@@ -108,18 +108,20 @@ function getScatterSeries(
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
     if (f) {
-      const disp =
-        f.display ??
-        getDisplayProcessor({
-          field: f,
-          theme: config.theme2,
-        });
       pointColorMode = getFieldColorModeForField(y);
       if (pointColorMode.isByValue) {
         const index = dims.pointColorIndex;
         pointColor = (frame: DataFrame) => {
-          // Yes we can improve this later
-          return frame.fields[index].values.map((v) => disp(v).color!);
+          const field = frame.fields[index];
+
+          if (field.state?.range) {
+            // this forces local min/max recalc, rather than using global min/max from field.state
+            field.state.range = undefined;
+          }
+
+          field.display = getDisplayProcessor({ field, theme: config.theme2 });
+
+          return field.values.map((v) => field.display!(v).color!); // slow!
         };
       } else {
         seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);

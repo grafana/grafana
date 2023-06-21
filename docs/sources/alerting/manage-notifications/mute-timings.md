@@ -11,7 +11,7 @@ keywords:
   - mute timings
   - mute time interval
 title: Create mute timings
-weight: 700
+weight: 420
 ---
 
 # Create mute timings

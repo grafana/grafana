@@ -18,7 +18,7 @@ Set up or upgrade your implementation of Grafana Alerting.
 
 These are set-up instructions for Grafana Alerting Open Source.
 
-To set up Grafana Alerting for Cloud, see ({{< relref "./set-up-cloud/_index.md" >}})
+To set up Grafana Alerting for Cloud, see [Set up Alerting for Cloud]({{< relref "../set-up/set-up-cloud" >}}).
 
 ## Before you begin
 

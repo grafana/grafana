@@ -154,11 +154,14 @@ type TestDataDataQuery struct {
 	// Specific implementations will *extend* this interface, adding the required
 	// properties for the given context.
 	DataQuery
-	Alias           *string            `json:"alias,omitempty"`
-	Channel         *string            `json:"channel,omitempty"`
-	CsvContent      *string            `json:"csvContent,omitempty"`
-	CsvFileName     *string            `json:"csvFileName,omitempty"`
-	CsvWave         []CSVWave          `json:"csvWave,omitempty"`
+	Alias       *string   `json:"alias,omitempty"`
+	Channel     *string   `json:"channel,omitempty"`
+	CsvContent  *string   `json:"csvContent,omitempty"`
+	CsvFileName *string   `json:"csvFileName,omitempty"`
+	CsvWave     []CSVWave `json:"csvWave,omitempty"`
+
+	// Drop percentage (the chance we will lose a point 0-100)
+	DropPercent     *float64           `json:"dropPercent,omitempty"`
 	ErrorType       *ErrorType         `json:"errorType,omitempty"`
 	Labels          *string            `json:"labels,omitempty"`
 	LevelColumn     *bool              `json:"levelColumn,omitempty"`
