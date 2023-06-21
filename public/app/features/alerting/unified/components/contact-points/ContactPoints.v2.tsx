@@ -212,7 +212,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom: none;
   `,
   integrationWrapper: css`
-    flex: 1;
     position: relative;
     background: ${theme.colors.background.primary};
 
@@ -236,19 +235,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom-left-radius: ${theme.shape.borderRadius()};
     border-bottom-right-radius: ${theme.shape.borderRadius()};
   `,
-  receiversWrapper: css`
-    /* margin-left: ${theme.spacing(3)}; */
-    /* position: relative; */
-
-    /* &:before {
-      content: '';
-      position: absolute;
-      height: 100%;
-      border-left: solid 1px rgba(204, 204, 220, 0.12);
-      margin-top: 0;
-      margin-left: -${theme.spacing(2)};
-    } */
-  `,
+  receiversWrapper: css``,
 });
 
 export default ContactPoints;
