@@ -243,6 +243,21 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return err
 		}
 
+		if cmd.Name != "" && cmd.Name != dataSource.Name {
+			query := &datasources.GetDataSourceQuery{
+				Name:  cmd.Name,
+				OrgID: cmd.OrgID,
+			}
+			exist, err := s.SQLStore.GetDataSource(ctx, query)
+			if exist != nil {
+				return datasources.ErrDataSourceNameExists
+			}
+
+			if err != nil {
+				return err
+			}
+		}
+
 		err = s.fillWithSecureJSONData(ctx, cmd, dataSource)
 		if err != nil {
 			return err
