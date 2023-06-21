@@ -79,6 +79,9 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
 export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVariableQuery): string {
   switch (QueryVariable.qryType) {
     case QueryType.LabelNames:
+      if (QueryVariable.match) {
+        return `label_names(${QueryVariable.match})`;
+      }
       return 'label_names()';
     case QueryType.LabelValues:
       if (QueryVariable.metric) {
