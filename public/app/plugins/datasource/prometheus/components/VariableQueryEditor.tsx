@@ -1,4 +1,3 @@
-import { debounce } from 'lodash';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -271,11 +270,12 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
           <InlineField
             label="Metric regex"
             labelWidth={20}
+            aria-labelledby="names-regex-select"
             tooltip={<div>Returns a list of labels matching the specified metric regex.</div>}
           >
             <Input
               type="text"
-              aria-label="Label names regex"
+              aria-label="names-regex-select"
               placeholder="Label names regex"
               value={labelNamesMatch}
               onBlur={(event) => {
@@ -297,6 +297,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
           <InlineField
             label="Metric regex"
             labelWidth={20}
+            aria-labelledby="Metric selector"
             tooltip={<div>Returns a list of metrics matching the specified metric regex.</div>}
           >
             <Input
