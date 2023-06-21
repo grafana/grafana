@@ -29,12 +29,7 @@ import { ConnectionLimits } from 'app/features/plugins/sql/components/configurat
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
-import {
-  // dataSourceHasCredentials,
-  // setDataSourceCredentials,
-  AzureAuthConfigType,
-  // resetCredentials,
-} from '../azureauth/AzureCredentialsConfig';
+import { AzureAuthConfigType } from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
 const SHORT_WIDTH = 15;
@@ -52,8 +47,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
   const azureAuthSettings: AzureAuthConfigType = {
     azureAuthIsSupported,
-    // dataSourceHasCredentials,
-    // setDataSourceCredentials,
     azureAuthSettingsUI: AzureAuthSettings,
   };
 
@@ -112,9 +105,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     { value: MSSQLEncryptOptions.false, label: 'false' },
     { value: MSSQLEncryptOptions.true, label: 'true' },
   ];
-
-  // const azureAuthEnabled: boolean =
-  //   azureAuthSettings?.azureAuthIsSupported && azureAuthSettings?.dataSourceHasCredentials(dsSettings);
 
   return (
     <>
@@ -271,27 +261,6 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
 
       {azureAuthIsSupported && jsonData.authenticationType === MSSQLAuthenticationType.azureAuth && (
         <FieldSet label="Azure Authentication Settings">
-          {/* <div className="gf-form-inline">
-            <InlineField
-              label="Azure Authentication"
-              tooltip="Use Azure authentication for Azure endpoint."
-              labelWidth={LONG_WIDTH}
-              disabled={dsSettings.readOnly}
-            >
-              <InlineSwitch
-                id="http-settings-azure-auth"
-                value={azureAuthEnabled}
-                onChange={(event) => {
-                  onOptionsChange({
-                    ...dsSettings,
-                    ...azureAuthSettings.setDataSourceCredentials(dsSettings, config, event!.currentTarget.checked),
-                  });
-                }}
-                disabled={dsSettings.readOnly}
-              />
-            </InlineField>
-          </div> */}
-
           <azureAuthSettings.azureAuthSettingsUI dataSourceConfig={dsSettings} onChange={onOptionsChange} />
         </FieldSet>
       )}
