@@ -663,7 +663,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
@@ -1109,7 +1109,7 @@ func TestGetMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
@@ -1194,7 +1194,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{}, nil)

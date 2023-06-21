@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
+import { isEmptyObject, SelectableValue } from '@grafana/data';
 import { getBackendSrv, reportInteraction } from '@grafana/runtime';
 import { Button, ClipboardButton, Field, Input, LinkButton, Modal, Select, Spinner } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -160,7 +160,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         variable.query = '';
       }
       if ('options' in variable) {
-        variable.options = variable.current ? [variable.current] : [];
+        variable.options = variable.current && !isEmptyObject(variable.current) ? [variable.current] : [];
       }
       if ('refresh' in variable) {
         variable.refresh = VariableRefresh.never;
