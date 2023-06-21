@@ -2,6 +2,7 @@ import { extend } from 'lodash';
 
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
+import { AutoRefreshInterval } from 'app/features/dashboard/services/TimeSrv';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
@@ -154,7 +155,7 @@ export class ContextSrv {
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
   isAllowedInterval(interval: string) {
-    if (!config.minRefreshInterval) {
+    if (!config.minRefreshInterval || interval === AutoRefreshInterval) {
       return true;
     }
     return rangeUtil.intervalToMs(interval) >= rangeUtil.intervalToMs(config.minRefreshInterval);

@@ -21,14 +21,17 @@ import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEven
 import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
+export const AutoRefreshInterval = 'auto';
+
 export class TimeSrv {
   time: RawTimeRange;
   refreshTimer: number | undefined;
-  refresh: any;
+  refresh: string | undefined | boolean;
   oldRefresh: string | null | undefined;
   timeModel?: TimeModel;
   timeAtLoad: RawTimeRange;
   private autoRefreshBlocked?: boolean;
+  private refreshMS?: number;
 
   constructor(private contextSrv: ContextSrv) {
     // default time
@@ -89,11 +92,11 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    if (!this.contextSrv.minRefreshInterval) {
-      return intervals;
-    }
-
-    return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
+    const valid = this.contextSrv.minRefreshInterval
+      ? intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval)
+      : intervals;
+    valid.push(AutoRefreshInterval);
+    return valid;
   }
 
   private parseTime() {
@@ -215,6 +218,7 @@ export class TimeSrv {
   }
 
   setAutoRefresh(interval: any) {
+    console.log('setAutoRefresh', interval);
     if (this.timeModel) {
       this.timeModel.refresh = interval;
     }
@@ -232,19 +236,32 @@ export class TimeSrv {
       return;
     }
 
-    const validInterval = this.contextSrv.getValidInterval(interval);
-    const intervalMs = rangeUtil.intervalToMs(validInterval);
+    let refresh = interval;
+    let intervalMs = 60 * 1000;
+    if (interval === AutoRefreshInterval) {
+      intervalMs = this.getAutoRefreshInteval();
+    } else {
+      const validInterval = this.contextSrv.getValidInterval(interval);
+      intervalMs = rangeUtil.intervalToMs(validInterval);
+      refresh = validInterval;
+    }
 
+    this.refreshMS = intervalMs;
     this.refreshTimer = window.setTimeout(() => {
       this.startNextRefreshTimer(intervalMs);
       this.refreshTimeModel();
     }, intervalMs);
 
-    const refresh = this.contextSrv.getValidInterval(interval);
-
     if (currentUrlState.refresh !== refresh) {
       locationService.partial({ refresh }, true);
     }
+  }
+
+  private getAutoRefreshInteval() {
+    const resolution = window?.innerWidth ?? 2000;
+    const v = rangeUtil.calculateInterval(this.timeRange(), resolution, config.minRefreshInterval);
+    console.log('Get AUTO Interval', v);
+    return v.intervalMs;
   }
 
   refreshTimeModel() {
@@ -265,6 +282,7 @@ export class TimeSrv {
   stopAutoRefresh() {
     clearTimeout(this.refreshTimer);
     this.refreshTimer = undefined;
+    this.refreshMS = undefined;
   }
 
   // resume auto-refresh based on old dashboard refresh property
@@ -298,6 +316,14 @@ export class TimeSrv {
       urlParams.to = urlRange.to.toString();
 
       locationService.partial(urlParams);
+    }
+
+    // Check if the auto refresh interval has changed
+    if (this.timeModel?.refresh === AutoRefreshInterval) {
+      const v = this.getAutoRefreshInteval();
+      if (v !== this.refreshMS) {
+        this.setAutoRefresh(AutoRefreshInterval);
+      }
     }
 
     this.refreshTimeModel();
