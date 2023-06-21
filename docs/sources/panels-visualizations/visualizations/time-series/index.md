@@ -230,7 +230,7 @@ The transform option is only available as an override.
 
 ## Color options
 
-By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}} option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
+By default, the graph uses the standard [Color scheme]({{< relref "../../configure-standard-options/#color-scheme" >}}) option to assign series colors. You can also use the legend to open the color picker by clicking the legend series color icon. Setting
 color this way automatically creates an override rule that set's a specific color for a specific series.
 
 ### Classic palette

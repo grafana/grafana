@@ -4,6 +4,7 @@ import {
   DataQuery,
   getDataSourceRef,
   isDataSourceRef,
+  isEmptyObject,
   LoadingState,
   TimeRange,
   UrlQueryMap,
@@ -257,7 +258,7 @@ export const changeVariableMultiValue = (identifier: KeyedVariableIdentifier, mu
   return (dispatch, getState) => {
     const { rootStateKey: key } = identifier;
     const variable = getVariable(identifier, getState());
-    if (!isMulti(variable)) {
+    if (!isMulti(variable) || isEmptyObject(variable.current)) {
       return;
     }
 

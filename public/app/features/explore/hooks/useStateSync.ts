@@ -1,4 +1,4 @@
-import { isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
+import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
 import {
@@ -183,6 +183,11 @@ export function useStateSync(params: ExploreQueryParams) {
                       withUniqueRefIds(queries)
                         // but filter out the ones that are not compatible with the pane datasource
                         .filter(getQueryFilter(paneDatasource))
+                        .map(
+                          isMixedDatasource(paneDatasource)
+                            ? identity<DataQuery>
+                            : (query) => ({ ...query, datasource: paneDatasource.getRef() })
+                        )
                     : getDatasourceSrv()
                         // otherwise we get a default query from the pane datasource or from the default datasource if the pane datasource is mixed
                         .get(isMixedDatasource(paneDatasource) ? undefined : paneDatasource.getRef())
@@ -366,7 +371,7 @@ const urlDiff = (
   };
 };
 
-function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
     // datasourceInstance should not be undefined anymore here but in case there is some path for it to be undefined
     // lets just fallback instead of crashing.

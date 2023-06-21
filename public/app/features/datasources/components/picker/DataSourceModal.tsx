@@ -37,12 +37,16 @@ interface DataSourceModalProps {
   onDismiss: () => void;
   recentlyUsed?: string[];
   enableFileUpload?: boolean;
+  dashboard?: boolean;
+  mixed?: boolean;
   fileUploadOptions?: DropzoneOptions;
   reportedInteractionFrom?: string;
 }
 
 export function DataSourceModal({
   enableFileUpload,
+  dashboard,
+  mixed,
   fileUploadOptions,
   onChange,
   current,
@@ -113,6 +117,8 @@ export function DataSourceModal({
             }
           />
           <BuiltInDataSourceList
+            dashboard={dashboard}
+            mixed={mixed}
             className={styles.appendBuiltInDataSourcesList}
             onChange={onChangeDataSource}
             current={current}
@@ -122,7 +128,12 @@ export function DataSourceModal({
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+            <BuiltInDataSourceList
+              onChange={onChangeDataSource}
+              current={current}
+              dashboard={dashboard}
+              mixed={mixed}
+            />
           </CustomScrollbar>
           {enableFileUpload && (
             <FileDropzone

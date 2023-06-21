@@ -67,6 +67,6 @@ type SubjectKind string
 // Spec defines model for Spec.
 type Spec struct {
 	// The role we are discussing
-	Role    interface{} `json:"role"`
-	Subject Subject     `json:"subject"`
+	Role    any     `json:"role"`
+	Subject Subject `json:"subject"`
 }
