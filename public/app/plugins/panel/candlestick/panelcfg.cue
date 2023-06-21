@@ -23,9 +23,8 @@ composableKinds: PanelCfg: {
 
 	lineage: {
 
-		schemas: [{
-			version: [0, 0]
-			schema: {
+		seqs: [{
+			schemas: [{
 				VizDisplayMode: "candles+volume" | "candles" | "volume" @cuetsy(kind="enum", memberNames="CandlesVolume|Candles|Volume")
 				CandleStyle:    "candles" | "ohlcbars"                  @cuetsy(kind="enum", memberNames="Candles|OHLCBars")
 				ColorStrategy:  "open-close" | "close-close"            @cuetsy(kind="enum", memberNames="OpenClose|CloseClose")
@@ -63,8 +62,7 @@ composableKinds: PanelCfg: {
 					includeAllFields?: bool | *false
 				} @cuetsy(kind="interface")
 				FieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
-			}
+			}]
 		}]
-		lenses: []
 	}
 }
