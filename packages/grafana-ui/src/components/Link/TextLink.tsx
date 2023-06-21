@@ -14,7 +14,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   /** url to which redirect the user, external or internal */
   href: string;
   /** Color to use for text */
-  color?: keyof GrafanaTheme2['colors']['text'] | 'error' | 'success' | 'warning' | 'info';
+  color?: keyof GrafanaTheme2['colors']['text'];
   /** Specify if the link will redirect users to a page in or out Grafana */
   external?: boolean;
   /** True if the element should be displayed inline with surrounding text, false if it should be displayed as a block */
