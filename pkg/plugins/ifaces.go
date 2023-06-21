@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 )
 
 // Store is the publicly accessible storage for plugins.
@@ -182,14 +182,3 @@ type KeyStore interface {
 type KeyRetriever interface {
 	GetPublicKey(ctx context.Context, keyID string) (string, error)
 }
-
-type AngularPatternsStore interface {
-	// TODO: move GCOMPatterns into another package
-	Get(ctx context.Context) (angulardetectorsprovider.GCOMPatterns, error)
-	Set(ctx context.Context, patterns angulardetectorsprovider.GCOMPatterns) error
-	GetLastUpdated(ctx context.Context) (time.Time, error)
-}
-
-/*type AngularDetectorsProvider interface {
-	ProvideDetectors(ctx context.Context) []angulardetector.Detector
-}*/
