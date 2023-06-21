@@ -99,6 +99,10 @@ export const SelectMenuOptions = ({
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
   const icon = data.icon ? toIconName(data.icon) : undefined;
+  // We are removing onMouseMove and onMouseOver from innerProps because they cause the whole
+  // list to re-render everytime the user hovers over an option. This is a performance issue.
+  // See https://github.com/JedWatson/react-select/issues/3128#issuecomment-451936743
+  const { onMouseMove, onMouseOver, ...rest } = innerProps;
 
   return (
     <div
@@ -109,7 +113,7 @@ export const SelectMenuOptions = ({
         isSelected && styles.optionSelected,
         data.isDisabled && styles.optionDisabled
       )}
-      {...innerProps}
+      {...rest}
       aria-label="Select option"
       title={data.title}
     >
