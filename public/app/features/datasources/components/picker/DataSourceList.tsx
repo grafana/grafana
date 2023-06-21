@@ -71,7 +71,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
-    <div ref={containerRef} className={cx(className, styles.container)}>
+    <div ref={containerRef} className={cx(className, styles.container)} data-testid="data-sources-list">
       {filteredDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
@@ -79,6 +79,7 @@ export function DataSourceList(props: DataSourceListProps) {
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
+            data-testid="data-source-card"
             key={ds.uid}
             ds={ds}
             onClick={() => {

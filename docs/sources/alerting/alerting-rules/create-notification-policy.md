@@ -26,7 +26,7 @@ If the **Continue matching subsequent sibling nodes** option is enabled for a ne
 
 You can configure Grafana-managed notification policies as well as notification policies for an external Alertmanager data source.
 
-For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies/index.md" >}}).
+For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies" >}}).
 
 ## Edit default notification policy
 
