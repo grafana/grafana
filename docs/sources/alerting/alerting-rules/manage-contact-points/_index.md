@@ -13,7 +13,7 @@ keywords:
   - contact point
   - templating
 title: Configure contact points
-weight: 200
+weight: 410
 ---
 
 # Configure contact points
