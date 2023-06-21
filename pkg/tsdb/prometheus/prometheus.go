@@ -131,15 +131,92 @@ type promMetadata struct {
 	Unit string `json:"unit"`
 }
 
-type metadataResponseWrapper struct {
-	Status string                    `json:"status"`
-	Data   map[string][]promMetadata `json:"data"`
+type promLabels []string
+type promLabelValues []string
+
+type promResponseWrapper[T any] struct {
+	Status string `json:"status"`
+	Data   T      `json:"data"`
 }
 
 // providedMetricMetadata matches to the `PromMetric` interface in the frontend query editor.
 type providedMetricMetadata struct {
 	Name     string         `json:"name"`
 	Metadata []promMetadata `json:"metadata"`
+}
+
+// providedLabelMetadata matches to the `PromLabel` interface in the frontend query editor.
+type providedLabelMetadata struct {
+	Name   string          `json:"name"`
+	Values promLabelValues `json:"values"`
+}
+
+func (s *Service) metricMetadata(ctx context.Context, i *instance, pluginCtx backend.PluginContext) ([]string, error) {
+	resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
+		PluginContext: pluginCtx,
+		Path:          "/api/v1/metadata",
+	})
+	if err != nil {
+		return nil, err
+	}
+	respWrapper := promResponseWrapper[map[string][]promMetadata]{}
+	err = json.Unmarshal(resp.Body, &respWrapper)
+	if err != nil {
+		return nil, err
+	}
+	meta := make([]string, 0, len(respWrapper.Data))
+	for k, v := range respWrapper.Data {
+		doc := providedMetricMetadata{
+			Name:     k,
+			Metadata: v,
+		}
+		jdoc, err := json.Marshal(doc)
+		if err != nil {
+			return nil, err
+		}
+		meta = append(meta, string(jdoc))
+	}
+	return meta, nil
+}
+
+func (s *Service) labelMetadata(ctx context.Context, i *instance, pluginCtx backend.PluginContext) ([]string, error) {
+	resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
+		PluginContext: pluginCtx,
+		Path:          "/api/v1/labels",
+	})
+	if err != nil {
+		return nil, err
+	}
+	respWrapper := promResponseWrapper[promLabels]{}
+	err = json.Unmarshal(resp.Body, &respWrapper)
+	if err != nil {
+		return nil, err
+	}
+	meta := make([]string, 0, len(respWrapper.Data))
+	for _, lab := range respWrapper.Data {
+		resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
+			PluginContext: pluginCtx,
+			Path:          "/api/v1/label/" + lab + "/values",
+		})
+		if err != nil {
+			return nil, err
+		}
+		respWrapper := promResponseWrapper[promLabelValues]{}
+		err = json.Unmarshal(resp.Body, &respWrapper)
+		if err != nil {
+			return nil, err
+		}
+		doc := providedLabelMetadata{
+			Name:   lab,
+			Values: respWrapper.Data,
+		}
+		jdoc, err := json.Marshal(doc)
+		if err != nil {
+			return nil, err
+		}
+		meta = append(meta, string(jdoc))
+	}
+	return meta, nil
 }
 
 // ProvideMetadata implements the backend plugin metadata interface (backend.MetadataHandler).
@@ -155,33 +232,18 @@ func (s *Service) ProvideMetadata(ctx context.Context, req *backend.ProvideMetad
 	if err != nil {
 		return nil, err
 	}
-	resp, err := i.resource.Execute(ctx, &backend.CallResourceRequest{
-		PluginContext: req.PluginContext,
-		Path:          "/api/v1/metadata",
-	})
+	metricMetadata, err := s.metricMetadata(ctx, i, req.PluginContext)
 	if err != nil {
 		return nil, err
 	}
-	respWrapper := metadataResponseWrapper{}
-	err = json.Unmarshal(resp.Body, &respWrapper)
+	labelMetadata, err := s.labelMetadata(ctx, i, req.PluginContext)
 	if err != nil {
 		return nil, err
-	}
-	pm := make([]string, 0, len(respWrapper.Data))
-	for k, v := range respWrapper.Data {
-		doc := providedMetricMetadata{
-			Name:     k,
-			Metadata: v,
-		}
-		jdoc, err := json.Marshal(doc)
-		if err != nil {
-			return nil, err
-		}
-		pm = append(pm, string(jdoc))
 	}
 	return &backend.ProvideMetadataResponse{
 		Metadata: map[string][]string{
-			"metrics": pm,
+			"metrics": metricMetadata,
+			"labels":  labelMetadata,
 		},
 	}, nil
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"math"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -227,44 +228,53 @@ func (s *Service) addNewMetadata(ctx context.Context, client vector.VectorClient
 	// TODO: batch this so we don't try to process every single piece of metadata in memory at once.
 	// IDs are just hashes of the payload
 	logger.Debug("adding metadata", "collection", collection, "count", len(allMetadata))
-	ids := make([]uint64, 0)
-	embeddings := make([][]float32, 0)
-	payloads := make([]string, 0)
-	for _, metadata := range allMetadata {
-		hash := fnv.New64a()
-		hash.Write([]byte(metadata))
-		id := hash.Sum64()
-		// TODO: can we do this call in a batch?
-		// or does it return 404 if _any_ don't exist?
-		// Answer: looks like we can for qdrant at least, the returned array
-		// just returns any found IDs.
-		if exists, err := client.PointExists(ctx, collection, id); err != nil {
-			logger.Warn("check vector exists", "collection", collection, "id", id, "err", err)
-			continue
-		} else if exists {
-			logger.Debug("vector already exists, skipping", "collection", collection, "id", id, "err", err)
-			continue
-		}
-		// If we're here, we have some new metadata to add.
-		logger.Debug("getting embeddings for metadata", "collection", collection, "metadata", metadata)
-		// TODO: we could batch this as well.
-		e, err := s.llmClient.Embeddings(ctx, metadata)
-		if err != nil {
-			logger.Warn("get embeddings", "collection", collection, "err", err)
-			continue
-		}
-		ids = append(ids, id)
-		embeddings = append(embeddings, e)
-		payloads = append(payloads, metadata)
-	}
-	if len(ids) == 0 {
+	chunkSize := 100
+	if len(allMetadata) == 0 {
 		logger.Debug("no new embeddings to add")
 		return nil
 	}
-	logger.Debug("adding embeddings to vector DB", "collection", collection, "count", len(embeddings))
-	err := client.UpsertColumnar(ctx, collection, ids, embeddings, payloads)
-	if err != nil {
-		return fmt.Errorf("upsert columnar: %w", err)
+	for i := 0; i < len(allMetadata); i += chunkSize {
+		chunk := allMetadata[i:int(math.Min(float64(i+chunkSize), float64(len(allMetadata))))]
+		ids := make([]uint64, 0)
+		embeddings := make([][]float32, 0)
+		payloads := make([]string, 0)
+		for j, metadata := range chunk {
+			hash := fnv.New64a()
+			hash.Write([]byte(metadata))
+			id := hash.Sum64()
+			// TODO: can we do this call in a batch?
+			// or does it return 404 if _any_ don't exist?
+			// Answer: looks like we can for qdrant at least, the returned array
+			// just returns any found IDs.
+			if exists, err := client.PointExists(ctx, collection, id); err != nil {
+				logger.Warn("check vector exists", "collection", collection, "id", id, "err", err)
+				continue
+			} else if exists {
+				logger.Debug("vector already exists, skipping", "collection", collection, "id", id, "err", err)
+				continue
+			}
+			// If we're here, we have some new metadata to add.
+			logger.Debug("getting embeddings for metadata", "collection", collection, "metadata", metadata, "index", i+j, "count", len(allMetadata))
+			// TODO: we could batch this as well.
+			e, err := s.llmClient.Embeddings(ctx, metadata)
+			if err != nil {
+				logger.Warn("get embeddings", "collection", collection, "err", err)
+				continue
+			}
+			ids = append(ids, id)
+			embeddings = append(embeddings, e)
+			payloads = append(payloads, metadata)
+
+		}
+		if len(ids) == 0 {
+			logger.Debug("no new embeddings to add")
+			continue
+		}
+		logger.Debug("adding embeddings to vector DB", "collection", collection, "count", len(embeddings))
+		err := client.UpsertColumnar(ctx, collection, ids, embeddings, payloads)
+		if err != nil {
+			return fmt.Errorf("upsert columnar: %w", err)
+		}
 	}
 	return nil
 }

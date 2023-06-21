@@ -65,10 +65,12 @@ export function LLMQueryEditor<
   datasource: { uid: datasourceUid, type: datasourceType },
 }: LLMQueryEditorProps<T, M, Q, O, QIC>): JSX.Element {
   const [query, setQuery] = useState('');
+  const [usedSystemPrompt, setUsedSystemPrompt] = useState('');
   const [state, onSubmit] = useAsyncFn(
     async ({ userPrompt }: { userPrompt: string }) => {
       if (createPrompt !== undefined) {
         const metadata = await llmSrv.relatedMetadata<M>({
+          type: 'datasource',
           datasourceUid,
           datasourceType,
           text: userPrompt,
@@ -77,6 +79,7 @@ export function LLMQueryEditor<
         systemPrompt = createPrompt(metadata);
       }
       console.log(systemPrompt);
+      setUsedSystemPrompt(systemPrompt);
       const returnedMessage = await llmSrv.chatCompletions({
         messages: [
           { role: 'system', content: systemPrompt },
@@ -103,12 +106,24 @@ export function LLMQueryEditor<
           );
         }}
       </Form>
+      <br />
       {state.loading ? (
         <Spinner />
       ) : state.error ? (
         <div>Something went wrong! Error: {state.error.message}</div>
       ) : (
-        query !== '' && <div>{query}</div>
+        <>
+          {query !== '' && <div>
+            <h3>Returned query</h3>
+            <pre>{query}</pre>
+          </div>
+          }
+          {usedSystemPrompt !== '' && <div>
+            <h3>System prompt</h3>
+            <pre>{usedSystemPrompt}</pre>
+          </div>
+          }
+        </>
       )}
     </div>
   );

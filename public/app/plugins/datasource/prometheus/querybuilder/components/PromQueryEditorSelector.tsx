@@ -160,9 +160,9 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
           />
         )}
         {editorMode === QueryEditorMode.Natural_language && llmSrv.isEnabled && (
-          <LLMQueryEditor<PrometheusDatasource, 'metrics', PromQuery, PromOptions>
+          <LLMQueryEditor<PrometheusDatasource, 'metrics' | 'labels', PromQuery, PromOptions>
             systemPrompt="You are a helpful assistant who is an expert in PromQL. Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text."
-            createPrompt={({ metrics }) => generatePrompt(metrics)}
+            createPrompt={({ metrics, labels }) => generatePrompt(metrics, labels)}
             onChange={(expr) => onChangeInternal({ ...query, expr })}
             datasource={props.datasource}
             llmSrv={llmSrv}
@@ -186,6 +186,11 @@ interface PromMetricMetadata {
   unit: string;
 }
 
+interface PromLabel {
+  name: string;
+  values: string[];
+}
+
 const generateMetricsPrompt = (metrics: string[]): string => {
   const metricExamples = metrics.map((metricJSON) => {
     const metric = JSON.parse(metricJSON) as unknown as PromMetric;
@@ -193,7 +198,8 @@ const generateMetricsPrompt = (metrics: string[]): string => {
       return ''
     }
     const firstMeta = metric.metadata[0];
-    return `* ${metric.name} (${firstMeta.type}) - ${firstMeta.help}\n`;
+    const name = firstMeta.type === 'counter' ? `${metric.name}_total` : metric.name;
+    return `* ${name} (${firstMeta.type}) - ${firstMeta.help}\n`;
   }).join('');
   return `Here are some example metrics you can use in your query:
 
@@ -201,11 +207,26 @@ ${metricExamples}
 `
 }
 
-const generatePrompt = (metrics?: string[]): string => {
+const generateLabelsPrompt = (labels: string[]): string => {
+  const labelExamples = labels.map((labelJSON) => {
+    const label = JSON.parse(labelJSON) as unknown as PromLabel;
+    if (label.values.length === 0) {
+      return ''
+    }
+    const values = label.values.join(', ');
+    return `* ${label.name}: (${values})\n`;
+  }).join('');
+  return `Here are some example labels and values you can use in your query:
+
+${labelExamples}
+`
+}
+const generatePrompt = (metrics?: string[], labels?: string[]): string => {
   const metricsPrompt = metrics === undefined ? '' : generateMetricsPrompt(metrics);
+  const labelsPrompt = labels === undefined ? '' : generateLabelsPrompt(labels);
   return `You are a helpful assistant who is an expert in PromQL.
 
-${metricsPrompt}Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text.`
+${metricsPrompt}${labelsPrompt}Generate a PromQL query to answer the following question, answering with just the query itself and no surrounding text.`
 }
 
 PromQueryEditorSelector.displayName = 'PromQueryEditorSelector';

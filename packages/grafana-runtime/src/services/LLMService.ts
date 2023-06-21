@@ -45,7 +45,11 @@ export type LLMChatCompletionsRequest = LLMRequestCommonOptions & {
   messages: LLMChatCompletionsMessage[];
 };
 
+export type LLMRelatedMetadataRequestTypeDatasource = 'datasource';
+export type LLMRelatedMetadataRequestTypeGrafana = 'grafana';
+
 export interface LLMRelatedMetadataRequest {
+  type: LLMRelatedMetadataRequestTypeDatasource | LLMRelatedMetadataRequestTypeGrafana;
   datasourceType: string;
   datasourceUid: string;
   text: string;
