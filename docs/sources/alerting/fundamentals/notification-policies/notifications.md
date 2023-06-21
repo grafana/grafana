@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../notifications/
-description: Notifications
+description: Notification policies
 keywords:
   - grafana
   - alerting
@@ -13,7 +13,7 @@ title: Notification policies
 weight: 410
 ---
 
-# Notification Policies
+# Notification policies
 
 Notification policies provide you with a flexible way of routing alerts to various different receivers. Using label matchers, you can modify alert notification delivery without having to update every individual alert rule.
 
