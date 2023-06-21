@@ -144,7 +144,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
               </li>
               {azureAuthIsSupported && (
                 <li>
-                  <i>Azure Authentication</i> JEV: TODO DESCRIPTION
+                  <i>Azure Authentication</i> Securely authenticate and access Azure resources and applications using
+                  Azure AD credentials - Managed Service Identity and Client Secret Credentials are supported.
                 </li>
               )}
             </ul>
