@@ -43,17 +43,6 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             ],
           },
         })
-        .addSliderInput({
-          path: 'pointSize.fixed',
-          name: 'Point size',
-          defaultValue: cfg.pointSize?.fixed,
-          settings: {
-            min: 1,
-            max: 100,
-            step: 1,
-          },
-          showIf: (c) => c.show !== ScatterShow.Lines,
-        })
         .addGenericEditor(
           {
             path: 'pointSymbol',
@@ -73,6 +62,17 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           },
           SymbolEditor // ResourceDimensionEditor
         )
+        .addSliderInput({
+          path: 'pointSize.fixed',
+          name: 'Point size',
+          defaultValue: cfg.pointSize?.fixed,
+          settings: {
+            min: 1,
+            max: 100,
+            step: 1,
+          },
+          showIf: (c) => c.show !== ScatterShow.Lines,
+        })
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
