@@ -1,7 +1,6 @@
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isFunction } from 'lodash';
 
 import { forbiddenElements } from './constants';
-import { isFunction } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.

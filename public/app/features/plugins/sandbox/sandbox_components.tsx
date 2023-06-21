@@ -1,9 +1,10 @@
+import { isFunction } from 'lodash';
 import React, { ComponentType, FC } from 'react';
 
 import { PluginConfigPage, PluginExtensionConfig, PluginMeta } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
-import { isFunction, isSandboxedPluginObject } from './utils';
+import { isSandboxedPluginObject } from './utils';
 
 /**
  * Plugins must render their components inside a div with a `data-plugin-sandbox` attribute
