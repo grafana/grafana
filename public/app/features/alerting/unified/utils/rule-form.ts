@@ -168,7 +168,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         condition: ga.condition,
         annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(rule.annotations, false)),
         labels: listifyLabelsOrAnnotations(rule.labels, true),
-        folder: { title: namespace, id: ga.namespace_id },
+        folder: { title: namespace, uid: ga.namespace_uid },
         isPaused: ga.is_paused,
       };
     } else {
