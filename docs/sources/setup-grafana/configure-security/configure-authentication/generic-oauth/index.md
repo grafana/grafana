@@ -1,17 +1,17 @@
 ---
 aliases:
   - ../../../auth/generic-oauth/
-description: Configure generic OAuth authentication
+description: Configure generic OAuth2 authentication
 keywords:
   - grafana
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth authentication
+title: Configure generic OAuth2 authentication
 weight: 200
 ---
 
-# Configure generic OAuth authentication
+# Configure generic OAuth2 authentication
 
 Grafana has specialised OAuth2 integrations for the following auth providers:
 
@@ -33,16 +33,18 @@ Follow these steps to integrate your OAuth provider with Grafana:
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
 1. Update `[auth.generic_oauth]` section of Grafana configuration file with details from you OAuth2 app. You must specify the following configuration options:
 
-- `enabled`
-- `client_id`
-- `client_secret`
-- `auth_url`
-- `token_url`
-- `api_url`
+   - `enabled`
+   - `client_id`
+   - `client_secret`
+   - `auth_url`
+   - `token_url`
+   - `api_url`
 
 1. (Optional) Look at the list of optional Grafana general OAuth configuration options and fill in the desired ones.
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
 1. (Optional) Configure [team synchronization]({{< relref "#team-synchronization" >}}).
+1. Restart Grafana. You should now see a generic OAuth login button
+   on the login page and be able to login or sign up with your OAuth provider.
 
 Continue reading this documentation to learn more about [configuring your OAuth2 app]({{< relref "#configuring-your-oauth2-app" >}}) and [configuring Grafana]({{< relref "#configuring-grafana" >}}).
 
@@ -126,12 +128,11 @@ The table below describes all generic OAuth configuration options. Continue read
 | `allowed_groups`             | No       | List of comma- or space-separated groups. User should be a member of at least one group to log in.                                                                                             |                 |
 | `allowed_organizations`      | No       | List of comma- or space-separated organizations. User should be a member of at least one organization to log in.                                                                               |                 |
 | `allowed_domains`            | No       | List of comma- or space-separated domains. User should belong to at least one domain to log in.                                                                                                |                 |
-| `team_ids`                   | No       | String list of Grafana team IDs. If set, a user has to be a member of one of the given teams to log in. Used together with `teams_url` and `team_ids_attribute_path`.                          |                 |
+| `team_ids`                   | No       | String list of team IDs. If set, user has to be a member of one of the given teams to log in. Used together with `teams_url` and `team_ids_attribute_path`.                                    |                 |
 | `team_ids_attribute_path`    | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana team ID lookup within the results returned by `teams_url` endpoint. Used together with `team_ids` and `teams_url`. |                 |
 | `teams_url`                  | No       | URL used to query for team IDs. If not set, defaults to `/teams`. Used together with `team_ids` and `team_ids_attribute_path`.                                                                 |                 |
 | `tls_skip_verify_insecure`   | No       | If set to `true`, client will not verify the server's certificate chain and host name. Should only be set to `true` for testing purposes.                                                      | `false`         |
 | `tls_client_cert`            | No       | Path of the certificate.                                                                                                                                                                       |                 |
-| `tls_client_cert`            | No       | Path to the certificate.                                                                                                                                                                       |                 |
 | `tls_client_key`             | No       | Path to the key.                                                                                                                                                                               |                 |
 | `tls_client_ca`              | No       | Path to the trusted certificate authority list.                                                                                                                                                |                 |
 | `use_pkce`                   | No       | Set to `true` to use "proof key for code exchange" (PKCE).                                                                                                                                     | `false`         |
@@ -220,8 +221,6 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
 
 ### Configure refresh token
 
-> Available in Grafana v9.3 and later versions.
-
 > **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
@@ -253,7 +252,7 @@ skip_org_role_sync = true
 
 ## Role Mapping
 
-Unless [`skip_org_role_sync` option]({{< relref "#skip-organization-role-sync" >}}) is specified, users role will be set to the role obtained from the auth provider upon user login.
+Unless [`skip_org_role_sync` option]({{< relref "#skip-organization-role-sync" >}}) is specified, user's role will be set to the role obtained from the auth provider upon user login.
 User role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
 Grafana determines a user's role by following the steps below until it finds a role:
 
@@ -336,8 +335,6 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(in
 ```
 
 #### Map server administrator privileges
-
-> Available in Grafana v9.2 and later versions.
 
 If the application role received by Grafana is `GrafanaAdmin`, Grafana grants the user server administrator privileges.  
 This is useful if you want to grant server administrator privileges to a subset of users.  
