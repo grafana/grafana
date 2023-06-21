@@ -18,6 +18,7 @@ import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource
 import { isPromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
+import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
@@ -278,10 +279,20 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isGrafanaManagedType && (
         <Stack direction="column">
           {/* Data Queries */}
-          <div className={styles.mutedText}>
-            Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
-            threshold that an alert rule must meet or exceed in order to fire.
-          </div>
+          <Stack direction="row" gap={1} alignItems="baseline">
+            <div className={styles.mutedText}>
+              Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
+              threshold that an alert rule must meet or exceed in order to fire.
+            </div>
+
+            <NeedHelpInfo
+              contentText={`An alert rule consists of one or more queries and expressions that select the data you want to measure.
+          Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire.
+          For more information on queries and expressions, see Query and transform data.`}
+              externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
+              linkText={`Read about query and condition`}
+            />
+          </Stack>
 
           <QueryEditor
             queries={dataQueries}
@@ -389,5 +400,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   addQueryButton: css`
     width: fit-content;
+  `,
+  helpInfo: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-left: ${theme.spacing(1)};
+    font-size: ${theme.typography.size.sm};
+    cursor: pointer;
+  `,
+  helpInfoText: css`
+    margin-left: ${theme.spacing(0.5)};
+    text-decoration: underline;
+  `,
+  infoLink: css`
+    color: ${theme.colors.text.link};
   `,
 });
