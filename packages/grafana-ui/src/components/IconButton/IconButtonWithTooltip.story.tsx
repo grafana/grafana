@@ -7,19 +7,12 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
+import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
-import { basicArgs } from './IconButton.story';
 
 interface ScenarioProps {
   background: 'canvas' | 'primary' | 'secondary';
 }
-
-const argsWithTooltip: BasePropsWithTooltip = {
-  ...basicArgs,
-  tooltip: 'sample tooltip message',
-  tooltipPlacement: 'top',
-};
 
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton/IconButton with Tooltip',
@@ -30,7 +23,14 @@ const meta: Meta<typeof IconButton> = {
       page: mdx,
     },
   },
-  args: argsWithTooltip,
+  args: {
+    name: 'apps',
+    size: 'md',
+    iconType: 'default',
+    tooltip: 'sample tooltip message',
+    tooltipPlacement: 'top',
+    variant: 'secondary',
+  },
   argTypes: {
     tooltip: {
       control: 'text',

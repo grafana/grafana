@@ -7,30 +7,12 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import {
-  BaseProps,
-  BasePropsWithAriaLabel,
-  IconButton,
-  IconButtonVariant,
-  Props as IconButtonProps,
-} from './IconButton';
+import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
 interface ScenarioProps {
   background: 'canvas' | 'primary' | 'secondary';
 }
-
-export const basicArgs: BaseProps = {
-  name: 'apps',
-  size: 'md',
-  iconType: 'default',
-  variant: 'secondary',
-};
-
-const argsWithoutTooltip: BasePropsWithAriaLabel = {
-  ...basicArgs,
-  ['aria-label']: 'sample aria-label content',
-};
 
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton/IconButton without Tooltip',
@@ -41,7 +23,13 @@ const meta: Meta<typeof IconButton> = {
       page: mdx,
     },
   },
-  args: argsWithoutTooltip,
+  args: {
+    name: 'apps',
+    size: 'md',
+    iconType: 'default',
+    variant: 'secondary',
+    ['aria-label']: 'sample aria-label content',
+  },
 };
 
 export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
