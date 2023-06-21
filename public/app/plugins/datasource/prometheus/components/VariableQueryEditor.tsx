@@ -270,13 +270,13 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
           <InlineField
             label="Metric regex"
             labelWidth={20}
-            aria-labelledby="names-regex-select"
-            tooltip={<div>Returns a list of labels matching the specified metric regex.</div>}
+            aria-labelledby="Metric regex"
+            tooltip={<div>Returns a list of label names, optionally filtering by specified metric regex.</div>}
           >
             <Input
               type="text"
-              aria-label="names-regex-select"
-              placeholder="Label names regex"
+              aria-label="Metric regex"
+              placeholder="Metric regex"
               value={labelNamesMatch}
               onBlur={(event) => {
                 setLabelNamesMatch(event.currentTarget.value);

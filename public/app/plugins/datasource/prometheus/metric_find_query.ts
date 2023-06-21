@@ -5,7 +5,6 @@ import { map } from 'rxjs/operators';
 import { MetricFindValue, TimeRange } from '@grafana/data';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { addLabelToQuery } from './add_label_to_query';
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import {
