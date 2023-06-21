@@ -377,6 +377,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			logger.Error("Failed to save alert state", "labels", s.Labels.String(), "state", s.State, "error", err)
 		}
 	}
+	logger.Debug("Saving alert states done", "count", len(states))
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
