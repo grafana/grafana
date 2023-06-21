@@ -37,7 +37,7 @@ composableKinds: DataQuery: {
 				legendFormat?: string
 				// Used to limit the number of log rows returned.
 				maxLines?: int64
-				// Used to scale the interval value.
+				// @deprecated, now use step.
 				resolution?: int64
 				editorMode?: #QueryEditorMode
 				// @deprecated, now use queryType.
