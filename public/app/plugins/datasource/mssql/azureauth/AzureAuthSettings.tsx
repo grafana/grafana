@@ -48,7 +48,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
 
   return (
     <>
-      <h6>Azure authentication</h6>
+      {/* <h6>Azure authentication</h6> */}
       <AzureCredentialsForm
         managedIdentityEnabled={managedIdentityEnabled}
         credentials={credentials}

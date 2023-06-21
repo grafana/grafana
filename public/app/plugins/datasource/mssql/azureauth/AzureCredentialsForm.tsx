@@ -166,15 +166,18 @@ export const AzureCredentialsForm = (props: Props) => {
   // };
 
   return (
-    <div className="gf-form-group">
+    <div
+    // className="gf-form-group"
+    >
       {managedIdentityEnabled && (
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineFormLabel className="width-12" tooltip="Choose the type of authentication to Azure services">
+            <InlineFormLabel tooltip="Choose the type of authentication to Azure services">
               Authentication
             </InlineFormLabel>
             <Select
-              className="width-15"
+              // className="width-15"
+              // width={20}
               value={authTypeOptions.find((opt) => opt.value === credentials.authType)}
               options={authTypeOptions}
               onChange={onAuthTypeChange}
@@ -192,7 +195,7 @@ export const AzureCredentialsForm = (props: Props) => {
                   Azure Cloud
                 </InlineFormLabel>
                 <Select
-                  className="width-15"
+                  // className="width-15"
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
                   onChange={onAzureCloudChange}

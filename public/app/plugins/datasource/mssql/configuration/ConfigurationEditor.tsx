@@ -271,7 +271,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         ) : null}
       </FieldSet>
 
-      {azureAuthIsSupported && (
+      {azureAuthIsSupported && jsonData.authenticationType === MSSQLAuthenticationType.azureAuth && (
         <FieldSet label="Azure Authentication Settings">
           {/* <div className="gf-form-inline">
             <InlineField
