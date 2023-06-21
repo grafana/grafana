@@ -604,8 +604,7 @@ const prepConfig = (
     isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    min: xField.config.min,
-    max: xField.config.max,
+    range: (u, dataMin, dataMax) => [xField.config.min ?? dataMin, xField.config.max ?? dataMax],
   });
 
   // why does this fall back to '' instead of null or undef?

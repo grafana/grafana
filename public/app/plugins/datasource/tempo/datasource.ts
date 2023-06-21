@@ -26,7 +26,7 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { BarGaugeDisplayMode, TableCellDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@grafana/schema';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
@@ -353,7 +353,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
     return {
       ...expandedQuery,
-      query: this.templateSrv.replace(query.query ?? '', scopedVars),
+      query: this.templateSrv.replace(query.query ?? '', scopedVars, VariableFormatID.Pipe),
       serviceName: this.templateSrv.replace(query.serviceName ?? '', scopedVars),
       spanName: this.templateSrv.replace(query.spanName ?? '', scopedVars),
       search: this.templateSrv.replace(query.search ?? '', scopedVars),

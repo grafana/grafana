@@ -5,7 +5,7 @@ keywords:
   - alerting
   - rules
 title: Alert rules
-weight: 101
+weight: 105
 ---
 
 # Alert rules

@@ -1,6 +1,6 @@
 import {
   getHighlighterExpressionsFromQuery,
-  getNormalizedLokiQuery,
+  getLokiQueryType,
   isLogsQuery,
   isQueryWithLabelFormat,
   isQueryWithParser,
@@ -11,6 +11,7 @@ import {
   requestSupportsSplitting,
   isQueryWithDistinct,
   isQueryWithRangeVariable,
+  getNormalizedLokiQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -116,50 +117,69 @@ describe('getHighlighterExpressionsFromQuery', () => {
 });
 
 describe('getNormalizedLokiQuery', () => {
-  function expectNormalized(inputProps: Object, outputQueryType: LokiQueryType) {
-    const input: LokiQuery = { refId: 'A', expr: 'test1', ...inputProps };
+  it('removes deprecated instant property', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', instant: true };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: outputQueryType });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant });
+  });
+
+  it('removes deprecated range property', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true };
+    const output = getNormalizedLokiQuery(input);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+  });
+
+  it('removes deprecated range and instant properties if query with queryType', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true, instant: false, queryType: LokiQueryType.Range };
+    const output = getNormalizedLokiQuery(input);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+  });
+});
+describe('getLokiQueryType', () => {
+  function expectCorrectQueryType(inputProps: Object, outputQueryType: LokiQueryType) {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', ...inputProps };
+    const output = getLokiQueryType(input);
+    expect(output).toStrictEqual(outputQueryType);
   }
 
   it('handles no props case', () => {
-    expectNormalized({}, LokiQueryType.Range);
+    expectCorrectQueryType({}, LokiQueryType.Range);
   });
 
   it('handles old-style instant case', () => {
-    expectNormalized({ instant: true, range: false }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false }, LokiQueryType.Instant);
   });
 
   it('handles old-style range case', () => {
-    expectNormalized({ instant: false, range: true }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true }, LokiQueryType.Range);
   });
 
   it('handles new+old style instant', () => {
-    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: true, range: false, queryType: LokiQueryType.Range }, LokiQueryType.Range);
   });
 
   it('handles new+old style range', () => {
-    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: false, range: true, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
 
   it('handles new<>old conflict (new wins), range', () => {
-    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true, queryType: LokiQueryType.Range }, LokiQueryType.Range);
   });
 
   it('handles new<>old conflict (new wins), instant', () => {
-    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
 
   it('handles invalid new, range', () => {
-    expectNormalized({ queryType: 'invalid' }, LokiQueryType.Range);
+    expectCorrectQueryType({ queryType: 'invalid' }, LokiQueryType.Range);
   });
 
   it('handles invalid new, when old-range exists, use old', () => {
-    expectNormalized({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
   });
 
   it('handles invalid new, when old-instant exists, use old', () => {
-    expectNormalized({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
   });
 });
 
