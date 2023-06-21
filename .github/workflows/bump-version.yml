@@ -66,11 +66,6 @@ jobs:
         with:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: Check if token exists
-        id: check-if-token-exists
-        if: ${{ steps.generate_token.outputs.token != '' }}
-        run: |
-          echo "token present"
       - name: Run bump version (manually invoked)
         uses: ./actions/bump-version
         with:
