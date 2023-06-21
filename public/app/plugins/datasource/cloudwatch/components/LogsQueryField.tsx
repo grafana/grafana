@@ -13,7 +13,6 @@ import {
   TypeaheadOutput,
   withTheme2,
 } from '@grafana/ui';
-import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
@@ -30,7 +29,7 @@ export interface CloudWatchLogsQueryFieldProps
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  exploreId: ExploreId;
+  exploreId: string;
   query: CloudWatchLogsQuery;
 }
 const plugins: Array<Plugin<Editor>> = [

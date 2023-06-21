@@ -1,26 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 
-import { ExploreId, ExploreState, StoreState } from 'app/types';
+import { ExploreItemState, StoreState } from 'app/types';
 
 export const selectPanes = (state: Pick<StoreState, 'explore'>) => state.explore.panes;
 
-/**
- * Explore renders panes by iterating over the panes object. This selector ensures that entries in the returned panes object
- * are in the correct order.
- */
-export const selectOrderedExplorePanes = createSelector(selectPanes, (panes) => {
-  const orderedPanes: ExploreState['panes'] = {};
+export const selectPanesEntries = createSelector<
+  [(state: Pick<StoreState, 'explore'>) => Record<string, ExploreItemState | undefined>],
+  Array<[string, ExploreItemState]>
+>(selectPanes, Object.entries);
 
-  if (panes.left) {
-    orderedPanes.left = panes.left;
-  }
-  if (panes.right) {
-    orderedPanes.right = panes.right;
-  }
-  return orderedPanes;
-});
+export const isSplit = createSelector(selectPanesEntries, (panes) => panes.length > 1);
 
-export const isSplit = createSelector(selectPanes, (panes) => Object.keys(panes).length > 1);
-
-export const getExploreItemSelector = (exploreId: ExploreId) =>
-  createSelector(selectPanes, (panes) => panes[exploreId]);
+export const getExploreItemSelector = (exploreId: string) => createSelector(selectPanes, (panes) => panes[exploreId]);

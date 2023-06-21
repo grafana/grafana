@@ -7,7 +7,6 @@ import { DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
@@ -23,7 +22,7 @@ import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
  * Updates datasource instance before datasource loading has started
  */
 export interface UpdateDatasourceInstancePayload {
-  exploreId: ExploreId;
+  exploreId: string;
   datasourceInstance: DataSourceApi;
   history: HistoryItem[];
 }
@@ -39,7 +38,7 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
  * Loads a new datasource identified by the given name.
  */
 export function changeDatasource(
-  exploreId: ExploreId,
+  exploreId: string,
   datasource: string | DataSourceRef,
   options?: { importQueries: boolean }
 ): ThunkResult<Promise<void>> {

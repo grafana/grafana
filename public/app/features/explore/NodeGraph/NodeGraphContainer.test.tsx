@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { getDefaultTimeRange, MutableDataFrame } from '@grafana/data';
-import { ExploreId } from 'app/types';
 
 import { UnconnectedNodeGraphContainer } from './NodeGraphContainer';
 
@@ -11,7 +10,7 @@ describe('NodeGraphContainer', () => {
     const { container } = render(
       <UnconnectedNodeGraphContainer
         dataFrames={[emptyFrame]}
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         range={getDefaultTimeRange()}
         splitOpenFn={() => {}}
         withTraceView={true}
@@ -27,7 +26,7 @@ describe('NodeGraphContainer', () => {
     const { container } = render(
       <UnconnectedNodeGraphContainer
         dataFrames={[nodes]}
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         range={getDefaultTimeRange()}
         splitOpenFn={() => {}}
         datasourceType={''}

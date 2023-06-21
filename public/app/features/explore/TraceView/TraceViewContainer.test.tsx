@@ -5,7 +5,6 @@ import { Provider } from 'react-redux';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ExploreId } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 
@@ -31,7 +30,7 @@ function renderTraceViewContainer(frames = [frameOld]) {
   const { container, baseElement } = render(
     <Provider store={store}>
       <TraceViewContainer
-        exploreId={ExploreId.left}
+        exploreId="left"
         dataFrames={frames}
         splitOpenFn={() => {}}
         queryResponse={mockPanelData}

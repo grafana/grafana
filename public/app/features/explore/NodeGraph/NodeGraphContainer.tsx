@@ -9,7 +9,7 @@ import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
-import { ExploreId, StoreState } from '../../../types';
+import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -23,7 +23,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 interface OwnProps {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
-  exploreId: ExploreId;
+  exploreId: string;
   // When showing the node graph together with trace view we do some changes so it works better.
   withTraceView?: boolean;
   datasourceType: string;

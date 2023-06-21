@@ -7,7 +7,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
-import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
+import { ExploreItemState, ExploreState } from '../../../types';
 
 import { exploreReducer, navigateToExplore, splitClose } from './main';
 
@@ -117,36 +117,6 @@ describe('navigateToExplore', () => {
 describe('Explore reducer', () => {
   describe('split view', () => {
     describe('split close', () => {
-      it('should move right pane to left when left is closed', () => {
-        const leftItemMock = {
-          containerWidth: 100,
-        } as unknown as ExploreItemState;
-
-        const rightItemMock = {
-          containerWidth: 200,
-        } as unknown as ExploreItemState;
-
-        const initialState = {
-          panes: {
-            left: leftItemMock,
-            right: rightItemMock,
-          },
-        } as unknown as ExploreState;
-
-        // closing left item
-        reducerTester<ExploreState>()
-          .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitClose(ExploreId.left))
-          .thenStateShouldEqual({
-            evenSplitPanes: true,
-            largerExploreId: undefined,
-            panes: {
-              left: rightItemMock,
-            },
-            maxedExploreId: undefined,
-            syncedTimes: false,
-          } as unknown as ExploreState);
-      });
       it('should reset right pane when it is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
@@ -166,7 +136,7 @@ describe('Explore reducer', () => {
         // closing left item
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitClose(ExploreId.right))
+          .whenActionIsDispatched(splitClose('right'))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             largerExploreId: undefined,
@@ -193,7 +163,7 @@ describe('Explore reducer', () => {
 
         reducerTester<ExploreState>()
           .givenReducer(exploreReducer, initialState)
-          .whenActionIsDispatched(splitClose(ExploreId.right))
+          .whenActionIsDispatched(splitClose('right'))
           .thenStateShouldEqual({
             evenSplitPanes: true,
             panes: {

@@ -134,7 +134,6 @@ export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries: query.queries,
-    context: 'explore',
   };
 
   const serializedState = serializeStateToUrlParam(exploreState);

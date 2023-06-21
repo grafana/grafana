@@ -1,30 +1,25 @@
 import { identity, isEmpty, isEqual, isObject, mapValues, omitBy } from 'lodash';
 import { useEffect, useRef } from 'react';
 
-import {
-  CoreApp,
-  serializeStateToUrlParam,
-  ExploreUrlState,
-  isDateTime,
-  TimeRange,
-  RawTimeRange,
-  DataSourceApi,
-} from '@grafana/data';
+import { CoreApp, ExploreUrlState, isDateTime, TimeRange, RawTimeRange, DataSourceApi } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { clearQueryKeys, getLastUsedDatasourceUID, parseUrlState } from 'app/core/utils/explore';
+import { clearQueryKeys, getLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { addListener, ExploreId, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
+import { addListener, ExploreItemState, ExploreQueryParams, useDispatch, useSelector } from 'app/types';
 
-import { changeDatasource } from '../state/datasource';
-import { initializeExplore } from '../state/explorePane';
-import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../state/main';
-import { runQueries, setQueriesAction } from '../state/query';
-import { selectPanes } from '../state/selectors';
-import { changeRangeAction, updateTime } from '../state/time';
-import { DEFAULT_RANGE } from '../state/utils';
-import { withUniqueRefIds } from '../utils/queries';
+import { changeDatasource } from '../../state/datasource';
+import { initializeExplore } from '../../state/explorePane';
+import { clearPanes, splitClose, splitOpen, syncTimesAction } from '../../state/main';
+import { runQueries, setQueriesAction } from '../../state/query';
+import { selectPanes } from '../../state/selectors';
+import { changeRangeAction, updateTime } from '../../state/time';
+import { DEFAULT_RANGE } from '../../state/utils';
+import { withUniqueRefIds } from '../../utils/queries';
+import { isFulfilled } from '../utils';
+
+import { parseURL } from './parseURL';
 
 /**
  * Bi-directionally syncs URL changes with Explore's state.
@@ -37,15 +32,15 @@ export function useStateSync(params: ExploreQueryParams) {
     },
   } = useGrafana();
   const dispatch = useDispatch();
-  const statePanes = useSelector(selectPanes);
+  const panesState = useSelector(selectPanes);
   const orgId = useSelector((state) => state.user.orgId);
-  const prevParams = useRef<ExploreQueryParams>(params);
+  const prevParams = useRef(params);
   const initState = useRef<'notstarted' | 'pending' | 'done'>('notstarted');
 
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
     // ie. by clicking on the explore when explore is active.
-    if (!params.left && !params.right) {
+    if (!params.panes) {
       initState.current = 'notstarted';
       prevParams.current = params;
     }
@@ -63,27 +58,32 @@ export function useStateSync(params: ExploreQueryParams) {
             action.type
           ),
         effect: async (_, { cancelActiveListeners, delay, getState }) => {
-          // The following 2 lines will throttle updates to avoid  creating history entries when rapid changes
+          // The following 2 lines will throttle updates to avoid creating history entries when rapid changes
           // are committed to the store.
           cancelActiveListeners();
           await delay(200);
 
-          const panesQueryParams = Object.entries(getState().explore.panes).reduce<Record<string, string>>(
-            (acc, [id, paneState]) => ({ ...acc, [id]: serializeStateToUrlParam(getUrlStateFromPaneState(paneState)) }),
-            {}
-          );
+          const panesQueryParams = Object.entries(getState().explore.panes).reduce((acc, [id, paneState]) => {
+            if (!paneState) {
+              return acc;
+            }
+            return {
+              ...acc,
+              [id]: getUrlStateFromPaneState(paneState),
+            };
+          }, {});
 
-          if (!isEqual(prevParams.current, panesQueryParams)) {
+          if (!isEqual(prevParams.current.panes, JSON.stringify(panesQueryParams))) {
             // If there's no previous state it means we are mounting explore for the first time,
             // in this case we want to replace the URL instead of pushing a new entry to the history.
-            const replace = Object.values(prevParams.current).filter(Boolean).length === 0;
+            const replace =
+              !!prevParams.current.panes && Object.values(prevParams.current.panes).filter(Boolean).length === 0;
 
-            prevParams.current = panesQueryParams;
+            prevParams.current = {
+              panes: JSON.stringify(panesQueryParams),
+            };
 
-            location.partial(
-              { left: panesQueryParams.left, right: panesQueryParams.right, orgId: getState().user.orgId },
-              replace
-            );
+            location.partial({ panes: prevParams.current.panes }, replace);
           }
         },
       })
@@ -94,33 +94,29 @@ export function useStateSync(params: ExploreQueryParams) {
   }, [dispatch, location]);
 
   useEffect(() => {
-    const isURLOutOfSync = prevParams.current?.left !== params.left || prevParams.current?.right !== params.right;
+    const isURLOutOfSync = prevParams.current?.panes !== params.panes;
 
-    const urlPanes = {
-      left: parseUrlState(params.left),
-      ...(params.right && { right: parseUrlState(params.right) }),
-    };
+    const urlState = parseURL(params);
 
     async function sync() {
       // if navigating the history causes one of the time range to not being equal to all the other ones,
       // we set syncedTimes to false to avoid inconsistent UI state.
       // Ideally `syncedTimes` should be saved in the URL.
-      if (Object.values(urlPanes).some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange))) {
+      if (Object.values(urlState.panes).some(({ range }, _, [{ range: firstRange }]) => !isEqual(range, firstRange))) {
         dispatch(syncTimesAction({ syncedTimes: false }));
       }
 
-      for (const [exploreId, urlPane] of Object.entries(urlPanes) as Array<[ExploreId, ExploreUrlState]>) {
+      Object.entries(urlState.panes).forEach(([exploreId, urlPane], i) => {
         const { datasource, queries, range, panelsState } = urlPane;
 
-        const statePane = statePanes[exploreId];
+        const paneState = panesState[exploreId];
 
-        if (statePane !== undefined) {
-          // TODO: the diff contains panelState updates, but we are currently not handling them.
-          const update = urlDiff(urlPane, getUrlStateFromPaneState(statePane));
+        if (paneState !== undefined) {
+          const update = urlDiff(urlPane, getUrlStateFromPaneState(paneState));
 
           Promise.resolve()
             .then(async () => {
-              if (update.datasource) {
+              if (update.datasource && datasource) {
                 await dispatch(changeDatasource(exploreId, datasource));
               }
               return;
@@ -146,20 +142,21 @@ export function useStateSync(params: ExploreQueryParams) {
           dispatch(
             initializeExplore({
               exploreId,
-              datasource,
+              datasource: datasource || '',
               queries: withUniqueRefIds(queries),
               range,
               panelsState,
+              position: i,
             })
           );
         }
-      }
+      });
 
       // Close all the panes that are not in the URL but are still in the store
       // ie. because the user has navigated back after opening the split view.
-      Object.keys(statePanes)
-        .filter((keyInStore) => !Object.keys(urlPanes).includes(keyInStore))
-        .forEach((paneId) => dispatch(splitClose(paneId as ExploreId)));
+      Object.keys(panesState)
+        .filter((keyInStore) => !Object.keys(urlState.panes).includes(keyInStore))
+        .forEach((paneId) => dispatch(splitClose(paneId)));
     }
 
     // This happens when the user first navigates to explore.
@@ -172,11 +169,11 @@ export function useStateSync(params: ExploreQueryParams) {
       dispatch(clearPanes());
 
       Promise.all(
-        Object.entries(urlPanes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
+        Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState }]) => {
           return getPaneDatasource(datasource, queries, orgId, !!exploreMixedDatasource).then(
             async (paneDatasource) => {
               return Promise.resolve(
-                // In theory, given the Grafana datasource will always be present, this should always be defined.
+                // FIXME: In theory, given the Grafana datasource will always be present, this should always be defined.
                 paneDatasource
                   ? queries.length
                     ? // if we have queries in the URL, we use them
@@ -212,7 +209,7 @@ export function useStateSync(params: ExploreQueryParams) {
                 .then((queries) => {
                   return dispatch(
                     initializeExplore({
-                      exploreId: exploreId as ExploreId,
+                      exploreId,
                       datasource: paneDatasource,
                       queries,
                       range,
@@ -224,25 +221,39 @@ export function useStateSync(params: ExploreQueryParams) {
           );
         })
       ).then((panes) => {
-        const urlState = panes.reduce<ExploreQueryParams>((acc, { exploreId, state }) => {
-          return { ...acc, [exploreId]: serializeStateToUrlParam(getUrlStateFromPaneState(state)) };
-        }, {});
-
-        location.partial({ ...urlState, orgId }, true);
+        const newParams = panes.reduce(
+          (acc, { exploreId, state }) => {
+            return {
+              ...acc,
+              panes: {
+                ...acc.panes,
+                [exploreId]: getUrlStateFromPaneState(state),
+              },
+            };
+          },
+          {
+            panes: {},
+          }
+        );
 
         initState.current = 'done';
+
+        location.replace({
+          search: Object.entries({
+            panes: JSON.stringify(newParams.panes),
+            schemaVersion: urlState.schemaVersion,
+            orgId,
+          })
+            .map(([key, value]) => `${key}=${value}`)
+            .join('&'),
+        });
       });
     }
 
-    prevParams.current = {
-      left: params.left,
-    };
-    if (params.right) {
-      prevParams.current.right = params.right;
-    }
+    prevParams.current = params;
 
     isURLOutOfSync && initState.current === 'done' && sync();
-  }, [params.left, params.right, dispatch, statePanes, exploreMixedDatasource, orgId, location]);
+  }, [dispatch, panesState, exploreMixedDatasource, orgId, location, params]);
 }
 
 function getDefaultQuery(ds: DataSourceApi) {
@@ -342,9 +353,6 @@ async function getPaneDatasource(
   );
 }
 
-const isFulfilled = <T>(promise: PromiseSettledResult<T>): promise is PromiseFulfilledResult<T> =>
-  promise.status === 'fulfilled';
-
 /**
  * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
  * side effects needed.
@@ -396,7 +404,7 @@ function pruneObject(obj: object): object | undefined {
   return pruned;
 }
 
-export const toRawTimeRange = (range: TimeRange): RawTimeRange => {
+const toRawTimeRange = (range: TimeRange): RawTimeRange => {
   let from = range.raw.from;
   if (isDateTime(from)) {
     from = from.valueOf().toString(10);

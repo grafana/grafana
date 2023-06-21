@@ -20,12 +20,17 @@ export interface Props {
  * Wrapps component in redux store provider, Router and GrafanaContext
  */
 export function TestProvider(props: Props) {
-  const { store = configureStore(props.storeState), grafanaContext = getGrafanaContextMock(), children } = props;
+  const { store = configureStore(props.storeState), children } = props;
+
+  const context = {
+    ...getGrafanaContextMock(),
+    ...props.grafanaContext,
+  };
 
   return (
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <GrafanaContext.Provider value={grafanaContext}>{children}</GrafanaContext.Provider>
+        <GrafanaContext.Provider value={context}>{children}</GrafanaContext.Provider>
       </Router>
     </Provider>
   );

@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 
 import { ToolbarButton } from '@grafana/ui';
-import { ExploreId, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
 import { AddToDashboardModal } from './AddToDashboardModal';
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 export const AddToDashboard = ({ exploreId }: Props) => {
