@@ -121,7 +121,6 @@ export function TraceView(props: Props) {
       childrenHiddenIDs,
       detailStates,
       hoverIndentGuideIds,
-      shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
       traceID: props.traceProp?.traceID,
     }),
@@ -191,7 +190,6 @@ export function TraceView(props: Props) {
           )}
           <TraceTimelineViewer
             registerAccessors={noop}
-            scrollToFirstVisibleSpan={noop}
             findMatchesIDs={config.featureToggles.newTraceViewHeader ? spanFilterMatches : spanFindMatches}
             trace={traceProp}
             datasourceType={datasourceType}
@@ -207,7 +205,6 @@ export function TraceView(props: Props) {
             expandAll={expandAll}
             expandOne={expandOne}
             childrenToggle={childrenToggle}
-            clearShouldScrollToFirstUiFindMatch={noop}
             detailLogItemToggle={detailLogItemToggle}
             detailLogsToggle={detailLogsToggle}
             detailWarningsToggle={detailWarningsToggle}
