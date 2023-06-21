@@ -217,7 +217,7 @@ export class TimeSrv {
     return this.timeAtLoad && (this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to);
   }
 
-  setAutoRefresh(interval: any) {
+  setAutoRefresh(interval: string | false) {
     if (this.timeModel) {
       this.timeModel.refresh = interval;
     }
@@ -240,7 +240,7 @@ export class TimeSrv {
     if (interval === AutoRefreshInterval) {
       intervalMs = this.getAutoRefreshInteval();
     } else {
-      refresh = this.contextSrv.getValidInterval(interval);
+      refresh = this.contextSrv.getValidInterval(interval as string);
       intervalMs = rangeUtil.intervalToMs(refresh);
     }
 
