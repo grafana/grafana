@@ -1,7 +1,9 @@
+import { ProxyTarget } from '@locker/near-membrane-shared';
+
 import { forbiddenElements } from './constants';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
-export const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
+const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
 
 export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');
@@ -59,16 +61,19 @@ export function isDomElement(obj: unknown): obj is Element {
  *
  * This is necessary for plugins working with style attributes to work in Chrome
  */
-export function markDomElementStyleAsALiveTarget(el: Element, mark: symbol) {
+export function markDomElementStyleAsALiveTarget(el: Element) {
   if (
     // only HTMLElement's (extends Element) have a style attribute
     el instanceof HTMLElement &&
     // do not define it twice
-    //@ts-ignore - our types are out of date
-    !Object.hasOwn(el.style, mark)
+    !Object.hasOwn(el.style, SANDBOX_LIVE_VALUE)
   ) {
-    Reflect.defineProperty(el.style, mark, {});
+    Reflect.defineProperty(el.style, SANDBOX_LIVE_VALUE, {});
   }
+}
+
+export function isLiveTarget(el: ProxyTarget) {
+  return Object.hasOwn(el, SANDBOX_LIVE_VALUE);
 }
 
 /*

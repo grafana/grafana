@@ -9,8 +9,8 @@ import { getGeneralSandboxDistortionMap } from './distortion_map';
 import {
   getSafeSandboxDomElement,
   isDomElement,
+  isLiveTarget,
   markDomElementStyleAsALiveTarget,
-  SANDBOX_LIVE_VALUE,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
@@ -46,7 +46,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
     if (isDomElement(originalValue)) {
       const element = getSafeSandboxDomElement(originalValue, meta.id);
       // the element.style attribute should be a live target to work in chrome
-      markDomElementStyleAsALiveTarget(element, SANDBOX_LIVE_VALUE);
+      markDomElementStyleAsALiveTarget(element);
       return element;
     }
     const distortion = generalDistortionMap.get(originalValue);
@@ -62,10 +62,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // distortions are interceptors to modify the behavior of objects when
       // the code inside the sandbox tries to access them
       distortionCallback,
-      liveTargetCallback(target) {
-        // @ts-ignore - our types are wrong
-        return Object.hasOwn(target, SANDBOX_LIVE_VALUE);
-      },
+      liveTargetCallback: isLiveTarget,
       // endowments are custom variables we make available to plugins in their window object
       endowments: Object.getOwnPropertyDescriptors({
         // Plugins builds use the AMD module system. Their code consists
