@@ -124,7 +124,7 @@ interface LogRowContextModalProps {
 
 type Source = 'none' | 'top' | 'bottom' | 'center';
 
-const INITIAL_LOAD_LIMIT = 20;
+const INITIAL_LOAD_LIMIT = 100;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
   row,
@@ -400,9 +400,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         <div className={styles.datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
-        <div className={loading ? styles.hidden : ''}>
-          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
-        </div>
         <div>
           <LogContextButtons wrapLines={wrapLines} onChangeWrapLines={setWrapLines} />
         </div>
@@ -477,11 +474,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
             </tr>
           </tbody>
         </table>
-      </div>
-      <div>
-        <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
-          Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
-        </div>
       </div>
 
       <Modal.ButtonRow>
