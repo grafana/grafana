@@ -56,6 +56,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: 'unset',
       border: 'unset',
       marginBottom: 0,
+
+      ['> button']: {
+        padding: theme.spacing(0, 1),
+      },
     }),
     wrapper: css({
       width: '100%',
@@ -73,13 +77,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     description: css({
       color: theme.colors.text.secondary,
       fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.bodySmall.fontWeight,
       paddingLeft: theme.spacing(2),
       gap: theme.spacing(2),
       display: 'flex',
     }),
     body: css({
       display: 'flex',
-      paddingTop: theme.spacing(2),
       gap: theme.spacing(2),
       flexWrap: 'wrap',
     }),
