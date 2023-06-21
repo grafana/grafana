@@ -33,6 +33,7 @@ import {
   // dataSourceHasCredentials,
   // setDataSourceCredentials,
   AzureAuthConfigType,
+  // resetCredentials,
 } from '../azureauth/AzureCredentialsConfig';
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -74,14 +75,11 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
     updateDatasourcePluginJsonDataOption(props, 'encrypt', value.value);
   };
 
-  // JEV update
-  // const updateJSONOnAzureAuthSelect = (value: SelectableValue) => {};
-
   const onAuthenticationMethodChanged = (value: SelectableValue) => {
     onOptionsChange({
       ...dsSettings,
       ...{
-        jsonData: { ...jsonData, ...{ authenticationType: value.value } },
+        jsonData: { ...jsonData, ...{ authenticationType: value.value }, azureCredentials: undefined },
         secureJsonData: { ...dsSettings.secureJsonData, ...{ password: '' } },
         secureJsonFields: { ...dsSettings.secureJsonFields, ...{ password: false } },
         user: '',

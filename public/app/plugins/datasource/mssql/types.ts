@@ -17,4 +17,5 @@ export interface MssqlOptions extends SQLOptions {
   sslRootCertFile?: string;
   serverName?: string;
   connectionTimeout?: number;
+  azureCredentials?: any;
 }

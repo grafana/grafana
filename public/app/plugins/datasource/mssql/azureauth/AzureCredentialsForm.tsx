@@ -89,7 +89,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         authType: selected.value || 'msi',
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -101,7 +101,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -113,7 +113,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -125,7 +125,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -137,7 +137,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -149,7 +149,7 @@ export const AzureCredentialsForm = (props: Props) => {
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
-        defaultSubscriptionId: undefined,
+        // defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }

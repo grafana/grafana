@@ -30,12 +30,17 @@ const concealed: ConcealedSecret = Symbol('Concealed client secret');
 //   },
 // });
 
-// const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
+// export const resetCredentials = (dsSettings: DataSourceSettings<any, any>): Partial<DataSourceSettings<any, any>> => ({
 //   jsonData: {
 //     ...dsSettings.jsonData,
 //     azureAuth: undefined,
 //     azureCredentials: undefined,
 //     azureEndpointResourceId: undefined,
+//   //   authType: 'clientsecret';
+//   // azureCloud?: string;
+//   // tenantId?: string;
+//   // clientId?: string;
+//   // clientSecret?: string | ConcealedSecret;
 //   },
 // });
 
