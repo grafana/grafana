@@ -5,6 +5,7 @@ keywords:
   - grafana
   - plugins
   - documentation
+description: Reference for the plugin.json metadata file.
 title: plugin.json
 menuTitle: Reference (plugin.json)
 weight: 700
@@ -36,7 +37,7 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `metrics`            | boolean                       | No       | For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor.                                                                                                                                                                                                                                                                                          |
 | `preload`            | boolean                       | No       | Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that should load without user interaction.                                                                                                                                                                                                                                                        |
 | `queryOptions`       | [object](#queryoptions)       | No       | For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.                                                                                                                                                                                                                                                                    |
-| `routes`             | [object](#routes)[]           | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).                                                                                                                       |
+| `routes`             | [object](#routes)[]           | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](./create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md).                                                                                                          |
 | `skipDataQuery`      | boolean                       | No       | For panel plugins. Hides the query editor.                                                                                                                                                                                                                                                                                                                                                              |
 | `state`              | string                        | No       | Marks a plugin as a pre-release. Possible values are: `alpha`, `beta`.                                                                                                                                                                                                                                                                                                                                  |
 | `streaming`          | boolean                       | No       | For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.                                                                                                                                                                                                                                                                                                     |
@@ -181,7 +182,7 @@ For data source plugins. There is a query options section in the plugin's query 
 
 ## routes
 
-For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](./create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md).
 
 ### Properties
 

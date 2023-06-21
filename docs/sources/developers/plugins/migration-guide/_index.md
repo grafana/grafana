@@ -2,6 +2,7 @@
 title: Migrate a plugin
 aliases:
   - ../../plugins/developing/migration-guide
+description: A guide for migrating and updating a Grafana plugin.
 keywords:
   - grafana
   - plugins

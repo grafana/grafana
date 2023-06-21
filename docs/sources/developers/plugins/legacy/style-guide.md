@@ -28,7 +28,7 @@ grafana-piechart-panel
 mtanda-histogram-panel
 ```
 
-For more information about the file format for `plugin.json` file, refer to [metadata]({{< relref "../metadata/" >}}).
+For more information about the file format for `plugin.json` file, refer to [metadata]({{< relref "../metadata.md" >}}).
 
 Minimal plugin.json:
 

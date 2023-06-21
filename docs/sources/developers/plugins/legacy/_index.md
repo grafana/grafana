@@ -34,7 +34,7 @@ Example plugins
 
 You might also be interested in the available tutorials around authoring a plugin.
 
-- [Grafana Tutorials](https://grafana.com/tutorials/)
+- [Grafana Tutorials](../../../../tutorials/)
 
 ## What languages?
 
@@ -46,19 +46,19 @@ You can use any build system that supports systemjs. All the built content shoul
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. See our [documentation](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/) for changes in
+New versions of Grafana can sometimes cause plugins to break. See our [documentation](../../../../docs/grafana/latest/developers/plugins/migration-guide/) for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
 
-See the [coding styleguide]({{< relref "style-guide/" >}}) for details on the metadata.
+See the [coding styleguide]({{< relref "./style-guide.md" >}}) for details on the metadata.
 
 ## module.(js|ts)
 
 This is the entry point for every plugin. This is the place where you should export
 your plugin implementation. Depending on what kind of plugin you are developing you
-will be expected to export different things. You can find what's expected for [datasource]({{< relref "./data-sources/" >}}), [panels]({{< relref "./panels" >}})
-and [apps]({{< relref "./apps" >}}) plugins in the documentation.
+will be expected to export different things. You can find what's expected for [datasource]({{< relref "./data-sources.md" >}}), [panels]({{< relref "./panels.md" >}})
+and [apps]({{< relref "./apps.md" >}}) plugins in the documentation.
 
 The Grafana SDK is quite small so far and can be found here:
 
@@ -126,9 +126,9 @@ We have three different examples that you can fork/download to get started devel
 
 ## Other Articles
 
-- [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode" >}})
-- [Plugin Defaults and Editor Mode]({{< relref "./defaults-and-editor-mode" >}})
-- [Grafana Plugin Code Styleguide]({{< relref "./style-guide" >}})
-- [Grafana Apps]({{< relref "./apps" >}})
-- [Grafana Data Sources]({{< relref "./data-sources" >}})
-- [plugin.json Schema]({{< relref "../metadata/" >}})
+- [Getting Plugins to work in Snapshot Mode]({{< relref "./snapshot-mode.md" >}})
+- [Plugin Defaults and Editor Mode]({{< relref "./defaults-and-editor-mode.md" >}})
+- [Grafana Plugin Code Styleguide]({{< relref "./style-guide.md" >}})
+- [Grafana Apps]({{< relref "./apps.md" >}})
+- [Grafana Data Sources]({{< relref "./data-sources.md" >}})
+- [plugin.json Schema]({{< relref "../metadata.md" >}})
