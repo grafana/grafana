@@ -18,54 +18,71 @@ const ContactPoints = () => {
 
   return (
     <Stack direction="column">
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'grafana-default-email'} />
-        <div className={styles.receiversWrapper}>
-          <ContactPointReceiver type={'email'} description="gilles.demey@grafana.com" />
-        </div>
-      </Stack>
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'New school'} provenance={'api'} />
-        <div className={styles.receiversWrapper}>
-          <Stack direction="column" gap={1}>
-            <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
-            <ContactPointReceiver type={'discord'} />
-          </Stack>
-        </div>
-      </Stack>
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'Japan 🇯🇵'} />
-        <div className={styles.receiversWrapper}>
-          <ContactPointReceiver type={'line'} />
-        </div>
-      </Stack>
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'Google Stuff'} />
-        <div className={styles.receiversWrapper}>
-          <ContactPointReceiver type={'googlechat'} />
-        </div>
-      </Stack>
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader name={'Chinese Contact Points'} />
-        <div className={styles.receiversWrapper}>
-          <Stack direction="column" gap={1}>
-            <ContactPointReceiver type={'dingding'} />
-            <ContactPointReceiver type={'wecom'} error="403 unauthorized" />
-          </Stack>
-        </div>
-      </Stack>
-      <Stack direction="column" gap={1}>
-        <ContactPointHeader
-          name={
-            "This is a very long title to check if we are dealing with it appropriately, it shouldn't cause any layout issues"
-          }
-        />
-        <div className={styles.receiversWrapper}>
-          <Stack direction="column" gap={1}>
-            <ContactPointReceiver type={'dingding'} />
-          </Stack>
-        </div>
-      </Stack>
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader name={'grafana-default-email'} />
+          <div className={styles.receiversWrapper}>
+            <ContactPointReceiver type={'email'} description="gilles.demey@grafana.com" />
+          </div>
+        </Stack>
+      </div>
+
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader name={'New school'} provenance={'api'} />
+          <div className={styles.receiversWrapper}>
+            <Stack direction="column" gap={0}>
+              <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
+              <ContactPointReceiver type={'discord'} />
+            </Stack>
+          </div>
+        </Stack>
+      </div>
+
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader name={'Japan 🇯🇵'} />
+          <div className={styles.receiversWrapper}>
+            <ContactPointReceiver type={'line'} />
+          </div>
+        </Stack>
+      </div>
+
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader name={'Google Stuff'} />
+          <div className={styles.receiversWrapper}>
+            <ContactPointReceiver type={'googlechat'} />
+          </div>
+        </Stack>
+      </div>
+
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader name={'Chinese Contact Points'} />
+          <div className={styles.receiversWrapper}>
+            <Stack direction="column" gap={0}>
+              <ContactPointReceiver type={'dingding'} />
+              <ContactPointReceiver type={'wecom'} error="403 unauthorized" />
+            </Stack>
+          </div>
+        </Stack>
+      </div>
+
+      <div className={styles.contactPointWrapper}>
+        <Stack direction="column" gap={0}>
+          <ContactPointHeader
+            name={
+              "This is a very long title to check if we are dealing with it appropriately, it shouldn't cause any layout issues"
+            }
+          />
+          <div className={styles.receiversWrapper}>
+            <Stack direction="column" gap={0}>
+              <ContactPointReceiver type={'dingding'} />
+            </Stack>
+          </div>
+        </Stack>
+      </div>
     </Stack>
   );
 };
@@ -85,8 +102,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
     <div className={styles.headerWrapper}>
       <Stack direction="row" alignItems="center" gap={1}>
         <Stack alignItems="center" gap={1}>
-          <Icon name="at" />
-          <Strong>{name}</Strong>
+          <Span variant="body">{name}</Span>
         </Stack>
         <MetaText>
           {/* TODO make this a link to the notification policies page with the filter applied */}
@@ -138,34 +154,48 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
   const iconName = INTEGRATION_ICONS[type];
 
   return (
-    <div className={styles.integrationWrapper({ error: Boolean(error) })}>
+    <div className={styles.integrationWrapper}>
       <Stack direction="column" gap={0}>
         <div className={styles.receiverDescriptionRow}>
           <Stack direction="row" alignItems="center" gap={1}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               {iconName && <Icon name={iconName} />}
-              <strong>{type}</strong>
+              <Span variant="body" color="primary">
+                {type}
+              </Span>
             </Stack>
             {description && (
               <Span variant="bodySmall" color="secondary">
                 {description}
               </Span>
             )}
-            <Spacer />
-            {error && <Badge text={'Error'} color={'red'} icon="exclamation-circle" />}
           </Stack>
         </div>
         <div className={styles.metadataRow}>
           <Stack direction="row" gap={1}>
-            <MetaText icon="clock-nine">
-              Last delivery attempt <Strong>25 minutes ago</Strong>
-            </MetaText>
-            <MetaText icon="hourglass">
-              took <Strong>2s</Strong>
-            </MetaText>
+            {error ? (
+              <>
+                {/* TODO we might need an error variant for MetaText, dito for success */}
+                {/* TODO show error details on hover or elsewhere */}
+                <Span color="error" variant="bodySmall" weight="bold">
+                  <Stack direction="row" alignItems={'center'} gap={0.5}>
+                    <Icon name="exclamation-circle" /> Last delivery attempt failed
+                  </Stack>
+                </Span>
+              </>
+            ) : (
+              <>
+                <MetaText icon="clock-nine">
+                  Last delivery attempt <Strong>25 minutes ago</Strong>
+                </MetaText>
+                <MetaText icon="hourglass">
+                  took <Strong>2s</Strong>
+                </MetaText>
+              </>
+            )}
             {!sendingResolved && (
-              <MetaText icon="exclamation-circle">
-                <Strong>Only firing</Strong> notifications
+              <MetaText icon="info-circle">
+                Delivering <Strong>only firing</Strong> notifications
               </MetaText>
             )}
           </Stack>
@@ -176,24 +206,26 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  integrationWrapper: ({ error }: { error: boolean }) => css`
-    flex: 1;
-    position: relative;
-    background: ${theme.colors.background.secondary};
-
+  contactPointWrapper: css`
     border-radius: ${theme.shape.borderRadius()};
     border: solid 1px ${theme.colors.border.weak};
-    ${error &&
-    `
-      border-color: ${theme.colors.error.border};
-    `}
+    border-bottom: none;
+  `,
+  integrationWrapper: css`
+    flex: 1;
+    position: relative;
+    background: ${theme.colors.background.primary};
+
+    border-bottom: solid 1px ${theme.colors.border.weak};
   `,
   headerWrapper: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
-    border: solid 1px ${theme.colors.border.weak};
 
-    border-radius: ${theme.shape.borderRadius()};
-    background: ${theme.colors.background.primary};
+    background: ${theme.colors.background.secondary};
+
+    border-bottom: solid 1px ${theme.colors.border.weak};
+    border-top-left-radius: ${theme.shape.borderRadius()};
+    border-top-right-radius: ${theme.shape.borderRadius()};
   `,
   receiverDescriptionRow: css`
     padding: ${theme.spacing(1)} ${theme.spacing(1.5)};
@@ -205,17 +237,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     border-bottom-right-radius: ${theme.shape.borderRadius()};
   `,
   receiversWrapper: css`
-    margin-left: ${theme.spacing(3)};
-    position: relative;
+    /* margin-left: ${theme.spacing(3)}; */
+    /* position: relative; */
 
-    &:before {
+    /* &:before {
       content: '';
       position: absolute;
       height: 100%;
       border-left: solid 1px rgba(204, 204, 220, 0.12);
       margin-top: 0;
       margin-left: -${theme.spacing(2)};
-    }
+    } */
   `,
 });
 
