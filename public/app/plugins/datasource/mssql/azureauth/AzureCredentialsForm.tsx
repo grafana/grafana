@@ -29,7 +29,6 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 export const AzureCredentialsForm = (props: Props) => {
   const { managedIdentityEnabled, credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
 
-  // JEV: clean these funcs up
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
       const updated: AzureCredentials = {
@@ -49,6 +48,17 @@ export const AzureCredentialsForm = (props: Props) => {
       onCredentialsChange(updated);
     }
   };
+
+  // JEV: use this to replace even on changes to the tenantId, clientId, and clientSecret
+  // const onInputChange = ({property, value}: { property: keyof AzureCredentials; value: string }) => {
+  //   if (onCredentialsChange && credentials.authType === 'clientsecret') {
+  //     const updated: AzureCredentials = {
+  //       ...credentials,
+  //       [property]: value,
+  //     };
+  //     onCredentialsChange(updated);
+  //   }
+  // };
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
