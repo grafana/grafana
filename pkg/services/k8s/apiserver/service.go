@@ -3,7 +3,9 @@ package apiserver
 import (
 	"context"
 	"crypto/x509"
+	"encoding/json"
 	"net"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -228,6 +230,8 @@ func (s *service) start(ctx context.Context) error {
 
 	prepared := server.GenericAPIServer.PrepareRun()
 
+	var dualWriter DualWriter = &noopDualWriter{}
+
 	s.handler = func(c *contextmodel.ReqContext) {
 		req := c.Req
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/k8s")
@@ -243,6 +247,35 @@ func (s *service) start(ctx context.Context) error {
 		req.Header.Set("X-Remote-Extra-org-role", string(signedInUser.OrgRole))
 		req.Header.Set("X-Remote-Extra-org-id", strconv.FormatInt(signedInUser.OrgID, 10))
 		req.Header.Set("X-Remote-Extra-user-id", strconv.FormatInt(signedInUser.UserID, 10))
+
+		if strings.HasPrefix(req.URL.Path, "/apis/core.kinds.grafana.com") {
+			var uObj unstructured.Unstructured
+			if req.ContentLength > 0 {
+				err := json.NewDecoder(req.Body).Decode(&uObj)
+				if err != nil {
+					klog.Error(err)
+					return
+				}
+			}
+			switch req.Method {
+			case http.MethodPost:
+				_, err := dualWriter.Create(&uObj)
+				if err != nil {
+					klog.Error(err)
+					return
+				}
+			case http.MethodPut:
+				fallthrough
+			case http.MethodPatch:
+				_, err := dualWriter.Update(&uObj)
+				if err != nil {
+					klog.Error(err)
+					return
+				}
+			case http.MethodDelete:
+				// TODO: dualWriter.Delete()
+			}
+		}
 
 		resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 		prepared.GenericAPIServer.Handler.ServeHTTP(resp, req)
