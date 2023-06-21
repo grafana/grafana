@@ -30,7 +30,7 @@ Grafana Cloud Alerting's Prometheus-style alerts are built by querying directly 
 
 These are set up instructions for Grafana Alerting Cloud.
 
-To set up Grafana Alerting for Open Source, see ({{< relref "../set-up/_index.md" >}})
+To set up Grafana Alerting for Open Source, see ({{< relref "./set-up" >}})
 
 To set up Alerting, you need to:
 
