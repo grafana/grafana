@@ -23,9 +23,8 @@ composableKinds: PanelCfg: {
 
 	lineage: {
 
-		schemas: [{
-			version: [0, 0]
-			schema: {
+		seqs: [{
+			schemas: [{
 				HorizontalConstraint: "left" | "right" | "leftright" | "center" | "scale" @cuetsy(kind="enum", memberNames="Left|Right|LeftRight|Center|Scale")
 				VerticalConstraint:   "top" | "bottom" | "topbottom" | "center" | "scale" @cuetsy(kind="enum", memberNames="Top|Bottom|TopBottom|Center|Scale")
 
@@ -97,8 +96,7 @@ composableKinds: PanelCfg: {
 						elements: [...CanvasElementOptions]
 					} @cuetsy(kind="interface")
 				} @cuetsy(kind="interface")
-			}
+			}]
 		}]
-		lenses: []
 	}
 }
