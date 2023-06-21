@@ -45,7 +45,7 @@ Set where, when, and how firing alert instances get routed.
 
 Each notification policy contains a set of label matchers to indicate which alerts rules or instances it is responsible for. It also has a contact point assigned to it that consists of one or more contact point types, such as Slack or email. Contact points define how your contacts are notified when an alert instance fires.
 
-For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies/index.md" >}}).
+For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies" >}}).
 
 **Message templates**
 
