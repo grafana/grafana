@@ -90,7 +90,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   useEffect(() => {
     if (props.options.groupMode === GroupMode.Default) {
       dispatch(
-        fetchAllPromAndRulerRulesAction(false, {
+        fetchAllPromAndRulerRulesAction(true, {
           limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
           matcher: matcherList,
           state: stateList,
