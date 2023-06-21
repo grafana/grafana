@@ -52,14 +52,47 @@ export const browseDashboardsAPI = createApi({
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
-    deleteFolder: builder.mutation<void, FolderDTO>({
-      query: ({ uid }) => ({
+    // get folder info (e.g. title, parents) but *not* children
+    getFolder: builder.query<FolderDTO, string>({
+      providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
+      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
+    }),
+    // create a new folder
+    newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
+      query: ({ title, parentUid }) => ({
+        method: 'POST',
+        url: '/folders',
+        data: {
+          title,
+          parentUid,
+        },
+      }),
+      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
+        queryFulfilled.then(async ({ data: folder }) => {
+          await contextSrv.fetchUserPermissions();
+          dispatch(notifyApp(createSuccessNotification('Folder created')));
+          dispatch(
+            refetchChildren({
+              parentUID: parentUid,
+              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
+            })
+          );
+          locationService.push(locationUtil.stripBaseFromUrl(folder.url));
+        });
+      },
+    }),
+    // save an existing folder (e.g. rename)
+    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
+      // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
+      // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
+      // instead let's just invalidate all the getFolder calls
+      invalidatesTags: ['getFolder'],
+      query: ({ uid, title, version }) => ({
+        method: 'PUT',
         url: `/folders/${uid}`,
-        method: 'DELETE',
-        params: {
-          // TODO: Once backend returns alert rule counts, set this back to true
-          // when this is merged https://github.com/grafana/grafana/pull/67259
-          forceDeleteRules: false,
+        data: {
+          title,
+          version,
         },
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
@@ -73,10 +106,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    getFolder: builder.query<FolderDTO, string>({
-      providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
-      query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
-    }),
+    // move an *individual* folder. used in the folder actions menu.
     moveFolder: builder.mutation<void, { folder: FolderDTO; destinationUID: string }>({
       invalidatesTags: ['getFolder'],
       query: ({ folder, destinationUID }) => ({
@@ -102,40 +132,15 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
-      query: ({ title, parentUid }) => ({
-        method: 'POST',
-        url: '/folders',
-        data: {
-          title,
-          parentUid,
-        },
-      }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(async ({ data: folder }) => {
-          await contextSrv.fetchUserPermissions();
-          dispatch(notifyApp(createSuccessNotification('Folder created')));
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE,
-            })
-          );
-          locationService.push(locationUtil.stripBaseFromUrl(folder.url));
-        });
-      },
-    }),
-    saveFolder: builder.mutation<FolderDTO, FolderDTO>({
-      // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
-      // we could do something smart and recursively invalidate these child folders but it doesn't seem worth it
-      // instead let's just invalidate all the getFolder calls
-      invalidatesTags: ['getFolder'],
-      query: ({ uid, title, version }) => ({
-        method: 'PUT',
+    // delete an *individual* folder. used in the folder actions menu.
+    deleteFolder: builder.mutation<void, FolderDTO>({
+      query: ({ uid }) => ({
         url: `/folders/${uid}`,
-        data: {
-          title,
-          version,
+        method: 'DELETE',
+        params: {
+          // TODO: Once backend returns alert rule counts, set this back to true
+          // when this is merged https://github.com/grafana/grafana/pull/67259
+          forceDeleteRules: false,
         },
       }),
       onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
@@ -149,42 +154,37 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    deleteItems: builder.mutation<void, DeleteItemsArgs>({
-      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        // Delete all the folders sequentially
-        // TODO error handling here
-        for (const folderUID of selectedFolders) {
-          await baseQuery({
-            url: `/folders/${folderUID}`,
-            method: 'DELETE',
-            params: {
-              // TODO: Once backend returns alert rule counts, set this back to true
-              // when this is merged https://github.com/grafana/grafana/pull/67259
-              forceDeleteRules: false,
-            },
-          });
+    // gets the descendant counts for a folder. used in the move/delete modals.
+    getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
+      queryFn: async (selectedItems) => {
+        const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+
+        const promises = folderUIDs.map((folderUID) => {
+          return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
+        });
+
+        const results = await Promise.all(promises);
+
+        const totalCounts = {
+          folder: Object.values(selectedItems.folder).filter(isTruthy).length,
+          dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
+          libraryPanel: 0,
+          alertRule: 0,
+        };
+
+        for (const folderCounts of results) {
+          totalCounts.folder += folderCounts.folder;
+          totalCounts.dashboard += folderCounts.dashboard;
+          totalCounts.alertRule += folderCounts.alertrule ?? 0;
+
+          // TODO enable these once the backend correctly returns them
+          // totalCounts.libraryPanel += folderCounts.libraryPanel;
         }
 
-        // Delete all the dashboards sequentially
-        // TODO error handling here
-        for (const dashboardUID of selectedDashboards) {
-          await baseQuery({
-            url: `/dashboards/uid/${dashboardUID}`,
-            method: 'DELETE',
-          });
-        }
-        return { data: undefined };
-      },
-      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
-        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
-        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-        queryFulfilled.then(() => {
-          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
-        });
+        return { data: totalCounts };
       },
     }),
+    // move *multiple* items (folders and dashboards). used in the move modal.
     moveItems: builder.mutation<void, MoveItemsArgs>({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ selectedItems, destinationUID }, _api, _extraOptions, baseQuery) => {
@@ -235,35 +235,44 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
-    getAffectedItems: builder.query<DescendantCount, DashboardTreeSelection>({
-      queryFn: async (selectedItems) => {
-        const folderUIDs = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
-
-        const promises = folderUIDs.map((folderUID) => {
-          return getBackendSrv().get<DescendantCountDTO>(`/api/folders/${folderUID}/counts`);
-        });
-
-        const results = await Promise.all(promises);
-
-        const totalCounts = {
-          folder: Object.values(selectedItems.folder).filter(isTruthy).length,
-          dashboard: Object.values(selectedItems.dashboard).filter(isTruthy).length,
-          libraryPanel: 0,
-          alertRule: 0,
-        };
-
-        for (const folderCounts of results) {
-          totalCounts.folder += folderCounts.folder;
-          totalCounts.dashboard += folderCounts.dashboard;
-          totalCounts.alertRule += folderCounts.alertrule ?? 0;
-
-          // TODO enable these once the backend correctly returns them
-          // totalCounts.libraryPanel += folderCounts.libraryPanel;
+    // delete *multiple* items (folders and dashboards). used in the delete modal.
+    deleteItems: builder.mutation<void, DeleteItemsArgs>({
+      queryFn: async ({ selectedItems }, _api, _extraOptions, baseQuery) => {
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        // Delete all the folders sequentially
+        // TODO error handling here
+        for (const folderUID of selectedFolders) {
+          await baseQuery({
+            url: `/folders/${folderUID}`,
+            method: 'DELETE',
+            params: {
+              // TODO: Once backend returns alert rule counts, set this back to true
+              // when this is merged https://github.com/grafana/grafana/pull/67259
+              forceDeleteRules: false,
+            },
+          });
         }
 
-        return { data: totalCounts };
+        // Delete all the dashboards sequentially
+        // TODO error handling here
+        for (const dashboardUID of selectedDashboards) {
+          await baseQuery({
+            url: `/dashboards/uid/${dashboardUID}`,
+            method: 'DELETE',
+          });
+        }
+        return { data: undefined };
+      },
+      onQueryStarted: ({ selectedItems }, { queryFulfilled, dispatch }) => {
+        const selectedDashboards = Object.keys(selectedItems.dashboard).filter((uid) => selectedItems.dashboard[uid]);
+        const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
+        queryFulfilled.then(() => {
+          dispatch(refreshParents([...selectedFolders, ...selectedDashboards]));
+        });
       },
     }),
+    // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
       query: ({ dashboard, folderUid, message, overwrite }) => ({
         url: `/dashboards/db`,
