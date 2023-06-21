@@ -163,6 +163,12 @@
       "success": "Panel de librería guardado"
     }
   },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
