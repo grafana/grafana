@@ -50,6 +50,7 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   // JEV: use this to replace even on changes to the tenantId, clientId, and clientSecret
+  // JEV: do the same with selected.value for onAzureCloudChange and onAuthTypeChange
   // const onInputChange = ({property, value}: { property: keyof AzureCredentials; value: string }) => {
   //   if (onCredentialsChange && credentials.authType === 'clientsecret') {
   //     const updated: AzureCredentials = {
