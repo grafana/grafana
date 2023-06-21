@@ -3,7 +3,7 @@ import createMockRaf from 'mock-raf';
 import React from 'react';
 import uPlot from 'uplot';
 
-import { dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, GraphDrawStyle } from '@grafana/schema';
 
 import { UPlotChart } from './Plot';
