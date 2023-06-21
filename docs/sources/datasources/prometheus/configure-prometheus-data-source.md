@@ -16,7 +16,7 @@ weight: 200
 
 Grafana ships with built-in support for Prometheus. If you are new to Prometheus the following documentation will help you get started working with Prometheus and Grafana:
 
-- [What is Prometheus?](https://grafana.com/docs/grafana/latest/fundamentals/intro-to-prometheus/)
+- [What is Prometheus?]({{< relref "../../fundamentals/intro-to-prometheus/" >}})
 - [Prometheus data model](https://prometheus.io/docs/concepts/data_model/)
 - [Getting started](https://prometheus.io/docs/prometheus/latest/getting_started/)
 
@@ -44,7 +44,7 @@ The first option to configure is the name of your connection:
 
 ### HTTP section
 
-- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the port exposed where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
+- **URL** - The URL of your Prometheus server. If your Prometheus server is local, use `<http://localhost:9090>`. If it is on a server within a network, this is the URL with port where you are running Prometheus. Example: `<http://prometheus.example.orgname:9090>`.
 
 - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
 
@@ -114,7 +114,7 @@ Following are additional configuration options.
 
 ### Exemplars
 
-Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/). An exemplar is a specific trace representative of measurement taken in a given time interval.
+Support for exemplars is available only for the Prometheus data source. If this is your first time working with exemplars see [Introduction to exemplars]({{< relref "../../fundamentals/exemplars/" >}}). An exemplar is a specific trace representative of measurement taken in a given time interval.
 
 - **Internal link** - Toggle on to enable an internal link. When enabled, reveals the data source selector. Select the backend tracing data store for your exemplar data.
 
