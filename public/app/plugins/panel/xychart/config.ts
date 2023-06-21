@@ -15,6 +15,34 @@ import { ScatterFieldConfig, ScatterShow } from './types';
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {
     standardOptions: {
+      [FieldConfigProperty.Min]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Max]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Unit]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Decimals]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.NoValue]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.DisplayName]: {
+        hideFromDefaults: true,
+      },
+
+      [FieldConfigProperty.Thresholds]: {
+        hideFromDefaults: true,
+      },
+      [FieldConfigProperty.Mappings]: {
+        hideFromDefaults: true,
+      },
+
+      // TODO: this still leaves by Color series by: [ Last | Min | Max ]
+      // because item.settings?.bySeriesSupport && colorMode.isByValue
       [FieldConfigProperty.Color]: {
         settings: {
           byValueSupport: true,
@@ -26,13 +54,6 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         },
       },
     },
-
-    disableStandardOptions: [
-      FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-      FieldConfigProperty.Min,
-      FieldConfigProperty.Max,
-    ],
 
     useCustomConfig: (builder) => {
       builder
