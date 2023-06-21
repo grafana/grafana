@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/filestore"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keyretriever"
@@ -53,6 +53,13 @@ var WireSet = wire.NewSet(
 	coreplugin.ProvideCoreRegistry,
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
+
+	angulardetectorsprovider.ProvideStatic,
+	angularpatternsstore.ProvideService,
+	angulardetectorsprovider.ProvideDynamic,
+	angulardetectorsprovider.ProvideDetectorsProvider,
+	angularinspector.ProvideService,
+
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
@@ -78,13 +85,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.KeyRetriever), new(*keyretriever.Service)),
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
-
-	angulardetectorsprovider.ProvideStatic,
-	//angularpatternsstore.ProvideService,
-	//angulardetectorsprovider.ProvideDynamic,
-	//angulardetectorsprovider.ProvideDetectorsProvider,
-	wire.Bind(new(angulardetector.DetectorsProvider), new(*angulardetectorsprovider.Static)),
-	angularinspector.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

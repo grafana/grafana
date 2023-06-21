@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // SequenceDetectorsProvider is a DetectorsProvider that wraps a slice of other DetectorsProvider, and returns the first
@@ -28,10 +29,9 @@ func newDynamicWithStaticFallbackDetectorsProvider(dynamic *Dynamic, static *Sta
 
 // ProvideDetectorsProvider provides the implementation of angulardetector.DetectorsProvider depending on the feature
 // flags.
-// func ProvideDetectorsProvider(features featuremgmt.FeatureToggles, dynamic *Dynamic, static *Static) angulardetector.DetectorsProvider {\
-func ProvideDetectorsProvider(dynamic *Dynamic, static *Static) angulardetector.DetectorsProvider {
-	//if features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
-	//	return newDynamicWithStaticFallbackDetectorsProvider(dynamic, static)
-	//}
+func ProvideDetectorsProvider(features featuremgmt.FeatureToggles, dynamic *Dynamic, static *Static) angulardetector.DetectorsProvider {
+	if features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
+		return newDynamicWithStaticFallbackDetectorsProvider(dynamic, static)
+	}
 	return static
 }
