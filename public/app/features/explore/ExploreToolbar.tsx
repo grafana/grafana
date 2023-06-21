@@ -11,7 +11,6 @@ import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { AccessControlAction } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
@@ -24,7 +23,7 @@ import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
 import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -39,7 +38,7 @@ const rotateIcon = css({
 });
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
@@ -64,9 +63,11 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
+  const panes = useSelector(selectPanesEntries);
+
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === 'left' && isLargerPane) || (exploreId === 'right' && !isLargerPane),
-    [isLargerPane, exploreId]
+    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
+    [isLargerPane, exploreId, panes]
   );
 
   const onCopyShortLink = () => {

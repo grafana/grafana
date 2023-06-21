@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { Trans } from 'app/core/internationalization';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch, useSelector } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -130,10 +131,11 @@ export function BrowseActions() {
   return (
     <div className={styles.row} data-testid="manage-actions">
       <Button onClick={showMoveModal} variant="secondary">
-        Move
+        <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
       </Button>
+
       <Button onClick={showDeleteModal} variant="destructive">
-        Delete
+        <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
       </Button>
     </div>
   );
