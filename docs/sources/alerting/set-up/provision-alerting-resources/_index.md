@@ -9,7 +9,7 @@ keywords:
   - configure
   - provisioning
 title: Provision Grafana Alerting resources
-weight: 200
+weight: 300
 ---
 
 # Provision Grafana Alerting resources

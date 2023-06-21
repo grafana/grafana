@@ -24,7 +24,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
@@ -63,7 +62,7 @@ function noop(): {} {
 type Props = {
   dataFrames: DataFrame[];
   splitOpenFn?: SplitOpen;
-  exploreId?: ExploreId;
+  exploreId?: string;
   scrollElement?: Element;
   scrollElementClass?: string;
   traceProp: Trace;
@@ -251,7 +250,7 @@ export function TraceView(props: Props) {
  * @param options
  */
 function useFocusSpanLink(options: {
-  exploreId: ExploreId;
+  exploreId: string;
   splitOpenFn: SplitOpen;
   refId?: string;
   datasource?: DataSourceApi;

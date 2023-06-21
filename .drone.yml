@@ -1089,7 +1089,7 @@ steps:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:latest
+  image: grafana/docs-base:dbd975af06
   name: build-docs-website
 trigger:
   event:
@@ -1200,7 +1200,7 @@ steps:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:latest
+  image: grafana/docs-base:dbd975af06
   name: build-docs-website
 trigger:
   branch: main
@@ -7117,7 +7117,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM osixia/openldap:1.4.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   image: aquasec/trivy:0.21.0
@@ -7139,7 +7139,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL osixia/openldap:1.4.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
-  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
   - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
   - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
   image: aquasec/trivy:0.21.0
@@ -7364,6 +7364,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 55967abbc18ff15e55bc3d8a1c8f01f4abde576766569c7ae73d8252d62dee87
+hmac: 2cfe53f430c7cfec1b422a329b009b7c81cd52e897abb7a940115e524796178a
 
 ...

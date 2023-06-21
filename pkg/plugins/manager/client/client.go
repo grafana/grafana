@@ -196,7 +196,7 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 			return nil, err
 		}
 
-		return nil, fmt.Errorf("%v: %w", "failed to check plugin health", backendplugin.ErrHealthCheckFailed)
+		return nil, fmt.Errorf("%w: %w", backendplugin.ErrHealthCheckFailed, err)
 	}
 
 	return resp, nil

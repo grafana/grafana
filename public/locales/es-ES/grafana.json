@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -141,6 +161,12 @@
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
       "success": "Panel de librería guardado"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
     }
   },
   "nav": {
@@ -432,6 +458,12 @@
     "search-input": {
       "include-panels-placeholder": "Buscar paneles de control y paneles",
       "placeholder": "Buscar paneles de control"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
