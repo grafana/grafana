@@ -15,7 +15,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -173,6 +173,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     hasTop: true,
     hasBottom: true,
   });
+  const [loadingStateTop, setLoadingStateTop] = useState(LoadingState.NotStarted);
+  const [loadingStateBottom, setLoadingStateBottom] = useState(LoadingState.NotStarted);
+
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
   const [wrapLines, setWrapLines] = useState(
@@ -291,6 +294,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         hasBottom: uniqueNewRows.length > 0,
       }));
     }
+
+    return newRows;
   };
 
   useEffect(() => {
@@ -318,17 +323,40 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
-  const onScrollHit = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-    if (entries[0].isIntersecting) {
-      //top FIXME: ugly
-      loadMore('top');
-      // we do not allow both top-and-bottom loading at the same time
-      return;
-    }
+  const onScrollHit = async (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+    for (const entry of entries) {
+      // If the element is not intersecting, skip to the next one
+      if (!entry.isIntersecting) {
+        continue;
+      }
 
-    if (entries[1].isIntersecting) {
-      loadMore('bottom');
-      // FIXME
+      const targetElement = entry.target;
+      let loadingState;
+      let setLoadingState;
+
+      if (targetElement === topElement.current) {
+        loadingState = loadingStateTop;
+        setLoadingState = setLoadingStateTop;
+      } else if (targetElement === bottomElement.current) {
+        loadingState = loadingStateBottom;
+        setLoadingState = setLoadingStateBottom;
+      } else {
+        continue; // Skip processing for unknown elements
+      }
+
+      if (loadingState !== LoadingState.Loading) {
+        try {
+          setLoadingState(LoadingState.Loading);
+          const rows = await loadMore(targetElement === topElement.current ? 'top' : 'bottom');
+          if (!rows || rows.length > 0) {
+            setLoadingState(LoadingState.NotStarted);
+          } else if (rows.length === 0) {
+            setLoadingState(LoadingState.Done);
+          }
+        } catch (_) {
+          setLoadingState(LoadingState.Error);
+        }
+      }
     }
   };
 
@@ -421,9 +449,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <tbody>
             <tr>
               <td className={styles.loadingCell}>
-                <div ref={topElement}>
-                  <LoadingIndicator place="top" />
-                </div>
+                {loadingStateTop !== LoadingState.Done && loadingStateTop !== LoadingState.Error && (
+                  <div ref={topElement}>
+                    <LoadingIndicator place="top" />
+                  </div>
+                )}
+                {loadingStateTop === LoadingState.Error && <div>Error loading log more logs.</div>}
+                {loadingStateTop === LoadingState.Done && <div>No more logs available.</div>}
               </td>
             </tr>
             <tr>
@@ -482,9 +514,13 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
             </tr>
             <tr>
               <td className={styles.loadingCell}>
-                <div ref={bottomElement}>
-                  <LoadingIndicator place="bottom" />
-                </div>
+                {loadingStateBottom !== LoadingState.Done && loadingStateBottom !== LoadingState.Error && (
+                  <div ref={bottomElement}>
+                    <LoadingIndicator place="bottom" />
+                  </div>
+                )}
+                {loadingStateBottom === LoadingState.Error && <div>Error loading log more logs.</div>}
+                {loadingStateBottom === LoadingState.Done && <div>No more logs available.</div>}
               </td>
             </tr>
           </tbody>
