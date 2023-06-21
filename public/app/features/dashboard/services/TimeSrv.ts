@@ -13,7 +13,7 @@ import {
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { config } from 'app/core/config';
-import { contextSrv, ContextSrv } from 'app/core/services/context_srv';
+import { AutoRefreshInterval, contextSrv, ContextSrv } from 'app/core/services/context_srv';
 import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
@@ -21,13 +21,11 @@ import { AbsoluteTimeEvent, ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEven
 import { TimeModel } from '../state/TimeModel';
 import { getRefreshFromUrl } from '../utils/getRefreshFromUrl';
 
-export const AutoRefreshInterval = 'auto';
-
 export class TimeSrv {
   time: RawTimeRange;
   refreshTimer: number | undefined;
-  refresh: string | undefined | boolean;
-  oldRefresh: string | null | undefined;
+  refresh?: string | false;
+  oldRefresh?: string;
   timeModel?: TimeModel;
   timeAtLoad: RawTimeRange;
   private autoRefreshBlocked?: boolean;
@@ -299,7 +297,7 @@ export class TimeSrv {
       this.setAutoRefresh(false);
     } else if (this.oldRefresh && this.oldRefresh !== this.timeModel?.refresh) {
       this.setAutoRefresh(this.oldRefresh);
-      this.oldRefresh = null;
+      this.oldRefresh = undefined;
     }
 
     if (updateUrl === true) {

@@ -2,11 +2,14 @@ import { extend } from 'lodash';
 
 import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
-import { AutoRefreshInterval } from 'app/features/dashboard/services/TimeSrv';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
+
+// When set to auto, the interval will be based on the query range
+// NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
+export const AutoRefreshInterval = 'auto';
 
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
