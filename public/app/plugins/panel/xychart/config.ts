@@ -65,7 +65,7 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Point size',
-          defaultValue: cfg.pointSize?.fixed,
+          defaultValue: 5, // cfg.pointSize?.fixed,
           settings: {
             min: 1,
             max: 100,
@@ -76,9 +76,9 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultFieldConfig.fillOpacity,
+          defaultValue: 0.4, // defaultFieldConfig.fillOpacity,
           settings: {
-            min: 0,
+            min: 0, // hidden?  or just outlines?
             max: 1,
             step: 0.05,
           },
