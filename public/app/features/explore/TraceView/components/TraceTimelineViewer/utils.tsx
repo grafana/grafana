@@ -51,11 +51,10 @@ export function createViewedBoundsFunc(viewRange: { min: number; max: number; vi
 /**
  * Returns `true` if the `span` has a tag matching `key` = `value`.
  *
- * @param  {string} key   The tag key to match on.
- * @param  {any}    value The tag value to match.
- * @param  {{tags}} span  An object with a `tags` property of { key, value }
- *                        items.
- * @returns {boolean}      True if a match was found.
+ * @param  {string} key         The tag key to match on.
+ * @param  {any}    value       The tag value to match.
+ * @param  {{tag}} span         An object with a `tag` property of { key, value } items.
+ * @returns {boolean}           True if a match was found.
  */
 export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
   if (!Array.isArray(span.tags) || !span.tags.length) {
@@ -64,12 +63,17 @@ export function spanHasTag(key: string, value: unknown, span: TraceSpan) {
   return span.tags.some((tag) => tag.key === key && tag.value === value);
 }
 
-export const isClientSpan = spanHasTag.bind(null, 'span.kind', 'client');
-export const isServerSpan = spanHasTag.bind(null, 'span.kind', 'server');
+const isClientOtel = (span: TraceSpan) => span.kind === 'client';
+const isClient = spanHasTag.bind(null, 'span.kind', 'client');
+export const isClientSpan = (span: TraceSpan) => isClientOtel(span) || isClient(span);
+const isServerOtel = (span: TraceSpan) => span.kind === 'server';
+const isServer = spanHasTag.bind(null, 'span.kind', 'server');
+export const isServerSpan = (span: TraceSpan) => isServerOtel(span) || isServer(span);
 
+const isErrorOtel = (span: TraceSpan) => span.statusCode === 2;
 const isErrorBool = spanHasTag.bind(null, 'error', true);
 const isErrorStr = spanHasTag.bind(null, 'error', 'true');
-export const isErrorSpan = (span: TraceSpan) => isErrorBool(span) || isErrorStr(span);
+export const isErrorSpan = (span: TraceSpan) => isErrorOtel(span) || isErrorBool(span) || isErrorStr(span);
 
 /**
  * Returns `true` if at least one of the descendants of the `parentSpanIndex`
@@ -112,7 +116,11 @@ export function findServerChildSpan(spans: TraceSpan[]) {
   return null;
 }
 
-export const isKindClient = (span: TraceSpan): Boolean =>
-  span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
+export const isKindClient = (span: TraceSpan): Boolean => {
+  if (span.kind) {
+    return span.kind === 'client';
+  }
+  return span.tags.some(({ key, value }) => key === 'span.kind' && value === 'client');
+};
 
 export { formatDuration } from '../utils/date';
