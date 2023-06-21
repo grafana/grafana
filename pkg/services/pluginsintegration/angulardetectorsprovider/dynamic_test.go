@@ -1,4 +1,4 @@
-package angulardetector
+package angulardetectorsprovider
 
 import (
 	"context"
@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,12 +33,12 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockGCOMResponse(t *testing.T, detectors []Detector) {
+func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.Detector) {
 	require.Len(t, detectors, 2)
-	d, ok := detectors[0].(*ContainsBytesDetector)
+	d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 	require.True(t, ok)
 	require.Equal(t, []byte(`PanelCtrl`), d.Pattern)
-	rd, ok := detectors[1].(*RegexDetector)
+	rd, ok := detectors[1].(*angulardetector.RegexDetector)
 	require.True(t, ok)
 	require.Equal(t, `["']QueryCtrl["']`, rd.Regex.String())
 }
@@ -61,13 +65,23 @@ func newError500GCOMScenario() *gcomScenario {
 	}}
 }
 
+func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration) *Dynamic {
+	d, err := ProvideDynamic(
+		&config.Cfg{GrafanaComURL: gcomURL},
+		angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
+	)
+	require.NoError(t, err)
+	d.cacheTTL = cacheTTL
+	return d
+}
+
 func TestGCOMDetectorsProvider(t *testing.T) {
 	t.Run("returns value returned from gcom api", func(t *testing.T) {
 		scenario := newDefaultGCOMScenario()
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
+		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
+		gcomProvider.tryUpdateDetectors(context.Background())
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
 		checkMockGCOMResponse(t, detectors)
@@ -77,8 +91,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		scenario := newDefaultGCOMScenario()
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
+		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
 		checkMockGCOMResponse(t, detectors)
@@ -92,13 +105,10 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		scenario := newDefaultGCOMScenario()
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(
-			srv.URL,
-			// Cache expires after 1 us
-			time.Microsecond*1,
-		)
 
-		require.NoError(t, err)
+		// Cache expires after 1 us
+		gcomProvider := provideDynamic(t, srv.URL, time.Microsecond*1)
+
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		checkMockGCOMResponse(t, detectors)
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
@@ -134,8 +144,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				srv := tc.newHTTPTestServer()
 				t.Cleanup(srv.Close)
-				gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-				require.NoError(t, err)
+				gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 				detectors := gcomProvider.ProvideDetectors(context.Background())
 				require.Equal(t, 1, tc.gcomHTTPCalls, "gcom should be called")
 				require.Empty(t, detectors, "returned detectors should be empty")
@@ -152,8 +161,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		}
 		srv := gcomScenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
+		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 		// Expired context
 		ctx, canc := context.WithTimeout(context.Background(), time.Second*-1)
 		defer canc()
@@ -166,8 +174,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		scenario := newError500GCOMScenario()
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
+		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
 		require.Empty(t, detectors, "returned detectors should be empty")
@@ -188,12 +195,11 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		}}
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
+		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
 		require.Len(t, detectors, 1, "should have decoded only 1 Detector")
-		d, ok := detectors[0].(*ContainsBytesDetector)
+		d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 		require.True(t, ok, "decoded pattern should be of the correct type")
 		require.Equal(t, []byte("PanelCtrl"), d.Pattern, "decoded value for known pattern should be correct")
 	})
