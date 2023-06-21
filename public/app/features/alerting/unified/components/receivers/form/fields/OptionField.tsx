@@ -122,15 +122,6 @@ const OptionInput: FC<Props & { id: string; pathIndex?: string }> = ({
               validationRule: (v) => (option.validationRule ? validateOption(v, option.validationRule) : true),
               customValidator: (v) => (customValidator ? customValidator(v) : true),
             },
-            // validate: (v) => {
-            //   if (option.validationRule !== '') {
-            //     return validateOption(v, option.validationRule);
-            //   } else if (customValidator) {
-            //     return customValidator(v);
-            //   } else {
-            //     return true;
-            //   }
-            // },
             setValueAs: option.setValueAs,
           })}
           placeholder={option.placeholder}
