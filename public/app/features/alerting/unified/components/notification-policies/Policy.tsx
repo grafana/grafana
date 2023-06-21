@@ -127,133 +127,135 @@ const Policy: FC<PolicyComponentProps> = ({
         {/* continueMatching and showMatchesAllLabelsWarning are mutually exclusive so the icons can't overlap */}
         {continueMatching && <ContinueMatchingIndicator />}
         {showMatchesAllLabelsWarning && <AllMatchesIndicator />}
-        <Stack direction="column" gap={0}>
-          {/* Matchers and actions */}
-          <div className={styles.matchersRow}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              {isDefaultPolicy ? (
-                <DefaultPolicyIndicator />
-              ) : hasMatchers ? (
-                <Matchers matchers={matchers ?? []} />
-              ) : (
-                <span className={styles.metadata}>No matchers</span>
-              )}
-              <Spacer />
-              {/* TODO maybe we should move errors to the gutter instead? */}
-              {errors.length > 0 && <Errors errors={errors} />}
-              {!readOnly && (
-                <Stack direction="row" gap={0.5}>
-                  <Button
-                    variant="secondary"
-                    icon="plus"
-                    size="sm"
-                    onClick={() => onAddPolicy(currentRoute)}
-                    type="button"
-                  >
-                    New nested policy
-                  </Button>
-                  <Dropdown
-                    overlay={
-                      <Menu>
-                        <Menu.Item
-                          icon="pen"
-                          disabled={!isEditable}
-                          label="Edit"
-                          onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                        />
-                        {isDeletable && (
-                          <>
-                            <Menu.Divider />
-                            <Menu.Item
-                              destructive
-                              icon="trash-alt"
-                              label="Delete"
-                              onClick={() => onDeletePolicy(currentRoute)}
-                            />
-                          </>
-                        )}
-                      </Menu>
-                    }
-                  >
+        <div className={styles.policyItemWrapper}>
+          <Stack direction="column" gap={1}>
+            {/* Matchers and actions */}
+            <div className={styles.matchersRow}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                {isDefaultPolicy ? (
+                  <DefaultPolicyIndicator />
+                ) : hasMatchers ? (
+                  <Matchers matchers={matchers ?? []} />
+                ) : (
+                  <span className={styles.metadata}>No matchers</span>
+                )}
+                <Spacer />
+                {/* TODO maybe we should move errors to the gutter instead? */}
+                {errors.length > 0 && <Errors errors={errors} />}
+                {!readOnly && (
+                  <Stack direction="row" gap={0.5}>
                     <Button
                       variant="secondary"
+                      icon="plus"
                       size="sm"
-                      icon="ellipsis-h"
+                      onClick={() => onAddPolicy(currentRoute)}
                       type="button"
-                      aria-label="more-actions"
-                      data-testid="more-actions"
-                    />
-                  </Dropdown>
-                </Stack>
-              )}
-            </Stack>
-          </div>
+                    >
+                      New nested policy
+                    </Button>
+                    <Dropdown
+                      overlay={
+                        <Menu>
+                          <Menu.Item
+                            icon="edit"
+                            disabled={!isEditable}
+                            label="Edit"
+                            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                          />
+                          {isDeletable && (
+                            <>
+                              <Menu.Divider />
+                              <Menu.Item
+                                destructive
+                                icon="trash-alt"
+                                label="Delete"
+                                onClick={() => onDeletePolicy(currentRoute)}
+                              />
+                            </>
+                          )}
+                        </Menu>
+                      }
+                    >
+                      <Button
+                        icon="ellipsis-h"
+                        variant="secondary"
+                        size="sm"
+                        type="button"
+                        aria-label="more-actions"
+                        data-testid="more-actions"
+                      />
+                    </Dropdown>
+                  </Stack>
+                )}
+              </Stack>
+            </div>
 
-          {/* Metadata row */}
-          <div className={styles.metadataRow}>
-            <Stack direction="row" alignItems="center" gap={1}>
-              {matchingInstancesPreview.enabled && (
-                <MetaText
-                  icon="layers-alt"
-                  onClick={() => {
-                    matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
-                  }}
-                  data-testid="matching-instances"
-                >
-                  <Strong>{numberOfAlertInstances ?? '-'}</Strong>
-                  <span>{pluralize('instance', numberOfAlertInstances)}</span>
-                </MetaText>
-              )}
-              {contactPoint && (
-                <MetaText icon="at" data-testid="contact-point">
-                  <span>Delivered to</span>
-                  <ContactPointsHoverDetails
-                    alertManagerSourceName={alertManagerSourceName}
-                    receivers={receivers}
-                    contactPoint={contactPoint}
-                  />
-                </MetaText>
-              )}
-              {!inheritedGrouping && (
-                <>
-                  {customGrouping && (
-                    <MetaText icon="layer-group" data-testid="grouping">
-                      <span>Grouped by</span>
-                      <Strong>{groupBy.join(', ')}</Strong>
-                    </MetaText>
-                  )}
-                  {singleGroup && (
-                    <MetaText icon="layer-group">
-                      <span>Single group</span>
-                    </MetaText>
-                  )}
-                  {noGrouping && (
-                    <MetaText icon="layer-group">
-                      <span>Not grouping</span>
-                    </MetaText>
-                  )}
-                </>
-              )}
-              {hasMuteTimings && (
-                <MetaText icon="calendar-slash" data-testid="mute-timings">
-                  <span>Muted when</span>
-                  <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
-                </MetaText>
-              )}
-              {timingOptions && Object.values(timingOptions).some(Boolean) && (
-                <TimingOptionsMeta timingOptions={timingOptions} />
-              )}
-              {hasInheritedProperties && (
-                <>
-                  <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
-                    <span>Inherited</span>
-                    <InheritedProperties properties={inheritedProperties} />
+            {/* Metadata row */}
+            <div className={styles.metadataRow}>
+              <Stack direction="row" alignItems="center" gap={1}>
+                {matchingInstancesPreview.enabled && (
+                  <MetaText
+                    icon="layers-alt"
+                    onClick={() => {
+                      matchingAlertGroups && onShowAlertInstances(matchingAlertGroups, matchers);
+                    }}
+                    data-testid="matching-instances"
+                  >
+                    <Strong>{numberOfAlertInstances ?? '-'}</Strong>
+                    <span>{pluralize('instance', numberOfAlertInstances)}</span>
                   </MetaText>
-                </>
-              )}
-            </Stack>
-          </div>
-        </Stack>
+                )}
+                {contactPoint && (
+                  <MetaText icon="at" data-testid="contact-point">
+                    <span>Delivered to</span>
+                    <ContactPointsHoverDetails
+                      alertManagerSourceName={alertManagerSourceName}
+                      receivers={receivers}
+                      contactPoint={contactPoint}
+                    />
+                  </MetaText>
+                )}
+                {!inheritedGrouping && (
+                  <>
+                    {customGrouping && (
+                      <MetaText icon="layer-group" data-testid="grouping">
+                        <span>Grouped by</span>
+                        <Strong>{groupBy.join(', ')}</Strong>
+                      </MetaText>
+                    )}
+                    {singleGroup && (
+                      <MetaText icon="layer-group">
+                        <span>Single group</span>
+                      </MetaText>
+                    )}
+                    {noGrouping && (
+                      <MetaText icon="layer-group">
+                        <span>Not grouping</span>
+                      </MetaText>
+                    )}
+                  </>
+                )}
+                {hasMuteTimings && (
+                  <MetaText icon="calendar-slash" data-testid="mute-timings">
+                    <span>Muted when</span>
+                    <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
+                  </MetaText>
+                )}
+                {timingOptions && Object.values(timingOptions).some(Boolean) && (
+                  <TimingOptionsMeta timingOptions={timingOptions} />
+                )}
+                {hasInheritedProperties && (
+                  <>
+                    <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
+                      <span>Inherited</span>
+                      <InheritedProperties properties={inheritedProperties} />
+                    </MetaText>
+                  </>
+                )}
+              </Stack>
+            </div>
+          </Stack>
+        </div>
       </div>
       <div className={styles.childPolicies}>
         {/* pass the "readOnly" prop from the parent, because if you can't edit the parent you can't edit children */}
@@ -574,7 +576,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         font-size: ${theme.typography.bodySmall.fontSize};
 
         border: solid 1px ${borderColor};
-        border-radius: ${theme.shape.borderRadius(2)};
+        border-radius: ${theme.shape.borderRadius(1)};
       `,
     };
   },
@@ -593,23 +595,22 @@ const getStyles = (theme: GrafanaTheme2) => ({
       margin-left: -20px;
     }
   `,
+  policyItemWrapper: css`
+    padding: ${theme.spacing(1.5)};
+  `,
   metadataRow: css`
-    background: ${theme.colors.background.primary};
-    padding: ${theme.spacing(1.5)};
+    background: ${theme.colors.background.secondary};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius(2)};
-    border-bottom-right-radius: ${theme.shape.borderRadius(2)};
+    border-bottom-left-radius: ${theme.shape.borderRadius(1)};
+    border-bottom-right-radius: ${theme.shape.borderRadius(1)};
   `,
-  matchersRow: css`
-    padding: ${theme.spacing(1.5)};
-    border-bottom: solid 1px ${theme.colors.border.weak};
-  `,
+  matchersRow: css``,
   policyWrapper: (hasFocus = false) => css`
     flex: 1;
     position: relative;
     background: ${theme.colors.background.secondary};
 
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius(1)};
     border: solid 1px ${theme.colors.border.weak};
 
     ${hasFocus &&
@@ -628,11 +629,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: 0;
     margin-bottom: ${theme.spacing(2)};
   `,
-  // TODO I'm not quite sure why the margins are different for non-child policies, should investigate a bit more
-  addPolicyWrapper: (hasChildPolicies: boolean) => css`
-    margin-top: -${theme.spacing(hasChildPolicies ? 1.5 : 2)};
-    margin-bottom: ${theme.spacing(1)};
-  `,
   gutterIcon: css`
     position: absolute;
 
@@ -648,7 +644,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     text-align: center;
 
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius(1)};
 
     padding: 0;
   `,
