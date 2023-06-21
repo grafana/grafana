@@ -11,7 +11,7 @@ keywords:
   - notification policies
   - routes
 title: Configure notification policies
-weight: 300
+weight: 420
 ---
 
 # Configure notification policies
