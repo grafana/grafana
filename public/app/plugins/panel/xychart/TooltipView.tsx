@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import {
-  DataFrame,
-  Field,
-  formattedValueToString,
-  getFieldDisplayName,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-} from '@grafana/data';
+import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
 import { findField } from 'app/features/dimensions';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
@@ -39,7 +31,6 @@ export interface Props {
   seriesMapping: SeriesMapping;
   hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
-  range: TimeRange;
 }
 
 export const TooltipView = ({
@@ -50,7 +41,6 @@ export const TooltipView = ({
   rowIndex,
   hoveredPointIndex,
   options,
-  range,
 }: Props) => {
   const style = useStyles2(getStyles);
 

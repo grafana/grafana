@@ -215,7 +215,7 @@ export const XYChartPanel2 = (props: Props) => {
     <>
       <VizLayout width={props.width} height={props.height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} timeRange={props.timeRange} />
+          <UPlotChart config={builder} data={facets} width={vizWidth} height={vizHeight} />
         )}
       </VizLayout>
       <Portal>
@@ -252,7 +252,6 @@ export const XYChartPanel2 = (props: Props) => {
               rowIndex={hover.xIndex}
               hoveredPointIndex={hover.scatterIndex}
               data={props.data.series}
-              range={props.timeRange}
             />
           </VizTooltipContainer>
         )}

@@ -16,16 +16,6 @@ function sameConfig(prevProps: PlotProps, nextProps: PlotProps) {
   return nextProps.config === prevProps.config;
 }
 
-function sameTimeRange(prevProps: PlotProps, nextProps: PlotProps) {
-  let prevTime = prevProps.timeRange;
-  let nextTime = nextProps.timeRange;
-
-  return (
-    prevTime === nextTime ||
-    (nextTime.from.valueOf() === prevTime.from.valueOf() && nextTime.to.valueOf() === prevTime.to.valueOf())
-  );
-}
-
 type UPlotChartState = {
   plot: uPlot | null;
 };
@@ -100,11 +90,6 @@ export class UPlotChart extends Component<PlotProps, UPlotChartState> {
       this.reinitPlot();
     } else if (!sameData(prevProps, this.props)) {
       plot?.setData(this.props.data as AlignedData);
-    } else if (!sameTimeRange(prevProps, this.props)) {
-      plot?.setScale('x', {
-        min: this.props.timeRange.from.valueOf(),
-        max: this.props.timeRange.to.valueOf(),
-      });
     }
   }
 
