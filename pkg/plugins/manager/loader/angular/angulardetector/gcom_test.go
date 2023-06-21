@@ -66,48 +66,11 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		scenario := newDefaultGCOMScenario()
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
+		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL)
 		require.NoError(t, err)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
 		checkMockGCOMResponse(t, detectors)
-	})
-
-	t.Run("uses cache when called multiple times", func(t *testing.T) {
-		scenario := newDefaultGCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
-		checkMockGCOMResponse(t, detectors)
-
-		secondDetectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called only once")
-		require.Equal(t, detectors, secondDetectors)
-	})
-
-	t.Run("calls gcom again when cache expires", func(t *testing.T) {
-		scenario := newDefaultGCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(
-			srv.URL,
-			// Cache expires after 1 us
-			time.Microsecond*1,
-		)
-
-		require.NoError(t, err)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		checkMockGCOMResponse(t, detectors)
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
-
-		// Wait for cache to expire
-		time.Sleep(time.Microsecond * 2)
-		newDetectors := gcomProvider.ProvideDetectors(context.Background())
-		checkMockGCOMResponse(t, newDetectors)
-		require.Equal(t, 2, scenario.gcomHTTPCalls, "gcom api should be called again after cache expires")
 	})
 
 	t.Run("error handling", func(t *testing.T) {
@@ -134,7 +97,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				srv := tc.newHTTPTestServer()
 				t.Cleanup(srv.Close)
-				gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
+				gcomProvider, err := NewGCOMDetectorsProvider(srv.URL)
 				require.NoError(t, err)
 				detectors := gcomProvider.ProvideDetectors(context.Background())
 				require.Equal(t, 1, tc.gcomHTTPCalls, "gcom should be called")
@@ -152,7 +115,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		}
 		srv := gcomScenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
+		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL)
 		require.NoError(t, err)
 		// Expired context
 		ctx, canc := context.WithTimeout(context.Background(), time.Second*-1)
@@ -160,21 +123,6 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		detectors := gcomProvider.ProvideDetectors(ctx)
 		require.Zero(t, gcomScenario.gcomHTTPCalls, "gcom should be not called due to request timing out")
 		require.Empty(t, detectors, "returned detectors should be empty")
-	})
-
-	t.Run("caches gcom error", func(t *testing.T) {
-		scenario := newError500GCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
-		require.NoError(t, err)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
-		require.Empty(t, detectors, "returned detectors should be empty")
-
-		newDetectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should not be called while cache is valid")
-		require.Equal(t, detectors, newDetectors, "second call should return the same response")
 	})
 
 	t.Run("unknown pattern types do not break decoding", func(t *testing.T) {
@@ -188,7 +136,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		}}
 		srv := scenario.newHTTPTestServer()
 		t.Cleanup(srv.Close)
-		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL, DefaultGCOMDetectorsProviderTTL)
+		gcomProvider, err := NewGCOMDetectorsProvider(srv.URL)
 		require.NoError(t, err)
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")

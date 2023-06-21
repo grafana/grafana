@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -17,36 +16,24 @@ import (
 )
 
 const (
-	// DefaultGCOMDetectorsProviderTTL is the default TTL for the cached Angular detection patterns fetched from GCOM.
-	DefaultGCOMDetectorsProviderTTL = time.Hour * 24
-
 	// gcomAngularPatternsPath is the relative path to the GCOM API handler that returns angular detection patterns.
 	gcomAngularPatternsPath = "/api/plugins/angular_patterns"
 )
 
 var _ DetectorsProvider = &GCOMDetectorsProvider{}
 
-// GCOMDetectorsProvider is a DetectorsProvider which fetches patterns from GCOM, and caches the result for
-// the specified ttl. All subsequent calls to provideDetectors will return the cached result until the TTL expires.
-// This struct is safe for concurrent use.
+// GCOMDetectorsProvider is a DetectorsProvider which fetches patterns from GCOM.
 type GCOMDetectorsProvider struct {
 	log log.Logger
 
 	httpClient *http.Client
 
 	baseURL string
-
-	ttl        time.Duration
-	lastUpdate time.Time
-
-	mux       sync.Mutex
-	detectors []Detector
 }
 
 // NewGCOMDetectorsProvider returns a new GCOMDetectorsProvider.
 // baseURL is the GCOM base url, without /api and without a trailing slash (e.g.: https://grafana.com)
-// A default reasonable value for ttl is defaultGCOMDetectorsProviderTTL.
-func NewGCOMDetectorsProvider(baseURL string, ttl time.Duration) (DetectorsProvider, error) {
+func NewGCOMDetectorsProvider(baseURL string) (DetectorsProvider, error) {
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
@@ -55,60 +42,23 @@ func NewGCOMDetectorsProvider(baseURL string, ttl time.Duration) (DetectorsProvi
 		log:        log.New("plugins.angulardetector.gcom"),
 		baseURL:    baseURL,
 		httpClient: cl,
-		ttl:        ttl,
 	}, nil
 }
 
-// tryUpdateDynamicDetectors tries to update the cached detectors value, if the cache has expired.
-//
-// If the TTL hasn't passed yet, this function returns immediately.
-// Otherwise, it calls fetch and updates the cached detectors value and lastUpdate.
-//
-// lastUpdate is also updated in case of an error, to avoid consecutive failures.
-// However, if there's an error, the cached value is not changed (the previous one is kept).
-//
-// The caller must have acquired g.mux.
-func (p *GCOMDetectorsProvider) tryUpdateDynamicDetectors(ctx context.Context) error {
-	if time.Since(p.lastUpdate) <= p.ttl {
-		// Patterns already fetched
+// ProvideDetectors gets the dynamic detectors from the remote source.
+// If an error occurs, the function fails silently by logging an error and it returns nil.
+func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
+	patterns, err := p.fetch(ctx)
+	if err != nil {
+		p.log.Warn("Could not fetch remote angular patterns", "error", err)
 		return nil
 	}
-
-	// Update last update even if there's an error, to avoid wasting time due to consecutive failures
-	defer func() {
-		p.lastUpdate = time.Now()
-	}()
-
-	// Fetch patterns from GCOM API
-	resp, err := p.fetch(ctx)
+	detectors, err := patterns.detectors()
 	if err != nil {
-		return fmt.Errorf("fetch: %w", err)
+		p.log.Warn("Could not convert angular patterns to detectors", "error", err)
+		return nil
 	}
-
-	// Convert patterns definitions to detectors
-	detectors, err := resp.detectors()
-	if err != nil {
-		return fmt.Errorf("detectors: %w", err)
-	}
-	p.log.Debug("Updated dynamic angular detectors", "detectors", len(detectors))
-
-	// Update cached result
-	p.detectors = detectors
-	return nil
-}
-
-// ProvideDetectors gets the dynamic detectors, either from the cache or from the remote source (if TTL has passed).
-// If an error occurs during the cache refresh, the function fails silently and the old cached value is returned
-// instead.
-func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []Detector {
-	p.mux.Lock()
-	defer p.mux.Unlock()
-
-	if err := p.tryUpdateDynamicDetectors(ctx); err != nil {
-		// Fail silently
-		p.log.Warn("Could not update dynamic detectors", "error", err)
-	}
-	return p.detectors
+	return detectors
 }
 
 // fetch fetches the angular patterns from GCOM and returns them as gcomPatterns.
