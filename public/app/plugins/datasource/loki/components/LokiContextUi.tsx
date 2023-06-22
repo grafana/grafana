@@ -377,34 +377,36 @@ export function LokiContextUi(props: LokiContextUiProps) {
               />
             </>
           )}
-          <InlineFieldRow className={styles.operationsToggle}>
-            <InlineField
-              label="Include LogQL pipeline operations"
-              tooltip={
-                <RenderUserContentAsHTML
-                  content={renderMarkdown(
-                    "This will include LogQL operations such as `line_format` or `label_format`. It won't include line or label filter operations."
-                  )}
+          {logContextProvider.queryContainsValidPipelineStages(origQuery) && (
+            <InlineFieldRow className={styles.operationsToggle}>
+              <InlineField
+                label="Include LogQL pipeline operations"
+                tooltip={
+                  <RenderUserContentAsHTML
+                    content={renderMarkdown(
+                      "This will include LogQL operations such as `line_format` or `label_format`. It won't include line or label filter operations."
+                    )}
+                  />
+                }
+              >
+                <InlineSwitch
+                  value={includePipelineOperations}
+                  showLabel={true}
+                  transparent={true}
+                  onChange={(e) => {
+                    reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
+                      logRowUid: row.uid,
+                      action: e.currentTarget.checked ? 'enable' : 'disable',
+                    });
+                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                    setIncludePipelineOperations(e.currentTarget.checked);
+                    // need to retrigger a query to run by calling `updateFilter`
+                    updateFilter(contextFilters.filter(({ enabled }) => enabled));
+                  }}
                 />
-              }
-            >
-              <InlineSwitch
-                value={includePipelineOperations}
-                showLabel={true}
-                transparent={true}
-                onChange={(e) => {
-                  reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
-                    logRowUid: row.uid,
-                    action: e.currentTarget.checked ? 'enable' : 'disable',
-                  });
-                  store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
-                  setIncludePipelineOperations(e.currentTarget.checked);
-                  // need to retrigger a query to run by calling `updateFilter`
-                  updateFilter(contextFilters.filter(({ enabled }) => enabled));
-                }}
-              />
-            </InlineField>
-          </InlineFieldRow>
+              </InlineField>
+            </InlineFieldRow>
+          )}
         </div>
       </Collapse>
     </div>

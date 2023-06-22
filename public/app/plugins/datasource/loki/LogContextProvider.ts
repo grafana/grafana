@@ -258,6 +258,22 @@ export class LogContextProvider {
     return newExpr;
   };
 
+  queryContainsValidPipelineStages = (query: LokiQuery | undefined): boolean => {
+    const origExpr = query?.expr ?? '';
+    const allNodePositions = getNodePositionsFromQuery(origExpr, [
+      PipelineStage,
+      LabelParser,
+      LineFilters,
+      LabelFilter,
+    ]);
+    const pipelineStagePositions = allNodePositions.filter((position) => position.type?.id === PipelineStage);
+    const otherNodePositions = allNodePositions.filter((position) => position.type?.id !== PipelineStage);
+
+    return pipelineStagePositions.some((pipelineStagePosition) =>
+      otherNodePositions.every((position) => pipelineStagePosition.contains(position) === false)
+    );
+  };
+
   getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {
     if (!query || isEmpty(labels)) {
       return [];

@@ -33,7 +33,7 @@ jest.mock('app/core/store', () => {
 
 const setupProps = (): LokiContextUiProps => {
   const defaults: LokiContextUiProps = {
-    logContextProvider: mockLogContextProvider as unknown as LogContextProvider,
+    logContextProvider: Object.assign({}, mockLogContextProvider) as unknown as LogContextProvider,
     updateFilter: jest.fn(),
     row: {
       entry: 'WARN test 1.23 on [xxx]',
@@ -70,6 +70,7 @@ const mockLogContextProvider = {
     .fn()
     .mockImplementation((currentExpr: string, query: LokiQuery | undefined) => `${currentExpr} | newOperation`),
   getLogRowContext: jest.fn(),
+  queryContainsValidPipelineStages: jest.fn().mockReturnValue(true),
 };
 
 describe('LokiContextUi', () => {
@@ -239,6 +240,40 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...newProps} />);
     await waitFor(() => {
       expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    });
+  });
+
+  it('renders pipeline operations switch if query contains valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(true);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render pipeline operations switch if query does not contain valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(false);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByRole('checkbox')).toBeNull();
     });
   });
 

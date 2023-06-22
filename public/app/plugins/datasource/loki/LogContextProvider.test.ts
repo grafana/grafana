@@ -461,4 +461,38 @@ describe('LogContextProvider', () => {
       });
     });
   });
+
+  describe('queryContainsValidPipelineStages', () => {
+    it('should return true if query contains a line_format stage', () => {
+      expect(
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | line_format "foo"' } as LokiQuery)
+      ).toBe(true);
+    });
+
+    it('should return true if query contains a label_format stage', () => {
+      expect(
+        logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | label_format a="foo"' } as LokiQuery)
+      ).toBe(true);
+    });
+
+    it('should return false if query contains a parser', () => {
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} | json' } as LokiQuery)).toBe(
+        false
+      );
+    });
+
+    it('should return false if query contains a line filter', () => {
+      expect(logContextProvider.queryContainsValidPipelineStages({ expr: '{foo="bar"} |= "test"' } as LokiQuery)).toBe(
+        false
+      );
+    });
+
+    it('should return true if query contains a line filter and a label_format', () => {
+      expect(
+        logContextProvider.queryContainsValidPipelineStages({
+          expr: '{foo="bar"} |= "test" | label_format a="foo"',
+        } as LokiQuery)
+      ).toBe(true);
+    });
+  });
 });
