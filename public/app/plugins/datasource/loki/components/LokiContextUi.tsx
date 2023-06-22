@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -13,6 +13,7 @@ import {
   InlineSwitch,
   Label,
   MultiSelect,
+  RenderUserContentAsHTML,
   Spinner,
   Tooltip,
   useStyles2,
@@ -90,6 +91,15 @@ function getStyles(theme: GrafanaTheme2) {
       top: ${theme.spacing(1)};
       right: ${theme.spacing(1)};
       z-index: ${theme.zIndex.navbarFixed};
+    `,
+    operationsToggle: css`
+      margin: ${theme.spacing(1)} 0 ${theme.spacing(-1)} 0;
+      & > div {
+        margin: 0;
+        & > label {
+          padding: 0;
+        }
+      }
     `,
   };
 }
@@ -367,26 +377,34 @@ export function LokiContextUi(props: LokiContextUiProps) {
               />
             </>
           )}
-          <div>
-            <InlineFieldRow>
-              <InlineField label="Include LogQL pipeline operations">
-                <InlineSwitch
-                  value={includePipelineOperations}
-                  showLabel={true}
-                  transparent={true}
-                  onChange={(e) => {
-                    reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
-                      logRowUid: row.uid,
-                      action: e.currentTarget.checked ? 'enable' : 'disable',
-                    });
-                    store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
-                    setIncludePipelineOperations(e.currentTarget.checked);
-                    updateFilter(contextFilters.filter(({ enabled }) => enabled));
-                  }}
+          <InlineFieldRow className={styles.operationsToggle}>
+            <InlineField
+              label="Include LogQL pipeline operations"
+              tooltip={
+                <RenderUserContentAsHTML
+                  content={renderMarkdown(
+                    "This will include LogQL operations such as `line_format` or `label_format`. It won't include line or label filter operations."
+                  )}
                 />
-              </InlineField>
-            </InlineFieldRow>
-          </div>
+              }
+            >
+              <InlineSwitch
+                value={includePipelineOperations}
+                showLabel={true}
+                transparent={true}
+                onChange={(e) => {
+                  reportInteraction('grafana_explore_logs_loki_log_context_pipeline_toggled', {
+                    logRowUid: row.uid,
+                    action: e.currentTarget.checked ? 'enable' : 'disable',
+                  });
+                  store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
+                  setIncludePipelineOperations(e.currentTarget.checked);
+                  // need to retrigger a query to run by calling `updateFilter`
+                  updateFilter(contextFilters.filter(({ enabled }) => enabled));
+                }}
+              />
+            </InlineField>
+          </InlineFieldRow>
         </div>
       </Collapse>
     </div>
