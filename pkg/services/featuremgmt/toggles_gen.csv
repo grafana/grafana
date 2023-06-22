@@ -51,7 +51,7 @@ lokiQuerySplittingConfig,experimental,@grafana/observability-logs,false,false,fa
 individualCookiePreferences,experimental,@grafana/backend-platform,false,false,false,false
 onlyExternalOrgRoleSync,experimental,@grafana/grafana-authnz-team,false,false,false,false
 traceqlSearch,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
-prometheusMetricEncyclopedia,experimental,@grafana/observability-metrics,false,false,false,true
+prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,false,false,false,true
 timeSeriesTable,experimental,@grafana/app-o11y,false,false,false,true
 prometheusResourceBrowserCache,experimental,@grafana/observability-metrics,false,false,false,true
 influxdbBackendMigration,experimental,@grafana/observability-metrics,false,false,false,true
