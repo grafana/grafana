@@ -104,7 +104,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
+export const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
 
 export function LokiContextUi(props: LokiContextUiProps) {
   const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
