@@ -129,7 +129,7 @@ describe('useStateSync', () => {
     const { location, waitForNextUpdate, store } = setup({
       queryParams: {
         panes: JSON.stringify({
-          one: { datasource: 'loki-uid', queries: [{ datasource: { name: 'loki', uid: 'loki-uid' } }] },
+          one: { datasource: 'loki-uid', queries: [{ datasource: { name: 'loki', uid: 'loki-uid' }, refId: '1+2' }] },
           two: { datasource: 'elastic-uid', queries: [{ datasource: { name: 'elastic', uid: 'elastic-uid' } }] },
         }),
         schemaVersion: 1,
@@ -145,6 +145,13 @@ describe('useStateSync', () => {
     const search = location.getSearchObject();
     expect(search.panes).toBeDefined();
     expect(Object.keys(store.getState().explore.panes)).toHaveLength(2);
+
+    // check if the URL is properly encoded when finishing rendering the hook. (this would '1 2' otherwise)
+    const panes = location.getSearch().get('panes');
+    expect(panes).not.toBeNull();
+    if (panes !== null) {
+      expect(JSON.parse(panes)['one'].queries[0].refId).toBe('1+2');
+    }
   });
 
   it('inits with a default query from the root level datasource when there are no valid queries in the URL', async () => {
