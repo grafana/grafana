@@ -1049,7 +1049,7 @@ describe('ElasticDatasource', () => {
       ds = getTestContext().ds;
     });
 
-    it("doesn't return a logs sample provider given a log query", () => {
+    it("doesn't return a logs sample provider given a non time series query", () => {
       const request = getQueryOptions<ElasticsearchQuery>({
         targets: [
           {
