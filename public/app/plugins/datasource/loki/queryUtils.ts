@@ -24,7 +24,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
-import { getStreamSelectorPositions } from './modifyQuery';
+import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -156,6 +156,19 @@ export function getNodesFromQuery(query: string, nodeTypes?: number[]): SyntaxNo
     },
   });
   return nodes;
+}
+
+export function getNodePositionsFromQuery(query: string, nodeTypes?: number[]): NodePosition[] {
+  const positions: NodePosition[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: (node): false | void => {
+      if (nodeTypes === undefined || nodeTypes.includes(node.type.id)) {
+        positions.push(NodePosition.fromNode(node.node));
+      }
+    },
+  });
+  return positions;
 }
 
 export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | undefined {
