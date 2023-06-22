@@ -249,8 +249,8 @@ export const XYChartPanel2 = (props: Props) => {
               allSeries={series}
               manualSeriesConfigs={props.options.series}
               seriesMapping={props.options.seriesMapping!}
-              rowIndex={hover.xIndex}
-              hoveredPointIndex={hover.scatterIndex}
+              valueIndex={hover.xIndex}
+              seriesIndex={hover.scatterIndex}
               data={props.data.series}
             />
           </VizTooltipContainer>

@@ -27,9 +27,9 @@ export interface Props {
   allSeries: ScatterSeries[];
   data: DataFrame[]; // source data
   manualSeriesConfigs: ScatterSeriesConfig[] | undefined;
-  rowIndex?: number; // the hover row
+  seriesIndex: number; // the hovered field
+  valueIndex?: number; // the hover value
   seriesMapping: SeriesMapping;
-  hoveredPointIndex: number; // the hovered point
   options: VizTooltipOptions;
 }
 
@@ -38,17 +38,17 @@ export const TooltipView = ({
   data,
   manualSeriesConfigs,
   seriesMapping,
-  rowIndex,
-  hoveredPointIndex,
+  valueIndex,
+  seriesIndex,
   options,
 }: Props) => {
   const style = useStyles2(getStyles);
 
-  if (!allSeries || rowIndex == null) {
+  if (!allSeries || valueIndex == null) {
     return null;
   }
 
-  const series = allSeries[hoveredPointIndex];
+  const series = allSeries[seriesIndex];
   const frame = series.frame(data);
   const xField = series.x(frame);
   const yField = series.y(frame);
@@ -56,9 +56,9 @@ export const TooltipView = ({
   let links: LinkModel[] | undefined = undefined;
 
   if (yField.getLinks) {
-    const v = yField.values[rowIndex];
+    const v = yField.values[valueIndex];
     const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
-    links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
+    links = yField.getLinks({ calculatedValue: disp, valueRowIndex: seriesIndex }).map((linkModel) => {
       if (!linkModel.title) {
         linkModel.title = getTitleFromHref(linkModel.href);
       }
@@ -69,33 +69,44 @@ export const TooltipView = ({
 
   let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
 
-  let color = '#0000';
+  let color: string | undefined;
+
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
-    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
+    const seriesCfg = manualSeriesConfigs[seriesIndex];
+
+    const { pointColor, pointSize } = seriesCfg;
+
+    const colorFacetFieldName = pointColor?.field ?? '';
+    const sizeFacetFieldName = pointSize?.field ?? '';
 
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
 
     if (colorFacet) {
-      color = colorFacet.display!(colorFacet.values[rowIndex]).color!;
+      color = colorFacet.display!(colorFacet.values[valueIndex]).color!;
+    } else if (pointColor?.fixed) {
+      color = series.pointColor(frame) as string;
     }
 
     extraFacets = {
       colorFacetFieldName,
       sizeFacetFieldName,
-      colorFacetValue: colorFacet?.values[rowIndex],
-      sizeFacetValue: sizeFacet?.values[rowIndex],
+      colorFacetValue: colorFacet?.values[valueIndex],
+      sizeFacetValue: sizeFacet?.values[valueIndex],
     };
 
     extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
   }
 
+  if (color == null) {
+    color = yField.display!(yField.values[valueIndex]).color!;
+  }
+
   yValue = {
     name: getFieldDisplayName(yField, frame),
-    val: yField.values[rowIndex],
+    val: yField.values[valueIndex],
     field: yField,
     color,
   };
@@ -109,7 +120,7 @@ export const TooltipView = ({
         <tbody>
           <tr>
             <th>{getFieldDisplayName(xField, frame)}</th>
-            <td>{fmt(xField, xField.values[rowIndex])}</td>
+            <td>{fmt(xField, xField.values[valueIndex])}</td>
           </tr>
           <tr>
             <th>{yValue.name}:</th>
@@ -130,7 +141,7 @@ export const TooltipView = ({
           {extraFields.map((field, i) => (
             <tr key={i}>
               <th>{getFieldDisplayName(field, frame)}:</th>
-              <td>{fmt(field, field.values[rowIndex])}</td>
+              <td>{fmt(field, field.values[valueIndex])}</td>
             </tr>
           ))}
           {links && links.length > 0 && (
