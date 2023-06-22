@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useEffect, useRef } from 'react';
+import React, { ReactElement, useEffect, useRef, useState } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
 import { docsTip } from '../../../configuration/ConfigEditor';
 import { PromVisualQuery } from '../../types';
@@ -30,6 +30,8 @@ export function ResultsTable(props: ResultsTableProps) {
   const styles = getStyles(theme, disableTextWrap);
 
   const tableRef = useRef<HTMLTableElement | null>(null);
+
+  const [clickLocation, setClickLocation] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
 
   function isSelectedRow(idx: number): boolean {
     return idx === selectedIdx;
@@ -159,7 +161,6 @@ export function ResultsTable(props: ResultsTableProps) {
               <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>Description</th>
             </>
           )}
-          <th className={styles.selectButtonWidth}> </th>
         </tr>
       </thead>
       <tbody>
@@ -171,6 +172,15 @@ export function ResultsTable(props: ResultsTableProps) {
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
                   onFocus={() => onFocusRow(idx)}
+                  onMouseDown={(e) => {
+                    setClickLocation({ x: e.clientX, y: e.clientY });
+                  }}
+                  onMouseUp={(e) => {
+                    if (clickLocation.x === e.clientX && clickLocation.y === e.clientY) {
+                      selectMetric(metric);
+                    }
+                  }}
+                  tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
                       selectMetric(metric);
@@ -186,16 +196,6 @@ export function ResultsTable(props: ResultsTableProps) {
                     />
                   </td>
                   {state.hasMetadata && metaRows(metric)}
-                  <td>
-                    <Button
-                      size="md"
-                      variant="secondary"
-                      onClick={() => selectMetric(metric)}
-                      className={styles.centerButton}
-                    >
-                      Select
-                    </Button>
-                  </td>
                 </tr>
               );
             })}
@@ -233,6 +233,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       }
       :hover {
         background-color: ${rowHoverBg};
+        cursor: pointer;
       }
     `,
     tableHeaderPadding: css`
@@ -256,10 +257,7 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       ${disableTextWrap ? '' : 'width: 15%;'}
     `,
     descriptionWidth: css`
-      ${disableTextWrap ? '' : 'width: 35%;'}
-    `,
-    selectButtonWidth: css`
-      ${disableTextWrap ? '' : 'width: 12.5%;'}
+      ${disableTextWrap ? '' : 'width: 47.5%;'}
     `,
     stickyHeader: css`
       position: sticky;
