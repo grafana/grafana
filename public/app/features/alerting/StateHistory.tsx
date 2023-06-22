@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { getBackendSrv } from '@grafana/runtime';
@@ -68,15 +68,21 @@ class StateHistory extends PureComponent<Props, State> {
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
             <ConfirmButton onConfirm={this.clearHistory} confirmVariant="destructive" confirmText="Clear">
-              <Button
-                className={css`
-                  direction: ltr;
-                `}
-                variant="destructive"
-                icon="trash-alt"
-              >
-                Clear history
-              </Button>
+              {({ onClick, className }) => (
+                <Button
+                  onClick={onClick}
+                  className={cx(
+                    className,
+                    css`
+                      direction: ltr;
+                    `
+                  )}
+                  variant="destructive"
+                  icon="trash-alt"
+                >
+                  Clear history
+                </Button>
+              )}
             </ConfirmButton>
           </div>
         )}

@@ -79,9 +79,11 @@ export const WithCustomButton: Story<StoryProps> = (args) => {
         action('Saved')('save!');
       }}
     >
-      <Button size={args.size} variant="secondary" icon="pen">
-        {args.buttonText}
-      </Button>
+      {({ onClick, className }) => (
+        <Button onClick={onClick} className={className} size={args.size} variant="secondary" icon="pen">
+          {args.buttonText}
+        </Button>
+      )}
     </ConfirmButton>
   );
 };

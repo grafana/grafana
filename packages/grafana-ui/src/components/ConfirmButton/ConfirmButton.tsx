@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { PureComponent, SyntheticEvent } from 'react';
+import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -11,6 +11,16 @@ import { Button, ButtonVariant } from '../Button';
 export interface Props extends Themeable2 {
   /** Confirm action callback */
   onConfirm(): void;
+  /** Children */
+  children:
+    | React.ReactNode
+    | (({
+        onClick,
+        className,
+      }: {
+        onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+        className: string;
+      }) => React.ReactNode);
   /** Custom button styles */
   className?: string;
   /** Button size */
@@ -36,14 +46,14 @@ interface State {
   showConfirm: boolean;
 }
 
-class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>, State> {
+class UnThemedConfirmButton extends PureComponent<Props, State> {
   mainButtonRef = React.createRef<HTMLButtonElement>();
   confirmButtonRef = React.createRef<HTMLButtonElement>();
   state: State = {
     showConfirm: false,
   };
 
-  onClickButton = (event: SyntheticEvent) => {
+  onClickButton = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (event) {
       event.preventDefault();
     }
@@ -64,7 +74,7 @@ class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>
     }
   };
 
-  onClickCancel = (event: SyntheticEvent) => {
+  onClickCancel = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (event) {
       event.preventDefault();
     }
@@ -80,7 +90,7 @@ class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>
       this.props.onCancel();
     }
   };
-  onConfirm = (event: SyntheticEvent) => {
+  onConfirm = (event: React.MouseEvent<HTMLButtonElement>) => {
     if (event) {
       event.preventDefault();
     }
@@ -118,16 +128,14 @@ class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>
     return (
       <span className={styles.buttonContainer}>
         <div className={cx(disabled && styles.disabled)}>
-          {typeof children === 'string' ? (
+          {typeof children !== 'function' ? (
             <span className={buttonClass}>
               <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
                 {children}
               </Button>
             </span>
           ) : (
-            <span className={buttonClass} onClick={onClick}>
-              {children}
-            </span>
+            children({ onClick, className: buttonClass })
           )}
         </div>
         <span className={confirmButtonClass}>
