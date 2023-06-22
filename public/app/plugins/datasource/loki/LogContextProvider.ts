@@ -35,7 +35,7 @@ import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
-export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'shouldIncludePipelineOperations';
+export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
 
 export type PreservedLabels = {
   removedLabels: string[];
