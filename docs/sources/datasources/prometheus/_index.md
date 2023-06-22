@@ -14,7 +14,7 @@ weight: 1300
 
 # Prometheus data source
 
-Prometheus is an open-source toolkit that collects and stores metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?]({{< relref "../../fundamentals/intro-to-prometheus/" >}}).
+Prometheus is an open-source database that uses an telemetry collector agent to scrape and store metrics used for monitoring and alerting. If you are just getting started with Prometheus, see [What is Prometheus?]({{< relref "../../fundamentals/intro-to-prometheus/" >}}).
 
 Grafana provides native support for Prometheus.
 For instructions on downloading Prometheus see [Get started with Grafana and Prometheus](/docs/grafana/latest/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus).
