@@ -198,27 +198,7 @@ func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*models.ReqContext) response.Response {
 	return func(_ *models.ReqContext) response.Response {
 		if ngalertEnabled {
-			// LOGZ.IO Change start
-			availableNotifier := notifier.GetAvailableNotifiers()
-			allowedNotifiers := []alerting.NotifierPlugin{}
-			isAllowedNotifier := func(t string) bool {
-				allowedTypes := []string{"slack", "email", "opsgenie", "victorops", "teams", "webhook", "pagerduty", "logzio_opsgenie"} // LOGZ.IO GRAFANA CHANGE :: DEV-35483 - Allow type for Opsgenie Logzio intergration
-				isAllowedNotifier := false
-				for _, allowedType := range allowedTypes {
-					if allowedType == t {
-						return true
-					}
-				}
-				return isAllowedNotifier
-			}
-
-			for _, n := range availableNotifier {
-				if isAllowedNotifier(n.Type) {
-					allowedNotifiers = append(allowedNotifiers, *n)
-				}
-			}
-			return response.JSON(200, allowedNotifiers)
-			// LOGZ.IO Change end
+			return response.JSON(200, notifier.GetAvailableNotifiers())
 		}
 		// TODO(codesome): This wont be required in 8.0 since ngalert
 		// will be enabled by default with no disabling. This is to be removed later.
