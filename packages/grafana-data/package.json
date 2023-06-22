@@ -40,7 +40,7 @@
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.1",
     "d3-interpolate": "3.0.1",
-    "date-fns": "2.29.3",
+    "date-fns": "2.30.0",
     "dompurify": "^2.4.3",
     "eventemitter3": "5.0.0",
     "fast_array_intersect": "1.1.0",

@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
 import React, { useState } from 'react';
-import { DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Modal,
   FileDropzone,
@@ -15,6 +15,10 @@ import {
   Icon,
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
+
+import { useDatasource } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { BuiltInDataSourceList } from './BuiltInDataSourceList';
@@ -32,18 +36,18 @@ const INTERACTION_ITEM = {
 };
 
 interface DataSourceModalProps {
-  onChange: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
-  enableFileUpload?: boolean;
-  fileUploadOptions?: DropzoneOptions;
+  dashboard?: boolean;
+  mixed?: boolean;
   reportedInteractionFrom?: string;
 }
 
 export function DataSourceModal({
-  enableFileUpload,
-  fileUploadOptions,
+  dashboard,
+  mixed,
   onChange,
   current,
   onDismiss,
@@ -74,6 +78,24 @@ export function DataSourceModal({
     [analyticsInteractionSrc]
   );
 
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
+    if (!grafanaDS) {
+      return;
+    }
+    onChange(grafanaDS, [query]);
+
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.UPLOAD_FILE,
+      src: analyticsInteractionSrc,
+    });
+
+    if (fileRejections.length < 1) {
+      onDismiss();
+    }
+  });
+
   return (
     <Modal
       title="Select data source"
@@ -87,6 +109,7 @@ export function DataSourceModal({
     >
       <div className={styles.leftColumn}>
         <Input
+          type="search"
           autoFocus
           className={styles.searchInput}
           value={search}
@@ -113,6 +136,8 @@ export function DataSourceModal({
             }
           />
           <BuiltInDataSourceList
+            dashboard={dashboard}
+            mixed={mixed}
             className={styles.appendBuiltInDataSourcesList}
             onChange={onChangeDataSource}
             current={current}
@@ -122,9 +147,14 @@ export function DataSourceModal({
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
           <CustomScrollbar className={styles.builtInDataSourcesList}>
-            <BuiltInDataSourceList onChange={onChangeDataSource} current={current} />
+            <BuiltInDataSourceList
+              onChange={onChangeDataSource}
+              current={current}
+              dashboard={dashboard}
+              mixed={mixed}
+            />
           </CustomScrollbar>
-          {enableFileUpload && (
+          {config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
@@ -132,15 +162,7 @@ export function DataSourceModal({
                 maxSize: DFImport.maxFileSize,
                 multiple: false,
                 accept: DFImport.acceptedFiles,
-                ...fileUploadOptions,
-                onDrop: (...args) => {
-                  fileUploadOptions?.onDrop?.(...args);
-                  onDismiss();
-                  reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: INTERACTION_ITEM.UPLOAD_FILE,
-                    src: analyticsInteractionSrc,
-                  });
-                },
+                onDrop: onFileDrop,
               }}
             >
               <FileDropzoneDefaultChildren />

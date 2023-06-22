@@ -378,7 +378,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
-/public/app/features/panel/ @grafana/grafana-frontend-platform
+/public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
@@ -619,6 +619,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/grafana-frontend-platform
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
+/.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
+/.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
+/.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

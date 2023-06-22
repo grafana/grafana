@@ -117,11 +117,11 @@ func FetchNpmPackages(ctx context.Context, tag, bucketName string) error {
 //     Latest and next is 9.1.6.
 //     9.2.0-beta1 is released, the latest should stay on 9.1.6, next should point to 9.2.0-beta1
 //     No move of dist-tags
-//     9.1.7 is relased, the latest should point to 9.1.7, next should stay to 9.2.0-beta1
+//     9.1.7 is released, the latest should point to 9.1.7, next should stay to 9.2.0-beta1
 //     No move of dist-tags
 //     Next week 9.2.0-beta2 is released, the latest should point to 9.1.7, next should point to 9.2.0-beta2
 //     No move of dist-tags
-//     In two weeks 9.2.0 stable is relased, the latest and next should point to 9.2.0.
+//     In two weeks 9.2.0 stable is released, the latest and next should point to 9.2.0.
 //     The next dist-tag is moved to point to 9.2.0.
 //
 //  3. Releasing an older stable than the current stable

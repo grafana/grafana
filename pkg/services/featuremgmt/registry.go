@@ -62,8 +62,8 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:        "lokiLive",
-			Description: "Support WebSocket streaming for loki (early prototype)",
+			Name:        "lokiExperimentalStreaming",
+			Description: "Support new streaming approach for loki (prototype, needs special loki build)",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 		},
@@ -488,19 +488,6 @@ var (
 			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
-			Name:        "authenticationConfigUI",
-			Description: "Enables authentication configuration UI",
-			Stage:       FeatureStageGeneralAvailability,
-			Expression:  "true",
-			Owner:       grafanaAuthnzSquad,
-		},
-		{
-			Name:        "pluginsAPIManifestKey",
-			Description: "Use grafana.com API to retrieve the public manifest key",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "advancedDataSourcePicker",
 			Description:  "Enable a new data source picker with contextual information, recently used order and advanced mode",
 			Stage:        FeatureStageGeneralAvailability,
@@ -556,6 +543,40 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaBiSquad,
+		},
+		{
+			Name:         "cloudWatchLogsMonacoEditor",
+			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
+		},
+		{
+			Name:         "exploreScrollableLogsContainer",
+			Description:  "Improves the scrolling behavior of logs in Explore",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:        "recordedQueriesMulti",
+			Description: "Enables writing multiple items from a single query within Recorded Queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "alertingLokiRangeToInstant",
+			Description:  "Rewrites eligible loki range queries to instant queries",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "flameGraphV2",
+			Description:  "New version of flame graph with new features",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 	}
 )

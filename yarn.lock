@@ -2221,6 +2221,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.21.0":
+  version: 7.22.5
+  resolution: "@babel/runtime@npm:7.22.5"
+  dependencies:
+    regenerator-runtime: ^0.13.11
+  checksum: 12a50b7de2531beef38840d17af50c55a094253697600cee255311222390c68eed704829308d4fd305e1b3dfbce113272e428e9d9d45b1730e0fede997eaceb1
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.18.10, @babel/template@npm:^7.20.7, @babel/template@npm:^7.21.9, @babel/template@npm:^7.3.3":
   version: 7.21.9
   resolution: "@babel/template@npm:7.21.9"
@@ -3564,7 +3573,7 @@ __metadata:
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
     d3-interpolate: 3.0.1
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     dompurify: ^2.4.3
     esbuild: 0.17.19
     eventemitter3: 5.0.0
@@ -3855,9 +3864,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.14.0":
-  version: 0.14.0
-  resolution: "@grafana/scenes@npm:0.14.0"
+"@grafana/scenes@npm:^0.15.0":
+  version: 0.15.0
+  resolution: "@grafana/scenes@npm:0.15.0"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -3865,7 +3874,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: a33193fe4b7d18d934d7885ad5e2da0051bde64af865ef593aa2f182ea2190f3f16d163da5e7b2e9ac848187323124308be9f2cea61ccd246e287738113c1107
+  checksum: 2d30a1a1af4cc198c2a42fefa196e8e29ce16e5185ecc6fee30bc5ec890465822c6c17f12a04881d1bb95c6c1c374732264ae013472cf40e44525674c9a5f8a8
   languageName: node
   linkType: hard
 
@@ -3909,6 +3918,13 @@ __metadata:
   version: 1.2.0-rc1
   resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
   checksum: 621a400a762b97a33aade0c03eb8e7bdd1aa1635fab9eb2c03cd7cb7d80fb56e0fbdfc68b74a2abafacc623ad118e2ccaaf46164ee577b9c9c186a83a923d01d
+  languageName: node
+  linkType: hard
+
+"@grafana/tsconfig@npm:^1.3.0-rc1":
+  version: 1.3.0-rc1
+  resolution: "@grafana/tsconfig@npm:1.3.0-rc1"
+  checksum: 3ed039967ae9e0c6ab70387b6aee648086aed00bf0c831ca4d82088cd829e15dac953387413e18941cc75958eec89e58c53ed1a6dedc02a34bbb794fa9658ea0
   languageName: node
   linkType: hard
 
@@ -3986,11 +4002,11 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.2
     common-tags: 1.8.2
-    core-js: 3.30.2
+    core-js: 3.31.0
     css-loader: 6.8.1
     csstype: 3.1.1
     d3: 7.8.2
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     esbuild: 0.17.19
     expose-loader: 4.0.0
     hoist-non-react-statics: 3.3.2
@@ -5523,39 +5539,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-base@npm:0.12.14":
-  version: 0.12.14
-  resolution: "@locker/near-membrane-base@npm:0.12.14"
+"@locker/near-membrane-base@npm:0.12.15":
+  version: 0.12.15
+  resolution: "@locker/near-membrane-base@npm:0.12.15"
   dependencies:
-    "@locker/near-membrane-shared": 0.12.14
-  checksum: f6878bbb59bf5241632e610c521be9138cc039d7983d2f9b3aeb670483446364a1b92d407f93fc1ae2834093d033f4223752cb9fb012a48f4b2eb985974a425c
+    "@locker/near-membrane-shared": 0.12.15
+  checksum: 353b172bcd3a1d3790ca0baef4b8d0aabb7c1077cfb4452df9f4b36b44bafe054ab5d9b9cb4ec47deb6504bbaa4b516554a0406cbfa948cea2ceb4b4926a5d67
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-dom@npm:^0.12.14":
-  version: 0.12.14
-  resolution: "@locker/near-membrane-dom@npm:0.12.14"
+"@locker/near-membrane-dom@npm:^0.12.15":
+  version: 0.12.15
+  resolution: "@locker/near-membrane-dom@npm:0.12.15"
   dependencies:
-    "@locker/near-membrane-base": 0.12.14
-    "@locker/near-membrane-shared": 0.12.14
-    "@locker/near-membrane-shared-dom": 0.12.14
-  checksum: fa8178feaa691fcd5c18405387b1296945da7b13ee8fade2efcbd1bbcd57dd17e2015ca70fe41807ae0c2892aa542286a5c07ac4c37c59032333642b7ae4628b
+    "@locker/near-membrane-base": 0.12.15
+    "@locker/near-membrane-shared": 0.12.15
+    "@locker/near-membrane-shared-dom": 0.12.15
+  checksum: cd0d692f36665031f2485c8e4ff40e8cf051b7cecdf34b34171446585791f59b0b69b4570490918084178b37a26986f501b128b52c49b9b25aa8958e0cea15a8
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared-dom@npm:0.12.14":
-  version: 0.12.14
-  resolution: "@locker/near-membrane-shared-dom@npm:0.12.14"
+"@locker/near-membrane-shared-dom@npm:0.12.15, @locker/near-membrane-shared-dom@npm:^0.12.15":
+  version: 0.12.15
+  resolution: "@locker/near-membrane-shared-dom@npm:0.12.15"
   dependencies:
-    "@locker/near-membrane-shared": 0.12.14
-  checksum: 7e3e6352b0f4aa3306e1b1f49f11b5ddc0c9820dd84d8317b68545d949fa583b2f7b3ab0c56446769e7d993431d1baf3245fd27ff255ee3e1c2c95d3e5c1876c
+    "@locker/near-membrane-shared": 0.12.15
+  checksum: 2faabd8dc7d508d35f17f8573a78a5ec48aaa232e53791e182792516dec285e60c32e811ffd00bd1c916e56ba1e1ff7199fc8e4cdcf061b388a8ba6f22ad44c4
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared@npm:0.12.14, @locker/near-membrane-shared@npm:^0.12.14":
-  version: 0.12.14
-  resolution: "@locker/near-membrane-shared@npm:0.12.14"
-  checksum: f5e75ae422b5369ba5323a72e7cdb979ccc2178c7202a6e85b7e9adaf9971a367de413503cd1e743672798afec1f53836bdbe849acadfb640e41d93ee0125194
+"@locker/near-membrane-shared@npm:0.12.15, @locker/near-membrane-shared@npm:^0.12.15":
+  version: 0.12.15
+  resolution: "@locker/near-membrane-shared@npm:0.12.15"
+  checksum: de5d44022148f7f9183781d50d591a40d8b54cc7692bbd54ee865c0a7ddb6bf15d465fb0e804ad86cbea9135cc7d31983eaed9c8cdbbe9dc94d9e74eaac75134
   languageName: node
   linkType: hard
 
@@ -8929,16 +8945,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/helpers@npm:0.5.1":
-  version: 0.5.1
-  resolution: "@swc/helpers@npm:0.5.1"
-  dependencies:
-    tslib: ^2.4.0
-  checksum: 71e0e27234590435e4c62b97ef5e796f88e786841a38c7116a5e27a3eafa7b9ead7cdec5249b32165902076de78446945311c973e59bddf77c1e24f33a8f272a
-  languageName: node
-  linkType: hard
-
-"@swc/helpers@npm:^0.4.14":
+"@swc/helpers@npm:0.4.14, @swc/helpers@npm:^0.4.14":
   version: 0.4.14
   resolution: "@swc/helpers@npm:0.4.14"
   dependencies:
@@ -14153,10 +14160,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.30.2":
-  version: 3.30.2
-  resolution: "core-js@npm:3.30.2"
-  checksum: 73d47e2b9d9f502800973982d08e995bbf04832e20b04e04be31dd7607247158271315e9328788a2408190e291c7ffbefad141167b1e57dea9f983e1e723541e
+"core-js@npm:3.31.0":
+  version: 3.31.0
+  resolution: "core-js@npm:3.31.0"
+  checksum: f7cf9b3010f7ca99c026d95b61743baca1a85512742ed2b67e8f65a72ac4f4fe0b90b00057783e886bdd39d3a295f42f845d33e7cba3973ed263df978343ab79
   languageName: node
   linkType: hard
 
@@ -15092,10 +15099,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"date-fns@npm:2.29.3":
-  version: 2.29.3
-  resolution: "date-fns@npm:2.29.3"
-  checksum: e01cf5b62af04e05dfff921bb9c9933310ed0e1ae9a81eb8653452e64dc841acf7f6e01e1a5ae5644d0337e9a7f936175fd2cb6819dc122fdd9c5e86c56be484
+"date-fns@npm:2.30.0":
+  version: 2.30.0
+  resolution: "date-fns@npm:2.30.0"
+  dependencies:
+    "@babel/runtime": ^7.21.0
+  checksum: f7be01523282e9bb06c0cd2693d34f245247a29098527d4420628966a2d9aad154bd0e90a6b1cf66d37adcb769cd108cf8a7bd49d76db0fb119af5cdd13644f4
   languageName: node
   linkType: hard
 
@@ -18589,18 +18598,19 @@ __metadata:
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.14.0
+    "@grafana/scenes": ^0.15.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
-    "@grafana/tsconfig": ^1.2.0-rc1
+    "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
     "@leeoniya/ufuzzy": 1.0.6
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
     "@lezer/lr": 1.3.3
-    "@locker/near-membrane-dom": ^0.12.14
-    "@locker/near-membrane-shared": ^0.12.14
+    "@locker/near-membrane-dom": ^0.12.15
+    "@locker/near-membrane-shared": ^0.12.15
+    "@locker/near-membrane-shared-dom": ^0.12.15
     "@opentelemetry/api": 1.4.0
     "@opentelemetry/exporter-collector": 0.25.0
     "@opentelemetry/semantic-conventions": 1.14.0
@@ -18626,7 +18636,7 @@ __metadata:
     "@remix-run/router": ^1.5.0
     "@rtsao/plugin-proposal-class-properties": 7.0.1-patch.1
     "@swc/core": 1.3.38
-    "@swc/helpers": 0.5.1
+    "@swc/helpers": 0.4.14
     "@testing-library/dom": 9.3.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 14.0.0
@@ -18718,7 +18728,7 @@ __metadata:
     comlink: 4.4.1
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
-    core-js: 3.30.2
+    core-js: 3.31.0
     css-loader: 6.8.1
     css-minimizer-webpack-plugin: 4.2.2
     cypress: 9.5.1
@@ -18726,7 +18736,7 @@ __metadata:
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
     dangerously-set-html-content: 1.0.9
-    date-fns: 2.29.3
+    date-fns: 2.30.0
     debounce-promise: 3.1.2
     emotion: 11.0.0
     esbuild: 0.17.19
