@@ -155,7 +155,7 @@ export const ExamplesWithoutTooltip = (args: BasePropsWithAriaLabel) => {
     >
       <HorizontalGroup justify="center">
         {sizes.map((size) => {
-          return <IconButton key={size} name="angle-down" size={size} aria-label="" />;
+          return <IconButton key={size} name="angle-down" size={size} aria-label={args['aria-label']} />;
         })}
       </HorizontalGroup>
       <span
