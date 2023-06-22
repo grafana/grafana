@@ -1,23 +1,24 @@
 ---
+menuTitle: Set up
 aliases:
   - unified-alerting/set-up/
 labels:
   products:
     - oss
-description: How to set up alerting features and integrations
+description: How to configure alerting features and integrations
 title: Set up Alerting
 weight: 107
 ---
 
 # Set up Alerting
 
-Configure the features and integrations that you need to create and manage your alerts.
+Set up or upgrade your implementation of Grafana Alerting.
 
 **Note:**
 
-These are set up instructions for Grafana Alerting Open Source.
+These are set-up instructions for Grafana Alerting Open Source.
 
-To set up Grafana Alerting for Cloud, see ({{< relref "../set-up-cloud" >}})
+To set up Grafana Alerting for Cloud, see [Set up Alerting for Cloud]({{< relref "../set-up/set-up-cloud" >}}).
 
 ## Before you begin
 
@@ -46,10 +47,9 @@ To set up Alerting, you need to:
 
    - [Optional] Add labels and label matchers to control alert routing
 
-1. [Optional] Integrate with [Grafana OnCall]
-   (/docs/oncall/latest/integrations/grafana-alerting/)
+1. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting)
 
-## Advanced set-up options
+## Advanced set up options
 
 Grafana Alerting supports many additional configuration options, from configuring external Alertmanagers to routing Grafana-managed alerts outside of Grafana, to defining your alerting setup as code.
 

@@ -109,7 +109,7 @@ You can run a backend plugin and attach a debugger to it, which allows you to se
    ```
 1. Install your plugin into your local Grafana instance.
 
-Now that your plugin is ready to run, follow the instructions bellow for your IDE of choice.
+Now that your plugin is ready to run, follow the instructions below for your IDE of choice.
 
 ### Visual Studio Code
 

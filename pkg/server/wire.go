@@ -111,7 +111,6 @@ import (
 	secretsStore "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsMigrations "github.com/grafana/grafana/pkg/services/secrets/kvstore/migrations"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
@@ -264,8 +263,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)),
 	secretsDatabase.ProvideSecretsStore,
 	wire.Bind(new(secrets.Store), new(*secretsDatabase.SecretsStoreImpl)),
-	secretsMigrator.ProvideSecretsMigrator,
-	wire.Bind(new(secrets.Migrator), new(*secretsMigrator.SecretsMigrator)),
 	grafanads.ProvideService,
 	wire.Bind(new(dashboardsnapshots.Store), new(*dashsnapstore.DashboardSnapshotStore)),
 	dashsnapstore.ProvideStore,
