@@ -5,11 +5,7 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { LogRowModel } from '@grafana/data';
 
-import {
-  LogContextProvider,
-  LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-  SHOULD_INCLUDE_PIPELINE_OPERATIONS,
-} from '../LogContextProvider';
+import { LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { ContextFilter, LokiQuery } from '../types';
 
 import { IS_LOKI_LOG_CONTEXT_UI_OPEN, LokiContextUi, LokiContextUiProps } from './LokiContextUi';
