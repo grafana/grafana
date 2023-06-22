@@ -1,3 +1,5 @@
+import { DataSourceJsonData } from '@grafana/data';
+import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 import { SQLOptions } from 'app/features/plugins/sql/types';
 
 export enum MSSQLAuthenticationType {
@@ -26,11 +28,11 @@ interface AzureCredentialsBaseType {
   defaultSubscriptionId?: string;
 }
 
-export interface AzureManagedIdentityCredentialsType extends AzureCredentialsBaseType {
+interface AzureManagedIdentityCredentialsType extends AzureCredentialsBaseType {
   authType: 'msi';
 }
 
-export interface AzureClientSecretCredentialsType extends AzureCredentialsBaseType {
+interface AzureClientSecretCredentialsType extends AzureCredentialsBaseType {
   authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
@@ -38,7 +40,7 @@ export interface AzureClientSecretCredentialsType extends AzureCredentialsBaseTy
   clientSecret?: string | ConcealedSecret;
 }
 
-export type AzureCredentials = AzureManagedIdentityCredentialsType | AzureClientSecretCredentialsType;
+export type AzureCredentialsType = AzureManagedIdentityCredentialsType | AzureClientSecretCredentialsType;
 
 export interface MssqlOptions extends SQLOptions {
   authenticationType?: MSSQLAuthenticationType;
@@ -48,3 +50,16 @@ export interface MssqlOptions extends SQLOptions {
   connectionTimeout?: number;
   azureCredentials?: any;
 }
+
+export type AzureAuthJSONDataType = DataSourceJsonData & {
+  azureCredentials: AzureCredentialsType;
+};
+
+export type AzureAuthSecureJSONDataType = {
+  azureClientSecret: undefined | string | ConcealedSecret;
+};
+
+export type AzureAuthConfigType = {
+  azureAuthIsSupported: boolean;
+  azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
+};

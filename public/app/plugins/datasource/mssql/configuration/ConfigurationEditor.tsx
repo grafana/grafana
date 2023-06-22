@@ -29,8 +29,7 @@ import { ConnectionLimits } from 'app/features/plugins/sql/components/configurat
 import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
-import { AzureAuthConfigType } from '../azureauth/AzureCredentialsConfig';
-import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
+import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions, AzureAuthConfigType } from '../types';
 
 const SHORT_WIDTH = 15;
 const LONG_WIDTH = 46;

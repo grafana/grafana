@@ -1,21 +1,13 @@
 import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
-import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { AzureCloud, AzureCredentials, ConcealedSecret } from '../types';
-
-type AzureAuthJSONData = DataSourceJsonData & {
-  azureCredentials: AzureCredentials;
-};
-
-type AzureAuthSecureJSONData = {
-  azureClientSecret: undefined | string | ConcealedSecret;
-};
-
-export type AzureAuthConfigType = {
-  azureAuthIsSupported: boolean;
-  azureAuthSettingsUI: (props: HttpSettingsBaseProps) => JSX.Element;
-};
+import {
+  AzureCloud,
+  AzureCredentialsType,
+  ConcealedSecret,
+  AzureAuthSecureJSONDataType,
+  AzureAuthJSONDataType,
+} from '../types';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
@@ -23,7 +15,7 @@ const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
   return bootConfig.azure.cloud || AzureCloud.Public;
 };
 
-const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentials => {
+const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
   if (bootConfig.azure.managedIdentityEnabled) {
     return { authType: 'msi' };
   } else {
@@ -32,7 +24,7 @@ const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentials 
 };
 
 const getSecret = (
-  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONData>
+  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>
 ): undefined | string | ConcealedSecret => {
   if (dsSettings.secureJsonFields.azureClientSecret) {
     // The secret is concealed on server
@@ -44,10 +36,10 @@ const getSecret = (
 };
 
 export const getCredentials = (
-  dsSettings: DataSourceSettings<AzureAuthJSONData, AzureAuthSecureJSONData>,
+  dsSettings: DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>,
   bootConfig: GrafanaBootConfig
-): AzureCredentials => {
-  const credentials = dsSettings.jsonData.azureCredentials as AzureCredentials | undefined;
+): AzureCredentialsType => {
+  const credentials = dsSettings.jsonData.azureCredentials as AzureCredentialsType | undefined;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
@@ -81,10 +73,10 @@ export const getCredentials = (
 };
 
 export const updateCredentials = (
-  dsSettings: DataSourceSettings<AzureAuthJSONData>,
+  dsSettings: DataSourceSettings<AzureAuthJSONDataType>,
   bootConfig: GrafanaBootConfig,
-  credentials: AzureCredentials
-): DataSourceSettings<AzureAuthJSONData> => {
+  credentials: AzureCredentialsType
+): DataSourceSettings<AzureAuthJSONDataType> => {
   switch (credentials.authType) {
     case 'msi':
       if (!bootConfig.azure.managedIdentityEnabled) {
