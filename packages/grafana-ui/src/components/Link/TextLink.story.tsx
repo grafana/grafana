@@ -49,11 +49,6 @@ export const Example: StoryFn = () => {
   );
 };
 
-Example.parameters = {
-  controls: {
-    exclude: ['variant', 'weight', 'truncate', 'color', 'children'],
-  },
-};
 export const Basic: StoryFn = (args) => {
   return (
     <div>
