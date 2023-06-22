@@ -620,5 +620,14 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 8.5.27 START -->
+
+# 8.5.27 (2023-06-22)
+
+### Bug fixes
+
+- Fixed CVE-2023-3128
+
+<!-- 8.5.27 END -->
 
 <!-- previous CHANGELOG entries can be found in /.changelog-archive >
