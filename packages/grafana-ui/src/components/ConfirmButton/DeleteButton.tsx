@@ -27,15 +27,8 @@ export const DeleteButton = ({ size, disabled, onConfirm, 'aria-label': ariaLabe
       onConfirm={onConfirm}
       closeOnConfirm={closeOnConfirm}
     >
-      {({ onClick, className }) => (
-        <Button
-          aria-label={ariaLabel}
-          onClick={onClick}
-          className={className}
-          variant="destructive"
-          icon="times"
-          size={size || 'sm'}
-        />
+      {(buttonProps) => (
+        <Button aria-label={ariaLabel} variant="destructive" icon="times" size={size || 'sm'} {...buttonProps} />
       )}
     </ConfirmButton>
   );

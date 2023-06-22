@@ -79,8 +79,8 @@ export const WithCustomButton: Story<StoryProps> = (args) => {
         action('Saved')('save!');
       }}
     >
-      {({ onClick, className }) => (
-        <Button onClick={onClick} className={className} size={args.size} variant="secondary" icon="pen">
+      {(buttonProps) => (
+        <Button size={args.size} variant="secondary" icon="pen" {...buttonProps}>
           {args.buttonText}
         </Button>
       )}

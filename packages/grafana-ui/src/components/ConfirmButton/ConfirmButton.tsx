@@ -14,10 +14,7 @@ export interface Props extends Themeable2 {
   /** Children */
   children:
     | React.ReactNode
-    | (({
-        onClick,
-        className,
-      }: {
+    | ((buttonProps: {
         onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
         className: string;
       }) => React.ReactNode);
