@@ -117,11 +117,11 @@ export class LogContextProvider {
     direction: LogRowContextQueryDirection,
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    let expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
-
-    if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
-      expr = this.processPipelineStagesToExpr(expr, origQuery);
-    }
+    let expr = this.prepareExpression(
+      this.appliedContextFilters,
+      origQuery,
+      store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
+    );
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
@@ -196,7 +196,19 @@ export class LogContextProvider {
     });
   }
 
-  processContextFiltersToExpr = (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) => {
+  prepareExpression(
+    contextFilters: ContextFilter[],
+    query: LokiQuery | undefined,
+    includePipelineOperations: boolean
+  ): string {
+    let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
+    if (includePipelineOperations) {
+      preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
+    }
+    return preparedExpression;
+  }
+
+  processContextFiltersToExpr = (contextFilters: ContextFilter[], query: LokiQuery | undefined): string => {
     const labelFilters = contextFilters
       .map((filter) => {
         if (!filter.fromParser && filter.enabled) {
