@@ -51,7 +51,7 @@ export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
     value: ExpressionQueryType.classic,
     label: 'Classic condition',
     description:
-      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition.',
+      'Takes one or more time series returned from a query or an expression and checks if any of the series match the condition. Disables multi-dimensional alerts for this rule.',
   },
   {
     value: ExpressionQueryType.threshold,
