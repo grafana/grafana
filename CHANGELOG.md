@@ -5,7 +5,7 @@
 ### Features and enhancements
 
 - **Schema:** Improve Dashboard kind docs and remove deprecated props. [#69652](https://github.com/grafana/grafana/issues/69652), [@ivanortegaalba](https://github.com/ivanortegaalba)
-- **Alerting:** Update alerting module to to  20230524181453-a8e75e4dfdda. [#69011](https://github.com/grafana/grafana/issues/69011), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Update alerting module to to 20230524181453-a8e75e4dfdda. [#69011](https://github.com/grafana/grafana/issues/69011), [@yuri-tceretian](https://github.com/yuri-tceretian)
 - **Caching:** Update labels for cache insertions counter. (Enterprise)
 
 ### Bug fixes
