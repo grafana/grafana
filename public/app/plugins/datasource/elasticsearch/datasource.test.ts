@@ -1029,7 +1029,7 @@ describe('ElasticDatasource', () => {
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
-    it('does create a logs sample provider for date_histogram query', () => {
+    it('does create a logs sample provider for time series query', () => {
       const options = getQueryOptions<ElasticsearchQuery>({
         targets: [
           {
