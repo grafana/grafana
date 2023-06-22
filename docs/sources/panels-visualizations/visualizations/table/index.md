@@ -29,7 +29,7 @@ The table panel visualization is very flexible, supporting multiple modes for ti
 
 ## Annotation and alert support
 
-Annotations and alerts are not currently supported in the new table panel. However, annotations might be added back in a future release.
+Annotations and alerts are not currently supported in the new table panel. 
 
 ## Sort column
 
