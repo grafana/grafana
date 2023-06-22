@@ -508,7 +508,7 @@ export class PrometheusDatasource
           trackQuery(response, request, startTime);
         })
       );
-      // Run queries trough browser/proxy
+      // Run queries through browser/proxy
     } else {
       const start = getPrometheusTime(request.range.from, false);
       const end = getPrometheusTime(request.range.to, true);
@@ -1233,7 +1233,7 @@ export class PrometheusDatasource
     return finalQuery;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
       return false;
@@ -1241,7 +1241,7 @@ export class PrometheusDatasource
     return true;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 
