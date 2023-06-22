@@ -99,6 +99,46 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Type: Range')).toBeInTheDocument();
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
   });
+
+  it('does not shows resolution field if resolution is not set', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]' });
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
+  });
+
+  it('does not shows resolution field if resolution is set to default value 1', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
+  });
+
+  it('does shows resolution field with warning if resolution is set to non-default value', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 2 });
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    expect(screen.getByText('Resolution')).toBeInTheDocument();
+    expect(
+      screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
+    ).toBeInTheDocument();
+  });
+
+  it('shows correct options for metric query with invalid step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
+    expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
+    expect(screen.getByText('Type: Range')).toBeInTheDocument();
+    expect(screen.getByText('Step: Invalid value')).toBeInTheDocument();
+  });
+
+  it('shows error when invalid value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: 'a' });
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
+  });
+
+  it('does not shows error when valid value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
+    await userEvent.click(screen.getByTitle('Click to edit options'));
+    expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}) {
