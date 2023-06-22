@@ -1438,7 +1438,7 @@ type EntitySearchResult struct {
 
 	// Entity identifier
 	GRN *GRN `protobuf:"bytes,1,opt,name=GRN,proto3" json:"GRN,omitempty"`
-	// The current veresion of this entity
+	// The current version of this entity
 	Version string `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	// Content Length
 	Size int64 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`

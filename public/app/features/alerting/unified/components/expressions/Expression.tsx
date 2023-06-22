@@ -396,8 +396,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   expression: {
     wrapper: css`
       display: flex;
-      border: solid 1px ${theme.colors.border.medium};
-
+      border: solid 1px ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius()};
       max-width: 640px;
     `,
@@ -475,13 +474,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       background: ${theme.colors.background.secondary};
       padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      border-bottom: solid 1px ${theme.colors.border.medium};
+      border-bottom: solid 1px ${theme.colors.border.weak};
     `,
   },
   footer: css`
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(1)};
-    border-top: solid 1px ${theme.colors.border.medium};
+    border-top: solid 1px ${theme.colors.border.weak};
   `,
   draggableIcon: css`
     cursor: grab;

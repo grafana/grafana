@@ -39,20 +39,23 @@ type Provider struct {
 // Get allows getting plugin context by its ID. If datasourceUID is not empty string
 // then PluginContext.DataSourceInstanceSettings will be resolved and appended to
 // returned context.
-func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser) (backend.PluginContext, error) {
+// Note: *user.SignedInUser can be nil.
+func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedInUser, orgID int64) (backend.PluginContext, error) {
 	plugin, exists := p.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return backend.PluginContext{}, ErrPluginNotFound
 	}
 
 	pCtx := backend.PluginContext{
-		OrgID:    user.OrgID,
 		PluginID: pluginID,
-		User:     adapters.BackendUserFromSignedInUser(user),
+	}
+	if user != nil {
+		pCtx.OrgID = user.OrgID
+		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
 	if plugin.IsApp() {
-		appSettings, err := p.appInstanceSettings(ctx, pluginID, user)
+		appSettings, err := p.appInstanceSettings(ctx, pluginID, orgID)
 		if err != nil {
 			return backend.PluginContext{}, err
 		}
@@ -64,10 +67,19 @@ func (p *Provider) Get(ctx context.Context, pluginID string, user *user.SignedIn
 
 // GetWithDataSource allows getting plugin context by its ID and PluginContext.DataSourceInstanceSettings will be
 // resolved and appended to the returned context.
+// Note: *user.SignedInUser can be nil.
 func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user *user.SignedInUser, ds *datasources.DataSource) (backend.PluginContext, error) {
-	pCtx, err := p.Get(ctx, pluginID, user)
-	if err != nil {
-		return backend.PluginContext{}, err
+	_, exists := p.pluginStore.Plugin(ctx, pluginID)
+	if !exists {
+		return backend.PluginContext{}, ErrPluginNotFound
+	}
+
+	pCtx := backend.PluginContext{
+		PluginID: pluginID,
+	}
+	if user != nil {
+		pCtx.OrgID = user.OrgID
+		pCtx.User = adapters.BackendUserFromSignedInUser(user)
 	}
 
 	datasourceSettings, err := adapters.ModelToInstanceSettings(ds, p.decryptSecureJsonDataFn(ctx))
@@ -82,12 +94,12 @@ func (p *Provider) GetWithDataSource(ctx context.Context, pluginID string, user 
 const pluginSettingsCacheTTL = 5 * time.Second
 const pluginSettingsCachePrefix = "plugin-setting-"
 
-func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*backend.AppInstanceSettings, error) {
+func (p *Provider) appInstanceSettings(ctx context.Context, pluginID string, orgID int64) (*backend.AppInstanceSettings, error) {
 	jsonData := json.RawMessage{}
 	decryptedSecureJSONData := map[string]string{}
 	var updated time.Time
 
-	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
+	ps, err := p.getCachedPluginSettings(ctx, pluginID, orgID)
 	if err != nil {
 		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// Otherwise, something is wrong with cache or database, and we return the error to the client.
@@ -114,19 +126,19 @@ func (p *Provider) InvalidateSettingsCache(_ context.Context, pluginID string) {
 	p.cacheService.Delete(getCacheKey(pluginID))
 }
 
-func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*pluginsettings.DTO, error) {
+func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, orgID int64) (*pluginsettings.DTO, error) {
 	cacheKey := getCacheKey(pluginID)
 
 	if cached, found := p.cacheService.Get(cacheKey); found {
 		ps := cached.(*pluginsettings.DTO)
-		if ps.OrgID == user.OrgID {
+		if ps.OrgID == orgID {
 			return ps, nil
 		}
 	}
 
 	ps, err := p.pluginSettingsService.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    user.OrgID,
+		OrgID:    orgID,
 	})
 	if err != nil {
 		return nil, err

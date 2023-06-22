@@ -116,7 +116,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 	token.TokenType = "Bearer"
 
-	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
+	userInfo, err := c.connector.UserInfo(ctx, c.connector.Client(clientCtx, token), token)
 	if err != nil {
 		var sErr *social.Error
 		if errors.As(err, &sErr) {

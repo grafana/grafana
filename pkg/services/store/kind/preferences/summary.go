@@ -20,11 +20,7 @@ func GetEntityKindInfo() entity.EntityKindInfo {
 func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		if uid != "default" {
-			parts := strings.Split(uid, "-")
-			if len(parts) != 2 {
-				return nil, nil, fmt.Errorf("expecting UID: default, user-{#}, or team-{#}")
-			}
-			if !(parts[0] == "team" || parts[0] == "user") {
+			if !(strings.HasPrefix(uid, "user-") || strings.HasPrefix(uid, "team-")) {
 				return nil, nil, fmt.Errorf("expecting UID: default, user-{#}, or team-{#}")
 			}
 		}

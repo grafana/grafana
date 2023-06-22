@@ -179,7 +179,13 @@ Template the title of a Slack message to contain the number of firing and resolv
 
 ## Template the content of a Slack message
 
-Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL:
+Template the content of a Slack message to contain a description of all firing and resolved alerts, including their labels, annotations, Silence URL and Dashboard URL.
+
+**Note:**
+
+This template is for Grafana-managed alerts only.
+To use the template for Grafana Mimir/Loki-managed alerts, delete the references to DashboardURL and SilenceURL.
+For more information, see the [Prometheus documentation on notifications](https://prometheus.io/docs/alerting/latest/notifications/).
 
 ```
 1 firing alert(s):

@@ -276,14 +276,18 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	return "", ErrInternalServerError.Errorf("failed to generate a unique accessToken for public dashboard")
 }
 
-// FindAll Returns a list of public dashboards by orgId
-func (pd *PublicDashboardServiceImpl) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error) {
-	publicDashboards, err := pd.store.FindAll(ctx, orgId)
+// FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
+func (pd *PublicDashboardServiceImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+	query.Offset = query.Limit * (query.Page - 1)
+	resp, err := pd.store.FindAllWithPagination(ctx, query)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindAll: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindAllWithPagination: %w", err)
 	}
 
-	return pd.filterDashboardsByPermissions(ctx, u, publicDashboards)
+	resp.Page = query.Page
+	resp.PerPage = query.Limit
+
+	return resp, nil
 }
 
 func (pd *PublicDashboardServiceImpl) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
@@ -369,25 +373,6 @@ func (pd *PublicDashboardServiceImpl) logIsEnabledChanged(existingPubdash *Publi
 		}
 		pd.log.Info("Public dashboard "+verb, "publicDashboardUid", newPubdash.Uid, "dashboardUid", newPubdash.DashboardUid, "user", u.Login)
 	}
-}
-
-// Filter out dashboards that user does not have read access to
-func (pd *PublicDashboardServiceImpl) filterDashboardsByPermissions(ctx context.Context, u *user.SignedInUser, publicDashboards []PublicDashboardListResponse) ([]PublicDashboardListResponse, error) {
-	result := make([]PublicDashboardListResponse, 0)
-
-	for i := range publicDashboards {
-		hasAccess, err := pd.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(publicDashboards[i].DashboardUid)))
-		// If original dashboard does not exist, the public dashboard is an orphan. We want to list it anyway
-		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return nil, ErrInternalServerError.Errorf("filterDashboardsByPermissions: error evaluating permissions %w", err)
-		}
-
-		// If user has access to the original dashboard or the dashboard does not exist, add the pubdash to the result
-		if hasAccess || errors.Is(err, dashboards.ErrDashboardNotFound) {
-			result = append(result, publicDashboards[i])
-		}
-	}
-	return result, nil
 }
 
 // Checks to see if PublicDashboard.ExistsEnabledByDashboardUid is true on create or changed on update

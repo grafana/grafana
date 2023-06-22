@@ -54,10 +54,12 @@ func TestStore_Plugin(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+			},
+		})
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
@@ -78,13 +80,15 @@ func TestStore_Plugins(t *testing.T) {
 		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-			p5.ID: p5,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+				p5.ID: p5,
+			},
+		})
 
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
@@ -113,14 +117,16 @@ func TestStore_Routes(t *testing.T) {
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-			p5.ID: p5,
-			p6.ID: p6,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+				p5.ID: p5,
+				p6.ID: p6,
+			},
+		})
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.FS.Base()}
@@ -137,11 +143,13 @@ func TestStore_Renderer(t *testing.T) {
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
 		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+			},
+		})
 
 		r := ps.Renderer(context.Background())
 		require.Equal(t, p1, r)
@@ -155,12 +163,14 @@ func TestStore_SecretsManager(t *testing.T) {
 		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.TypeSecretsManager}}
 		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
 
-		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
-			p1.ID: p1,
-			p2.ID: p2,
-			p3.ID: p3,
-			p4.ID: p4,
-		}))
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
+				p1.ID: p1,
+				p2.ID: p2,
+				p3.ID: p3,
+				p4.ID: p4,
+			},
+		})
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
@@ -173,12 +183,12 @@ func TestStore_availablePlugins(t *testing.T) {
 		p1.RegisterClient(&DecommissionedPlugin{})
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
 
-		ps := New(
-			newFakePluginRegistry(map[string]*plugins.Plugin{
+		ps := New(&fakes.FakePluginRegistry{
+			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
-			}),
-		)
+			},
+		})
 
 		aps := ps.availablePlugins(context.Background())
 		require.Len(t, aps, 1)
@@ -196,37 +206,4 @@ func (p *DecommissionedPlugin) Decommission() error {
 
 func (p *DecommissionedPlugin) IsDecommissioned() bool {
 	return true
-}
-
-type fakePluginRegistry struct {
-	store map[string]*plugins.Plugin
-}
-
-func newFakePluginRegistry(m map[string]*plugins.Plugin) *fakePluginRegistry {
-	return &fakePluginRegistry{
-		store: m,
-	}
-}
-
-func (f *fakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plugin, bool) {
-	p, exists := f.store[id]
-	return p, exists
-}
-
-func (f *fakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-	for _, p := range f.store {
-		res = append(res, p)
-	}
-	return res
-}
-
-func (f *fakePluginRegistry) Add(_ context.Context, p *plugins.Plugin) error {
-	f.store[p.ID] = p
-	return nil
-}
-
-func (f *fakePluginRegistry) Remove(_ context.Context, id string) error {
-	delete(f.store, id)
-	return nil
 }
