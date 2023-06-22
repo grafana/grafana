@@ -2,11 +2,11 @@ package state
 
 import (
 	"context"
-	"github.com/grafana/dskit/concurrency"
 	"net/url"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
