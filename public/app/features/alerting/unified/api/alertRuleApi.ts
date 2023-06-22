@@ -1,10 +1,26 @@
 import { RelativeTimeRange } from '@grafana/data';
-import { AlertQuery, Annotations, GrafanaAlertStateDecision, Labels } from 'app/types/unified-alerting-dto';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { AlertGroupTotals, RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import {
+  AlertQuery,
+  Annotations,
+  GrafanaAlertStateDecision,
+  Labels,
+  PromRuleGroupDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { arrayKeyValuesToObject } from '../utils/labels';
+import { isCloudRuleIdentifier, isPrometheusRuleIdentifier } from '../utils/rules';
 
 import { alertingApi } from './alertingApi';
+import {
+  FetchPromRulesFilter,
+  groupRulesByFileName,
+  paramsWithMatcherAndState,
+  prepareRulesFilterQueryParams,
+} from './prometheus';
 
 export type ResponseLabels = {
   labels: AlertInstances[];
@@ -17,6 +33,8 @@ export interface Datasource {
 }
 
 export const PREVIEW_URL = '/api/v1/rule/test/grafana';
+export const PROM_RULES_URL = 'api/prometheus/grafana/api/v1/rules';
+
 export interface Data {
   refId: string;
   relativeTimeRange: RelativeTimeRange;
@@ -75,6 +93,41 @@ export const alertRuleApi = alertingApi.injectEndpoints({
         },
         method: 'POST',
       }),
+    }),
+
+    promRules: build.query<
+      RuleNamespace[],
+      {
+        limitAlerts?: number;
+        identifier?: RuleIdentifier;
+        filter?: FetchPromRulesFilter;
+        state?: string[];
+        matcher?: Matcher[];
+      }
+    >({
+      query: ({ limitAlerts, identifier, filter, state, matcher }) => {
+        const searchParams = new URLSearchParams();
+
+        // if we're fetching for Grafana managed rules, we should add a limit to the number of alert instances
+        // we do this because the response is large otherwise and we don't show all of them in the UI anyway.
+        if (limitAlerts) {
+          searchParams.set('limit_alerts', String(limitAlerts));
+        }
+
+        if (identifier && (isPrometheusRuleIdentifier(identifier) || isCloudRuleIdentifier(identifier))) {
+          searchParams.set('file', identifier.namespace);
+          searchParams.set('rule_group', identifier.groupName);
+        }
+
+        const params = prepareRulesFilterQueryParams(searchParams, filter);
+
+        return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
+      },
+      transformResponse: (response: {
+        data: { groups: PromRuleGroupDTO[]; totals: AlertGroupTotals };
+      }): RuleNamespace[] => {
+        return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
+      },
     }),
   }),
 });
