@@ -992,7 +992,7 @@ describe('ElasticDatasource', () => {
       ).toEqual(undefined);
     });
 
-    it('returns logs samples for data_histogram queries', () => {
+    it('returns logs samples for time series queries', () => {
       expect(
         ds.getSupplementaryQuery(
           { type: SupplementaryQueryType.LogsSample, limit: 100 },
