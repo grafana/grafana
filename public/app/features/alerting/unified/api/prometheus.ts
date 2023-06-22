@@ -1,4 +1,3 @@
-import { groups } from 'd3';
 import { lastValueFrom } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';

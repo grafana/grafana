@@ -1,6 +1,6 @@
 import { RelativeTimeRange } from '@grafana/data';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { AlertGroupTotals, RuleGroup, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { AlertGroupTotals, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
