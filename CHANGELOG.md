@@ -121,8 +121,18 @@ In Grafana 9.4.4, InfluxDB data parsing started to be handled in the backend. If
 
 - **PanelChrome:** Implement hover header. [#61774](https://github.com/grafana/grafana/pull/61774), [@kaydelaney](https://github.com/kaydelaney)
 
+<<<<<<< HEAD
 <!-- 9.4.0 END -->
 <!-- 9.4.0-beta1 START -->
+=======
+<!-- 9.5.0 END -->
+<!-- 9.4.13 START -->
+
+# 9.4.13 (2023-06-22)
+
+<!-- 9.4.13 END -->
+<!-- 9.3.16 START -->
+>>>>>>> 58145908f4 (Changelog: Updated changelog for 9.4.13 (#70553))
 
 # 9.4.0-beta1 (2023-01-30)
 
