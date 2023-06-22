@@ -4,6 +4,7 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
+  DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -52,6 +53,7 @@ import { makeExplorePaneState } from './utils';
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
 const exploreId = 'left';
+const cleanUpMock = jest.fn();
 const datasources: DataSourceApi[] = [
   {
     name: 'testDs',
@@ -766,6 +768,39 @@ describe('reducer', () => {
       await dispatch(clearCache('left'));
 
       expect(getState().explore.panes.left!.cache).toEqual([]);
+    });
+  });
+
+  describe('when data source does not support log volume supplementary query', () => {
+    it('cleans up query subscription correctly (regression #70049)', async () => {
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: {
+                getRef: jest.fn(),
+                meta: {
+                  id: 'something',
+                },
+                query(
+                  request: DataQueryRequest<DataQuery>
+                ): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+                  return new Observable(() => cleanUpMock);
+                },
+              },
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      const dispatch = store.dispatch;
+
+      cleanUpMock.mockClear();
+      await dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(cancelQueries('left'));
+      expect(cleanUpMock).toBeCalledTimes(1);
     });
   });
 
