@@ -326,7 +326,7 @@ abstract class DataSourceApi<
   /**
    * Used in explore for Log details
    */
-  inspectQuery?(query: TQuery, options: InspectQueryOptions): boolean;
+  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
 
   /**
    * @deprecated since version 8.2.0
@@ -561,7 +561,7 @@ export interface QueryFixAction {
   options?: KeyValue<string>;
 }
 
-export interface InspectQueryOptions {
+export interface AnalyzeQueryOptions {
   check: string;
   attributes: KeyValue<string>;
 }

@@ -1339,19 +1339,19 @@ describe('showContextToggle()', () => {
   });
 });
 
-describe('inspectQuery()', () => {
+describe('analyzeQuery()', () => {
   let ds: LokiDatasource;
   beforeEach(() => {
     ds = createLokiDatasource(templateSrvStub);
   });
   it('returns false for unsupported inspections', () => {
     const query = { refId: 'A', expr: '{a="b"}' };
-    expect(ds.inspectQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
+    expect(ds.analyzeQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
   });
   it('inspects queries for filter presence', () => {
     const query = { refId: 'A', expr: '{grafana="awesome"}' };
     expect(
-      ds.inspectQuery(query, {
+      ds.analyzeQuery(query, {
         check: 'HAS_FILTER',
         attributes: {
           key: 'grafana',

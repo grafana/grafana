@@ -33,7 +33,7 @@ import {
   SupplementaryQueryOptions,
   TimeRange,
   LogRowContextOptions,
-  InspectQueryOptions,
+  AnalyzeQueryOptions,
 } from '@grafana/data';
 import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -611,7 +611,7 @@ export class LokiDatasource
     return escapedValues.join('|');
   }
 
-  inspectQuery(query: LokiQuery, options: InspectQueryOptions): boolean {
+  analyzeQuery(query: LokiQuery, options: AnalyzeQueryOptions): boolean {
     let expression = query.expr ?? '';
     switch (options.check) {
       case 'HAS_FILTER': {

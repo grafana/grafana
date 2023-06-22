@@ -31,7 +31,7 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
-  InspectQueryOptions,
+  AnalyzeQueryOptions,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
@@ -892,7 +892,7 @@ export class ElasticDatasource
     return false;
   }
 
-  inspectQuery(query: ElasticsearchQuery, options: InspectQueryOptions): boolean {
+  analyzeQuery(query: ElasticsearchQuery, options: AnalyzeQueryOptions): boolean {
     let expression = query.query ?? '';
     switch (options.check) {
       case 'HAS_FILTER': {

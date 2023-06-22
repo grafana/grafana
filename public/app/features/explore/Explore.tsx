@@ -182,13 +182,13 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
-  inspectQuery = async (check: string, key: string, value: string) => {
+  analyzeQuery = async (check: string, key: string, value: string) => {
     let isActive = false;
     const { queries } = this.props;
     for (const query of queries) {
       const ds = await getDataSourceSrv().get(query.datasource);
-      if (ds.inspectQuery) {
-        isActive = ds.inspectQuery(query, {
+      if (ds.analyzeQuery) {
+        isActive = ds.analyzeQuery(query, {
           check,
           attributes: {
             key,
@@ -203,7 +203,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   isFilterLabelActive = async (key: string, value: string) => {
-    return await this.inspectQuery('HAS_FILTER', key, value);
+    return await this.analyzeQuery('HAS_FILTER', key, value);
   };
 
   onClickFilterLabel = (key: string, value: string) => {

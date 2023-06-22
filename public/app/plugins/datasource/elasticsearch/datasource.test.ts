@@ -1245,19 +1245,19 @@ describe('modifyQuery', () => {
   });
 });
 
-describe('inspectQuery()', () => {
+describe('analyzeQuery()', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
   });
   it('returns false for unsupported inspections', () => {
     const query = { refId: 'A', query: '{a="b"}' };
-    expect(ds.inspectQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
+    expect(ds.analyzeQuery(query, { check: 'UNSUPPORTED', attributes: {} })).toBe(false);
   });
   it('inspects queries for filter presence', () => {
     const query = { refId: 'A', query: 'grafana:"awesome"' };
     expect(
-      ds.inspectQuery(query, {
+      ds.analyzeQuery(query, {
         check: 'HAS_FILTER',
         attributes: {
           key: 'grafana',
