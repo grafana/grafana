@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Kopiert"
@@ -114,15 +134,6 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
-    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "new-dashboard": "Neues Dashboard",
-    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
-    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
-    "viewAll": "Alle anzeigen",
-    "welcome": "Willkommen bei Grafana Dashboards!"
-  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -150,6 +161,12 @@
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
       "success": "Bibliotheks-Panel wurde gespeichert"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
     }
   },
   "nav": {
@@ -443,6 +460,12 @@
       "placeholder": "Nach Dashboards suchen"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Teilen"
@@ -518,6 +541,15 @@
       "copy-button": "In Zwischenablage kopieren"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zeitzone"
@@ -533,10 +565,7 @@
       "week-start-label": "Wochenbeginn"
     },
     "theme": {
-      "dark-label": "Dunkel",
-      "default-label": "Standard",
-      "light-label": "Hell",
-      "system-label": "System"
+      "default-label": "Standard"
     },
     "title": "Einstellungen"
   },

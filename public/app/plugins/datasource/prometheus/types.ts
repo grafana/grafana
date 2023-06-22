@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
 import { Prometheus as GenPromQuery } from './dataquery.gen';
-import { QueryEditorMode } from './querybuilder/shared/types';
+import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends GenPromQuery, DataQuery {
   /**
@@ -191,6 +191,7 @@ export interface PromVariableQuery extends DataQuery {
   metric?: string;
   varQuery?: string;
   seriesQuery?: string;
+  labelFilters?: QueryBuilderLabelFilter[];
 }
 
 export type StandardPromVariableQuery = {

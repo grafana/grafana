@@ -5,7 +5,7 @@ import { usePrevious } from 'react-use';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
@@ -38,9 +38,13 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const timerange = datasource.getTimeRange();
+  const predefinedOperations = datasource.predefinedOperations;
   const previousTimerange = usePrevious(timerange);
 
   const query = getQueryWithDefaults(props.query);
+  if (config.featureToggles.lokiPredefinedOperations && !query.expr && predefinedOperations) {
+    query.expr = `{} ${predefinedOperations}`;
+  }
   const previousQuery = usePrevious(query.expr);
 
   // This should be filled in from the defaults by now.
@@ -199,7 +203,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           onRunQuery={onRunQuery}
           app={app}
           maxLines={datasource.maxLines}
-          datasource={datasource}
           queryStats={queryStats}
         />
       </EditorRows>

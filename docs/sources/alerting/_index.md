@@ -3,11 +3,6 @@ aliases:
   - about-alerting/
   - unified-alerting/alerting/
 description: Intro to key benefits and features of Grafana Alerting
-cascade:
-  labels:
-    products:
-      - cloud
-      - oss
 title: Alerting
 weight: 114
 ---

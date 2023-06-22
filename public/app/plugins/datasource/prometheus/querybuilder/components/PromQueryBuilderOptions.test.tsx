@@ -5,7 +5,6 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { CoreApp } from '@grafana/data';
 
-import { promDefaultBaseQuery } from '../../datasource';
 import { PromQuery } from '../../types';
 import { getQueryWithDefaults } from '../state';
 
@@ -107,7 +106,15 @@ function setup(queryOverrides: Partial<PromQuery> = {}, app: CoreApp = CoreApp.P
   const props = {
     app,
     query: {
-      ...getQueryWithDefaults(promDefaultBaseQuery(), CoreApp.PanelEditor),
+      ...getQueryWithDefaults(
+        {
+          refId: 'A',
+          expr: '',
+          range: true,
+          instant: false,
+        } as PromQuery,
+        CoreApp.PanelEditor
+      ),
       ...queryOverrides,
     },
     onRunQuery: jest.fn(),

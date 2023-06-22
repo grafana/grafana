@@ -135,6 +135,9 @@ var (
 	// Profile UI
 	ProfileEnabled bool
 
+	// News Feed
+	NewsFeedEnabled bool
+
 	// Grafana.NET URL
 	GrafanaComUrl string
 
@@ -238,6 +241,7 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 	PluginForcePublicKeyDownload     bool
+	PluginSkipPublicKeyDownload      bool
 
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
@@ -274,6 +278,8 @@ type Cfg struct {
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
+	// TO REMOVE: Not documented & not supported. Remove with legacy handlers in 10.2
+	AuthBrokerEnabled bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -531,6 +537,9 @@ type Cfg struct {
 
 	CustomResponseHeaders map[string]string
 
+	// This is used to override the general error message shown to users when we want to obfuscate a sensitive backend error
+	UserFacingDefaultError string
+
 	// DatabaseInstrumentQueries is used to decide if database queries
 	// should be instrumented with metrics, logs and traces.
 	// This needs to be on the global object since its used in the
@@ -550,7 +559,7 @@ type CommandLineArgs struct {
 	Args     []string
 }
 
-func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
+func (cfg *Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
 	appUrl := valueAsString(section, "root_url", "http://localhost:3000/")
 
 	if appUrl[len(appUrl)-1] != '/' {
@@ -773,7 +782,7 @@ func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	}
 }
 
-func (cfg Cfg) getCommandLineProperties(args []string) map[string]string {
+func (cfg *Cfg) getCommandLineProperties(args []string) map[string]string {
 	props := make(map[string]string)
 
 	for _, arg := range args {
@@ -1104,6 +1113,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	profile := iniFile.Section("profile")
 	ProfileEnabled = profile.Key("enabled").MustBool(true)
 
+	news := iniFile.Section("news")
+	NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
+
 	queryHistory := iniFile.Section("query_history")
 	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
 
@@ -1214,6 +1226,9 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	databaseSection := iniFile.Section("database")
 	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+
+	logSection := iniFile.Section("log")
+	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
 
 	return nil
 }
@@ -1486,8 +1501,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
+
 	// Do not use
 	cfg.AuthConfigUIAdminAccess = auth.Key("config_ui_admin_access").MustBool(false)
+	cfg.AuthBrokerEnabled = auth.Key("broker").MustBool(true)
+
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 

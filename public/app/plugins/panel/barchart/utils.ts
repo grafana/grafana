@@ -1,4 +1,3 @@
-import { orderBy } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -11,7 +10,6 @@ import {
   getFieldSeriesColor,
   GrafanaTheme2,
   outerJoinDataFrames,
-  reduceField,
   TimeZone,
   VizOrientation,
 } from '@grafana/data';
@@ -472,18 +470,6 @@ export function prepareBarChartDisplayValues(
     if (firstNumber) {
       fields = [firstNumber];
     }
-  }
-
-  if (isLegendOrdered(options.legend)) {
-    const sortKey = options.legend.sortBy!.toLowerCase();
-    const reducers = options.legend.calcs ?? [sortKey];
-    fields = orderBy(
-      fields,
-      (field) => {
-        return reduceField({ field, reducers })[sortKey];
-      },
-      options.legend.sortDesc ? 'desc' : 'asc'
-    );
   }
 
   let legendFields: Field[] = fields;

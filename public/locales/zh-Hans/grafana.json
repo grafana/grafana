@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "已复制"
@@ -114,15 +134,6 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "请联系您的管理员配置数据源。",
-    "explanation": "如需可视化您的数据，请先连接数据。",
-    "new-dashboard": "新建仪表板",
-    "preferred": "连接您的首选数据源：",
-    "sampleData": "或者使用示例数据设置新的仪表板",
-    "viewAll": "查看全部",
-    "welcome": "欢迎使用 Grafana 仪表板 ！"
-  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
@@ -150,6 +161,12 @@
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
       "success": "库面板已保存"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
     }
   },
   "nav": {
@@ -443,6 +460,12 @@
       "placeholder": "搜索仪表板"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -518,6 +541,15 @@
       "copy-button": "复制到剪贴板"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "时区"
@@ -533,10 +565,7 @@
       "week-start-label": "每周开始日"
     },
     "theme": {
-      "dark-label": "深色",
-      "default-label": "默认",
-      "light-label": "浅色",
-      "system-label": "系统"
+      "default-label": "默认"
     },
     "title": "首选项"
   },

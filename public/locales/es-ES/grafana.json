@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copiado"
@@ -114,15 +134,6 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
-    "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
-    "new-dashboard": "Nuevo panel de control",
-    "preferred": "Conecte su fuente de datos preferida:",
-    "sampleData": "O configure un nuevo panel de control con datos de muestra",
-    "viewAll": "Ver todo",
-    "welcome": "¡Te damos la bienvenida a los paneles de Grafana!"
-  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
@@ -150,6 +161,12 @@
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
       "success": "Panel de librería guardado"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
     }
   },
   "nav": {
@@ -443,6 +460,12 @@
       "placeholder": "Buscar paneles de control"
     }
   },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartir"
@@ -518,6 +541,15 @@
       "copy-button": "Copiar al portapapeles"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Zona horaria"
@@ -533,10 +565,7 @@
       "week-start-label": "Inicio de la semana"
     },
     "theme": {
-      "dark-label": "Oscuro",
-      "default-label": "Por defecto",
-      "light-label": "Claro",
-      "system-label": "Sistema"
+      "default-label": "Por defecto"
     },
     "title": "Preferencias"
   },

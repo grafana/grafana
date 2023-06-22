@@ -9,6 +9,7 @@ import { createLogRow } from '../__mocks__/logRow';
 import { LogRowContextModal } from './LogRowContextModal';
 
 const getRowContext = jest.fn().mockResolvedValue({ data: { fields: [], rows: [] } });
+const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 
 const dispatchMock = jest.fn();
 jest.mock('app/types', () => ({
@@ -127,6 +128,35 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(4));
   });
 
+  it('should call getRowContextQuery when limit changes', async () => {
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        getRowContextQuery={getRowContextQuery}
+        timeZone={timeZone}
+      />
+    );
+
+    // this will call it initially and in the first fetchResults
+    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(2));
+
+    const tenLinesButton = screen.getByRole('button', {
+      name: /50 lines/i,
+    });
+    await userEvent.click(tenLinesButton);
+    const twentyLinesButton = screen.getByRole('menuitemradio', {
+      name: /20 lines/i,
+    });
+    act(() => {
+      userEvent.click(twentyLinesButton);
+    });
+
+    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(3));
+  });
+
   it('should show a split view button', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 
@@ -175,7 +205,7 @@ describe('LogRowContextModal', () => {
       />
     );
 
-    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(2));
   });
 
   it('should close modal', async () => {

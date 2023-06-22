@@ -48,8 +48,8 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// The most recently defined state
-		if add.State != FeatureStateUnknown {
-			flag.State = add.State
+		if add.Stage != FeatureStageUnknown {
+			flag.Stage = add.Stage
 		}
 
 		// Only gets more restrictive

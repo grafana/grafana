@@ -10,12 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
-
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -89,10 +90,12 @@ func getBody(t *testing.T, body io.ReadCloser) string {
 	return string(b)
 }
 
-func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
+type ruleMutator func(r *apimodels.PostableExtendedRuleNode)
+
+func alertRuleGen(mutators ...ruleMutator) func() apimodels.PostableExtendedRuleNode {
 	return func() apimodels.PostableExtendedRuleNode {
 		forDuration := model.Duration(10 * time.Second)
-		return apimodels.PostableExtendedRuleNode{
+		rule := apimodels.PostableExtendedRuleNode{
 			ApiRuleNode: &apimodels.ApiRuleNode{
 				For:         &forDuration,
 				Labels:      map[string]string{"label1": "val1"},
@@ -117,6 +120,69 @@ func alertRuleGen() func() apimodels.PostableExtendedRuleNode {
 				},
 			},
 		}
+
+		for _, mutator := range mutators {
+			mutator(&rule)
+		}
+		return rule
+	}
+}
+
+func withDatasourceQuery(uid string) func(r *apimodels.PostableExtendedRuleNode) {
+	data := []apimodels.AlertQuery{
+		{
+			RefID: "A",
+			RelativeTimeRange: apimodels.RelativeTimeRange{
+				From: apimodels.Duration(600 * time.Second),
+				To:   0,
+			},
+			DatasourceUID: uid,
+			Model: json.RawMessage(fmt.Sprintf(`{
+	                "refId": "A",
+	                "hide": false,
+	                "datasource": {
+	                    "type": "testdata",
+	                    "uid": "%s"
+	                },
+	                "scenarioId": "random_walk",
+	                "seriesCount": 5,
+	                "labels": "series=series-$seriesIndex"
+	            }`, uid)),
+		},
+		{
+			RefID:         "B",
+			DatasourceUID: expr.DatasourceType,
+			Model: json.RawMessage(`{
+	                "type": "reduce",
+	                "reducer": "last",
+	                "expression": "A"
+	            }`),
+		},
+		{
+			RefID:         "C",
+			DatasourceUID: expr.DatasourceType,
+			Model: json.RawMessage(`{
+	                "refId": "C",
+	                "type": "threshold",
+	                "conditions": [
+	                    {
+	                        "type": "query",
+	                        "evaluator": {
+	                            "params": [
+	                                0
+	                            ],
+	                            "type": "gt"
+	                        }
+	                    }
+	                ],
+	                "expression": "B"
+	            }`),
+		},
+	}
+
+	return func(r *apimodels.PostableExtendedRuleNode) {
+		r.GrafanaManagedAlert.Data = data
+		r.GrafanaManagedAlert.Condition = "C"
 	}
 }
 
@@ -126,7 +192,7 @@ func generateAlertRuleGroup(rulesCount int, gen func() apimodels.PostableExtende
 		rules = append(rules, gen())
 	}
 	return apimodels.PostableRuleGroupConfig{
-		Name:     "arulegroup-" + util.GenerateShortUID(),
+		Name:     "arulegroup-" + uuid.NewString(),
 		Interval: model.Duration(10 * time.Second),
 		Rules:    rules,
 	}
@@ -280,6 +346,24 @@ func (a apiClient) PostRulesGroup(t *testing.T, folder string, group *apimodels.
 	return resp.StatusCode, string(b)
 }
 
+func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (int, string) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	require.NoError(t, err)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	return resp.StatusCode, string(b)
+}
+
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
 	t.Helper()
 	u := fmt.Sprintf("%s/api/ruler/grafana/api/v1/rules/%s/%s", a.url, folder, group)
@@ -333,4 +417,69 @@ func (a apiClient) SubmitRuleForBacktesting(t *testing.T, config apimodels.Backt
 	b, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) SubmitRuleForTesting(t *testing.T, config apimodels.PostableExtendedRuleNodeExtended) (int, string) {
+	t.Helper()
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(config)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/v1/rule/test/grafana", a.url)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) CreateTestDatasource(t *testing.T) (result api.CreateOrUpdateDatasourceResponse) {
+	t.Helper()
+
+	payload := fmt.Sprintf(`{"name":"TestData-%s","type":"testdata","access":"proxy","isDefault":false}`, uuid.NewString())
+	buf := bytes.Buffer{}
+	buf.Write([]byte(payload))
+
+	u := fmt.Sprintf("%s/api/datasources", a.url)
+
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", &buf)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	if resp.StatusCode != 200 {
+		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
+	}
+	require.NoError(t, json.Unmarshal([]byte(fmt.Sprintf(`{ "body": %s }`, string(b))), &result))
+	return result
+}
+
+func (a apiClient) DeleteDatasource(t *testing.T, uid string) {
+	t.Helper()
+
+	u := fmt.Sprintf("%s/api/datasources/uid/%s", a.url, uid)
+
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	require.NoError(t, err)
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	if resp.StatusCode != 200 {
+		require.Failf(t, "failed to create data source", "API request to create a datasource failed. Status code: %d, response: %s", resp.StatusCode, string(b))
+	}
 }

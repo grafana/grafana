@@ -307,12 +307,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component:
-        config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
-          ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-            )
-          : () => <Redirect to="/admin" />,
+      component: config.licenseInfo.enabledFeatures?.saml
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin',

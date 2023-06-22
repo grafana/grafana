@@ -48,6 +48,52 @@ describe('getPluginExtensions()', () => {
     );
   });
 
+  test('should not limit the number of extensions per plugin by default', () => {
+    // Registering 3 extensions for the same plugin for the same placement
+    const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link1, link1, link2] }]);
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1 });
+
+    expect(extensions).toHaveLength(3);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.link,
+        title: link1.title,
+        description: link1.description,
+        path: link1.path,
+      })
+    );
+  });
+
+  test('should be possible to limit the number of extensions per plugin for a given placement', () => {
+    const registry = createPluginExtensionRegistry([
+      { pluginId, extensionConfigs: [link1, link1, link1, link2] },
+      {
+        pluginId: 'my-plugin',
+        extensionConfigs: [
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link1, path: '/a/my-plugin/declare-incident' },
+          { ...link2, path: '/a/my-plugin/declare-incident' },
+        ],
+      },
+    ]);
+
+    // Limit to 1 extension per plugin
+    const { extensions } = getPluginExtensions({ registry, extensionPointId: extensionPoint1, limitPerPlugin: 1 });
+
+    expect(extensions).toHaveLength(2);
+    expect(extensions[0]).toEqual(
+      expect.objectContaining({
+        pluginId,
+        type: PluginExtensionTypes.link,
+        title: link1.title,
+        description: link1.description,
+        path: link1.path,
+      })
+    );
+  });
+
   test('should return with an empty list if there are no extensions registered for a placement yet', () => {
     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
     const { extensions } = getPluginExtensions({ registry, extensionPointId: 'placement-with-no-extensions' });

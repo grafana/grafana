@@ -5,18 +5,21 @@ This module contains steps and pipelines publishing to AWS Marketplace.
 load(
     "scripts/drone/steps/lib.star",
     "compile_build_cmd",
-    "publish_image",
 )
 load("scripts/drone/vault.star", "from_secret")
 load(
     "scripts/drone/utils/utils.star",
     "pipeline",
 )
+load(
+    "scripts/drone/utils/images.star",
+    "images",
+)
 
 def publish_aws_marketplace_step():
     return {
         "name": "publish-aws-marketplace",
-        "image": publish_image,
+        "image": images["publish_image"],
         "commands": ["./bin/build publish aws --image grafana/grafana-enterprise --repo grafana-labs/grafanaenterprise --product 422b46fb-bea6-4f27-8bcc-832117bd627e"],
         "depends_on": ["compile-build-cmd"],
         "environment": {

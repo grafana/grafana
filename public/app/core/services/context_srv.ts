@@ -245,7 +245,7 @@ export class ContextSrv {
 
   private rotateToken() {
     // We directly use fetch here to bypass the request queue from backendSvc
-    return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
+    return fetch(config.appSubUrl + '/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
           this.scheduleTokenRotationJob();

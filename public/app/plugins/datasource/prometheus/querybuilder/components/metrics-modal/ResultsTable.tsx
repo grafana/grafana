@@ -3,8 +3,9 @@ import React, { ReactElement, useEffect, useRef } from 'react';
 import Highlighter from 'react-highlight-words';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, Tooltip, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
 
+import { docsTip } from '../../../configuration/ConfigEditor';
 import { PromVisualQuery } from '../../types';
 
 import { tracking } from './state/helpers';
@@ -51,15 +52,7 @@ export function ResultsTable(props: ResultsTableProps) {
     if (state.fullMetaSearch && metric) {
       return (
         <>
-          <td>
-            <Highlighter
-              textToHighlight={metric.type ?? ''}
-              searchWords={state.metaHaystackMatches}
-              autoEscape
-              highlightClassName={`${styles.matchHighLight} ${metric.inferred ? styles.italicized : ''}`}
-            />{' '}
-            {inferredType(metric.inferred ?? false)}
-          </td>
+          <td>{displayType(metric.type ?? '')}</td>
           <td>
             <Highlighter
               textToHighlight={metric.description ?? ''}
@@ -73,25 +66,49 @@ export function ResultsTable(props: ResultsTableProps) {
     } else {
       return (
         <>
-          <td className={metric.inferred ? styles.italicized : ''}>
-            {metric.type ?? ''} {inferredType(metric.inferred ?? false)}
-          </td>
+          <td>{displayType(metric.type ?? '')}</td>
           <td>{metric.description ?? ''}</td>
         </>
       );
     }
   }
 
-  function inferredType(inferred: boolean): JSX.Element | undefined {
-    if (inferred) {
-      return (
-        <Tooltip content={'This metric type has been inferred'} placement="bottom-end">
-          <Icon name="info-circle" size="xs" />
-        </Tooltip>
-      );
-    } else {
-      return undefined;
+  function addHelpIcon(fullType: string, descriptiveType: string, link: string) {
+    return (
+      <>
+        {fullType}
+        <span className={styles.tooltipSpace}>
+          <Tooltip
+            content={
+              <>
+                When creating a {descriptiveType}, Prometheus exposes multiple series with the type counter.{' '}
+                {docsTip(link)}
+              </>
+            }
+            placement="bottom-start"
+            interactive={true}
+          >
+            <Icon name="info-circle" size="xs" />
+          </Tooltip>
+        </span>
+      </>
+    );
+  }
+
+  function displayType(type: string | null) {
+    if (!type) {
+      return '';
     }
+
+    if (type.includes('(summary)')) {
+      return addHelpIcon(type, 'summary', 'https://prometheus.io/docs/concepts/metric_types/#summary');
+    }
+
+    if (type.includes('(histogram)')) {
+      return addHelpIcon(type, 'histogram', 'https://prometheus.io/docs/concepts/metric_types/#histogram');
+    }
+
+    return type;
   }
 
   function noMetricsMessages(): ReactElement {
@@ -105,7 +122,7 @@ export function ResultsTable(props: ResultsTableProps) {
       message = 'There are no metrics found. Try to expand your label filters.';
     }
 
-    if (state.fuzzySearchQuery) {
+    if (state.fuzzySearchQuery || state.selectedTypes.length > 0) {
       message = 'There are no metrics found. Try to expand your search and filters.';
     }
 
@@ -116,6 +133,21 @@ export function ResultsTable(props: ResultsTableProps) {
     );
   }
 
+  function textHighlight(state: MetricsModalState) {
+    if (state.useBackend) {
+      // highlight the input only for the backend search
+      // this highlight is equivalent to how the metric select highlights
+      // look into matching on regex input
+      return [state.fuzzySearchQuery];
+    } else if (state.fullMetaSearch) {
+      // highlight the matches in the ufuzzy metaHaystack
+      return state.metaHaystackMatches;
+    } else {
+      // highlight the ufuzzy name matches
+      return state.nameHaystackMatches;
+    }
+  }
+
   return (
     <table className={styles.table} ref={tableRef}>
       <thead className={styles.stickyHeader}>
@@ -124,9 +156,10 @@ export function ResultsTable(props: ResultsTableProps) {
           {state.hasMetadata && (
             <>
               <th className={`${styles.typeWidth} ${styles.tableHeaderPadding}`}>Type</th>
-              <th className={styles.tableHeaderPadding}>Description</th>
+              <th className={`${styles.descriptionWidth} ${styles.tableHeaderPadding}`}>Description</th>
             </>
           )}
+          <th className={styles.selectButtonWidth}> </th>
         </tr>
       </thead>
       <tbody>
@@ -137,8 +170,6 @@ export function ResultsTable(props: ResultsTableProps) {
                 <tr
                   key={metric?.value ?? idx}
                   className={`${styles.row} ${isSelectedRow(idx) ? `${styles.selectedRow} selected-row` : ''}`}
-                  onClick={() => selectMetric(metric)}
-                  tabIndex={0}
                   onFocus={() => onFocusRow(idx)}
                   onKeyDown={(e) => {
                     if (e.code === 'Enter' && e.currentTarget.classList.contains('selected-row')) {
@@ -149,12 +180,22 @@ export function ResultsTable(props: ResultsTableProps) {
                   <td className={styles.nameOverflow}>
                     <Highlighter
                       textToHighlight={metric?.value ?? ''}
-                      searchWords={state.fullMetaSearch ? state.metaHaystackMatches : state.nameHaystackMatches}
+                      searchWords={textHighlight(state)}
                       autoEscape
                       highlightClassName={styles.matchHighLight}
                     />
                   </td>
                   {state.hasMetadata && metaRows(metric)}
+                  <td>
+                    <Button
+                      size="md"
+                      variant="secondary"
+                      onClick={() => selectMetric(metric)}
+                      className={styles.centerButton}
+                    >
+                      Select
+                    </Button>
+                  </td>
                 </tr>
               );
             })}
@@ -186,7 +227,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
     `,
     row: css`
       label: row;
-      cursor: pointer;
       border-bottom: 1px solid ${theme.colors.border.weak}
       &:last-child {
         border-bottom: 0;
@@ -207,13 +247,19 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       background-color: ${theme.components.textHighlight.background};
     `,
     nameWidth: css`
-      ${disableTextWrap ? '' : 'width: 40%;'}
+      ${disableTextWrap ? '' : 'width: 37.5%;'}
     `,
     nameOverflow: css`
       ${disableTextWrap ? '' : 'overflow-wrap: anywhere;'}
     `,
     typeWidth: css`
-      ${disableTextWrap ? '' : 'width: 16%;'}
+      ${disableTextWrap ? '' : 'width: 15%;'}
+    `,
+    descriptionWidth: css`
+      ${disableTextWrap ? '' : 'width: 35%;'}
+    `,
+    selectButtonWidth: css`
+      ${disableTextWrap ? '' : 'width: 12.5%;'}
     `,
     stickyHeader: css`
       position: sticky;
@@ -224,8 +270,13 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       text-align: center;
       color: ${theme.colors.text.secondary};
     `,
-    italicized: css`
-      font-style: italic;
+    tooltipSpace: css`
+      margin-left: 4px;
+    `,
+    centerButton: css`
+      display: block;
+      margin: auto;
+      border: none;
     `,
   };
 };
