@@ -325,6 +325,8 @@ abstract class DataSourceApi<
 
   /**
    * Used in explore for Log details
+   *
+   * @alpha
    */
   analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
 
