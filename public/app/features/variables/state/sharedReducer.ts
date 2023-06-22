@@ -78,15 +78,24 @@ const sharedReducerSlice = createSlice({
       }
 
       const original = cloneDeep<VariableModel>(state[action.payload.id]);
-      const originalName = original.name.match(/^copy_of_(.*)_\d+$/)?.[1] || original.name;
-      const copyRegex = new RegExp(`^copy_of_${escapeRegExp(originalName)}_(\\d+)$`);
-      const suffix =
-        (Object.values(state)
-          .map(({ name }) => name.match(copyRegex)?.[1])
-          .filter((v): v is string => v != null)
-          .map((v) => +v)
-          .sort((a, b) => b - a)?.[0] || 0) + 1;
-      const name = `copy_of_${originalName}_${suffix}`;
+      const copyRegex = new RegExp(`^copy_of_${escapeRegExp(original.name)}(_(\\d+))?$`);
+
+      const copies = Object.values(state)
+        .map(({ name }) => name.match(copyRegex))
+        .filter((v): v is RegExpMatchArray => v != null);
+      const numberedCopies = copies.map((match) => match[2]).filter((v): v is string => v != null);
+
+      const suffix = ((): number | null => {
+        if (copies.length === 0) {
+          return null;
+        }
+        if (numberedCopies.length === 0) {
+          return 1;
+        }
+        return numberedCopies.map((v) => +v).sort((a, b) => b - a)[0] + 1;
+      })();
+
+      const name = `copy_of_${original.name}${suffix ? `_${suffix}` : ''}`;
       const newId = action.payload.data?.newId ?? name;
       const index = getNextVariableIndex(Object.values(state));
       state[newId] = {
