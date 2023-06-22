@@ -441,7 +441,7 @@ func TestLoader_Load(t *testing.T) {
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{}, &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, &fakes.FakeLicensingService{})
 		})
 
 		t.Run(tt.name, func(t *testing.T) {
@@ -675,7 +675,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 			l := newLoader(tt.cfg, func(l *Loader) {
 				l.pluginRegistry = reg
 				l.processManager = procMgr
-				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+				l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 			})
 			t.Run(tt.name, func(t *testing.T) {
 				origAppURL := setting.AppUrl
@@ -796,7 +796,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 		l := newLoader(tt.cfg, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(tt.cfg, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -875,7 +875,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -959,7 +959,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1058,7 +1058,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1211,7 +1211,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1389,7 +1389,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		l := newLoader(&config.Cfg{}, func(l *Loader) {
 			l.pluginRegistry = reg
 			l.processManager = procMgr
-			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService(), &fakes.FakeOauthService{})
+			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {

@@ -81,7 +81,7 @@ var WireSet = wire.NewSet(
 	keyretriever.ProvideService,
 	dynamic.ProvideService,
 	oauthserver.ProvideService,
-	wire.Bind(new(oauth.ExternalServiceRegister), new(*oauthserver.Service)),
+	wire.Bind(new(oauth.ExternalServiceRegistry), new(*oauthserver.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

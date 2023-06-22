@@ -21,17 +21,17 @@ type ImpersonationCfg struct {
 
 // PluginExternalServiceRegistration is a subset of oauthserver.ExternalServiceRegistration
 // simplified for the plugin use case.
-type PluginExternalService struct {
-	Impersonation ImpersonationCfg `json:"impersonation"`
-	Self          SelfCfg          `json:"self"`
+type ExternalServiceRegistration struct {
+	Impersonation *ImpersonationCfg `json:"impersonation,omitempty"`
+	Self          *SelfCfg          `json:"self,omitempty"`
 }
 
-type PluginExternalServiceRegistration struct {
+type ExternalService struct {
 	ClientID     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
 	PrivateKey   string `json:"privateKey"`
 }
 
-type ExternalServiceRegister interface {
-	SavePluginExternalService(ctx context.Context, name string, svc *PluginExternalService) (*PluginExternalServiceRegistration, error)
+type ExternalServiceRegistry interface {
+	RegisterExternalService(ctx context.Context, name string, svc *ExternalServiceRegistration) (*ExternalService, error)
 }

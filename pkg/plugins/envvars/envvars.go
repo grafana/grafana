@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type Provider interface {
@@ -24,14 +23,13 @@ type Provider interface {
 type Service struct {
 	cfg             *config.Cfg
 	license         plugins.Licensing
-	serviceRegister oauth.ExternalServiceRegister
+	serviceRegister oauth.ExternalServiceRegistry
 }
 
-func NewProvider(cfg *config.Cfg, license plugins.Licensing, serviceRegister oauth.ExternalServiceRegister) *Service {
+func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	return &Service{
-		cfg:             cfg,
-		license:         license,
-		serviceRegister: serviceRegister,
+		cfg:     cfg,
+		license: license,
 	}
 }
 
@@ -50,12 +48,14 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) 
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
-	if p.ExternalServiceRegistration != nil && s.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		vars, err := s.externalServiceEnvVars(ctx, p.ID, p.ExternalServiceRegistration)
-		if err != nil {
-			return nil, err
-		}
-		hostEnv = append(hostEnv, vars...)
+	if p.ExternalService != nil {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
+			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
+		)
 	}
 
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
@@ -110,20 +110,6 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 		}
 	}
 	return nil
-}
-
-func (s *Service) externalServiceEnvVars(ctx context.Context, pluginID string, oauthAppInfo *oauth.PluginExternalService) ([]string, error) {
-	cli, err := s.serviceRegister.SavePluginExternalService(ctx, pluginID, oauthAppInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	return []string{
-		fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
-		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", cli.ClientID),
-		fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", cli.ClientSecret),
-		fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", cli.PrivateKey),
-	}, nil
 }
 
 type pluginSettings map[string]string

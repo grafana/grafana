@@ -37,7 +37,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
-		}, licensing, &fakes.FakeOauthService{})
+		}, licensing)
 
 		envVars, err := envVarsProvider.Get(context.Background(), p)
 		require.NoError(t, err)
@@ -299,7 +299,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			envVarsProvider := NewProvider(tc.cfg, nil, &fakes.FakeOauthService{})
+			envVarsProvider := NewProvider(tc.cfg, nil)
 			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
 			require.NoError(t, err)
 			tc.exp(t, envVars)
@@ -312,20 +312,19 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:                          "test",
-				ExternalServiceRegistration: &oauth.PluginExternalService{},
+				ExternalServiceRegistration: &oauth.ExternalServiceRegistration{},
+			},
+			ExternalService: &oauth.ExternalService{
+				ClientID:     "clientID",
+				ClientSecret: "clientSecret",
+				PrivateKey:   "privatePem",
 			},
 		}
 
 		envVarsProvider := NewProvider(&config.Cfg{
 			GrafanaAppURL: "https://myorg.com/",
 			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
-		}, nil, &fakes.FakeOauthService{
-			Result: &oauth.PluginExternalServiceRegistration{
-				ClientID:     "clientID",
-				ClientSecret: "clientSecret",
-				PrivateKey:   "privatePem",
-			},
-		})
+		}, nil)
 		envVars, err := envVarsProvider.Get(context.Background(), p)
 
 		require.NoError(t, err)

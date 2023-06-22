@@ -54,6 +54,8 @@ type Plugin struct {
 
 	AngularDetected bool
 
+	ExternalService *oauth.ExternalService
+
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
@@ -153,7 +155,7 @@ type JSONData struct {
 	Executable string `json:"executable,omitempty"`
 
 	// Oauth App Service Registration
-	ExternalServiceRegistration *oauth.PluginExternalService `json:"externalServiceRegistration,omitempty"`
+	ExternalServiceRegistration *oauth.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

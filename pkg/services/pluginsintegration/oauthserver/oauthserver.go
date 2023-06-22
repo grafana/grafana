@@ -18,28 +18,31 @@ func ProvideService(os oauthserver.OAuth2Server) *Service {
 	return s
 }
 
-// SavePluginExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) SavePluginExternalService(ctx context.Context, svcName string, svc *oauth.PluginExternalService) (*oauth.PluginExternalServiceRegistration, error) {
-	impersonation := oauthserver.ImpersonationCfg{
-		Permissions: svc.Impersonation.Permissions,
+// RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
+func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *oauth.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+	impersonation := oauthserver.ImpersonationCfg{}
+	if svc.Impersonation != nil {
+		impersonation.Permissions = svc.Impersonation.Permissions
+		if svc.Impersonation.Enabled != nil {
+			impersonation.Enabled = *svc.Impersonation.Enabled
+		} else {
+			impersonation.Enabled = true
+		}
+		if svc.Impersonation.Groups != nil {
+			impersonation.Groups = *svc.Impersonation.Groups
+		} else {
+			impersonation.Groups = true
+		}
 	}
-	if svc.Impersonation.Enabled != nil {
-		impersonation.Enabled = *svc.Impersonation.Enabled
-	} else {
-		impersonation.Enabled = true
-	}
-	if svc.Impersonation.Groups != nil {
-		impersonation.Groups = *svc.Impersonation.Groups
-	} else {
-		impersonation.Groups = true
-	}
-	self := oauthserver.SelfCfg{
-		Permissions: svc.Self.Permissions,
-	}
-	if svc.Self.Enabled != nil {
-		self.Enabled = *svc.Self.Enabled
-	} else {
-		self.Enabled = true
+
+	self := oauthserver.SelfCfg{}
+	if svc.Self != nil {
+		self.Permissions = svc.Self.Permissions
+		if svc.Self.Enabled != nil {
+			self.Enabled = *svc.Self.Enabled
+		} else {
+			self.Enabled = true
+		}
 	}
 	extSvc, err := s.os.SaveExternalService(ctx, &oauthserver.ExternalServiceRegistration{
 		Name:          svcName,
@@ -51,7 +54,7 @@ func (s *Service) SavePluginExternalService(ctx context.Context, svcName string,
 		return nil, err
 	}
 
-	return &oauth.PluginExternalServiceRegistration{
+	return &oauth.ExternalService{
 		ClientID:     extSvc.ID,
 		ClientSecret: extSvc.Secret,
 		PrivateKey:   extSvc.KeyResult.PrivatePem,

@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -33,6 +34,7 @@ type Loader struct {
 	pluginInitializer   initializer.Initializer
 	signatureValidator  signature.Validator
 	signatureCalculator plugins.SignatureCalculator
+	oauthServer         oauth.ExternalServiceRegistry
 	assetPath           *assetpath.Service
 	log                 log.Logger
 	cfg                 *config.Cfg
@@ -45,7 +47,7 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector, oauthServer oauth.ExternalServiceRegister) *Loader {
+	angularInspector angulardetector.Inspector, oauthServer oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, oauthServer)
 }
@@ -54,11 +56,11 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector, oauthServer oauth.ExternalServiceRegister) *Loader {
+	angularInspector angulardetector.Inspector, oauthServer oauth.ExternalServiceRegistry) *Loader {
 	return &Loader{
 		pluginFinder:        pluginFinder,
 		pluginRegistry:      pluginRegistry,
-		pluginInitializer:   initializer.New(cfg, backendProvider, license, oauthServer),
+		pluginInitializer:   initializer.New(cfg, backendProvider, license),
 		signatureValidator:  signature.NewValidator(authorizer),
 		signatureCalculator: signatureCalculator,
 		processManager:      processManager,
@@ -68,6 +70,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		cfg:                 cfg,
 		assetPath:           assetPath,
 		angularInspector:    angularInspector,
+		oauthServer:         oauthServer,
 	}
 }
 
@@ -196,6 +199,15 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
 				continue
 			}
+		}
+
+		if p.ExternalServiceRegistration != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+			s, err := l.oauthServer.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
+			if err != nil {
+				l.log.Error("Could not register an external service. Initialization skipped", "pluginID", p.ID, "err", err)
+				continue
+			}
+			p.ExternalService = s
 		}
 
 		err := l.pluginInitializer.Initialize(ctx, p)
