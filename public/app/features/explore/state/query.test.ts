@@ -798,8 +798,8 @@ describe('reducer', () => {
       const dispatch = store.dispatch;
 
       cleanUpMock.mockClear();
-      await dispatch(runQueries({ exploreId: ExploreId.left }));
-      await dispatch(cancelQueries(ExploreId.left));
+      await dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(cancelQueries('left'));
       expect(cleanUpMock).toBeCalledTimes(1);
     });
   });
