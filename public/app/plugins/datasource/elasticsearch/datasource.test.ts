@@ -1016,7 +1016,7 @@ describe('ElasticDatasource', () => {
       ds = getTestContext().ds;
     });
 
-    it('does not create a logs sample provider for logs query', () => {
+    it('does not create a logs sample provider for non time series query', () => {
       const options = getQueryOptions<ElasticsearchQuery>({
         targets: [
           {
