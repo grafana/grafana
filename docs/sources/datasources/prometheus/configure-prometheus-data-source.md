@@ -34,7 +34,7 @@ You will be taken to the **Settings** tab where you will set up your Prometheus 
 
 ## Configuration options
 
-Following is a list of configuration options for Prometheus.
+The following is a list of configuration options for Prometheus.
 
 The first option to configure is the name of your connection:
 
