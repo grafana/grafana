@@ -6,7 +6,10 @@ import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { setupMswServer } from 'app/features/alerting/unified/mockApi';
+import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { RuleNamespace } from 'app/types/unified-alerting';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
@@ -22,8 +25,37 @@ import { UnifiedAlertList } from './UnifiedAlertList';
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import * as utils from './util';
 
-jest.mock('app/features/alerting/unified/api/alertmanager');
+const grafanaRuleMock = {
+  promRules: {
+    grafana: {
+      loading: false,
+      dispatched: true,
+      result: [
+        mockPromRuleNamespace({
+          name: 'ns1',
+          groups: [
+            mockPromRuleGroup({
+              name: 'group1',
+              rules: [
+                mockPromAlertingRule({
+                  name: 'rule1',
+                  alerts: [mockPromAlert({ labels: { severity: 'critical' } })],
+                  totals: { alerting: 1 },
+                  totalsFiltered: { alerting: 1 },
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    },
+  },
+};
 
+const fakeResponse: RuleNamespace[] = grafanaRuleMock.promRules.grafana.result;
+
+const server = setupMswServer();
+jest.mock('app/features/alerting/unified/api/alertmanager');
 const defaultOptions: UnifiedAlertListOptions = {
   maxItems: 2,
   sortOrder: SortOrder.AlphaAsc,
@@ -73,32 +105,7 @@ const dashboard = {
 };
 
 const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions) => {
-  const store = mockUnifiedAlertingStore({
-    promRules: {
-      grafana: {
-        loading: false,
-        dispatched: true,
-        result: [
-          mockPromRuleNamespace({
-            name: 'ns1',
-            groups: [
-              mockPromRuleGroup({
-                name: 'group1',
-                rules: [
-                  mockPromAlertingRule({
-                    name: 'rule1',
-                    alerts: [mockPromAlert({ labels: { severity: 'critical' } })],
-                    totals: { alerting: 1 },
-                    totalsFiltered: { alerting: 1 },
-                  }),
-                ],
-              }),
-            ],
-          }),
-        ],
-      },
-    },
-  });
+  const store = mockUnifiedAlertingStore(grafanaRuleMock);
 
   const dashSrv: unknown = { getCurrent: () => dashboard };
   setDashboardSrv(dashSrv as DashboardSrv);
@@ -121,6 +128,8 @@ describe('UnifiedAlertList', () => {
   });
 
   it('should replace option variables before filtering', async () => {
+    mockPromRulesApiResponse(server, fakeResponse);
+
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     const filterAlertsSpy = jest.spyOn(utils, 'filterAlerts');
 
