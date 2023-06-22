@@ -7,7 +7,13 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
+import {
+  BasePropsWithAriaLabel,
+  BasePropsWithTooltip,
+  IconButton,
+  IconButtonVariant,
+  Props as IconButtonProps,
+} from './IconButton';
 import mdx from './IconButton.mdx';
 
 type ScenarioProp = 'canvas' | 'primary' | 'secondary';
@@ -101,7 +107,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
 
   const renderBackgroundScenario = (background: ScenarioProp) => {
     const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
-    console.log('theme', theme);
+
     return (
       <div
         className={css`
@@ -110,7 +116,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
         `}
       >
         <VerticalGroup spacing="md">
-          {/*<div>{background}</div>*/}
+          <div>{background}</div>
           <div
             className={css`
               display: flex;
@@ -136,7 +142,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
   );
 };
 
-export const ExamplesWithoutTooltip = () => {
+export const ExamplesWithoutTooltip = (args: BasePropsWithAriaLabel) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
