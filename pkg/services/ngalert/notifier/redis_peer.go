@@ -354,7 +354,7 @@ func (p *redisPeer) WaitReady(ctx context.Context) error {
 	}
 }
 
-// Settle is mostly copied from uptream.
+// Settle is mostly copied from upstream.
 // Ref: https://github.com/prometheus/alertmanager/blob/2888649b473970400c0bd375fdd563486dc80481/cluster/cluster.go#L674-L712
 func (p *redisPeer) Settle(ctx context.Context, interval time.Duration) {
 	const NumOkayRequired = 3
