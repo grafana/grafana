@@ -2,7 +2,7 @@ import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+import { AzureCloud, AzureCredentials, ConcealedSecret } from '../types';
 
 type AzureAuthJSONData = DataSourceJsonData & {
   azureCredentials: AzureCredentials;

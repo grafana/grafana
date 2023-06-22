@@ -5,7 +5,7 @@ import { InlineFormLabel, Button } from '@grafana/ui/src/components';
 import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
 import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
 
-import { AzureCredentials, AzureAuthType } from './AzureCredentials';
+import { AzureCredentials, AzureAuthType } from '../types';
 
 export interface Props {
   managedIdentityEnabled: boolean;

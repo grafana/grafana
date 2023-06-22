@@ -3,7 +3,9 @@ import React, { useMemo } from 'react';
 import { config } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { KnownAzureClouds, AzureCredentials } from './AzureCredentials';
+import { AzureCredentials } from '../types';
+
+import { KnownAzureClouds } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 
