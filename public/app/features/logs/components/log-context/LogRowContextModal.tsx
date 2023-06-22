@@ -15,8 +15,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
-import { Icon, Button, LoadingBar, Modal, useTheme2, Spinner } from '@grafana/ui';
+import { DataQuery, LoadingState, TimeZone } from '@grafana/schema';
+import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { SETTINGS_KEYS } from 'app/features/explore/Logs/utils/logs';
@@ -26,6 +26,7 @@ import { useDispatch } from 'app/types';
 import { sortLogRows } from '../../utils';
 import { LogRows } from '../LogRows';
 
+import { LoadingIndicator } from './LoadingIndicator';
 import { LogContextButtons } from './LogContextButtons';
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -63,6 +64,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       max-height: 75%;
       align-self: stretch;
       display: inline-block;
+      border: 1px solid ${theme.colors.border.weak};
+      border-radius: ${theme.shape.radius.default};
       & > table {
         min-width: 100%;
       }
@@ -101,6 +104,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         color: ${theme.colors.text.link};
       }
     `,
+    loadingCell: css`
+      position: sticky;
+      left: 50%;
+      display: inline-block;
+      transform: translateX(-50%);
+    `,
   };
 };
 
@@ -124,7 +133,7 @@ interface LogRowContextModalProps {
 
 type Source = 'none' | 'top' | 'bottom' | 'center';
 
-const INITIAL_LOAD_LIMIT = 20;
+const INITIAL_LOAD_LIMIT = 100;
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
   row,
@@ -164,6 +173,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     hasTop: true,
     hasBottom: true,
   });
+  const [loadingStateTop, setLoadingStateTop] = useState(LoadingState.NotStarted);
+  const [loadingStateBottom, setLoadingStateBottom] = useState(LoadingState.NotStarted);
+
   const [loadingWidth, setLoadingWidth] = useState(0);
   const [contextQuery, setContextQuery] = useState<DataQuery | null>(null);
   const [wrapLines, setWrapLines] = useState(
@@ -282,6 +294,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         hasBottom: uniqueNewRows.length > 0,
       }));
     }
+
+    return newRows;
   };
 
   useEffect(() => {
@@ -309,17 +323,40 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
-  const onScrollHit = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
-    if (entries[0].isIntersecting) {
-      //top FIXME: ugly
-      loadMore('top');
-      // we do not allow both top-and-bottom loading at the same time
-      return;
-    }
+  const onScrollHit = async (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+    for (const entry of entries) {
+      // If the element is not intersecting, skip to the next one
+      if (!entry.isIntersecting) {
+        continue;
+      }
 
-    if (entries[1].isIntersecting) {
-      loadMore('bottom');
-      // FIXME
+      const targetElement = entry.target;
+      let loadingState;
+      let setLoadingState;
+
+      if (targetElement === topElement.current) {
+        loadingState = loadingStateTop;
+        setLoadingState = setLoadingStateTop;
+      } else if (targetElement === bottomElement.current) {
+        loadingState = loadingStateBottom;
+        setLoadingState = setLoadingStateBottom;
+      } else {
+        continue; // Skip processing for unknown elements
+      }
+
+      if (loadingState !== LoadingState.Loading) {
+        try {
+          setLoadingState(LoadingState.Loading);
+          const rows = await loadMore(targetElement === topElement.current ? 'top' : 'bottom');
+          if (!rows || rows.length > 0) {
+            setLoadingState(LoadingState.NotStarted);
+          } else if (rows.length === 0) {
+            setLoadingState(LoadingState.Done);
+          }
+        } catch (_) {
+          setLoadingState(LoadingState.Error);
+        }
+      }
     }
   };
 
@@ -400,9 +437,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         <div className={styles.datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
-        <div className={loading ? styles.hidden : ''}>
-          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
-        </div>
         <div>
           <LogContextButtons wrapLines={wrapLines} onChangeWrapLines={setWrapLines} />
         </div>
@@ -414,25 +448,31 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         <table>
           <tbody>
             <tr>
-              <td className={styles.noMarginBottom}>
-                <>
+              <td className={styles.loadingCell}>
+                {loadingStateTop !== LoadingState.Done && loadingStateTop !== LoadingState.Error && (
                   <div ref={topElement}>
                     <LoadingIndicator place="top" />
                   </div>
-                  <LogRows
-                    logRows={context.after}
-                    dedupStrategy={LogsDedupStrategy.none}
-                    showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-                    showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-                    wrapLogMessage={wrapLines}
-                    prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-                    enableLogDetails={true}
-                    timeZone={timeZone}
-                    displayedFields={displayedFields}
-                    onClickShowField={showField}
-                    onClickHideField={hideField}
-                  />
-                </>
+                )}
+                {loadingStateTop === LoadingState.Error && <div>Error loading log more logs.</div>}
+                {loadingStateTop === LoadingState.Done && <div>No more logs available.</div>}
+              </td>
+            </tr>
+            <tr>
+              <td className={styles.noMarginBottom}>
+                <LogRows
+                  logRows={context.after}
+                  dedupStrategy={LogsDedupStrategy.none}
+                  showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+                  showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+                  wrapLogMessage={wrapLines}
+                  prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+                  enableLogDetails={true}
+                  timeZone={timeZone}
+                  displayedFields={displayedFields}
+                  onClickShowField={showField}
+                  onClickHideField={hideField}
+                />
               </td>
             </tr>
             <tr ref={preEntryElement}></tr>
@@ -469,19 +509,22 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                     onClickShowField={showField}
                     onClickHideField={hideField}
                   />
+                </>
+              </td>
+            </tr>
+            <tr>
+              <td className={styles.loadingCell}>
+                {loadingStateBottom !== LoadingState.Done && loadingStateBottom !== LoadingState.Error && (
                   <div ref={bottomElement}>
                     <LoadingIndicator place="bottom" />
                   </div>
-                </>
+                )}
+                {loadingStateBottom === LoadingState.Error && <div>Error loading log more logs.</div>}
+                {loadingStateBottom === LoadingState.Done && <div>No more logs available.</div>}
               </td>
             </tr>
           </tbody>
         </table>
-      </div>
-      <div>
-        <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
-          Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
-        </div>
       </div>
 
       <Modal.ButtonRow>
@@ -534,23 +577,5 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
         )}
       </Modal.ButtonRow>
     </Modal>
-  );
-};
-
-const loadingIndicatorStyles = css`
-  display: flex;
-  justify-content: center;
-`;
-
-// ideally we'd use `@grafana/ui/LoadingPlaceholder`, but that
-// one has a large margin-bottom.
-const LoadingIndicator = ({ place }: { place: 'top' | 'bottom' }) => {
-  const text = place === 'top' ? 'Loading newer logs...' : 'Loading older logs...';
-  return (
-    <div className={loadingIndicatorStyles}>
-      <div>
-        {text} <Spinner inline />
-      </div>
-    </div>
   );
 };
