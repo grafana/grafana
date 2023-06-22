@@ -16,7 +16,7 @@ export interface Props extends Themeable2 {
     | React.ReactNode
     | ((buttonProps: {
         onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-        className: string;
+        ref: React.RefObject<HTMLButtonElement>;
       }) => React.ReactNode);
   /** Custom button styles */
   className?: string;
@@ -125,15 +125,15 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
     return (
       <span className={styles.buttonContainer}>
         <div className={cx(disabled && styles.disabled)}>
-          {typeof children !== 'function' ? (
-            <span className={buttonClass}>
+          <span className={buttonClass}>
+            {typeof children !== 'function' ? (
               <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
                 {children}
               </Button>
-            </span>
-          ) : (
-            children({ onClick, className: buttonClass })
-          )}
+            ) : (
+              children({ onClick, ref: this.mainButtonRef })
+            )}
+          </span>
         </div>
         <span className={confirmButtonClass}>
           <Button size={size} variant={confirmButtonVariant} onClick={this.onConfirm} ref={this.confirmButtonRef}>

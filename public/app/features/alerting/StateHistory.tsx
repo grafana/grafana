@@ -67,16 +67,16 @@ class StateHistory extends PureComponent<Props, State> {
         {stateHistoryItems.length > 0 && (
           <div className="p-b-1">
             <span className="muted">Last 50 state changes</span>
-            <ConfirmButton
-              className={css`
-                direction: ltr;
-              `}
-              onConfirm={this.clearHistory}
-              confirmVariant="destructive"
-              confirmText="Clear"
-            >
+            <ConfirmButton onConfirm={this.clearHistory} confirmVariant="destructive" confirmText="Clear">
               {(buttonProps) => (
-                <Button variant="destructive" icon="trash-alt" {...buttonProps}>
+                <Button
+                  className={css`
+                    direction: ltr;
+                  `}
+                  variant="destructive"
+                  icon="trash-alt"
+                  {...buttonProps}
+                >
                   Clear history
                 </Button>
               )}
