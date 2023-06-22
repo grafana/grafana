@@ -4,13 +4,66 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { render } from 'test/redux-rtl';
 
-import { SplitOpenOptions } from '@grafana/data';
-
-import { createLogRow } from '../__mocks__/logRow';
+import {
+  createDataFrame,
+  FieldType,
+  LogRowContextQueryDirection,
+  LogsSortOrder,
+  SplitOpenOptions,
+} from '@grafana/data';
+import { dataFrameToLogsModel } from 'app/core/logsModel';
 
 import { LogRowContextModal } from './LogRowContextModal';
 
-const getRowContext = jest.fn().mockResolvedValue({ data: { fields: [], rows: [] } });
+const dfBefore = createDataFrame({
+  fields: [
+    {
+      name: 'time',
+      type: FieldType.time,
+      values: ['2019-04-26T07:28:11.352440161Z', '2019-04-26T09:28:11.352440161Z'],
+    },
+    {
+      name: 'message',
+      type: FieldType.string,
+      values: ['foo123', 'foo123'],
+    },
+  ],
+});
+const dfNow = createDataFrame({
+  fields: [
+    {
+      name: 'time',
+      type: FieldType.time,
+      values: ['2019-04-26T09:28:11.352440161Z'],
+    },
+    {
+      name: 'message',
+      type: FieldType.string,
+      values: ['foo123'],
+    },
+  ],
+});
+const dfAfter = createDataFrame({
+  fields: [
+    {
+      name: 'time',
+      type: FieldType.time,
+      values: ['2019-04-26T14:42:50.991981292Z', '2019-04-26T16:28:11.352440161Z'],
+    },
+    {
+      name: 'message',
+      type: FieldType.string,
+      values: ['foo123', 'bar123'],
+    },
+  ],
+});
+const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+  if (options.direction === LogRowContextQueryDirection.Forward) {
+    return { data: [dfBefore] };
+  } else {
+    return { data: [dfAfter] };
+  }
+});
 const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 
 const dispatchMock = jest.fn();
@@ -28,7 +81,8 @@ jest.mock('app/features/explore/state/main', () => ({
   },
 }));
 
-const row = createLogRow({ uid: '1' });
+const logs = dataFrameToLogsModel([dfNow]);
+const row = logs.rows[0];
 
 const timeZone = 'UTC';
 
@@ -90,6 +144,7 @@ describe('LogRowContextModal', () => {
 
     await waitFor(() => expect(getRowContext).not.toHaveBeenCalled());
   });
+
   it('should call getRowContext on open', async () => {
     act(() => {
       render(
@@ -103,6 +158,23 @@ describe('LogRowContextModal', () => {
       );
     });
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
+  });
+
+  it('should render 3 lines containing `foo123`', async () => {
+    act(() => {
+      render(
+        <LogRowContextModal
+          row={row}
+          open={true}
+          onClose={() => {}}
+          getRowContext={getRowContext}
+          timeZone={timeZone}
+          logsSortOrder={LogsSortOrder.Descending}
+        />
+      );
+    });
+    // there need to be 2 lines with that message. 1 in before, 1 in now, 1 in after
+    await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
   });
 
   it('should call getRowContext when limit changes', async () => {

@@ -224,10 +224,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
       setContext({
         after: afterRows.filter((r) => {
-          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
+          return r.timeEpochNs !== row.timeEpochNs || r.entry !== row.entry;
         }),
         before: beforeRows.filter((r) => {
-          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
+          return r.timeEpochNs !== row.timeEpochNs || r.entry !== row.entry;
         }),
       });
     } else {
