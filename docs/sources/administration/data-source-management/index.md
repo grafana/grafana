@@ -81,27 +81,29 @@ You can assign data source permissions to users, teams, and roles which will all
 
 <div class="clearfix"></div>
 
-## Query caching
+## Query and resource caching
 
-When query caching is enabled, Grafana temporarily stores the results of data source queries. When you or another user submit the exact same query again, the results will come back from the cache instead of from the data source (like Splunk or ServiceNow) itself.
+When query and resource caching is enabled, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the exact same query or resource request again, the results will come back from the cache instead of from the data source itself.
 
-Query caching works for all backend data sources. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
+A "query" refers to a data source query for data frames to be transformed and/or visualized in Grafana. A "resource" refers to any HTTP requests a plugin might make, for example: the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/backend/" >}}).
+
+The caching feature works for **all** backend data sources. You can enable the cache globally in Grafana's [configuration]({{< relref "../../setup-grafana/configure-grafana/enterprise-configuration/#caching" >}}), and configure a cache duration (also called Time to Live, or TTL) for each data source individually.
 
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-The following cache backends are available: in-memory, Redis, and Memcached.
+The following cache backend integrations are available: in-memory, Redis, and Memcached.
 
 {{% admonition type="note" %}}
 Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{% /admonition %}}
 
-When a panel queries a cached data source, the time until this query fetches fresh data is determined by the panel's **interval.** This means that wider panels and dashboards with shorter time ranges fetch new data more frequently than narrower panels and dashboards with longer time ranges.
+When a dashboard panel queries a data source with cached data, whether the query fetches fresh data or uses cached data is determined by the panel's **interval.** The Grafana backend uses the interval to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more frequently than narrower panels and dashboards with longer time ranges.
 
-Interval is visible in a panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated like this: `(max data points) / time range`. Max data points are calculated based on the width of the panel. For example, a full-width panel on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes. In this example, cached data for this panel will be served for up to 10 minutes before Grafana queries the data source again and returns new data.
+A panel's interval is visible in the [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated like this: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
 
-You can make a panel retrieve fresh data more frequently by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
+You can make a panel retrieve fresh data more often by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
 
 ### Query caching benefits
 
@@ -111,21 +113,13 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ### Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
+Query caching works for all [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource). More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
 
-- CloudWatch Metrics
-- Google Cloud Monitoring
-- InfluxDB
-- Microsoft SQL Server
-- MySQL
-- Postgres
-- Tempo
+To verify that a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
-Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not improve performance.
-
-Query caching also works for all data sources that include a backend. More specifically, caching works with data sources that extend the `DataSourceWithBackend` class in the plugins SDK.
-
-To tell if a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
+{{% admonition type="note" %}}
+Some data sources, such as Elasticsearch, Prometheus, and Loki, cache queries themselves, so Grafana query caching does not significantly improve performance.
+{{% /admonition %}}
 
 ### Enable and configure query caching
 
