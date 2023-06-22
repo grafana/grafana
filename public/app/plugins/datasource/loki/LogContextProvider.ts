@@ -117,7 +117,7 @@ export class LogContextProvider {
     direction: LogRowContextQueryDirection,
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    let expr = this.prepareExpression(
+    const expr = this.prepareExpression(
       this.appliedContextFilters,
       origQuery,
       store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)
