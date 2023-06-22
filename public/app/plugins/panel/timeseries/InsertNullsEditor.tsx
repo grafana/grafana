@@ -8,7 +8,7 @@ import { InputPrefix, NullsThresholdInput } from './NullsThresholdInput';
 const DISCONNECT_OPTIONS: Array<SelectableValue<boolean | number>> = [
   {
     label: 'Never',
-    value: undefined,
+    value: false,
   },
   {
     label: 'Threshold',
