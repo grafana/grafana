@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/oauth"
 )
 
 type Provider interface {
@@ -21,9 +20,8 @@ type Provider interface {
 }
 
 type Service struct {
-	cfg             *config.Cfg
-	license         plugins.Licensing
-	serviceRegister oauth.ExternalServiceRegistry
+	cfg     *config.Cfg
+	license plugins.Licensing
 }
 
 func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
