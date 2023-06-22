@@ -33,11 +33,18 @@ const meta: Meta = {
 export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
-      <StoryExample name="">
-        <TextLink href="https://google.es" icon="external-link-alt" external>
-          This is an external link
+      <StoryExample name="This is a 'inline + external' link with the default behaviour">
+        <TextLink href="https://google.es" inline={true} external>
+          Go to Google
         </TextLink>
       </StoryExample>
+      <StoryExample name="This is a 'standalone + external' link with the default behaviour">
+        <TextLink href="https://grafana.com/docs/grafana/latest/" inline={false} external>
+          Go to Grafana Docs
+        </TextLink>
+      </StoryExample>
+      <hr />
+      <p>*The examples cannot contemplate an internal link due to conflicts between Storybook and React Router</p>
     </VerticalGroup>
   );
 };
