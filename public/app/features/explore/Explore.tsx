@@ -182,6 +182,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     }
   };
 
+  /**
+   * Used by Logs details.
+   */
   analyzeQuery = async (check: string, key: string, value: string) => {
     let isActive = false;
     const { queries } = this.props;
@@ -202,14 +205,23 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     return isActive;
   };
 
+  /**
+   * Used by Logs details.
+   */
   isFilterLabelActive = async (key: string, value: string) => {
     return await this.analyzeQuery('HAS_FILTER', key, value);
   };
 
+  /**
+   * Used by Logs details.
+   */
   onClickFilterLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER', options: { key, value } });
   };
 
+  /**
+   * Used by Logs details.
+   */
   onClickFilterOutLabel = (key: string, value: string) => {
     this.onModifyQueries({ type: 'ADD_FILTER_OUT', options: { key, value } });
   };
@@ -224,6 +236,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     makeAbsoluteTime();
   };
 
+  /**
+   * Used by Logs details.
+   */
   onModifyQueries = (action: QueryFixAction) => {
     const modifier = async (query: DataQuery, modification: QueryFixAction) => {
       const { datasource } = query;
