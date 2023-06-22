@@ -4018,9 +4018,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.15.0":
-  version: 0.15.0
-  resolution: "@grafana/scenes@npm:0.15.0"
+"@grafana/scenes@npm:^0.17.0":
+  version: 0.17.1
+  resolution: "@grafana/scenes@npm:0.17.1"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -4028,7 +4028,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 2d30a1a1af4cc198c2a42fefa196e8e29ce16e5185ecc6fee30bc5ec890465822c6c17f12a04881d1bb95c6c1c374732264ae013472cf40e44525674c9a5f8a8
+  checksum: ea79b384dfe8ed7e4f2faad6e0168b641b9d3a2ac9a1abc08fd46d66ef7c4e67c97e2674dc5778fe6b2ac5c4047a7ca0463b8ed040b4ac86cc998d132223707f
   languageName: node
   linkType: hard
 
@@ -18829,7 +18829,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.15.0
+    "@grafana/scenes": ^0.17.0
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
