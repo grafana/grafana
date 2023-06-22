@@ -1,12 +1,12 @@
 import { DataSourceInstanceSettings, locationUtil } from '@grafana/data';
-import { getDataSourceSrv, locationService, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardDTO, FolderInfo, PermissionLevelString, SearchQueryType, ThunkResult } from 'app/types';
 
-import { Input, LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
+import { Input, InputUsage, LibraryElementExport } from '../../dashboard/components/DashExportModal/DashboardExporter';
 import { getLibraryPanel } from '../../library-panels/state/api';
 import { LibraryElementDTO, LibraryElementKind } from '../../library-panels/types';
 import { DashboardSearchHit } from '../../search/types';
@@ -52,36 +52,35 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
   };
 }
 
-const getLibraryPanelInputInfo = (info?: string): { isLibraryPanelInput: boolean; libraryPanelUid?: string } => {
-  if (!info) {
-    return { isLibraryPanelInput: false };
-  }
-
-  const hyphenIndex = info.lastIndexOf('-');
-
-  const panel = info.substring(0, hyphenIndex);
-  const uid = info.substring(hyphenIndex + 1);
-
-  const isLibraryPanelInput = panel === 'library-panel';
-
-  return { isLibraryPanelInput, libraryPanelUid: isLibraryPanelInput ? uid : undefined };
+const getNewLibraryPanelsByInput = (input: Input, state: ImportDashboardState) => {
+  return input?.usage?.libraryPanels?.filter((usageLibPanel) =>
+    state.inputs.libraryPanels.some(
+      (libPanel) => libPanel.state !== LibraryPanelInputState.Exists && libPanel.model.uid === usageLibPanel.uid
+    )
+  );
 };
 
 function processDashboard(dashboardJson: DashboardJson, state: ImportDashboardState): DashboardJson {
-  let filteredUsedInputs = dashboardJson.__inputs;
+  let inputs = dashboardJson.__inputs;
   if (!!state.inputs.libraryPanels.length) {
-    filteredUsedInputs = dashboardJson.__inputs?.filter((input: Input) => {
-      const { isLibraryPanelInput, libraryPanelUid } = getLibraryPanelInputInfo(input.usage);
-      return !(
-        isLibraryPanelInput &&
-        state.inputs.libraryPanels.some(
-          (libPanel) => libPanel.model.uid === libraryPanelUid && libPanel.state === LibraryPanelInputState.Exists
-        )
-      );
+    const filteredUsedInputs: Input[] = [];
+    dashboardJson.__inputs?.forEach((input: Input) => {
+      if (!input?.usage?.libraryPanels) {
+        filteredUsedInputs.push(input);
+      }
+
+      const newLibraryPanels = getNewLibraryPanelsByInput(input, state);
+      input.usage = { libraryPanels: newLibraryPanels };
+
+      const isInputBeingUsedByANewLibraryPanel = !!newLibraryPanels?.length;
+      if (isInputBeingUsedByANewLibraryPanel) {
+        filteredUsedInputs.push(input);
+      }
     });
+    inputs = filteredUsedInputs;
   }
 
-  return { ...dashboardJson, __inputs: filteredUsedInputs };
+  return { ...dashboardJson, __inputs: inputs };
 }
 
 function processGcomDashboard(dashboard: { json: DashboardJson }): ThunkResult<void> {
@@ -115,6 +114,8 @@ function processInputs(): ThunkResult<void> {
           pluginId: input.pluginId,
           options: [],
         };
+
+        inputModel.description = getDataSourceDescription(input);
 
         if (input.type === InputType.DataSource) {
           getDataSourceOptions(input, inputModel);
@@ -230,6 +231,22 @@ const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, i
   } else if (!inputModel.info) {
     inputModel.info = 'Select a ' + input.pluginName + ' data source';
   }
+};
+
+const getDataSourceDescription = (input: { usage?: InputUsage }): string | undefined => {
+  if (!input.usage) {
+    return undefined;
+  }
+
+  if (input.usage.libraryPanels) {
+    const libPanelNames = input.usage.libraryPanels.reduce(
+      (acc: string, libPanel, index) => (index === 0 ? libPanel.name : `${acc}, ${libPanel.name}`),
+      ''
+    );
+    return `List of affected library panels: ${libPanelNames}`;
+  }
+
+  return undefined;
 };
 
 export async function moveFolders(folderUIDs: string[], toFolder: FolderInfo) {

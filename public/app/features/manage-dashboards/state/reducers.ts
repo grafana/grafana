@@ -34,6 +34,7 @@ export enum LibraryPanelInputState {
 export interface DashboardInput {
   name: string;
   label: string;
+  description?: string;
   info: string;
   value: string;
   type: InputType;

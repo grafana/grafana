@@ -120,12 +120,30 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			return model.LibraryElementDTO{}, model.ErrLibraryElementUIDTooLong
 		}
 	}
+
+	var modelMap map[string]interface{}
+	err := json.Unmarshal(cmd.Model, &modelMap)
+	if err != nil {
+		return model.LibraryElementDTO{}, err
+	}
+
+	if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
+		if uid, ok := libraryPanel["uid"]; ok && uid == "" {
+			libraryPanel["uid"] = createUID
+		}
+	}
+
+	updatedModel, err := json.Marshal(modelMap)
+	if err != nil {
+		return model.LibraryElementDTO{}, err
+	}
+
 	element := model.LibraryElement{
 		OrgID:    signedInUser.OrgID,
 		FolderID: cmd.FolderID,
 		UID:      createUID,
 		Name:     cmd.Name,
-		Model:    cmd.Model,
+		Model:    updatedModel,
 		Version:  1,
 		Kind:     cmd.Kind,
 
@@ -140,7 +158,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		return model.LibraryElementDTO{}, err
 	}
 
-	err := l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
+	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 			return err
 		}
@@ -267,6 +285,24 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 
 	leDtos := make([]model.LibraryElementDTO, len(libraryElements))
 	for i, libraryElement := range libraryElements {
+		var modelMap map[string]interface{}
+
+		err := json.Unmarshal(libraryElement.Model, &modelMap)
+		if err != nil {
+			return []model.LibraryElementDTO{}, err
+		}
+
+		if libraryPanel, ok := modelMap["libraryPanel"].(map[string]interface{}); ok {
+			if uid, ok := libraryPanel["uid"]; ok && uid == "" {
+				libraryPanel["uid"] = libraryElement.UID
+			}
+		}
+
+		updatedModel, err := json.Marshal(modelMap)
+		if err != nil {
+			return []model.LibraryElementDTO{}, err
+		}
+
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
@@ -277,7 +313,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 			Kind:        libraryElement.Kind,
 			Type:        libraryElement.Type,
 			Description: libraryElement.Description,
-			Model:       libraryElement.Model,
+			Model:       updatedModel,
 			Version:     libraryElement.Version,
 			Meta: model.LibraryElementDTOMeta{
 				FolderName:          libraryElement.FolderName,
@@ -297,6 +333,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 				},
 			},
 		}
+
 	}
 
 	return leDtos, nil

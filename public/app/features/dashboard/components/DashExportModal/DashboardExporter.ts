@@ -13,13 +13,21 @@ import { VariableOption, VariableRefresh } from '../../../variables/types';
 import { DashboardModel } from '../../state/DashboardModel';
 import { GridPos } from '../../state/PanelModel';
 
+export interface InputUsage {
+  libraryPanels?: LibraryPanel[];
+}
+
+interface LibraryPanel {
+  name: string;
+  uid: string;
+}
 export interface Input {
   name: string;
   type: string;
   label: string;
   value: any;
   description: string;
-  usage?: string;
+  usage?: InputUsage;
 }
 
 interface Requires {
@@ -41,10 +49,7 @@ export interface ExternalDashboard {
 interface PanelWithExportableLibraryPanel {
   gridPos: GridPos;
   id: number;
-  libraryPanel: {
-    name: string;
-    uid: string;
-  };
+  libraryPanel: LibraryPanel;
 }
 
 function isExportableLibraryPanel(p: any): p is PanelWithExportableLibraryPanel {
@@ -59,7 +64,7 @@ interface DataSources {
     type: string;
     pluginId: string;
     pluginName: string;
-    usage?: string;
+    usage?: InputUsage;
   };
 }
 
@@ -94,11 +99,7 @@ export class DashboardExporter {
       variableLookup[variable.name] = variable;
     }
 
-    const templateizeDatasourceUsage = (
-      obj: any,
-      fallback?: DataSourceRef,
-      libraryPanel?: { uid: string; name: string }
-    ) => {
+    const templateizeDatasourceUsage = (obj: any, fallback?: DataSourceRef) => {
       if (obj.datasource === undefined) {
         obj.datasource = fallback;
         return;
@@ -138,17 +139,28 @@ export class DashboardExporter {
             return;
           }
 
-          const libraryPanelSuffix = !!libraryPanel ? `for-library-panel-${libraryPanel.name.replace(' ', '-')}` : '';
+          const libraryPanel = obj.libraryPanel;
+          const libraryPanelSuffix = !!libraryPanel ? '-for-library-panel' : '';
           let refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase() + libraryPanelSuffix.toUpperCase();
+
           datasources[refName] = {
             name: refName,
-            label: !!libraryPanel ? `${ds.name}-${libraryPanelSuffix}` : ds.name,
+            label: ds.name,
             description: '',
             type: 'datasource',
             pluginId: ds.meta?.id,
             pluginName: ds.meta?.name,
-            usage: !!libraryPanel ? `library-panel-${libraryPanel?.uid}` : undefined,
+            usage: datasources[refName]?.usage,
           };
+
+          if (!!libraryPanel) {
+            const libPanels = datasources[refName]?.usage?.libraryPanels || [];
+            libPanels.push({ name: libraryPanel.name, uid: libraryPanel.uid });
+
+            datasources[refName].usage = {
+              libraryPanels: libPanels,
+            };
+          }
 
           obj.datasource = { type: ds.meta.id, uid: '${' + refName + '}' };
         });
@@ -185,7 +197,7 @@ export class DashboardExporter {
           model = libPanel.model;
         }
 
-        await templateizeDatasourceUsage(model, undefined, { name, uid });
+        await templateizeDatasourceUsage(model);
 
         const { gridPos, id, ...rest } = model as any;
         if (!libraryPanels.has(uid)) {

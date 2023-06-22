@@ -118,6 +118,7 @@ export const ImportDashboardForm = ({
           return (
             <Field
               label={input.label}
+              description={input.description}
               key={dataSourceOption}
               invalid={errors.dataSources && !!errors.dataSources[index]}
               error={errors.dataSources && errors.dataSources[index] && 'A data source is required'}
