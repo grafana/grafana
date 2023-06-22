@@ -47,6 +47,7 @@ const setupProps = (): LokiContextUiProps => {
       expr: '{label1="value1"} | logfmt',
       refId: 'A',
     },
+    runContextQuery: jest.fn(),
   };
 
   return defaults;
@@ -60,7 +61,7 @@ const mockLogContextProvider = {
     ])
   ),
   processContextFiltersToExpr: jest.fn().mockImplementation(
-    (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
       `{${contextFilters
         .filter((filter) => filter.enabled)
         .map((filter) => `${filter.label}="${filter.value}"`)
@@ -71,6 +72,13 @@ const mockLogContextProvider = {
     .mockImplementation((currentExpr: string, query: LokiQuery | undefined) => `${currentExpr} | newOperation`),
   getLogRowContext: jest.fn(),
   queryContainsValidPipelineStages: jest.fn().mockReturnValue(true),
+  prepareExpression: jest.fn().mockImplementation(
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+      `{${contextFilters
+        .filter((filter) => filter.enabled)
+        .map((filter) => `${filter.label}="${filter.value}"`)
+        .join('` ')}}`
+  ),
 };
 
 describe('LokiContextUi', () => {

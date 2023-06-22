@@ -38,6 +38,7 @@ export interface LokiContextUiProps {
   updateFilter: (value: ContextFilter[]) => void;
   onClose: () => void;
   origQuery?: LokiQuery;
+  runContextQuery?: () => void;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -107,7 +108,7 @@ function getStyles(theme: GrafanaTheme2) {
 export const IS_LOKI_LOG_CONTEXT_UI_OPEN = 'isLogContextQueryUiOpen';
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, logContextProvider, updateFilter, onClose, origQuery } = props;
+  const { row, logContextProvider, updateFilter, onClose, origQuery, runContextQuery } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
@@ -397,8 +398,9 @@ export function LokiContextUi(props: LokiContextUiProps) {
                     });
                     store.set(SHOULD_INCLUDE_PIPELINE_OPERATIONS, e.currentTarget.checked);
                     setIncludePipelineOperations(e.currentTarget.checked);
-                    // need to retrigger a query to run by calling `updateFilter`
-                    updateFilter(contextFilters.filter(({ enabled }) => enabled));
+                    if (runContextQuery) {
+                      runContextQuery();
+                    }
                   }}
                 />
               </InlineField>

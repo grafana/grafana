@@ -193,6 +193,7 @@ export class LogContextProvider {
       updateFilter,
       onClose: this.onContextClose,
       logContextProvider: this,
+      runContextQuery,
     });
   }
 
