@@ -5,13 +5,13 @@ import { InlineFormLabel, Button } from '@grafana/ui/src/components';
 import { Input } from '@grafana/ui/src/components/Forms/Legacy/Input/Input';
 import { Select } from '@grafana/ui/src/components/Forms/Legacy/Select/Select';
 
-import { AzureCredentials, AzureAuthType } from '../types';
+import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export interface Props {
   managedIdentityEnabled: boolean;
-  credentials: AzureCredentials;
+  credentials: AzureCredentialsType;
   azureCloudOptions?: SelectableValue[];
-  onCredentialsChange: (updatedCredentials: AzureCredentials) => void;
+  onCredentialsChange: (updatedCredentials: AzureCredentialsType) => void;
   disabled?: boolean;
 }
 
@@ -31,7 +31,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         authType: selected.value || 'msi',
       };
@@ -41,7 +41,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onAzureCloudChange = (selected: SelectableValue<string>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         azureCloud: selected.value,
       };
@@ -51,9 +51,9 @@ export const AzureCredentialsForm = (props: Props) => {
 
   // JEV: use this to replace even on changes to the tenantId, clientId, and clientSecret
   // JEV: do the same with selected.value for onAzureCloudChange and onAuthTypeChange
-  // const onInputChange = ({property, value}: { property: keyof AzureCredentials; value: string }) => {
+  // const onInputChange = ({property, value}: { property: keyof AzureCredentialsType; value: string }) => {
   //   if (onCredentialsChange && credentials.authType === 'clientsecret') {
-  //     const updated: AzureCredentials = {
+  //     const updated: AzureCredentialsType = {
   //       ...credentials,
   //       [property]: value,
   //     };
@@ -63,7 +63,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         tenantId: event.target.value,
       };
@@ -73,7 +73,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         clientId: event.target.value,
       };
@@ -83,7 +83,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         clientSecret: event.target.value,
       };
@@ -93,7 +93,7 @@ export const AzureCredentialsForm = (props: Props) => {
 
   const onClientSecretReset = () => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentials = {
+      const updated: AzureCredentialsType = {
         ...credentials,
         clientSecret: '',
       };
