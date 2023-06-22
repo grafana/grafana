@@ -28,11 +28,7 @@ import { ReceiversSection } from './ReceiversSection';
 import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
 import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
 import { ReceiverWithTypes } from './grafanaAppReceivers/types';
-import {
-  AlertmanagerConfigHealth,
-  ContactPointConfigHealth,
-  useAlertmanagerConfigHealth,
-} from './useAlertmanagerConfigHealth';
+import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -126,10 +122,9 @@ function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierH
 interface ReceiverHealthProps {
   errorsByReceiver: number;
   someWithNoAttempt: boolean;
-  configHealth?: ContactPointConfigHealth;
 }
 
-function ReceiverHealth({ errorsByReceiver, someWithNoAttempt, configHealth }: ReceiverHealthProps) {
+function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
   const hasErrors = errorsByReceiver > 0;
 
   if (hasErrors) {
@@ -140,10 +135,6 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt, configHealth }: R
         tooltip="Expand the contact point to see error details."
       />
     );
-  }
-
-  if (configHealth === 'Unused') {
-    return <UnusedContactPointBadge />;
   }
 
   if (someWithNoAttempt) {
@@ -388,8 +379,12 @@ const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: 
 
 const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
   const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
-  const hasSomeWitNoAttempt =
-    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+
+  if (notifiers.length === 0) {
+    return false;
+  }
+
+  const hasSomeWitNoAttempt = notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
   return hasSomeWitNoAttempt;
 };
 
@@ -408,6 +403,10 @@ function useGetColumns(
   isVanillaAM: boolean
 ): RowTableColumnProps[] {
   const tableStyles = useStyles2(getAlertTableStyles);
+
+  const enableHealthColumn =
+    errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp === 'Unused');
+
   const baseColumns: RowTableColumnProps[] = [
     {
       id: 'name',
@@ -434,12 +433,16 @@ function useGetColumns(
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
+      if (configHealth.contactPoints[name] === 'Unused') {
+        return <UnusedContactPointBadge />;
+      }
+
       return (
-        contactPointsState && (
+        contactPointsState &&
+        Object.entries(contactPointsState.receivers).length > 0 && (
           <ReceiverHealth
             errorsByReceiver={errorsByReceiver(contactPointsState, name)}
             someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
-            configHealth={configHealth.contactPoints[name]}
           />
         )
       );
@@ -449,7 +452,7 @@ function useGetColumns(
 
   return [
     ...baseColumns,
-    ...(errorStateAvailable ? [healthColumn] : []),
+    ...(enableHealthColumn ? [healthColumn] : []),
     {
       id: 'actions',
       label: 'Actions',
