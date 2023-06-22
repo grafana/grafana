@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 
@@ -27,6 +28,11 @@ import { ReceiversSection } from './ReceiversSection';
 import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
 import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
 import { ReceiverWithTypes } from './grafanaAppReceivers/types';
+import {
+  AlertmanagerConfigHealth,
+  ContactPointConfigHealth,
+  useAlertmanagerConfigHealth,
+} from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -57,6 +63,7 @@ function UpdateActions({ permissions, alertManagerName, receiverName, onClickDel
     </>
   );
 }
+
 interface ActionProps {
   permissions: {
     read: AccessControlAction;
@@ -80,6 +87,7 @@ function ViewAction({ permissions, alertManagerName, receiverName }: ActionProps
     </Authorize>
   );
 }
+
 interface ReceiverErrorProps {
   errorCount: number;
   errorDetail?: string;
@@ -118,9 +126,10 @@ function NotifierHealth({ errorsByNotifier, errorDetail, lastNotify }: NotifierH
 interface ReceiverHealthProps {
   errorsByReceiver: number;
   someWithNoAttempt: boolean;
+  configHealth?: ContactPointConfigHealth;
 }
 
-function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthProps) {
+function ReceiverHealth({ errorsByReceiver, someWithNoAttempt, configHealth }: ReceiverHealthProps) {
   const hasErrors = errorsByReceiver > 0;
 
   if (hasErrors) {
@@ -131,6 +140,10 @@ function ReceiverHealth({ errorsByReceiver, someWithNoAttempt }: ReceiverHealthP
         tooltip="Expand the contact point to see error details."
       />
     );
+  }
+
+  if (configHealth === 'Unused') {
+    return <UnusedContactPointBadge />;
   }
 
   if (someWithNoAttempt) {
@@ -146,6 +159,7 @@ const useContactPointsState = (alertManagerName: string) => {
   const errorStateAvailable = Object.keys(receivers).length > 0;
   return { contactPointsState, errorStateAvailable };
 };
+
 interface ReceiverItem {
   name: string;
   types: string[];
@@ -170,6 +184,7 @@ type NotifierItemTableProps = DynamicTableItemProps<NotifierStatus>;
 interface NotifiersTableProps {
   notifiersState: NotifiersState;
 }
+
 const isLastNotifyNullDate = (lastNotify: string) => lastNotify === '0001-01-01T00:00:00.000Z';
 
 function LastNotify({ lastNotifyDate }: { lastNotifyDate: string }) {
@@ -234,6 +249,7 @@ function NotifiersTable({ notifiersState }: NotifiersTableProps) {
       },
     ];
   }
+
   const notifierRows: NotifierItemTableProps[] = Object.entries(notifiersState).flatMap((typeState) =>
     typeState[1].map((notifierStatus, index) => {
       return {
@@ -263,6 +279,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
+  const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
 
   // receiver name slated for deletion. If this is set, a confirmation modal is shown. If user approves, this receiver is deleted
@@ -283,6 +300,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     }
     setReceiverToDelete(undefined);
   };
+
   const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
   const rows: RowItemTableProps[] = useMemo(() => {
     return (
@@ -309,6 +327,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     alertManagerName,
     errorStateAvailable,
     contactPointsState,
+    configHealth,
     onClickDeleteReceiver,
     permissions,
     isVanillaAM
@@ -378,6 +397,7 @@ function useGetColumns(
   alertManagerName: string,
   errorStateAvailable: boolean,
   contactPointsState: ContactPointsState | undefined,
+  configHealth: AlertmanagerConfigHealth,
   onClickDeleteReceiver: (receiverName: string) => void,
   permissions: {
     read: AccessControlAction;
@@ -393,12 +413,13 @@ function useGetColumns(
       id: 'name',
       label: 'Contact point name',
       renderCell: ({ data: { name, provisioned } }) => (
-        <Stack alignItems="center">
+        <>
           <div>{name}</div>
           {provisioned && <ProvisioningBadge />}
-        </Stack>
+        </>
       ),
-      size: 1,
+      size: 3,
+      className: tableStyles.nameCell,
     },
     {
       id: 'type',
@@ -406,7 +427,7 @@ function useGetColumns(
       renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
         <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
       ),
-      size: 1,
+      size: 2,
     },
   ];
   const healthColumn: RowTableColumnProps = {
@@ -418,11 +439,12 @@ function useGetColumns(
           <ReceiverHealth
             errorsByReceiver={errorsByReceiver(contactPointsState, name)}
             someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
+            configHealth={configHealth.contactPoints[name]}
           />
         )
       );
     },
-    size: 1,
+    size: '160px',
   };
 
   return [
@@ -452,3 +474,23 @@ function useGetColumns(
     },
   ];
 }
+
+function UnusedContactPointBadge() {
+  const styles = useStyles2(unusedContactPointBadgeStyles);
+
+  return (
+    <Badge
+      text="Unused"
+      color="orange"
+      icon="exclamation-triangle"
+      tooltip="This contact point is not used in any notification policy and it will not receive any alerts"
+      className={styles.badge}
+    />
+  );
+}
+
+const unusedContactPointBadgeStyles = () => ({
+  badge: css`
+    cursor: default;
+  `,
+});
