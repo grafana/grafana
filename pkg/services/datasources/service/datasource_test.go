@@ -79,7 +79,6 @@ func TestService_AddDataSource(t *testing.T) {
 }
 
 func TestService_UpdateDataSource(t *testing.T) {
-
 	cfg := &setting.Cfg{}
 
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
