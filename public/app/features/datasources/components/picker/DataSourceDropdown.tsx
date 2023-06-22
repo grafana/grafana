@@ -7,10 +7,11 @@ import { usePopper } from 'react-popper';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
+import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
@@ -68,6 +69,15 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onClickAddCSV = () => {
+    if (!grafanaDS) {
+      return;
+    }
+
+    onChange(grafanaDS, [defaultFileUploadQuery]);
+  };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -154,14 +164,18 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
-              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+              onChange={(
+                ds: DataSourceInstanceSettings<DataSourceJsonData>,
+                defaultQueries?: DataQuery[] | GrafanaQuery[]
+              ) => {
                 onClose();
-                onChange(ds);
+                onChange(ds, defaultQueries);
               }}
               onClose={onClose}
               current={currentDataSourceInstanceSettings}
               style={popper.styles.popper}
               ref={setSelectorElement}
+              onClickAddCSV={onClickAddCSV}
               {...restProps}
               onDismiss={onClose}
               {...popper.attributes.popper}
@@ -237,15 +251,13 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  enableFileUpload: props.enableFileUpload,
-                  fileUploadOptions: props.fileUploadOptions,
                   reportedInteractionFrom: 'ds_picker',
                   dashboard: props.dashboard,
                   mixed: props.mixed,
                   current,
                   onDismiss: hideModal,
-                  onChange: (ds) => {
-                    onChange(ds);
+                  onChange: (ds, defaultQueries) => {
+                    onChange(ds, defaultQueries);
                     hideModal();
                   },
                 });

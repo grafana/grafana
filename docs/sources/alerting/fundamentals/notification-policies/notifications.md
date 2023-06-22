@@ -1,14 +1,19 @@
 ---
-title: Notification Policies
-description: Introduction to Notification Policies and how they work
-weight: 409
+aliases:
+  - ../notifications/
+description: Notification policies
 keywords:
   - grafana
   - alerting
+  - alertmanager
   - notification policies
+  - contact points
+  - silences
+title: Notification policies
+weight: 410
 ---
 
-# Notification Policies
+# Notification policies
 
 Notification policies provide you with a flexible way of routing alerts to various different receivers. Using label matchers, you can modify alert notification delivery without having to update every individual alert rule.
 
