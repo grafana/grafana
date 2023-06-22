@@ -15,20 +15,29 @@ interface ScenarioProps {
 }
 
 const meta: Meta<typeof IconButton> = {
-  title: 'Buttons/IconButton/IconButton without Tooltip',
+  title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
     },
+    controls: { exclude: ['ariaLabel'] },
   },
   args: {
     name: 'apps',
     size: 'md',
     iconType: 'default',
+    tooltip: 'sample tooltip message',
+    tooltipPlacement: 'top',
     variant: 'secondary',
+    ariaLabel: 'this property is deprecated',
     ['aria-label']: 'sample aria-label content',
+  },
+  argTypes: {
+    tooltip: {
+      control: 'text',
+    },
   },
 };
 
@@ -49,7 +58,7 @@ export const ExamplesSizes = () => {
   `;
 
   return (
-    <HorizontalGroup spacing="md">
+    <HorizontalGroup justify="center">
       {variants.map((variant) => {
         return (
           <div key={variant}>
@@ -59,7 +68,7 @@ export const ExamplesSizes = () => {
                 <div className={rowStyle} key={icon}>
                   {sizes.map((size) => (
                     <span key={icon + size}>
-                      <IconButton name={icon} size={size} variant={variant} aria-label="aria label example" />
+                      <IconButton name={icon} size={size} variant={variant} tooltip="Tooltip example" />
                     </span>
                   ))}
                 </div>
@@ -120,6 +129,18 @@ const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
         </div>
       </VerticalGroup>
     </div>
+  );
+};
+
+export const ExamplesWithoutTooltip = () => {
+  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
+
+  return (
+    <HorizontalGroup justify="center">
+      {sizes.map((size) => {
+        return <IconButton key={size} name="angle-down" size={size} aria-label="aria-label example" />;
+      })}
+    </HorizontalGroup>
   );
 };
 
