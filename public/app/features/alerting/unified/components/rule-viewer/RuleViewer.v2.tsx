@@ -129,11 +129,18 @@ interface BreadcrumbProps {
 // make folder and group clickable
 const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
   <Stack alignItems="center" gap={0.5}>
-    <Stack alignItems="center" gap={0.5}>
-      <Icon name="folder" /> {folder}
-    </Stack>
-    <Icon name="angle-right" />
-    <div>{evaluationGroup}</div>
+    <Span color="secondary">
+      <Icon name="folder" />
+    </Span>
+    <Span variant="body" color="primary">
+      {folder}
+    </Span>
+    <Span variant="body" color="secondary">
+      <Icon name="angle-right" />
+    </Span>
+    <Span variant="body" color="primary">
+      {evaluationGroup}
+    </Span>
   </Stack>
 );
 
