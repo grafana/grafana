@@ -23,7 +23,6 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
     const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
-    const [observerHasRan, setObserverHasRan] = useState(false);
     const overflowRef = useRef<HTMLDivElement>(null);
     const overflowItemsRef = createRef<HTMLDivElement>();
     const { overlayProps } = useOverlay(
@@ -56,7 +55,6 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
               });
             }
           });
-          setObserverHasRan(true);
         },
         {
           threshold: 1,
@@ -79,7 +77,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         {childrenWithoutNull.map((child, index) => (
           <div
             key={index}
-            style={{ order: index, visibility: observerHasRan && childVisibility[index] ? 'visible' : 'hidden' }}
+            style={{ order: index, visibility: childVisibility[index] ? 'visible' : 'hidden' }}
             className={styles.childWrapper}
           >
             {child}
