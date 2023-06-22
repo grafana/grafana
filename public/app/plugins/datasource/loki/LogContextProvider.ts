@@ -26,8 +26,7 @@ import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './d
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
 import {
-  getNodeExpressionFromQuery,
-  getNodesFromQuery,
+  getNodePositionsFromQuery,
   getParserFromQuery,
   getStreamSelectorsFromQuery,
   isQueryWithParser,
@@ -119,6 +118,7 @@ export class LogContextProvider {
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
     let expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
+
     if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
       expr = this.processPipelineStagesToExpr(expr, origQuery);
     }
@@ -229,21 +229,30 @@ export class LogContextProvider {
     return expr;
   };
 
-  processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined) => {
+  processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined): string => {
     let newExpr = currentExpr;
     const origExpr = query?.expr ?? '';
 
-    const pipelineStages = getNodesFromQuery(origExpr, [PipelineStage]);
+    if (isQueryWithParser(origExpr).parserCount > 1) {
+      return newExpr;
+    }
 
-    for (const pipelineStage of pipelineStages) {
-      const pipelineStageExpr = getNodeExpressionFromQuery(origExpr, pipelineStage);
-      const allSubNodeTypes = getNodesFromQuery(`{} ${pipelineStageExpr}`).map((node) => node.type.id);
-      // don't apply this pipeline stage if it contains any of these sub nodes
-      if ([LabelParser, LineFilters, LabelFilter].some((nodeType) => allSubNodeTypes.includes(nodeType))) {
+    const allNodePositions = getNodePositionsFromQuery(origExpr, [
+      PipelineStage,
+      LabelParser,
+      LineFilters,
+      LabelFilter,
+    ]);
+    const pipelineStagePositions = allNodePositions.filter((position) => position.type?.id === PipelineStage);
+    const otherNodePositions = allNodePositions.filter((position) => position.type?.id !== PipelineStage);
+
+    for (const pipelineStagePosition of pipelineStagePositions) {
+      // we don't process pipeline stages that contain label parsers, line filters or label filters
+      if (otherNodePositions.some((position) => pipelineStagePosition.contains(position))) {
         continue;
       }
 
-      newExpr += ` ${pipelineStageExpr}`;
+      newExpr += ` ${pipelineStagePosition.getExpression(origExpr)}`;
     }
 
     return newExpr;
