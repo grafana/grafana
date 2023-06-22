@@ -238,8 +238,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   let queryExpr = logContextProvider.prepareExpression(
     contextFilters.filter(({ enabled }) => enabled),
-    origQuery,
-    includePipelineOperations
+    origQuery
   );
   return (
     <div className={styles.wrapper}>
