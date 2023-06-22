@@ -20,10 +20,12 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   getQueryModel() {
+    console.log('getQueryModel');
     return { quoteLiteral };
   }
 
   getSqlLanguageDefinition(): LanguageDefinition {
+    console.log('getSqlLanguageDefinition');
     if (this.sqlLanguageDefinition !== undefined) {
       return this.sqlLanguageDefinition;
     }
@@ -40,17 +42,20 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   async fetchDatasets(): Promise<string[]> {
+    console.log('fetchDatasets');
     const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
     return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
+    console.log('fetchTables');
     const query = buildTableQuery(dataset);
     const tables = await this.runSql<string[]>(query, { refId: 'tables' });
     return tables.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchFields(query: Partial<SQLQuery>) {
+    console.log('fetchFields');
     if (!query.dataset || !query.table) {
       return [];
     }
@@ -67,6 +72,7 @@ export class FlightSQLDatasource extends SqlDatasource {
   }
 
   async fetchMeta(identifier?: TableIdentifier) {
+    console.log('fetchMeta');
     const defaultDB = this.instanceSettings.jsonData.database;
     if (!identifier?.schema && defaultDB) {
       const tables = await this.fetchTables(defaultDB);
@@ -91,6 +97,7 @@ export class FlightSQLDatasource extends SqlDatasource {
     if (this.db !== undefined) {
       return this.db;
     }
+    console.log('getDB Fresh');
     return {
       datasets: () => this.fetchDatasets(),
       tables: (dataset?: string) => this.fetchTables(dataset),

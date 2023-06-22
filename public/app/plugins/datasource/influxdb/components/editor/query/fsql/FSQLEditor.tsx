@@ -1,36 +1,3 @@
-// import React from 'react';
-//
-// import { Input } from '@grafana/ui';
-//
-// import { InfluxQuery } from '../../../../types';
-//
-// type Props = {
-//   onChange: (query: InfluxQuery) => void;
-//   onRunQuery: () => void;
-//   query: InfluxQuery;
-// };
-//
-// // Flight SQL Editor
-// export const FSQLEditor = (props: Props) => {
-//   const onSQLQueryChange = (query?: string) => {
-//     if (query) {
-//       props.onChange({ ...props.query, query, resultFormat: 'table' });
-//     }
-//     props.onRunQuery();
-//   };
-//   return (
-//     <div>
-//       <Input
-//         value={props.query.query}
-//         onBlur={(e) => onSQLQueryChange(e.currentTarget.value)}
-//         onChange={(e) => onSQLQueryChange(e.currentTarget.value)}
-//       />
-//       <br />
-//       <button onClick={() => onSQLQueryChange()}>run query</button>
-//     </div>
-//   );
-// };
-
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
@@ -47,7 +14,7 @@ import { FlightSQLDatasource } from './FlightSQLDatasource';
 interface Props extends Themeable2 {
   onChange: (query: InfluxQuery) => void;
   onRunQuery: () => void;
-  query: SQLQuery;
+  query: InfluxQuery;
   datasource: InfluxDatasource;
 }
 
@@ -56,20 +23,43 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props);
-    const { datasource } = props;
+    const { datasource: influxDatasource } = props;
+    console.log('datasource', influxDatasource);
+
     this.datasource = new FlightSQLDatasource({
-      url: datasource.urls[0],
-      access: datasource.access,
-      id: datasource.id,
-      // So the datasource wants some connection stuff that doesn't apply to flightSQL? Ignoring for now.
-      //@ts-ignore @todo fix PoC code
-      jsonData: { ...datasource.jsonData, allowCleartextPasswords: false },
-      meta: datasource.meta,
-      name: datasource.name,
+      url: influxDatasource.urls[0],
+      access: influxDatasource.access,
+      id: influxDatasource.id,
+
+      jsonData: {
+        // Not applicable to flightSQL? @itsmylife
+        allowCleartextPasswords: false,
+        tlsAuth: false,
+        tlsAuthWithCACert: false,
+        tlsSkipVerify: false,
+        maxIdleConns: 1,
+        maxOpenConns: 1,
+        maxIdleConnsAuto: true,
+        connMaxLifetime: 1,
+        timezone: '',
+        user: '',
+        database: '',
+        url: influxDatasource.urls[0],
+        timeInterval: '',
+      },
+      meta: influxDatasource.meta,
+      name: influxDatasource.name,
       readOnly: false,
-      type: datasource.type,
-      uid: datasource.uid,
+      type: influxDatasource.type,
+      uid: influxDatasource.uid,
     });
+  }
+
+  transformQuery(query: InfluxQuery & SQLQuery): SQLQuery {
+    console.log('influxQuery', query);
+    return {
+      ...query,
+    };
   }
 
   render() {
@@ -96,7 +86,12 @@ class UnthemedSQLQueryEditor extends PureComponent<Props> {
 
     return (
       <>
-        <SqlQueryEditor datasource={this.datasource} query={query} onRunQuery={onRunSQLQuery} onChange={onSQLChange} />
+        <SqlQueryEditor
+          datasource={this.datasource}
+          query={this.transformQuery(query)}
+          onRunQuery={onRunSQLQuery}
+          onChange={onSQLChange}
+        />
         <div className={cx('gf-form-inline', styles.editorActions)}>
           <LinkButton
             icon="external-link-alt"
