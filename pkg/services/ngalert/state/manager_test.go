@@ -194,13 +194,13 @@ func TestWarmStateCache(t *testing.T) {
 	}
 
 	cfg := state.ManagerCfg{
-		Metrics:                  testMetrics.GetStateMetrics(),
-		ExternalURL:              nil,
-		InstanceStore:            dbstore,
-		Images:                   &state.NoopImageService{},
-		Clock:                    clock.NewMock(),
-		Historian:                &state.FakeHistorian{},
-		MaxConcurrentStateSavers: 1,
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           dbstore,
+		Images:                  &state.NoopImageService{},
+		Clock:                   clock.NewMock(),
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(cfg)
 	st.Warm(ctx, dbstore)
@@ -228,13 +228,13 @@ func TestDashboardAnnotations(t *testing.T) {
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil, metrics)
 	cfg := state.ManagerCfg{
-		Metrics:                  testMetrics.GetStateMetrics(),
-		ExternalURL:              nil,
-		InstanceStore:            dbstore,
-		Images:                   &state.NoopImageService{},
-		Clock:                    clock.New(),
-		Historian:                hist,
-		MaxConcurrentStateSavers: 1,
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           dbstore,
+		Images:                  &state.NoopImageService{},
+		Clock:                   clock.New(),
+		Historian:               hist,
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(cfg)
 
@@ -2258,13 +2258,13 @@ func TestProcessEvalResults(t *testing.T) {
 		metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil, metrics)
 		cfg := state.ManagerCfg{
-			Metrics:                  testMetrics.GetStateMetrics(),
-			ExternalURL:              nil,
-			InstanceStore:            &state.FakeInstanceStore{},
-			Images:                   &state.NotAvailableImageService{},
-			Clock:                    clock.New(),
-			Historian:                hist,
-			MaxConcurrentStateSavers: 1,
+			Metrics:                 testMetrics.GetStateMetrics(),
+			ExternalURL:             nil,
+			InstanceStore:           &state.FakeInstanceStore{},
+			Images:                  &state.NotAvailableImageService{},
+			Clock:                   clock.New(),
+			Historian:               hist,
+			MaxStateSaveConcurrency: 1,
 		}
 		st := state.NewManager(cfg)
 		t.Run(tc.desc, func(t *testing.T) {
@@ -2294,13 +2294,13 @@ func TestProcessEvalResults(t *testing.T) {
 		instanceStore := &state.FakeInstanceStore{}
 		clk := clock.New()
 		cfg := state.ManagerCfg{
-			Metrics:                  testMetrics.GetStateMetrics(),
-			ExternalURL:              nil,
-			InstanceStore:            instanceStore,
-			Images:                   &state.NotAvailableImageService{},
-			Clock:                    clk,
-			Historian:                &state.FakeHistorian{},
-			MaxConcurrentStateSavers: 1,
+			Metrics:                 testMetrics.GetStateMetrics(),
+			ExternalURL:             nil,
+			InstanceStore:           instanceStore,
+			Images:                  &state.NotAvailableImageService{},
+			Clock:                   clk,
+			Historian:               &state.FakeHistorian{},
+			MaxStateSaveConcurrency: 1,
 		}
 		st := state.NewManager(cfg)
 		rule := models.AlertRuleGen()()
@@ -2436,13 +2436,13 @@ func TestStaleResultsHandler(t *testing.T) {
 	for _, tc := range testCases {
 		ctx := context.Background()
 		cfg := state.ManagerCfg{
-			Metrics:                  testMetrics.GetStateMetrics(),
-			ExternalURL:              nil,
-			InstanceStore:            dbstore,
-			Images:                   &state.NoopImageService{},
-			Clock:                    clock.New(),
-			Historian:                &state.FakeHistorian{},
-			MaxConcurrentStateSavers: 1,
+			Metrics:                 testMetrics.GetStateMetrics(),
+			ExternalURL:             nil,
+			InstanceStore:           dbstore,
+			Images:                  &state.NoopImageService{},
+			Clock:                   clock.New(),
+			Historian:               &state.FakeHistorian{},
+			MaxStateSaveConcurrency: 1,
 		}
 		st := state.NewManager(cfg)
 		st.Warm(ctx, dbstore)
@@ -2516,13 +2516,13 @@ func TestStaleResults(t *testing.T) {
 	store := &state.FakeInstanceStore{}
 
 	cfg := state.ManagerCfg{
-		Metrics:                  testMetrics.GetStateMetrics(),
-		ExternalURL:              nil,
-		InstanceStore:            store,
-		Images:                   &state.NoopImageService{},
-		Clock:                    clk,
-		Historian:                &state.FakeHistorian{},
-		MaxConcurrentStateSavers: 1,
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           store,
+		Images:                  &state.NoopImageService{},
+		Clock:                   clk,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(cfg)
 
@@ -2684,13 +2684,13 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
-				Metrics:                  testMetrics.GetStateMetrics(),
-				ExternalURL:              nil,
-				InstanceStore:            dbstore,
-				Images:                   &state.NoopImageService{},
-				Clock:                    clk,
-				Historian:                &state.FakeHistorian{},
-				MaxConcurrentStateSavers: 1,
+				Metrics:                 testMetrics.GetStateMetrics(),
+				ExternalURL:             nil,
+				InstanceStore:           dbstore,
+				Images:                  &state.NoopImageService{},
+				Clock:                   clk,
+				Historian:               &state.FakeHistorian{},
+				MaxStateSaveConcurrency: 1,
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)
@@ -2824,13 +2824,13 @@ func TestResetStateByRuleUID(t *testing.T) {
 			clk := clock.NewMock()
 			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
-				Metrics:                  testMetrics.GetStateMetrics(),
-				ExternalURL:              nil,
-				InstanceStore:            dbstore,
-				Images:                   &state.NoopImageService{},
-				Clock:                    clk,
-				Historian:                fakeHistorian,
-				MaxConcurrentStateSavers: 1,
+				Metrics:                 testMetrics.GetStateMetrics(),
+				ExternalURL:             nil,
+				InstanceStore:           dbstore,
+				Images:                  &state.NoopImageService{},
+				Clock:                   clk,
+				Historian:               fakeHistorian,
+				MaxStateSaveConcurrency: 1,
 			}
 			st := state.NewManager(cfg)
 			st.Warm(ctx, dbstore)

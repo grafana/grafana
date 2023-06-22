@@ -40,8 +40,8 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	doNotSaveNormalState     bool
-	maxConcurrentStateSavers int
+	doNotSaveNormalState    bool
+	maxStateSaveConcurrency int
 }
 
 type ManagerCfg struct {
@@ -53,23 +53,23 @@ type ManagerCfg struct {
 	Historian     Historian
 	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
 	DoNotSaveNormalState bool
-	// MaxConcurrentStateSavers controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxConcurrentStateSavers int
+	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxStateSaveConcurrency int
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:                    newCache(),
-		ResendDelay:              ResendDelay, // TODO: make this configurable
-		log:                      log.New("ngalert.state.manager"),
-		metrics:                  cfg.Metrics,
-		instanceStore:            cfg.InstanceStore,
-		images:                   cfg.Images,
-		historian:                cfg.Historian,
-		clock:                    cfg.Clock,
-		externalURL:              cfg.ExternalURL,
-		doNotSaveNormalState:     cfg.DoNotSaveNormalState,
-		maxConcurrentStateSavers: cfg.MaxConcurrentStateSavers,
+		cache:                   newCache(),
+		ResendDelay:             ResendDelay, // TODO: make this configurable
+		log:                     log.New("ngalert.state.manager"),
+		metrics:                 cfg.Metrics,
+		instanceStore:           cfg.InstanceStore,
+		images:                  cfg.Images,
+		historian:               cfg.Historian,
+		clock:                   cfg.Clock,
+		externalURL:             cfg.ExternalURL,
+		doNotSaveNormalState:    cfg.DoNotSaveNormalState,
+		maxStateSaveConcurrency: cfg.MaxStateSaveConcurrency,
 	}
 }
 
@@ -385,9 +385,9 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 		return nil
 	}
 
-	logger.Debug("Saving alert states", "count", len(states), "max_concurrent_state_savers", st.maxConcurrentStateSavers)
-	_ = concurrency.ForEachJob(ctx, len(states), st.maxConcurrentStateSavers, saveState)
-	logger.Debug("Saving alert states done", "count", len(states), "max_concurrent_state_savers", st.maxConcurrentStateSavers)
+	logger.Debug("Saving alert states", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
+	_ = concurrency.ForEachJob(ctx, len(states), st.maxStateSaveConcurrency, saveState)
+	logger.Debug("Saving alert states done", "count", len(states), "max_state_save_concurrency", st.maxStateSaveConcurrency)
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
