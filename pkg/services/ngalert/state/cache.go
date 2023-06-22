@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"errors"
 	"math"
 	"net/url"
 	"strings"
@@ -9,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -161,21 +161,21 @@ func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.Ale
 // template.ExpandError errors.
 func expand(ctx context.Context, log log.Logger, name string, original map[string]string, data template.Data, externalURL *url.URL, evaluatedAt time.Time) (map[string]string, error) {
 	var (
-		errs     *multierror.Error
+		errs     error
 		expanded = make(map[string]string, len(original))
 	)
 	for k, v := range original {
 		result, err := template.Expand(ctx, name, v, data, externalURL, evaluatedAt)
 		if err != nil {
 			log.Error("Error in expanding template", "error", err)
-			errs = multierror.Append(errs, err)
+			errs = errors.Join(errs, err)
 			// keep the original template on error
 			expanded[k] = v
 		} else {
 			expanded[k] = result
 		}
 	}
-	return expanded, errs.ErrorOrNil()
+	return expanded, errs
 }
 
 func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {

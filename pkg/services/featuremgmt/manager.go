@@ -128,7 +128,7 @@ func (fm *FeatureManager) IsEnabled(flag string) bool {
 	return fm.enabled[flag]
 }
 
-// GetEnabled returns a map contaning only the features that are enabled
+// GetEnabled returns a map containing only the features that are enabled
 func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	enabled := make(map[string]bool, len(fm.enabled))
 	for key, val := range fm.enabled {

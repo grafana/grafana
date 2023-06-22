@@ -13,10 +13,6 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
     },
   ],
   "condition": "C",
-  "folder": {
-    "id": 1,
-    "title": "super folder",
-  },
   "name": "mypanel",
   "queries": [
     {
