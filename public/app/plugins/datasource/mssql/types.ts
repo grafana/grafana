@@ -48,7 +48,7 @@ export interface MssqlOptions extends SQLOptions {
   sslRootCertFile?: string;
   serverName?: string;
   connectionTimeout?: number;
-  azureCredentials?: any;
+  azureCredentials?: AzureCredentialsType;
 }
 
 export type AzureAuthJSONDataType = DataSourceJsonData & {
