@@ -124,14 +124,19 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const previousInitialized = React.useRef<boolean>(false);
   const previousContextFilters = React.useRef<ContextFilter[]>([]);
 
-  const isInitialQuery = useMemo(() => {
+  const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
     if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
       return false;
     }
 
+    // if we include pipeline operations, we also want to enable the revert button
+    if (includePipelineOperations && logContextProvider.queryContainsValidPipelineStages(origQuery)) {
+      return false;
+    }
+
     return true;
-  }, [contextFilters, initialized]);
+  }, [contextFilters, includePipelineOperations, initialized, logContextProvider, origQuery]);
 
   useEffect(() => {
     if (!initialized) {
@@ -244,7 +249,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             data-testid="revert-button"
             icon="history-alt"
             variant="secondary"
-            disabled={isInitialQuery}
+            disabled={isInitialState}
             onClick={(e) => {
               reportInteraction('grafana_explore_logs_loki_log_context_reverted', {
                 logRowUid: row.uid,
