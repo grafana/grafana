@@ -27,7 +27,7 @@ The table panel visualization is very flexible, supporting multiple modes for ti
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
-## Annotation and Alert support
+## Annotation and alert support
 
 Annotations and alerts are not currently supported in the new table panel. However, annotations might be added back in a future release.
 
