@@ -3,11 +3,12 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
+import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
@@ -19,7 +20,6 @@ import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
 import { applyMaxSize, maxSize } from './popperModifiers';
-import { PickerContentProps, DataSourceDropdownProps } from './types';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
@@ -30,6 +30,29 @@ const INTERACTION_ITEM = {
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
   CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
 };
+
+export interface DataSourceDropdownProps {
+  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+  current?: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
+  recentlyUsed?: string[];
+  hideTextValue?: boolean;
+  width?: number;
+  inputId?: string;
+  noDefault?: boolean;
+  disabled?: boolean;
+
+  // DS filters
+  tracing?: boolean;
+  mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
+}
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const {
@@ -211,6 +234,15 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourceDropdownProps)
       }
     `,
   };
+}
+
+export interface PickerContentProps extends DataSourceDropdownProps {
+  onClickAddCSV?: () => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
+  style: React.CSSProperties;
+  filterTerm?: string;
+  onClose: () => void;
+  onDismiss: () => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {

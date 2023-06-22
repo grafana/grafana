@@ -8,8 +8,7 @@ import { ModalRoot, ModalsProvider } from '@grafana/ui';
 import config from 'app/core/config';
 import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
 
-import { DataSourceDropdown } from './DataSourceDropdown';
-import { DataSourceDropdownProps } from './types';
+import { DataSourceDropdown, DataSourceDropdownProps } from './DataSourceDropdown';
 import * as utils from './utils';
 
 const pluginMetaInfo: PluginMetaInfo = {
