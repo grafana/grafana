@@ -687,6 +687,10 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 
 # 9.4.13 (2023-06-22)
 
+### Bug fixes
+
+- Fixed CVE-2023-3128
+
 <!-- 9.4.13 END -->
 <!-- 9.3.16 START -->
 
