@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataFrame, Field, formattedValueToString, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { LinkButton, useStyles2, VerticalGroup, VizTooltipOptions } from '@grafana/ui';
+import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+import { FacetedData } from '@grafana/ui/src/components/uPlot/types';
 import { findField } from 'app/features/dimensions';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
@@ -30,7 +31,7 @@ export interface Props {
   seriesIndex: number; // the hovered field
   valueIndex?: number; // the hover value
   seriesMapping: SeriesMapping;
-  options: VizTooltipOptions;
+  facetedData: FacetedData;
 }
 
 export const TooltipView = ({
@@ -40,7 +41,7 @@ export const TooltipView = ({
   seriesMapping,
   valueIndex,
   seriesIndex,
-  options,
+  facetedData,
 }: Props) => {
   const style = useStyles2(getStyles);
 
@@ -69,8 +70,6 @@ export const TooltipView = ({
 
   let extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
 
-  let color: string | undefined;
-
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
@@ -84,12 +83,6 @@ export const TooltipView = ({
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
 
-    if (colorFacet) {
-      color = colorFacet.display!(colorFacet.values[valueIndex]).color!;
-    } else if (pointColor?.fixed) {
-      color = series.pointColor(frame) as string;
-    }
-
     extraFacets = {
       colorFacetFieldName,
       sizeFacetFieldName,
@@ -100,16 +93,24 @@ export const TooltipView = ({
     extraFields = extraFields.filter((f) => f !== colorFacet && f !== sizeFacet);
   }
 
-  if (color == null) {
-    color = yField.display!(yField.values[valueIndex]).color!;
-  }
-
   yValue = {
     name: getFieldDisplayName(yField, frame),
     val: yField.values[valueIndex],
     field: yField,
-    color,
+    color: '#CCC',
   };
+
+  const vals = facetedData[seriesIndex + 1];
+  if (vals) {
+    // should not be possible, right?
+    console.log({
+      x: vals[0][valueIndex],
+      y: vals[1][valueIndex],
+      size: vals[2][valueIndex],
+      color: vals[3][valueIndex],
+    });
+    yValue.color = vals[3][valueIndex];
+  }
 
   return (
     <>

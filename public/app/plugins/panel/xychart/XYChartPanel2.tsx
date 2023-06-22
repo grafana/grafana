@@ -245,13 +245,13 @@ export const XYChartPanel2 = (props: Props) => {
               </div>
             )}
             <TooltipView
-              options={props.options.tooltip}
               allSeries={series}
               manualSeriesConfigs={props.options.series}
               seriesMapping={props.options.seriesMapping!}
               valueIndex={hover.xIndex}
               seriesIndex={hover.scatterIndex}
               data={props.data.series}
+              facetedData={facets}
             />
           </VizTooltipContainer>
         )}
