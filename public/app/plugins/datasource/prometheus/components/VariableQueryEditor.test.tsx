@@ -118,13 +118,7 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names(that)',
-      labelFilters: [
-        {
-          label: '__name__',
-          op: '=~',
-          value: 'that',
-        },
-      ],
+      labelFilters: [],
       refId,
     });
   });
