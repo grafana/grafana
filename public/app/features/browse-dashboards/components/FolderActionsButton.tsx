@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
-import { AccessControlAction, FolderDTO, useDispatch } from 'app/types';
+import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
-import { useMoveFolderMutation } from '../api/browseDashboardsAPI';
-import { deleteFolder, fetchChildren } from '../state';
+import { useDeleteFolderMutation, useMoveFolderMutation } from '../api/browseDashboardsAPI';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
 import { MoveModal } from './BrowseActions/MoveModal';
@@ -18,29 +17,38 @@ interface Props {
 }
 
 export function FolderActionsButton({ folder }: Props) {
-  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutation();
+  const [deleteFolder] = useDeleteFolderMutation();
   const canViewPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsRead);
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.FoldersPermissionsWrite);
   const canMoveFolder = contextSrv.hasPermission(AccessControlAction.FoldersWrite);
   const canDeleteFolder = contextSrv.hasPermission(AccessControlAction.FoldersDelete);
 
   const onMove = async (destinationUID: string) => {
-    await moveFolder({ folderUID: folder.uid, destinationUID });
-    dispatch(fetchChildren(destinationUID));
-    if (folder.parentUid) {
-      dispatch(fetchChildren(folder.parentUid));
-    }
+    await moveFolder({ folder, destinationUID });
+    reportInteraction('grafana_manage_dashboards_item_moved', {
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
+      source: 'folder_actions',
+    });
   };
 
   const onDelete = async () => {
-    await dispatch(deleteFolder(folder.uid));
-    if (folder.parentUid) {
-      dispatch(fetchChildren(folder.parentUid));
-    }
-    locationService.push('/dashboards');
+    await deleteFolder(folder);
+    reportInteraction('grafana_manage_dashboards_item_deleted', {
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
+      source: 'folder_actions',
+    });
+    const { parents } = folder;
+    const parentUrl = parents && parents.length ? parents[parents.length - 1].url : '/dashboards';
+    locationService.push(parentUrl);
   };
 
   const showMoveModal = () => {

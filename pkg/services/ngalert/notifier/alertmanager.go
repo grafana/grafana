@@ -12,6 +12,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	alertingTemplates "github.com/grafana/alerting/templates"
+	"github.com/prometheus/alertmanager/config"
 
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 
@@ -70,6 +71,7 @@ type alertmanager struct {
 	Base   *alertingNotify.GrafanaAlertmanager
 	logger log.Logger
 
+	ConfigMetrics       *metrics.AlertmanagerConfigMetrics
 	Settings            *setting.Cfg
 	Store               AlertingStore
 	fileStore           *FileStore
@@ -156,6 +158,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	am := &alertmanager{
 		Base:                gam,
+		ConfigMetrics:       m.AlertmanagerConfigMetrics,
 		Settings:            cfg,
 		Store:               store,
 		NotificationService: ns,
@@ -260,6 +263,44 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 	return outerErr
 }
 
+type AggregateMatchersUsage struct {
+	Matchers       int
+	MatchRE        int
+	Match          int
+	ObjectMatchers int
+}
+
+func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
+	var amu AggregateMatchersUsage
+	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
+	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
+	am.ConfigMetrics.Matchers.Set(float64(amu.Matchers))
+	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
+	am.ConfigMetrics.Match.Set(float64(amu.Match))
+	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
+}
+
+func (am *Alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
+	amu.Matchers += len(r.Matchers)
+	amu.MatchRE += len(r.MatchRE)
+	amu.Match += len(r.Match)
+	amu.ObjectMatchers += len(r.ObjectMatchers)
+	for _, next := range r.Routes {
+		am.aggregateRouteMatchers(next, amu)
+	}
+}
+
+func (am *Alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
+	for _, r := range rules {
+		amu.Matchers += len(r.SourceMatchers)
+		amu.Matchers += len(r.TargetMatchers)
+		amu.MatchRE += len(r.SourceMatchRE)
+		amu.MatchRE += len(r.TargetMatchRE)
+		amu.Match += len(r.SourceMatch)
+		amu.Match += len(r.TargetMatch)
+	}
+}
+
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
@@ -296,6 +337,8 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		am.logger.Debug("Neither config nor template have changed, skipping configuration sync.")
 		return false, nil
 	}
+
+	am.updateConfigMetrics(cfg)
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
@@ -339,7 +382,7 @@ func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIRe
 		return nil, err
 	}
 	s := &sender{am.NotificationService}
-	img := newImageStore(am.Store)
+	img := newImageProvider(am.Store, log.New("ngalert.notifier.image-provider"))
 	integrations, err := alertingNotify.BuildReceiverIntegrations(
 		receiverCfg,
 		tmpl,

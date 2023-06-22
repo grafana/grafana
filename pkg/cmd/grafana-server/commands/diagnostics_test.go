@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,18 +24,14 @@ func TestProfilingDiagnostics(t *testing.T) {
 
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			os.Clearenv()
 			if tc.enabledEnv != "" {
-				err := os.Setenv(profilingEnabledEnvName, tc.enabledEnv)
-				assert.NoError(t, err)
+				t.Setenv(profilingEnabledEnvName, tc.enabledEnv)
 			}
 			if tc.addrEnv != "" {
-				err := os.Setenv(profilingAddrEnvName, tc.addrEnv)
-				assert.NoError(t, err)
+				t.Setenv(profilingAddrEnvName, tc.addrEnv)
 			}
 			if tc.portEnv != "" {
-				err := os.Setenv(profilingPortEnvName, tc.portEnv)
-				assert.NoError(t, err)
+				t.Setenv(profilingPortEnvName, tc.portEnv)
 			}
 			err := tc.defaults.overrideWithEnv()
 			assert.NoError(t, err)
@@ -61,14 +56,11 @@ func TestTracingDiagnostics(t *testing.T) {
 
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			os.Clearenv()
 			if tc.enabledEnv != "" {
-				err := os.Setenv(tracingEnabledEnvName, tc.enabledEnv)
-				assert.NoError(t, err)
+				t.Setenv(tracingEnabledEnvName, tc.enabledEnv)
 			}
 			if tc.fileEnv != "" {
-				err := os.Setenv(tracingFileEnvName, tc.fileEnv)
-				assert.NoError(t, err)
+				t.Setenv(tracingFileEnvName, tc.fileEnv)
 			}
 			err := tc.defaults.overrideWithEnv()
 			assert.NoError(t, err)

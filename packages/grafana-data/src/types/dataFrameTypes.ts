@@ -18,6 +18,9 @@ export enum DataFrameType {
   NumericMulti = 'numeric-multi',
   NumericLong = 'numeric-long',
 
+  /** Logs types: https://grafana.github.io/dataplane/logs */
+  LogLines = 'log-lines',
+
   /** Directory listing */
   DirectoryListing = 'directory-listing',
 

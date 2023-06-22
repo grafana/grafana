@@ -224,7 +224,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.App,
+								Type:    plugins.TypeApp,
 								Preload: true,
 							},
 						},
@@ -248,7 +248,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			},
 		},
 		{
-			desc: "enalbed app with preload",
+			desc: "enabled app with preload",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
@@ -257,7 +257,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.App,
+								Type:    plugins.TypeApp,
 								Preload: true,
 							},
 						},
@@ -290,7 +290,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 							JSONData: plugins.JSONData{
 								ID:      "test-app",
 								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.App,
+								Type:    plugins.TypeApp,
 								Preload: true,
 							},
 							AngularDetected: true,
