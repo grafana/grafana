@@ -387,7 +387,7 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 
 	logger.Debug("Saving alert states", "count", len(states), "max_concurrent_state_savers", st.maxConcurrentStateSavers)
 	concurrency.ForEachJob(ctx, len(states), st.maxConcurrentStateSavers, saveState)
-	logger.Debug("Saving alert states done", "count", len(states))
+	logger.Debug("Saving alert states done", "count", len(states), "max_concurrent_state_savers", st.maxConcurrentStateSavers)
 }
 
 func (st *Manager) deleteAlertStates(ctx context.Context, logger log.Logger, states []StateTransition) {
