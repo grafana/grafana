@@ -51,6 +51,7 @@ describe('Login Page', () => {
     expect(screen.getByRole('link', { name: 'Sign up' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
   });
+
   it('should pass validation checks for username field', async () => {
     render(<LoginPage />);
 
@@ -60,6 +61,7 @@ describe('Login Page', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Username input field' }), 'admin');
     await waitFor(() => expect(screen.queryByText('Email or username is required')).not.toBeInTheDocument());
   });
+
   it('should pass validation checks for password field', async () => {
     render(<LoginPage />);
 
@@ -69,6 +71,7 @@ describe('Login Page', () => {
     await userEvent.type(screen.getByLabelText('Password input field'), 'admin');
     await waitFor(() => expect(screen.queryByText('Password is required')).not.toBeInTheDocument());
   });
+
   it('should navigate to default url if credentials is valid', async () => {
     Object.defineProperty(window, 'location', {
       value: {
@@ -82,9 +85,12 @@ describe('Login Page', () => {
     await userEvent.type(screen.getByLabelText('Password input field'), 'test');
     fireEvent.click(screen.getByLabelText('Login button'));
 
-    await waitFor(() => expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }));
+    await waitFor(() =>
+      expect(postMock).toHaveBeenCalledWith('/login', { password: 'test', user: 'admin' }, { showErrorAlert: false })
+    );
     expect(window.location.assign).toHaveBeenCalledWith('/');
   });
+
   it('renders social logins correctly', () => {
     runtimeMock.config.oauth = {
       okta: {
