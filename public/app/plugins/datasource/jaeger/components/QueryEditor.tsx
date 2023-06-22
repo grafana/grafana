@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { QueryEditorProps } from '@grafana/data';
 import {
   Button,
   FileDropzone,
@@ -36,18 +36,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     switch (query.queryType) {
       case 'search':
         return <SearchForm datasource={datasource} query={query} onChange={onChange} />;
-      case 'upload':
-        return (
-          <div className={styles.fileDropzoneContainer}>
-            <FileDropzone
-              options={{ multiple: false }}
-              onLoad={(result) => {
-                datasource.uploadedJson = result;
-                onRunQuery();
-              }}
-            />
-          </div>
-        );
       default:
         return (
           <InlineFieldRow>
@@ -120,11 +108,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   container: css`
     width: 100%;
-  `,
-  fileDropzoneContainer: css`
-    padding: ${theme.spacing(2)};
   `,
 });
