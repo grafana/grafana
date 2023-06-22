@@ -7,12 +7,10 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import { IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
+import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
-interface ScenarioProps {
-  background: 'canvas' | 'primary' | 'secondary';
-}
+type ScenarioProp = 'canvas' | 'primary' | 'secondary';
 
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
@@ -45,7 +43,7 @@ export const Basic: StoryFn<typeof IconButton> = (args: IconButtonProps) => {
   return <IconButton {...args} />;
 };
 
-export const ExamplesSizes = () => {
+export const ExamplesSizes = (args: BasePropsWithTooltip) => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
   const icons: IconName[] = ['search', 'trash-alt', 'arrow-left', 'times'];
@@ -64,7 +62,7 @@ export const ExamplesSizes = () => {
           <div
             key={variant}
             className={css`
-              margin: auto 5px;
+              margin: auto ${theme.spacing(1)};
             `}
           >
             <p>{variant}</p>
@@ -73,7 +71,7 @@ export const ExamplesSizes = () => {
                 <div className={rowStyle} key={icon}>
                   {sizes.map((size) => (
                     <span key={icon + size}>
-                      <IconButton name={icon} size={size} variant={variant} tooltip="Tooltip example" />
+                      <IconButton name={icon} size={size} variant={variant} tooltip={args.tooltip} />
                     </span>
                   ))}
                 </div>
@@ -88,7 +86,7 @@ export const ExamplesSizes = () => {
           <div className={rowStyle} key={icon}>
             {sizes.map((size) => (
               <span key={icon + size}>
-                <IconButton name={icon} size={size} tooltip="Tooltip example" disabled />
+                <IconButton name={icon} size={size} tooltip={args.tooltip} disabled />
               </span>
             ))}
           </div>
@@ -98,54 +96,71 @@ export const ExamplesSizes = () => {
   );
 };
 
-export const ExamplesBackground = () => {
+export const ExamplesBackground = (args: BasePropsWithTooltip) => {
+  const theme = useTheme2();
+
+  const renderBackgroundScenario = (background: ScenarioProp) => {
+    const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
+    console.log('theme', theme);
+    return (
+      <div
+        className={css`
+          padding: 30px;
+          background: ${theme.colors.background[background]};
+        `}
+      >
+        <VerticalGroup spacing="md">
+          {/*<div>{background}</div>*/}
+          <div
+            className={css`
+              display: flex;
+              gap: ${theme.spacing(2)};
+            `}
+          >
+            {variants.map((variant) => {
+              return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip={args.tooltip} />;
+            })}
+            <IconButton name="times" size="xl" tooltip={args.tooltip} disabled />
+          </div>
+        </VerticalGroup>
+      </div>
+    );
+  };
+
   return (
     <div>
-      <RenderBackgroundScenario background="canvas" />
-      <RenderBackgroundScenario background="primary" />
-      <RenderBackgroundScenario background="secondary" />
-    </div>
-  );
-};
-
-const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
-  const theme = useTheme2();
-  const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
-
-  return (
-    <div
-      className={css`
-        padding: 30px;
-        background: ${theme.colors.background[background]};
-      `}
-    >
-      <VerticalGroup spacing="md">
-        <div>{background}</div>
-        <div
-          className={css`
-            display: flex;
-            gap: ${theme.spacing(2)};
-          `}
-        >
-          {variants.map((variant) => {
-            return <IconButton name="times" size="xl" variant={variant} key={variant} tooltip="Tooltip example" />;
-          })}
-          <IconButton name="times" size="xl" tooltip="Tooltip example" disabled />
-        </div>
-      </VerticalGroup>
+      {renderBackgroundScenario('canvas')}
+      {renderBackgroundScenario('primary')}
+      {renderBackgroundScenario('secondary')}
     </div>
   );
 };
 
 export const ExamplesWithoutTooltip = () => {
+  const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
   return (
-    <HorizontalGroup justify="center">
-      {sizes.map((size) => {
-        return <IconButton key={size} name="angle-down" size={size} aria-label="aria-label example" />;
-      })}
-    </HorizontalGroup>
+    <div
+      className={css`
+        display: flex;
+        flex-direction: column;
+      `}
+    >
+      <HorizontalGroup justify="center">
+        {sizes.map((size) => {
+          return <IconButton key={size} name="angle-down" size={size} aria-label="" />;
+        })}
+      </HorizontalGroup>
+      <span
+        className={css`
+          margin-top: ${theme.spacing(4)};
+        `}
+      >
+        This story provides an example for IconButtons without a Tooltip. This option should only be used on special
+        occasions. Please find further information in the Docs.
+      </span>
+    </div>
   );
 };
 
