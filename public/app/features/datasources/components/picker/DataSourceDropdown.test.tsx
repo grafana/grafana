@@ -128,6 +128,13 @@ describe('DataSourceDropdown', () => {
       expect(getListMock.mock.lastCall[0]).toEqual(filters);
     });
 
+    it('should dispaly the current selected DS in the selector', async () => {
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourceDropdown onChange={jest.fn()} current={mockDS2}></DataSourceDropdown>);
+      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
+      expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
+    });
+
     it('should display the current ds on top', async () => {
       //Mock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS1);
@@ -142,6 +149,13 @@ describe('DataSourceDropdown', () => {
       expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
     });
 
+    it('should dispaly the default DS as selected when `current` is not set', async () => {
+      getInstanceSettingsMock.mockReturnValue(mockDS2);
+      render(<DataSourceDropdown onChange={jest.fn()} current={undefined}></DataSourceDropdown>);
+      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', mockDS2.name);
+      expect(screen.getByAltText(`${mockDS2.meta.name} logo`)).toBeVisible();
+    });
+
     it('should get the sorting function using the correct parameters', async () => {
       //The actual sorting is tested in utils.test but let's make sure we're calling getDataSourceCompareFn with the correct parameters
       const spy = jest.spyOn(utils, 'getDataSourceCompareFn');
@@ -150,9 +164,24 @@ describe('DataSourceDropdown', () => {
       expect(spy.mock.lastCall).toEqual([mockDS1, [mockDS2.name], ['${foo}']]);
     });
 
-    it('should disable the dropdown when disabled is true', async () => {
-      render(<DataSourceDropdown onChange={jest.fn()} disabled={true}></DataSourceDropdown>);
-      expect(screen.getByPlaceholderText('Select a data source')).toBeDisabled();
+    it('should disable the dropdown when `disabled` is true', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} disabled></DataSourceDropdown>);
+      expect(screen.getByTestId('Select a data source')).toBeDisabled();
+    });
+
+    it('should assign the correct `id` to the input element to pair it with a label', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} inputId={'custom.input.id'}></DataSourceDropdown>);
+      expect(screen.getByTestId('Select a data source')).toHaveAttribute('id', 'custom.input.id');
+    });
+
+    it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
+      render(<DataSourceDropdown onChange={jest.fn()} current={null} noDefault></DataSourceDropdown>);
+      getListMock.mockClear();
+      getInstanceSettingsMock.mockClear();
+      // Doesn't try to get the default DS
+      expect(getListMock).not.toBeCalled();
+      expect(getInstanceSettingsMock).not.toBeCalled();
+      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', 'Select a data source');
     });
   });
 

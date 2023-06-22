@@ -32,7 +32,16 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, hideTextValue, width, inputId, noDefault, disabled, ...restProps } = props;
+  const {
+    current,
+    onChange,
+    hideTextValue = false,
+    width,
+    inputId,
+    noDefault = false,
+    disabled = false,
+    ...restProps
+  } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -45,7 +54,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     markerElement?.focus();
   };
   const currentDataSourceInstanceSettings = useDatasource(current);
-  const currentValue = !current && noDefault ? undefined : currentDataSourceInstanceSettings;
+  const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
