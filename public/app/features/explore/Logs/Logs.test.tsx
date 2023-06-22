@@ -11,21 +11,68 @@ import {
   MutableDataFrame,
   toUtc,
 } from '@grafana/data';
-import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
+
+const reportInteraction = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
+    reportInteraction(interactionName, properties),
+}));
+
+const createAndCopyShortLink = jest.fn();
+jest.mock('app/core/utils/shortLinks', () => ({
+  ...jest.requireActual('app/core/utils/shortLinks'),
+  createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
+}));
+
+jest.mock('app/store/store', () => ({
+  getState: jest.fn().mockReturnValue({
+    explore: {
+      panes: {
+        left: {
+          datasource: 'id',
+          queries: [{ refId: 'A', expr: '', queryType: 'range', datasource: { type: 'loki', uid: 'id' } }],
+          range: { raw: { from: 'now-1h', to: 'now' } },
+        },
+      },
+    },
+  }),
+  dispatch: jest.fn(),
+}));
 
 const changePanelState = jest.fn();
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
-  changePanelState: (exploreId: ExploreId, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+  changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
     return changePanelState(exploreId, panel, panelState);
   },
 }));
 
 describe('Logs', () => {
+  let originalHref = window.location.href;
+
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: 'http://localhost:3000/explore?test',
+      },
+      writable: true,
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: originalHref,
+      },
+      writable: true,
+    });
   });
 
   const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
@@ -37,7 +84,7 @@ describe('Logs', () => {
 
     return (
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -93,7 +140,7 @@ describe('Logs', () => {
     const scanningStarted = jest.fn();
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -130,7 +177,7 @@ describe('Logs', () => {
   it('should render a stop scanning button', () => {
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -170,7 +217,7 @@ describe('Logs', () => {
 
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -222,10 +269,10 @@ describe('Logs', () => {
       const panelState = { logs: { id: '1' } };
       const { rerender } = setup({ loading: false, panelState });
 
-      rerender(getComponent({ loading: true, exploreId: ExploreId.right, panelState }));
-      rerender(getComponent({ loading: false, exploreId: ExploreId.right, panelState }));
+      rerender(getComponent({ loading: true, exploreId: 'right', panelState }));
+      rerender(getComponent({ loading: false, exploreId: 'right', panelState }));
 
-      expect(changePanelState).toHaveBeenCalledWith(ExploreId.right, 'logs', { logs: {} });
+      expect(changePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
     });
 
     it('should scroll the scrollElement into view if rows contain id', () => {
@@ -242,6 +289,38 @@ describe('Logs', () => {
       setup({ loading: false, scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState });
 
       expect(scrollElementMock.scroll).not.toHaveBeenCalled();
+    });
+
+    it('should call reportInteraction on permalinkClick', async () => {
+      const panelState = { logs: { id: 'not-included' } };
+      setup({ loading: false, panelState });
+
+      const row = screen.getAllByRole('row');
+      await userEvent.hover(row[0]);
+
+      const linkButtons = row[1].querySelectorAll('button');
+      await userEvent.click(linkButtons[2]);
+
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_clicked', {
+        datasourceType: 'unknown',
+        logRowUid: '2',
+        logRowLevel: 'debug',
+      });
+    });
+
+    it('should call createAndCopyShortLink on permalinkClick', async () => {
+      const panelState = { logs: { id: 'not-included' } };
+      setup({ loading: false, panelState });
+
+      const row = screen.getAllByRole('row');
+      await userEvent.hover(row[0]);
+
+      const linkButtons = row[1].querySelectorAll('button');
+      await userEvent.click(linkButtons[2]);
+
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(
+        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%222%22%7D%7D%7D'
+      );
     });
   });
 });

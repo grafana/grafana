@@ -30,10 +30,10 @@ declare global {
 export interface RudderstackBackendOptions {
   writeKey: string;
   dataPlaneUrl: string;
+  buildInfo: BuildInfo;
   user?: CurrentUserDTO;
   sdkUrl?: string;
   configUrl?: string;
-  buildInfo?: BuildInfo;
 }
 
 export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
@@ -86,8 +86,8 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
           email: options.user.email,
           orgId: options.user.orgId,
           language: options.user.language,
-          version: options.buildInfo?.version ?? 'unknown',
-          edition: options.buildInfo?.edition ?? 'unknown',
+          version: options.buildInfo.version,
+          edition: options.buildInfo.edition,
         },
         apiOptions
       );

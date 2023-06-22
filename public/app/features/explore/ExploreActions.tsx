@@ -1,24 +1,22 @@
 import { useRegisterActions, useKBar, Action, Priority } from 'kbar';
 import { useEffect, useState } from 'react';
 
-import { ExploreId, useDispatch, useSelector } from 'app/types';
+import { useDispatch, useSelector } from 'app/types';
 
 import { splitOpen, splitClose } from './state/main';
 import { runQueries } from './state/query';
-import { isSplit } from './state/selectors';
+import { isSplit, selectPanes } from './state/selectors';
 
-interface Props {
-  exploreIdLeft: ExploreId;
-  exploreIdRight?: ExploreId;
-}
-
-export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
+// FIXME: this should use the new IDs
+export const ExploreActions = () => {
   const [actions, setActions] = useState<Action[]>([]);
   const { query } = useKBar();
   const dispatch = useDispatch();
+  const panes = useSelector(selectPanes);
   const splitted = useSelector(isSplit);
 
   useEffect(() => {
+    const keys = Object.keys(panes);
     const exploreSection = {
       name: 'Explore',
       priority: Priority.HIGH + 1,
@@ -32,18 +30,18 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
         name: 'Run query (left)',
         keywords: 'query left',
         perform: () => {
-          dispatch(runQueries({ exploreId: exploreIdLeft }));
+          dispatch(runQueries({ exploreId: keys[0] }));
         },
         section: exploreSection,
       });
-      if (exploreIdRight) {
+      if ([panes[1]]) {
         // we should always have the right exploreId if split
         actionsArr.push({
           id: 'explore/run-query-right',
           name: 'Run query (right)',
           keywords: 'query right',
           perform: () => {
-            dispatch(runQueries({ exploreId: exploreIdRight }));
+            dispatch(runQueries({ exploreId: keys[1] }));
           },
           section: exploreSection,
         });
@@ -52,7 +50,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
           name: 'Close split view left',
           keywords: 'split',
           perform: () => {
-            dispatch(splitClose(exploreIdLeft));
+            dispatch(splitClose(keys[0]));
           },
           section: exploreSection,
         });
@@ -61,7 +59,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
           name: 'Close split view right',
           keywords: 'split',
           perform: () => {
-            dispatch(splitClose(exploreIdRight));
+            dispatch(splitClose(keys[1]));
           },
           section: exploreSection,
         });
@@ -72,7 +70,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
         name: 'Run query',
         keywords: 'query',
         perform: () => {
-          dispatch(runQueries({ exploreId: exploreIdLeft }));
+          dispatch(runQueries({ exploreId: keys[0] }));
         },
         section: exploreSection,
       });
@@ -87,7 +85,7 @@ export const ExploreActions = ({ exploreIdLeft, exploreIdRight }: Props) => {
       });
     }
     setActions(actionsArr);
-  }, [exploreIdLeft, exploreIdRight, splitted, query, dispatch]);
+  }, [panes, splitted, query, dispatch]);
 
   useRegisterActions(!query ? [] : actions, [actions, query]);
 

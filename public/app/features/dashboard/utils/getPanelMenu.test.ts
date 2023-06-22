@@ -1,3 +1,5 @@
+import { Store } from 'redux';
+
 import {
   dateTime,
   FieldType,
@@ -8,7 +10,7 @@ import {
   PluginExtensionTypes,
   toDataFrame,
 } from '@grafana/data';
-import { getPluginExtensions } from '@grafana/runtime';
+import { AngularComponent, getPluginExtensions } from '@grafana/runtime';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
 import { setStore } from 'app/store/store';
@@ -292,9 +294,9 @@ describe('getPanelMenu()', () => {
   describe('when panel is in view mode', () => {
     it('should return the correct panel menu items', () => {
       const getExtendedMenu = () => [{ text: 'Toggle legend', shortcut: 'p l', click: jest.fn() }];
-      const ctrl: any = { getExtendedMenu };
-      const scope: any = { $$childHead: { ctrl } };
-      const angularComponent: any = { getScope: () => scope };
+      const ctrl = { getExtendedMenu };
+      const scope = { $$childHead: { ctrl } };
+      const angularComponent = { getScope: () => scope } as AngularComponent;
       const panel = new PanelModel({ isViewing: true });
       const dashboard = createDashboardModelFixture({});
 
@@ -363,7 +365,7 @@ describe('getPanelMenu()', () => {
     const windowOpen = jest.fn();
     let event: any;
     let explore: PanelMenuItem;
-    let navigateSpy: any;
+    let navigateSpy: jest.SpyInstance;
 
     beforeAll(() => {
       const panel = new PanelModel({});
@@ -378,7 +380,7 @@ describe('getPanelMenu()', () => {
         preventDefault: jest.fn(),
       };
 
-      setStore({ dispatch: jest.fn() } as any);
+      setStore({ dispatch: jest.fn() } as unknown as Store);
     });
 
     it('should navigate to url without subUrl', () => {

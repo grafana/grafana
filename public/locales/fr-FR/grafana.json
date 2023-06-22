@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": "",
+      "type-column": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    },
+    "type-cell": {
+      "dashboard": "",
+      "folder": "",
+      "panel": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copié"
@@ -141,6 +161,12 @@
     "save": {
       "error": "Erreur lors de l'enregistrement du panneau de bibliothèque\u00a0: \"{{errorMsg}}\"",
       "success": "Panneau de bibliothèque enregistré"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "",
+      "unknown": ""
     }
   },
   "nav": {
@@ -432,6 +458,12 @@
     "search-input": {
       "include-panels-placeholder": "Rechercher des tableaux de bord et des panneaux",
       "placeholder": "Rechercher des tableaux de bord"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
