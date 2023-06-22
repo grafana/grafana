@@ -61,7 +61,12 @@ export const ExamplesSizes = () => {
     <HorizontalGroup justify="center">
       {variants.map((variant) => {
         return (
-          <div key={variant}>
+          <div
+            key={variant}
+            className={css`
+              margin: auto 5px;
+            `}
+          >
             <p>{variant}</p>
             {icons.map((icon) => {
               return (
