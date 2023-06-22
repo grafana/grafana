@@ -15,6 +15,21 @@ export enum ExpressionQueryType {
   threshold = 'threshold',
 }
 
+export const getExpressionLabel = (type: ExpressionQueryType) => {
+  switch (type) {
+    case ExpressionQueryType.math:
+      return 'Math';
+    case ExpressionQueryType.reduce:
+      return 'Reduce';
+    case ExpressionQueryType.resample:
+      return 'Resample';
+    case ExpressionQueryType.classic:
+      return 'Classic condition';
+    case ExpressionQueryType.threshold:
+      return 'Threshold';
+  }
+};
+
 export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.math,

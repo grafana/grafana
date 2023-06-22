@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { capitalize, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
@@ -10,7 +10,7 @@ import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
+import { ExpressionQuery, ExpressionQueryType, gelTypes, getExpressionLabel } from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
@@ -124,17 +124,18 @@ export const Expression: FC<ExpressionProps> = ({
         </div>
         {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
 
-        <div className={styles.footer}>
-          <Stack direction="row" alignItems="center">
-            <Spacer />
-            {showSummary && (
+        {showSummary && (
+          <div className={styles.footer}>
+            <Stack direction="row" alignItems="center">
+              <Spacer />
+
               <PreviewSummary
                 firing={groupedByState[PromAlertingRuleState.Firing].length}
                 normal={groupedByState[PromAlertingRuleState.Inactive].length}
               />
-            )}
-          </Stack>
-        </div>
+            </Stack>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -275,7 +276,7 @@ const Header: FC<HeaderProps> = ({
               }}
             />
           )}
-          <div className={styles.mutedText}>{capitalize(queryType)}</div>
+          <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
         <AlertConditionIndicator
