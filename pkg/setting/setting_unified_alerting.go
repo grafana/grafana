@@ -93,6 +93,8 @@ type UnifiedAlertingSettings struct {
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
 	StateHistory                  UnifiedAlertingStateHistorySettings
+	// MaxConcurrentStateSavers controls the number of goroutines (per rule) that can save alert state in parallel.
+	MaxConcurrentStateSavers int
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -351,6 +353,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
+
+	uaCfg.MaxConcurrentStateSavers = ua.Key("max_concurrent_state_savers").MustInt(1)
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil
