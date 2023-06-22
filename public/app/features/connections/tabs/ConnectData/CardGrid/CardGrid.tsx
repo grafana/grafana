@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Card, useStyles2 } from '@grafana/ui';
+import { PluginAngularBadge } from 'app/features/plugins/admin/components/Badges';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   sourcesList: css`
@@ -39,7 +40,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export type CardGridItem = { id: string; name: string; description: string; url: string; logo?: string };
+export type CardGridItem = {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  logo?: string;
+  angularDetected?: boolean;
+};
 export interface CardGridProps {
   items: CardGridItem[];
   onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
@@ -68,7 +76,10 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
                   <img src={item.logo} alt={`logo of ${item.name}`} />
                 </div>
               )}
-              <h4 className={styles.label}>{item.name}</h4>
+              <div>
+                <h4 className={styles.label}>{item.name}</h4>
+                {item.angularDetected && <PluginAngularBadge />}
+              </div>
             </div>
           </Card.Heading>
         </Card>
