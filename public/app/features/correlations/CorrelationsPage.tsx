@@ -42,7 +42,7 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -94,6 +94,10 @@ export default function CorrelationsPage() {
       fetchCorrelations({ page });
     }
   }, [remove.error, remove.loading, remove.value, fetchCorrelations, page]);
+
+  useEffect(() => {
+    fetchCorrelations({ page });
+  }, [fetchCorrelations, page]);
 
   const RowActions = useCallback(
     ({
@@ -205,7 +209,7 @@ export default function CorrelationsPage() {
                 getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
               />
               <Pagination
-                currentPage={1}
+                currentPage={page}
                 numberOfPages={Math.ceil(data.totalCount! / data.limit!)}
                 onNavigate={(toPage: number) => {
                   setPage(toPage);
