@@ -35,6 +35,8 @@ Custom labels are additional labels from the alert rule. Like annotations, custo
 
 When using custom labels with templates it is important to make sure that the label value does not change between consecutive evaluations of the alert rule as this will end up creating large numbers of distinct alerts. However, it is OK for the template to produce different label values for different alerts. For example, do not put the value of the query in a custom label as this will end up creating a new set of alerts each time the value changes. Instead use annotations.
 
+For example, if the custom label was reporting `"The CPU usage for server1 is {{current usage}} which is above the 75% threshold."` then a new alert would be generated every time this variable changed.
+
 It is also important to make sure that the label set for an alert does not have two or more labels with the same name. If a custom label has the same name as a label from the datasource then it will replace that label. However, should a custom label have the same name as a reserved label then the custom label will be omitted from the alert.
 
 ## Annotations
