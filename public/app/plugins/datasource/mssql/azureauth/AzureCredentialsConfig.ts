@@ -1,8 +1,16 @@
-import { DataSourceSettings } from '@grafana/data';
+import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
 import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+
+type AzureAuthJSONData = DataSourceJsonData & {
+  azureCredentials: AzureCredentials;
+};
+
+type AzureAuthSecureJSONData = {
+  azureClientSecret: undefined | string | ConcealedSecret;
+};
 
 export type AzureAuthConfigType = {
   azureAuthIsSupported: boolean;
@@ -23,7 +31,9 @@ const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentials 
   }
 };
 
-const getSecret = (dsSettings: DataSourceSettings<any, any>): undefined | string | ConcealedSecret => {
+const getSecret = (
+  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONData>
+): undefined | string | ConcealedSecret => {
   if (dsSettings.secureJsonFields.azureClientSecret) {
     // The secret is concealed on server
     return concealed;
@@ -34,7 +44,7 @@ const getSecret = (dsSettings: DataSourceSettings<any, any>): undefined | string
 };
 
 export const getCredentials = (
-  dsSettings: DataSourceSettings<any, any>,
+  dsSettings: DataSourceSettings<AzureAuthJSONData, AzureAuthSecureJSONData>,
   bootConfig: GrafanaBootConfig
 ): AzureCredentials => {
   const credentials = dsSettings.jsonData.azureCredentials as AzureCredentials | undefined;
@@ -71,10 +81,10 @@ export const getCredentials = (
 };
 
 export const updateCredentials = (
-  dsSettings: DataSourceSettings<any, any>,
+  dsSettings: DataSourceSettings<AzureAuthJSONData>,
   bootConfig: GrafanaBootConfig,
   credentials: AzureCredentials
-): DataSourceSettings<any, any> => {
+): DataSourceSettings<AzureAuthJSONData> => {
   switch (credentials.authType) {
     case 'msi':
       if (!bootConfig.azure.managedIdentityEnabled) {
