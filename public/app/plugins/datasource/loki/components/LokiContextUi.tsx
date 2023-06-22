@@ -262,6 +262,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
               store.delete(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
               store.delete(SHOULD_INCLUDE_PIPELINE_OPERATIONS);
+              setIncludePipelineOperations(false);
             }}
           />
         </div>
