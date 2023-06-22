@@ -7,7 +7,7 @@ import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 export interface DataSourceDropdownProps {
   onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
-  current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
+  current?: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
   tracing?: boolean;
   mixed?: boolean;
   dashboard?: boolean;
