@@ -16,7 +16,9 @@ import {
 } from './IconButton';
 import mdx from './IconButton.mdx';
 
-type ScenarioProp = 'canvas' | 'primary' | 'secondary';
+interface ScenarioProps {
+  background: 'canvas' | 'primary' | 'secondary';
+}
 
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
@@ -103,9 +105,8 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
 };
 
 export const ExamplesBackground = (args: BasePropsWithTooltip) => {
-  const theme = useTheme2();
-
-  const renderBackgroundScenario = (background: ScenarioProp) => {
+  const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
+    const theme = useTheme2();
     const variants: IconButtonVariant[] = ['primary', 'secondary', 'destructive'];
 
     return (
@@ -135,9 +136,9 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
 
   return (
     <div>
-      {renderBackgroundScenario('canvas')}
-      {renderBackgroundScenario('primary')}
-      {renderBackgroundScenario('secondary')}
+      <RenderBackgroundScenario background="canvas" />
+      <RenderBackgroundScenario background="primary" />
+      <RenderBackgroundScenario background="secondary" />
     </div>
   );
 };
