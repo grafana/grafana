@@ -102,7 +102,7 @@ interface State {
   prettifyLogMessage: boolean;
   dedupStrategy: LogsDedupStrategy;
   hiddenLogLevels: LogLevel[];
-  logsSortOrder: LogsSortOrder | null;
+  logsSortOrder: LogsSortOrder;
   isFlipping: boolean;
   displayedFields: string[];
   forceEscape: boolean;
