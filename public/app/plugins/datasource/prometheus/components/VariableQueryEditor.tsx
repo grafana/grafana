@@ -280,7 +280,6 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               }}
               onChange={(e) => {
                 setLabelNamesMatch(e.currentTarget.value);
-                // onLabelNamesMatchChange(e.currentTarget.value);
               }}
               width={25}
             />
