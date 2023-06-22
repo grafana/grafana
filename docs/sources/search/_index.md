@@ -1,12 +1,4 @@
 ---
-aliases:
-  - ./
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Learn how to search for Grafana dashboards
 keywords:
   - search

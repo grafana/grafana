@@ -38,6 +38,7 @@ Basic.args = {
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
   indeterminate: false,
+  invalid: false,
 };
 
 export const StackedList = () => {
@@ -80,6 +81,7 @@ InAField.args = {
     'Annotation queries can be toggled on or of at the top of the dashboard. With this option checked this toggle will be hidden.',
   disabled: false,
   indeterminate: false,
+  invalid: false,
 };
 
 export const AllStates: StoryFn<typeof Checkbox> = (args) => {
@@ -96,6 +98,8 @@ export const AllStates: StoryFn<typeof Checkbox> = (args) => {
         <Checkbox value={true} label="Checked" />
         <Checkbox value={false} label="Unchecked" />
         <Checkbox value={false} indeterminate={true} label="Interdeterminate" />
+        <Checkbox value={false} invalid={true} label="Invalid and unchecked" />
+        <Checkbox value={true} invalid={true} label="Invalid and checked" />
       </VerticalGroup>
     </div>
   );
@@ -106,6 +110,7 @@ AllStates.args = {
   description: 'Set to true if you want to skip TLS cert validation',
   disabled: false,
   indeterminate: false,
+  invalid: false,
 };
 
 export default meta;

@@ -1,4 +1,6 @@
-import { getMatcherQueryParams, parseQueryParamMatchers } from './matchers';
+import { MatcherOperator, Route } from '../../../../plugins/datasource/alertmanager/types';
+
+import { getMatcherQueryParams, normalizeMatchers, parseQueryParamMatchers } from './matchers';
 
 describe('Unified Alerting matchers', () => {
   describe('getMatcherQueryParams tests', () => {
@@ -31,6 +33,31 @@ describe('Unified Alerting matchers', () => {
       expect(matchers).toHaveLength(1);
       expect(matchers[0].name).toBe('alertname');
       expect(matchers[0].value).toBe('TestData 1');
+    });
+  });
+
+  describe('normalizeMatchers', () => {
+    const eq = MatcherOperator.equal;
+
+    it('should work for object_matchers', () => {
+      const route: Route = { object_matchers: [['foo', eq, 'bar']] };
+      expect(normalizeMatchers(route)).toEqual([['foo', eq, 'bar']]);
+    });
+    it('should work for matchers', () => {
+      const route: Route = { matchers: ['foo=bar', 'foo!=bar', 'foo=~bar', 'foo!~bar'] };
+      expect(normalizeMatchers(route)).toEqual([
+        ['foo', MatcherOperator.equal, 'bar'],
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['foo', MatcherOperator.regex, 'bar'],
+        ['foo', MatcherOperator.notRegex, 'bar'],
+      ]);
+    });
+    it('should work for match and match_re', () => {
+      const route: Route = { match: { foo: 'bar' }, match_re: { foo: 'bar' } };
+      expect(normalizeMatchers(route)).toEqual([
+        ['foo', MatcherOperator.regex, 'bar'],
+        ['foo', MatcherOperator.equal, 'bar'],
+      ]);
     });
   });
 });

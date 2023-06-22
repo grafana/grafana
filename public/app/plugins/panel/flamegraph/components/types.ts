@@ -1,7 +1,9 @@
-export type ContextMenuData = {
-  e: MouseEvent;
-  levelIndex: number;
-  barIndex: number;
+export type ClickedItemData = {
+  posX: number;
+  posY: number;
+  itemIndex: number;
+  label: string;
+  start: number;
 };
 
 export type Metadata = {
@@ -44,3 +46,5 @@ export type TopTableValue = {
   value: number;
   unitValue: string;
 };
+
+export type TextAlign = 'left' | 'right';

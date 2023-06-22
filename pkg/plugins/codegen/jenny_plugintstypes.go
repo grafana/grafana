@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/codejen"
 	tsast "github.com/grafana/cuetsy/ts/ast"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
@@ -34,7 +35,7 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 	tsf := &tsast.File{}
 
 	for _, im := range decl.Imports {
-		if tsim, err := convertImport(im); err != nil {
+		if tsim, err := cuectx.ConvertImport(im); err != nil {
 			return nil, err
 		} else if tsim.From.Value != "" {
 			tsf.Imports = append(tsf.Imports, tsim)

@@ -15,12 +15,21 @@ weight: 600
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD Application Roles to assign users and groups to Grafana roles from the Azure Portal. This topic has the following sections:
 
-- [Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
+- [Configure Azure AD OAuth2 authentication](#configure-azure-ad-oauth2-authentication)
   - [Create the Azure AD application](#create-the-azure-ad-application)
+    - [Assign server administrator privileges](#assign-server-administrator-privileges)
   - [Enable Azure AD OAuth in Grafana](#enable-azure-ad-oauth-in-grafana)
+    - [Configure refresh token](#configure-refresh-token)
     - [Configure allowed groups](#configure-allowed-groups)
     - [Configure allowed domains](#configure-allowed-domains)
+    - [PKCE](#pkce)
+    - [Configure automatic login](#configure-automatic-login)
     - [Team Sync (Enterprise only)](#team-sync-enterprise-only)
+  - [Common troubleshooting](#common-troubleshooting)
+    - [Users with over 200 Group assignments](#users-with-over-200-group-assignments)
+    - [Force fetching groups from Microsoft graph API](#force-fetching-groups-from-microsoft-graph-api)
+    - [Map roles](#map-roles)
+  - [Skip organization role sync](#skip-organization-role-sync)
 
 ## Create the Azure AD application
 
@@ -143,6 +152,7 @@ allowed_groups =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
 skip_org_role_sync = false
+use_pkce = true
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -191,9 +201,18 @@ The `allowed_domains` option limits access to users who belong to specific domai
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### PKCE
+
+IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
+introduces "proof key for code exchange" (PKCE) which provides
+additional protection against some forms of authorization code
+interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-03).
+
+> You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.azuread]` section.
+
 ### Configure automatic login
 
-Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+To bypass the login screen and log in automatically, enable the "auto_login" feature.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
 ```
@@ -224,7 +243,7 @@ If a user is member of more groups than the
 overage limit (200), then
 Azure AD does not emit the groups claim in the token and emits a group overage claim instead.
 
-> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim)
+> More information in [Groups overage claim](https://learn.microsoft.com/en-us/azure/active-directory/develop/id-token-claims-reference#groups-overage-claim)
 
 If Grafana receives a token with a group overage claim instead of a groups claim,
 Grafana attempts to retrieve the user's group membership by calling the included endpoint.

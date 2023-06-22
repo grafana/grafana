@@ -61,7 +61,6 @@ import {
   FetchRulerRulesFilter,
   setRulerRuleGroup,
 } from '../api/ruler';
-import { getAlertInfo, safeParseDurationstr } from '../components/rules/EditRuleGroupModal';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
@@ -75,7 +74,8 @@ import { makeAMLink, retryWhile } from '../utils/misc';
 import { AsyncRequestMapSlice, messageFromError, withAppEvents, withSerializedError } from '../utils/redux';
 import * as ruleId from '../utils/rule-id';
 import { getRulerClient } from '../utils/rulerClient';
-import { isRulerNotSupportedResponse } from '../utils/rules';
+import { getAlertInfo, isRulerNotSupportedResponse } from '../utils/rules';
+import { safeParseDurationstr } from '../utils/time';
 
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
@@ -107,12 +107,14 @@ export const fetchPromRulesAction = createAsyncThunk(
       limitAlerts,
       matcher,
       state,
+      identifier,
     }: {
       rulesSourceName: string;
       filter?: FetchPromRulesFilter;
       limitAlerts?: number;
       matcher?: Matcher[];
       state?: string[];
+      identifier?: RuleIdentifier;
     },
     thunkAPI
   ): Promise<RuleNamespace[]> => {
@@ -123,7 +125,9 @@ export const fetchPromRulesAction = createAsyncThunk(
       thunk: 'unifiedalerting/fetchPromRules',
     });
 
-    return await withSerializedError(fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state));
+    return await withSerializedError(
+      fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
+    );
   }
 );
 
@@ -239,12 +243,18 @@ export const fetchRulerRulesAction = createAsyncThunk(
   }
 );
 
-export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
+export function fetchPromAndRulerRulesAction({
+  rulesSourceName,
+  identifier,
+}: {
+  rulesSourceName: string;
+  identifier?: RuleIdentifier;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName }));
+    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
@@ -554,12 +564,16 @@ interface UpdateAlertManagerConfigActionOptions {
   newConfig: AlertManagerCortexConfig;
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
+  redirectSearch?: string; // additional redirect query params
   refetch?: boolean; // refetch config on success
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
-  ({ alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, refetch }, thunkAPI): Promise<void> =>
+  (
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch },
+    thunkAPI
+  ): Promise<void> =>
     withAppEvents(
       withSerializedError(
         (async () => {
@@ -579,7 +593,8 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             await thunkAPI.dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
           }
           if (redirectPath) {
-            locationService.push(makeAMLink(redirectPath, alertManagerSourceName));
+            const options = new URLSearchParams(redirectSearch ?? '');
+            locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
           }
         })()
       ),

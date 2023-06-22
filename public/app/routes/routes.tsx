@@ -307,12 +307,11 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/admin/authentication',
       roles: () => contextSrv.evaluatePermission(() => ['Admin', 'ServerAdmin'], [AccessControlAction.SettingsWrite]),
-      component:
-        config.featureToggles.authenticationConfigUI && config.licenseInfo.enabledFeatures?.saml
-          ? SafeDynamicImport(
-              () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
-            )
-          : () => <Redirect to="/admin" />,
+      component: config.licenseInfo.enabledFeatures?.saml
+        ? SafeDynamicImport(
+            () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/auth-config/AuthConfigPage')
+          )
+        : () => <Redirect to="/admin" />,
     },
     {
       path: '/admin',
@@ -477,7 +476,13 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/dashboards/f/:uid/:slug/library-panels',
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
+        config.featureToggles.nestedFolders
+          ? () =>
+              import(
+                /* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/browse-dashboards/BrowseFolderLibraryPanelsPage'
+              )
+          : () =>
+              import(/* webpackChunkName: "FolderLibraryPanelsPage"*/ 'app/features/folders/FolderLibraryPanelsPage')
       ),
     },
     {
@@ -485,7 +490,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       roles: () =>
         contextSrv.evaluatePermission(() => ['Viewer', 'Editor', 'Admin'], [AccessControlAction.AlertingRuleRead]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
+        config.featureToggles.nestedFolders
+          ? () =>
+              import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/browse-dashboards/BrowseFolderAlertingPage')
+          : () => import(/* webpackChunkName: "FolderAlerting"*/ 'app/features/folders/FolderAlerting')
       ),
     },
     {

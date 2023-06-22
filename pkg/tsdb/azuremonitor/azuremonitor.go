@@ -162,8 +162,8 @@ type azDatasourceExecutor interface {
 	ResourceRequest(rw http.ResponseWriter, req *http.Request, cli *http.Client)
 }
 
-func (s *Service) getDataSourceFromPluginReq(req *backend.QueryDataRequest) (types.DatasourceInfo, error) {
-	i, err := s.im.Get(req.PluginContext)
+func (s *Service) getDataSourceFromPluginReq(ctx context.Context, req *backend.QueryDataRequest) (types.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, req.PluginContext)
 	if err != nil {
 		return types.DatasourceInfo{}, err
 	}
@@ -185,7 +185,7 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 		dst := dsType
 		mux.HandleFunc(dsType, func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			executor := s.executors[dst]
-			dsInfo, err := s.getDataSourceFromPluginReq(req)
+			dsInfo, err := s.getDataSourceFromPluginReq(ctx, req)
 			if err != nil {
 				return nil, err
 			}
@@ -199,8 +199,8 @@ func (s *Service) newQueryMux() *datasource.QueryTypeMux {
 	return mux
 }
 
-func (s *Service) getDSInfo(pluginCtx backend.PluginContext) (types.DatasourceInfo, error) {
-	i, err := s.im.Get(pluginCtx)
+func (s *Service) getDSInfo(ctx context.Context, pluginCtx backend.PluginContext) (types.DatasourceInfo, error) {
+	i, err := s.im.Get(ctx, pluginCtx)
 	if err != nil {
 		return types.DatasourceInfo{}, err
 	}
@@ -321,7 +321,7 @@ func parseSubscriptions(res *http.Response) ([]string, error) {
 }
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,

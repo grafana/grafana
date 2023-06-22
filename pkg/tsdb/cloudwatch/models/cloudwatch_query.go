@@ -27,13 +27,13 @@ type (
 )
 
 const (
-	MetricEditorModeBuilder = dataquery.CloudWatchMetricsQueryMetricEditorModeN0
-	MetricEditorModeRaw     = dataquery.CloudWatchMetricsQueryMetricEditorModeN1
+	MetricEditorModeBuilder = dataquery.MetricEditorModeN0
+	MetricEditorModeRaw     = dataquery.MetricEditorModeN1
 )
 
 const (
-	MetricQueryTypeSearch = dataquery.CloudWatchMetricsQueryMetricQueryTypeN0
-	MetricQueryTypeQuery  = dataquery.CloudWatchMetricsQueryMetricQueryTypeN1
+	MetricQueryTypeSearch = dataquery.MetricQueryTypeN0
+	MetricQueryTypeQuery  = dataquery.MetricQueryTypeN1
 )
 
 const (
@@ -67,8 +67,8 @@ type CloudWatchQuery struct {
 	MatchExact        bool
 	UsedExpression    string
 	TimezoneUTCOffset string
-	MetricQueryType   dataquery.CloudWatchMetricsQueryMetricQueryType
-	MetricEditorMode  dataquery.CloudWatchMetricsQueryMetricEditorMode
+	MetricQueryType   dataquery.MetricQueryType
+	MetricEditorMode  dataquery.MetricEditorMode
 	AccountId         *string
 }
 
@@ -303,9 +303,12 @@ func (q *CloudWatchQuery) validateAndSetDefaults(refId string, metricsDataQuery 
 		return err
 	}
 
-	q.Dimensions, err = parseDimensions(metricsDataQuery.Dimensions)
-	if err != nil {
-		return fmt.Errorf("failed to parse dimensions: %v", err)
+	q.Dimensions = map[string][]string{}
+	if metricsDataQuery.Dimensions != nil {
+		q.Dimensions, err = parseDimensions(*metricsDataQuery.Dimensions)
+		if err != nil {
+			return fmt.Errorf("failed to parse dimensions: %v", err)
+		}
 	}
 
 	if crossAccountQueryingEnabled {

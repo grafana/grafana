@@ -9,7 +9,7 @@ keywords:
   - documentation
   - upgrade
 title: Upgrade Grafana
-weight: 380
+weight: 3
 ---
 
 # Upgrade Grafana

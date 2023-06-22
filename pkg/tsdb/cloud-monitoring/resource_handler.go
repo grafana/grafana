@@ -397,7 +397,7 @@ func writeResponse(rw http.ResponseWriter, code int, msg string) {
 func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (*datasourceInfo, error) {
 	ctx := req.Context()
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
-	i, err := s.im.Get(pluginContext)
+	i, err := s.im.Get(ctx, pluginContext)
 	if err != nil {
 		return nil, nil
 	}

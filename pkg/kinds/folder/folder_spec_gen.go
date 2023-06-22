@@ -9,7 +9,8 @@
 
 package folder
 
-// Spec defines model for Spec.
+// TODO:
+// common metadata will soon support setting the parent folder in the metadata
 type Spec struct {
 	// Description of the folder.
 	Description *string `json:"description,omitempty"`

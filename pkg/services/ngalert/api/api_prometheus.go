@@ -214,7 +214,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
 	}
 	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(accesscontrol.ReqViewer, evaluator)
+		return accesscontrol.HasAccess(srv.ac, c)(evaluator)
 	}
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,

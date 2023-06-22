@@ -7,10 +7,11 @@ import { usePopper } from 'react-popper';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceJsonData } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
+import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
@@ -31,7 +32,7 @@ const INTERACTION_ITEM = {
 };
 
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, ...restProps } = props;
+  const { current, onChange, hideTextValue, width, ...restProps } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -68,6 +69,15 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onClickAddCSV = () => {
+    if (!grafanaDS) {
+      return;
+    }
+
+    onChange(grafanaDS, [defaultFileUploadQuery]);
+  };
 
   const currentDataSourceInstanceSettings = useDatasource(current);
 
@@ -107,7 +117,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   const styles = useStyles2(getStylesDropdown);
 
   return (
-    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container} style={{ width }}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
@@ -122,7 +132,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             )
           }
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentDataSourceInstanceSettings)}
           onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
@@ -154,14 +164,18 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
-              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+              onChange={(
+                ds: DataSourceInstanceSettings<DataSourceJsonData>,
+                defaultQueries?: DataQuery[] | GrafanaQuery[]
+              ) => {
                 onClose();
-                onChange(ds);
+                onChange(ds, defaultQueries);
               }}
               onClose={onClose}
               current={currentDataSourceInstanceSettings}
               style={popper.styles.popper}
               ref={setSelectorElement}
+              onClickAddCSV={onClickAddCSV}
               {...restProps}
               onDismiss={onClose}
               {...popper.attributes.popper}
@@ -237,13 +251,13 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  enableFileUpload: props.enableFileUpload,
-                  fileUploadOptions: props.fileUploadOptions,
                   reportedInteractionFrom: 'ds_picker',
+                  dashboard: props.dashboard,
+                  mixed: props.mixed,
                   current,
                   onDismiss: hideModal,
-                  onChange: (ds) => {
-                    onChange(ds);
+                  onChange: (ds, defaultQueries) => {
+                    onChange(ds, defaultQueries);
                     hideModal();
                   },
                 });

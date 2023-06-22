@@ -13,8 +13,7 @@ import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-
-import { DataHoverView } from '../geomap/components/DataHoverView';
+import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
 import { HeatmapData } from './fields';
 import { HeatmapHoverEvent } from './utils';

@@ -79,7 +79,9 @@ describe('browse-dashboards MoveModal', () => {
     };
     render(<MoveModal {...props} />);
 
-    expect(await screen.findByText('Moving this item may change its permissions.')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('status', { name: 'Moving this item may change its permissions.' })
+    ).toBeInTheDocument();
   });
 
   it('only enables the `Move` button if a folder is selected', async () => {

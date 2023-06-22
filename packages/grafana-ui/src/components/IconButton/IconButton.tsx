@@ -28,7 +28,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   tooltipPlacement?: TooltipPlacement;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
-  /** Text avilable ony for screenscreen readers. Will use tooltip text as fallback. */
+  /** Text available only for screen readers. Will use tooltip text as fallback. */
   ariaLabel?: string;
 }
 
@@ -68,6 +68,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
         aria-label={ariaLabel || tooltipString}
         {...restProps}
         className={cx(styles.button, className)}
+        type="button"
       >
         <Icon name={name} size={limitedIconSize} className={styles.icon} type={iconType} />
       </button>

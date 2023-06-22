@@ -177,7 +177,6 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
-	dashboardService        dashboards.DashboardService
 }
 
 func (sc *scenarioContext) exec() {

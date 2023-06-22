@@ -35,16 +35,15 @@ To configure basic settings for the data source, complete the following steps:
 
 1.  Set the data source's basic configuration options:
 
-        | Name                | Description                                                                             |
-
-    | ------------------- | --------------------------------------------------------------------------------------- |
-    | **Name** | The data source name. This is how you refer to the data source in panels and queries. |
-    | **Default** | Default data source means that it will be pre-selected for new panels. |
-    | **URL** | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242) |
-    | **Allowed cookies** | List the names of cookies to forward to the data source. |
-    | **Version** | Version = opentsdb version, either <=2.1 or 2.2 |
-    | **Resolution** | Metrics from opentsdb may have datapoints with either second or millisecond resolution. |
-    | **Lookup limit** | Default is 1000. |
+| Name                | Description                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------- |
+| **Name**            | The data source name. This is how you refer to the data source in panels and queries.    |
+| **Default**         | Default data source that will be be pre-selected for new panels.                         |
+| **URL**             | The HTTP protocol, IP, and port of your OpenTSDB server (default port is usually 4242).  |
+| **Allowed cookies** | Listing of cookies to forward to the data source.                                        |
+| **Version**         | The OpenTSDB version.                                                                    |
+| **Resolution**      | Metrics from OpenTSDB may have data points with either second or millisecond resolution. |
+| **Lookup limit**    | Default is 1000.                                                                         |
 
 ### Provision the data source
 
@@ -57,7 +56,7 @@ For more information about provisioning, and for available configuration options
 apiVersion: 1
 
 datasources:
-  - name: OpenTsdb
+  - name: OpenTSDB
     type: opentsdb
     access: proxy
     url: http://localhost:4242
@@ -70,7 +69,7 @@ datasources:
 
 Open a graph in edit mode by click the title. Query editor will differ if the data source has version <=2.1 or = 2.2.
 In the former version, only tags can be used to query OpenTSDB. But in the latter version, filters as well as tags
-can be used to query opentsdb. Fill Policy is also introduced in OpenTSDB 2.2.
+can be used to query OpenTSDB. Fill Policy is also introduced in OpenTSDB 2.2.
 
 ![](/static/img/docs/v43/opentsdb_query_editor.png)
 

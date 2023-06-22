@@ -216,7 +216,7 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
    * There are 3 edit modes:
    *
    * 1. "refId": Editing the refId (ie. A -> B)
-   * 2. "epressionType": Editing the type of the expression (ie. Reduce -> Math)
+   * 2. "expressionType": Editing the type of the expression (ie. Reduce -> Math)
    * 3. "false": This means we're not editing either of those
    */
   const [editMode, setEditMode] = useState<'refId' | 'expressionType' | false>(false);
@@ -281,11 +281,11 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
         </Stack>
         <Spacer />
         <IconButton
-          type="button"
           name="trash-alt"
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
+          tooltip="Remove expression"
         />
       </Stack>
     </header>
@@ -396,8 +396,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   expression: {
     wrapper: css`
       display: flex;
-      border: solid 1px ${theme.colors.border.medium};
-
+      border: solid 1px ${theme.colors.border.weak};
       border-radius: ${theme.shape.borderRadius()};
       max-width: 640px;
     `,
@@ -475,13 +474,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       background: ${theme.colors.background.secondary};
       padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      border-bottom: solid 1px ${theme.colors.border.medium};
+      border-bottom: solid 1px ${theme.colors.border.weak};
     `,
   },
   footer: css`
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(1)};
-    border-top: solid 1px ${theme.colors.border.medium};
+    border-top: solid 1px ${theme.colors.border.weak};
   `,
   draggableIcon: css`
     cursor: grab;

@@ -1,5 +1,25 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "Delete",
+      "move-button": "Move"
+    },
+    "dashboards-tree": {
+      "name-column": "Name",
+      "tags-column": "Tags",
+      "type-column": "Type"
+    },
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    },
+    "type-cell": {
+      "dashboard": "Dashboard",
+      "folder": "Folder",
+      "panel": "Panel"
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -114,15 +134,6 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "Please contact your administrator to configure data sources.",
-    "explanation": "To visualize your data, you'll need to connect it first.",
-    "new-dashboard": "New dashboard",
-    "preferred": "Connect your preferred data source:",
-    "sampleData": "Or set up a new dashboard with sample data",
-    "viewAll": "View all",
-    "welcome": "Welcome to Grafana dashboards!"
-  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -150,6 +161,12 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "Invalid username or password",
+      "unknown": "Unknown error occurred"
     }
   },
   "nav": {
@@ -417,8 +434,8 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New Dashboard",
-      "new-folder": "New Folder"
+      "new-dashboard": "New dashboard",
+      "new-folder": "New folder"
     },
     "folder-view": {
       "go-to-folder": "Go to folder",
@@ -441,6 +458,12 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -518,6 +541,15 @@
       "copy-button": "Copy to Clipboard"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "Dark",
+        "light-label": "Light",
+        "system-label": "System preference"
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "Timezone"
@@ -529,14 +561,11 @@
       "home-dashboard-placeholder": "Default dashboard",
       "locale-label": "Language",
       "locale-placeholder": "Choose language",
-      "theme-label": "UI Theme",
+      "theme-label": "Interface theme",
       "week-start-label": "Week start"
     },
     "theme": {
-      "dark-label": "Dark",
-      "default-label": "Default",
-      "light-label": "Light",
-      "system-label": "System"
+      "default-label": "Default"
     },
     "title": "Preferences"
   },

@@ -8,7 +8,7 @@ Because Grafana upgrades are backward compatible, the upgrade process is straigh
 In addition to common tasks you should complete for all versions of Grafana, there might be additional upgrade tasks to complete for a version.
 
 {{% admonition type="note" %}}
-There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for each release.
+There might be breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../../whatsnew/" >}}) document for most releases or a separate [Breaking changes]({{< relref "../../breaking-changes/" >}}) document for releases with many breaking changes.
 {{% /admonition %}}
 
 For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
@@ -142,7 +142,9 @@ To upgrade Grafana running in a Docker container, complete the following steps:
 
 1. Run a commands similar to the following commands.
 
-   > **Note:** This is an example. The parameters you enter depend on how you configured your Grafana container.
+   {{% admonition type="note" %}}
+   This is an example. The parameters you enter depend on how you configured your Grafana container.
+   {{% /admonition %}}
 
    ```bash
    docker pull grafana/grafana

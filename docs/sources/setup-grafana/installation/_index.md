@@ -23,9 +23,9 @@ Grafana relies on other open source software to operate. For a list of open sour
 
 Grafana supports the following operating systems:
 
-- [Debian/Ubuntu]({{< relref "./debian" >}})
-- [Red Hat/RHEL/Fedora]({{< relref "./redhat-rhel-fedora" >}})
-- [SUSE/openSUSE]({{< relref "./suse-opensuse" >}})
+- [Debian or Ubuntu]({{< relref "./debian" >}})
+- [Red Hat, RHEL, or Fedora]({{< relref "./redhat-rhel-fedora" >}})
+- [SUSE or openSUSE]({{< relref "./suse-opensuse" >}})
 - [macOS]({{< relref "./mac" >}})
 - [Windows]({{< relref "./windows" >}})
 
@@ -37,7 +37,7 @@ Installation of Grafana on other operating systems is possible, but is not recom
 
 Grafana requires the minimum system resources:
 
-- Minimum recommended memory: 255 MB
+- Minimum recommended memory: 512 MB
 - Minimum recommended CPU: 1
 
 Some features might require more memory or CPUs, including:
@@ -54,7 +54,7 @@ Grafana supports the following databases:
 
 - [SQLite 3](https://www.sqlite.org/index.html)
 - [MySQL 5.7+](https://www.mysql.com/support/supportedplatforms/database.html)
-- [PostgreSQL 10+](https://www.postgresql.org/support/versioning/)
+- [PostgreSQL 12+](https://www.postgresql.org/support/versioning/)
 
 By default Grafana uses an embedded SQLite database, which is stored in the Grafana installation location.
 

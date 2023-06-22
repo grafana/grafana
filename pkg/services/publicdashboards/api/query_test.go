@@ -310,18 +310,19 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// Create public dashboard
+	isEnabled := true
 	savePubDashboardCmd := &SavePublicDashboardDTO{
 		DashboardUid: dashboard.UID,
-		OrgId:        dashboard.OrgID,
-		PublicDashboard: &PublicDashboard{
-			IsEnabled: true,
+		PublicDashboard: &PublicDashboardDTO{
+			IsEnabled: &isEnabled,
+			OrgId:     dashboard.OrgID,
 		},
 	}
 
 	annotationsService := annotationstest.NewFakeAnnotationsRepo()
 
 	// create public dashboard
-	store := publicdashboardsStore.ProvideStore(db)
+	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)

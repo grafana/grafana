@@ -41,6 +41,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginsCDNURLTemplate,
 		tracingCfg,
 		featuremgmt.ProvideToggles(features),
+		grafanaCfg.AngularSupportEnabled,
 	), nil
 }
 

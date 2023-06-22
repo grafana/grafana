@@ -18,6 +18,8 @@ export const availableIconsIndex = {
   'angle-left': true,
   'angle-right': true,
   'angle-up': true,
+  'align-left': true,
+  'align-right': true,
   apps: true,
   arrow: true,
   'arrow-down': true,

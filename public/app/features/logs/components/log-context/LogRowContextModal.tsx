@@ -190,8 +190,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   };
 
+  const updateContextQuery = async () => {
+    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
+    setContextQuery(contextQuery);
+  };
+
   const [{ loading }, fetchResults] = useAsyncFn(async () => {
     if (open && row && limit) {
+      await updateContextQuery();
       const rawResults = await Promise.all([
         getRowContext(row, {
           limit: logsSortOrder === LogsSortOrder.Descending ? limit + 1 : limit,
@@ -268,10 +274,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     }
   }, [scrollElement]);
 
-  useAsync(async () => {
-    const contextQuery = getRowContextQuery ? await getRowContextQuery(row) : null;
-    setContextQuery(contextQuery);
-  }, [getRowContextQuery, row]);
+  useAsync(updateContextQuery, [getRowContextQuery, row]);
 
   return (
     <Modal
@@ -385,11 +388,22 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <Button
             variant="secondary"
             onClick={async () => {
+              let rowId = row.uid;
+              if (row.dataFrame.refId) {
+                // the orignal row has the refid from the base query and not the refid from the context query, so we need to replace it.
+                rowId = row.uid.replace(row.dataFrame.refId, contextQuery.refId);
+              }
+
               dispatch(
                 splitOpen({
                   queries: [contextQuery],
                   range: getFullTimeRange(),
                   datasourceUid: contextQuery.datasource!.uid!,
+                  panelsState: {
+                    logs: {
+                      id: rowId,
+                    },
+                  },
                 })
               );
               onClose();

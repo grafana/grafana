@@ -89,7 +89,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 		resources := []string{}
 		var resourceOrWorkspace string
 		var queryString string
-		var resultFormat string
+		var resultFormat dataquery.ResultFormat
 		traceExploreQuery := ""
 		traceParentExploreQuery := ""
 		traceLogsExploreQuery := ""
@@ -103,7 +103,9 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			azureLogAnalyticsTarget := queryJSONModel.AzureLogAnalytics
 			logger.Debug("AzureLogAnalytics", "target", azureLogAnalyticsTarget)
 
-			resultFormat = azureLogAnalyticsTarget.ResultFormat
+			if azureLogAnalyticsTarget.ResultFormat != nil {
+				resultFormat = *azureLogAnalyticsTarget.ResultFormat
+			}
 			if resultFormat == "" {
 				resultFormat = types.TimeSeries
 			}
@@ -115,14 +117,16 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if len(azureLogAnalyticsTarget.Resources) > 0 {
 				resources = azureLogAnalyticsTarget.Resources
 				resourceOrWorkspace = azureLogAnalyticsTarget.Resources[0]
-			} else if azureLogAnalyticsTarget.Resource != "" {
-				resources = []string{azureLogAnalyticsTarget.Resource}
-				resourceOrWorkspace = azureLogAnalyticsTarget.Resource
-			} else {
-				resourceOrWorkspace = azureLogAnalyticsTarget.Workspace
+			} else if azureLogAnalyticsTarget.Resource != nil && *azureLogAnalyticsTarget.Resource != "" {
+				resources = []string{*azureLogAnalyticsTarget.Resource}
+				resourceOrWorkspace = *azureLogAnalyticsTarget.Resource
+			} else if azureLogAnalyticsTarget.Workspace != nil {
+				resourceOrWorkspace = *azureLogAnalyticsTarget.Workspace
 			}
 
-			queryString = azureLogAnalyticsTarget.Query
+			if azureLogAnalyticsTarget.Query != nil {
+				queryString = *azureLogAnalyticsTarget.Query
+			}
 		}
 
 		if query.QueryType == string(dataquery.AzureQueryTypeAzureTraces) {
@@ -138,7 +142,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 			if azureTracesTarget.ResultFormat == nil {
 				resultFormat = types.Table
 			} else {
-				resultFormat = string(*azureTracesTarget.ResultFormat)
+				resultFormat = *azureTracesTarget.ResultFormat
 				if resultFormat == "" {
 					resultFormat = types.Table
 				}
@@ -205,7 +209,7 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(ctx context.Context, logger l
 
 		azureLogAnalyticsQueries = append(azureLogAnalyticsQueries, &AzureLogAnalyticsQuery{
 			RefID:                   query.RefID,
-			ResultFormat:            resultFormat,
+			ResultFormat:            string(resultFormat),
 			URL:                     apiURL,
 			JSON:                    query.JSON,
 			TimeRange:               query.TimeRange,
@@ -351,7 +355,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 			return dataResponse
 		}
 		traceIdVariable := "${__data.fields.traceID}"
-		resultFormat := dataquery.AzureMonitorQueryAzureTracesResultFormatTrace
+		resultFormat := dataquery.ResultFormatTrace
 		queryJSONModel.AzureTraces.ResultFormat = &resultFormat
 		queryJSONModel.AzureTraces.Query = &query.TraceExploreQuery
 		if queryJSONModel.AzureTraces.OperationId == nil || *queryJSONModel.AzureTraces.OperationId == "" {
@@ -360,20 +364,16 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 
 		logsQueryType := string(dataquery.AzureQueryTypeAzureLogAnalytics)
 		logsJSONModel := dataquery.AzureMonitorQuery{
-			AzureLogAnalytics: &struct {
-				Query        *string                                                   "json:\"query,omitempty\""
-				Resource     *string                                                   "json:\"resource,omitempty\""
-				Resources    []string                                                  "json:\"resources,omitempty\""
-				ResultFormat *dataquery.AzureMonitorQueryAzureLogAnalyticsResultFormat "json:\"resultFormat,omitempty\""
-				Workspace    *string                                                   "json:\"workspace,omitempty\""
-			}{
-				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
-				Query:     &query.TraceLogsExploreQuery,
+			DataQuery: dataquery.DataQuery{
+				QueryType: &logsQueryType,
 			},
-			QueryType: &logsQueryType,
+			AzureLogAnalytics: &dataquery.AzureLogsQuery{
+				Query:     &query.TraceLogsExploreQuery,
+				Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
+			},
 		}
 
-		if query.ResultFormat == string(dataquery.AzureMonitorQueryAzureTracesResultFormatTable) {
+		if query.ResultFormat == string(dataquery.ResultFormatTable) {
 			AddCustomDataLink(*frame, data.DataLink{
 				Title: "Explore Trace: ${__data.fields.traceID}",
 				URL:   "",
@@ -705,7 +705,7 @@ func encodeQuery(rawQuery string) (string, error) {
 	return base64.StdEncoding.EncodeToString(b.Bytes()), nil
 }
 
-func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []string, filters []types.TracesFilters, resultFormat *string, resources []string) string {
+func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []string, filters []dataquery.AzureTracesFilter, resultFormat *dataquery.ResultFormat, resources []string) string {
 	types := traceTypes
 	if len(types) == 0 {
 		types = Tables
@@ -713,7 +713,7 @@ func buildTracesQuery(operationId string, parentSpanID *string, traceTypes []str
 
 	filteredTypes := make([]string, 0)
 	// If the result format is set to trace then we filter out all events that are of the type traces as they don't make sense when visualised as a span
-	if resultFormat != nil && dataquery.ResultFormat(*resultFormat) == dataquery.ResultFormatTrace {
+	if resultFormat != nil && *resultFormat == dataquery.ResultFormatTrace {
 		filteredTypes = slices.Filter(filteredTypes, types, func(s string) bool { return s != "traces" })
 	} else {
 		filteredTypes = types

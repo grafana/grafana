@@ -36,7 +36,7 @@ header_name = X-JWT-Assertion
 
 ## Configure login claim
 
-To identify the user, some of the claims needs to be selected as a login info. You could specify a claim that contains either a username or an email of the Grafana user.
+To identify the user, some of the claims needs to be selected as a login info. The subject claim called `"sub"` is mandatory and needs to identify the principal that is the subject of the JWT.
 
 Typically, the subject claim called `"sub"` would be used as a login but it might also be set to some application specific claim.
 
@@ -76,17 +76,6 @@ For embedding to work, you must enable `allow_embedding` in the [security sectio
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
-
-## Skip organization role
-
-To skip the assignment of roles and permissions upon login via JWT and handle them via other mechanisms like the user interface, we can skip the organization role synchronization with the following configuration.
-
-```ini
-[auth.jwt]
-# ...
-
-skip_org_role_sync = true
-```
 
 ### URL login
 
@@ -228,3 +217,14 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'Admin' || contains(in
 ### Grafana Admin Role
 
 If the `role_attribute_path` property returns a `GrafanaAdmin` role, Grafana Admin is not assigned by default, instead the `Admin` role is assigned. To allow `Grafana Admin` role to be assigned set `allow_assign_grafana_admin = true`.
+
+### Skip organization role mapping
+
+To skip the assignment of roles and permissions upon login via JWT and handle them via other mechanisms like the user interface, we can skip the organization role synchronization with the following configuration.
+
+```ini
+[auth.jwt]
+# ...
+
+skip_org_role_sync = true
+```

@@ -7,9 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -17,6 +21,8 @@ import (
 type PublicDashboardStoreImpl struct {
 	sqlStore db.DB
 	log      log.Logger
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -26,25 +32,54 @@ var LogPrefix = "publicdashboards.store"
 var _ publicdashboards.Store = (*PublicDashboardStoreImpl)(nil)
 
 // Factory used by wire to dependency injection
-func ProvideStore(sqlStore db.DB) *PublicDashboardStoreImpl {
+func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *PublicDashboardStoreImpl {
 	return &PublicDashboardStoreImpl{
 		sqlStore: sqlStore,
 		log:      log.New(LogPrefix),
+		cfg:      cfg,
+		features: features,
 	}
 }
 
-// FindAll Returns a list of public dashboards by orgId
-func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error) {
-	resp := make([]PublicDashboardListResponse, 0)
+// FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
+func (d *PublicDashboardStoreImpl) FindAllWithPagination(ctx context.Context, query *PublicDashboardListQuery) (*PublicDashboardListResponseWithPagination, error) {
+	resp := &PublicDashboardListResponseWithPagination{
+		PublicDashboards: make([]*PublicDashboardListResponse, 0),
+		TotalCount:       0,
+	}
 
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		sess.Table("dashboard_public").Select(
-			"dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title").
-			Join("LEFT", "dashboard", "dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id").
-			Where("dashboard_public.org_id = ?", orgId).
-			OrderBy(" is_enabled DESC, dashboard.title IS NULL, dashboard.title ASC")
+	recursiveQueriesAreSupported, err := d.sqlStore.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
 
-		err := sess.Find(&resp)
+	pubdashBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	pubdashBuilder.Write("SELECT dashboard_public.uid, dashboard_public.access_token, dashboard.uid as dashboard_uid, dashboard_public.is_enabled, dashboard.title")
+	pubdashBuilder.Write(" FROM dashboard_public")
+	pubdashBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
+	pubdashBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
+	if query.User.OrgRole != org.RoleAdmin {
+		pubdashBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
+	}
+	pubdashBuilder.Write(" ORDER BY dashboard.title")
+	pubdashBuilder.Write(d.sqlStore.GetDialect().LimitOffset(int64(query.Limit), int64(query.Offset)))
+
+	counterBuilder := db.NewSqlBuilder(d.cfg, d.features, d.sqlStore.GetDialect(), recursiveQueriesAreSupported)
+	counterBuilder.Write("SELECT COUNT(*)")
+	counterBuilder.Write(" FROM dashboard_public")
+	counterBuilder.Write(" JOIN dashboard ON dashboard.uid = dashboard_public.dashboard_uid AND dashboard.org_id = dashboard_public.org_id")
+	counterBuilder.Write(` WHERE dashboard_public.org_id = ?`, query.OrgID)
+	if query.User.OrgRole != org.RoleAdmin {
+		counterBuilder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard)
+	}
+
+	err = d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.SQL(pubdashBuilder.GetSQLString(), pubdashBuilder.GetParams()...).Find(&resp.PublicDashboards)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.SQL(counterBuilder.GetSQLString(), counterBuilder.GetParams()...).Get(&resp.TotalCount)
 		return err
 	})
 

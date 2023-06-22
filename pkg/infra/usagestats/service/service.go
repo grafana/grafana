@@ -45,10 +45,8 @@ func ProvideService(cfg *setting.Cfg,
 		accesscontrol: accesscontrol,
 	}
 
-	if !accesscontrol.IsDisabled() {
-		if err := declareFixedRoles(accesscontrolService); err != nil {
-			return nil, err
-		}
+	if err := declareFixedRoles(accesscontrolService); err != nil {
+		return nil, err
 	}
 
 	s.registerAPIEndpoints()

@@ -3,31 +3,39 @@ import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField } from '@grafana/experimental';
-import { reportInteraction } from '@grafana/runtime';
-import { InlineField, Switch, Input, Modal, MultiSelect, Spinner, useTheme2, Pagination, Button } from '@grafana/ui';
+import {
+  Input,
+  Modal,
+  MultiSelect,
+  Spinner,
+  useTheme2,
+  Pagination,
+  Button,
+  Toggletip,
+  ButtonGroup,
+  Icon,
+} from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
 import { PromVisualQuery } from '../../types';
 
+import { AdditionalSettings } from './AdditionalSettings';
 import { FeedbackLink } from './FeedbackLink';
-import { LetterSearch } from './LetterSearch';
 import { ResultsTable } from './ResultsTable';
 import {
   calculatePageList,
   calculateResultsPerPage,
   displayedMetrics,
-  filterMetrics,
   getBackendSearchMetrics,
   setMetrics,
   placeholders,
   promTypes,
+  tracking,
 } from './state/helpers';
 import {
   DEFAULT_RESULTS_PER_PAGE,
   initialState,
   MAXIMUM_RESULTS_PER_PAGE,
-  // MetricsModalReducer,
   MetricsModalMetadata,
   stateSlice,
 } from './state/state';
@@ -44,7 +52,7 @@ export type MetricsModalProps = {
   initialMetrics: string[];
 };
 
-// actions
+// actions to update the state
 const {
   setIsLoading,
   buildMetrics,
@@ -55,9 +63,8 @@ const {
   setNameHaystack,
   setMetaHaystack,
   setFullMetaSearch,
-  setExcludeNullMetadata,
+  setIncludeNullMetadata,
   setSelectedTypes,
-  setLetterSearch,
   setUseBackend,
   setSelectedIdx,
   setDisableTextWrap,
@@ -80,7 +87,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
     dispatch(setIsLoading(true));
 
     const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
-
     dispatch(
       buildMetrics({
         isLoading: false,
@@ -135,7 +141,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
     dispatch(setMetaHaystack(haystackData));
   }
 
-  function fuzzySearchCallback(query: string, fullMetaSearchVal: boolean) {
+  function searchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
       updateMetricsMetadata();
@@ -161,179 +167,128 @@ export const MetricsModal = (props: MetricsModalProps) => {
       const metric = displayedMetrics(state, dispatch)[state.selectedIdx];
 
       onChange({ ...query, metric: metric.value });
-      reportInteraction('grafana_prom_metric_encycopedia_tracking', {
-        metric: metric.value,
-        hasMetadata: state.hasMetadata,
-        totalMetricCount: state.totalMetricCount,
-        fuzzySearchQuery: state.fuzzySearchQuery,
-        fullMetaSearch: state.fullMetaSearch,
-        selectedTypes: state.selectedTypes,
-        letterSearch: state.letterSearch,
-      });
+
+      tracking('grafana_prom_metric_encycopedia_tracking', state, metric.value);
+
       onClose();
     }
   }
+
+  /* Settings switches */
+  const additionalSettings = (
+    <AdditionalSettings
+      state={state}
+      onChangeFullMetaSearch={() => {
+        const newVal = !state.fullMetaSearch;
+        dispatch(setFullMetaSearch(newVal));
+        onChange({ ...query, fullMetaSearch: newVal });
+
+        searchCallback(state.fuzzySearchQuery, newVal);
+      }}
+      onChangeIncludeNullMetadata={() => {
+        dispatch(setIncludeNullMetadata(!state.includeNullMetadata));
+        onChange({ ...query, includeNullMetadata: !state.includeNullMetadata });
+      }}
+      onChangeDisableTextWrap={() => {
+        dispatch(setDisableTextWrap());
+        onChange({ ...query, disableTextWrap: !state.disableTextWrap });
+        tracking('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', state, '');
+      }}
+      onChangeUseBackend={() => {
+        const newVal = !state.useBackend;
+        dispatch(setUseBackend(newVal));
+        onChange({ ...query, useBackend: newVal });
+        if (newVal === false) {
+          // rebuild the metrics metadata if we turn off useBackend
+          updateMetricsMetadata();
+        } else {
+          // check if there is text in the browse search and update
+          if (state.fuzzySearchQuery !== '') {
+            debouncedBackendSearch(state.fuzzySearchQuery);
+          }
+          // otherwise wait for user typing
+        }
+      }}
+    />
+  );
 
   return (
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Browse metrics"
+      title="Metrics explorer"
       onDismiss={onClose}
       aria-label="Browse metrics"
       className={styles.modal}
     >
+      <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.inputWrapper}>
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
-          <EditorField label="Search metrics">
-            <Input
-              autoFocus={true}
-              data-testid={testIds.searchMetric}
-              placeholder={placeholders.browse}
-              value={state.fuzzySearchQuery}
-              onInput={(e) => {
-                const value = e.currentTarget.value ?? '';
-                dispatch(setFuzzySearchQuery(value));
-
-                fuzzySearchCallback(value, state.fullMetaSearch);
-              }}
-              onKeyDown={(e) => {
-                keyFunction(e);
-              }}
-            />
-          </EditorField>
+          <Input
+            autoFocus={true}
+            data-testid={testIds.searchMetric}
+            placeholder={placeholders.browse}
+            value={state.fuzzySearchQuery}
+            onInput={(e) => {
+              const value = e.currentTarget.value ?? '';
+              dispatch(setFuzzySearchQuery(value));
+              searchCallback(value, state.fullMetaSearch);
+            }}
+            onKeyDown={(e) => {
+              keyFunction(e);
+            }}
+          />
         </div>
-        <div className={styles.inputItem}>
-          <EditorField label="Filter by type">
+        {state.hasMetadata && (
+          <div className={styles.inputItem}>
             <MultiSelect
               data-testid={testIds.selectType}
               inputId="my-select"
               options={typeOptions}
               value={state.selectedTypes}
-              disabled={!state.hasMetadata || state.useBackend}
               placeholder={placeholders.type}
-              onChange={(v) => {
-                // *** Filter by type
-                // *** always include metrics without metadata but label it as unknown type
-                // Consider tabs select instead of actual select or multi select
-                dispatch(setSelectedTypes(v));
-              }}
+              onChange={(v) => dispatch(setSelectedTypes(v))}
             />
-          </EditorField>
-        </div>
-      </div>
-      {/* <h4 className={styles.resultsHeading}>Results</h4> */}
-      <div className={styles.resultsData}>
-        <div className={styles.resultsDataCount}>
-          Showing {state.filteredMetricCount} of {state.totalMetricCount} results.{' '}
+          </div>
+        )}
+        <div>
           <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
-          <div className={styles.selectWrapper}>
-            <div className={styles.alphabetRow}>
-              <LetterSearch
-                filteredMetrics={filterMetrics(state, true)}
-                disableTextWrap={state.disableTextWrap}
-                updateLetterSearch={(letter: string) => {
-                  if (state.letterSearch === letter) {
-                    dispatch(setLetterSearch(''));
-                  } else {
-                    dispatch(setLetterSearch(letter));
-                  }
-                }}
-                letterSearch={state.letterSearch}
-              />
+        </div>
+        <div className={styles.inputItem}>
+          <Toggletip
+            aria-label="Additional settings"
+            content={additionalSettings}
+            placement="bottom-end"
+            closeButton={false}
+          >
+            <ButtonGroup className={styles.settingsBtn}>
               <Button
                 variant="secondary"
-                fill="text"
-                size="sm"
+                size="md"
                 onClick={() => dispatch(showAdditionalSettings())}
-                onKeyDown={(e) => {
-                  keyFunction(e);
-                }}
                 data-testid={testIds.showAdditionalSettings}
+                className={styles.noBorder}
               >
                 Additional Settings
               </Button>
-            </div>
-            {state.showAdditionalSettings && (
-              <>
-                <div className={styles.selectItem}>
-                  <Switch
-                    data-testid={testIds.searchWithMetadata}
-                    value={state.fullMetaSearch}
-                    disabled={state.useBackend || !state.hasMetadata}
-                    onChange={() => {
-                      const newVal = !state.fullMetaSearch;
-                      dispatch(setFullMetaSearch(newVal));
-                      onChange({ ...query, fullMetaSearch: newVal });
-
-                      fuzzySearchCallback(state.fuzzySearchQuery, newVal);
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.metadataSearchSwitch}</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    value={state.excludeNullMetadata}
-                    disabled={state.useBackend || !state.hasMetadata}
-                    onChange={() => {
-                      dispatch(setExcludeNullMetadata(!state.excludeNullMetadata));
-                      onChange({ ...query, excludeNullMetadata: !state.excludeNullMetadata });
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.excludeNoMetadata}</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    value={state.disableTextWrap}
-                    onChange={() => {
-                      dispatch(setDisableTextWrap());
-                      onChange({ ...query, disableTextWrap: !state.disableTextWrap });
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>Disable text wrap</p>
-                </div>
-                <div className={styles.selectItem}>
-                  <Switch
-                    data-testid={testIds.setUseBackend}
-                    value={state.useBackend}
-                    onChange={() => {
-                      const newVal = !state.useBackend;
-                      dispatch(setUseBackend(newVal));
-                      onChange({ ...query, useBackend: newVal });
-                      if (newVal === false) {
-                        // rebuild the metrics metadata if we turn off useBackend
-                        updateMetricsMetadata();
-                      } else {
-                        // check if there is text in the browse search and update
-                        if (state.fuzzySearchQuery !== '') {
-                          debouncedBackendSearch(state.fuzzySearchQuery);
-                        }
-                        // otherwise wait for user typing
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      keyFunction(e);
-                    }}
-                  />
-                  <p className={styles.selectItemLabel}>{placeholders.setUseBackend}</p>
-                </div>
-              </>
-            )}
-          </div>
+              <Button
+                className={styles.noBorder}
+                variant="secondary"
+                icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'}
+              />
+            </ButtonGroup>
+          </Toggletip>
         </div>
+      </div>
+      <div className={styles.resultsData}>
+        {query.metric && <i className={styles.currentlySelected}>Currently selected: {query.metric}</i>}
         {query.labels.length > 0 && (
-          <p className={styles.resultsDataFiltered}>
-            These metrics have been pre-filtered by labels chosen in the label filters.
-          </p>
+          <div className={styles.resultsDataFiltered}>
+            <Icon name="info-circle" size="sm" />
+            <div className={styles.resultsDataFilteredText}>
+              &nbsp;These metrics have been pre-filtered by labels chosen in the label filters.
+            </div>
+          </div>
         )}
       </div>
       <div className={styles.results}>
@@ -346,43 +301,42 @@ export const MetricsModal = (props: MetricsModalProps) => {
             state={state}
             selectedIdx={state.selectedIdx}
             disableTextWrap={state.disableTextWrap}
+            onFocusRow={(idx: number) => dispatch(setSelectedIdx(idx))}
           />
         )}
       </div>
+      <div className={styles.resultsFooter}>
+        <div className={styles.resultsAmount}>
+          Showing {state.filteredMetricCount} of {state.totalMetricCount} results
+        </div>
+        <Pagination
+          currentPage={state.pageNum ?? 1}
+          numberOfPages={calculatePageList(state).length}
+          onNavigate={(val: number) => {
+            const page = val ?? 1;
+            dispatch(setPageNum(page));
+          }}
+        />
+        <div className={styles.resultsPerPageWrapper}>
+          <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
+          <Input
+            data-testid={testIds.resultsPerPage}
+            value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
+            placeholder="results per page"
+            width={10}
+            title={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
+            type="number"
+            onInput={(e) => {
+              const value = +e.currentTarget.value;
 
-      <div className={styles.pageSettingsWrapper}>
-        <div className={styles.pageSettings}>
-          <InlineField
-            label="# results per page"
-            tooltip={'The maximum results per page is ' + MAXIMUM_RESULTS_PER_PAGE}
-            labelWidth={20}
-          >
-            <Input
-              data-testid={testIds.resultsPerPage}
-              value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
-              placeholder="results per page"
-              width={20}
-              onInput={(e) => {
-                const value = +e.currentTarget.value;
+              if (isNaN(value) || value >= MAXIMUM_RESULTS_PER_PAGE) {
+                return;
+              }
 
-                if (isNaN(value)) {
-                  return;
-                }
-
-                dispatch(setResultsPerPage(value));
-              }}
-            />
-          </InlineField>
-          <Pagination
-            currentPage={state.pageNum ?? 1}
-            numberOfPages={calculatePageList(state).length}
-            onNavigate={(val: number) => {
-              const page = val ?? 1;
-              dispatch(setPageNum(page));
+              dispatch(setResultsPerPage(value));
             }}
           />
         </div>
-        <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       </div>
     </Modal>
   );

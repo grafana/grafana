@@ -11,7 +11,7 @@ keywords:
   - alerting
   - alerts
   - notifications
-title: 'Alerting Notification Channels HTTP API '
+title: Legacy Alerting Notification Channels API
 ---
 
 # Legacy Alerting Notification Channels API
@@ -189,7 +189,7 @@ Content-Type: application/json
 
 ## Create notification channel
 
-You can find the full list of [supported notifiers](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/notifications/) on the alert notifiers page.
+You can find the full list of [supported notifiers](/docs/grafana/v8.5/alerting/old-alerting/notifications/) on the alert notifiers page.
 
 `POST /api/alert-notifications`
 

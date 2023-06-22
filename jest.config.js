@@ -29,6 +29,8 @@ module.exports = {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
+    // near-membrane-dom won't work in a nodejs environment.
+    '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

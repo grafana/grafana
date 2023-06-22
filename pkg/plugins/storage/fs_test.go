@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 func TestAdd(t *testing.T) {
@@ -24,7 +26,7 @@ func TestAdd(t *testing.T) {
 
 	pluginID := "test-app"
 
-	fs := FileSystem(&fakeLogger{}, testDir)
+	fs := FileSystem(log.NewTestPrettyLogger(), testDir)
 	archive, err := fs.Extract(context.Background(), pluginID, zipFile(t, "./testdata/plugin-with-symlinks.zip"))
 	require.NotNil(t, archive)
 	require.NoError(t, err)
@@ -51,7 +53,7 @@ func TestAdd(t *testing.T) {
 func TestExtractFiles(t *testing.T) {
 	pluginsDir := setupFakePluginsDir(t)
 
-	i := &FS{log: &fakeLogger{}, pluginsDir: pluginsDir}
+	i := &FS{log: log.NewTestPrettyLogger(), pluginsDir: pluginsDir}
 
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
 		skipWindows(t)
@@ -282,16 +284,3 @@ func skipWindows(t *testing.T) {
 		t.Skip("Skipping test on Windows")
 	}
 }
-
-type fakeLogger struct{}
-
-func (f *fakeLogger) Successf(_ string, _ ...interface{}) {}
-func (f *fakeLogger) Failuref(_ string, _ ...interface{}) {}
-func (f *fakeLogger) Info(_ ...interface{})               {}
-func (f *fakeLogger) Infof(_ string, _ ...interface{})    {}
-func (f *fakeLogger) Debug(_ ...interface{})              {}
-func (f *fakeLogger) Debugf(_ string, _ ...interface{})   {}
-func (f *fakeLogger) Warn(_ ...interface{})               {}
-func (f *fakeLogger) Warnf(_ string, _ ...interface{})    {}
-func (f *fakeLogger) Error(_ ...interface{})              {}
-func (f *fakeLogger) Errorf(_ string, _ ...interface{})   {}

@@ -5,10 +5,10 @@ import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { LogRowModel } from '@grafana/data';
 
-import { LogContextProvider } from '../LogContextProvider';
+import { LogContextProvider, SHOULD_INCLUDE_PIPELINE_OPERATIONS } from '../LogContextProvider';
 import { ContextFilter, LokiQuery } from '../types';
 
-import { LokiContextUi, LokiContextUiProps, LOKI_LOG_CONTEXT_PRESERVED_LABELS } from './LokiContextUi';
+import { IS_LOKI_LOG_CONTEXT_UI_OPEN, LokiContextUi, LokiContextUiProps } from './LokiContextUi';
 
 // we have to mock out reportInteraction, otherwise it crashes the test.
 jest.mock('@grafana/runtime', () => ({
@@ -19,19 +19,21 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('app/core/store', () => {
   return {
     set() {},
-    getBool() {
-      return true;
+    getBool(key: string, defaultValue?: boolean) {
+      const item = window.localStorage.getItem(key);
+      if (item === null) {
+        return defaultValue;
+      } else {
+        return item === 'true';
+      }
     },
     delete() {},
-    get() {
-      return window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
-    },
   };
 });
 
 const setupProps = (): LokiContextUiProps => {
   const defaults: LokiContextUiProps = {
-    logContextProvider: mockLogContextProvider as unknown as LogContextProvider,
+    logContextProvider: Object.assign({}, mockLogContextProvider) as unknown as LogContextProvider,
     updateFilter: jest.fn(),
     row: {
       entry: 'WARN test 1.23 on [xxx]',
@@ -45,26 +47,38 @@ const setupProps = (): LokiContextUiProps => {
       expr: '{label1="value1"} | logfmt',
       refId: 'A',
     },
+    runContextQuery: jest.fn(),
   };
 
   return defaults;
 };
 
 const mockLogContextProvider = {
-  getInitContextFiltersFromLabels: jest.fn().mockImplementation(() =>
+  getInitContextFilters: jest.fn().mockImplementation(() =>
     Promise.resolve([
       { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
       { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
     ])
   ),
   processContextFiltersToExpr: jest.fn().mockImplementation(
-    (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
       `{${contextFilters
         .filter((filter) => filter.enabled)
         .map((filter) => `${filter.label}="${filter.value}"`)
         .join('` ')}}`
   ),
+  processPipelineStagesToExpr: jest
+    .fn()
+    .mockImplementation((currentExpr: string, query: LokiQuery | undefined) => `${currentExpr} | newOperation`),
   getLogRowContext: jest.fn(),
+  queryContainsValidPipelineStages: jest.fn().mockReturnValue(true),
+  prepareExpression: jest.fn().mockImplementation(
+    (contextFilters: ContextFilter[], query: LokiQuery | undefined) =>
+      `{${contextFilters
+        .filter((filter) => filter.enabled)
+        .map((filter) => `${filter.label}="${filter.value}"`)
+        .join('` ')}}`
+  ),
 };
 
 describe('LokiContextUi', () => {
@@ -81,6 +95,11 @@ describe('LokiContextUi', () => {
   });
   afterAll(() => {
     global = savedGlobal;
+  });
+
+  beforeEach(() => {
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    window.localStorage.setItem(IS_LOKI_LOG_CONTEXT_UI_OPEN, 'true');
   });
 
   afterEach(() => {
@@ -105,7 +124,7 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
   });
 
@@ -113,7 +132,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[0], 'label1="value1"');
@@ -123,7 +142,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
     });
     const select = await screen.findAllByRole('combobox');
     await selectOptionInTest(select[1], 'label3="value3"');
@@ -134,7 +153,7 @@ describe('LokiContextUi', () => {
     const props = setupProps();
     render(<LokiContextUi {...props} />);
     await waitFor(() => {
-      expect(props.logContextProvider.getInitContextFiltersFromLabels).toHaveBeenCalled();
+      expect(props.logContextProvider.getInitContextFilters).toHaveBeenCalled();
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
     });
     await selectOptionInTest(screen.getAllByRole('combobox')[1], 'label3="value3"');
@@ -200,6 +219,72 @@ describe('LokiContextUi', () => {
     });
   });
 
+  it('renders pipeline operations switch as enabled when saved in localstorage', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(true);
+    });
+  });
+
+  it('renders pipeline operations switch as disabled when saved in localstorage', async () => {
+    const props = setupProps();
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'false');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect((screen.getByRole('checkbox') as HTMLInputElement).checked).toBe(false);
+    });
+  });
+
+  it('renders pipeline operations switch if query contains valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(true);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.getByRole('checkbox')).toBeInTheDocument();
+    });
+  });
+
+  it('does not render pipeline operations switch if query does not contain valid pipeline stages', async () => {
+    const props = setupProps();
+    (props.logContextProvider.queryContainsValidPipelineStages as jest.Mock).mockReturnValue(false);
+    const newProps = {
+      ...props,
+      origQuery: {
+        expr: '{label1="value1"} | logfmt',
+        refId: 'A',
+      },
+    };
+    window.localStorage.setItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS, 'true');
+    render(<LokiContextUi {...newProps} />);
+    await waitFor(() => {
+      expect(screen.queryByRole('checkbox')).toBeNull();
+    });
+  });
+
   it('does not show parsed labels section if origQuery has 2 parsers', async () => {
     const props = setupProps();
     const newProps = {
@@ -241,76 +326,6 @@ describe('LokiContextUi', () => {
     await userEvent.click(revertButton);
     await waitFor(() => {
       expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('preserve labels', () => {
-    it('should use init contextFilters if all real labels are disabled', async () => {
-      window.localStorage.setItem(
-        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-        JSON.stringify({
-          removedLabels: ['label1'],
-          selectedExtractedLabels: ['label3'],
-        })
-      );
-      const props = setupProps();
-      const newProps = {
-        ...props,
-        origQuery: {
-          expr: '{label1="value1"} | logfmt',
-          refId: 'A',
-        },
-      };
-      render(<LokiContextUi {...newProps} />);
-      await waitFor(() => {
-        expect(screen.queryByText('label3="value3"')).not.toBeInTheDocument();
-        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
-      });
-    });
-
-    it('should use preserved contextFilters if all at least 1 real labels is enabled', async () => {
-      window.localStorage.setItem(
-        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-        JSON.stringify({
-          removedLabels: ['foo'],
-          selectedExtractedLabels: ['label3'],
-        })
-      );
-      const props = setupProps();
-      const newProps = {
-        ...props,
-        origQuery: {
-          expr: '{label1="value1"} | logfmt',
-          refId: 'A',
-        },
-      };
-      render(<LokiContextUi {...newProps} />);
-      await waitFor(() => {
-        expect(screen.getByText('label3="value3"')).toBeInTheDocument();
-        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
-      });
-    });
-
-    it('should not introduce new labels in ui', async () => {
-      window.localStorage.setItem(
-        LOKI_LOG_CONTEXT_PRESERVED_LABELS,
-        JSON.stringify({
-          removedLabels: ['foo'],
-          selectedExtractedLabels: ['bar', 'baz'],
-        })
-      );
-      const props = setupProps();
-      const newProps = {
-        ...props,
-        origQuery: {
-          expr: '{label1="value1"} | logfmt',
-          refId: 'A',
-        },
-      };
-      render(<LokiContextUi {...newProps} />);
-      await waitFor(() => {
-        expect(screen.getByText('label1="value1"')).toBeInTheDocument();
-      });
     });
   });
 });

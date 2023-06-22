@@ -1,9 +1,13 @@
+import { useCallback, useRef } from 'react';
 import { createSelector } from 'reselect';
 
 import { DashboardViewItem } from 'app/features/search/types';
-import { useSelector, StoreState } from 'app/types';
+import { useSelector, StoreState, useDispatch } from 'app/types';
 
-import { DashboardsTreeItem, DashboardTreeSelection } from '../types';
+import { ROOT_PAGE_SIZE } from '../api/services';
+import { BrowseDashboardsState, DashboardsTreeItem, DashboardTreeSelection } from '../types';
+
+import { fetchNextChildrenPage } from './actions';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
@@ -16,7 +20,7 @@ const flatTreeSelector = createSelector(
   openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
   (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems ?? [], childrenByParentUID, openFolders);
+    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
   }
 );
 
@@ -45,9 +49,9 @@ const selectedItemsForActionsSelector = createSelector(
       const isSelected = selectedItems.folder[folderUID];
       if (isSelected) {
         // Unselect any children in the output
-        const children = childrenByParentUID[folderUID];
-        if (children) {
-          for (const child of children) {
+        const collection = childrenByParentUID[folderUID];
+        if (collection) {
+          for (const child of collection.items) {
             if (child.kind === 'dashboard') {
               result.dashboard[child.uid] = false;
             }
@@ -93,6 +97,26 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
+export function useLoadNextChildrenPage(folderUID: string | undefined) {
+  const dispatch = useDispatch();
+  const requestInFlightRef = useRef(false);
+
+  const handleLoadMore = useCallback(() => {
+    if (requestInFlightRef.current) {
+      return Promise.resolve();
+    }
+
+    requestInFlightRef.current = true;
+
+    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+    promise.finally(() => (requestInFlightRef.current = false));
+
+    return promise;
+  }, [dispatch, folderUID]);
+
+  return handleLoadMore;
+}
+
 /**
  * Creates a list of items, with level indicating it's 'nested' in the tree structure
  *
@@ -104,21 +128,21 @@ export function useActionSelectionState() {
  */
 function createFlatTree(
   folderUID: string | undefined,
-  rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  rootCollection: BrowseDashboardsState['rootItems'],
+  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
   level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    const mappedChildren = createFlatTree(item.uid, rootItems, childrenByUID, openFolders, level + 1);
+    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.length === 0;
+    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
     if (isOpen && emptyFolder) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
-        item: { kind: 'ui-empty-folder', uid: item.uid + '-empty-folder' },
+        item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
       });
     }
 
@@ -134,9 +158,32 @@ function createFlatTree(
 
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
 
-  const items = folderUID
-    ? (isOpen && childrenByUID[folderUID]) || [] // keep seperate lines
-    : rootItems;
+  const collection = folderUID ? childrenByUID[folderUID] : rootCollection;
 
-  return items.flatMap((item) => mapItem(item, folderUID, level));
+  const items = folderUID
+    ? isOpen && collection?.items // keep seperate lines
+    : collection?.items;
+
+  let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
+
+  if (level === 0 && (!collection || !collection.isFullyLoaded)) {
+    children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
+  }
+
+  return children;
+}
+
+function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
+  return new Array(amount).fill(null).map((_, index) => {
+    return {
+      parentUID,
+      level,
+      isOpen: false,
+      item: {
+        kind: 'ui' as const,
+        uiKind: 'pagination-placeholder' as const,
+        uid: `${parentUID}-pagination-${index}`,
+      },
+    };
+  });
 }

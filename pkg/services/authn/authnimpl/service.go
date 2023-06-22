@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -64,7 +64,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
-	signingKeysService signingkeys.Service,
+	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -131,7 +131,7 @@ func ProvideService(
 	}
 
 	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
-		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService))
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
@@ -142,7 +142,7 @@ func ProvideService(
 			connector, errConnector := socialService.GetConnector(name)
 			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
 			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
 			} else {
 				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 			}
@@ -200,7 +200,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 					return nil, err
 				}
 
-				authErr = multierror.Append(authErr, err)
+				authErr = errors.Join(authErr, err)
 				// try next
 				continue
 			}
