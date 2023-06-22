@@ -1,3 +1,16 @@
+<!-- 9.5.5 START -->
+
+# 9.5.5 (2023-06-22)
+
+### Bug fixes
+
+- **Auth:** Show invite button if disable login form is set to false. [#70154](https://github.com/grafana/grafana/issues/70154), [@grafanabot](https://github.com/grafanabot)
+- **Azure:** Fix Kusto auto-completion for Azure datasources (#69685). [#69694](https://github.com/grafana/grafana/issues/69694), [@aangelisc](https://github.com/aangelisc)
+- **RBAC:** Remove legacy AC editor and admin role on new dashboard route. [#68776](https://github.com/grafana/grafana/issues/68776), [@grafanabot](https://github.com/grafanabot)
+- **Revert:** Allow editors to access GET /datasources. [#68654](https://github.com/grafana/grafana/issues/68654), [@grafanabot](https://github.com/grafanabot)
+- **Settings:** Add ability to override `skip_org_role_sync` with Env variables. [#68375](https://github.com/grafana/grafana/issues/68375), [@grafanabot](https://github.com/grafanabot)
+
+<!-- 9.5.5 END -->
 <!-- 9.5.3 START -->
 
 # 9.5.3 (2023-06-06)
