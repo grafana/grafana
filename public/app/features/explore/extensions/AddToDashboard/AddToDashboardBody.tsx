@@ -7,7 +7,7 @@ import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { ExploreId, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
 
@@ -56,7 +56,7 @@ interface SubmissionError {
 
 interface Props {
   onClose: () => void;
-  exploreId: ExploreId;
+  exploreId: string;
   saveTargets: Array<SelectableValue<SaveTarget>>;
 }
 

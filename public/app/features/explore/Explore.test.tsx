@@ -7,7 +7,6 @@ import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv, PluginE
 import { selectors } from '@grafana/e2e-selectors';
 import { getPluginLinkExtensions } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
-import { ExploreId } from 'app/types';
 
 import { Explore, Props } from './Explore';
 import { initialExploreState } from './state/main';
@@ -62,7 +61,7 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),

@@ -9,7 +9,6 @@ import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButto
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
-import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
@@ -22,8 +21,8 @@ import { LiveTailButton } from './LiveTailButton';
 import { ToolbarExtensionPoint } from './extensions/ToolbarExtensionPoint';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
-import { cancelQueries, runQueries } from './state/query';
-import { isSplit } from './state/selectors';
+import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
+import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -34,7 +33,7 @@ const rotateIcon = css({
 });
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
@@ -45,30 +44,25 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const splitted = useSelector(isSplit);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
-  const { refreshInterval, loading, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
+  const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
     (state: StoreState) => ({
-      ...pick(
-        state.explore.panes[exploreId]!,
-        'refreshInterval',
-        'loading',
-        'datasourceInstance',
-        'range',
-        'isLive',
-        'isPaused'
-      ),
+      ...pick(state.explore.panes[exploreId]!, 'refreshInterval', 'datasourceInstance', 'range', 'isLive', 'isPaused'),
       syncedTimes: state.explore.syncedTimes,
     }),
     shallowEqual
   );
+  const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
+  const panes = useSelector(selectPanesEntries);
+
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === 'left' && isLargerPane) || (exploreId === 'right' && !isLargerPane),
-    [isLargerPane, exploreId]
+    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
+    [isLargerPane, exploreId, panes]
   );
 
   const onCopyShortLink = () => {

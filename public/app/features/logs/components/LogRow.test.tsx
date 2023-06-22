@@ -9,6 +9,13 @@ import { LogRow } from './LogRow';
 import { createLogRow } from './__mocks__/logRow';
 import { getLogRowStyles } from './getLogRowStyles';
 
+const reportInteraction = jest.fn();
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: (interactionName: string, properties?: Record<string, unknown> | undefined) =>
+    reportInteraction(interactionName, properties),
+}));
+
 const theme = createTheme();
 const styles = getLogRowStyles(theme);
 const setup = (propOverrides?: Partial<ComponentProps<typeof LogRow>>, rowOverrides?: Partial<LogRowModel>) => {
@@ -52,6 +59,15 @@ describe('LogRow', () => {
   });
 
   describe('with permalinking', () => {
+    it('reports via feature tracking when log line matches', () => {
+      const scrollIntoView = jest.fn();
+      setup({ permalinkedRowId: 'log-row-id', scrollIntoView });
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_explore_logs_permalink_opened', {
+        logRowUid: 'log-row-id',
+        datasourceType: 'unknown',
+      });
+    });
+
     it('highlights row with same permalink-id', () => {
       const { container } = setup({ permalinkedRowId: 'log-row-id' });
       const row = container.querySelector('tr');
