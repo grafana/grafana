@@ -73,11 +73,11 @@ type CorrelationConfig struct {
 	Type CorrelationConfigType `json:"type" binding:"Required"`
 	// Target data query
 	// required:true
-	// example: { "expr": "job=app" }
+	// example: {"prop1":"value1","prop2":"value"}
 	Target map[string]interface{} `json:"target" binding:"Required"`
 	// Source data transformations
 	// required:false
-	// example: [{"type": "logfmt"}]
+	// example: [{"type":"logfmt"}]
 	Transformations Transformations `json:"transformations,omitempty"`
 }
 
@@ -107,10 +107,10 @@ type Correlation struct {
 	// example: 50xhMlg9k
 	UID string `json:"uid" xorm:"pk 'uid'"`
 	// UID of the data source the correlation originates from
-	// example:d0oxYRg4z
+	// example: d0oxYRg4z
 	SourceUID string `json:"sourceUID" xorm:"pk 'source_uid'"`
 	// UID of the data source the correlation points to
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID" xorm:"target_uid"`
 	// Label identifying the correlation
 	// example: My Label
@@ -145,7 +145,7 @@ type CreateCorrelationCommand struct {
 	OrgId             int64  `json:"-"`
 	SkipReadOnlyCheck bool   `json:"-"`
 	// Target data source UID to which the correlation is created. required if config.type = query
-	// example:PE1C5CBDA0504A6A3
+	// example: PE1C5CBDA0504A6A3
 	TargetUID *string `json:"targetUID"`
 	// Optional label identifying the correlation
 	// example: My label
@@ -200,7 +200,7 @@ type CorrelationConfigUpdateDTO struct {
 	// Target type
 	Type *CorrelationConfigType `json:"type"`
 	// Target data query
-	// example: { "expr": "job=app" }
+	// example: {"prop1":"value1","prop2":"value"}
 	Target *map[string]interface{} `json:"target"`
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]

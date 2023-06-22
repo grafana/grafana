@@ -76,7 +76,7 @@ type CreateCorrelationParams struct {
 	SourceUID string `json:"sourceUID"`
 }
 
-//swagger:response createCorrelationResponse
+// swagger:response createCorrelationResponse
 type CreateCorrelationResponse struct {
 	// in: body
 	Body CreateCorrelationResponseBody `json:"body"`
@@ -192,7 +192,7 @@ type UpdateCorrelationParams struct {
 	Body UpdateCorrelationCommand `json:"body"`
 }
 
-//swagger:response updateCorrelationResponse
+// swagger:response updateCorrelationResponse
 type UpdateCorrelationResponse struct {
 	// in: body
 	Body UpdateCorrelationResponseBody `json:"body"`
@@ -282,7 +282,7 @@ type GetCorrelationsBySourceUIDParams struct {
 	DatasourceUID string `json:"sourceUID"`
 }
 
-//swagger:response getCorrelationsBySourceUIDResponse
+// swagger:response getCorrelationsBySourceUIDResponse
 type GetCorrelationsBySourceUIDResponse struct {
 	// in: body
 	Body []Correlation `json:"body"`
