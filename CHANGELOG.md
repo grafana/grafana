@@ -1,3 +1,53 @@
+<!-- 10.0.1 START -->
+
+# 10.0.1 (2023-06-22)
+
+### Features and enhancements
+
+- **Schema:** Improve Dashboard kind docs and remove deprecated props. [#69652](https://github.com/grafana/grafana/issues/69652), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Alerting:** Update alerting module to to  20230524181453-a8e75e4dfdda. [#69011](https://github.com/grafana/grafana/issues/69011), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Caching:** Update labels for cache insertions counter. (Enterprise)
+
+### Bug fixes
+
+- **Command palette:** Include help links. [#70322](https://github.com/grafana/grafana/issues/70322), [@grafanabot](https://github.com/grafanabot)
+- **Tempo:** Use pipe in TraceQL by default for multi-value variables. [#70321](https://github.com/grafana/grafana/issues/70321), [@grafanabot](https://github.com/grafanabot)
+- **XYChart/Trend:** Fix min/max and units/decimals X field overrides. [#70261](https://github.com/grafana/grafana/issues/70261), [@grafanabot](https://github.com/grafanabot)
+- **Explore:** Improve logs volume panel empty state. [#70255](https://github.com/grafana/grafana/issues/70255), [@grafanabot](https://github.com/grafanabot)
+- **Plugins:** Wrap original check health error. [#70227](https://github.com/grafana/grafana/issues/70227), [@grafanabot](https://github.com/grafanabot)
+- **XYChart:** Fix variable interpolation in datalinks/toggletip. [#70210](https://github.com/grafana/grafana/issues/70210), [@grafanabot](https://github.com/grafanabot)
+- **XYChart:** Fix formatting of axis ticks (units, decimals). [#70193](https://github.com/grafana/grafana/issues/70193), [@grafanabot](https://github.com/grafanabot)
+- **Auth:** Show invite button if disable login form is set to false. [#70155](https://github.com/grafana/grafana/issues/70155), [@grafanabot](https://github.com/grafanabot)
+- **TextPanel:** Fix <summary> styling missing the disclosure triangle. [#70138](https://github.com/grafana/grafana/issues/70138), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Fix email template for text/plain emails. [#70111](https://github.com/grafana/grafana/issues/70111), [@grafanabot](https://github.com/grafanabot)
+- **Explore:** Fixed Starred query history tab to show all starred queries. [#70092](https://github.com/grafana/grafana/issues/70092), [@grafanabot](https://github.com/grafanabot)
+- **CodeEditor:** Ensure suggestions only apply to the instance of the edit…. [#70067](https://github.com/grafana/grafana/issues/70067), [@ashharrison90](https://github.com/ashharrison90)
+- **Command Palette:** Links opened in a new tab now route correctly when Grafana is served under a subpath. [#69925](https://github.com/grafana/grafana/issues/69925), [@grafanabot](https://github.com/grafanabot)
+- **Heatmap:** Sort fields by numeric names when single frame. [#69880](https://github.com/grafana/grafana/issues/69880), [@grafanabot](https://github.com/grafanabot)
+- **CloudMonitoring:** Improve parsing of GCM labels. [#69812](https://github.com/grafana/grafana/issues/69812), [@grafanabot](https://github.com/grafanabot)
+- **NestedFolders:** Fix select all in folder view selecting items out of folder. [#69783](https://github.com/grafana/grafana/issues/69783), [@joshhunt](https://github.com/joshhunt)
+- **Alerting:** Fix notification policies inheritance algorithm (#69304). [#69782](https://github.com/grafana/grafana/issues/69782), [@gillesdemey](https://github.com/gillesdemey)
+- **Templating:** Fix updating of definition to empty string. [#69767](https://github.com/grafana/grafana/issues/69767), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Support newer http_config struct. [#69719](https://github.com/grafana/grafana/issues/69719), [@grafanabot](https://github.com/grafanabot)
+- **Loki:** Fix including of template variables in variable query editor. [#69709](https://github.com/grafana/grafana/issues/69709), [@grafanabot](https://github.com/grafanabot)
+- **Azure:** Fix Kusto auto-completion for Azure datasources (#69685). [#69695](https://github.com/grafana/grafana/issues/69695), [@aangelisc](https://github.com/aangelisc)
+- **Alerting:** Fix broken UI because of query being optional for some ExpressionQuer…. [#69683](https://github.com/grafana/grafana/issues/69683), [@grafanabot](https://github.com/grafanabot)
+- **Explore:** Run remaining queries when one is removed from a pane. [#69670](https://github.com/grafana/grafana/issues/69670), [@grafanabot](https://github.com/grafanabot)
+- **Dashboards:** Variables - Improve slow template variable loading due same variable loaded multiple times on time range change. [#69641](https://github.com/grafana/grafana/issues/69641), [@grafanabot](https://github.com/grafanabot)
+- **Loki:** Fix error when empty template variables response. [#69559](https://github.com/grafana/grafana/issues/69559), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Add heuristics back to datasource healthchecks. [#69541](https://github.com/grafana/grafana/issues/69541), [@grafanabot](https://github.com/grafanabot)
+- **Util:** Fix panic when generating UIDs concurrently. [#69538](https://github.com/grafana/grafana/issues/69538), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Fix provisioned templates being ignored by alertmanager. [#69488](https://github.com/grafana/grafana/issues/69488), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Log Context:** Fix split view button using the wrong query. [#69416](https://github.com/grafana/grafana/issues/69416), [@grafanabot](https://github.com/grafanabot)
+- **Pyroscope:** Fix wrong defaults when importing query from different datasource. [#69366](https://github.com/grafana/grafana/issues/69366), [@grafanabot](https://github.com/grafanabot)
+- **InfluxDB:** Interpolate retention policies. [#69300](https://github.com/grafana/grafana/issues/69300), [@grafanabot](https://github.com/grafanabot)
+- **SQLStore:** Align SQLite IsUniqueConstraintViolation() with other backend implementations. [#69227](https://github.com/grafana/grafana/issues/69227), [@grafanabot](https://github.com/grafanabot)
+- **Dashboards:** Remove Explore option from panel menu when panel's datasource uid is "-- Dashboard --". [#69173](https://github.com/grafana/grafana/issues/69173), [@grafanabot](https://github.com/grafanabot)
+- **Alerting:** Fix "show all instances". [#67837](https://github.com/grafana/grafana/issues/67837), [@grafanabot](https://github.com/grafanabot)
+- **Usage Insights:** Fix last viewed date. (Enterprise)
+- **Caching:** Fix issue in which caching can cause HTTP resource response bodies to be written twice. (Enterprise)
+
+<!-- 10.0.1 END -->
 <!-- 10.0.0 START -->
 
 # 10.0.0 (2023-06-12)
