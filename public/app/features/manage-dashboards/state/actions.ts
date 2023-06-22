@@ -409,12 +409,3 @@ function executeInOrder(tasks: any[]): Promise<unknown> {
     return Promise.resolve(acc).then(task);
   }, []);
 }
-
-// function getDataSourceRefNameFromPlaceholder(datasourceUid?: string): string {
-//   const regex = /\$\{([^}]+)\}/;
-//   const match = datasourceUid?.match(regex);
-//   if (match && match.length >= 2) {
-//     return match[1];
-//   }
-//   return '';
-// }
