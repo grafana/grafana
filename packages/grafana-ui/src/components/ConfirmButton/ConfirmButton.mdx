@@ -29,4 +29,28 @@ Apart from the button variant, you can also modify the button size and the butto
 </ConfirmButton>
 ```
 
+## With a custom button
+
+You can pass a function as a child to the `ConfirmButton` to render a custom button. The function will receive the `buttonProps` that you can spread on your button component.
+
+```jsx
+<ConfirmButton
+  className="myClass" // this will be applied to the child button via the buttonProps
+  closeOnConfirm
+  size="md"
+  confirmText="Are you sure?"
+  confirmVariant="secondary"
+  onConfirm={() => {
+    console.log('Action confirmed!');
+  }}
+>
+  {(buttonProps) => (
+    <Button variant="secondary" {...buttonProps}>
+      Click me
+    </Button>
+  )}
+  )}
+</ConfirmButton>
+```
+
 <ArgTypes of={ConfirmButton} />
