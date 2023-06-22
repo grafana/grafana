@@ -979,7 +979,7 @@ describe('ElasticDatasource', () => {
       });
     });
 
-    it('does not return logs samples for non date_histogram queries', () => {
+    it('does not return logs samples for non time series queries', () => {
       expect(
         ds.getSupplementaryQuery(
           { type: SupplementaryQueryType.LogsSample, limit: 100 },
