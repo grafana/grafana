@@ -237,10 +237,10 @@ export function useStateSync(params: ExploreQueryParams) {
         // we need to use partial here beacuse replace doesn't encode the query params.
         location.partial(
           {
-            // partial doesn't remove other parameters, so we delete all the current one before adding the new ones.
-            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc_1, key) => {
-              acc_1[key] = undefined;
-              return acc_1;
+            // partial doesn't remove other parameters, so we delete (by setting them to undefined) all the current one before adding the new ones.
+            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
+              acc[key] = undefined;
+              return acc;
             }, {}),
             panes: JSON.stringify(newParams.panes),
             schemaVersion: urlState.schemaVersion,
