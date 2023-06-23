@@ -21,17 +21,15 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-var (
-	logger = log.New("social")
 )
 
 type SocialService struct {
@@ -74,6 +72,7 @@ func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
+	cache remotecache.CacheStorage,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
@@ -188,10 +187,12 @@ func ProvideService(cfg *setting.Cfg,
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
-				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
-				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				cache:                cache,
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
