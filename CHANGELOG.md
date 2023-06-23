@@ -4,11 +4,12 @@
 
 ### Bug fixes
 
-- **Auth:** Show invite button if disable login form is set to false. [#70154](https://github.com/grafana/grafana/issues/70154), [@grafanabot](https://github.com/grafanabot)
+- **Auth:** Fixed CVE-2023-3128. [#70580](https://github.com/grafana/grafana/issues/70580), [@zerok](https://github.com/zerok)
+- **Auth:** Show invite button if disable login form is set to false. [#70154](https://github.com/grafana/grafana/issues/70154), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Azure:** Fix Kusto auto-completion for Azure datasources (#69685). [#69694](https://github.com/grafana/grafana/issues/69694), [@aangelisc](https://github.com/aangelisc)
-- **RBAC:** Remove legacy AC editor and admin role on new dashboard route. [#68776](https://github.com/grafana/grafana/issues/68776), [@grafanabot](https://github.com/grafanabot)
-- **Revert:** Allow editors to access GET /datasources. [#68654](https://github.com/grafana/grafana/issues/68654), [@grafanabot](https://github.com/grafanabot)
-- **Settings:** Add ability to override `skip_org_role_sync` with Env variables. [#68375](https://github.com/grafana/grafana/issues/68375), [@grafanabot](https://github.com/grafanabot)
+- **RBAC:** Remove legacy AC editor and admin role on new dashboard route. [#68776](https://github.com/grafana/grafana/issues/68776), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Revert:** Allow editors to access GET /datasources. [#68654](https://github.com/grafana/grafana/issues/68654), [@eleijonmarck](https://github.com/eleijonmarck)
+- **Settings:** Add ability to override `skip_org_role_sync` with Env variables. [#68375](https://github.com/grafana/grafana/issues/68375), [@eleijonmarck](https://github.com/eleijonmarck)
 
 <!-- 9.5.5 END -->
 <!-- 9.5.3 START -->
