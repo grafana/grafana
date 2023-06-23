@@ -11,8 +11,5 @@ export function assertNever(x: never): never {
 }
 
 export function isReactClassComponent(obj: unknown): obj is React.Component {
-  if (obj instanceof React.Component) {
-    return true;
-  }
-  return false;
+  return obj instanceof React.Component;
 }
