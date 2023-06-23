@@ -41,7 +41,7 @@ export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOp
         hideFromDefaults: true,
       },
 
-      // TODO: this still leaves by Color series by: [ Last | Min | Max ]
+      // TODO: this still leaves Color series by: [ Last | Min | Max ]
       // because item.settings?.bySeriesSupport && colorMode.isByValue
       [FieldConfigProperty.Color]: {
         settings: {
