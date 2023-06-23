@@ -52,7 +52,7 @@ describe('NewTracePageHeader test', () => {
     const method = getByText(header!, 'POST');
     const status = getByText(header!, '200');
     const url = getByText(header!, '/v2/gamma/792edh2w897y2huehd2h89');
-    const duration = getByText(header!, '2.36s');
+    const duration = getByText(header!, 'Duration: 2.36s');
     const timestampPart1 = getByText(header!, '2023-02-05 08:50');
     const timestampPart2 = getByText(header!, ':56.289');
     expect(method).toBeInTheDocument();
