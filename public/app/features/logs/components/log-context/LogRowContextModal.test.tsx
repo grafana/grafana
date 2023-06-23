@@ -218,7 +218,6 @@ describe('LogRowContextModal', () => {
       <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
     );
 
-    // await waitFor(() => {expect(getRowContext).toHaveBeenCalled();});
     await waitFor(() => {
       expect(
         screen.queryByRole('button', {
