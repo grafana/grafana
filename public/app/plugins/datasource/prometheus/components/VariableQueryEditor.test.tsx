@@ -166,7 +166,6 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names(that)',
-      labelFilters: [],
       refId,
     });
   });
@@ -185,7 +184,6 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names()',
-      labelFilters: [],
       refId,
     });
   });
@@ -224,7 +222,6 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({
         query: 'metrics(a)',
-        labelFilters: [],
         refId,
       })
     );
@@ -248,7 +245,6 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({
         query: 'label_values(this)',
-        labelFilters: [],
         refId,
       })
     );
@@ -276,7 +272,6 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() =>
       expect(onChange).toHaveBeenCalledWith({
         query: 'label_values(that,this)',
-        labelFilters: [],
         refId,
       })
     );
@@ -299,7 +294,6 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'query_result(a)',
-      labelFilters: [],
       refId,
     });
   });
@@ -321,7 +315,6 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: '{a: "example"}',
-      labelFilters: [],
       refId,
     });
   });
