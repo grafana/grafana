@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { DataSourceInstanceSettings, DataSourcePluginMeta, PluginMetaInfo, PluginType } from '@grafana/data';
-import { config, GetDataSourceListFilters } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { DataSourceModal } from './DataSourceModal';
 
@@ -61,15 +61,17 @@ jest.mock('@grafana/runtime', () => {
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
   return {
     getDataSourceSrv: () => ({
-      getList: (filters: GetDataSourceListFilters) => {
-        if (filters.filter) {
-          return mockDSList.filter(filters.filter);
-        }
-        return mockDSList;
-      },
-      getInstanceSettings: () => mockDS1,
+      getList: getListMock,
+      getInstanceSettings: getInstanceSettingsMock,
     }),
   };
+});
+
+const getListMock = jest.fn();
+const getInstanceSettingsMock = jest.fn();
+beforeEach(() => {
+  getListMock.mockReturnValue(mockDSList);
+  getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
 
 describe('DataSourceDropdown', () => {
@@ -108,6 +110,39 @@ describe('DataSourceDropdown', () => {
 
       expect(queryByText(dsList, mockDSBuiltIn.name)).toBeNull();
       expect(await findByText(builtInDSList, mockDSBuiltIn.name, { selector: 'span' })).toBeInTheDocument();
+    });
+
+    it('should fetch the DS applying the correct filters consistently across lists', async () => {
+      const filters = {
+        mixed: true,
+        tracing: true,
+        dashboard: true,
+        metrics: true,
+        type: 'foo',
+        annotations: true,
+        variables: true,
+        alerting: true,
+        pluginId: 'pluginid',
+        logs: true,
+      };
+
+      const props = {
+        onChange: () => {},
+        onDismiss: () => {},
+        current: mockDS1.name,
+        ...filters,
+      };
+
+      getListMock.mockClear();
+      render(<DataSourceModal {...props}></DataSourceModal>);
+
+      // Every call to the service must contain same filters
+      expect(getListMock).toHaveBeenCalled();
+      getListMock.mock.calls.forEach((call) =>
+        expect(call[0]).toMatchObject({
+          ...filters,
+        })
+      );
     });
   });
 
