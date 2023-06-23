@@ -143,13 +143,20 @@ const FlameGraph = ({
         );
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          tooltipRef.current.style.top = e.clientY + 'px';
-          if (document.documentElement.clientWidth - e.clientX < 400) {
-            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-            tooltipRef.current.style.left = 'auto';
+          if (e.clientY < document.documentElement.clientHeight / 2) {
+            tooltipRef.current.style.top = e.clientY + 'px';
+            tooltipRef.current.style.bottom = 'auto';
           } else {
+            tooltipRef.current.style.bottom = document.documentElement.clientHeight - e.clientY + 'px';
+            tooltipRef.current.style.top = 'auto';
+          }
+
+          if (e.clientX < document.documentElement.clientWidth / 2) {
             tooltipRef.current.style.left = e.clientX + 15 + 'px';
             tooltipRef.current.style.right = 'auto';
+          } else {
+            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
+            tooltipRef.current.style.left = 'auto';
           }
 
           setTooltipItem(levels[levelIndex][barIndex]);
