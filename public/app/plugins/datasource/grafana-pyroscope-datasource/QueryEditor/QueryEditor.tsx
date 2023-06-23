@@ -23,7 +23,6 @@ export function QueryEditor(props: Props) {
     onRunQuery();
   }
 
-  console.log('outside', { query });
   const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(datasource, query, onChange);
   const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
   useNormalizeQuery(query, profileTypes, onChange, app);
