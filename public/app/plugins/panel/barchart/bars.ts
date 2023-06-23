@@ -61,6 +61,7 @@ export interface BarsOptions {
   xTimeAuto?: boolean;
   negY?: boolean[];
   fullHighlight?: boolean;
+  ignore?: number[];
 }
 
 /**
@@ -526,11 +527,13 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       s._paths = null;
     });
 
+    const ignore = opts.ignore ?? [];
+
     if (isStacked) {
       //barsPctLayout = [null as any].concat(distrOne(u.data.length - 1, u.data[0].length));
-      barsPctLayout = [null as any].concat(distrOne(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null as any].concat(distrOne(u.data[0].length, u.data.length - 1 - ignore.length));
     } else {
-      barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1));
+      barsPctLayout = [null as any].concat(distrTwo(u.data[0].length, u.data.length - 1 - ignore.length));
     }
 
     if (useMappedColors) {
