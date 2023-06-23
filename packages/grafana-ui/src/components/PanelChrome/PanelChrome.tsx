@@ -324,15 +324,6 @@ const getStyles = (theme: GrafanaTheme2, height?: number) => {
       fontSize: theme.typography.h6.fontSize,
       fontWeight: theme.typography.h6.fontWeight,
     }),
-    titleWithLinks: css({
-      label: 'panel-title-with-links',
-      margin: theme.spacing(1, 0, 0),
-      textOverflow: 'ellipsis',
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.h6.fontWeight,
-    }),
     items: css({
       display: 'flex',
     }),
