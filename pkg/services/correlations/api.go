@@ -329,6 +329,24 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	return response.JSON(http.StatusOK, correlations)
 }
 
+// swagger:parameters getCorrelations
+type GetCorrelationsParams struct {
+	// Limit the maximum number of correlations to return per page
+	// in:query
+	// required:false
+	// default:100
+	Limit int64 `json:"limit"`
+	// Page index for starting fetching correlations
+	// in:query
+	// required:false
+	// default:1
+	Page int64 `json:"page"`
+	// Source datasource UID filter to be applied to correlations
+	// in:query
+	// required:false
+	SourceUIDs []string `json:"sourceuid"`
+}
+
 //swagger:response getCorrelationsResponse
 type GetCorrelationsResponse struct {
 	// in: body
