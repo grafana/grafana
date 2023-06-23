@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { RefObject, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, SplitOpen, PanelData, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataFrame, SplitOpen, PanelData, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome';
@@ -10,6 +10,7 @@ import { StoreState, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
+import TracePageActions from './components/TracePageHeader/Actions/TracePageActions';
 import TracePageSearchBar from './components/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { getTraceName } from './components/model/trace-viewer';
@@ -62,7 +63,21 @@ export function TraceViewContainer(props: Props) {
 
   return (
     <div className={style.container} ref={ref}>
-      <PanelChrome padding="none" width={width} title={getTraceName(traceProp.spans)} displayMode="transparent">
+      <PanelChrome
+        padding="none"
+        width={width}
+        title={getTraceName(traceProp.spans)}
+        displayMode="transparent"
+        actions={
+          config.featureToggles.newTraceViewHeader && (
+            <TracePageActions
+              traceId={traceProp.traceID}
+              data={dataFrames[0]}
+              app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
+            />
+          )
+        }
+      >
         {() => (
           <>
             {!config.featureToggles.newTraceViewHeader && (

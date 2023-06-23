@@ -11,6 +11,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       overflow: hidden;
       position: relative;
       width: 110px;
+      height: 30px;
       justify-content: center;
       &:after {
         content: '';

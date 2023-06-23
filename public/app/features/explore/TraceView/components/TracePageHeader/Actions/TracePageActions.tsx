@@ -16,7 +16,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: TracePageActions;
       display: flex;
       gap: 4px;
-      margin-top: 2px;
+      margin-top: 4px;
+      height: 32px;
     `,
     feedback: css`
       margin: 6px;
