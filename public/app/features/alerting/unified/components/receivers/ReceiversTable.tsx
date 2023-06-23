@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useMemo, useState } from 'react';
 
@@ -405,7 +404,7 @@ function useGetColumns(
   const tableStyles = useStyles2(getAlertTableStyles);
 
   const enableHealthColumn =
-    errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp === 'Unused');
+    errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp.matchingRoutes === 0);
 
   const baseColumns: RowTableColumnProps[] = [
     {
@@ -433,7 +432,7 @@ function useGetColumns(
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
-      if (configHealth.contactPoints[name] === 'Unused') {
+      if (configHealth.contactPoints[name]?.matchingRoutes === 0) {
         return <UnusedContactPointBadge />;
       }
 
@@ -479,21 +478,12 @@ function useGetColumns(
 }
 
 function UnusedContactPointBadge() {
-  const styles = useStyles2(unusedContactPointBadgeStyles);
-
   return (
     <Badge
       text="Unused"
       color="orange"
       icon="exclamation-triangle"
       tooltip="This contact point is not used in any notification policy and it will not receive any alerts"
-      className={styles.badge}
     />
   );
 }
-
-const unusedContactPointBadgeStyles = () => ({
-  badge: css`
-    cursor: default;
-  `,
-});
