@@ -26,7 +26,6 @@ export interface PanelChromeProps {
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
   title?: string;
-  titleWithLinks?: ReactNode;
   description?: string | (() => string);
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
@@ -73,7 +72,6 @@ export function PanelChrome({
   children,
   padding = 'md',
   title = '',
-  titleWithLinks,
   description = '',
   displayMode = 'default',
   titleItems,
@@ -121,9 +119,7 @@ export function PanelChrome({
 
   const headerContent = (
     <>
-      {titleWithLinks ? (
-        <div className={styles.titleWithLinks}>{titleWithLinks}</div>
-      ) : (
+      {title && (
         <h6 title={title} className={styles.title}>
           {title}
         </h6>
@@ -133,7 +129,6 @@ export function PanelChrome({
         <PanelDescription description={description} className={dragClassCancel} />
         {titleItems}
       </div>
-
       {loadingState === LoadingState.Streaming && (
         <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
