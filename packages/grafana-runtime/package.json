@@ -39,7 +39,7 @@
   "dependencies": {
     "@grafana/data": "10.1.0-pre",
     "@grafana/e2e-selectors": "10.1.0-pre",
-    "@grafana/faro-web-sdk": "1.0.2",
+    "@grafana/faro-web-sdk": "1.1.0",
     "@grafana/ui": "10.1.0-pre",
     "history": "4.10.1",
     "lodash": "4.17.21",
@@ -50,8 +50,8 @@
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@rollup/plugin-commonjs": "23.0.2",
-    "@rollup/plugin-node-resolve": "15.0.1",
-    "@testing-library/dom": "9.0.1",
+    "@rollup/plugin-node-resolve": "15.1.0",
+    "@testing-library/dom": "9.3.0",
     "@testing-library/react": "14.0.0",
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
@@ -61,7 +61,7 @@
     "@types/react": "18.0.28",
     "@types/react-dom": "18.0.11",
     "@types/systemjs": "^0.20.6",
-    "esbuild": "0.17.19",
+    "esbuild": "0.18.6",
     "lodash": "4.17.21",
     "react": "18.2.0",
     "react-dom": "18.2.0",

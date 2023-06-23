@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 
 import { Button, Card, Spinner } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -46,7 +47,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   );
 
   const clearSelection = useCallback(() => {
-    dispatch(setAllSelection({ isSelected: false }));
+    dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
   }, [dispatch]);
 
   const handleItemSelectionChange = useCallback(
@@ -72,10 +73,12 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
     return (
       <div style={{ width }}>
         <Card>
-          <Card.Heading>No results found for your query.</Card.Heading>
+          <Card.Heading>
+            <Trans i18nKey="browse-dashboards.no-results.text">No results found for your query.</Trans>
+          </Card.Heading>
           <Card.Actions>
             <Button variant="secondary" onClick={stateManager.onClearSearchAndFilters}>
-              Clear search and filters
+              <Trans i18nKey="browse-dashboards.no-results.clear">Clear search and filters</Trans>
             </Button>
           </Card.Actions>
         </Card>

@@ -224,10 +224,10 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
       setContext({
         after: afterRows.filter((r) => {
-          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
+          return r.timeEpochNs !== row.timeEpochNs || r.entry !== row.entry;
         }),
         before: beforeRows.filter((r) => {
-          return r.timeEpochNs !== row.timeEpochNs && r.entry !== row.entry;
+          return r.timeEpochNs !== row.timeEpochNs || r.entry !== row.entry;
         }),
       });
     } else {
@@ -388,11 +388,22 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           <Button
             variant="secondary"
             onClick={async () => {
+              let rowId = row.uid;
+              if (row.dataFrame.refId) {
+                // the orignal row has the refid from the base query and not the refid from the context query, so we need to replace it.
+                rowId = row.uid.replace(row.dataFrame.refId, contextQuery.refId);
+              }
+
               dispatch(
                 splitOpen({
                   queries: [contextQuery],
                   range: getFullTimeRange(),
                   datasourceUid: contextQuery.datasource!.uid!,
+                  panelsState: {
+                    logs: {
+                      id: rowId,
+                    },
+                  },
                 })
               );
               onClose();

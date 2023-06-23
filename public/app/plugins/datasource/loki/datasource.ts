@@ -263,7 +263,11 @@ export class LokiDatasource
     };
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
-    if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+    if (
+      config.featureToggles.lokiExperimentalStreaming &&
+      streamQueries.length > 0 &&
+      fixedRequest.rangeRaw?.to === 'now'
+    ) {
       // this is still an in-development feature,
       // we do not support mixing stream-queries with normal-queries for now.
       const streamRequest = {
@@ -290,7 +294,11 @@ export class LokiDatasource
     }
 
     const startTime = new Date();
-    return this.runQuery(fixedRequest).pipe(tap((response) => trackQuery(response, fixedRequest, startTime)));
+    return this.runQuery(fixedRequest).pipe(
+      tap((response) =>
+        trackQuery(response, fixedRequest, startTime, { predefinedOperations: this.predefinedOperations })
+      )
+    );
   }
 
   runQuery(fixedRequest: DataQueryRequest<LokiQuery>) {

@@ -111,7 +111,7 @@ type HTTPServer struct {
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
 
-	PluginContextProvider        *plugincontext.Provider
+	pluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
@@ -291,7 +291,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SearchService:                searchService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
-		PluginContextProvider:        plugCtxProvider,
+		pluginContextProvider:        plugCtxProvider,
 		ContextHandler:               contextHandler,
 		LoggerMiddleware:             loggerMiddleware,
 		AlertNG:                      alertNG,

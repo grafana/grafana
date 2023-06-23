@@ -35,7 +35,7 @@ export const VariableUsagesButton = ({ id, usages, isAdhoc }: Props) => {
               showModal();
             }}
             name="code-branch"
-            title="Show usages"
+            tooltip="Show usages"
           />
         );
       }}

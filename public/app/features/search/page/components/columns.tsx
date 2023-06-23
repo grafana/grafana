@@ -65,7 +65,7 @@ export const generateColumns = (
         if (selection('*', '*')) {
           return (
             <div className={styles.checkboxHeader}>
-              <IconButton name="check-square" onClick={clearSelection} />
+              <IconButton name="check-square" onClick={clearSelection} tooltip="Clear selection" />
             </div>
           );
         }

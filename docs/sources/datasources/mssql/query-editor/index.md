@@ -94,6 +94,8 @@ Once you select a database, Grafana populates the dropdown with all available ta
 
 **Note:** If a default database has been configured through the Data Source Configuration page (or through a provisioning configuration file), the user will only be able to use that single preconfigured database for querying.
 
+We don't include `tempdb`,`model`,`msdb`,`master` databases in the query editor dropdown.
+
 ### Select columns and aggregation functions (SELECT)
 
 Select a column from the **Column** dropdown to include it in the data.

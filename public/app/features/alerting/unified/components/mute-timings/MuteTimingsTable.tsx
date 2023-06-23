@@ -150,7 +150,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
                     muteName: data.name,
                   })}
                 >
-                  <IconButton name="file-alt" title="View mute timing" />
+                  <IconButton name="file-alt" tooltip="View mute timing" />
                 </Link>
               </div>
             );
@@ -163,13 +163,13 @@ function useColumns(alertManagerSourceName: string, hideActions = false, setMute
                     muteName: data.name,
                   })}
                 >
-                  <IconButton name="edit" title="Edit mute timing" />
+                  <IconButton name="edit" tooltip="Edit mute timing" />
                 </Link>
               </Authorize>
               <Authorize actions={[permissions.delete]}>
                 <IconButton
-                  name={'trash-alt'}
-                  title="Delete mute timing"
+                  name="trash-alt"
+                  tooltip="Delete mute timing"
                   onClick={() => setMuteTimingName(data.name)}
                 />
               </Authorize>

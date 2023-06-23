@@ -16,7 +16,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
-	authConfigUIAvailable := s.license.FeatureEnabled("saml") && s.features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI)
+	authConfigUIAvailable := s.license.FeatureEnabled("saml")
 
 	if hasAccess(datasources.ConfigurationPageAccess) {
 		configNodes = append(configNodes, &navtree.NavLink{

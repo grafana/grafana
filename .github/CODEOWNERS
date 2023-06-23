@@ -378,7 +378,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
-/public/app/features/panel/ @grafana/grafana-frontend-platform
+/public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
@@ -438,6 +438,7 @@ lerna.json @grafana/frontend-ops
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
+/public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
@@ -611,13 +612,18 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
-/.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
+/.github/workflows/remove-milestone.yml @grafana/grafana-delivery
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
-/.github/workflows/stale.yml @grafana/grafana-frontend-platform
+/.github/workflows/stale.yml @grafana/grafana-delivery
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
+/.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
+/.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
+/.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
