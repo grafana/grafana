@@ -28,12 +28,11 @@ Grafana Enterprise is the recommended and default edition. It is available for f
 
 To install Grafana using the RPM repository, complete the following steps:
 
-1. Import the GPG key and add the Grafana package repository:
+1. Import the GPG key:
 
    ```bash
    wget -q -O gpg.key https://rpm.grafana.com/gpg.key
    sudo rpm --import gpg.key
-   sudo zypper addrepo https://rpm.grafana.com grafana
    ```
 
 1. Use zypper to add the grafana repo.
