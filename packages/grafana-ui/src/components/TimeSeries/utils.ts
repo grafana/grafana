@@ -16,6 +16,9 @@ import {
   getDisplayProcessor,
   FieldColorModeId,
   DecimalCount,
+  Field,
+  GrafanaTheme2,
+  FieldColorMode,
 } from '@grafana/data';
 import {
   AxisPlacement,
@@ -269,36 +272,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     }
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-      let axisColor: uPlot.Axis.Stroke | undefined;
-
-      if (customConfig.axisColorMode === AxisColorMode.Series) {
-        if (
-          colorMode.isByValue &&
-          field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
-          colorMode.id === FieldColorModeId.Thresholds
-        ) {
-          axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
-        } else {
-          axisColor = seriesColor;
-        }
-      }
-
-      let axisColorOpts = {};
-
-      if (axisColor) {
-        axisColorOpts = {
-          border: {
-            show: true,
-            width: 1,
-            stroke: axisColor,
-          },
-          ticks: {
-            stroke: axisColor,
-          },
-          color: customConfig.axisColorMode === AxisColorMode.Series ? axisColor : undefined,
-        };
-      }
-
+      const axisColorOpts = getAxisColorOpts(customConfig.axisColorMode, colorMode, theme, field, seriesColor);
       let incrs: uPlot.Axis.Incrs | undefined;
 
       if (IEC_UNITS.has(config.unit!)) {
@@ -646,4 +620,44 @@ export function getNamesToFieldIndex(frame: DataFrame, allFrames: DataFrame[]): 
     }
   });
   return originNames;
+}
+
+export function getAxisColorOpts(
+  axisColorMode: AxisColorMode | undefined,
+  colorMode: FieldColorMode,
+  theme: GrafanaTheme2,
+  field: Field,
+  seriesColor: string
+) {
+  let axisColor: uPlot.Axis.Stroke | undefined;
+
+  if (axisColorMode === AxisColorMode.Series) {
+    if (
+      colorMode.isByValue &&
+      field.config.custom?.gradientMode === GraphGradientMode.Scheme &&
+      colorMode.id === FieldColorModeId.Thresholds
+    ) {
+      axisColor = getScaleGradientFn(1, theme, colorMode, field.config.thresholds);
+    } else {
+      axisColor = seriesColor;
+    }
+  }
+
+  let axisColorOpts = {};
+
+  if (axisColor) {
+    axisColorOpts = {
+      border: {
+        show: true,
+        width: 1,
+        stroke: axisColor,
+      },
+      ticks: {
+        stroke: axisColor,
+      },
+      color: axisColorMode === AxisColorMode.Series ? axisColor : undefined,
+    };
+  }
+
+  return axisColorOpts;
 }

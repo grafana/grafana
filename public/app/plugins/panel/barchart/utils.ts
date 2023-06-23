@@ -16,6 +16,7 @@ import {
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisPlacement,
+  GraphDrawStyle,
   GraphTransform,
   GraphTresholdsStyleMode,
   ScaleDirection,
@@ -25,6 +26,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { getAxisColorOpts } from '@grafana/ui/src/components/TimeSeries/utils';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
@@ -55,6 +57,10 @@ export interface BarChartOptionsEX extends Options {
   getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
+}
+
+interface AddArgs {
+  [key: string]: any;
 }
 
 export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
@@ -97,6 +103,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     barWidth = 1;
   }
 
+  const lines = frame.fields
+    .filter((field) => field.config.custom?.drawStyle === GraphDrawStyle.Line)
+    .map((field) => field.state?.seriesIndex!);
+
   const opts: BarsOptions = {
     xOri: vizOrientation.xOri,
     xDir: vizOrientation.xDir,
@@ -117,6 +127,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
+    ignore: lines,
   };
 
   const config = getConfig(opts, theme);
@@ -186,6 +197,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     const customConfig: FieldConfig = { ...defaultFieldConfig, ...field.config.custom };
 
     const scaleKey = field.config.unit || FIXED_UNIT;
+    const scaleLineKey = '__line';
     const colorMode = getFieldColorModeForField(field);
     const scaleColor = getFieldSeriesColor(field, theme);
     const seriesColor = scaleColor.color;
@@ -219,73 +231,64 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       }
     }
 
-    builder.addSeries({
+    const args: AddArgs = {
       scaleKey,
-      pxAlign: true,
-      lineWidth: customConfig.lineWidth,
-      lineColor: seriesColor,
-      fillOpacity: customConfig.fillOpacity,
+      customConfig,
       theme,
+      seriesColor,
       colorMode,
-      pathBuilder: config.barsBuilder,
-      show: !customConfig.hideFrom?.viz,
-      gradientMode: customConfig.gradientMode,
-      thresholds: field.config.thresholds,
-      hardMin: field.config.min,
-      hardMax: field.config.max,
+      seriesIndex,
       softMin,
       softMax,
+      legendOrdered,
+      allFrames,
+      i,
+      vizOrientation,
+      field,
+    };
 
-      // The following properties are not used in the uPlot config, but are utilized as transport for legend config
-      // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
-      dataFrameFieldIndex: {
-        fieldIndex: legendOrdered
-          ? i
-          : allFrames[0].fields.findIndex(
-              (f) => f.type === FieldType.number && f.state?.seriesIndex === seriesIndex - 1
-            ),
-        frameIndex: 0,
-      },
-    });
+    // lines
+    if (opts.ignore?.includes(field.state?.seriesIndex!)) {
+      args.pathBuilder = null;
+      args.scaleKey = scaleLineKey;
+      args.customConfig.fillOpacity = 0;
+      args.customConfig.lineWidth = 3;
+      args.customConfig.pointSize = 8;
 
-    // The builder will manage unique scaleKeys and combine where appropriate
-    builder.addScale({
-      scaleKey,
-      min: field.config.min,
-      max: field.config.max,
-      softMin,
-      softMax,
-      orientation: vizOrientation.yOri,
-      direction: vizOrientation.yDir,
-      distribution: customConfig.scaleDistribution?.type,
-      log: customConfig.scaleDistribution?.log,
-    });
+      addYSeries(builder, field, args);
+      addYScale(builder, field, args);
+    } else {
+      args.pathBuilder = config.barsBuilder;
+      addYSeries(builder, field, args);
+      addYScale(builder, field, args);
+    }
+
+    const axisColorOpts = getAxisColorOpts(customConfig.axisColorMode, colorMode, theme, field, seriesColor);
 
     if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
-      let placement = customConfig.axisPlacement;
-      if (!placement || placement === AxisPlacement.Auto) {
-        placement = AxisPlacement.Left;
-      }
-      if (vizOrientation.xOri === 1) {
-        if (placement === AxisPlacement.Left) {
-          placement = AxisPlacement.Bottom;
-        }
-        if (placement === AxisPlacement.Right) {
-          placement = AxisPlacement.Top;
-        }
-      }
+      if (opts.ignore?.includes(field.state?.seriesIndex!)) {
+        args.axisColorOpts = axisColorOpts;
+        args.scaleKey = scaleLineKey;
+        args.placement = AxisPlacement.Right;
 
-      builder.addAxis({
-        scaleKey,
-        label: customConfig.axisLabel,
-        size: customConfig.axisWidth,
-        placement,
-        formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
-        filter: vizOrientation.yOri === 0 ? config.hFilter : undefined,
-        tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
-        theme,
-        grid: { show: customConfig.axisGridShow },
-      });
+        addYAxix(builder, args);
+      } else {
+        let placement = customConfig.axisPlacement;
+        if (!placement || placement === AxisPlacement.Auto) {
+          placement = AxisPlacement.Left;
+        }
+        if (vizOrientation.xOri === 1) {
+          if (placement === AxisPlacement.Left) {
+            placement = AxisPlacement.Bottom;
+          }
+          if (placement === AxisPlacement.Right) {
+            placement = AxisPlacement.Top;
+          }
+        }
+
+        args.placement = placement;
+        addYAxix(builder, args);
+      }
     }
   }
 
@@ -295,6 +298,91 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   return builder;
 };
+
+function addYSeries(builder: UPlotConfigBuilder, field: Field, args: AddArgs) {
+  const {
+    scaleKey,
+    customConfig,
+    pathBuilder,
+    theme,
+    seriesColor,
+    i,
+    softMin,
+    softMax,
+    colorMode,
+    seriesIndex,
+    legendOrdered,
+    allFrames,
+  } = args;
+
+  builder.addSeries({
+    scaleKey,
+    pathBuilder,
+    colorMode,
+    theme,
+    pxAlign: true,
+    lineWidth: customConfig.lineWidth,
+    lineColor: seriesColor,
+    lineStyle: customConfig.lineStyle,
+    drawStyle: customConfig.drawStyle,
+    showPoints: customConfig.showPoints,
+    pointSize: customConfig.pointSize,
+    fillOpacity: customConfig.fillOpacity,
+    show: !customConfig.hideFrom?.viz,
+    gradientMode: customConfig.gradientMode,
+    thresholds: field.config.thresholds,
+    hardMin: field.config.min,
+    hardMax: field.config.max,
+    softMin,
+    softMax,
+
+    // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+    // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
+    dataFrameFieldIndex: {
+      fieldIndex: legendOrdered
+        ? i
+        : allFrames[0].fields.findIndex(
+            (field: Field) => field.type === FieldType.number && field.state?.seriesIndex === seriesIndex - 1
+          ),
+      frameIndex: 0,
+    },
+  });
+}
+
+function addYScale(builder: UPlotConfigBuilder, field: Field, args: AddArgs) {
+  const { scaleKey, customConfig, softMin, softMax, vizOrientation } = args;
+
+  // The builder will manage unique scaleKeys and combine where appropriate
+  builder.addScale({
+    scaleKey,
+    min: field.config.min,
+    max: field.config.max,
+    softMin,
+    softMax,
+    orientation: vizOrientation.yOri,
+    direction: vizOrientation.yDir,
+    distribution: customConfig.scaleDistribution?.type,
+    log: customConfig.scaleDistribution?.log,
+  });
+}
+
+function addYAxix(builder: UPlotConfigBuilder, args: AddArgs) {
+  const { scaleKey, customConfig, vizOrientation, theme, config, xTickLabelRotation, field, axisColorOpts, placement } =
+    args;
+
+  builder.addAxis({
+    scaleKey,
+    label: customConfig.axisLabel,
+    size: customConfig.axisWidth,
+    placement: placement,
+    formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+    filter: vizOrientation.yOri === 0 ? config.hFilter : undefined,
+    tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
+    theme,
+    grid: { show: customConfig.axisGridShow },
+    ...axisColorOpts,
+  });
+}
 
 function shortenValue(value: string, length: number) {
   if (value.length > length) {
@@ -463,6 +551,14 @@ export function prepareBarChartDisplayValues(
       warn: 'No numeric fields found',
     };
   }
+
+  // move lines to the end
+  fields.forEach((field, idx) => {
+    if (field.config.custom?.drawStyle === GraphDrawStyle.Line) {
+      fields.push(field);
+      fields.splice(idx, 1);
+    }
+  });
 
   // Show the first number value
   if (colorByField && fields.length > 1) {
