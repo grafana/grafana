@@ -26,6 +26,13 @@ If you install from the RPM repository, then Grafana is automatically updated ev
 
 To install Grafana using the RPM repository, complete the following steps:
 
+1. Import the GPG key:
+
+   ```bash
+   wget -q -O gpg.key https://rpm.grafana.com/gpg.key
+   sudo rpm --import gpg.key
+   ```
+
 1. Use zypper to add the grafana repo.
 
    ```bash
