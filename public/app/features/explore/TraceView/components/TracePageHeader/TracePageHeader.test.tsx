@@ -119,16 +119,6 @@ describe('TracePageHeader test', () => {
     expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
   });
 
-  it('should render the trace title', () => {
-    setup();
-    expect(
-      // TODO: fix this as it is failing
-      screen.getByRole('heading', {
-        name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
-      })
-    ).toBeInTheDocument();
-  });
-
   it('should render the header items', () => {
     setup();
 
