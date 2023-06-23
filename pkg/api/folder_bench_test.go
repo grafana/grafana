@@ -58,10 +58,22 @@ const (
 	TEAM_MEMBER_NUM    = 5
 )
 
+type benchScenario struct {
+	db *sqlstore.SQLStore
+	// signedInUser is the user that is signed in to the server
+	cfg          *setting.Cfg
+	signedInUser user.SignedInUser
+	userID       int64
+	teamSvc      team.Service
+	userSvc      user.Service
+}
+
 func BenchmarkNestedFoldersOn(b *testing.B) {
 	start := time.Now()
 	b.Log("setup start")
-	m, orgID, userWithPermissions := setupBench(b)
+	features := featuremgmt.WithFeatures("nestedFolders")
+	sc := setupDB(b)
+	m := setupServer(b, sc, features)
 	b.Log("setup time:", time.Since(start))
 
 	limit := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
@@ -97,7 +109,7 @@ func BenchmarkNestedFoldersOn(b *testing.B) {
 	for _, bm := range benchmarks {
 		b.Run(bm.desc, func(b *testing.B) {
 			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
-			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: userWithPermissions, OrgID: orgID})
+			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: sc.userID, OrgID: sc.signedInUser.OrgID})
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -113,14 +125,13 @@ func BenchmarkNestedFoldersOn(b *testing.B) {
 	}
 }
 
-func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
+func setupDB(b testing.TB) benchScenario {
 	b.Helper()
 	db := sqlstore.InitTestDB(b)
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
 	quotaService := quotatest.New(false, nil)
-	folderStore := folderimpl.ProvideDashboardFolderStore(db)
 	cfg := setting.NewCfg()
 
 	teamSvc := teamimpl.ProvideService(db, cfg)
@@ -131,19 +142,12 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	userSvc, err := userimpl.ProvideService(db, orgService, cfg, teamSvc, cache, &quotatest.FakeQuotaService{}, bundleregistry.ProvideService())
 	require.NoError(b, err)
 
-	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
-	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
-	require.NoError(b, err)
-
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
 	b.Cleanup(func() {
 		guardian.New = origNewGuardian
 	})
-
-	ac := acimpl.ProvideAccessControl(cfg)
-	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashStore, folderStore, db, featuresFlagOn)
 
 	var orgID int64 = 1
 
@@ -300,12 +304,25 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	})
 	require.NoError(b, err)
 
+	return benchScenario{
+		db:           db,
+		cfg:          cfg,
+		signedInUser: signedInUser,
+		userID:       userIDs[len(userIDs)-1],
+		teamSvc:      teamSvc,
+		userSvc:      userSvc,
+	}
+}
+
+func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+	b.Helper()
+
 	m := web.New()
 	initCtx := &contextmodel.ReqContext{}
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		initCtx.SignedInUser = &signedInUser
+		initCtx.SignedInUser = &sc.signedInUser
 
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
@@ -313,18 +330,28 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(cfg, acdb.ProvideService(db), cache, featuresFlagOn)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+
+	quotaSrv := quotatest.New(false, nil)
+
+	dashStore, err := database.ProvideDashboardStore(sc.db, sc.db.Cfg, features, tagimpl.ProvideService(sc.db, sc.db.Cfg), quotaSrv)
+	require.NoError(b, err)
+
+	folderStore := folderimpl.ProvideDashboardFolderStore(sc.db)
+
+	ac := acimpl.ProvideAccessControl(sc.cfg)
+	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, routing.NewRouteRegister(), db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, teamSvc, userSvc)
+		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, routing.NewRouteRegister(), db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, teamSvc, userSvc)
+		sc.cfg, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
-		cfg, dashStore, folderStore, nil,
-		featuresFlagOn, folderPermissions, dashboardPermissions, ac,
+		sc.cfg, dashStore, folderStore, nil,
+		features, folderPermissions, dashboardPermissions, ac,
 		folderServiceWithFlagOn,
 	)
 	require.NoError(b, err)
@@ -333,18 +360,18 @@ func setupBench(b testing.TB) (*web.Macaron, int64, int64) {
 	starSvc.ExpectedUserStars = &star.GetUserStarsResult{UserStars: make(map[int64]bool)}
 	hs := &HTTPServer{
 		CacheService:  localcache.New(5*time.Minute, 10*time.Minute),
-		Cfg:           cfg,
-		SQLStore:      db,
-		Features:      featuresFlagOn,
-		QuotaService:  quotaService,
-		SearchService: search.ProvideService(cfg, db, starSvc, dashboardSvc),
+		Cfg:           sc.cfg,
+		SQLStore:      sc.db,
+		Features:      features,
+		QuotaService:  quotaSrv,
+		SearchService: search.ProvideService(sc.cfg, sc.db, starSvc, dashboardSvc),
 		folderService: folderServiceWithFlagOn,
 	}
 
 	m.Get("/api/folders", hs.GetFolders)
 	m.Get("/api/search", hs.Search)
 
-	return m, orgID, userIDs[len(userIDs)-1]
+	return m
 }
 
 type f struct {
