@@ -204,8 +204,8 @@ export function useStateSync(params: ExploreQueryParams) {
             });
           });
         })
-      ).then((panes) => {
-        Promise.all(
+      ).then(async (panes) => {
+        const initializedPanes = await Promise.all(
           panes.map(({ exploreId, range, panelsState, queries, datasource }) => {
             return dispatch(
               initializeExplore({
@@ -217,39 +217,37 @@ export function useStateSync(params: ExploreQueryParams) {
               })
             ).unwrap();
           })
-        ).then((panes) => {
-          const newParams = panes.reduce(
-            (acc, { exploreId, state }) => {
-              return {
-                ...acc,
-                panes: {
-                  ...acc.panes,
-                  [exploreId]: getUrlStateFromPaneState(state),
-                },
-              };
-            },
-            {
-              panes: {},
-            }
-          );
+        );
 
-          initState.current = 'done';
-
-          // we need to use partial here beacuse replace doesn't encode the query params.
-          location.partial(
-            {
-              // partial doesn't remove other parameters, so we delete all the current one before adding the new ones.
-              ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc, key) => {
-                acc[key] = undefined;
-                return acc;
-              }, {}),
-              panes: JSON.stringify(newParams.panes),
-              schemaVersion: urlState.schemaVersion,
-              orgId,
-            },
-            true
-          );
-        });
+        const newParams = initializedPanes.reduce(
+          (acc, { exploreId, state }) => {
+            return {
+              ...acc,
+              panes: {
+                ...acc.panes,
+                [exploreId]: getUrlStateFromPaneState(state),
+              },
+            };
+          },
+          {
+            panes: {},
+          }
+        );
+        initState.current = 'done';
+        // we need to use partial here beacuse replace doesn't encode the query params.
+        location.partial(
+          {
+            // partial doesn't remove other parameters, so we delete all the current one before adding the new ones.
+            ...Object.keys(location.getSearchObject()).reduce<Record<string, unknown>>((acc_1, key) => {
+              acc_1[key] = undefined;
+              return acc_1;
+            }, {}),
+            panes: JSON.stringify(newParams.panes),
+            schemaVersion: urlState.schemaVersion,
+            orgId,
+          },
+          true
+        );
       });
     }
 
