@@ -115,7 +115,7 @@ By reducing the number of queries and requests sent to data sources, caching can
 
 ### Data sources that work with query caching
 
-Query caching works for all backend data sources. More specifically, caching works with Grafana's [built-in data sources]({{< relref "../../datasources/#built-in-core-data-sources" >}}), and any [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in the plugins SDK.
+Query caching works for Grafana's [built-in data sources]({{< relref "../../datasources/#built-in-core-data-sources" >}}), and [backend data source plugins](https://grafana.com/grafana/plugins/?type=datasource) that extend the `DataSourceWithBackend` class in the plugins SDK.
 
 To verify that a data source works with query caching, follow the instructions below to **Enable and Configure query caching**. If caching is enabled in Grafana but the Caching tab is not visible for the given data source, then query caching is not available for that data source.
 
