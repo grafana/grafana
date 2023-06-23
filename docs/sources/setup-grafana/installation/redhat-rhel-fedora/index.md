@@ -15,7 +15,7 @@ If you install via RPM or the `.tar.gz` file, then you must manually update Graf
 
 ## Install Grafana from the RPM repository
 
-If you install from the RPM repository, then Grafana is automatically updated every time you run `sudo rpm update`.
+If you install from the RPM repository, then Grafana is automatically updated every time you update your applications.
 
 | Grafana Version    | Package            | Repository                |
 | ------------------ | ------------------ | ------------------------- |
