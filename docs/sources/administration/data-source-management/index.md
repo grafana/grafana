@@ -100,7 +100,7 @@ The following cache backend integrations are available: in-memory, Redis, and Me
 Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
 {{% /admonition %}}
 
-When a panel queries a data source with cached data, it will either fetch fresh data or use cached data based on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
+When a panel queries a data source with cached data, it will either fetch fresh data or use cached data depending on the panel's **interval.** The interval is used to round the query time range to a nearby cached time range, increasing the likelihood of cache hits. Therefore, wider panels and dashboards with shorter time ranges fetch new data more often than narrower panels and dashboards with longer time ranges.
 
 A panel's interval is visible in the [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}). It is calculated like this: `time range / max data points`. Max data points are calculated based on the width of the panel. For example, a wide panel with `1000 data points` on a dashboard with a time range of `last 7 days` will retrieve fresh data every 10 minutes: `7d / 1000 = 10m`. In this example, cached data for this panel will be served for up to 10 minutes before Grafana needs to query the data source again for new data.
 
