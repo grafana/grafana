@@ -1,4 +1,4 @@
-package oauthserver
+package serviceregistration
 
 import (
 	"context"
