@@ -55,16 +55,22 @@ Complete the following steps to install Grafana from the APT repository:
    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
-1. After you add the repository, run the following commands to install the OSS or Enterprise release:
+1. Run the following command to update the list of available packages:
 
    ```bash
    # Update the list of available packages
    sudo apt-get update
+   ```
 
-   # Install the latest OSS release:
+1. Run one of the following commands to install the OSS or Enterprise release:
+
+   ```bash
+   # To install the latest OSS release:
    sudo apt-get install grafana
+   ```
 
-   # Install the latest Enterprise release:
+   ```bash
+   # To install the latest Enterprise release:
    sudo apt-get install grafana-enterprise
    ```
 

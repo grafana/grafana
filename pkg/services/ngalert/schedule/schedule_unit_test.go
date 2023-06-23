@@ -75,12 +75,13 @@ func TestProcessTicks(t *testing.T) {
 		Tracer:       testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       testMetrics.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: nil,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 testMetrics.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           nil,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 
@@ -818,12 +819,13 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Tracer:           testTracer,
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:       m.GetStateMetrics(),
-		ExternalURL:   nil,
-		InstanceStore: is,
-		Images:        &state.NoopImageService{},
-		Clock:         mockedClock,
-		Historian:     &state.FakeHistorian{},
+		Metrics:                 m.GetStateMetrics(),
+		ExternalURL:             nil,
+		InstanceStore:           is,
+		Images:                  &state.NoopImageService{},
+		Clock:                   mockedClock,
+		Historian:               &state.FakeHistorian{},
+		MaxStateSaveConcurrency: 1,
 	}
 	st := state.NewManager(managerCfg)
 
