@@ -371,7 +371,7 @@ func (s *SocialAzureAD) retrieveJWKS(client *http.Client) (*jose.JSONWebKeySet, 
 	// TODO: allow setting well-known endpoint and retrieve from there
 	keysetURL := strings.Replace(s.Endpoint.AuthURL, "/oauth2/v2.0/authorize", "/discovery/v2.0/keys", 1)
 
-	resp, err := s.httpGet(client, keysetURL)
+	resp, err := s.httpGet(context.Background(), client, keysetURL)
 	if err != nil {
 		return nil, err
 	}
