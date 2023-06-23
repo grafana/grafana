@@ -1,12 +1,11 @@
-import { defaults } from 'lodash';
+import deepEqual from 'fast-deep-equal';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, QueryEditorProps, TimeRange } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
-import { defaultGrafanaPyroscope, defaultPhlareQueryType, GrafanaPyroscope } from '../dataquery.gen';
-import { PhlareDataSource } from '../datasource';
+import { normalizeQuery, PhlareDataSource } from '../datasource';
 import { BackendType, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
@@ -16,31 +15,19 @@ import { QueryOptions } from './QueryOptions';
 
 export type Props = QueryEditorProps<PhlareDataSource, Query, PhlareDataSourceOptions>;
 
-export const defaultQuery: Partial<GrafanaPyroscope> = {
-  ...defaultGrafanaPyroscope,
-  queryType: defaultPhlareQueryType,
-};
-
 export function QueryEditor(props: Props) {
-  let query = normalizeQuery(props.query, props.app);
+  const { onChange, onRunQuery, datasource, query, range, app } = props;
 
   function handleRunQuery(value: string) {
-    props.onChange({ ...props.query, labelSelector: value });
-    props.onRunQuery();
+    onChange({ ...query, labelSelector: value });
+    onRunQuery();
   }
 
-  const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(
-    props.datasource,
-    props.query,
-    props.onChange,
-    props.datasource.backendType
-  );
-  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(
-    props.range,
-    props.datasource,
-    props.query,
-    props.onChange
-  );
+  console.log('outside', { query });
+  const { profileTypes, onProfileTypeChange, selectedProfileName } = useProfileTypes(datasource, query, onChange);
+  const { labels, getLabelValues, onLabelSelectorChange } = useLabels(range, datasource, query, onChange);
+  useNormalizeQuery(query, profileTypes, onChange, app);
+
   const cascaderOptions = useCascaderOptions(profileTypes);
 
   return (
@@ -62,6 +49,25 @@ export function QueryEditor(props: Props) {
       </EditorRow>
     </EditorRows>
   );
+}
+
+function useNormalizeQuery(
+  query: Query,
+  profileTypes: ProfileTypeMessage[],
+  onChange: (value: Query) => void,
+  app?: CoreApp
+) {
+  useEffect(() => {
+    const normalizedQuery = normalizeQuery(query, app);
+    if (!query.profileTypeId && profileTypes.length > 0) {
+      // Select the first thing so the profile type selector isn't empty
+      normalizedQuery.profileTypeId = profileTypes[0].id;
+    }
+    // Makes sure we don't have a infinite loop updates
+    if (!deepEqual(query, normalizedQuery)) {
+      onChange(normalizedQuery);
+    }
+  }, [app, query, profileTypes, onChange]);
 }
 
 function useLabels(
@@ -138,12 +144,7 @@ function useCascaderOptions(profileTypes: ProfileTypeMessage[]) {
   }, [profileTypes]);
 }
 
-function useProfileTypes(
-  datasource: PhlareDataSource,
-  query: Query,
-  onChange: (value: Query) => void,
-  backendType: BackendType = 'phlare'
-) {
+function useProfileTypes(datasource: PhlareDataSource, query: Query, onChange: (value: Query) => void) {
   const [profileTypes, setProfileTypes] = useState<ProfileTypeMessage[]>([]);
 
   useEffect(() => {
@@ -160,23 +161,20 @@ function useProfileTypes(
       }
 
       const id = selectedOptions[selectedOptions.length - 1].value;
-
-      // Probably cannot happen but makes TS happy
-      if (typeof id !== 'string') {
-        throw new Error('id is not string');
-      }
-
       onChange({ ...query, profileTypeId: id });
     },
     [onChange, query]
   );
 
-  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId, backendType);
-
+  const selectedProfileName = useProfileName(profileTypes, query.profileTypeId, datasource.backendType);
   return { profileTypes, onProfileTypeChange, selectedProfileName };
 }
 
-function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: string, backendType: BackendType) {
+function useProfileName(
+  profileTypes: ProfileTypeMessage[],
+  profileTypeId: string,
+  backendType: BackendType = 'phlare'
+) {
   return useMemo(() => {
     if (!profileTypes) {
       return 'Loading';
@@ -191,14 +189,4 @@ function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: strin
 
     return profile.label;
   }, [profileTypeId, profileTypes, backendType]);
-}
-
-export function normalizeQuery(query: Query, app?: CoreApp | string) {
-  let normalized = defaults(query, defaultQuery);
-  if (app !== CoreApp.Explore && normalized.queryType === 'both') {
-    // In dashboards and other places, we can't show both types of graphs at the same time.
-    // This will also be a default when having 'both' query and adding it from explore to dashboard
-    normalized.queryType = 'profile';
-  }
-  return normalized;
 }
