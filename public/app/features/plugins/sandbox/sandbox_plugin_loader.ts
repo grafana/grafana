@@ -3,6 +3,8 @@ import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { PluginMeta } from '@grafana/data';
 
+import { extractPluginIdVersionFromUrl, getPluginCdnResourceUrl, transformPluginSourceForCDN } from '../cdn/utils';
+import { PLUGIN_CDN_URL_KEY } from '../constants';
 import { getPluginSettings } from '../pluginSettings';
 
 import { getGeneralSandboxDistortionMap } from './distortion_map';
@@ -117,11 +119,16 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       },
     });
 
-    // fetch and evalute the plugin code inside the sandbox
+    // fetch plugin's code
+    let pluginCode = '';
     try {
-      let pluginCode = await getPluginCode(meta.module);
-      pluginCode = patchPluginSourceMap(meta, pluginCode);
+      pluginCode = await getPluginCode(meta);
+    } catch (e) {
+      throw new Error(`Could not load plugin ${meta.id}: ` + e);
+      reject(new Error(`Could not load plugin ${meta.id}: ` + e));
+    }
 
+    try {
       // runs the code inside the sandbox environment
       // this evaluate will eventually run the `define` function inside
       // of endowments.
@@ -132,9 +139,26 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
   });
 }
 
-async function getPluginCode(modulePath: string) {
-  const response = await fetch('public/' + modulePath + '.js');
-  return await response.text();
+async function getPluginCode(meta: PluginMeta): Promise<string> {
+  if (meta.module.includes(`${PLUGIN_CDN_URL_KEY}/`)) {
+    // should load plugin from a CDN
+    const pluginUrl = getPluginCdnResourceUrl(`/public/${meta.module}`) + '.js';
+    const response = await fetch(pluginUrl);
+    let pluginCode = await response.text();
+    const { version } = extractPluginIdVersionFromUrl(pluginUrl);
+    pluginCode = transformPluginSourceForCDN({
+      pluginId: meta.id,
+      version,
+      source: pluginCode,
+    });
+    return pluginCode;
+  } else {
+    //local plugin loading
+    const response = await fetch('public/' + meta.module + '.js');
+    let pluginCode = await response.text();
+    pluginCode = patchPluginSourceMap(meta, pluginCode);
+    return pluginCode;
+  }
 }
 
 function getActivityErrorHandler(pluginId: string) {

@@ -33,6 +33,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { PLUGIN_CDN_URL_KEY } from './constants';
 import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
@@ -78,7 +79,7 @@ grafanaRuntime.SystemJS.config({
     '*.css': {
       loader: 'css',
     },
-    'plugin-cdn/*': {
+    [`${PLUGIN_CDN_URL_KEY}/*`]: {
       esModule: true,
       authorization: false,
       loader: 'cdn-loader',
