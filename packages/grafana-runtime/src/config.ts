@@ -89,7 +89,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  featureToggles: FeatureToggles = {};
+  featureToggles: FeatureToggles = {
+    newTraceViewHeader: false,
+  };
   anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

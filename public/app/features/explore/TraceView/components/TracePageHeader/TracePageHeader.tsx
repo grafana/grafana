@@ -173,16 +173,16 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
     return null;
   }
 
+  const summaryItems = HEADER_ITEMS.map((item) => {
+    const { renderer, ...rest } = item;
+    return { ...rest, value: renderer(trace, timeZone, styles) };
+  });
+
   const title = (
     <h1 className={styles.TracePageHeaderTitle}>
       <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
     </h1>
   );
-
-  const summaryItems = HEADER_ITEMS.map((item) => {
-    const { renderer, ...rest } = item;
-    return { ...rest, value: renderer(trace, timeZone, styles) };
-  });
 
   return (
     <header className={styles.TracePageHeader}>
