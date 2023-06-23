@@ -21,6 +21,7 @@ import {
 } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 
+import { InsertNullsEditor } from './InsertNullsEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 import { SpanNullsEditor } from './SpanNullsEditor';
 import { ThresholdsStyleEditor } from './ThresholdsStyleEditor';
@@ -67,7 +68,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       settings: {
         options: graphFieldOptions.lineInterpolation,
       },
-      showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
+      showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
       hideFromDefaults,
     });
 
@@ -81,7 +82,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
         settings: {
           options: graphFieldOptions.barAlignment,
         },
-        showIf: (c) => c.drawStyle === GraphDrawStyle.Bars,
+        showIf: (config) => config.drawStyle === GraphDrawStyle.Bars,
         hideFromDefaults,
       })
       .addSliderInput({
@@ -95,7 +96,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
           step: 1,
           ariaLabelForHandle: 'Line width',
         },
-        showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+        showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         hideFromDefaults,
       })
       .addSliderInput({
@@ -109,7 +110,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
           step: 1,
           ariaLabelForHandle: 'Fill opacity',
         },
-        showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+        showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         hideFromDefaults,
       })
       .addRadio({
@@ -120,7 +121,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
         settings: {
           options: graphFieldOptions.fillGradient,
         },
-        showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+        showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
         hideFromDefaults,
       })
       .addFieldNamePicker({
@@ -140,11 +141,11 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       path: 'lineStyle',
       name: 'Line style',
       category: categoryStyles,
-      showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
+      showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
       editor: LineStyleEditor,
       override: LineStyleEditor,
       process: identityOverrideProcessor,
-      shouldApply: (f) => f.type === FieldType.number,
+      shouldApply: (field) => field.type === FieldType.number,
       hideFromDefaults,
     })
     .addCustomEditor<void, boolean>({
@@ -155,8 +156,21 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       defaultValue: false,
       editor: SpanNullsEditor,
       override: SpanNullsEditor,
-      showIf: (c) => c.drawStyle === GraphDrawStyle.Line,
-      shouldApply: (f) => f.type !== FieldType.time,
+      showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
+      shouldApply: (field) => field.type !== FieldType.time,
+      process: identityOverrideProcessor,
+      hideFromDefaults,
+    })
+    .addCustomEditor<void, boolean>({
+      id: 'insertNulls',
+      path: 'insertNulls',
+      name: 'Disconnect values',
+      category: categoryStyles,
+      defaultValue: false,
+      editor: InsertNullsEditor,
+      override: InsertNullsEditor,
+      showIf: (config) => config.drawStyle === GraphDrawStyle.Line,
+      shouldApply: (field) => field.type !== FieldType.time,
       process: identityOverrideProcessor,
       hideFromDefaults,
     })
@@ -168,7 +182,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
       settings: {
         options: graphFieldOptions.showPoints,
       },
-      showIf: (c) => c.drawStyle !== GraphDrawStyle.Points,
+      showIf: (config) => config.drawStyle !== GraphDrawStyle.Points,
       hideFromDefaults,
     })
     .addSliderInput({
@@ -182,7 +196,7 @@ export function addPointAndLineStyles<T extends GraphFieldConfig>(
         step: 1,
         ariaLabelForHandle: 'Point size',
       },
-      showIf: (c) => c.showPoints !== VisibilityMode.Never || c.drawStyle === GraphDrawStyle.Points,
+      showIf: (config) => config.showPoints !== VisibilityMode.Never || config.drawStyle === GraphDrawStyle.Points,
       hideFromDefaults,
     });
 }

@@ -26,8 +26,11 @@ import {
   DataHoverClearEvent,
   EventBus,
   LogRowContextOptions,
+  ExplorePanelsState,
+  serializeStateToUrlParam,
+  urlUtil,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
@@ -41,10 +44,13 @@ import {
 } from '@grafana/ui';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
-import { ExploreId } from 'app/types/explore';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { getState, dispatch } from 'app/store/store';
 
 import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
+import { getUrlStateFromPaneState } from '../hooks/useStateSync';
+import { changePanelState } from '../state/explorePane';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -66,7 +72,7 @@ interface Props extends Themeable2 {
   timeZone: TimeZone;
   scanning?: boolean;
   scanRange?: RawTimeRange;
-  exploreId: ExploreId;
+  exploreId: string;
   datasourceType?: string;
   logsVolumeEnabled: boolean;
   logsVolumeData: DataQueryResponse | undefined;
@@ -85,6 +91,8 @@ interface Props extends Themeable2 {
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;
+  panelState?: ExplorePanelsState;
+  scrollElement?: HTMLDivElement;
 }
 
 interface State {
@@ -102,8 +110,10 @@ interface State {
   contextRow?: LogRowModel;
 }
 
+const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
 // We need to override css overflow of divs in Collapse element to enable sticky Logs navigation
 const styleOverridesForStickyNavigation = css`
+  ${scrollableLogsContainer && 'margin-bottom: 0px'};
   & > div {
     overflow: visible;
     & > div {
@@ -125,6 +135,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   cancelFlippingTimer?: number;
   topLogsRef = createRef<HTMLDivElement>();
   logsVolumeEventBus: EventBus;
+  logsContainer = createRef<HTMLDivElement>();
 
   state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
@@ -153,6 +164,18 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
     if (this.cancelFlippingTimer) {
       window.clearTimeout(this.cancelFlippingTimer);
+    }
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    if (this.props.loading && !prevProps.loading && this.props.panelState?.logs?.id) {
+      // loading stopped, so we need to remove any permalinked log lines
+      delete this.props.panelState.logs.id;
+      dispatch(
+        changePanelState(this.props.exploreId, 'logs', {
+          ...this.props.panelState,
+        })
+      );
     }
   }
 
@@ -328,6 +351,50 @@ class UnthemedLogs extends PureComponent<Props, State> {
       });
       onClose();
     };
+  };
+
+  onPermalinkClick = async (row: LogRowModel) => {
+    // get explore state, add log-row-id and make timerange absolute
+    const urlState = getUrlStateFromPaneState(getState().explore.panes[this.props.exploreId]!);
+    urlState.panelsState = { ...this.props.panelState, logs: { id: row.uid } };
+    urlState.range = {
+      from: new Date(this.props.absoluteRange.from).toISOString(),
+      to: new Date(this.props.absoluteRange.to).toISOString(),
+    };
+
+    // append changed urlState to baseUrl
+    const serializedState = serializeStateToUrlParam(urlState);
+    const baseUrl = /.*(?=\/explore)/.exec(`${window.location.href}`)![0];
+    const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+    await createAndCopyShortLink(url);
+
+    reportInteraction('grafana_explore_logs_permalink_clicked', {
+      datasourceType: row.datasourceType ?? 'unknown',
+      logRowUid: row.uid,
+      logRowLevel: row.logLevel,
+    });
+  };
+
+  scrollIntoView = (element: HTMLElement) => {
+    if (config.featureToggles.exploreScrollableLogsContainer) {
+      this.scrollToTopLogs();
+      if (this.logsContainer.current) {
+        this.logsContainer.current.scroll({
+          behavior: 'smooth',
+          top: this.logsContainer.current.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+        });
+      }
+
+      return;
+    }
+    const { scrollElement } = this.props;
+
+    if (scrollElement) {
+      scrollElement.scroll({
+        behavior: 'smooth',
+        top: scrollElement.scrollTop + element.getBoundingClientRect().top - window.innerHeight / 2,
+      });
+    }
   };
 
   checkUnescapedContent = memoizeOne((logRows: LogRowModel[]) => {
@@ -532,7 +599,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows">
+            <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
               <LogRows
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
@@ -555,6 +622,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 app={CoreApp.Explore}
                 onLogRowHover={this.onLogRowHover}
                 onOpenContext={this.onOpenContext}
+                onPermalinkClick={this.onPermalinkClick}
+                permalinkedRowId={this.props.panelState?.logs?.id}
+                scrollIntoView={this.scrollIntoView}
               />
               {!loading && !hasData && !scanning && (
                 <div className={styles.noData}>
@@ -632,9 +702,10 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean) => {
       justify-content: space-between;
     `,
     logRows: css`
-      overflow-x: ${wrapLogMessage ? 'unset' : 'scroll'};
+      overflow-x: ${scrollableLogsContainer ? 'scroll;' : `${wrapLogMessage ? 'unset' : 'scroll'};`}
       overflow-y: visible;
       width: 100%;
+      ${scrollableLogsContainer && 'max-height: calc(100vh - 170px);'}
     `,
   };
 };

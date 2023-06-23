@@ -15,6 +15,7 @@ import {
   type Column,
   type CellProps,
   type SortByFn,
+  Icon,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
@@ -153,7 +154,14 @@ export default function CorrelationsPage() {
   return (
     <Page
       navModel={navModel}
-      subTitle="Define how data living in different data sources relates to each other."
+      subTitle={
+        <>
+          Define how data living in different data sources relates to each other. Read more in the{' '}
+          <a href="https://grafana.com/docs/grafana/next/administration/correlations/" target="_blank" rel="noreferrer">
+            documentation <Icon name="external-link-alt" />
+          </a>
+        </>
+      }
       actions={addButton}
     >
       <Page.Contents>

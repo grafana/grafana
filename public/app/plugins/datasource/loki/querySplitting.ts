@@ -10,6 +10,7 @@ import {
   dateTime,
   durationToMilliseconds,
   parseDuration,
+  rangeUtil,
   TimeRange,
 } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -25,24 +26,15 @@ import { LokiGroupedRequest, LokiQuery, LokiQueryType } from './types';
 export function partitionTimeRange(
   isLogsQuery: boolean,
   originalTimeRange: TimeRange,
-  intervalMs: number,
-  resolution: number,
+  stepMs: number,
   duration: number
 ): TimeRange[] {
-  // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
-  // but there are some complications.
-  // we need to replicate this algo:
-  //
-  // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
   const start = originalTimeRange.from.toDate().getTime();
   const end = originalTimeRange.to.toDate().getTime();
 
-  const safeStep = Math.ceil((end - start) / 11000);
-  const step = Math.max(intervalMs * resolution, safeStep);
-
   const ranges = isLogsQuery
     ? splitLogsTimeRange(start, end, duration)
-    : splitMetricTimeRange(start, end, step, duration);
+    : splitMetricTimeRange(start, end, stepMs, duration);
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
@@ -243,29 +235,20 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
     for (const resolution in resolutionPartition) {
       requests.push({
         request: { ...request, targets: resolutionPartition[resolution] },
-        partition: partitionTimeRange(
-          true,
-          request.range,
-          request.intervalMs,
-          Number(resolution),
-          Number(chunkRangeMs)
-        ),
+        partition: partitionTimeRange(true, request.range, request.intervalMs, Number(chunkRangeMs)),
       });
     }
   }
 
   for (const [chunkRangeMs, queries] of Object.entries(rangePartitionedMetricQueries)) {
-    const resolutionPartition = groupBy(queries, (query) => query.resolution || 1);
-    for (const resolution in resolutionPartition) {
+    const stepMsPartition = groupBy(queries, (query) =>
+      calculateStep(request.intervalMs, request.range, query.resolution || 1, query.step)
+    );
+
+    for (const stepMs in stepMsPartition) {
       requests.push({
-        request: { ...request, targets: resolutionPartition[resolution] },
-        partition: partitionTimeRange(
-          false,
-          request.range,
-          request.intervalMs,
-          Number(resolution),
-          Number(chunkRangeMs)
-        ),
+        request: { ...request, targets: stepMsPartition[stepMs] },
+        partition: partitionTimeRange(false, request.range, Number(stepMs), Number(chunkRangeMs)),
       });
     }
   }
@@ -287,4 +270,19 @@ export function runSplitQuery(datasource: LokiDatasource, request: DataQueryRequ
       }
     })
   );
+}
+
+// Replicate from backend for split queries for now, until we can move query splitting to the backend
+// https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
+function calculateStep(intervalMs: number, range: TimeRange, resolution: number, step: string | undefined) {
+  // If we can parse step,the we use it
+  // Otherwise we will calculate step based on interval
+  const interval_regex = /(-?\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
+  if (step?.match(interval_regex)) {
+    return rangeUtil.intervalToMs(step) * resolution;
+  }
+
+  const newStep = intervalMs * resolution;
+  const safeStep = Math.round((range.to.valueOf() - range.from.valueOf()) / 11000);
+  return Math.max(newStep, safeStep);
 }

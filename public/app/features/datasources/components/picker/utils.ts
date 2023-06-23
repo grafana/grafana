@@ -3,7 +3,7 @@ import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
   current: string | DataSourceInstanceSettings | DataSourceRef | null | undefined
-): boolean | undefined {
+): boolean {
   if (!ds) {
     return false;
   }
@@ -20,7 +20,7 @@ export function dataSourceLabel(
   dataSource: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined
 ) {
   if (!dataSource) {
-    return 'Unknown';
+    return 'Select a data source';
   }
 
   if (typeof dataSource === 'string') {
@@ -35,7 +35,7 @@ export function dataSourceLabel(
     return `${dataSource.uid} - not found`;
   }
 
-  return 'Unknown';
+  return 'Select a data source';
 }
 
 export function getDataSourceCompareFn(
