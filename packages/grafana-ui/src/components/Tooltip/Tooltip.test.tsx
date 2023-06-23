@@ -1,4 +1,4 @@
-﻿import { act, render, screen } from '@testing-library/react';
+﻿import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { MutableRefObject } from 'react';
 
@@ -66,7 +66,6 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     await userEvent.hover(screen.getByText('On the page'));
-    screen.debug();
     expect(screen.getByText('Tooltip content')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
