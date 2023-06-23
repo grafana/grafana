@@ -84,7 +84,7 @@ You can assign data source permissions to users, teams, and roles which will all
 
 ## Query and resource caching
 
-When query and resource caching is enabled, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the exact same query or resource request again, the results will come back from the cache instead of from the data source itself.
+When you enable query and resource caching, Grafana temporarily stores the results of data source queries and resource requests. When you or another user submit the same query or resource request again, the results will come back from the cache instead of from the data source.
 
 A "query" refers to a data source query for data frames to be transformed and/or visualized in Grafana. A "resource" refers to any HTTP requests a plugin might make, for example: the Amazon Timestream plugin requesting a list of available databases from AWS. For more information on data source queries and resources, please see the developers page on [backend plugins]({{< relref "../../developers/plugins/backend/" >}}).
 
