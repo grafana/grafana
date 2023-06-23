@@ -27,18 +27,16 @@ func (b *Builder) ToSQL(limit, page int64) (string, []interface{}) {
 
 	b.buildSelect()
 
-	b.sql.WriteString("( ")
-	orderQuery := b.applyFilters()
-
-	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit) + `) AS ids
-		INNER JOIN dashboard ON ids.id = dashboard.id`)
-	b.sql.WriteString("\n")
-
 	b.sql.WriteString(
-		`LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
+		`
+		FROM dashboard
+		LEFT OUTER JOIN dashboard AS folder ON folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag ON dashboard.id = dashboard_tag.dashboard_id`)
 	b.sql.WriteString("\n")
+
+	orderQuery := b.applyFilters()
 	b.sql.WriteString(orderQuery)
+	b.sql.WriteString(b.Dialect.LimitOffset(limit, (page-1)*limit))
 
 	return b.sql.String(), b.params
 }
@@ -69,8 +67,6 @@ func (b *Builder) buildSelect() {
 			recQuery, recQueryParams = f.With()
 		}
 	}
-
-	b.sql.WriteString(` FROM `)
 
 	if recQuery == "" {
 		return
@@ -126,7 +122,6 @@ func (b *Builder) applyFilters() (ordering string) {
 		}
 	}
 
-	b.sql.WriteString("SELECT dashboard.id FROM dashboard")
 	b.sql.WriteString(strings.Join(joins, ""))
 
 	if len(wheres) > 0 {
@@ -165,7 +160,6 @@ func (b *Builder) applyFilters() (ordering string) {
 	}
 
 	orderBy := fmt.Sprintf(" ORDER BY %s", strings.Join(orderByCols, ", "))
-	b.sql.WriteString(orderBy)
 
 	order := strings.Join(orderJoins, "")
 	order += orderBy
