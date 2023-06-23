@@ -6,7 +6,7 @@ import { GrafanaTheme2, locationUtil, textUtil, ThemeTypographyVariantTypes } fr
 import { useTheme2 } from '../../themes';
 import { IconName, IconSize } from '../../types';
 import { Icon } from '../Icon/Icon';
-import { customColor, customWeight } from '../Text/utils';
+import { customWeight } from '../Text/utils';
 
 import { Link } from './Link';
 
@@ -19,7 +19,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   external?: boolean;
   /** True if the element should be displayed inline with surrounding text, false if it should be displayed as a block */
   inline?: boolean;
-  /** What typograpy variant should be used for the component. Only use if default variant for the defined element is not what is needed */
+  /** The default variant is 'body'. To fit another styles set the correspondent variant as it is necessary also to adjust the icon size */
   variant?: keyof ThemeTypographyVariantTypes;
   /** Override the default weight for the used variant */
   weight?: 'light' | 'regular' | 'medium' | 'bold';
@@ -28,6 +28,19 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   children: string;
 }
 
+const svgSizes: {
+  [key in keyof ThemeTypographyVariantTypes]: IconSize;
+} = {
+  h1: 'xl',
+  h2: 'xl',
+  h3: 'lg',
+  h4: 'lg',
+  h5: 'md',
+  h6: 'md',
+  body: 'md',
+  bodySmall: 'xs',
+};
+
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   ({ href, color, external = false, inline, variant = 'body', weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
@@ -35,18 +48,6 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     const theme = useTheme2();
     const styles = getLinkStyles(theme, variant, weight, color, inline);
     const externalIcon = icon || 'external-link-alt';
-    const svgSizes: {
-      [key in keyof ThemeTypographyVariantTypes]: IconSize;
-    } = {
-      h1: 'xl',
-      h2: 'xl',
-      h3: 'lg',
-      h4: 'lg',
-      h5: 'md',
-      h6: 'md',
-      body: 'md',
-      bodySmall: 'xs',
-    };
 
     return external ? (
       <a href={validUrl} ref={ref} target="_blank" rel="noreferrer" {...rest} className={styles}>
@@ -56,7 +57,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
     ) : (
       <Link ref={ref} href={validUrl} {...rest} className={styles}>
         {children}
-        {icon && <Icon name={icon} />}
+        {icon && <Icon name={icon} size={svgSizes[variant] || 'md'} />}
       </Link>
     );
   }
@@ -73,7 +74,7 @@ export const getLinkStyles = (
 ) => {
   const getLinkColor = (color: TextLinkProps['color'], inline: boolean) => {
     if (color) {
-      return customColor(color, theme);
+      return theme.colors.text[color];
     }
     return inline ? theme.colors.text.link : theme.colors.text.primary;
   };
