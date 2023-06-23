@@ -17,6 +17,20 @@ import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
 
+const fetch = jest.fn().mockResolvedValue({ correlations: [] });
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getBackendSrv: () => ({ fetch }),
+}));
+
+jest.mock('rxjs', () => ({
+  ...jest.requireActual('rxjs'),
+  lastValueFrom: () =>
+    new Promise((resolve, reject) => {
+      resolve({ data: { correlations: [] } });
+    }),
+}));
+
 interface SetupParams {
   queryParams?: UrlQueryMap;
   exploreMixedDatasource?: boolean;
