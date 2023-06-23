@@ -29,7 +29,6 @@ import {
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
-import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -76,6 +75,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const stateList = useMemo(() => getStateList(props.options.stateFilter), [props.options.stateFilter]);
   const { options, replaceVariables } = props;
+  const dataSourceName =
+    options.datasource === GRAFANA_DATASOURCE_NAME ? GRAFANA_RULES_SOURCE_NAME : options.datasource;
   const parsedOptions: UnifiedAlertListOptions = {
     ...props.options,
     alertName: replaceVariables(options.alertName),
@@ -90,66 +91,78 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   useEffect(() => {
     if (props.options.groupMode === GroupMode.Default) {
       dispatch(
-        fetchAllPromAndRulerRulesAction(false, {
-          limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-          matcher: matcherList,
-          state: stateList,
-        })
+        fetchAllPromAndRulerRulesAction(
+          false,
+          {
+            limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+            matcher: matcherList,
+            state: stateList,
+          },
+          dataSourceName
+        )
       );
     }
-  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList]);
+  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList, dataSourceName]);
 
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     dispatch(
-      fetchAllPromAndRulerRulesAction(false, {
-        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-        matcher: matcherList,
-        state: stateList,
-      })
-    );
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
-      dispatch(
-        fetchAllPromAndRulerRulesAction(false, {
+      fetchAllPromAndRulerRulesAction(
+        false,
+        {
           limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
           matcher: matcherList,
           state: stateList,
-        })
+        },
+        dataSourceName
+      )
+    );
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
+      dispatch(
+        fetchAllPromAndRulerRulesAction(
+          false,
+          {
+            limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+            matcher: matcherList,
+            state: stateList,
+          },
+          dataSourceName
+        )
       )
     );
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances]);
+  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances, dataSourceName]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
       dispatch(
-        fetchAllPromAndRulerRulesAction(false, {
-          limitAlerts: INSTANCES_DISPLAY_LIMIT,
-          matcher: matcherList,
-          state: stateList,
-        })
+        fetchAllPromAndRulerRulesAction(
+          false,
+          {
+            limitAlerts: INSTANCES_DISPLAY_LIMIT,
+            matcher: matcherList,
+            state: stateList,
+          },
+          dataSourceName
+        )
       );
       toggleLimit(true);
     } else {
       dispatch(
-        fetchAllPromAndRulerRulesAction(false, {
-          matcher: matcherList,
-          state: stateList,
-        })
+        fetchAllPromAndRulerRulesAction(
+          false,
+          {
+            matcher: matcherList,
+            state: stateList,
+          },
+          dataSourceName
+        )
       );
       toggleLimit(false);
     }
   };
-
-  const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
-    prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
-    ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
-  }));
-
-  const loading = prom.loading || ruler.loading;
-  const haveResults = !!prom.result || !!ruler.result;
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
@@ -157,7 +170,12 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
   const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
+  const haveResults = rulesDataSourceNames.some(
+    (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
+  );
+
   const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
+  const loading = rulesDataSourceNames.some((name) => promRulesRequests[name]?.loading);
 
   const styles = useStyles2(getStyles);
 

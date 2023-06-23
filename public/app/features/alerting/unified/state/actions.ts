@@ -246,15 +246,23 @@ export const fetchRulerRulesAction = createAsyncThunk(
 export function fetchPromAndRulerRulesAction({
   rulesSourceName,
   identifier,
+  filter,
+  limitAlerts,
+  matcher,
+  state,
 }: {
   rulesSourceName: string;
   identifier?: RuleIdentifier;
+  filter?: FetchPromRulesFilter | undefined;
+  limitAlerts?: number | undefined;
+  matcher?: Matcher[] | undefined;
+  state?: string[] | undefined;
 }): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier }));
+    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
@@ -370,31 +378,34 @@ interface FetchPromRulesRulesActionProps {
 
 export function fetchAllPromAndRulerRulesAction(
   force = false,
-  options: FetchPromRulesRulesActionProps = {}
+  options: FetchPromRulesRulesActionProps = {},
+  dataSourceName?: string
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
     await Promise.allSettled(
-      getAllRulesSourceNames().map(async (rulesSourceName) => {
-        await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
+      getAllRulesSourceNames()
+        .filter((rulesSourceName) => rulesSourceName === (dataSourceName ?? rulesSourceName))
+        .map(async (rulesSourceName) => {
+          await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-        const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
-        const dataSourceConfig = dataSources[rulesSourceName].result;
+          const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+          const dataSourceConfig = dataSources[rulesSourceName].result;
 
-        if (!dataSourceConfig) {
-          return;
-        }
+          if (!dataSourceConfig) {
+            return;
+          }
 
-        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
-        const shouldLoadRuler =
-          (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
+          const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+          const shouldLoadRuler =
+            (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
-        await Promise.allSettled([
-          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
-          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
-        ]);
-      })
+          await Promise.allSettled([
+            shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
+            shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+          ]);
+        })
     );
 
     logInfo('All Prom and Ruler rules loaded', {
