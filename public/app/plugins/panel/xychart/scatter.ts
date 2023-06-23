@@ -21,7 +21,6 @@ import {
   VisibilityMode,
   ScaleDimensionConfig,
   ScaleDimensionMode,
-  ScaleDistribution,
 } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
