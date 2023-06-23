@@ -277,6 +277,7 @@ The resulting table panel:
 ## Time series queries
 
 The examples in this section query the following table:
+
 ```text
 +---------------------+--------------+---------------------+----------+
 | time_date_time      | value_double | CreatedAt           | hostname |
