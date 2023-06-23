@@ -10,7 +10,7 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
-import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import { InlineField, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
 // TODO:  Minimal implementation, needs some <3
 export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProps<ReduceTransformerOptions>) => {
@@ -55,61 +55,48 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
 
   return (
     <>
-      <div>
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label width-8" aria-label={selectors.components.Transforms.Reduce.modeLabel}>
-            Mode
-          </div>
-          <Select
-            options={modes}
-            value={modes.find((v) => v.value === options.mode) || modes[0]}
-            onChange={onSelectMode}
-            className="flex-grow-1"
-          />
-        </div>
-      </div>
-      <div className="gf-form-inline">
-        <div className="gf-form gf-form--grow">
-          <div className="gf-form-label width-8" aria-label={selectors.components.Transforms.Reduce.calculationsLabel}>
-            Calculations
-          </div>
-          <StatsPicker
-            className="flex-grow-1"
-            placeholder="Choose Stat"
-            allowMultiple
-            stats={options.reducers || []}
-            onChange={(stats) => {
-              onChange({
-                ...options,
-                reducers: stats as ReducerID[],
-              });
-            }}
-          />
-        </div>
-      </div>
+      <InlineField label="Mode" aria-label={selectors.components.Transforms.Reduce.modeLabel} grow labelWidth={16}>
+        <Select
+          options={modes}
+          value={modes.find((v) => v.value === options.mode) || modes[0]}
+          onChange={onSelectMode}
+        />
+      </InlineField>
+      <InlineField
+        label="Calculations"
+        aria-label={selectors.components.Transforms.Reduce.calculationsLabel}
+        grow
+        labelWidth={16}
+      >
+        <StatsPicker
+          placeholder="Choose Stat"
+          allowMultiple
+          stats={options.reducers || []}
+          onChange={(stats) => {
+            onChange({
+              ...options,
+              reducers: stats as ReducerID[],
+            });
+          }}
+        />
+      </InlineField>
       {options.mode === ReduceTransformerMode.ReduceFields && (
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <LegacyForms.Switch
-              label="Include time"
-              labelClass="width-8"
-              checked={!!options.includeTimeField}
-              onChange={onToggleTime}
-            />
-          </div>
-        </div>
+        <>
+          <LegacyForms.Switch
+            label="Include time"
+            labelClass="width-8"
+            checked={!!options.includeTimeField}
+            onChange={onToggleTime}
+          />
+        </>
       )}
       {options.mode !== ReduceTransformerMode.ReduceFields && (
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <LegacyForms.Switch
-              label="Labels to fields"
-              labelClass="width-8"
-              checked={!!options.labelsToFields}
-              onChange={onToggleLabels}
-            />
-          </div>
-        </div>
+        <LegacyForms.Switch
+          label="Labels to fields"
+          labelClass="width-8"
+          checked={!!options.labelsToFields}
+          onChange={onToggleLabels}
+        />
       )}
     </>
   );
