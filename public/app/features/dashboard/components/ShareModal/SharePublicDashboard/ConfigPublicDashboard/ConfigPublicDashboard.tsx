@@ -16,8 +16,11 @@ import {
   Spinner,
   Switch,
   useStyles2,
+  TimeRangeLabel,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
@@ -49,8 +52,9 @@ export interface ConfigPublicDashboardForm {
 
 const ConfigPublicDashboard = () => {
   const styles = useStyles2(getStyles);
-  const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
+  const { showModal, hideModal } = useContext(ModalsContext);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
@@ -63,6 +67,7 @@ const ConfigPublicDashboard = () => {
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
   const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
@@ -101,6 +106,22 @@ const ConfigPublicDashboard = () => {
     });
   };
 
+  function renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
+    if (isSettingsOpen) {
+      return undefined;
+    }
+
+    return (
+      <>
+        <div className={styles.collapsedText}>
+          Time range = <TimeRangeLabel value={timeRange} />
+        </div>
+        <div className={styles.collapsedText}>{`Time range picker = ${publicDashboard?.timeSelectionEnabled}`}</div>
+        <div className={styles.collapsedText}>{`Annotations = ${publicDashboard?.annotationsEnabled}`}</div>
+      </>
+    );
+  }
+
   return (
     <div>
       {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
@@ -109,15 +130,9 @@ const ConfigPublicDashboard = () => {
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      <div className={styles.titleContainer}>
-        <HorizontalGroup spacing="sm" align="center">
-          <h4 className={styles.title}>Settings</h4>
-          {(isUpdateLoading || isGetLoading) && <Spinner size={14} />}
-        </HorizontalGroup>
-      </div>
-      <Configuration disabled={disableInputs} onChange={onChange} register={register} />
-      <hr />
+
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
+
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
@@ -136,31 +151,43 @@ const ConfigPublicDashboard = () => {
           }
         />
       </Field>
+
+      <Layout>
+        <Switch
+          {...register('isPaused')}
+          disabled={disableInputs}
+          onChange={(e) => {
+            reportInteraction('grafana_dashboards_public_enable_clicked', {
+              action: e.currentTarget.checked ? 'disable' : 'enable',
+            });
+            onChange('isPaused', e.currentTarget.checked);
+          }}
+          data-testid={selectors.PauseSwitch}
+        />
+        <Label
+          className={css`
+            margin-bottom: 0;
+          `}
+        >
+          Pause sharing dashboard
+        </Label>
+      </Layout>
+
+      <QueryOperationRow
+        id="settings"
+        index={0}
+        title="Settings"
+        headerElement={renderCollapsedText(styles)}
+        isOpen={isSettingsOpen}
+      >
+        <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
+      </QueryOperationRow>
+
       <Layout
         orientation={isDesktop ? 0 : 1}
         justify={isDesktop ? 'flex-end' : 'flex-start'}
         align={isDesktop ? 'center' : 'normal'}
       >
-        <HorizontalGroup spacing="sm">
-          <Switch
-            {...register('isPaused')}
-            disabled={disableInputs}
-            onChange={(e) => {
-              reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: e.currentTarget.checked ? 'disable' : 'enable',
-              });
-              onChange('isPaused', e.currentTarget.checked);
-            }}
-            data-testid={selectors.PauseSwitch}
-          />
-          <Label
-            className={css`
-              margin-bottom: 0;
-            `}
-          >
-            Pause sharing dashboard
-          </Label>
-        </HorizontalGroup>
         <HorizontalGroup justify="flex-end">
           <DeletePublicDashboardButton
             className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
@@ -203,6 +230,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   deleteButtonMobile: css`
     margin-top: ${theme.spacing(2)};
   `,
+  collapsedText: css`
+    margin-left: ${theme.spacing.gridSize * 2}px;
+    font-size: ${theme.typography.bodySmall.fontSize};
+    color: ${theme.colors.text.secondary};
+  `,
 });
+type StylesType = ReturnType<typeof getStyles>;
 
 export default ConfigPublicDashboard;
