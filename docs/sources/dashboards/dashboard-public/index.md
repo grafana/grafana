@@ -166,6 +166,7 @@ guaranteed because plugin developers can override this functionality. The follow
     <td>
       <ul>
         <li>Altinity plugin for ClickHouse</li>
+        <li>Azure Data Explorer Datasource</li>
         <li>ClickHouse</li>
         <li>Elasticsearch</li>
         <li>Graphite</li>
@@ -207,7 +208,6 @@ If you've confirmed one of these data sources work with public dashboards, let u
         <li>Amazon Timestream</li>
         <li>Apache Cassandra</li>
         <li>AppDynamics</li>
-        <li>Azure Data Explorer Datasource</li>
         <li>Azure Monitor</li>
         <li>CSV</li>
         <li>CloudWatch</li>
