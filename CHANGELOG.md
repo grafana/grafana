@@ -4,7 +4,7 @@
 
 ### Bug fixes
 
-- Fixed CVE-2023-3128
+- **Auth:** Fixed CVE-2023-3128. [#70577](https://github.com/grafana/grafana/issues/70577), [@zerok](https://github.com/zerok)
 
 <!-- 9.2.20 END -->
 <!-- 9.2.19 START -->
