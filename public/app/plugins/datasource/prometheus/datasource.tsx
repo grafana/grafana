@@ -508,7 +508,7 @@ export class PrometheusDatasource
           trackQuery(response, request, startTime);
         })
       );
-      // Run queries trough browser/proxy
+      // Run queries through browser/proxy
     } else {
       const start = getPrometheusTime(request.range.from, false);
       const end = getPrometheusTime(request.range.to, true);
@@ -967,7 +967,7 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options?: any) {
+  async getTagKeys(options?: { series: string[] }) {
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(
@@ -1233,7 +1233,7 @@ export class PrometheusDatasource
     return finalQuery;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   filterQuery(query: PromQuery): boolean {
     if (query.hide || !query.expr) {
       return false;
@@ -1241,7 +1241,7 @@ export class PrometheusDatasource
     return true;
   }
 
-  // Used when running queries trough backend
+  // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars): Record<string, any> {
     const variables = cloneDeep(scopedVars);
 

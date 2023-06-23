@@ -11,9 +11,7 @@ on:
         description: Needs to match, exactly, the name of a milestone
         required: true
         type: string
-    secrets:
-      token:
-        required: true
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -42,4 +40,4 @@ jobs:
         uses: ./actions/close-milestone
         with:
           version_call: ${{ inputs.version_call }}
-          token: ${{ secrets.token }}
+          token: ${{ steps.generate_token.outputs.token }}
