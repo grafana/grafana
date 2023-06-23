@@ -26,7 +26,7 @@ If you install from the RPM repository, then Grafana is automatically updated ev
 Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
 {{% /admonition %}}
 
-To install Grafana using a RPM repository, complete the following steps:
+To install Grafana from the RPM repository, complete the following steps:
 
 1. Import the GPG key:
 
