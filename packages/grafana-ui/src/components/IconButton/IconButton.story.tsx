@@ -14,6 +14,9 @@ interface ScenarioProps {
   background: 'canvas' | 'primary' | 'secondary';
 }
 
+const defaultExcludes = ['ariaLabel', 'aria-label'];
+const additionalExcludes = ['size', 'name', 'variant', 'iconType'];
+
 const meta: Meta<typeof IconButton> = {
   title: 'Buttons/IconButton',
   component: IconButton,
@@ -22,7 +25,7 @@ const meta: Meta<typeof IconButton> = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['ariaLabel', 'iconType', 'aria-label'] },
+    controls: { exclude: defaultExcludes },
   },
   args: {
     name: 'apps',
@@ -98,6 +101,12 @@ export const ExamplesSizes = (args: BasePropsWithTooltip) => {
   );
 };
 
+ExamplesSizes.parameters = {
+  controls: {
+    exclude: [...defaultExcludes, ...additionalExcludes],
+  },
+};
+
 export const ExamplesBackground = (args: BasePropsWithTooltip) => {
   const RenderBackgroundScenario = ({ background }: ScenarioProps) => {
     const theme = useTheme2();
@@ -135,6 +144,12 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
       <RenderBackgroundScenario background="secondary" />
     </div>
   );
+};
+
+ExamplesBackground.parameters = {
+  controls: {
+    exclude: [...defaultExcludes, ...additionalExcludes],
+  },
 };
 
 export default meta;
