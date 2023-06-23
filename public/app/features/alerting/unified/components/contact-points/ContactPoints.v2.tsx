@@ -3,15 +3,15 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { GrafanaNotifierType } from 'app/types/alerting';
 
+import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
-// TODO move these icons somewhere else
-import { INTEGRATION_ICONS } from '../notification-policies/Policy';
 
 const ContactPoints = () => {
   const styles = useStyles2(getStyles);
@@ -113,33 +113,46 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
         ) : (
           <MetaText>is not used</MetaText>
         )}
-        <Spacer />
         {isProvisioned && <Badge color="purple" text="Provisioned" />}
-        {!isProvisioned && (
+        <Spacer />
+        <ConditionalWrap
+          shouldWrap={isProvisioned}
+          wrap={(children) => (
+            <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+              {children}
+            </Tooltip>
+          )}
+        >
           <Button
             variant="secondary"
             size="sm"
             icon="edit"
             type="button"
+            disabled={isProvisioned}
             aria-label="edit-action"
             data-testid="edit-action"
           >
             Edit
           </Button>
-        )}
-        {/* additional actions:
-          copy name,
-          export,
-          delete,
-        */}
-        <Button
-          variant="secondary"
-          size="sm"
-          icon="ellipsis-h"
-          type="button"
-          aria-label="more-actions"
-          data-testid="more-actions"
-        />
+        </ConditionalWrap>
+        <Dropdown
+          overlay={
+            <Menu>
+              <Menu.Item label="Export" icon="download-alt" />
+              <Menu.Divider />
+              <Menu.Item label="Delete" icon="trash-alt" destructive disabled={isProvisioned} />
+            </Menu>
+          }
+        >
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="ellipsis-h"
+            type="button"
+            aria-label="more-actions"
+            data-testid="more-actions"
+          />
+        </Dropdown>
       </Stack>
     </div>
   );

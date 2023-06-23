@@ -5,10 +5,6 @@
 
 import { NotifierType, NotifierStatus } from 'app/types';
 
-import { receiversApi } from '../../api/receiversApi';
-
-const { useContactPointsStateQuery } = receiversApi;
-
 // A Contact Point has 1 or more integrations
 // each integration can have additional metadata assigned to it
 export interface ContactPoint<T extends Notifier> {
@@ -20,11 +16,8 @@ interface Notifier {
 }
 
 // Grafana Managed contact points have receivers with additional diagnostics
-interface NotifierWithDiagnostics extends Notifier {
+export interface NotifierWithDiagnostics extends Notifier {
   status: NotifierStatus;
 }
 
-export function useContactPoints(AlertManagerSourceName: string) {
-  const contactPointsDetails = {};
-  const contactPointsState = useContactPointsStateQuery(AlertManagerSourceName);
-}
+export function useContactPoints(AlertManagerSourceName: string) {}
