@@ -672,7 +672,7 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 		JSONData: plugins.JSONData{
 			ID: id,
 		},
-		Class: plugins.Core,
+		Class: plugins.ClassCore,
 	}
 
 	p.SetLogger(log.New("test-plugin"))

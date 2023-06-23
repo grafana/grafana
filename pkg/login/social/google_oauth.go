@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -16,14 +17,14 @@ type SocialGoogle struct {
 	apiUrl       string
 }
 
-func (s *SocialGoogle) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
 
-	response, err := s.httpGet(client, s.apiUrl)
+	response, err := s.httpGet(ctx, client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

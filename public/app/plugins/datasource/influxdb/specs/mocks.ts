@@ -58,6 +58,6 @@ export function getMockDSInstanceSettings(): DataSourceInstanceSettings<InfluxOp
       module: '',
       baseUrl: '',
     },
-    jsonData: { version: InfluxVersion.InfluxQL, httpMode: 'POST' },
+    jsonData: { version: InfluxVersion.InfluxQL, httpMode: 'POST', dbName: 'site' },
   };
 }

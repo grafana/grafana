@@ -21,13 +21,14 @@ import {
 import { DataQuery } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../../profile/state/selectors';
 import {
   addResultsToCache,
   clearCache,
   loadSupplementaryQueryData,
+  selectIsWaitingForData,
   setSupplementaryQueryEnabled,
 } from '../state/query';
 import { updateTimeRange } from '../state/time';
@@ -40,7 +41,7 @@ import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
 
 interface LogsContainerProps extends PropsFromRedux {
   width: number;
-  exploreId: ExploreId;
+  exploreId: string;
   scanRange?: RawTimeRange;
   syncedTimes: boolean;
   loadingState: LoadingState;
@@ -50,6 +51,7 @@ interface LogsContainerProps extends PropsFromRedux {
   onStopScanning: () => void;
   eventBus: EventBus;
   splitOpenFn: SplitOpen;
+  scrollElement?: HTMLDivElement;
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps> {
@@ -144,6 +146,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       logsVolume,
+      scrollElement,
     } = this.props;
 
     if (!logRows) {
@@ -206,6 +209,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
             eventBus={this.props.eventBus}
+            panelState={this.props.panelState}
+            scrollElement={scrollElement}
           />
         </LogsCrossFadeTransition>
       </>
@@ -213,12 +218,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const {
     logsResult,
-    loading,
     scanning,
     datasourceInstance,
     isLive,
@@ -228,6 +232,8 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     absoluteRange,
     supplementaryQueries,
   } = item;
+  const loading = selectIsWaitingForData(exploreId)(state);
+  const panelState = item.panelsState;
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
 
@@ -247,6 +253,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreI
     range,
     absoluteRange,
     logsVolume,
+    panelState,
   };
 }
 

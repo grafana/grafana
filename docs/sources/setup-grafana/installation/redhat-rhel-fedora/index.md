@@ -2,7 +2,7 @@
 description: Install guide for Grafana on Red Hat, RHEL, and Fedora.
 title: Install Grafana on Red Hat, RHEL, or Fedora
 menuTitle: Redhat, RHEL, or Fedora
-weight: 400
+weight: 200
 ---
 
 # Install Grafana on Red Hat, RHEL, or Fedora
@@ -79,7 +79,7 @@ If you install Grafana manually using YUM or RPM, then you must manually update 
    - **Enterprise** - Recommended download. Functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
    - **Open Source** - Functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
 1. Depending on which system you are running, click **Linux** or **ARM**.
-1. Copy and paste the RPM package URL and the local RPM package information from the installation page into the pattern shown below, then run the commands.
+1. Copy and paste the RPM package URL and the local RPM package information from the [download page](/grafana/download) into the pattern shown below and run the command.
 
    ```bash
    sudo yum install -y <rpm package url>

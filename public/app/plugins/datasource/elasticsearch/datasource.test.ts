@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   CoreApp,
@@ -94,7 +95,6 @@ function getTestContext({
   data = { responses: [] },
   from = 'now-5m',
   jsonData,
-  database = '[test-]YYYY.MM.DD',
   fetchMockImplementation,
   templateSrvMock,
 }: TestContext = {}) {
@@ -127,6 +127,7 @@ function getTestContext({
           return text;
         }
       },
+      containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
       getAdhocFilters: () => [],
     } as unknown as TemplateSrv);
 
@@ -505,7 +506,7 @@ describe('ElasticDatasource', () => {
 
       const errObject = {
         error: 'Bad Request',
-        message: 'Elasticsearch error: Authentication to data source failed',
+        message: 'Authentication to data source failed',
       };
 
       await expect(ds.query(query)).toEmitValuesWith((received) => {
@@ -977,6 +978,102 @@ describe('ElasticDatasource', () => {
         timeField: '',
       });
     });
+
+    it('does not return logs samples for non time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'filters', id: '1' }],
+            query: '',
+          }
+        )
+      ).toEqual(undefined);
+    });
+
+    it('returns logs samples for time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          }
+        )
+      ).toEqual({
+        refId: `log-sample-A`,
+        query: '',
+        metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+      });
+    });
+  });
+
+  describe('getDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not create a logs sample provider for non time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does create a logs sample provider for time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+    });
+  });
+
+  describe('getLogsSampleDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it("doesn't return a logs sample provider given a non time series query", () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+    });
+
+    it('returns a logs sample provider given a time series query', () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
+    });
   });
 });
 
@@ -1294,6 +1391,57 @@ const logsResponse = {
     ],
   },
 };
+
+describe('targetContainsTemplate', () => {
+  let ds: ElasticDatasource;
+  let target: ElasticsearchQuery;
+  beforeEach(() => {
+    const context = getTestContext();
+    ds = context.ds;
+    target = {
+      refId: 'test',
+      bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: 'escape\\:test',
+    };
+  });
+  it('returns false when there is no variable in the query', () => {
+    expect(ds.targetContainsTemplate(target)).toBe(false);
+  });
+  it('returns true when there are variables in the query alias', () => {
+    target.alias = '$variable';
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the query', () => {
+    target.query = '$variable:something';
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the bucket aggregation', () => {
+    target.bucketAggs = [{ type: 'date_histogram', field: '$field', id: '1' }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.bucketAggs = [{ type: 'date_histogram', field: '@timestamp', id: '1', settings: { interval: '$interval' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in the metric aggregation', () => {
+    target.metrics = [{ type: 'moving_avg', id: '1', settings: { window: '$window' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.metrics = [{ type: 'moving_avg', id: '1', field: '$field' }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+    target.metrics = [{ type: 'extended_stats', id: '1', meta: { something: '$something' } }];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+  it('returns true when there are variables in an array inside an object in metrics', () => {
+    target.metrics = [
+      {
+        field: 'counter',
+        id: '1',
+        settings: { percents: ['20', '40', '$qqq'] },
+        type: 'percentiles',
+      },
+    ];
+    expect(ds.targetContainsTemplate(target)).toBe(true);
+  });
+});
 
 describe('ElasticDatasource using backend', () => {
   beforeEach(() => {

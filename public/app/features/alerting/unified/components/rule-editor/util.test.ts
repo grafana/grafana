@@ -396,16 +396,6 @@ function createThresholdExample(thresholdType: string): AlertQuery[] {
             params: [0, 10],
             type: thresholdType ?? 'gt',
           },
-          operator: {
-            type: 'and',
-          },
-          query: {
-            params: ['B'],
-          },
-          reducer: {
-            params: [],
-            type: 'last',
-          },
         },
       ],
       expression: 'B',

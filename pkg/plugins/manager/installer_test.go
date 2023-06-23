@@ -26,7 +26,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		)
 
 		// mock a plugin to be returned automatically by the plugin loader
-		pluginV1 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+		pluginV1 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 			plugin.Info.Version = v1
 		})
 		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
@@ -85,7 +85,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				zipNameV2 = "test-panel-2.0.0.zip"
 			)
 			// mock a plugin to be returned automatically by the plugin loader
-			pluginV2 := createPlugin(t, pluginID, plugins.External, true, true, func(plugin *plugins.Plugin) {
+			pluginV2 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2
 			})
 
@@ -93,7 +93,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 				FileHeader: zip.FileHeader{Name: zipNameV2},
 			}}}}
 			loader.LoadFunc = func(ctx context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
-				require.Equal(t, plugins.External, src.PluginClass(ctx))
+				require.Equal(t, plugins.ClassExternal, src.PluginClass(ctx))
 				require.Equal(t, []string{zipNameV2}, src.PluginURIs(ctx))
 				return []*plugins.Plugin{pluginV2}, nil
 			}
@@ -153,8 +153,8 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		tcs := []struct {
 			class plugins.Class
 		}{
-			{class: plugins.Core},
-			{class: plugins.Bundled},
+			{class: plugins.ClassCore},
+			{class: plugins.ClassBundled},
 		}
 
 		for _, tc := range tcs {
@@ -190,7 +190,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 		Class: class,
 		JSONData: plugins.JSONData{
 			ID:      pluginID,
-			Type:    plugins.DataSource,
+			Type:    plugins.TypeDataSource,
 			Backend: backend,
 		},
 	}

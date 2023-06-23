@@ -69,7 +69,6 @@ const {
   setSelectedIdx,
   setDisableTextWrap,
   showAdditionalSettings,
-  setInferType,
 } = stateSlice.actions;
 
 export const MetricsModal = (props: MetricsModalProps) => {
@@ -83,31 +82,26 @@ export const MetricsModal = (props: MetricsModalProps) => {
   /**
    * loads metrics and metadata on opening modal and switching off useBackend
    */
-  const updateMetricsMetadata = useCallback(
-    async (inferType: boolean) => {
-      // *** Loading Gif
-      dispatch(setIsLoading(true));
+  const updateMetricsMetadata = useCallback(async () => {
+    // *** Loading Gif
+    dispatch(setIsLoading(true));
 
-      const data: MetricsModalMetadata = await setMetrics(datasource, query, inferType, initialMetrics);
-
-      dispatch(
-        buildMetrics({
-          isLoading: false,
-          hasMetadata: data.hasMetadata,
-          metrics: data.metrics,
-          metaHaystackDictionary: data.metaHaystackDictionary,
-          nameHaystackDictionary: data.nameHaystackDictionary,
-          totalMetricCount: data.metrics.length,
-          filteredMetricCount: data.metrics.length,
-        })
-      );
-    },
-    [query, datasource, initialMetrics]
-  );
+    const data: MetricsModalMetadata = await setMetrics(datasource, query, initialMetrics);
+    dispatch(
+      buildMetrics({
+        isLoading: false,
+        hasMetadata: data.hasMetadata,
+        metrics: data.metrics,
+        metaHaystackDictionary: data.metaHaystackDictionary,
+        nameHaystackDictionary: data.nameHaystackDictionary,
+        totalMetricCount: data.metrics.length,
+        filteredMetricCount: data.metrics.length,
+      })
+    );
+  }, [query, datasource, initialMetrics]);
 
   useEffect(() => {
-    updateMetricsMetadata(state.inferType);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    updateMetricsMetadata();
   }, [updateMetricsMetadata]);
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
@@ -123,10 +117,10 @@ export const MetricsModal = (props: MetricsModalProps) => {
    */
   const debouncedBackendSearch = useMemo(
     () =>
-      debounce(async (metricText: string, inferType: boolean) => {
+      debounce(async (metricText: string) => {
         dispatch(setIsLoading(true));
 
-        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource, inferType);
+        const metrics = await getBackendSearchMetrics(metricText, query.labels, datasource);
 
         dispatch(
           filterMetricsBackend({
@@ -150,9 +144,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
   function searchCallback(query: string, fullMetaSearchVal: boolean) {
     if (state.useBackend && query === '') {
       // get all metrics data if a user erases everything in the input
-      updateMetricsMetadata(state.inferType);
+      updateMetricsMetadata();
     } else if (state.useBackend) {
-      debouncedBackendSearch(query, state.inferType);
+      debouncedBackendSearch(query);
     } else {
       // search either the names or all metadata
       // fuzzy search go!
@@ -200,31 +194,17 @@ export const MetricsModal = (props: MetricsModalProps) => {
         onChange({ ...query, disableTextWrap: !state.disableTextWrap });
         tracking('grafana_prom_metric_encycopedia_disable_text_wrap_interaction', state, '');
       }}
-      onChangeInferType={() => {
-        const inferType = !state.inferType;
-        dispatch(setInferType(inferType));
-        // update the type
-        if (state.useBackend) {
-          // if there is no query yet, it will infer the type on the api call
-          if (state.fuzzySearchQuery !== '') {
-            debouncedBackendSearch(state.fuzzySearchQuery, inferType);
-          }
-        } else {
-          // updates the metadata with the inferred type
-          updateMetricsMetadata(inferType);
-        }
-      }}
       onChangeUseBackend={() => {
         const newVal = !state.useBackend;
         dispatch(setUseBackend(newVal));
         onChange({ ...query, useBackend: newVal });
         if (newVal === false) {
           // rebuild the metrics metadata if we turn off useBackend
-          updateMetricsMetadata(state.inferType);
+          updateMetricsMetadata();
         } else {
           // check if there is text in the browse search and update
           if (state.fuzzySearchQuery !== '') {
-            debouncedBackendSearch(state.fuzzySearchQuery, state.inferType);
+            debouncedBackendSearch(state.fuzzySearchQuery);
           }
           // otherwise wait for user typing
         }
@@ -259,9 +239,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
             }}
           />
         </div>
-        <div>
-          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
-        </div>
         {state.hasMetadata && (
           <div className={styles.inputItem}>
             <MultiSelect
@@ -274,6 +251,9 @@ export const MetricsModal = (props: MetricsModalProps) => {
             />
           </div>
         )}
+        <div>
+          <Spinner className={`${styles.loadingSpinner} ${state.isLoading ? styles.visible : ''}`} />
+        </div>
         <div className={styles.inputItem}>
           <Toggletip
             aria-label="Additional settings"
@@ -287,10 +267,15 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 size="md"
                 onClick={() => dispatch(showAdditionalSettings())}
                 data-testid={testIds.showAdditionalSettings}
+                className={styles.noBorder}
               >
                 Additional Settings
               </Button>
-              <Button variant="secondary" icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'} />
+              <Button
+                className={styles.noBorder}
+                variant="secondary"
+                icon={state.showAdditionalSettings ? 'angle-up' : 'angle-down'}
+              />
             </ButtonGroup>
           </Toggletip>
         </div>
@@ -368,5 +353,4 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
   showAdditionalSettings: 'show-additional-settings',
-  inferType: 'set-infer-type',
 };

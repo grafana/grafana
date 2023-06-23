@@ -42,12 +42,13 @@ export class SQLSearcher implements GrafanaSearcher {
   private async composeQuery(apiQuery: APIQuery, searchOptions: SearchQuery): Promise<APIQuery> {
     const query = await replaceCurrentFolderQuery(searchOptions);
 
-    if (query.query === '*') {
-      if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
-        apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
-      }
-    } else if (query.query?.length) {
+    if (query.query?.length && query.query !== '*') {
       apiQuery.query = query.query;
+    }
+
+    // search v1 supports only one kind
+    if (query.kind?.length === 1 && TYPE_KIND_MAP[query.kind[0]]) {
+      apiQuery.type = TYPE_KIND_MAP[query.kind[0]];
     }
 
     if (query.uid) {
@@ -81,7 +82,11 @@ export class SQLSearcher implements GrafanaSearcher {
     }
 
     const limit = query.limit ?? (query.from !== undefined ? 1 : DEFAULT_MAX_VALUES);
-    const page = query.from !== undefined ? query.from / limit : undefined;
+    const page =
+      query.from !== undefined
+        ? // prettier-ignore
+          (query.from / limit) + 1 // pages are 1-indexed, so need to +1 to get there
+        : undefined;
 
     const q = await this.composeQuery(
       {

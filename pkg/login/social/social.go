@@ -2,30 +2,34 @@ package social
 
 import (
 	"bytes"
+	"compress/zlib"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
+	"time"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-)
-
-var (
-	logger = log.New("social")
 )
 
 type SocialService struct {
@@ -68,6 +72,7 @@ func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
+	cache remotecache.CacheStorage,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
@@ -182,10 +187,12 @@ func ProvideService(cfg *setting.Cfg,
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
-				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
-				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				cache:                cache,
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
@@ -261,7 +268,7 @@ func (b *BasicUserInfo) String() string {
 }
 
 type SocialConnector interface {
-	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
+	UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
@@ -450,9 +457,19 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: info.TlsSkipVerify,
 		},
+		DialContext: (&net.Dialer{
+			Timeout:   time.Second * 10,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout:   15 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
 	}
+
 	oauthClient := &http.Client{
 		Transport: tr,
+		Timeout:   time.Second * 15,
 	}
 
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
@@ -514,4 +531,60 @@ func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interfac
 	}
 
 	return m, nil
+}
+
+func (s *SocialBase) retrieveRawIDToken(idToken interface{}) ([]byte, error) {
+	tokenString, ok := idToken.(string)
+	if !ok {
+		return nil, fmt.Errorf("id_token is not a string: %v", idToken)
+	}
+
+	jwtRegexp := regexp.MustCompile("^([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)[.]([-_a-zA-Z0-9=]+)$")
+	matched := jwtRegexp.FindStringSubmatch(tokenString)
+	if matched == nil {
+		return nil, fmt.Errorf("id_token is not in JWT format: %s", tokenString)
+	}
+
+	rawJSON, err := base64.RawURLEncoding.DecodeString(matched[2])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding id_token: %w", err)
+	}
+
+	headerBytes, err := base64.RawURLEncoding.DecodeString(matched[1])
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding header: %w", err)
+	}
+
+	var header map[string]interface{}
+	if err := json.Unmarshal(headerBytes, &header); err != nil {
+		return nil, fmt.Errorf("error deserializing header: %w", err)
+	}
+
+	if compressionVal, exists := header["zip"]; exists {
+		compression, ok := compressionVal.(string)
+		if !ok {
+			return nil, fmt.Errorf("unrecognized compression header: %v", compressionVal)
+		}
+
+		if compression != "DEF" {
+			return nil, fmt.Errorf("unknown compression algorithm: %s", compression)
+		}
+
+		fr, err := zlib.NewReader(bytes.NewReader(rawJSON))
+		if err != nil {
+			return nil, fmt.Errorf("error creating zlib reader: %w", err)
+		}
+		defer func() {
+			if err := fr.Close(); err != nil {
+				s.log.Warn("Failed closing zlib reader", "error", err)
+			}
+		}()
+
+		rawJSON, err = io.ReadAll(fr)
+		if err != nil {
+			return nil, fmt.Errorf("error decompressing payload: %w", err)
+		}
+	}
+
+	return rawJSON, nil
 }
