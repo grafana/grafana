@@ -106,7 +106,9 @@ A panel's interval is visible in the [query options]({{< relref "../../panels-vi
 
 You can make a panel retrieve fresh data more often by increasing the **Max data points** setting in the panel's [query options]({{< relref "../../panels-visualizations/query-transform-data/" >}}).
 
-### Query caching benefits
+### Caching benefits
+
+By reducing the number of queries and requests sent to data sources, caching can provide the following benefits:
 
 - Faster dashboard load times, especially for popular dashboards.
 - Reduced API costs.
