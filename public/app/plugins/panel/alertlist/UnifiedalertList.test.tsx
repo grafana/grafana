@@ -2,14 +2,17 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { act } from 'react-test-renderer';
 import { byRole, byText } from 'testing-library-selector';
 
 import { FieldConfigSource, getDefaultTimeRange, LoadingState, PanelProps } from '@grafana/data';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/alertRuleApi';
+import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
+import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import { DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { RuleNamespace } from 'app/types/unified-alerting';
+import { PromRuleGroupDTO, PromRulesResponse, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { contextSrv } from '../../../core/services/context_srv';
 import {
@@ -17,6 +20,7 @@ import {
   mockPromAlertingRule,
   mockPromRuleGroup,
   mockPromRuleNamespace,
+  mockRulerGrafanaRule,
   mockUnifiedAlertingStore,
 } from '../../../features/alerting/unified/mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
@@ -52,10 +56,28 @@ const grafanaRuleMock = {
   },
 };
 
-const fakeResponse: RuleNamespace[] = grafanaRuleMock.promRules.grafana.result;
+jest.mock('app/features/alerting/unified/api/alertmanager');
+
+const fakeResponse: PromRulesResponse = {
+  data: { groups: grafanaRuleMock.promRules.grafana.result[0].groups as PromRuleGroupDTO[] },
+  status: 'success',
+};
 
 const server = setupMswServer();
-jest.mock('app/features/alerting/unified/api/alertmanager');
+
+mockPromRulesApiResponse(server, fakeResponse);
+const originRule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+  {
+    for: '1m',
+    labels: { severity: 'critical', region: 'nasa' },
+    annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+  },
+  { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
+);
+mockRulerRulesApiResponse(server, 'grafana', {
+  'folder-one': [{ name: 'group1', interval: '20s', rules: [originRule] }],
+});
+
 const defaultOptions: UnifiedAlertListOptions = {
   maxItems: 2,
   sortOrder: SortOrder.AlphaAsc,
@@ -122,14 +144,19 @@ const renderPanel = (options: Partial<UnifiedAlertListOptions> = defaultOptions)
 describe('UnifiedAlertList', () => {
   it('subscribes to the dashboard refresh interval', async () => {
     jest.spyOn(defaultProps, 'replaceVariables').mockReturnValue('severity=critical');
-    await renderPanel();
+
+    await act(async () => {
+      renderPanel();
+    });
+
     expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
   });
 
   it('should replace option variables before filtering', async () => {
-    mockPromRulesApiResponse(server, fakeResponse);
-
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     const filterAlertsSpy = jest.spyOn(utils, 'filterAlerts');
 
@@ -137,12 +164,18 @@ describe('UnifiedAlertList', () => {
 
     const user = userEvent.setup();
 
-    await renderPanel({
-      alertInstanceLabelFilter: '$label',
-      dashboardAlerts: false,
-      alertName: '',
-      datasource: GRAFANA_RULES_SOURCE_NAME,
-      folder: undefined,
+    await act(async () => {
+      renderPanel({
+        alertInstanceLabelFilter: '$label',
+        dashboardAlerts: false,
+        alertName: '',
+        datasource: GRAFANA_RULES_SOURCE_NAME,
+        folder: undefined,
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
 
     expect(byText('rule1').get()).toBeInTheDocument();
