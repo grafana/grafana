@@ -58,19 +58,21 @@ Complete the following steps to install Grafana from the APT repository:
 1. Run the following command to update the list of available packages:
 
    ```bash
-   # Update the list of available packages
+   # Updates the list of available packages
    sudo apt-get update
    ```
 
-1. Run one of the following commands to install the OSS or Enterprise release:
+1. To install Grafana OSS, run the following command:
 
    ```bash
-   # To install the latest OSS release:
+   # Installs the latest OSS release:
    sudo apt-get install grafana
    ```
 
+1. To install Grafana Enterprise, run the following command:
+
    ```bash
-   # To install the latest Enterprise release:
+   # Installs the latest Enterprise release:
    sudo apt-get install grafana-enterprise
    ```
 

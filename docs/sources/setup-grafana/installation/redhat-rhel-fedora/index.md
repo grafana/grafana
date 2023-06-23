@@ -35,13 +35,7 @@ To install Grafana from the RPM repository, complete the following steps:
    sudo rpm --import gpg.key
    ```
 
-1. Add a file to your RPM repository using the method of your choice.
-
-   The following example uses `nano` to add a file to the RPM repo.
-
-   ```bash
-   sudo nano /etc/yum.repos.d/grafana.repo
-   ```
+1. Create `/etc/yum.repos.d/grafana.repo` with the following content:
 
    ```bash
    [grafana]
@@ -64,13 +58,13 @@ To install Grafana from the RPM repository, complete the following steps:
 1. To install Grafana OSS, run the following command:
 
    ```bash
-   sudo yum install grafana
+   sudo dnf install grafana
    ```
 
 1. To install Grafana Enterprise, run the following command:
 
    ```bash
-   sudo yum install grafana-enterprise
+   sudo dnf install grafana-enterprise
    ```
 
 ## Install the Grafana RPM package manually
