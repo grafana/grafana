@@ -20,9 +20,12 @@ import React from 'react';
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
+import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
+import { getTraceLinks } from '../model/link-patterns';
 import { Trace } from '../types';
+import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
@@ -94,9 +97,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
     TracePageHeaderTraceId: css`
       label: TracePageHeaderTraceId;
       white-space: nowrap;
+      margin-left: 1em;
     `,
     titleBorderBottom: css`
       border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
+    `,
+    tracePageHeaderTraceId: css`
+      label: TracePageHeaderTraceId;
+      white-space: nowrap;
     `,
   };
 };
@@ -155,10 +163,22 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
   const { trace, updateNextViewRangeTime, updateViewRangeTime, viewRange, timeZone } = props;
 
   const styles = useStyles2(getStyles);
+  const links = React.useMemo(() => {
+    if (!trace) {
+      return [];
+    }
+    return getTraceLinks(trace);
+  }, [trace]);
 
   if (!trace) {
     return null;
   }
+
+  const title = (
+    <h1 className={styles.TracePageHeaderTitle}>
+      <small className={cx(styles.TracePageHeaderTraceId, uTxMuted)}>{trace.traceID}</small>
+    </h1>
+  );
 
   const summaryItems = HEADER_ITEMS.map((item) => {
     const { renderer, ...rest } = item;
@@ -167,6 +187,10 @@ export default function TracePageHeader(props: TracePageHeaderProps) {
 
   return (
     <header className={styles.TracePageHeader}>
+      <div className={cx(styles.TracePageHeaderTitleRow, styles.titleBorderBottom)}>
+        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
+        {title}
+      </div>
       {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
 
       <SpanGraph
