@@ -4,6 +4,7 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
+  DataQueryRequest,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -26,32 +27,33 @@ import { supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { createDefaultInitialState } from './helpers';
 import { saveCorrelationsAction } from './main';
+import * as actions from './query';
 import {
+  addQueryRow,
   addQueryRowAction,
   addResultsToCache,
   cancelQueries,
   cancelQueriesAction,
+  changeQueries,
   cleanSupplementaryQueryAction,
+  cleanSupplementaryQueryDataProviderAction,
   clearCache,
+  clearLogs,
   importQueries,
+  QueryEndedPayload,
   queryReducer,
+  queryStreamUpdatedAction,
   runQueries,
   scanStartAction,
   scanStopAction,
   setSupplementaryQueryEnabled,
-  addQueryRow,
-  cleanSupplementaryQueryDataProviderAction,
-  clearLogs,
-  queryStreamUpdatedAction,
-  QueryEndedPayload,
-  changeQueries,
 } from './query';
-import * as actions from './query';
 import { makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
 const exploreId = ExploreId.left;
+const cleanUpMock = jest.fn();
 const datasources: DataSourceApi[] = [
   {
     name: 'testDs',
@@ -742,6 +744,35 @@ describe('reducer', () => {
       await dispatch(clearCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
+    });
+  });
+
+  describe('when data source does not support log volume supplementary query', () => {
+    it('cleans up query subscription correctly (regression #70049)', async () => {
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          left: {
+            ...defaultInitialState.explore.left,
+            datasourceInstance: {
+              getRef: jest.fn(),
+              meta: {
+                id: 'something',
+              },
+              query(request: DataQueryRequest<DataQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponse> {
+                return new Observable(() => cleanUpMock);
+              },
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      const dispatch = store.dispatch;
+
+      cleanUpMock.mockClear();
+      await dispatch(runQueries(ExploreId.left));
+      await dispatch(cancelQueries(ExploreId.left));
+      expect(cleanUpMock).toBeCalledTimes(1);
     });
   });
 

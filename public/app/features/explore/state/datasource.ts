@@ -103,7 +103,6 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       logsResult: null,
       supplementaryQueries: loadSupplementaryQueries(),
       queryResponse: createEmptyQueryResponse(),
-      loading: false,
       queryKeys: [],
       history,
       datasourceMissing: false,

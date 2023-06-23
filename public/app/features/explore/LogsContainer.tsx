@@ -27,7 +27,13 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadSupplementaryQueryData, setSupplementaryQueryEnabled } from './state/query';
+import {
+  addResultsToCache,
+  clearCache,
+  loadSupplementaryQueryData,
+  selectIsWaitingForData,
+  setSupplementaryQueryEnabled,
+} from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -208,13 +214,12 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
   // @ts-ignore
   const item: ExploreItemState = explore[exploreId];
   const {
     logsResult,
-    loading,
     scanning,
     datasourceInstance,
     isLive,
@@ -224,6 +229,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     absoluteRange,
     supplementaryQueries,
   } = item;
+  const loading = selectIsWaitingForData(exploreId)(state);
   const timeZone = getTimeZone(state.user);
   const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
 

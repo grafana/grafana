@@ -18,6 +18,7 @@ export interface EchoMeta {
   windowSize: SizeMeta;
   userAgent: string;
   url?: string;
+  path?: string;
   /**
    * A unique browser session
    */

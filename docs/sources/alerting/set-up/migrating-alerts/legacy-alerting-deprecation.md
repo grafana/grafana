@@ -1,7 +1,7 @@
 ---
 title: Legacy alerting deprecation
 description: Legacy alerting deprecation notice
-weight: 999
+weight: 109
 keywords:
   - grafana
   - alerting
@@ -19,7 +19,7 @@ Users who are still using legacy alerting are encouraged to migrate their alerts
 
 However, we will still patch CVEs until legacy alerting is completely removed in Grafana 11; honoring our commitment to building and distributing secure software.
 
-We have provided [instructions]({{< relref "./migrating-alerts" >}}) on how to migrate to the new alerting system, making the process as easy as possible for users.
+We have provided [upgrade instructions]({{< relref "./_index.md" >}}) on how to migrate to the new alerting system, making the process as easy as possible for users.
 
 ## Why are we deprecating legacy alerting?
 
@@ -29,18 +29,17 @@ The new system is based on Prometheus Alertmanager, which offers a more comprehe
 
 Overall, the new alerting system in Grafana is a major improvement over the legacy alerting feature, providing users with a more powerful and flexible alerting experience.
 
-Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it]({{< relref "../developers/angular_deprecation" >}}) in Grafana 11.
+Additionally, legacy alerting still requires Angular to function and we are [planning to remove support for it]({{< relref "../../../developers/angular_deprecation" >}}) in Grafana 11.
 
 ## When will we remove legacy alerting completely?
 
-Legacy alerting will be removed from the code-base in Grafana 11, following the same timeline as the [Angular deprecation]({{< relref "../developers/angular_deprecation" >}}).
+Legacy alerting will be removed from the code-base in Grafana 11, following the same timeline as the [Angular deprecation]({{< relref "../../../developers/angular_deprecation" >}}).
 
 ## How do I migrate to the new Grafana alerting?
 
-Refer to our [migration instructions]({{< relref "./migrating-alerts/opt-in" >}}).
+Refer to our [upgrade instructions]({{< relref "./_index.md" >}}).
 
 ### Links
 
-- [Upgrade Alerting]({{< relref "./migrating-alerts" >}})
-- [Legacy alerting differences and limitations]({{< relref "./migrating-alerts/migrating-legacy-alerts" >}})
-- [Angular support deprecation]({{< relref "../developers/angular_deprecation" >}})
+- [Upgrade Alerting]({{< relref "./_index.md" >}})
+- [Angular support deprecation]({{< relref "../../../developers/angular_deprecation" >}})

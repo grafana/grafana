@@ -8,7 +8,7 @@ keywords:
   - performance
   - limitations
 title: Performance considerations and limitations
-weight: 450
+weight: 600
 ---
 
 # Performance considerations and limitations
@@ -47,4 +47,4 @@ Grafana cannot be used to receive external alerts. You can only send alerts to t
 
 You have the option to send Grafana managed alerts to an external Alertmanager, you can find this option in the admin tab on the Alerting page.
 
-For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773). For more information on the different Alertmanagers, refer to [Alertmanager]({{< relref "../manage-notifications/alertmanager" >}}).
+For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773).

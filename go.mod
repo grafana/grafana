@@ -57,7 +57,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230524181453-a8e75e4dfdda
+	github.com/grafana/alerting v0.0.0-20230620220549-5169fced2d28
 	github.com/grafana/cuetsy v0.1.9
 	github.com/grafana/grafana-aws-sdk v0.15.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
@@ -245,7 +245,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/matryer/is v1.4.0
 	github.com/urfave/cli v1.22.12
-	go.etcd.io/etcd/api/v3 v3.5.5
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
@@ -362,7 +361,6 @@ require (
 	github.com/blugelabs/ice v1.0.0 // indirect
 	github.com/caio/go-tdigest v3.1.0+incompatible // indirect
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
-	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
 	github.com/docker/docker v23.0.4+incompatible
 	github.com/elazarl/goproxy v0.0.0-20220115173737-adb46da277ac // indirect
@@ -393,7 +391,7 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.9.0
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
 
