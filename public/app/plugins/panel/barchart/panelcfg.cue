@@ -61,6 +61,8 @@ composableKinds: PanelCfg: {
 				FieldConfig: {
 					common.AxisConfig
 					common.HideableFieldConfig
+					common.PointsConfig
+					common.LineConfig
 
 					// Controls line width of the bars.
 					lineWidth?: int32 & >=0 & <=10 | *1
@@ -71,6 +73,8 @@ composableKinds: PanelCfg: {
 					gradientMode?: common.GraphGradientMode & (*"none" | _)
 					// Threshold rendering
 					thresholdsStyle?: common.GraphThresholdsStyleConfig
+					// Draw style
+					drawStyle?: common.GraphDrawStyle
 				} @cuetsy(kind="interface")
 			}
 		}]

@@ -79,6 +79,10 @@ export const defaultOptions: Partial<Options> = {
 
 export interface FieldConfig extends common.AxisConfig, common.HideableFieldConfig, common.PointsConfig, common.LineConfig {
   /**
+   * Draw style
+   */
+  drawStyle?: common.GraphDrawStyle;
+  /**
    * Controls the fill opacity of the bars.
    */
   fillOpacity?: number;
@@ -95,12 +99,10 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
    * Threshold rendering
    */
   thresholdsStyle?: common.GraphThresholdsStyleConfig;
-  drawStyle?: common.GraphDrawStyle;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
-  drawStyle: common.GraphDrawStyle.Bars,
 };
