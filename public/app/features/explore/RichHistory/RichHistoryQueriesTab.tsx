@@ -76,11 +76,6 @@ const getStyles = (theme: GrafanaTheme2, height: number) => {
     multiselect: css`
       width: 100%;
       margin-bottom: ${theme.spacing(1)};
-      .gf-form-select-box__multi-value {
-        background-color: ${bgColor};
-        padding: ${theme.spacing(0.25, 0.5, 0.25, 1)};
-        border-radius: ${theme.shape.borderRadius(1)};
-      }
     `,
     sort: css`
       width: 170px;
