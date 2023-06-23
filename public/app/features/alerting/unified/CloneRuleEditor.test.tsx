@@ -1,4 +1,4 @@
-import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -64,7 +64,6 @@ const ui = {
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
   loadingIndicator: byText('Loading the rule'),
-  loadingGroupIndicator: byText('Loading...'),
 };
 
 function getProvidersWrapper() {
@@ -149,7 +148,7 @@ describe('CloneRuleEditor', function () {
       });
 
       await waitForElementToBeRemoved(ui.loadingIndicator.query());
-      await waitForElementToBeRemoved(ui.loadingGroupIndicator.query(), { container: ui.inputs.group.get() });
+      await waitForElementToBeRemoved(within(ui.inputs.group.get()).getByTestId('Spinner'));
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Grafana Rule (copy)');

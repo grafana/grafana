@@ -123,22 +123,22 @@ func (_m *FakePublicDashboardStore) Find(ctx context.Context, uid string) (*mode
 	return r0, r1
 }
 
-// FindAll provides a mock function with given fields: ctx, orgId
-func (_m *FakePublicDashboardStore) FindAll(ctx context.Context, orgId int64) ([]models.PublicDashboardListResponse, error) {
-	ret := _m.Called(ctx, orgId)
+// FindAllWithPagination provides a mock function with given fields: ctx, query
+func (_m *FakePublicDashboardStore) FindAllWithPagination(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error) {
+	ret := _m.Called(ctx, query)
 
-	var r0 []models.PublicDashboardListResponse
-	if rf, ok := ret.Get(0).(func(context.Context, int64) []models.PublicDashboardListResponse); ok {
-		r0 = rf(ctx, orgId)
+	var r0 *models.PublicDashboardListResponseWithPagination
+	if rf, ok := ret.Get(0).(func(context.Context, *models.PublicDashboardListQuery) *models.PublicDashboardListResponseWithPagination); ok {
+		r0 = rf(ctx, query)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.PublicDashboardListResponse)
+			r0 = ret.Get(0).(*models.PublicDashboardListResponseWithPagination)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
-		r1 = rf(ctx, orgId)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.PublicDashboardListQuery) error); ok {
+		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
 	}
