@@ -10,7 +10,7 @@ describe('LokiQueryBuilderOptions', () => {
   it('can change query type', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.getByLabelText('Range')).toBeChecked();
 
     await userEvent.click(screen.getByLabelText('Instant'));
@@ -24,7 +24,7 @@ describe('LokiQueryBuilderOptions', () => {
   it('can change legend format', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
 
     // First autosize input is a Legend
     const element = screen.getAllByTestId('autosize-input')[0];
@@ -40,7 +40,7 @@ describe('LokiQueryBuilderOptions', () => {
   it('can change line limit to valid value', async () => {
     const { props } = setup({ expr: '{foo="bar"}' });
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
     const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, '10');
@@ -57,7 +57,7 @@ describe('LokiQueryBuilderOptions', () => {
     // We need to start with some value to be able to change it
     props.query.maxLines = 10;
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
     const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, '-10');
@@ -74,7 +74,7 @@ describe('LokiQueryBuilderOptions', () => {
     // We need to start with some value to be able to change it
     props.query.maxLines = 10;
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     // Second autosize input is a Line limit
     const element = screen.getAllByTestId('autosize-input')[1];
     await userEvent.type(element, 'asd');
@@ -100,6 +100,27 @@ describe('LokiQueryBuilderOptions', () => {
     expect(screen.getByText('Step: 1m')).toBeInTheDocument();
   });
 
+  it('does not shows resolution field if resolution is not set', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
+  });
+
+  it('does not shows resolution field if resolution is set to default value 1', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 1 });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText('Resolution')).not.toBeInTheDocument();
+  });
+
+  it('does shows resolution field with warning if resolution is set to non-default value', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', resolution: 2 });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.getByText('Resolution')).toBeInTheDocument();
+    expect(
+      screen.getByText("The 'Resolution' is deprecated. Use 'Step' editor instead to change step parameter.")
+    ).toBeInTheDocument();
+  });
+
   it('shows correct options for metric query with invalid step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: 'abc' });
     expect(screen.queryByText('Line limit: 20')).not.toBeInTheDocument();
@@ -109,13 +130,13 @@ describe('LokiQueryBuilderOptions', () => {
 
   it('shows error when invalid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: 'a' });
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.getByText(/Invalid step/)).toBeInTheDocument();
   });
 
   it('does not shows error when valid value in step', async () => {
     setup({ expr: 'rate({foo="bar"}[5m]', step: '1m' });
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
 });
