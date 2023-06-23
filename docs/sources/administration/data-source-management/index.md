@@ -4,7 +4,6 @@ aliases:
   - ../datasources/datasource_permissions/
   - ../enterprise/datasource_permissions/
   - ../enterprise/query-caching/
-  - ../enterprise/query-and-resource-caching/
   - ../features/datasources/add-a-data-source/
   - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
