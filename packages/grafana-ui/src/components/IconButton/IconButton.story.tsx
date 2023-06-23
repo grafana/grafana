@@ -137,32 +137,4 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
   );
 };
 
-export const ExamplesWithoutTooltip = () => {
-  const theme = useTheme2();
-  const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
-
-  return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-      `}
-    >
-      <HorizontalGroup justify="center">
-        {sizes.map((size) => {
-          return <IconButton key={size} name="angle-down" size={size} aria-label="sample aria-label content" />;
-        })}
-      </HorizontalGroup>
-      <span
-        className={css`
-          margin-top: ${theme.spacing(4)};
-        `}
-      >
-        This story provides an example for IconButtons without a Tooltip. This option should only be used on special
-        occasions. Please find further information in the Docs.
-      </span>
-    </div>
-  );
-};
-
 export default meta;
