@@ -689,7 +689,7 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 
 ### Bug fixes
 
-- Fixed CVE-2023-3128
+- **Auth:** Fixed CVE-2023-3128. [#70579](https://github.com/grafana/grafana/issues/70579), [@zerok](https://github.com/zerok)
 
 <!-- 9.4.13 END -->
 <!-- 9.3.16 START -->
