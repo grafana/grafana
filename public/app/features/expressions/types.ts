@@ -30,7 +30,7 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
   }
 };
 
-export const gelTypes: Array<SelectableValue<ExpressionQueryType>> = [
+export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.math,
     label: 'Math',

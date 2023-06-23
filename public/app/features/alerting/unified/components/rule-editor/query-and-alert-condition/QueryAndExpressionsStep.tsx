@@ -9,7 +9,7 @@ import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import { H5 } from '@grafana/ui/src/unstable';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { ExpressionQueryType, gelTypes } from 'app/features/expressions/types';
+import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -368,7 +368,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
   const newMenu = (
     <Menu>
-      {gelTypes.map((type) => (
+      {expressionTypes.map((type) => (
         <Tooltip key={type.value} content={type.description ?? ''} placement="right">
           <MenuItem
             key={type.value}
@@ -381,14 +381,12 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
   );
 
   return (
-    <>
-      <Dropdown overlay={newMenu}>
-        <Button variant="secondary">
-          Add expression
-          <Icon name="angle-down" />
-        </Button>
-      </Dropdown>
-    </>
+    <Dropdown overlay={newMenu}>
+      <Button variant="secondary">
+        Add expression
+        <Icon name="angle-down" />
+      </Button>
+    </Dropdown>
   );
 }
 

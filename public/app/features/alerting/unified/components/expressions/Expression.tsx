@@ -10,7 +10,12 @@ import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
 import { Resample } from 'app/features/expressions/components/Resample';
 import { Threshold } from 'app/features/expressions/components/Threshold';
-import { ExpressionQuery, ExpressionQueryType, gelTypes, getExpressionLabel } from 'app/features/expressions/types';
+import {
+  ExpressionQuery,
+  ExpressionQueryType,
+  expressionTypes,
+  getExpressionLabel,
+} from 'app/features/expressions/types';
 import { AlertQuery, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { usePagination } from '../../hooks/usePagination';
@@ -93,7 +98,7 @@ export const Expression: FC<ExpressionProps> = ({
     },
     [onChangeQuery, queries]
   );
-  const selectedExpressionType = gelTypes.find((o) => o.value === queryType);
+  const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
 
   return (
