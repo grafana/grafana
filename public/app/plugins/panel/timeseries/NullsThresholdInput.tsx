@@ -16,7 +16,11 @@ export const NullsThresholdInput = ({ value, onChange, inputPrefix }: Props) => 
     let val: boolean | number = false;
     if (txt) {
       try {
-        val = rangeUtil.intervalToMs(txt);
+        if (rangeUtil.isValidTimeSpan(txt)) {
+          val = rangeUtil.intervalToMs(txt);
+        } else {
+          val = Number(txt);
+        }
       } catch (err) {
         console.warn('ERROR', err);
       }
