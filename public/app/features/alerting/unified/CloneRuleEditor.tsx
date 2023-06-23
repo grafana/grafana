@@ -42,6 +42,9 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
       formPrefill.group = '';
     }
 
+    // Since this is a new rule, we don't want to carry over the uid of the original rule
+    formPrefill.uid = '';
+
     return <AlertRuleForm prefill={formPrefill} />;
   }
 
