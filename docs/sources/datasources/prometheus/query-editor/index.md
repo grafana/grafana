@@ -130,7 +130,7 @@ You can also enter text into the selector when the dropdown is open to search an
 
 {{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
-If you would like to explore your metrics further, you can open the **Metrics Explorer** by clicking the first option in the metric select.
+If you would like to explore your metrics further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
 
 {{< figure src="/static/img/docs/prometheus/metrics-explorer-option.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
