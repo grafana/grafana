@@ -97,7 +97,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
     TracePageHeaderTraceId: css`
       label: TracePageHeaderTraceId;
       white-space: nowrap;
-      margin-left: 1em;
     `,
     titleBorderBottom: css`
       border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
