@@ -61,7 +61,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [limitInstances, toggleLimit] = useToggle(true);
 
-  const { usePromRulesQuery } = alertRuleApi;
+  const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -161,7 +161,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
-  const { currentData: promRules = [] } = usePromRulesQuery({
+  const { currentData: promRules = [] } = usePrometheusRulesByNamespaceQuery({
     limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
     matcher: matcherList,
     state: stateList,

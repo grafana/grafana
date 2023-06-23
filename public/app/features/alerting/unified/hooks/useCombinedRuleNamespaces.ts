@@ -48,7 +48,7 @@ interface CacheValue {
 // can limit to a single rules source
 export function useCombinedRuleNamespaces(
   rulesSourceName?: string,
-  promRuleNamespaces?: RuleNamespace[]
+  grafanaPromRuleNamespaces?: RuleNamespace[]
 ): CombinedRuleNamespace[] {
   const promRulesResponses = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesResponses = useUnifiedAlertingSelector((state) => state.rulerRules);
@@ -71,11 +71,11 @@ export function useCombinedRuleNamespaces(
     return rulesSources
       .map((rulesSource): CombinedRuleNamespace[] => {
         const rulesSourceName = isCloudRulesSource(rulesSource) ? rulesSource.name : rulesSource;
-        let promRules = promRulesResponses[rulesSourceName]?.result;
         const rulerRules = rulerRulesResponses[rulesSourceName]?.result;
 
-        if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME && promRuleNamespaces) {
-          promRules = promRuleNamespaces;
+        let promRules = promRulesResponses[rulesSourceName]?.result;
+        if (rulesSourceName === GRAFANA_RULES_SOURCE_NAME && grafanaPromRuleNamespaces) {
+          promRules = grafanaPromRuleNamespaces;
         }
 
         const cached = cache.current[rulesSourceName];
@@ -112,7 +112,7 @@ export function useCombinedRuleNamespaces(
         return result;
       })
       .flat();
-  }, [promRulesResponses, rulerRulesResponses, rulesSources, promRuleNamespaces]);
+  }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups

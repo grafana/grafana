@@ -1,12 +1,12 @@
 import { RelativeTimeRange } from '@grafana/data';
 import { Matcher } from 'app/plugins/datasource/alertmanager/types';
-import { AlertGroupTotals, RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
+import { RuleIdentifier, RuleNamespace } from 'app/types/unified-alerting';
 import {
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
   Labels,
-  PromRuleGroupDTO,
+  PromRulesResponse,
 } from 'app/types/unified-alerting-dto';
 
 import { Folder } from '../components/rule-editor/RuleFolderPicker';
@@ -95,7 +95,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       }),
     }),
 
-    promRules: build.query<
+    prometheusRulesByNamespace: build.query<
       RuleNamespace[],
       {
         limitAlerts?: number;
@@ -123,9 +123,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
 
         return { url: PROM_RULES_URL, params: paramsWithMatcherAndState(params, state, matcher) };
       },
-      transformResponse: (response: {
-        data: { groups: PromRuleGroupDTO[]; totals: AlertGroupTotals };
-      }): RuleNamespace[] => {
+      transformResponse: (response: PromRulesResponse): RuleNamespace[] => {
         return groupRulesByFileName(response.data.groups, GRAFANA_RULES_SOURCE_NAME);
       },
     }),
