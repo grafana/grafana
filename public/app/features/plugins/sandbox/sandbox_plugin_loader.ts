@@ -11,6 +11,7 @@ import {
   isDomElement,
   isLiveTarget,
   markDomElementStyleAsALiveTarget,
+  patchObjectAsLiveTarget,
 } from './document_sandbox';
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
@@ -48,6 +49,8 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // the element.style attribute should be a live target to work in chrome
       markDomElementStyleAsALiveTarget(element);
       return element;
+    } else {
+      patchObjectAsLiveTarget(originalValue);
     }
     const distortion = generalDistortionMap.get(originalValue);
     if (distortion) {
