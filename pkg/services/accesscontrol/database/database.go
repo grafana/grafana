@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -32,11 +33,18 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 			permission.action,
 			permission.scope
 			FROM permission
+		`
+		if len(query.RolePrefixes) > 0 {
+			q += `
 			INNER JOIN role ON role.id = permission.role_id
-		` + filter
+		`
+		}
+		q += fmt.Sprintf(`
+		WHERE %s
+		`, filter)
 
 		if len(query.RolePrefixes) > 0 {
-			q += " WHERE ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
+			q += " AND ( " + strings.Repeat("role.name LIKE ? OR ", len(query.RolePrefixes))
 			q = q[:len(q)-4] + " )" // remove last " OR "
 			for i := range query.RolePrefixes {
 				params = append(params, query.RolePrefixes[i]+"%")

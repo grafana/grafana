@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -381,7 +382,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
-			Limit: 1,
+			// limit used to be applied on dashboard rows only
+			// but no it applied to dashboards rows * dashbaord tags
+			Limit: 2,
 			Page:  2,
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
@@ -818,6 +821,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
+	spew.Dump(">>>>", res)
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
@@ -855,5 +859,6 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
+	spew.Dump("<<<", hitList)
 	return hitList
 }

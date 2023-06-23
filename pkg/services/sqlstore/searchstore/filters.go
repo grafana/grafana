@@ -111,10 +111,6 @@ type TagsFilter struct {
 	Tags []string
 }
 
-func (f TagsFilter) LeftJoin() string {
-	return `dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id`
-}
-
 func (f TagsFilter) GroupBy() (string, []interface{}) {
 	return `dashboard.id HAVING COUNT(dashboard.id) >= ?`, []interface{}{len(f.Tags)}
 }

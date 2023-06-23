@@ -163,8 +163,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	dashWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeDashboardsPrefix)
 	folderWildcards := accesscontrol.WildcardsFromPrefix(dashboards.ScopeFoldersPrefix)
 
-	filter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
-	rolesFilter := " AND role_id IN(SELECT id FROM role " + filter + ") "
+	rolesFilter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
 	var args []interface{}
 	builder := strings.Builder{}
 	builder.WriteRune('(')
@@ -176,7 +175,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 		toCheck := actionsToCheck(f.dashboardActions, f.user.Permissions[f.user.OrgID], dashWildcards, folderWildcards)
 
 		if len(toCheck) > 0 {
-			builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%'")
+			builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%' AND ")
 			builder.WriteString(rolesFilter)
 			args = append(args, params...)
 
@@ -191,7 +190,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			builder.WriteString(") AND NOT dashboard.is_folder)")
 
 			builder.WriteString(" OR ")
-			permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
 			permSelector.WriteString(rolesFilter)
 			permSelectorArgs = append(permSelectorArgs, params...)
 
@@ -203,7 +201,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				permSelectorArgs = append(permSelectorArgs, toCheck...)
 				permSelectorArgs = append(permSelectorArgs, len(toCheck))
 			}
-			permSelector.WriteRune(')')
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
@@ -222,7 +219,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			default:
 				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 				builder.WriteString("WHERE d.uid IN ")
+				builder.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' AND ")
 				builder.WriteString(permSelector.String())
+				builder.WriteRune(')')
 				args = append(args, permSelectorArgs...)
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
@@ -242,7 +241,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 		toCheck := actionsToCheck(f.folderActions, f.user.Permissions[f.user.OrgID], folderWildcards)
 		if len(toCheck) > 0 {
-			permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%'")
 			permSelector.WriteString(rolesFilter)
 			permSelectorArgs = append(permSelectorArgs, params...)
 			if len(toCheck) == 1 {
@@ -253,7 +251,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				permSelectorArgs = append(permSelectorArgs, toCheck...)
 				permSelectorArgs = append(permSelectorArgs, len(toCheck))
 			}
-			permSelector.WriteRune(')')
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
@@ -272,7 +269,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 			default:
 				builder.WriteString("(dashboard.uid IN ")
+				builder.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' AND ")
 				builder.WriteString(permSelector.String())
+				builder.WriteRune(')')
 				args = append(args, permSelectorArgs...)
 			}
 			builder.WriteString(" AND dashboard.is_folder)")
@@ -311,9 +310,10 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 	copy(c, whereParams)
 	f.recQueries = append(f.recQueries, clause{
 		string: fmt.Sprintf(`%s AS (
-			SELECT uid, parent_uid, org_id FROM folder WHERE uid IN %s
+			SELECT uid, parent_uid, org_id FROM folder
+			INNER JOIN permission on folder.uid = substr(permission.scope, 13) AND permission.scope LIKE '%s' AND %s
 			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
-		)`, queryName, whereUIDSelect, queryName),
+		)`, queryName, "folders:uid:%", whereUIDSelect, queryName),
 		params: c,
 	})
 }
