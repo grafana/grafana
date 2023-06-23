@@ -116,6 +116,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
         labelWidth={labelWidth}
         grow={true}
         shrink={true}
+        className={styles.wrap}
       >
         <TextArea
           value={query.expression}
@@ -165,6 +166,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: grid;
     grid-template-columns: max-content auto;
     column-gap: ${theme.spacing(2)};
+  `,
+  wrap: css`
+    flex-wrap: wrap;
   `,
 });
 
