@@ -93,7 +93,7 @@ The caching feature works for **all** backend data sources. You can enable the c
 Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 {{% /admonition %}}
 
-The following cache backend integrations are available: in-memory, Redis, and Memcached.
+The following cache backend options are available: in-memory, Redis, and Memcached.
 
 {{% admonition type="note" %}}
 Storing cached queries in-memory can increase Grafana's memory footprint. In production environments, a Redis or Memcached backend is highly recommended.
