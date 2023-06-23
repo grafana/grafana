@@ -91,7 +91,7 @@ export function PanelChrome({
   onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2((theme: GrafanaTheme2) => getStyles(theme, height));
 
   const hasHeader = !hoverHeader;
 
@@ -254,7 +254,7 @@ const getContentStyle = (
   return { contentStyle, innerWidth, innerHeight };
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, height?: number) => {
   const { background, borderColor, padding } = theme.components.panel;
 
   return {
@@ -300,6 +300,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
+      contain: height ? 'strict' : 'none',
     }),
     headerContainer: css({
       label: 'panel-header',
