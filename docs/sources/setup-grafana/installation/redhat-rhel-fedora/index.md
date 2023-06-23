@@ -9,7 +9,7 @@ weight: 200
 
 This topic explains how to install Grafana dependencies, install Grafana on RHEL or Fedora, and start the Grafana server on your system.
 
-You can install Grafana using RPM or by downloading a binary `.tar.gz` file.
+You can install Grafana from the RPM repository, from standalone RPM, or with the binary `.tar.gz` file.
 
 If you install via RPM or the `.tar.gz` file, then you must manually update Grafana for each new version.
 
