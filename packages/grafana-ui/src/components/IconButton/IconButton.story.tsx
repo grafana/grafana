@@ -7,13 +7,7 @@ import { IconSize, IconName } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 
-import {
-  BasePropsWithAriaLabel,
-  BasePropsWithTooltip,
-  IconButton,
-  IconButtonVariant,
-  Props as IconButtonProps,
-} from './IconButton';
+import { BasePropsWithTooltip, IconButton, IconButtonVariant, Props as IconButtonProps } from './IconButton';
 import mdx from './IconButton.mdx';
 
 interface ScenarioProps {
@@ -28,7 +22,7 @@ const meta: Meta<typeof IconButton> = {
     docs: {
       page: mdx,
     },
-    controls: { exclude: ['ariaLabel'] },
+    controls: { exclude: ['ariaLabel', 'iconType', 'aria-label'] },
   },
   args: {
     name: 'apps',
@@ -143,7 +137,7 @@ export const ExamplesBackground = (args: BasePropsWithTooltip) => {
   );
 };
 
-export const ExamplesWithoutTooltip = (args: BasePropsWithAriaLabel) => {
+export const ExamplesWithoutTooltip = () => {
   const theme = useTheme2();
   const sizes: IconSize[] = ['xs', 'sm', 'md', 'lg', 'xl'];
 
@@ -156,7 +150,7 @@ export const ExamplesWithoutTooltip = (args: BasePropsWithAriaLabel) => {
     >
       <HorizontalGroup justify="center">
         {sizes.map((size) => {
-          return <IconButton key={size} name="angle-down" size={size} aria-label={args['aria-label']} />;
+          return <IconButton key={size} name="angle-down" size={size} aria-label="sample aria-label content" />;
         })}
       </HorizontalGroup>
       <span

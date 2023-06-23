@@ -33,7 +33,7 @@ export interface BasePropsWithTooltip extends BaseProps {
   tooltipPlacement?: TooltipPlacement;
 }
 
-export interface BasePropsWithAriaLabel extends BaseProps {
+interface BasePropsWithAriaLabel extends BaseProps {
   /** @deprecated use aria-label instead*/
   ariaLabel?: string;
   /** Text available only for screen readers. No tooltip will be set in this case. */
