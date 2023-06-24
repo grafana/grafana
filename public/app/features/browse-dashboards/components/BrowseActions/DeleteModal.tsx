@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { Space } from '@grafana/experimental';
 import { ConfirmModal } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
+import { Trans, t } from 'app/core/internationalization';
 
 import { DashboardTreeSelection } from '../../types';
 
@@ -17,6 +18,13 @@ export interface Props {
 
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const confirmButtonText = useMemo(
+    () =>
+      isDeleting
+        ? `${t('browse-dashboards.action.deleting', 'Deleting')}...`
+        : t('browse-dashboards.action.delete-button', 'Delete'),
+    [isDeleting]
+  );
   const onDelete = async () => {
     setIsDeleting(true);
     try {
@@ -32,16 +40,21 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
     <ConfirmModal
       body={
         <>
-          <P>This action will delete the following content:</P>
+          <P>
+            <Trans i18nKey="browse-dashboards.action.delete-modal-text">
+              This action will delete the following content
+            </Trans>
+            :
+          </P>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />
         </>
       }
       confirmationText="Delete"
-      confirmText={isDeleting ? 'Deleting...' : 'Delete'}
+      confirmText={confirmButtonText}
       onDismiss={onDismiss}
       onConfirm={onDelete}
-      title="Delete"
+      title={t('browse-dashboards.action.delete-modal-title', 'Delete')}
       {...props}
     />
   );
