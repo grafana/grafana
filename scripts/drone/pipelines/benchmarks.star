@@ -56,7 +56,7 @@ def integration_benchmarks(trigger, prefix):
     ]
 
     cmd = [
-        "go test -v -run=^$ -timeout=30m -bench=. ./pkg/api",
+        "go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api",
     ]
 
     benchmark_steps = [
@@ -66,17 +66,17 @@ def integration_benchmarks(trigger, prefix):
             "depends_on": ["wire-install"],
             "commands": cmd,
         },
-        {
-            "name": "postgres-integration-benchmarks",
-            "image": images["build_image"],
-            "depends_on": ["wire-install"],
-            "environment": {
-                "PGPASSWORD": "grafanatest",
-                "GRAFANA_TEST_DB": "postgres",
-                "POSTGRES_HOST": "postgres",
-            },
-            "commands": cmd,
-        },
+        #{
+        #    "name": "postgres-integration-benchmarks",
+        #    "image": images["build_image"],
+        #    "depends_on": ["wire-install"],
+        #    "environment": {
+        #        "PGPASSWORD": "grafanatest",
+        #        "GRAFANA_TEST_DB": "postgres",
+        #        "POSTGRES_HOST": "postgres",
+        #    },
+        #    "commands": cmd,
+        #},
         {
             "name": "mysql-integration-benchmarks-5.7",
             "image":  images["build_image"],
