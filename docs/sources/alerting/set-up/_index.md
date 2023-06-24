@@ -18,7 +18,7 @@ Set up or upgrade your implementation of Grafana Alerting.
 
 These are set-up instructions for Grafana Alerting Open Source.
 
-To set up Grafana Alerting for Cloud, see ({{< relref "./_index.md" >}})
+To set up Grafana Alerting for Cloud, see [Set up Alerting for Cloud]({{< relref "../set-up/set-up-cloud" >}}).
 
 ## Before you begin
 
@@ -47,8 +47,7 @@ To set up Alerting, you need to:
 
    - [Optional] Add labels and label matchers to control alert routing
 
-1. [Optional] Integrate with [Grafana OnCall]
-   (/docs/oncall/latest/integrations/grafana-alerting)
+1. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting)
 
 ## Advanced set up options
 
