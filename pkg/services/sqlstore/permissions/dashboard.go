@@ -219,9 +219,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			default:
 				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 				builder.WriteString("WHERE d.uid IN ")
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
+				builder.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' AND ")
 				builder.WriteString(permSelector.String())
-				permSelector.WriteRune(')')
+				builder.WriteRune(')')
 				args = append(args, permSelectorArgs...)
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
@@ -269,9 +269,9 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 			default:
 				builder.WriteString("(dashboard.uid IN ")
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' AND ")
+				builder.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' AND ")
 				builder.WriteString(permSelector.String())
-				permSelector.WriteRune(')')
+				builder.WriteRune(')')
 				args = append(args, permSelectorArgs...)
 			}
 			builder.WriteString(" AND dashboard.is_folder)")

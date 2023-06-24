@@ -129,7 +129,6 @@ func SetAcceptListForTest(list map[string]struct{}) func() {
 func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (string, []interface{}) {
 	var params []interface{}
 	builder := strings.Builder{}
-	builder.WriteRune('(')
 
 	// This is an additional security. We should never have permissions granted to userID 0.
 	// Only allow real users to get user/team permissions (anonymous/apikeys)
@@ -180,6 +179,5 @@ func UserRolesFilter(orgID, userID int64, teamIDs []int64, roles []string) (stri
 
 		params = append(params, orgID, GlobalOrgID)
 	}
-	builder.WriteRune(')')
-	return builder.String(), params
+	return "(" + builder.String() + ")", params
 }
