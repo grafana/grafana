@@ -4,6 +4,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
+import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -87,9 +88,16 @@ export function FolderActionsButton({ folder }: Props) {
 
   const menu = (
     <Menu>
-      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label="Manage permissions" />}
-      {canMoveFolder && <MenuItem onClick={showMoveModal} label="Move" />}
-      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label="Delete" />}
+      {canViewPermissions && (
+        <MenuItem
+          onClick={() => setShowPermissionsDrawer(true)}
+          label={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
+        />
+      )}
+      {canMoveFolder && <MenuItem onClick={showMoveModal} label={t('browse-dashboards.action.move-button', 'Move')} />}
+      {canDeleteFolder && (
+        <MenuItem destructive onClick={showDeleteModal} label={t('browse-dashboards.action.delete-button', 'Delete')} />
+      )}
     </Menu>
   );
 
@@ -101,13 +109,13 @@ export function FolderActionsButton({ folder }: Props) {
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
         <Button variant="secondary">
-          Folder actions
+          <Trans i18nKey="browse-dashboards.action.folder-actions-button">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showPermissionsDrawer && (
         <Drawer
-          title="Permissions"
+          title={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
           subtitle={folder.title}
           scrollableContent
           onClose={() => setShowPermissionsDrawer(false)}
