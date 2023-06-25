@@ -18,10 +18,10 @@ const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm }: Props) {
   const translatedFoldername = t('browse-dashboards.action.new-folder-label', 'Folder name');
-  const translatedFolderNameRequiredPhrase = `${t(
+  const translatedFolderNameRequiredPhrase = t(
     'browse-dashboards.action.new-folder-name-required-phrase',
-    'Folder name is required'
-  )}.`;
+    'Folder name is required.'
+  );
   const validateFolderName = async (folderName: string) => {
     try {
       await validationSrv.validateNewFolderName(folderName);

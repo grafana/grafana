@@ -21,7 +21,7 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
   const confirmButtonText = useMemo(
     () =>
       isDeleting
-        ? `${t('browse-dashboards.action.deleting', 'Deleting')}...`
+        ? t('browse-dashboards.action.deleting', 'Deleting...')
         : t('browse-dashboards.action.delete-button', 'Delete'),
     [isDeleting]
   );
@@ -42,9 +42,8 @@ export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: P
         <>
           <P>
             <Trans i18nKey="browse-dashboards.action.delete-modal-text">
-              This action will delete the following content
+              This action will delete the following content:
             </Trans>
-            :
           </P>
           <DescendantCount selectedItems={selectedItems} />
           <Space v={2} />

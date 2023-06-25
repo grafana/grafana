@@ -22,9 +22,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const [isMoving, setIsMoving] = useState(false);
   const moveButtonText = useMemo(
     () =>
-      isMoving
-        ? `${t('browse-dashboards.action.moving', 'Moving')}...`
-        : t('browse-dashboards.action.move-button', 'Move'),
+      isMoving ? t('browse-dashboards.action.moving', 'Moving...') : t('browse-dashboards.action.move-button', 'Move'),
     [isMoving]
   );
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
@@ -52,7 +50,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       )}
 
       <P>
-        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content</Trans>:
+        <Trans i18nKey="browse-dashboards.action.move-modal-text">This action will move the following content:</Trans>
       </P>
 
       <DescendantCount selectedItems={selectedItems} />
