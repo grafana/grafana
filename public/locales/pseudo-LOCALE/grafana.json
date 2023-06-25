@@ -2,13 +2,34 @@
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
   "browse-dashboards": {
     "action": {
+      "cancel-button": "Cäŉčęľ",
+      "create-button": "Cřęäŧę",
       "delete-button": "Đęľęŧę",
-      "move-button": "Mővę"
+      "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "delete-modal-title": "Đęľęŧę",
+      "deleting": "Đęľęŧįŉģ...",
+      "folder-actions-button": "Főľđęř äčŧįőŉş",
+      "manage-permissions-button": "Mäŉäģę pęřmįşşįőŉş",
+      "move-button": "Mővę",
+      "move-modal-alert": "Mővįŉģ ŧĥįş įŧęm mäy čĥäŉģę įŧş pęřmįşşįőŉş.",
+      "move-modal-field-label": "Főľđęř ŉämę",
+      "move-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ mővę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "move-modal-title": "Mővę",
+      "moving": "Mővįŉģ...",
+      "new-folder-label": "Főľđęř ŉämę",
+      "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
     "dashboards-tree": {
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş",
       "type-column": "Ŧypę"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş",
+      "permissions": "Pęřmįşşįőŉş",
+      "settings": "Ŝęŧŧįŉģş"
     },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",

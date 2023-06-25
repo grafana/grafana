@@ -2,13 +2,34 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
+      "create-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "folder-actions-button": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-label": "",
+      "new-folder-name-required-phrase": ""
     },
     "dashboards-tree": {
       "name-column": "",
       "tags-column": "",
       "type-column": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
     },
     "no-results": {
       "clear": "",

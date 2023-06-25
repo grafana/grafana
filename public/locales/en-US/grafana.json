@@ -2,13 +2,34 @@
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "browse-dashboards": {
     "action": {
+      "cancel-button": "Cancel",
+      "create-button": "Create",
       "delete-button": "Delete",
-      "move-button": "Move"
+      "delete-modal-text": "This action will delete the following content:",
+      "delete-modal-title": "Delete",
+      "deleting": "Deleting...",
+      "folder-actions-button": "Folder actions",
+      "manage-permissions-button": "Manage permissions",
+      "move-button": "Move",
+      "move-modal-alert": "Moving this item may change its permissions.",
+      "move-modal-field-label": "Folder name",
+      "move-modal-text": "This action will move the following content:",
+      "move-modal-title": "Move",
+      "moving": "Moving...",
+      "new-folder-label": "Folder name",
+      "new-folder-name-required-phrase": "Folder name is required."
     },
     "dashboards-tree": {
       "name-column": "Name",
       "tags-column": "Tags",
       "type-column": "Type"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Alert rules",
+      "dashboards": "Dashboards",
+      "panels": "Panels",
+      "permissions": "Permissions",
+      "settings": "Settings"
     },
     "no-results": {
       "clear": "Clear search and filters",
