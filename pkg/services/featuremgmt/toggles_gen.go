@@ -216,7 +216,7 @@ const (
 	FlagTraceqlSearch = "traceqlSearch"
 
 	// FlagPrometheusMetricEncyclopedia
-	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
 	// FlagTimeSeriesTable
