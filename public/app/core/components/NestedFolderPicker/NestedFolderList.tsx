@@ -90,7 +90,7 @@ function Row({ index, style, data }: RowProps) {
         {item.kind === 'folder' && (
           <IconButton
             onClick={handleClick}
-            ariaLabel={isOpen ? 'Collapse folder' : 'Expand folder'}
+            aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
             name={isOpen ? 'angle-down' : 'angle-right'}
           />
         )}
