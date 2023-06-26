@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -421,4 +422,12 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename strin
 		return f.FileFunc(ctx, pluginID, filename)
 	}
 	return nil, nil
+}
+
+type FakeOauthService struct {
+	Result *oauth.ExternalService
+}
+
+func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *oauth.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+	return f.Result, nil
 }

@@ -8,15 +8,16 @@ import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui'
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
-import { ExploreId, ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
+import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
+import { selectIsWaitingForData } from '../state/query';
 import { getFieldLinksForExplore } from '../utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;
-  exploreId: ExploreId;
+  exploreId: string;
   width: number;
   timeZone: TimeZone;
   onCellFilterAdded?: (filter: AdHocFilterItem) => void;
@@ -31,7 +32,8 @@ interface PrometheusContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { loading: loadingInState, tableResult, rawPrometheusResult, range } = item;
+  const { tableResult, rawPrometheusResult, range } = item;
+  const loadingInState = selectIsWaitingForData(exploreId)(state);
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
   const result = (tableResult?.length ?? false) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
   const loading = result && result.length > 0 ? false : loadingInState;

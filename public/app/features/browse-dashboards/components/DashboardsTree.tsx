@@ -7,6 +7,7 @@ import InfiniteLoader from 'react-window-infinite-loader';
 import { GrafanaTheme2, isTruthy } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import {
@@ -21,7 +22,6 @@ import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
-import { TypeCell } from './TypeCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
@@ -76,24 +76,21 @@ export function DashboardsTree({
     const nameColumn: DashboardsTreeColumn = {
       id: 'name',
       width: 3,
-      Header: <span style={{ paddingLeft: 24 }}>Name</span>,
+      Header: (
+        <span style={{ paddingLeft: 24 }}>
+          <Trans i18nKey="browse-dashboards.dashboards-tree.name-column">Name</Trans>
+        </span>
+      ),
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
-    };
-
-    const typeColumn: DashboardsTreeColumn = {
-      id: 'type',
-      width: 1,
-      Header: 'Type',
-      Cell: TypeCell,
     };
 
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       width: 2,
-      Header: 'Tags',
+      Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
-    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);
