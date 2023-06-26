@@ -17,7 +17,7 @@ interface TextLinkProps extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 't
   color?: keyof GrafanaTheme2['colors']['text'];
   /** Specify if the link will redirect users to a page in or out Grafana */
   external?: boolean;
-  /** True if the element should be displayed inline with surrounding text, false if it should be displayed as a block */
+  /** True when the link will be displayed inline with surrounding text, false if it will be displayed as a block. Depending on this prop correspondant default styles will be applied */
   inline?: boolean;
   /** The default variant is 'body'. To fit another styles set the correspondent variant as it is necessary also to adjust the icon size */
   variant?: keyof ThemeTypographyVariantTypes;
@@ -42,11 +42,11 @@ const svgSizes: {
 };
 
 export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
-  ({ href, color, external = false, inline, variant = 'body', weight, icon, children, ...rest }, ref) => {
+  ({ href, color, external = false, inline = true, variant = 'body', weight, icon, children, ...rest }, ref) => {
     const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 
     const theme = useTheme2();
-    const styles = getLinkStyles(theme, variant, weight, color, inline);
+    const styles = getLinkStyles(theme, inline, variant, weight, color);
     const externalIcon = icon || 'external-link-alt';
 
     return external ? (
@@ -67,10 +67,10 @@ TextLink.displayName = 'TextLink';
 
 export const getLinkStyles = (
   theme: GrafanaTheme2,
+  inline: boolean,
   variant?: keyof ThemeTypographyVariantTypes,
   weight?: TextLinkProps['weight'],
-  color?: TextLinkProps['color'],
-  inline = true
+  color?: TextLinkProps['color']
 ) => {
   const getLinkColor = (color: TextLinkProps['color'], inline: boolean) => {
     if (color) {
