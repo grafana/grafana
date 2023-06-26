@@ -114,6 +114,7 @@ Experimental features might be changed or removed without prior notice.
 | `cloudWatchLogsMonacoEditor`                | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`            | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                      | Enables writing multiple items from a single query within Recorded Queries                                   |
+| `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
 | `flameGraphV2`                              | New version of flame graph with new features                                                                 |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |

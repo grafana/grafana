@@ -566,6 +566,13 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "pluginsDynamicAngularDetectionPatterns",
+			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "alertingLokiRangeToInstant",
 			Description:  "Rewrites eligible loki range queries to instant queries",
 			Stage:        FeatureStageExperimental,

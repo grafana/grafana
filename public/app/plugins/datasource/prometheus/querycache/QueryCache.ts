@@ -12,6 +12,7 @@ import { faro } from '@grafana/faro-web-sdk';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
+import { getTimeSrv } from '../../../../features/dashboard/services/TimeSrv';
 import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
@@ -55,7 +56,7 @@ interface ProfileData extends DatasourceProfileData {
   dashboardUID: string;
   panelId?: number;
   from: string;
-  rawFrom: string;
+  duration: number;
 }
 
 /**
@@ -98,7 +99,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       sent: boolean;
       datasource: string;
       from: string;
-      rawFrom: string;
+      duration: number;
     }
   >();
 
@@ -177,7 +178,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         interval: currentRequest.interval ?? '',
                         sent: false,
                         from: currentRequest.from ?? '',
-                        rawFrom: currentRequest.rawFrom ?? '',
+                        duration: currentRequest.duration ?? 0,
                       });
 
                       // We don't need to save each subsequent request, only the first one
@@ -201,7 +202,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
       // Send any pending profile information when the user navigates away
-      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+      // window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
 
@@ -221,16 +222,12 @@ export class QueryCache<T extends SupportedQueryTypes> {
           expr: value.expr.toString(),
           interval: value.interval.toString(),
           from: value.from.toString(),
-          rawFrom: value.rawFrom.toString(),
+          duration: value.duration.toString(),
         };
 
         if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
           reportInteraction('grafana_incremental_queries_profile', event);
-          // If feature flag is false, disable all instrumentation
-        } else if (
-          faro.api.pushEvent &&
-          config.featureToggles.prometheusIncrementalQueryInstrumentation === undefined
-        ) {
+        } else if (faro.api.pushEvent) {
           faro.api.pushEvent('incremental query response size', event, 'no-interaction', {
             skipDedupe: true,
           });
@@ -254,6 +251,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
+    // const timeSrv = getTimeSrv();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
     const shouldCache = request.rangeRaw?.to?.toString() === 'now';
@@ -261,6 +259,10 @@ export class QueryCache<T extends SupportedQueryTypes> {
     // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
+
+    // console.log(timeSrv);
+    // const interval = getTimeSrv().getAutoRefreshInteval().interval
+    // debugger
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
@@ -276,7 +278,8 @@ export class QueryCache<T extends SupportedQueryTypes> {
           panelId: request.panelId,
           dashboardUID: request.dashboardUID ?? '',
           from: request.rangeRaw?.from.toString() ?? '',
-          rawFrom: request.range.from.toString() ?? '',
+          duration: request.range.to.diff(request.range.from, 'seconds') ?? '',
+          // interval: interval
         });
       }
 
