@@ -246,7 +246,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       i,
       vizOrientation,
       xTickLabelRotation,
-      field,
     };
 
     // lines
@@ -271,7 +270,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         args.scaleKey = scaleLineKey;
         args.placement = AxisPlacement.Right;
 
-        addYAxix(builder, args);
+        addYAxix(builder, field, args);
       } else {
         let placement = customConfig.axisPlacement;
         if (!placement || placement === AxisPlacement.Auto) {
@@ -289,7 +288,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         args.placement = placement;
         args.axisColorOpts = axisColorOpts;
 
-        addYAxix(builder, args);
+        addYAxix(builder, field, args);
       }
     }
   }
@@ -368,9 +367,8 @@ function addYScale(builder: UPlotConfigBuilder, field: Field, args: AddArgs) {
   });
 }
 
-function addYAxix(builder: UPlotConfigBuilder, args: AddArgs) {
-  const { scaleKey, customConfig, vizOrientation, theme, config, xTickLabelRotation, field, axisColorOpts, placement } =
-    args;
+function addYAxix(builder: UPlotConfigBuilder, field: Field, args: AddArgs) {
+  const { scaleKey, customConfig, vizOrientation, theme, config, xTickLabelRotation, axisColorOpts, placement } = args;
 
   builder.addAxis({
     scaleKey,
