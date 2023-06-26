@@ -234,9 +234,6 @@ function distortCreateElement(distortions: DistortionMap) {
   function getCreateElementDistortion(originalMethod: unknown, pluginId: string) {
     return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
       if (arg && forbiddenElements.includes(arg)) {
-        if (!monitorOnly) {
-          return document.createDocumentFragment();
-        }
         logWarning(`Plugin ${pluginId} tried to create ${arg}`, {
           pluginId,
           attrOrMethod: 'createElement',
@@ -244,6 +241,9 @@ function distortCreateElement(distortions: DistortionMap) {
           entity: 'document',
           monitorOnly: String(monitorOnly),
         });
+        if (!monitorOnly) {
+          return document.createDocumentFragment();
+        }
       }
       if (isFunction(originalMethod)) {
         return originalMethod.apply(this, [arg, options]);
