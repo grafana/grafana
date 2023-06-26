@@ -226,8 +226,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
           queryRangeSeconds: value.queryRangeSeconds.toString(),
         };
 
-        console.log('Sending profile event', JSON.stringify(event));
-
         if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
           reportInteraction('grafana_incremental_queries_profile', event);
         } else if (faro.api.pushEvent) {
