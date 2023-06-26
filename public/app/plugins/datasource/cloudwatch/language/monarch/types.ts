@@ -43,6 +43,43 @@ export enum StatementPosition {
   PredefinedFuncSecondArg,
   AfterFunction,
   WithinString,
+  // logs
+  NewCommand,
+
+  DisplayKeyword,
+  AfterDisplayKeyword,
+  FieldsKeyword,
+  AfterFieldsKeyword,
+  FilterKeyword,
+  AfterFilterKeyword,
+  LimitKeyword,
+  AfterLimitKeyword,
+  ParseKeyword,
+  AfterParseKeyword,
+  SortKeyword,
+  AfterSortKeyword,
+  StatsKeyword,
+  AfterStatsKeyword,
+  UnmaskKeyword,
+  AfterUnmaskKeyword,
+
+  AsKeyword,
+  AfterAsKeyword,
+  ByKeyword,
+  AfterByKeyword,
+  InKeyword,
+  AfterInKeyword,
+  LikeKeyword,
+  AfterLikeKeyword,
+
+  Function,
+  FunctionArg,
+
+  ArithmeticOperatorSecondArg,
+  BooleanOperatorSecondArg,
+  ComparisonOperatorSecondArg,
+
+  AfterDelimiterPipe,
 }
 
 export enum SuggestionKind {
