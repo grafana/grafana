@@ -4,7 +4,6 @@ import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
-export const ROOT_PAGE_SIZE = 50;
 export const PAGE_SIZE = 50;
 
 export async function listFolders(
