@@ -117,7 +117,7 @@ If you run Grafana in an Amazon EKS cluster, follow the AWS guide to [Query usin
 
 ## Exemplars
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars](https://grafana.com/docs/grafana/latest/fundamentals/exemplars/) in Prometheus documentation for detailed information on how they work.
+Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. See [Introduction to exemplars]({{< relref "../../fundamentals/exemplars/" >}}) in Prometheus documentation for detailed information on how they work.
 
 {{% admonition type="note" %}}
 Available in Prometheus v2.26 and higher with Grafana v7.4 and higher.
