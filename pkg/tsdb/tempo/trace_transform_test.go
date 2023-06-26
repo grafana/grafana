@@ -40,7 +40,7 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, 1616072924070.497, root["startTime"])
 		require.Equal(t, 8.421, root["duration"])
 		require.Equal(t, json.RawMessage("null"), root["logs"])
-		require.Equal(t, json.RawMessage("[{\"value\":\"const\",\"key\":\"sampler.type\"},{\"value\":true,\"key\":\"sampler.param\"},{\"value\":200,\"key\":\"http.status_code\"},{\"value\":\"GET\",\"key\":\"http.method\"},{\"value\":\"/loki/api/v1/query_range?direction=BACKWARD\\u0026limit=1000\\u0026query=%7Bcompose_project%3D%22devenv%22%7D%20%7C%3D%22traceID%22\\u0026start=1616070921000000000\\u0026end=1616072722000000000\\u0026step=2\",\"key\":\"http.url\"},{\"value\":\"net/http\",\"key\":\"component\"}]"), root["tags"])
+		require.Equal(t, json.RawMessage("[{\"value\":\"const\",\"key\":\"sampler.type\"},{\"value\":true,\"key\":\"sampler.param\"},{\"value\":200,\"key\":\"http.status_code\"},{\"value\":\"GET\",\"key\":\"http.method\"},{\"value\":\"/loki/api/v1/query_range?direction=BACKWARD\\u0026limit=1000\\u0026query=%7Bcompose_project%3D%22devenv%22%7D%20%7C%3D%22traceID%22\\u0026start=1616070921000000000\\u0026end=1616072722000000000\\u0026step=2\",\"key\":\"http.url\"},{\"value\":\"net/http\",\"key\":\"component\"},{\"value\":\"server\",\"key\":\"span.kind\"},{\"value\":0,\"key\":\"status.code\"}]"), root["tags"])
 
 		span := bFrame.FindRowWithValue("spanID", "7198307df9748606")
 
@@ -50,6 +50,7 @@ func TestTraceToFrame(t *testing.T) {
 		require.Equal(t, 1616072924072.852, span["startTime"])
 		require.Equal(t, 0.094, span["duration"])
 		require.Equal(t, json.RawMessage("[{\"timestamp\":1616072924072.856,\"fields\":[{\"value\":1,\"key\":\"chunks requested\"}]},{\"timestamp\":1616072924072.9448,\"fields\":[{\"value\":1,\"key\":\"chunks fetched\"}]}]"), span["logs"])
+		require.Equal(t, json.RawMessage("[{\"value\":0,\"key\":\"status.code\"}]"), span["tags"])
 	})
 
 	t.Run("should transform correct traceID", func(t *testing.T) {
@@ -140,12 +141,6 @@ var fields = []string{
 	"parentSpanID",
 	"operationName",
 	"serviceName",
-	"kind",
-	"statusCode",
-	"statusMessage",
-	"instrumentationLibraryName",
-	"instrumentationLibraryVersion",
-	"traceState",
 	"serviceTags",
 	"startTime",
 	"duration",

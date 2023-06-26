@@ -36,7 +36,9 @@ type service struct {
 	serviceMap     map[string]services.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *service {
+func ProvideService(
+	cfg *setting.Cfg,
+) *service {
 	logger := log.New("modules")
 
 	return &service{
@@ -53,7 +55,8 @@ func ProvideService(cfg *setting.Cfg) *service {
 func (m *service) Init(_ context.Context) error {
 	var err error
 
-	for mod, targets := range dependencyMap {
+	m.log.Debug("Initializing module manager", "targets", m.targets)
+	for mod, targets := range DependencyMap {
 		if err := m.moduleManager.AddDependency(mod, targets...); err != nil {
 			return err
 		}
@@ -92,6 +95,7 @@ func (m *service) Run(ctx context.Context) error {
 	listener := newServiceListener(m.log, m)
 	m.serviceManager.AddListener(listener)
 
+	m.log.Debug("Starting module service manager")
 	// wait until a service fails or stop signal was received
 	err := m.serviceManager.StartAsync(ctx)
 	if err != nil {
