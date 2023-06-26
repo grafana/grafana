@@ -16,6 +16,8 @@ async function fetchRootFolders() {
 
 interface NestedFolderPickerProps {
   value?: FolderUID | undefined;
+  // TODO: think properly (and pragmatically) about how to communicate moving to general folder,
+  // vs removing selection (if possible?)
   onChange?: (folderUID: FolderChange) => void;
 }
 
@@ -27,8 +29,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
   const state = useAsync(fetchRootFolders);
 
   const handleFolderClick = useCallback(async (uid: string, newOpenState: boolean) => {
-    console.log('onFolderClick', uid, newOpenState);
-
     setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
     if (newOpenState) {
@@ -66,8 +66,6 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
-      console.log('handleSelectionChange', item);
-
       if (onChange) {
         onChange({ title: item.title, uid: item.uid });
       }

@@ -107,18 +107,21 @@ export function GeneralSettingsUnconnected({
           <Field label="Tags">
             <TagsInput id="tags-input" tags={dashboard.tags} onChange={onTagsChange} width={40} />
           </Field>
-          <Field label="Folder">
-            {/* <FolderPicker
-              inputId="dashboard-folder-input"
-              initialTitle={dashboard.meta.folderTitle}
-              initialFolderUid={dashboard.meta.folderUid}
-              onChange={onFolderChange}
-              enableCreateNew={true}
-              dashboardId={dashboard.id}
-              skipInitialLoad={true}
-            /> */}
 
-            <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+          <Field label="Folder">
+            {config.featureToggles.nestedFolderPicker ? (
+              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+            ) : (
+              <FolderPicker
+                inputId="dashboard-folder-input"
+                initialTitle={dashboard.meta.folderTitle}
+                initialFolderUid={dashboard.meta.folderUid}
+                onChange={onFolderChange}
+                enableCreateNew={true}
+                dashboardId={dashboard.id}
+                skipInitialLoad={true}
+              />
+            )}
           </Field>
 
           <Field
