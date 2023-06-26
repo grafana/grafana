@@ -22,7 +22,6 @@ import CheckboxCell from './CheckboxCell';
 import CheckboxHeaderCell from './CheckboxHeaderCell';
 import { NameCell } from './NameCell';
 import { TagsCell } from './TagsCell';
-import { TypeCell } from './TypeCell';
 import { useCustomFlexLayout } from './customFlexTableLayout';
 
 interface DashboardsTreeProps {
@@ -85,20 +84,13 @@ export function DashboardsTree({
       Cell: (props: DashboardsTreeCellProps) => <NameCell {...props} onFolderClick={onFolderClick} />,
     };
 
-    const typeColumn: DashboardsTreeColumn = {
-      id: 'type',
-      width: 1,
-      Header: t('browse-dashboards.dashboards-tree.type-column', 'Type'),
-      Cell: TypeCell,
-    };
-
     const tagsColumns: DashboardsTreeColumn = {
       id: 'tags',
       width: 2,
       Header: t('browse-dashboards.dashboards-tree.tags-column', 'Tags'),
       Cell: TagsCell,
     };
-    const columns = [canSelect && checkboxColumn, nameColumn, typeColumn, tagsColumns].filter(isTruthy);
+    const columns = [canSelect && checkboxColumn, nameColumn, tagsColumns].filter(isTruthy);
 
     return columns;
   }, [onFolderClick, canSelect]);

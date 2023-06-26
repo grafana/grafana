@@ -7,17 +7,11 @@
     },
     "dashboards-tree": {
       "name-column": "",
-      "tags-column": "",
-      "type-column": ""
+      "tags-column": ""
     },
     "no-results": {
       "clear": "",
       "text": ""
-    },
-    "type-cell": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
     }
   },
   "clipboard-button": {
