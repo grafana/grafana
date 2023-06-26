@@ -97,22 +97,25 @@ export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }
 
-export function useLoadNextChildrenPage(folderUID: string | undefined) {
+export function useLoadNextChildrenPage() {
   const dispatch = useDispatch();
   const requestInFlightRef = useRef(false);
 
-  const handleLoadMore = useCallback(() => {
-    if (requestInFlightRef.current) {
-      return Promise.resolve();
-    }
+  const handleLoadMore = useCallback(
+    (folderUID: string | undefined) => {
+      if (requestInFlightRef.current) {
+        return Promise.resolve();
+      }
 
-    requestInFlightRef.current = true;
+      requestInFlightRef.current = true;
 
-    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-    promise.finally(() => (requestInFlightRef.current = false));
+      const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
+      promise.finally(() => (requestInFlightRef.current = false));
 
-    return promise;
-  }, [dispatch, folderUID]);
+      return promise;
+    },
+    [dispatch]
+  );
 
   return handleLoadMore;
 }
@@ -143,6 +146,7 @@ function createFlatTree(
         isOpen: false,
         level: level + 1,
         item: { kind: 'ui', uiKind: 'empty-folder', uid: item.uid + 'empty-folder' },
+        parentUID,
       });
     }
 
@@ -166,7 +170,7 @@ function createFlatTree(
 
   let children = (items || []).flatMap((item) => mapItem(item, folderUID, level));
 
-  if (level === 0 && (!collection || !collection.isFullyLoaded)) {
+  if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
     children = children.concat(getPaginationPlaceholders(ROOT_PAGE_SIZE, folderUID, level));
   }
 
