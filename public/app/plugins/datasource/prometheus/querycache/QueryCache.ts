@@ -57,6 +57,7 @@ interface ProfileData extends DatasourceProfileData {
   panelId?: number;
   from: string;
   duration: number;
+  refreshInterval: number;
 }
 
 /**
@@ -95,7 +96,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       panelId: string;
       dashId: string;
       expr: string;
-      interval: string;
+      refreshInterval: number;
       sent: boolean;
       datasource: string;
       from: string;
@@ -175,7 +176,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         panelId: currentRequest.panelId?.toString() ?? '',
                         dashId: currentRequest.dashboardUID ?? '',
                         expr: currentRequest.expr ?? '',
-                        interval: currentRequest.interval ?? '',
+                        refreshInterval: currentRequest.refreshInterval ?? 0,
                         sent: false,
                         from: currentRequest.from ?? '',
                         duration: currentRequest.duration ?? 0,
@@ -202,7 +203,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
       // Send any pending profile information when the user navigates away
-      // window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
 
@@ -220,7 +221,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           panelId: value.panelId.toString(),
           dashId: value.dashId.toString(),
           expr: value.expr.toString(),
-          interval: value.interval.toString(),
+          refreshInterval: value.refreshInterval.toString(),
           from: value.from.toString(),
           duration: value.duration.toString(),
         };
@@ -251,7 +252,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
 
     const newFrom = request.range.from.valueOf();
     const newTo = request.range.to.valueOf();
-    // const timeSrv = getTimeSrv();
 
     // only cache 'now'-relative queries (that can benefit from a backfill cache)
     const shouldCache = request.rangeRaw?.to?.toString() === 'now';
@@ -260,9 +260,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    // console.log(timeSrv);
-    // const interval = getTimeSrv().getAutoRefreshInteval().interval
-    // debugger
+    const refreshInterval = getTimeSrv().refreshMS;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
@@ -279,7 +277,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           dashboardUID: request.dashboardUID ?? '',
           from: request.rangeRaw?.from.toString() ?? '',
           duration: request.range.to.diff(request.range.from, 'seconds') ?? '',
-          // interval: interval
+          refreshInterval: refreshInterval ?? 0,
         });
       }
 
