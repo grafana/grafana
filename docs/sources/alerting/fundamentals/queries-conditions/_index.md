@@ -84,7 +84,7 @@ Checks if any time series data matches the alert condition.
 
 **Note**:
 
-Classic condition expression queries alway produce one alert instance only, no matter how many time series meet the condition.
+Classic condition expression queries always produce one alert instance only, no matter how many time series meet the condition.
 Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
 
 ## Alert condition
