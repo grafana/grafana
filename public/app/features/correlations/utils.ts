@@ -31,7 +31,9 @@ export const attachCorrelationsToDataFrames = (
       dataSourceUid = dataFrameRefIdToDataSourceUid[formattedRefID];
     }
 
-    const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
+    const sourceCorrelations = correlations.filter((correlation) => {
+      return correlation.source ? correlation.source.uid === dataSourceUid : false;
+    });
     decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
   });
 
