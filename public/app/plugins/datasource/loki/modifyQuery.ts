@@ -21,7 +21,7 @@ import {
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
-import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
+import { lokiQueryModeller as modeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString, handleQuotes } from './querybuilder/parsing';
 
 export class NodePosition {
@@ -86,7 +86,6 @@ function removeSelector(query: string, matcher: SyntaxNode): string {
     return query;
   }
   const labelName = query.substring(label.from, label.to);
-  const modeller = new LokiQueryModeller();
 
   const prefix = query.substring(0, selector.from);
   const suffix = query.substring(selector.to);
@@ -391,7 +390,6 @@ function addFilterToStreamSelector(
   vectorSelectorPositions: NodePosition[],
   filter: QueryBuilderLabelFilter
 ): string {
-  const modeller = new LokiQueryModeller();
   let newQuery = '';
   let prev = 0;
 
