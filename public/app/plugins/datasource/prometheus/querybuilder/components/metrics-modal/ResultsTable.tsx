@@ -231,9 +231,6 @@ const getStyles = (theme: GrafanaTheme2, disableTextWrap: boolean) => {
       &:last-child {
         border-bottom: 0;
       }
-      :hover {
-        background-color: ${rowHoverBg};
-      }
     `,
     tableHeaderPadding: css`
       padding: 8px;
