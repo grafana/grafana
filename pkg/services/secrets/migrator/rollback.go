@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/manager"
 )
 
-func (s simpleSecret) rollback(
+func (s simpleSecret) Rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
@@ -72,7 +72,7 @@ func (s simpleSecret) rollback(
 	return anyFailure
 }
 
-func (s b64Secret) rollback(
+func (s b64Secret) Rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
@@ -146,7 +146,7 @@ func (s b64Secret) rollback(
 	return anyFailure
 }
 
-func (s jsonSecret) rollback(
+func (s jsonSecret) Rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,
@@ -210,7 +210,7 @@ func (s jsonSecret) rollback(
 	return anyFailure
 }
 
-func (s alertingSecret) rollback(
+func (s alertingSecret) Rollback(
 	ctx context.Context,
 	secretsSrv *manager.SecretsService,
 	encryptionSrv encryption.Internal,

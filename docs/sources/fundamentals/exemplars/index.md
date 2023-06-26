@@ -10,7 +10,7 @@ keywords:
   - prometheus
 menuTitle: Exemplars
 title: Introduction to exemplars
-weight: 750
+weight: 800
 ---
 
 # Introduction to exemplars
