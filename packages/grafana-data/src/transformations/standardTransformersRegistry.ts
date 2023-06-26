@@ -40,14 +40,15 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
   image?: { dark: string; light: string };
 }
 
-export type TransformerCategory =
-  | 'combine'
-  | 'calculateNewFields'
-  | 'createNewVisualization'
-  | 'filter'
-  | 'performSpatialOperations'
-  | 'reformat'
-  | 'reorderAndRename';
+export enum TransformerCategory {
+  Combine = 'combine',
+  CalculateNewFields = 'calculateNewFields',
+  CreateNewVisualization = 'createNewVisualization',
+  Filter = 'filter',
+  PerformSpatialOperations = 'performSpatialOperations',
+  Reformat = 'reformat',
+  ReorderAndRename = 'reorderAndRename',
+}
 
 /**
  * Registry of transformation options that can be driven by

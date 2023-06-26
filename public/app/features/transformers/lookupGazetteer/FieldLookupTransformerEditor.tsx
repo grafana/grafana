@@ -8,6 +8,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   FieldType,
+  TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -86,6 +87,6 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   name: 'Field lookup',
   description: `Use a field value to lookup additional fields from an external source.  This currently supports spatial data, but will eventually support more formats`,
   state: PluginState.alpha,
-  categories: new Set(['performSpatialOperations']),
+  categories: new Set([TransformerCategory.PerformSpatialOperations]),
   image: fieldLookup,
 };

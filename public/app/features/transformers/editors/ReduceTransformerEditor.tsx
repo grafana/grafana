@@ -7,6 +7,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
@@ -123,6 +124,6 @@ export const reduceTransformRegistryItem: TransformerRegistryItem<ReduceTransfor
   transformation: standardTransformers.reduceTransformer,
   name: standardTransformers.reduceTransformer.name,
   description: standardTransformers.reduceTransformer.description,
-  categories: new Set(['calculateNewFields']),
+  categories: new Set([TransformerCategory.CalculateNewFields]),
   image: reduce,
 };

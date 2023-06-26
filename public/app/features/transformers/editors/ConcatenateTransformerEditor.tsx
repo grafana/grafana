@@ -6,6 +6,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 import {
   ConcatenateFrameNameMode,
@@ -92,6 +93,6 @@ export const concatenateTransformRegistryItem: TransformerRegistryItem<Concatena
   name: 'Concatenate fields',
   description:
     'Combine all fields into a single frame.  Values will be appended with undefined values if not the same length.',
-  categories: new Set(['combine']),
+  categories: new Set([TransformerCategory.Combine]),
   image: concatenate,
 };

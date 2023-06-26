@@ -6,6 +6,7 @@ import {
   StandardEditorContext,
   TransformerRegistryItem,
   TransformerUIProps,
+  TransformerCategory,
 } from '@grafana/data';
 
 import { createHeatmap } from '../img';
@@ -49,6 +50,6 @@ export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransf
   name: heatmapTransformer.name,
   description: heatmapTransformer.description,
   state: PluginState.alpha,
-  categories: new Set(['createNewVisualization']),
+  categories: new Set([TransformerCategory.CreateNewVisualization]),
   image: createHeatmap,
 };

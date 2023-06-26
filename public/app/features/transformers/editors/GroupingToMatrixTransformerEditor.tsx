@@ -8,6 +8,7 @@ import {
   TransformerUIProps,
   GroupingToMatrixTransformerOptions,
   SpecialValue,
+  TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
@@ -94,6 +95,6 @@ export const groupingToMatrixTransformRegistryItem: TransformerRegistryItem<Grou
   transformation: standardTransformers.groupingToMatrixTransformer,
   name: 'Grouping to matrix',
   description: `Takes a three fields combination and produces a Matrix`,
-  categories: new Set(['combine', 'reformat']),
+  categories: new Set([TransformerCategory.Combine, TransformerCategory.Reformat]),
   image: groupingByMatrix,
 };

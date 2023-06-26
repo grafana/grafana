@@ -5,7 +5,7 @@ import {
   standardTransformers,
   TransformerRegistryItem,
   TransformerUIProps,
-  Transform,
+  TransformerCategory,
 } from '@grafana/data';
 import { LimitTransformerOptions } from '@grafana/data/src/transformations/transformers/limit';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
@@ -46,6 +46,6 @@ export const limitTransformRegistryItem: TransformerRegistryItem<LimitTransforme
   transformation: standardTransformers.limitTransformer,
   name: 'Limit',
   description: `Limit the number of items displayed.`,
-  categories: new Set(['filter']),
+  categories: new Set([TransformerCategory.Filter]),
   image: limit,
 };

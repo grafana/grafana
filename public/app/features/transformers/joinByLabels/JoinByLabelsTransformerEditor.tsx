@@ -1,6 +1,12 @@
 import React, { useMemo } from 'react';
 
-import { PluginState, SelectableValue, TransformerRegistryItem, TransformerUIProps } from '@grafana/data';
+import {
+  PluginState,
+  SelectableValue,
+  TransformerRegistryItem,
+  TransformerUIProps,
+  TransformerCategory,
+} from '@grafana/data';
 import { Alert, HorizontalGroup, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
 import { joinByLabel } from '../img';
@@ -157,7 +163,7 @@ export const joinByLabelsTransformRegistryItem: TransformerRegistryItem<JoinByLa
   name: joinByLabelsTransformer.name,
   description: joinByLabelsTransformer.description,
   state: PluginState.beta,
-  categories: new Set(['combine']),
+  categories: new Set([TransformerCategory.Combine]),
   image: joinByLabel,
   //   help: `
   // ### Use cases
