@@ -378,34 +378,31 @@ interface FetchPromRulesRulesActionProps {
 
 export function fetchAllPromAndRulerRulesAction(
   force = false,
-  options: FetchPromRulesRulesActionProps = {},
-  dataSourceName?: string
+  options: FetchPromRulesRulesActionProps = {}
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const allStartLoadingTs = performance.now();
 
     await Promise.allSettled(
-      getAllRulesSourceNames()
-        .filter((rulesSourceName) => rulesSourceName === (dataSourceName ?? rulesSourceName))
-        .map(async (rulesSourceName) => {
-          await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
+      getAllRulesSourceNames().map(async (rulesSourceName) => {
+        await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-          const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
-          const dataSourceConfig = dataSources[rulesSourceName].result;
+        const { promRules, rulerRules, dataSources } = getStore().unifiedAlerting;
+        const dataSourceConfig = dataSources[rulesSourceName].result;
 
-          if (!dataSourceConfig) {
-            return;
-          }
+        if (!dataSourceConfig) {
+          return;
+        }
 
-          const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
-          const shouldLoadRuler =
-            (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
+        const shouldLoadProm = force || !promRules[rulesSourceName]?.loading;
+        const shouldLoadRuler =
+          (force || !rulerRules[rulesSourceName]?.loading) && Boolean(dataSourceConfig.rulerConfig);
 
-          await Promise.allSettled([
-            shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
-            shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
-          ]);
-        })
+        await Promise.allSettled([
+          shouldLoadProm && dispatch(fetchPromRulesAction({ rulesSourceName, ...options })),
+          shouldLoadRuler && dispatch(fetchRulerRulesAction({ rulesSourceName })),
+        ]);
+      })
     );
 
     logInfo('All Prom and Ruler rules loaded', {

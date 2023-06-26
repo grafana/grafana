@@ -22,7 +22,10 @@ import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
-import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
+import {
+  fetchAllPromAndRulerRulesAction,
+  fetchPromAndRulerRulesAction,
+} from 'app/features/alerting/unified/state/actions';
 import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
@@ -33,7 +36,8 @@ import {
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { AccessControlAction, useDispatch } from 'app/types';
+import { Matcher } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction, ThunkDispatch, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
@@ -55,12 +59,50 @@ function getStateList(state: StateFilter) {
   return Object.entries(state).reduce(reducer, []);
 }
 
+const fetchPromAndRuler = ({
+  dispatch,
+  limitInstances,
+  matcherList,
+  dataSourceName,
+  stateList,
+}: {
+  dispatch: ThunkDispatch;
+  limitInstances: boolean;
+  matcherList?: Matcher[] | undefined;
+  dataSourceName?: string;
+  stateList: string[];
+}) => {
+  if (dataSourceName) {
+    dispatch(
+      fetchPromAndRulerRulesAction({
+        rulesSourceName: dataSourceName,
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        matcher: matcherList,
+        state: stateList,
+      })
+    );
+  } else {
+    dispatch(
+      fetchAllPromAndRulerRulesAction(false, {
+        limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+        matcher: matcherList,
+        state: stateList,
+      })
+    );
+  }
+};
+
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [limitInstances, toggleLimit] = useToggle(true);
 
   const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
+
+  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+
+  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -92,85 +134,50 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 
   useEffect(() => {
-    if (props.options.groupMode === GroupMode.Default) {
-      dispatch(
-        fetchAllPromAndRulerRulesAction(
-          false,
-          {
-            limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-            matcher: matcherList,
-            state: stateList,
-          },
-          dataSourceName
-        )
-      );
+    if (props.options.groupMode === GroupMode.Default && !promRulesRequests.loading) {
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
     }
-  }, [props.options.groupMode, limitInstances, dispatch, matcherList, stateList, dataSourceName]);
+  }, [
+    props.options.groupMode,
+    limitInstances,
+    dispatch,
+    matcherList,
+    stateList,
+    dataSourceName,
+    promRulesRequests.loading,
+  ]);
 
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
-    dispatch(
-      fetchAllPromAndRulerRulesAction(
-        false,
-        {
-          limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-          matcher: matcherList,
-          state: stateList,
-        },
-        dataSourceName
-      )
-    );
+    if (!promRulesRequests.loading) {
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+    }
     const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
-      dispatch(
-        fetchAllPromAndRulerRulesAction(
-          false,
-          {
-            limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-            matcher: matcherList,
-            state: stateList,
-          },
-          dataSourceName
-        )
-      )
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList })
     );
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, matcherList, stateList, toggleLimit, limitInstances, dataSourceName]);
+  }, [
+    dispatch,
+    dashboard,
+    matcherList,
+    stateList,
+    toggleLimit,
+    limitInstances,
+    dataSourceName,
+    promRulesRequests.loading,
+  ]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
-      dispatch(
-        fetchAllPromAndRulerRulesAction(
-          false,
-          {
-            limitAlerts: INSTANCES_DISPLAY_LIMIT,
-            matcher: matcherList,
-            state: stateList,
-          },
-          dataSourceName
-        )
-      );
+      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
       toggleLimit(true);
     } else {
-      dispatch(
-        fetchAllPromAndRulerRulesAction(
-          false,
-          {
-            matcher: matcherList,
-            state: stateList,
-          },
-          dataSourceName
-        )
-      );
+      fetchPromAndRuler({ dispatch, limitInstances: false, matcherList, dataSourceName, stateList });
       toggleLimit(false);
     }
   };
-
-  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
-  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
