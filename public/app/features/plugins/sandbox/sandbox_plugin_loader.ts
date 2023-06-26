@@ -2,7 +2,6 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { PluginMeta } from '@grafana/data';
-import { logError } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -17,6 +16,7 @@ import {
 import { sandboxPluginDependencies } from './plugin_dependencies';
 import { sandboxPluginComponents } from './sandbox_components';
 import { CompartmentDependencyModule, PluginFactoryFunction } from './types';
+import { logError } from './utils';
 
 // Loads near membrane custom formatter for near membrane proxy objects.
 if (process.env.NODE_ENV !== 'production') {

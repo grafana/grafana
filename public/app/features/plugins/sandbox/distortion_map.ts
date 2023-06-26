@@ -1,8 +1,9 @@
 import { cloneDeep, isFunction } from 'lodash';
 
-import { config, logWarning } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
+import { logWarning } from './utils';
 
 /**
  * Distortions are near-membrane mechanisms to altert JS instrics and DOM APIs.
@@ -81,7 +82,6 @@ function failToSet(originalAttrOrMethod: unknown, pluginId: string) {
     pluginId,
     attrOrMethod: String(originalAttrOrMethod),
     entity: 'window',
-    monitorOnly: String(monitorOnly),
   });
   if (monitorOnly) {
     return originalAttrOrMethod;
@@ -103,7 +103,6 @@ function distortIframeAttributes(distortions: DistortionMap) {
           pluginId,
           attrOrMethod: property,
           entity: 'iframe',
-          monitorOnly: String(monitorOnly),
         });
 
         if (monitorOnly) {
@@ -165,7 +164,6 @@ function distortAlert(distortions: DistortionMap) {
       pluginId,
       attrOrMethod: 'alert',
       entity: 'window',
-      monitorOnly: String(monitorOnly),
     });
 
     if (monitorOnly) {
@@ -197,7 +195,6 @@ function distortInnerHTML(distortions: DistortionMap) {
               attrOrMethod: 'innerHTML',
               param: forbiddenElement,
               entity: 'HTMLElement',
-              monitorOnly: String(monitorOnly),
             });
 
             if (monitorOnly) {
@@ -239,7 +236,6 @@ function distortCreateElement(distortions: DistortionMap) {
           attrOrMethod: 'createElement',
           param: arg,
           entity: 'document',
-          monitorOnly: String(monitorOnly),
         });
         if (!monitorOnly) {
           return document.createDocumentFragment();
@@ -267,7 +263,6 @@ function distortInsert(distortions: DistortionMap) {
           attrOrMethod: 'insertChild',
           param: nodeType,
           entity: 'HTMLElement',
-          monitorOnly: String(monitorOnly),
         });
         if (!monitorOnly) {
           return document.createDocumentFragment();
@@ -288,7 +283,6 @@ function distortInsert(distortions: DistortionMap) {
           attrOrMethod: 'insertAdjacentElement',
           param: nodeType,
           entity: 'HTMLElement',
-          monitorOnly: String(monitorOnly),
         });
 
         if (!monitorOnly) {
@@ -335,7 +329,6 @@ function distortAppend(distortions: DistortionMap) {
           attrOrMethod: 'append',
           param: args?.filter((node) => forbiddenElements.includes(node.nodeName.toLowerCase()))?.join(',') || '',
           entity: 'HTMLElement',
-          monitorOnly: String(monitorOnly),
         });
       }
 
@@ -357,7 +350,6 @@ function distortAppend(distortions: DistortionMap) {
           attrOrMethod: 'appendChild',
           param: nodeType,
           entity: 'HTMLElement',
-          monitorOnly: String(monitorOnly),
         });
 
         if (!monitorOnly) {
