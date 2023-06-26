@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 	gcomAngularPatternsPath = "/api/plugins/angular_patterns"
 )
 
-var _ DetectorsProvider = &GCOMDetectorsProvider{}
+var _ angulardetector.DetectorsProvider = &GCOMDetectorsProvider{}
 
 // GCOMDetectorsProvider is a DetectorsProvider which fetches patterns from GCOM.
 type GCOMDetectorsProvider struct {
@@ -33,7 +34,7 @@ type GCOMDetectorsProvider struct {
 
 // NewGCOMDetectorsProvider returns a new GCOMDetectorsProvider.
 // baseURL is the GCOM base url, without /api and without a trailing slash (e.g.: https://grafana.com)
-func NewGCOMDetectorsProvider(baseURL string) (DetectorsProvider, error) {
+func NewGCOMDetectorsProvider(baseURL string) (angulardetector.DetectorsProvider, error) {
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
@@ -47,7 +48,7 @@ func NewGCOMDetectorsProvider(baseURL string) (DetectorsProvider, error) {
 
 // ProvideDetectors gets the dynamic angular detectors from the remote source.
 // If an error occurs, the function fails silently by logging an error, and it returns nil.
-func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []AngularDetector {
+func (p *GCOMDetectorsProvider) ProvideDetectors(ctx context.Context) []angulardetector.AngularDetector {
 	patterns, err := p.fetch(ctx)
 	if err != nil {
 		p.log.Warn("Could not fetch remote angular patterns", "error", err)
@@ -113,16 +114,16 @@ var errUnknownPatternType = errors.New("unknown pattern type")
 
 // angularDetector converts a gcomPattern into an AngularDetector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
-func (p *gcomPattern) angularDetector() (AngularDetector, error) {
+func (p *gcomPattern) angularDetector() (angulardetector.AngularDetector, error) {
 	switch p.Type {
 	case gcomPatternTypeContains:
-		return &ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
+		return &angulardetector.ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
 	case gcomPatternTypeRegex:
 		re, err := regexp.Compile(p.Pattern)
 		if err != nil {
 			return nil, fmt.Errorf("%q regexp compile: %w", p.Pattern, err)
 		}
-		return &RegexDetector{Regex: re}, nil
+		return &angulardetector.RegexDetector{Regex: re}, nil
 	}
 	return nil, fmt.Errorf("%q: %w", p.Type, errUnknownPatternType)
 }
@@ -131,9 +132,9 @@ func (p *gcomPattern) angularDetector() (AngularDetector, error) {
 type gcomPatterns []gcomPattern
 
 // angularDetectors converts the slice of gcomPattern s into a slice of AngularDetector, by calling AngularDetector() on each gcomPattern.
-func (p gcomPatterns) angularDetectors() ([]AngularDetector, error) {
+func (p gcomPatterns) angularDetectors() ([]angulardetector.AngularDetector, error) {
 	var finalErr error
-	detectors := make([]AngularDetector, 0, len(p))
+	detectors := make([]angulardetector.AngularDetector, 0, len(p))
 	for _, pattern := range p {
 		d, err := pattern.angularDetector()
 		if err != nil {

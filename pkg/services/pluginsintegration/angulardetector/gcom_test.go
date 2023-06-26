@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 )
 
 var mockGCOMResponse = []byte(`[{
@@ -29,12 +31,12 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockGCOMResponse(t *testing.T, detectors []AngularDetector) {
+func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.AngularDetector) {
 	require.Len(t, detectors, 2)
-	d, ok := detectors[0].(*ContainsBytesDetector)
+	d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 	require.True(t, ok)
 	require.Equal(t, []byte(`PanelCtrl`), d.Pattern)
-	rd, ok := detectors[1].(*RegexDetector)
+	rd, ok := detectors[1].(*angulardetector.RegexDetector)
 	require.True(t, ok)
 	require.Equal(t, `["']QueryCtrl["']`, rd.Regex.String())
 }
@@ -135,7 +137,7 @@ func TestGCOMDetectorsProvider(t *testing.T) {
 		detectors := gcomProvider.ProvideDetectors(context.Background())
 		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
 		require.Len(t, detectors, 1, "should have decoded only 1 AngularDetector")
-		d, ok := detectors[0].(*ContainsBytesDetector)
+		d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 		require.True(t, ok, "decoded pattern should be of the correct type")
 		require.Equal(t, []byte("PanelCtrl"), d.Pattern, "decoded value for known pattern should be correct")
 	})

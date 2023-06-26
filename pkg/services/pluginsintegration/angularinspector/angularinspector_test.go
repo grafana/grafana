@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	pAngularDetector "github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetector"
 )
 
 func TestProvideService(t *testing.T) {
@@ -33,7 +34,7 @@ func TestProvideService(t *testing.T) {
 		require.IsType(t, inspector.Inspector.(*angularinspector.PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
 		seq := inspector.Inspector.(*angularinspector.PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
 		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &angulardetector.GCOMDetectorsProvider{}, "first AngularDetector provided should be gcom")
+		require.IsType(t, seq[0], &pAngularDetector.GCOMDetectorsProvider{}, "first AngularDetector provided should be gcom")
 		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second AngularDetector provided should be static")
 		staticDetectors := seq[1].ProvideDetectors(context.Background())
 		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")

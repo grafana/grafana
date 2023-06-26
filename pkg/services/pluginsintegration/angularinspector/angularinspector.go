@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	pAngularDetector "github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetector"
 )
 
 type Service struct {
@@ -17,7 +18,7 @@ type Service struct {
 //  1. Try to get the Angular detectors from GCOM
 //  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
 func newDynamicInspector(cfg *config.Cfg) (angularinspector.Inspector, error) {
-	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
+	dynamicProvider, err := pAngularDetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
 	if err != nil {
 		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
 	}
