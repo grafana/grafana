@@ -124,7 +124,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
-	// Note: new data source proxy to make requests to the external AM?
+	// Note(santiago): new data source proxy to make requests to the external AM?
 	proxy, err := pluginproxy.NewDataSourceProxy(ds, plugin.Routes, c, proxyPath, p.Cfg, p.HTTPClientProvider,
 		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {

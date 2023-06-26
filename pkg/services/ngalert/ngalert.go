@@ -164,13 +164,16 @@ func (ng *AlertNG) init() error {
 
 	ng.store.Logger = ng.Log
 
-	// TODO: what if we have no external AM configured?
+	// TODO(santiago): what if we have no external AM configured?
 	if ng.Cfg.UnifiedAlerting.DisableInternalAlertmanager {
 		ng.Log.Info("Starting Grafana with a no-op internal Alertmanager")
 		amURL := ng.Cfg.UnifiedAlerting.MainAlertmanagerURL
-		amUser := ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthUser
-		amPassword := ng.Cfg.UnifiedAlerting.MainAlertmanagerBasicAuthPassword
-		ng.MultiOrgAlertmanager = notifier.NewExternalMultiOrgAlertmanager(amURL, amUser, amPassword, ng.store, log.New("ngalert.multiorg.external.alertmanager"))
+		tenantID := ng.Cfg.UnifiedAlerting.MainAlertmanagerTenantID
+		fmt.Println("TenantID:", tenantID)
+		ng.MultiOrgAlertmanager, err = notifier.NewExternalMultiOrgAlertmanager(amURL, tenantID, ng.store, log.New("ngalert.multiorg.external.alertmanager"))
+		if err != nil {
+			return err
+		}
 	} else {
 		decryptFn := ng.SecretsService.GetDecryptedValue
 		multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()

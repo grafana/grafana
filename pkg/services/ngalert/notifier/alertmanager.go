@@ -270,7 +270,7 @@ type AggregateMatchersUsage struct {
 	ObjectMatchers int
 }
 
-func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
+func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	var amu AggregateMatchersUsage
 	am.aggregateRouteMatchers(cfg.AlertmanagerConfig.Route, &amu)
 	am.aggregateInhibitMatchers(cfg.AlertmanagerConfig.InhibitRules, &amu)
@@ -280,7 +280,7 @@ func (am *Alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
 }
 
-func (am *Alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
+func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
 	amu.Matchers += len(r.Matchers)
 	amu.MatchRE += len(r.MatchRE)
 	amu.Match += len(r.Match)
@@ -290,7 +290,7 @@ func (am *Alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *Aggregat
 	}
 }
 
-func (am *Alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
+func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu *AggregateMatchersUsage) {
 	for _, r := range rules {
 		amu.Matchers += len(r.SourceMatchers)
 		amu.Matchers += len(r.TargetMatchers)
