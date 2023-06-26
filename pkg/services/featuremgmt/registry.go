@@ -579,5 +579,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
+		{
+			Name:         "vizAndWidgetSplit",
+			Description:  "Split panels between vizualizations and widgets",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+		},
 	}
 )

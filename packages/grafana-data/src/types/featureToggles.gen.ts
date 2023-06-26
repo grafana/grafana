@@ -103,4 +103,5 @@ export interface FeatureToggles {
   recordedQueriesMulti?: boolean;
   alertingLokiRangeToInstant?: boolean;
   flameGraphV2?: boolean;
+  vizAndWidgetSplit?: boolean;
 }
