@@ -8,7 +8,6 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 )
 
@@ -70,22 +69,6 @@ var defaultDetectors = []angulardetector.AngularDetector{
 // detection patterns (defaultDetectors)
 func NewDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
 	return &angulardetector.StaticDetectorsProvider{Detectors: defaultDetectors}
-}
-
-// NewDynamicInspector returns the default dynamic Inspector, which is a PatternsListInspector that will:
-//  1. Try to get the Angular detectors from GCOM
-//  2. If it fails, it will use the static (hardcoded) detections provided by defaultDetectors.
-func NewDynamicInspector(cfg *config.Cfg) (Inspector, error) {
-	dynamicProvider, err := angulardetector.NewGCOMDetectorsProvider(cfg.GrafanaComURL)
-	if err != nil {
-		return nil, fmt.Errorf("NewGCOMDetectorsProvider: %w", err)
-	}
-	return &PatternsListInspector{
-		DetectorsProvider: angulardetector.SequenceDetectorsProvider{
-			dynamicProvider,
-			NewDefaultStaticDetectorsProvider(),
-		},
-	}, nil
 }
 
 // NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
