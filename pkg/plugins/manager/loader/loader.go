@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/angulardetector"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
@@ -39,7 +40,7 @@ type Loader struct {
 	log                     log.Logger
 	cfg                     *config.Cfg
 
-	angularInspector angulardetector.Inspector
+	angularInspector angularinspector.Inspector
 
 	errs map[string]*plugins.SignatureError
 }
@@ -47,7 +48,7 @@ type Loader struct {
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, pluginFinder finder.Finder,
 	roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, pluginFinder, signatureCalculator, angularInspector, externalServiceRegistry)
 }
@@ -56,7 +57,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry,
 	assetPath *assetpath.Service, pluginFinder finder.Finder, signatureCalculator plugins.SignatureCalculator,
-	angularInspector angulardetector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
+	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return &Loader{
 		pluginFinder:            pluginFinder,
 		pluginRegistry:          pluginRegistry,
@@ -186,10 +187,14 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 	// initialize plugins
 	initializedPlugins := make([]*plugins.Plugin, 0, len(verifiedPlugins))
 	for _, p := range verifiedPlugins {
-		// Detect angular for external plugins
+		// detect angular for external plugins
 		if p.IsExternalPlugin() {
 			var err error
-			p.AngularDetected, err = l.angularInspector.Inspect(p)
+
+			cctx, canc := context.WithTimeout(ctx, time.Minute*1)
+			p.AngularDetected, err = l.angularInspector.Inspect(cctx, p)
+			canc()
+
 			if err != nil {
 				l.log.Warn("could not inspect plugin for angular", "pluginID", p.ID, "err", err)
 			}
