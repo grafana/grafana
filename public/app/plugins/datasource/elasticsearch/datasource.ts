@@ -33,7 +33,7 @@ import {
   AnnotationEvent,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { queryLogsVolume } from 'app/core/logsModel';
+import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -64,9 +64,11 @@ import {
   ElasticsearchAnnotationQuery,
   RangeMap,
 } from './types';
-import { getScriptValue, isSupportedVersion, unsupportedVersionMessage } from './utils';
+import { getScriptValue, isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from './utils';
 
 export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
+export const REF_ID_STARTER_LOG_SAMPLE = 'log-sample-';
+
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -520,13 +522,15 @@ export class ElasticDatasource
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
+      case SupplementaryQueryType.LogsSample:
+        return this.getLogsSampleDataProvider(request);
       default:
         return undefined;
     }
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
-    return [SupplementaryQueryType.LogsVolume];
+    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
@@ -579,6 +583,27 @@ export class ElasticDatasource
           bucketAggs,
         };
 
+      case SupplementaryQueryType.LogsSample:
+        isQuerySuitable = isTimeSeriesQuery(query);
+
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+
+        if (options.limit) {
+          return {
+            refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+            query: query.query,
+            metrics: [{ type: 'logs', id: '1', settings: { limit: options.limit.toString() } }],
+          };
+        }
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'logs', id: '1' }],
+        };
+
       default:
         return undefined;
     }
@@ -603,6 +628,20 @@ export class ElasticDatasource
         extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
       }
     );
+  }
+
+  getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsSampleRequest = cloneDeep(request);
+    const targets = logsSampleRequest.targets;
+    const queries = targets.map((query) => {
+      return this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query);
+    });
+    const elasticQueries = queries.filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!elasticQueries.length) {
+      return undefined;
+    }
+    return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
@@ -729,7 +768,7 @@ export class ElasticDatasource
     const url = this.getMultiSearchUrl();
 
     const termsObservable = config.featureToggles.enableElasticsearchBackendQuerying
-      ? // TODO: This is run trough resource call, but maybe should run trough query
+      ? // TODO: This is run through resource call, but maybe should run through query
         from(this.postResourceRequest(url, esQuery))
       : this.legacyQueryRunner.request('POST', url, esQuery);
 
@@ -828,37 +867,23 @@ export class ElasticDatasource
     return false;
   }
 
-  private isPrimitive(obj: unknown) {
-    if (obj === null || obj === undefined) {
-      return true;
-    }
-    if (['string', 'number', 'boolean'].some((type) => type === typeof true)) {
-      return true;
-    }
-
-    return false;
-  }
-
   private objectContainsTemplate(obj: any) {
-    if (!obj) {
+    if (typeof obj === 'string') {
+      return this.templateSrv.containsTemplate(obj);
+    }
+    if (!obj || typeof obj !== 'object') {
       return false;
     }
 
     for (const key of Object.keys(obj)) {
-      if (this.isPrimitive(obj[key])) {
-        if (this.templateSrv.containsTemplate(obj[key])) {
-          return true;
-        }
-      } else if (Array.isArray(obj[key])) {
+      if (Array.isArray(obj[key])) {
         for (const item of obj[key]) {
           if (this.objectContainsTemplate(item)) {
             return true;
           }
         }
-      } else {
-        if (this.objectContainsTemplate(obj[key])) {
-          return true;
-        }
+      } else if (this.objectContainsTemplate(obj[key])) {
+        return true;
       }
     }
 

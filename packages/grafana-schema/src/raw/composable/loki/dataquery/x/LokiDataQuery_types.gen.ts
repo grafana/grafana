@@ -58,7 +58,7 @@ export interface LokiDataQuery extends common.DataQuery {
    */
   range?: boolean;
   /**
-   * Used to scale the interval value.
+   * @deprecated, now use step.
    */
   resolution?: number;
   /**

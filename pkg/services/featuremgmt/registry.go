@@ -357,8 +357,9 @@ var (
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
-			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
-			Stage:        FeatureStageExperimental,
+			Description:  "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
+			Expression:   "true",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -570,6 +571,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:         "flameGraphV2",
+			Description:  "New version of flame graph with new features",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 	}
 )

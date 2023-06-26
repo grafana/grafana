@@ -23,6 +23,7 @@ import { createFieldConfigRegistry } from './registryFactories';
 export type StandardOptionConfig = {
   defaultValue?: any;
   settings?: any;
+  hideFromDefaults?: boolean;
 };
 
 /** @beta */

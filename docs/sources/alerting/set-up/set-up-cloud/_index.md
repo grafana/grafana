@@ -11,14 +11,14 @@ aliases:
 labels:
   products:
     - cloud
-description: How to set up Alerting for Cloud
+description: How to configure Alerting for Cloud
 title: Set up Alerting for Cloud
 weight: 100
 ---
 
 # Set up Alerting for Cloud
 
-Configure the features and integrations that you need to create and manage your alerts.
+Set up your implementation of Grafana Alerting for Cloud.
 
 Grafana Cloud alerts are directly tied to metrics and log data.
 
@@ -30,7 +30,7 @@ Grafana Cloud Alerting's Prometheus-style alerts are built by querying directly 
 
 These are set up instructions for Grafana Alerting Cloud.
 
-To set up Grafana Alerting for Open Source, see ({{< relref "../set-up" >}})
+To set up Grafana Alerting for Open Source, see [Set up]({{< relref "../_index.md" >}}).
 
 To set up Alerting, you need to:
 
@@ -47,11 +47,15 @@ To set up Alerting, you need to:
    - [Optional] Add additional nested policies
    - [Optional] Add labels and label matchers to control alert routing
 
-4. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting/) and [Grafana Incident](/docs/grafana-cloud/incident/set-up/)
+4. [Optional] Integrate with [Grafana OnCall](/docs/oncall/latest/integrations/grafana-alerting) and [Grafana Incident](/docs/grafana-cloud/incident/set-up)
+
+## Advanced set up options
+
+Grafana Alerting supports many additional configuration options, from configuring external Alertmanagers to routing Grafana-managed alerts outside of Grafana, to defining your alerting setup as code.
 
 The following topics provide you with advanced configuration options for Grafana Alerting for Cloud.
 
-## Provision alert rules using mimirtool
+### Provision alert rules using mimirtool
 
 Use `mimirtool` to create and upload alert and recording rules to your Grafana Cloud instance.
 
@@ -71,7 +75,7 @@ The following sections cover all of these concepts:
 
 **Note:** You need an API key with proper permissions. You can use the same API key for your Metric, Log, and Alerting instances.
 
-### Download and install mimirtool
+#### Download and install mimirtool
 
 `mimirtool` is a powerful command-line tool for interacting with Grafana Mimir, which powers Grafana Cloud Metrics and Alerts. Use `mimirtool` to upload your metric and log rules definition and the Alertmanager configuration using YAML files.
 
@@ -81,7 +85,7 @@ For more information, including installation instructions, see [Grafana Mimirtoo
 For `mimirtool` to interact with Grafana Cloud, you must set the correct configuration variables. Set them using either environment variables or a command line flags.
 {{% /admonition %}}
 
-### Upload rules definition to your Grafana Cloud Metrics and Logs instance
+#### Upload rules definition to your Grafana Cloud Metrics and Logs instance
 
 First, you'll need to upload your alerting and recording rules to your Metrics and Logs instance. You'll need the instance ID and the URL. These should be part of /orgs/`<yourOrgName>`/.
 
@@ -93,7 +97,7 @@ Your Metrics instance is likely to be in the `us-central1` region. Its address w
 
 Your Logs instance is likely to be in the `us-central1` region. Its address would be in the form of [https://logs-prod-us-central1.grafana.net](https://logs-prod-us-central1.grafana.net).
 
-### Use mimirtool
+#### Use mimirtool
 
 With your instance ID, URL, and API key you're now ready to upload your rules to your metrics instance. Use the following commands and files as a reference.
 
@@ -170,13 +174,13 @@ first_rules:
         expr: sum by(job) (up)
 ```
 
-## Add an external Alertmanager using mimirtool
+### Add an external Alertmanager using mimirtool
 
 To receive alerts you need to upload your Alertmanager configuration to your Grafana Cloud Alerts instance. Similar to the previous step, you need the corresponding instance ID, URL and API key. These should be part of /orgs/​`<yourOrgName>`/.
 
 Your Alerts instance is likely to be in the `us-central1` region. Its address would be in the form of [https://alertmanager-us-central1.grafana.net](https://alertmanager-us-central1.grafana.net).
 
-### Use mimirtool
+#### Use mimirtool
 
 With your instance ID, URL, and API key you're now ready to upload your Alertmanager configuration to your Alerts instance. Use the following commands and files as a reference.
 
@@ -238,6 +242,10 @@ $ mimirtool alertmanager delete \
 --key=<yourKey>
 ```
 
-### UI access
+#### UI access
 
 After you upload a working Alertmanager configuration file, you can access the Alertmanager UI at: https://alertmanager-us-central1.grafana.net/alertmanager.
+
+### Provision alert rules using Terraform
+
+For information on how to provision alert rule using Terraform, see [Provision alert rules using Terraform]({{< relref "../provision-alerting-resources/terraform-provisioning" >}}).
