@@ -57,7 +57,6 @@ var WireSet = wire.NewSet(
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
 
-	angulardetectorsprovider.ProvideStatic,
 	angularpatternsstore.ProvideService,
 	angulardetectorsprovider.ProvideDynamic,
 	angularinspector.ProvideService,
