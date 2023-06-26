@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useAsync, useAsyncFn } from 'react-use';
 
 import {
@@ -14,9 +14,11 @@ import {
   SelectableValue,
   dateTime,
   TimeRange,
+  DataSourceApi,
+  hasLogsContextSupport,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, TimeZone } from '@grafana/schema';
 import { Icon, Button, LoadingBar, Modal, useTheme2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -121,6 +123,10 @@ interface LogRowContextModalProps {
   logsSortOrder?: LogsSortOrder | null;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
+  getDatasourceAndQueryByRow: (row: LogRowModel) => Promise<{
+    datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+    query: DataQuery | undefined;
+  }>;
 }
 
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
@@ -132,6 +138,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   getRowContextQuery,
   onClose,
   getRowContext,
+  getDatasourceAndQueryByRow,
 }) => {
   const scrollElement = React.createRef<HTMLDivElement>();
   const entryElement = React.createRef<HTMLTableRowElement>();
@@ -153,6 +160,15 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const [wrapLines, setWrapLines] = useState(
     store.getBool(SETTINGS_KEYS.logContextWrapLogMessage, store.getBool(SETTINGS_KEYS.wrapLogMessage, true))
   );
+
+  const { loading: datasourceLoading, value: datasource } = useAsync(async () => {
+    const ds = await getDatasourceAndQueryByRow(row);
+    if (hasLogsContextSupport(ds.datasourceInstance)) {
+      return ds.datasourceInstance;
+    } else {
+      return null;
+    }
+  });
 
   const getFullTimeRange = useCallback(() => {
     const { before, after } = context;
@@ -284,9 +300,12 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       className={styles.modal}
       onDismiss={onClose}
     >
-      {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-        <div className={styles.datasourceUi}>{getLogRowContextUi(row, fetchResults)}</div>
-      )}
+      {config.featureToggles.logsContextDatasourceUi &&
+        !datasourceLoading &&
+        datasource &&
+        datasource.getLogRowContextUi && (
+          <div className={styles.datasourceUi}>{datasource.getLogRowContextUi(row, fetchResults)}</div>
+        )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div className={loading ? styles.hidden : ''}>
           Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.

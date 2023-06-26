@@ -29,9 +29,10 @@ import {
   ExplorePanelsState,
   serializeStateToUrlParam,
   urlUtil,
+  DataSourceApi,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 import {
   RadioButtonGroup,
   Button,
@@ -90,6 +91,10 @@ interface Props extends Themeable2 {
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
+  getDatasourceAndQueryByRow: (row: LogRowModel) => Promise<{
+    datasourceInstance: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+    query: DataQuery | undefined;
+  }>;
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
@@ -454,6 +459,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       getRowContext,
       getLogRowContextUi,
       getRowContextQuery,
+      getDatasourceAndQueryByRow,
     } = this.props;
 
     const {
@@ -493,6 +499,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             getLogRowContextUi={getLogRowContextUi}
             logsSortOrder={logsSortOrder}
             timeZone={timeZone}
+            getDatasourceAndQueryByRow={getDatasourceAndQueryByRow}
           />
         )}
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>

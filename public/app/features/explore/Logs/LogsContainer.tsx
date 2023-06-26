@@ -79,7 +79,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     );
   }
 
-  private async getDatasourceAndQuery(logsQueries: DataQuery[] | undefined, row: LogRowModel) {
+  getDatasourceAndQueryByRow = async(row: LogRowModel) => {
+    const { logsQueries } = this.props;
     const query = this.getQuery(logsQueries, row);
     const datasourceRef = query?.datasource;
 
@@ -88,9 +89,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   }
 
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
-    const { logsQueries } = this.props;
-
-    const { datasourceInstance, query } = await this.getDatasourceAndQuery(logsQueries, row);
+    const { datasourceInstance, query } = await this.getDatasourceAndQueryByRow(row);
     if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.getLogRowContext(row, options, query);
     }
@@ -99,9 +98,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getLogRowContextQuery = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQuery | null> => {
-    const { logsQueries } = this.props;
-
-    const { datasourceInstance, query } = await this.getDatasourceAndQuery(logsQueries, row);
+    const { datasourceInstance, query } = await this.getDatasourceAndQueryByRow(row);
     if (hasLogsContextSupport(datasourceInstance) && datasourceInstance.getLogRowContextQuery) {
       return datasourceInstance.getLogRowContextQuery(row, options, query);
     }
@@ -121,12 +118,11 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   showContextToggle = memoize(async (row?: LogRowModel): Promise<boolean> => {
-    const { logsQueries } = this.props;
     if (!row) {
       return false;
     }
 
-    const { datasourceInstance } = await this.getDatasourceAndQuery(logsQueries, row);
+    const { datasourceInstance } = await this.getDatasourceAndQueryByRow(row);
     if (hasLogsContextSupport(datasourceInstance)) {
       return datasourceInstance.showContextToggle(row);
     }
@@ -224,6 +220,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             getRowContext={this.getLogRowContext}
             getRowContextQuery={this.getLogRowContextQuery}
             getLogRowContextUi={this.getLogRowContextUi}
+            getDatasourceAndQueryByRow={this.getDatasourceAndQueryByRow}
             getFieldLinks={this.getFieldLinks}
             addResultsToCache={() => addResultsToCache(exploreId)}
             clearCache={() => clearCache(exploreId)}
