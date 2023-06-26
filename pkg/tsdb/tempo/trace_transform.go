@@ -7,8 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
 )
 
 type KeyValue struct {
@@ -46,12 +44,6 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 			data.NewField("parentSpanID", nil, []string{}),
 			data.NewField("operationName", nil, []string{}),
 			data.NewField("serviceName", nil, []string{}),
-			data.NewField("kind", nil, []string{}),
-			data.NewField("statusCode", nil, []int64{}),
-			data.NewField("statusMessage", nil, []string{}),
-			data.NewField("instrumentationLibraryName", nil, []string{}),
-			data.NewField("instrumentationLibraryVersion", nil, []string{}),
-			data.NewField("traceState", nil, []string{}),
 			data.NewField("serviceTags", nil, []json.RawMessage{}),
 			data.NewField("startTime", nil, []float64{}),
 			data.NewField("duration", nil, []float64{}),
@@ -125,20 +117,12 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 	startTime := float64(span.StartTimestamp()) / 1_000_000
 	serviceName, serviceTags := resourceToProcess(resource)
 
-	status := span.Status()
-	statusCode := int64(status.Code())
-	statusMessage := status.Message()
-
-	libraryName := libraryTags.Name()
-	libraryVersion := libraryTags.Version()
-	traceState := getTraceState(span.TraceState())
-
 	serviceTagsJson, err := json.Marshal(serviceTags)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal service tags: %w", err)
 	}
 
-	spanTags, err := json.Marshal(getSpanTags(span))
+	spanTags, err := json.Marshal(getSpanTags(span, libraryTags))
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal span tags: %w", err)
 	}
@@ -161,12 +145,6 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 		parentSpanID,
 		span.Name(),
 		serviceName,
-		getSpanKind(span.Kind()),
-		statusCode,
-		statusMessage,
-		libraryName,
-		libraryVersion,
-		traceState,
 		json.RawMessage(serviceTagsJson),
 		startTime,
 		float64(span.EndTimestamp()-span.StartTimestamp()) / 1_000_000,
@@ -177,22 +155,7 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 }
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
-	attrs := resource.Attributes()
-	serviceName := tracetranslator.ResourceNoServiceName
-	if attrs.Len() == 0 {
-		return serviceName, nil
-	}
-
-	tags := make([]*KeyValue, 0, attrs.Len()-1)
-	attrs.Range(func(key string, attr pdata.AttributeValue) bool {
-		if key == conventions.AttributeServiceName {
-			serviceName = attr.StringVal()
-		}
-		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
-		return true
-	})
-
-	return serviceName, tags
+	return "", nil
 }
 
 func getAttributeVal(attr pdata.AttributeValue) interface{} {
@@ -205,75 +168,67 @@ func getAttributeVal(attr pdata.AttributeValue) interface{} {
 		return attr.BoolVal()
 	case pdata.AttributeValueTypeDouble:
 		return attr.DoubleVal()
-	case pdata.AttributeValueTypeMap, pdata.AttributeValueTypeArray:
-		return tracetranslator.AttributeValueToString(attr)
 	default:
 		return nil
 	}
 }
 
-func getSpanTags(span pdata.Span) []*KeyValue {
+func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
 	var tags []*KeyValue
+
+	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
+	if libraryTags != nil {
+		tags = append(tags, libraryTags...)
+	}
 	span.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 		return true
 	})
+
+	status := span.Status()
+	possibleNilTags := []*KeyValue{
+		getTagFromSpanKind(span.Kind()),
+		getTagFromStatusCode(status.Code()),
+		getErrorTagFromStatusCode(status.Code()),
+		getTagFromStatusMsg(status.Message()),
+		getTagFromTraceState(span.TraceState()),
+	}
+
+	for _, tag := range possibleNilTags {
+		if tag != nil {
+			tags = append(tags, tag)
+		}
+	}
 	return tags
 }
 
-func getSpanKind(spanKind pdata.SpanKind) string {
-	var tagStr string
-	switch spanKind {
-	case pdata.SpanKindClient:
-		tagStr = string(tracetranslator.OpenTracingSpanKindClient)
-	case pdata.SpanKindServer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindServer)
-	case pdata.SpanKindProducer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindProducer)
-	case pdata.SpanKindConsumer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindConsumer)
-	case pdata.SpanKindInternal:
-		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
-	default:
-		return ""
-	}
-
-	return tagStr
+func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyValue {
+	var keyValues []*KeyValue
+	return keyValues
 }
 
-func getTraceState(traceState pdata.TraceState) string {
-	if traceState != pdata.TraceStateEmpty {
-		return string(traceState)
-	}
-	return ""
+func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
+	return nil
+}
+
+func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
+	return nil
+}
+
+func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
+	return nil
+}
+
+func getTagFromStatusMsg(statusMsg string) *KeyValue {
+	return nil
+}
+
+func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
+	return nil
 }
 
 func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
-	if events.Len() == 0 {
-		return nil
-	}
-
-	logs := make([]*TraceLog, 0, events.Len())
-	for i := 0; i < events.Len(); i++ {
-		event := events.At(i)
-		fields := make([]*KeyValue, 0, event.Attributes().Len()+1)
-		if event.Name() != "" {
-			fields = append(fields, &KeyValue{
-				Key:   tracetranslator.TagMessage,
-				Value: event.Name(),
-			})
-		}
-		event.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
-			fields = append(fields, &KeyValue{Key: key, Value: getAttributeVal(attr)})
-			return true
-		})
-		logs = append(logs, &TraceLog{
-			Timestamp: float64(event.Timestamp()) / 1_000_000,
-			Fields:    fields,
-		})
-	}
-
-	return logs
+	return nil
 }
 
 func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {

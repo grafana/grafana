@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/services/certgenerator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 type Registry interface{}
@@ -16,10 +18,14 @@ type registry struct {
 
 func ProvideRegistry(
 	moduleManager modules.Manager,
+	apiServer grafanaapiserver.Service,
+	certGenerator certgenerator.Service,
 ) *registry {
 	return newRegistry(
 		log.New("modules.registry"),
 		moduleManager,
+		apiServer,
+		certGenerator,
 	)
 }
 
@@ -38,7 +44,6 @@ func newRegistry(logger log.Logger, moduleManager modules.Manager, svcs ...servi
 		})
 	}
 
-	// Register module targets
 	logger.Debug("Registering module", "name", modules.All)
 	r.moduleManager.RegisterModule(modules.All, nil)
 

@@ -1,11 +1,18 @@
 package modules
 
 const (
-	// All includes all modules necessary for Grafana to run as a standalone application.
 	All string = "all"
+
+	CertGenerator string = "cert-generator"
+
+	GrafanaAPIServer string = "grafana-apiserver"
 )
 
-// dependencyMap defines Module Targets => Dependencies
-var dependencyMap = map[string][]string{
-	All: {},
+var DependencyMap = map[string][]string{
+	CertGenerator: {},
+
+	GrafanaAPIServer: {CertGenerator},
+
+	// All includes all modules necessary for Grafana to run as a standalone application.
+	All: {GrafanaAPIServer},
 }
