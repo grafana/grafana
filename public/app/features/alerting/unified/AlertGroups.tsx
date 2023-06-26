@@ -10,11 +10,9 @@ import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/typ
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
-import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -27,8 +25,7 @@ import { initialAsyncRequestState } from './utils/redux';
 const AlertGroups = () => {
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
 
-  const alertManagers = useAlertManagersByPermission('instance');
-  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const [alertManagerSourceName] = useAlertManagerSourceName({ withPermissions: 'instance' });
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
@@ -63,16 +60,8 @@ const AlertGroups = () => {
     };
   }, [dispatch, alertManagerSourceName]);
 
-  if (!alertManagerSourceName) {
-    return (
-      <AlertingPageWrapper pageId="groups">
-        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
-      </AlertingPageWrapper>
-    );
-  }
-
   return (
-    <AlertingPageWrapper pageId="groups">
+    <>
       <AlertGroupFilter groups={results} />
       {loading && <LoadingPlaceholder text="Loading notifications" />}
       {error && !loading && (
@@ -101,9 +90,15 @@ const AlertGroups = () => {
           );
         })}
       {results && !filteredAlertGroups.length && <p>No results.</p>}
-    </AlertingPageWrapper>
+    </>
   );
 };
+
+const AlertGroupsPage = () => (
+  <AlertingPageWrapper pageId="groups" includeAlertmanagerSelector>
+    <AlertGroups />
+  </AlertingPageWrapper>
+);
 
 const getStyles = (theme: GrafanaTheme2) => ({
   groupingBanner: css`
@@ -111,4 +106,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-export default AlertGroups;
+export default AlertGroupsPage;

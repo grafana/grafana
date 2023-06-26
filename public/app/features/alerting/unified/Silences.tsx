@@ -1,19 +1,16 @@
 import React, { useCallback, useEffect } from 'react';
-import { Redirect, Route, RouteChildrenProps, Switch, useLocation } from 'react-router-dom';
+import { Route, RouteChildrenProps, Switch } from 'react-router-dom';
 
 import { Alert, withErrorBoundary } from '@grafana/ui';
 import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
-import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
@@ -21,8 +18,7 @@ import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences = () => {
-  const alertManagers = useAlertManagersByPermission('instance');
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const [alertManagerSourceName] = useAlertManagerSourceName({ withPermissions: 'instance' });
 
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
@@ -30,10 +26,6 @@ const Silences = () => {
   const alertsRequest = alertManagerSourceName
     ? alertsRequests[alertManagerSourceName] || initialAsyncRequestState
     : undefined;
-
-  const location = useLocation();
-  const pageNav = useSilenceNavData();
-  const isRoot = location.pathname.endsWith('/alerting/silences');
 
   const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
     { amSourceName: alertManagerSourceName ?? '' },
@@ -63,23 +55,11 @@ const Silences = () => {
     error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
 
   if (!alertManagerSourceName) {
-    return isRoot ? (
-      <AlertingPageWrapper pageId="silences" pageNav={pageNav}>
-        <NoAlertManagerWarning availableAlertManagers={alertManagers} />
-      </AlertingPageWrapper>
-    ) : (
-      <Redirect to="/alerting/silences" />
-    );
+    return null;
   }
 
   return (
-    <AlertingPageWrapper pageId="silences" isLoading={loading} pageNav={pageNav}>
-      <AlertManagerPicker
-        disabled={!isRoot}
-        current={alertManagerSourceName}
-        onChange={setAlertManagerSourceName}
-        dataSources={alertManagers}
-      />
+    <>
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
 
       {mimirLazyInitError && (
@@ -124,8 +104,18 @@ const Silences = () => {
           </Route>
         </Switch>
       )}
-    </AlertingPageWrapper>
+    </>
   );
 };
 
-export default withErrorBoundary(Silences, { style: 'page' });
+function SilencesPage() {
+  const pageNav = useSilenceNavData();
+
+  return (
+    <AlertingPageWrapper pageId="silences" pageNav={pageNav} includeAlertmanagerSelector>
+      <Silences />
+    </AlertingPageWrapper>
+  );
+}
+
+export default withErrorBoundary(SilencesPage, { style: 'page' });

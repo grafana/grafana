@@ -6,33 +6,32 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
+import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
-import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useSelectedAlertmanager } from './state/AlertmanagerContext';
 import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName] = useAlertManagerSourceName(alertManagers);
+  const { selectedAlertmanager } = useSelectedAlertmanager({ withPermissions: 'notification' });
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   const fetchConfig = useCallback(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    if (selectedAlertmanager) {
+      dispatch(fetchAlertManagerConfigAction(selectedAlertmanager));
     }
-  }, [alertManagerSourceName, dispatch]);
+  }, [selectedAlertmanager, dispatch]);
 
   useEffect(() => {
     fetchConfig();
   }, [fetchConfig]);
 
   const { result, error, loading } =
-    (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
+    (selectedAlertmanager && amConfigs[selectedAlertmanager]) || initialAsyncRequestState;
 
   const config = result?.alertmanager_config;
 
@@ -57,7 +56,7 @@ const MuteTimings = () => {
   return (
     <>
       {error && !loading && !result && (
-        <Alert severity="error" title={`Error loading Alertmanager config for ${alertManagerSourceName}`}>
+        <Alert severity="error" title={`Error loading Alertmanager config for ${selectedAlertmanager}`}>
           {error.message || 'Unknown error.'}
         </Alert>
       )}
@@ -90,4 +89,12 @@ const MuteTimings = () => {
   );
 };
 
-export default MuteTimings;
+const MuteTimingsPage = () => {
+  return (
+    <AlertingPageWrapper pageId="am-routes" includeAlertmanagerSelector>
+      <MuteTimings />
+    </AlertingPageWrapper>
+  );
+};
+
+export default MuteTimingsPage;

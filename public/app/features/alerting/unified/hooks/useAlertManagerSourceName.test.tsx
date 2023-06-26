@@ -28,7 +28,7 @@ const externalAmMimir: AlertManagerDataSource = {
 describe('useAlertManagerSourceName', () => {
   it('Should return undefined alert manager name when there are no available alert managers', () => {
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <MemoryRouter>{children}</MemoryRouter>;
-    const { result } = renderHook(() => useAlertManagerSourceName([]), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 
@@ -38,8 +38,7 @@ describe('useAlertManagerSourceName', () => {
   it('Should return Grafana AM when it is available and no alert manager query param exists', () => {
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <MemoryRouter>{children}</MemoryRouter>;
 
-    const availableAMs = [grafanaAm, externalAmProm, externalAmMimir];
-    const { result } = renderHook(() => useAlertManagerSourceName(availableAMs), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 
@@ -51,8 +50,7 @@ describe('useAlertManagerSourceName', () => {
     history.push({ search: `alertmanager=${externalAmProm.name}` });
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Router history={history}>{children}</Router>;
 
-    const availableAMs = [grafanaAm, externalAmProm, externalAmMimir];
-    const { result } = renderHook(() => useAlertManagerSourceName(availableAMs), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 
@@ -64,9 +62,7 @@ describe('useAlertManagerSourceName', () => {
     history.push({ search: `alertmanager=Not available external AM` });
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Router history={history}>{children}</Router>;
 
-    const availableAMs = [grafanaAm, externalAmProm, externalAmMimir];
-
-    const { result } = renderHook(() => useAlertManagerSourceName(availableAMs), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 
@@ -76,10 +72,9 @@ describe('useAlertManagerSourceName', () => {
   it('Should return alert manager from store if available and query is empty', () => {
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <MemoryRouter>{children}</MemoryRouter>;
 
-    const availableAMs = [grafanaAm, externalAmProm, externalAmMimir];
     store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmProm.name);
 
-    const { result } = renderHook(() => useAlertManagerSourceName(availableAMs), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 
@@ -91,10 +86,9 @@ describe('useAlertManagerSourceName', () => {
     history.push({ search: `alertmanager=${externalAmProm.name}` });
     const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Router history={history}>{children}</Router>;
 
-    const availableAMs = [grafanaAm, externalAmProm, externalAmMimir];
     store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmMimir.name);
 
-    const { result } = renderHook(() => useAlertManagerSourceName(availableAMs), { wrapper });
+    const { result } = renderHook(() => useAlertManagerSourceName(), { wrapper });
 
     const [alertManager] = result.current;
 

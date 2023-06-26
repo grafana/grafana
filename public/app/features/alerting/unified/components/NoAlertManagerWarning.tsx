@@ -2,10 +2,7 @@ import React from 'react';
 
 import { Alert } from '@grafana/ui';
 
-import { useAlertManagerSourceName } from '../hooks/useAlertManagerSourceName';
 import { AlertManagerDataSource } from '../utils/datasource';
-
-import { AlertManagerPicker } from './AlertManagerPicker';
 
 interface Props {
   availableAlertManagers: AlertManagerDataSource[];
@@ -24,19 +21,7 @@ const OtherAlertManagersAvailable = () => (
 );
 
 export const NoAlertManagerWarning = ({ availableAlertManagers }: Props) => {
-  const [_, setAlertManagerSourceName] = useAlertManagerSourceName(availableAlertManagers);
   const hasOtherAMs = availableAlertManagers.length > 0;
 
-  return (
-    <div>
-      {hasOtherAMs ? (
-        <>
-          <AlertManagerPicker onChange={setAlertManagerSourceName} dataSources={availableAlertManagers} />
-          <OtherAlertManagersAvailable />
-        </>
-      ) : (
-        <NoAlertManagersAvailable />
-      )}
-    </div>
-  );
+  return <div>{hasOtherAMs ? <OtherAlertManagersAvailable /> : <NoAlertManagersAvailable />}</div>;
 };
