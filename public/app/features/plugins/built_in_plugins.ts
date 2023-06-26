@@ -42,6 +42,7 @@ const pyroscopePlugin = async () =>
 const parcaPlugin = async () =>
   await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
 
+import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
 import * as annoListPanel from 'app/plugins/panel/annolist/module';
 import * as barChartPanel from 'app/plugins/panel/barchart/module';
@@ -136,6 +137,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/welcome/module': welcomeBanner,
   'app/plugins/panel/nodeGraph/module': nodeGraph,
   'app/plugins/panel/histogram/module': histogramPanel,
+  'app/plugins/panel/alertGroups/module': alertGroupsPanel,
 };
 
 export default builtInPlugins;
