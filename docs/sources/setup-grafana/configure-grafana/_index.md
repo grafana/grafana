@@ -672,17 +672,15 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 ### angular_support_enabled
 
 This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
-all plugins and core features that depend on angular support will stop working.
+all [plugins]({{< relref "../../developers/angular_deprecation/angular-plugins/" >}}) and core features that depend on angular support will stop working.
 
-Current core features that will stop working:
+The core features that depend on angular are:
 
-- Heatmap panel
 - Old graph panel
 - Old table panel
-- Postgres, MySQL and MSSQL data source query editors
 - Legacy alerting edit rule UI
 
-Before we disable angular support by default we plan to migrate these remaining areas to React.
+These features each have supported alternatives, and we recommend using them.
 
 ### csrf_trusted_origins
 
