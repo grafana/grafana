@@ -216,7 +216,7 @@ const (
 	FlagTraceqlSearch = "traceqlSearch"
 
 	// FlagPrometheusMetricEncyclopedia
-	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
 	// FlagTimeSeriesTable
@@ -338,6 +338,10 @@ const (
 	// FlagRecordedQueriesMulti
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
+
+	// FlagPluginsDynamicAngularDetectionPatterns
+	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
+	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
 
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries

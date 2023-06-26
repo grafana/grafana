@@ -101,6 +101,7 @@ export interface FeatureToggles {
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
+  pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
   flameGraphV2?: boolean;
 }
