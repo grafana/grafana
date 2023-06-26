@@ -1,5 +1,6 @@
 import { map } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
+import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import {
   CoreApp,
@@ -977,6 +978,102 @@ describe('ElasticDatasource', () => {
         timeField: '',
       });
     });
+
+    it('does not return logs samples for non time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'filters', id: '1' }],
+            query: '',
+          }
+        )
+      ).toEqual(undefined);
+    });
+
+    it('returns logs samples for time series queries', () => {
+      expect(
+        ds.getSupplementaryQuery(
+          { type: SupplementaryQueryType.LogsSample, limit: 100 },
+          {
+            refId: 'A',
+            query: '',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          }
+        )
+      ).toEqual({
+        refId: `log-sample-A`,
+        query: '',
+        metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+      });
+    });
+  });
+
+  describe('getDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not create a logs sample provider for non time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+    });
+
+    it('does create a logs sample provider for time series query', () => {
+      const options = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+    });
+  });
+
+  describe('getLogsSampleDataProvider', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it("doesn't return a logs sample provider given a non time series query", () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            metrics: [{ type: 'logs', id: '1', settings: { limit: '100' } }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+    });
+
+    it('returns a logs sample provider given a time series query', () => {
+      const request = getQueryOptions<ElasticsearchQuery>({
+        targets: [
+          {
+            refId: 'A',
+            bucketAggs: [{ type: 'date_histogram', id: '1' }],
+          },
+        ],
+      });
+
+      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
+    });
   });
 });
 
@@ -1101,7 +1198,19 @@ describe('modifyQuery', () => {
       );
     });
 
+    it('should toggle the filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+    });
+
     it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should remove a positive filter to add a negative filter', () => {
+      query.query = 'foo:"bar"';
       expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         '-foo:"bar"'
       );

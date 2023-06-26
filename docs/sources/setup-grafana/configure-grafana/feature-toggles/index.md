@@ -33,6 +33,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `disablePrometheusExemplarSampling`              | Disable Prometheus exemplar sampling                                                                                                                                                                |                    |
 | `logsSampleInExplore`                            | Enables access to the logs sample feature in Explore                                                                                                                                                | Yes                |
 | `logsContextDatasourceUi`                        | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
+| `prometheusMetricEncyclopedia`                   | Adds the metrics explorer component to the Prometheus query builder as an option in metric select                                                                                                   | Yes                |
 | `prometheusDataplane`                            | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
 | `lokiMetricDataplane`                            | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
@@ -97,7 +98,6 @@ Experimental features might be changed or removed without prior notice.
 | `individualCookiePreferences`            | Support overriding cookie preferences per user                                                               |
 | `onlyExternalOrgRoleSync`                | Prohibits a user from changing organization roles synced with external auth providers                        |
 | `traceqlSearch`                          | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries    |
-| `prometheusMetricEncyclopedia`           | Replaces the Prometheus query builder metric select option with a paginated and filterable component         |
 | `timeSeriesTable`                        | Enable time series table transformer & sparkline cell type                                                   |
 | `prometheusResourceBrowserCache`         | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`               | Query InfluxDB InfluxQL without the proxy                                                                    |

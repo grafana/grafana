@@ -5,7 +5,7 @@ keywords:
   - alert rules
   - incident
 title: Declare incidents from firing alerts
-weight: 430
+weight: 1010
 ---
 
 # Declare incidents from firing alerts

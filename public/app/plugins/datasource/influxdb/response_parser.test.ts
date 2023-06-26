@@ -1,18 +1,15 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
 import { AnnotationEvent, DataQueryRequest, FieldType, MutableDataFrame } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
-import InfluxDatasource from '../datasource';
-import InfluxQueryModel from '../influx_query_model';
-import ResponseParser, { getSelectedParams } from '../response_parser';
-
-//@ts-ignore
-const templateSrv = new TemplateSrvStub();
+import InfluxQueryModel from './influx_query_model';
+import ResponseParser, { getSelectedParams } from './response_parser';
+import { getMockDS, getMockDSInstanceSettings } from './specs/mocks';
+import { InfluxQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -300,13 +297,14 @@ describe('influxdb response parser', () => {
   });
 
   describe('When issuing annotationQuery', () => {
-    const ctx: any = {
-      instanceSettings: { url: 'url', name: 'influxDb' },
+    const ctx = {
+      ds: getMockDS(getMockDSInstanceSettings()),
     };
 
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-    const annotation = {
+    const annotation: InfluxQuery = {
+      refId: 'A',
       fromAnnotations: true,
       name: 'Anno',
       query: 'select * from logs where time >= now() - 15m and time <= now()',
@@ -424,8 +422,6 @@ describe('influxdb response parser', () => {
         } as FetchResponse);
       });
 
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
-      ctx.ds.access = 'proxy';
       config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });

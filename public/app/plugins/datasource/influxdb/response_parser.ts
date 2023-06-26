@@ -183,12 +183,12 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
 
   dfs[0].fields.forEach((field) => {
     // Time col
-    if (field.name === 'time') {
+    if (field.name.toLowerCase() === 'time') {
       table.columns.push({ text: 'Time', type: FieldType.time });
     }
 
     // Group by (label) column(s)
-    else if (field.name === 'value') {
+    else if (field.name.toLowerCase() === 'value') {
       if (field.labels) {
         Object.keys(field.labels).forEach((key) => {
           table.columns.push({ text: key });
@@ -269,12 +269,12 @@ export function getSelectedParams(target: InfluxQuery): string[] {
   return uniqueParams;
 }
 
-function incrementName(name: string, nameIncremenet: string, params: string[], index: number): string {
-  if (params.indexOf(nameIncremenet) > -1) {
+function incrementName(name: string, nameIncrement: string, params: string[], index: number): string {
+  if (params.indexOf(nameIncrement) > -1) {
     index++;
     return incrementName(name, name + '_' + index, params, index);
   }
-  return nameIncremenet;
+  return nameIncrement;
 }
 
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {

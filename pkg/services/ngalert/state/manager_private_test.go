@@ -114,7 +114,7 @@ func TestManager_saveAlertStates(t *testing.T) {
 
 	t.Run("should save all transitions if doNotSaveNormalState is false", func(t *testing.T) {
 		st := &FakeInstanceStore{}
-		m := Manager{instanceStore: st, doNotSaveNormalState: false}
+		m := Manager{instanceStore: st, doNotSaveNormalState: false, maxStateSaveConcurrency: 1}
 		m.saveAlertStates(context.Background(), &logtest.Fake{}, transitions...)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
@@ -131,7 +131,7 @@ func TestManager_saveAlertStates(t *testing.T) {
 
 	t.Run("should not save Normal->Normal if doNotSaveNormalState is true", func(t *testing.T) {
 		st := &FakeInstanceStore{}
-		m := Manager{instanceStore: st, doNotSaveNormalState: true}
+		m := Manager{instanceStore: st, doNotSaveNormalState: true, maxStateSaveConcurrency: 1}
 		m.saveAlertStates(context.Background(), &logtest.Fake{}, transitions...)
 
 		savedKeys := map[ngmodels.AlertInstanceKey]ngmodels.AlertInstance{}
