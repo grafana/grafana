@@ -270,7 +270,11 @@ func (p *redisPeer) membersSync() {
 	// those out that have failed to send a heartbeat during the heartbeatTimeout.
 	peers := p.filterUnhealthyMembers(members, values.Val())
 	sort.Strings(peers)
+
+	// Redis Scan may return duplicate elements
+	// Filtering duplicates with Compact after sorting to prevent inconsistencies when calculating Position
 	peers = slices.Compact(peers)
+
 	dur := time.Since(startTime)
 	p.logger.Debug("membership sync done", "duration_ms", dur.Milliseconds())
 	p.membersMtx.Lock()
