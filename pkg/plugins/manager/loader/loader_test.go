@@ -1443,7 +1443,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()), angularInspector)
+		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{})
 
 	for _, cb := range cbs {
 		cb(l)
