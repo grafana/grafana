@@ -95,9 +95,12 @@ type UnifiedAlertingSettings struct {
 	StateHistory                  UnifiedAlertingStateHistorySettings
 
 	// Disable the internal Alertmanager and use an external one instead.
-	DisableInternalAlertmanager bool
-	MainAlertmanagerURL         string
-	MainAlertmanagerTenantID    string
+	DisableInternalAlertmanager       bool
+	MainAlertmanagerURL               string
+	MainAlertmanagerTenantID          string
+	MainAlertmanagerBasicAuthUser     string
+	MainAlertmanagerBasicAuthPassword string
+
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency int
 }
@@ -257,6 +260,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.DisableInternalAlertmanager = ua.Key("disable_internal_alertmanager").MustBool(false)
 	uaCfg.MainAlertmanagerURL = ua.Key("main_alertmanager_url").MustString("")
 	uaCfg.MainAlertmanagerTenantID = ua.Key("main_alertmanager_tenant_id").MustString("")
+	uaCfg.MainAlertmanagerBasicAuthUser = ua.Key("main_alertmanager_basic_auth_user").MustString("")
+	uaCfg.MainAlertmanagerBasicAuthPassword = ua.Key("main_alertmanager_basic_auth_password").MustString("")
 
 	// TODO load from ini file
 	uaCfg.DefaultConfiguration = alertmanagerDefaultConfiguration

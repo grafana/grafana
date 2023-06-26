@@ -28,17 +28,21 @@ type externalMultiOrgAlertmanager struct {
 	store        configStore
 }
 
-type alwkdnaw interface {
+type ExternalAlertmanagerConfig struct {
+	URL               string
+	BasicAuthUser     string
+	BasicAuthPassword string
+	TenantID          string
 }
 
-func NewExternalMultiOrgAlertmanager(url, tenantID string, store configStore, log log.Logger) (*externalMultiOrgAlertmanager, error) {
-	amClient, err := e2emimir.NewClient(url, tenantID)
+func NewExternalMultiOrgAlertmanager(cfg ExternalAlertmanagerConfig, store configStore, log log.Logger) (*externalMultiOrgAlertmanager, error) {
+	amClient, err := e2emimir.NewClient(cfg.URL, cfg.TenantID, cfg.BasicAuthUser, cfg.BasicAuthPassword)
 	if err != nil {
 		return nil, fmt.Errorf("Error creating client: %w", err)
 	}
 	am := externalAlertmanager{
-		url:      url,
-		tenantID: tenantID,
+		url:      cfg.URL,
+		tenantID: cfg.TenantID,
 		client:   amClient,
 	}
 

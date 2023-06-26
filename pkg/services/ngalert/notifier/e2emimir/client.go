@@ -41,6 +41,8 @@ type Client struct {
 func NewClient(
 	alertmanagerAddress string,
 	orgID string,
+	user string,
+	password string,
 ) (*Client, error) {
 	c := &Client{
 		alertmanagerAddress: alertmanagerAddress,
@@ -51,8 +53,13 @@ func NewClient(
 
 	if alertmanagerAddress != "" {
 		alertmanagerAPIClient, err := promapi.NewClient(promapi.Config{
-			Address:      alertmanagerAddress,
-			RoundTripper: &addOrgIDRoundTripper{orgID: orgID, next: http.DefaultTransport},
+			Address: alertmanagerAddress,
+			RoundTripper: &addOrgIDRoundTripper{
+				orgID:             orgID,
+				next:              http.DefaultTransport,
+				basicAuthUser:     user,
+				basicAuthPassword: password,
+			},
 		})
 		if err != nil {
 			return nil, err
@@ -64,12 +71,20 @@ func NewClient(
 }
 
 type addOrgIDRoundTripper struct {
-	orgID string
-	next  http.RoundTripper
+	orgID             string
+	basicAuthUser     string
+	basicAuthPassword string
+	next              http.RoundTripper
 }
 
 func (r *addOrgIDRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("X-Scope-OrgID", r.orgID)
+	if r.basicAuthUser != "" || r.basicAuthPassword != "" {
+		fmt.Println("Adding basic auth! :)")
+		req.SetBasicAuth(r.basicAuthUser, r.basicAuthPassword)
+	} else {
+		fmt.Println("Not adding basic auth :(")
+	}
 
 	return r.next.RoundTrip(req)
 }
