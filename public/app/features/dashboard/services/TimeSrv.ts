@@ -9,6 +9,7 @@ import {
   RawTimeRange,
   TimeRange,
   toUtc,
+  IntervalValues,
 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
@@ -90,11 +91,10 @@ export class TimeSrv {
   }
 
   getValidIntervals(intervals: string[]): string[] {
-    const valid = this.contextSrv.minRefreshInterval
-      ? intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval)
-      : intervals;
-    valid.push(AutoRefreshInterval);
-    return valid;
+    if (this.contextSrv.minRefreshInterval) {
+      return intervals.filter((str) => str !== '').filter(this.contextSrv.isAllowedInterval);
+    }
+    return intervals;
   }
 
   private parseTime() {
@@ -236,7 +236,7 @@ export class TimeSrv {
     let refresh = interval;
     let intervalMs = 60 * 1000;
     if (interval === AutoRefreshInterval) {
-      intervalMs = this.getAutoRefreshInteval();
+      intervalMs = this.getAutoRefreshInteval().intervalMs;
     } else {
       refresh = this.contextSrv.getValidInterval(interval as string);
       intervalMs = rangeUtil.intervalToMs(refresh);
@@ -253,11 +253,13 @@ export class TimeSrv {
     }
   }
 
-  private getAutoRefreshInteval() {
+  getAutoRefreshInteval(): IntervalValues {
     const resolution = window?.innerWidth ?? 2000;
-    const v = rangeUtil.calculateInterval(this.timeRange(), resolution, config.minRefreshInterval);
-    // console.log('Get AUTO Interval', v);
-    return v.intervalMs;
+    return rangeUtil.calculateInterval(
+      this.timeRange(),
+      resolution, // the max pixels possibles
+      config.minRefreshInterval
+    );
   }
 
   refreshTimeModel() {
@@ -316,7 +318,7 @@ export class TimeSrv {
 
     // Check if the auto refresh interval has changed
     if (this.timeModel?.refresh === AutoRefreshInterval) {
-      const v = this.getAutoRefreshInteval();
+      const v = this.getAutoRefreshInteval().intervalMs;
       if (v !== this.refreshMS) {
         this.setAutoRefresh(AutoRefreshInterval);
       }

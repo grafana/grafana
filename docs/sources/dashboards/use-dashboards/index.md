@@ -198,6 +198,8 @@ Click the **Refresh dashboard** icon to immediately run every query on the dashb
 
 By default, Grafana does not automatically refresh the dashboard. Queries run on their own schedule according to the panel settings. However, if you want to regularly refresh the dashboard, then click the down arrow next to the **Refresh dashboard** icon and then select a refresh interval.
 
+Selecting the "Auto" interval will schedule a refresh based on the query time range and browser window width. Short time ranges will update frequently, while longer ones will update infrequently.
+
 ### Control the time range using a URL
 
 You can control the time range of a dashboard by providing the following query parameters in the dashboard URL:
