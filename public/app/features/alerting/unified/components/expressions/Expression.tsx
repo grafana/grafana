@@ -407,7 +407,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     wrapper: css`
       display: flex;
       border: solid 1px ${theme.colors.border.medium};
-      flex: 0.5;
+      flex: 1;
+      flex-basis: 400px;
       border-radius: ${theme.shape.borderRadius()};
     `,
     stack: css`
@@ -419,13 +420,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       min-width: 0; // this one is important to prevent text overflow
     `,
     classic: css`
-      flex-basis: 100%;
-      margin-bottom: ${theme.spacing(2)};
+      max-width: 100%;
     `,
     nonClassic: css`
-      max-width: 49%;
-      min-width: 49%;
-      margin-bottom: ${theme.spacing(2)};
+      max-width: 640px;
     `,
     alertCondition: css``,
     body: css`
