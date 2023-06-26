@@ -1,19 +1,20 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
-import { PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
+import { PAGE_SIZE } from '../api/services';
 import {
   useFlatTreeState,
   useCheckboxSelectionState,
-  fetchNextChildrenPage,
   setFolderOpenState,
   setItemSelectionState,
   useChildrenByParentUIDState,
   setAllSelection,
   useBrowseLoadingStatus,
+  useLoadNextChildrenPage,
+  fetchNextChildrenPage,
 } from '../state';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
@@ -162,24 +163,4 @@ function hasSelectedDescendants(
 
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
-}
-
-function useLoadNextChildrenPage(folderUID: string | undefined) {
-  const dispatch = useDispatch();
-  const requestInFlightRef = useRef(false);
-
-  const handleLoadMore = useCallback(() => {
-    if (requestInFlightRef.current) {
-      return Promise.resolve();
-    }
-
-    requestInFlightRef.current = true;
-
-    const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, pageSize: ROOT_PAGE_SIZE }));
-    promise.finally(() => (requestInFlightRef.current = false));
-
-    return promise;
-  }, [dispatch, folderUID]);
-
-  return handleLoadMore;
 }

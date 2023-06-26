@@ -21,7 +21,9 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -30,15 +32,12 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	logger = log.New("social")
-)
-
 type SocialService struct {
 	cfg *setting.Cfg
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
+	log           log.Logger
 }
 
 type OAuthInfo struct {
@@ -74,11 +73,13 @@ func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service,
 	bundleRegistry supportbundles.Service,
+	cache remotecache.CacheStorage,
 ) *SocialService {
 	ss := &SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
+		log:           log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -139,7 +140,7 @@ func ProvideService(cfg *setting.Cfg,
 		case "autodetect", "":
 			authStyle = oauth2.AuthStyleAutoDetect
 		default:
-			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
 			authStyle = oauth2.AuthStyleAutoDetect
 		}
 
@@ -178,6 +179,9 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Google.
 		if name == "google" {
+			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+				ss.log.Warn("Using legacy Google API URL, please update your configuration")
+			}
 			ss.socialMap["google"] = &SocialGoogle{
 				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain: info.HostedDomain,
@@ -188,10 +192,12 @@ func ProvideService(cfg *setting.Cfg,
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
-				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
-				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				cache:                cache,
+				allowedGroups:        util.SplitString(sec.Key("allowed_groups").String()),
+				forceUseGraphAPI:     sec.Key("force_use_graph_api").MustBool(false),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
@@ -474,7 +480,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
@@ -484,7 +490,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCa != "" {
 		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
