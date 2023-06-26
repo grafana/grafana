@@ -681,13 +681,11 @@ all plugins and core features that depend on angular support will stop working.
 
 Current core features that will stop working:
 
-- Heatmap panel
 - Old graph panel
 - Old table panel
-- Postgres, MySQL and MSSQL data source query editors
 - Legacy alerting edit rule UI
 
-Before we disable angular support by default we plan to migrate these remaining areas to React.
+These features each have supported alternatives, and we reccomend using them.
 
 ### csrf_trusted_origins
 
