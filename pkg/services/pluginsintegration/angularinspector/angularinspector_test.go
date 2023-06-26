@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
-	pAngularDetector "github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetector"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
 func TestProvideService(t *testing.T) {
@@ -41,8 +40,8 @@ func TestProvideService(t *testing.T) {
 		require.IsType(t, inspector.Inspector.(*angularinspector.PatternsListInspector).DetectorsProvider, angulardetector.SequenceDetectorsProvider{})
 		seq := inspector.Inspector.(*angularinspector.PatternsListInspector).DetectorsProvider.(angulardetector.SequenceDetectorsProvider)
 		require.Len(t, seq, 2, "should return the correct number of providers")
-		require.IsType(t, seq[0], &pAngularDetector.GCOMDetectorsProvider{}, "first AngularDetector provided should be gcom")
-		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second AngularDetector provided should be static")
+		require.IsType(t, seq[0], &angulardetectorsprovider.Dynamic{}, "first AngularDetector provided should be gcom")
+		require.IsType(t, seq[1], &angulardetectorsprovider.Static{}, "second AngularDetector provided should be static")
 		staticDetectors := seq[1].ProvideDetectors(context.Background())
 		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
 	})
