@@ -641,6 +641,10 @@
         {
           "submenu": [
             {
+              "text": "counts/sec (cps)",
+              "value": "cps"
+            },
+            {
               "text": "ops/sec (ops)",
               "value": "ops"
             },
@@ -661,8 +665,32 @@
               "value": "iops"
             },
             {
+              "text": "events/sec (eps)",
+              "value": "eps"
+            },
+            {
+              "text": "messages/sec (mps)",
+              "value": "mps"
+            },
+            {
+              "text": "records/sec (rps)",
+              "value": "recps"
+            },
+            {
+              "text": "rows/sec (rps)",
+              "value": "rowsps"
+            },
+            {
+              "text": "counts/min (cpm)",
+              "value": "cpm"
+            },
+            {
               "text": "ops/min (opm)",
               "value": "opm"
+            },
+            {
+              "text": "requests/min (rpm)",
+              "value": "reqpm"
             },
             {
               "text": "reads/min (rpm)",
@@ -671,6 +699,22 @@
             {
               "text": "writes/min (wpm)",
               "value": "wpm"
+            },
+            {
+              "text": "events/min (epm)",
+              "value": "epm"
+            },
+            {
+              "text": "messages/min (mpm)",
+              "value": "mpm"
+            },
+            {
+              "text": "records/min (rpm)",
+              "value": "recpm"
+            },
+            {
+              "text": "rows/min (rpm)",
+              "value": "rowspm"
             }
           ],
           "text": "throughput"
