@@ -90,7 +90,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
   return (
     <header className={styles.header}>
       <div className={styles.titleRow}>
-        {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
+        {links && links.length > 0 && <ExternalLinks links={links} className={styles.tracePageHeaderBack} />}
       </div>
 
       <div className={styles.subtitle}>
@@ -151,12 +151,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       display: flex;
       padding: 0 8px;
     `,
-    title: css`
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-    `,
     subtitle: css`
       flex: 1;
       line-height: 1em;
@@ -180,6 +174,23 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       max-width: 30%;
       display: inline-block;
+    `,
+    tracePageHeaderBack: css`
+      label: TracePageHeaderBack;
+      align-items: center;
+      align-self: stretch;
+      background-color: #fafafa;
+      border-bottom: 1px solid #ddd;
+      border-right: 1px solid #ddd;
+      color: inherit;
+      display: flex;
+      font-size: 1.4rem;
+      padding: 0 1rem;
+      margin-bottom: -1px;
+      &:hover {
+        background-color: #f0f0f0;
+        border-color: #ccc;
+      }
     `,
   };
 };

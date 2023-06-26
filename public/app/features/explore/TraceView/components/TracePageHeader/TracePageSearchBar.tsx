@@ -46,10 +46,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: TracePageSearchBarBtn;
       margin-left: 8px;
     `,
-    TracePageSearchBarLocateBtn: css`
-      label: TracePageSearchBarLocateBtn;
-      padding: 1px 8px 4px;
-    `,
   };
 };
 

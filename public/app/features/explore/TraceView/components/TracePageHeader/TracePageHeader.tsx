@@ -36,37 +36,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
         border-bottom: 1px solid ${autoColor(theme, '#ccc')};
       }
     `,
-    TracePageHeaderTitleRow: css`
-      label: TracePageHeaderTitleRow;
-      align-items: center;
-      display: flex;
-    `,
-    TracePageHeaderBack: css`
-      label: TracePageHeaderBack;
-      align-items: center;
-      align-self: stretch;
-      background-color: #fafafa;
-      border-bottom: 1px solid #ddd;
-      border-right: 1px solid #ddd;
-      color: inherit;
-      display: flex;
-      font-size: 1.4rem;
-      padding: 0 1rem;
-      margin-bottom: -1px;
-      &:hover {
-        background-color: #f0f0f0;
-        border-color: #ccc;
-      }
-    `,
-    TracePageHeaderTitle: css`
-      label: TracePageHeaderTitle;
-      color: inherit;
-      flex: 1;
-      font-size: 1.7em;
-      line-height: 1em;
-      margin: 0 0 0 0.3em;
-      padding-bottom: 0.5em;
-    `,
     TracePageHeaderOverviewItems: css`
       label: TracePageHeaderOverviewItems;
       background-color: ${autoColor(theme, '#eee')};
@@ -85,22 +54,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       &:hover > .trace-item-value-detail {
         color: unset;
       }
-    `,
-    TracePageHeaderArchiveIcon: css`
-      label: TracePageHeaderArchiveIcon;
-      font-size: 1.78em;
-      margin-right: 0.15em;
-    `,
-    TracePageHeaderTraceId: css`
-      label: TracePageHeaderTraceId;
-      white-space: nowrap;
-    `,
-    titleBorderBottom: css`
-      border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
-    `,
-    tracePageHeaderTraceId: css`
-      label: TracePageHeaderTraceId;
-      white-space: nowrap;
     `,
   };
 };
