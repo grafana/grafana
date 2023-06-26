@@ -7,6 +7,7 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
+  ensureTimeField,
   Field,
   LogRowContextOptions,
   LogRowContextQueryDirection,
@@ -139,7 +140,7 @@ export class LegacyQueryRunner {
         data: [
           {
             ...dataFrame,
-            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+            fields: [ensureTimeField(timestampField), lineField],
           },
         ],
       };
