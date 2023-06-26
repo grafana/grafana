@@ -150,6 +150,8 @@ const getLoadMoreDirection = (place: Place, sortOrder: LogsSortOrder): LogRowCon
   return LogRowContextQueryDirection.Backward;
 };
 
+const PAGE_SIZE = 50;
+
 export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps> = ({
   row,
   open,
@@ -252,7 +254,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
 
     const direction = getLoadMoreDirection(place, logsSortOrder);
 
-    const result = await getRowContext(refRow, { limit: 10, direction });
+    const result = await getRowContext(refRow, { limit: PAGE_SIZE, direction });
     const newRows = dataFrameToLogsModel(result.data).rows;
 
     if (logsSortOrder === LogsSortOrder.Ascending) {
