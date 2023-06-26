@@ -32,6 +32,10 @@ type Dynamic struct {
 
 	cacheTTL time.Duration
 
+	// initialRestoreDone is a channel that will be closed when the first restore from db is done by the
+	// background service. It can be used to wait for the first restore to be done by reading a value from this channel.
+	initialRestoreDone chan struct{}
+
 	detectors []angulardetector.AngularDetector
 	mux       sync.RWMutex
 }
@@ -48,6 +52,8 @@ func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dyna
 		httpClient: cl,
 		baseURL:    cfg.GrafanaComURL,
 		cacheTTL:   defaultCacheTTL,
+
+		initialRestoreDone: make(chan struct{}),
 	}, nil
 }
 
@@ -195,6 +201,9 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	}
 	canc()
 
+	// Notify that the initial restore is done (see docstring for d.initialRestoreDone)
+	close(d.initialRestoreDone)
+
 	// Determine when next run is, and check if we should run immediately
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
 	if err != nil {
@@ -224,6 +233,9 @@ func (d *Dynamic) Run(ctx context.Context) error {
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
 func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
+	// Wait for channel to be closed, which is done after the restore from db is done
+	<-d.initialRestoreDone
+
 	d.mux.RLock()
 	r := d.detectors
 	d.mux.RUnlock()
