@@ -37,6 +37,7 @@ type SocialService struct {
 
 	socialMap     map[string]SocialConnector
 	oAuthProvider map[string]*OAuthInfo
+	log           log.Logger
 }
 
 type OAuthInfo struct {
@@ -78,6 +79,7 @@ func ProvideService(cfg *setting.Cfg,
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
+		log:           log.New("login.social"),
 	}
 
 	usageStats.RegisterMetricsFunc(ss.getUsageStats)
@@ -138,7 +140,7 @@ func ProvideService(cfg *setting.Cfg,
 		case "autodetect", "":
 			authStyle = oauth2.AuthStyleAutoDetect
 		default:
-			logger.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
+			ss.log.Warn("Invalid auth style specified, defaulting to auth style AutoDetect", "auth_style", sec.Key("auth_style").String())
 			authStyle = oauth2.AuthStyleAutoDetect
 		}
 
@@ -177,6 +179,9 @@ func ProvideService(cfg *setting.Cfg,
 
 		// Google.
 		if name == "google" {
+			if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
+				ss.log.Warn("Using legacy Google API URL, please update your configuration")
+			}
 			ss.socialMap["google"] = &SocialGoogle{
 				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain: info.HostedDomain,
@@ -475,7 +480,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCert != "" || info.TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
@@ -485,7 +490,7 @@ func (ss *SocialService) GetOAuthHttpClient(name string) (*http.Client, error) {
 	if info.TlsClientCa != "" {
 		caCert, err := os.ReadFile(info.TlsClientCa)
 		if err != nil {
-			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
+			ss.log.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
