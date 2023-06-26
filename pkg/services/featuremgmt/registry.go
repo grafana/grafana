@@ -579,5 +579,12 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
+		{
+			Name:         "prometheusIncrementalQueryInstrumentation",
+			Description:  "Adds RudderStack events to incremental queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
 	}
 )
