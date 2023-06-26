@@ -89,7 +89,6 @@ export function PanelChrome({
   onOpenMenu,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  console.log(height);
   const styles = useStyles2(getStyles);
 
   const hasHeader = !hoverHeader;
