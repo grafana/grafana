@@ -104,4 +104,5 @@ export interface FeatureToggles {
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
   flameGraphV2?: boolean;
+  elasticFiltersToggle?: boolean;
 }
