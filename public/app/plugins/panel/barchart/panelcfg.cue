@@ -74,7 +74,7 @@ composableKinds: PanelCfg: {
 					// Threshold rendering
 					thresholdsStyle?: common.GraphThresholdsStyleConfig
 					// Draw style
-					drawStyle?: common.GraphDrawStyle
+					drawStyle?: common.GraphDrawStyle & (*"bars" | _)
 				} @cuetsy(kind="interface")
 			}
 		}]

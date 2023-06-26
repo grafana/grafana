@@ -253,9 +253,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     if (opts.ignore?.includes(field.state?.seriesIndex!)) {
       args.pathBuilder = null;
       args.scaleKey = scaleLineKey;
-      args.customConfig.fillOpacity = 0;
-      args.customConfig.lineWidth = 3;
-      args.customConfig.pointSize = 8;
+      args.customConfig = { ...customConfig, fillOpacity: 0, lineWidth: 3, pointSize: 8 };
 
       addYSeries(builder, field, args);
       addYScale(builder, field, args);

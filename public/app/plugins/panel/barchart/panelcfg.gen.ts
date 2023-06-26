@@ -102,6 +102,7 @@ export interface FieldConfig extends common.AxisConfig, common.HideableFieldConf
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
+  drawStyle: common.GraphDrawStyle.Bars,
   fillOpacity: 80,
   gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
