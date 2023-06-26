@@ -70,10 +70,13 @@ export default function CorrelationsPage() {
   }, [fetchCorrelations, page]);
 
   const handleDelete = useCallback(
-    (params: RemoveCorrelationParams) => {
+    (params: RemoveCorrelationParams, isLastRow: boolean) => {
       remove.execute(params);
+      if (isLastRow) {
+        setPage(page - 1);
+      }
     },
-    [remove]
+    [remove, page]
   );
 
   // onDelete - triggers when deleting a correlation
@@ -97,19 +100,26 @@ export default function CorrelationsPage() {
   const RowActions = useCallback(
     ({
       row: {
+        index,
         original: {
           source: { uid: sourceUID, readOnly },
           uid,
         },
       },
-    }: CellProps<CorrelationData, void>) =>
-      !readOnly && (
-        <DeleteButton
-          aria-label="delete correlation"
-          onConfirm={() => handleDelete({ sourceUID, uid })}
-          closeOnConfirm
-        />
-      ),
+    }: CellProps<CorrelationData, void>) => {
+      return (
+        !readOnly && (
+          <DeleteButton
+            aria-label="delete correlation"
+            onConfirm={() =>
+              handleDelete({ sourceUID, uid }, page > 0 && index === 0 && data?.correlations.length === 1)
+            }
+            closeOnConfirm
+          />
+        )
+      );
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [handleDelete]
   );
 
