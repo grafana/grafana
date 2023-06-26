@@ -301,6 +301,8 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 	limit := c.QueryInt64("limit")
 	if limit <= 0 {
 		limit = 100
+	} else if limit > 1000 {
+		limit = 1000
 	}
 
 	page := c.QueryInt64("page")
@@ -335,6 +337,7 @@ type GetCorrelationsParams struct {
 	// in:query
 	// required:false
 	// default:100
+	// maximum: 1000
 	Limit int64 `json:"limit"`
 	// Page index for starting fetching correlations
 	// in:query

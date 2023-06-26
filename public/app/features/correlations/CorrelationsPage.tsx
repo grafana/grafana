@@ -87,7 +87,7 @@ export default function CorrelationsPage() {
     if (!remove.error && !remove.loading && remove.value) {
       fetchCorrelations({ page });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
 
   useEffect(() => {
