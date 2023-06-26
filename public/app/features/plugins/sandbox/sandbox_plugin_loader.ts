@@ -2,6 +2,7 @@ import createVirtualEnvironment from '@locker/near-membrane-dom';
 import { ProxyTarget } from '@locker/near-membrane-shared';
 
 import { PluginMeta } from '@grafana/data';
+import { logError } from '@grafana/runtime';
 
 import { getPluginSettings } from '../pluginSettings';
 
@@ -32,7 +33,12 @@ export async function importPluginModuleInSandbox({ pluginId }: { pluginId: stri
     }
     return pluginImportCache.get(pluginId);
   } catch (e) {
-    throw new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
+    const error = new Error(`Could not import plugin ${pluginId} inside sandbox: ` + e);
+    logError(error, {
+      pluginId,
+      error: String(e),
+    });
+    throw error;
   }
 }
 
@@ -98,7 +104,12 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
             const pluginExports = await sandboxPluginComponents(pluginExportsRaw, meta);
             resolve(pluginExports);
           } catch (e) {
-            reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
+            const error = new Error(`Could not execute plugin's define ${meta.id}: ` + e);
+            logError(error, {
+              pluginId: meta.id,
+              error: String(e),
+            });
+            reject(error);
           }
         },
       }),
@@ -130,7 +141,12 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
       // of endowments.
       sandboxEnvironment.evaluate(pluginCode);
     } catch (e) {
-      reject(new Error(`Could not execute plugin ${meta.id}: ` + e));
+      const error = new Error(`Could not run plugin ${meta.id} inside sandbox: ` + e);
+      logError(error, {
+        pluginId: meta.id,
+        error: String(e),
+      });
+      reject(error);
     }
   });
 }
