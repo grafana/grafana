@@ -27,7 +27,7 @@ Once you've added the Prometheus data source, you can [configure it](/docs/grafa
 
 The following guides will help you get started with the Prometheus data source:
 
-- [Configure the Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prom-data-source/)
+- [Configure the Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/)
 - [Prometheus query editor](/docs/grafana/latest/datasources/prometheus/query-editor/)
 - [Template variables](/docs/grafana/latest/datasources/prometheus/template-variables/)
 
