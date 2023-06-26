@@ -104,9 +104,8 @@ export const Expression: FC<ExpressionProps> = ({
   return (
     <div
       className={cx(
-        queryType === ExpressionQueryType.classic
-          ? styles.expression.wrapper.classic
-          : styles.expression.wrapper.nonClassic,
+        styles.expression.wrapper,
+        alertCondition && styles.expression.alertCondition,
         queryType === ExpressionQueryType.classic && styles.expression.classic,
         queryType !== ExpressionQueryType.classic && styles.expression.nonClassic
       )}
@@ -405,23 +404,12 @@ const TimeseriesRow: FC<FrameProps & { index: number }> = ({ frame, index }) => 
 
 const getStyles = (theme: GrafanaTheme2) => ({
   expression: {
-    wrapper: {
-      classic: css`
-        display: flex;
-        border: solid 1px ${theme.colors.border.medium};
-        flex: 0.5;
-        border-radius: ${theme.shape.borderRadius()};
-      `,
-      nonClassic: css`
+    wrapper: css`
       display: flex;
       border: solid 1px ${theme.colors.border.medium};
       flex: 0.5;
       border-radius: ${theme.shape.borderRadius()};
-      ${theme.breakpoints.up('xxl')} {
-        & classic flex:0.3;
-      },
     `,
-    },
     stack: css`
       display: flex;
       flex-direction: column;
@@ -438,11 +426,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       max-width: 49%;
       min-width: 49%;
       margin-bottom: ${theme.spacing(2)};
-      ${theme.breakpoints.up('xxl')} {
-        max-width: 33%;
-        min-width: 33%;
-      },
     `,
+    alertCondition: css``,
     body: css`
       padding: ${theme.spacing(1)};
       flex: 1;

@@ -7,7 +7,6 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { GrafanaTheme2 } from '../../../../../../../packages/grafana-data/src/themes/types';
 import { Expression } from '../expressions/Expression';
 
 import { errorFromSeries, warningFromSeries } from './util';
@@ -69,13 +68,12 @@ export const ExpressionsEditor = ({
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   wrapper: css`
     display: flex;
     flex-direction: row;
     align-items: stretch;
     flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: ${theme.spacing(1)};
+    justify-content: space-between;
   `,
 });
