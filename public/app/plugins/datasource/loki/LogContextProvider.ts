@@ -1,4 +1,5 @@
 import { isEmpty } from 'lodash';
+import { createElement } from 'react';
 import { catchError, lastValueFrom, of, switchMap } from 'rxjs';
 
 import {
@@ -183,7 +184,7 @@ export class LogContextProvider {
         this.appliedContextFilters = [];
       });
 
-    return LokiContextUi({
+    return createElement(LokiContextUi, {
       row,
       origQuery,
       updateFilter,

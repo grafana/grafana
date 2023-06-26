@@ -303,8 +303,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       {config.featureToggles.logsContextDatasourceUi &&
         !datasourceLoading &&
         datasource &&
-        datasource.getLogRowContextUi && (
-          <div className={styles.datasourceUi}>{datasource.getLogRowContextUi(row, fetchResults)}</div>
+        datasource.getLogRowContextUi &&
+        contextQuery && (
+          <div className={styles.datasourceUi}>{datasource.getLogRowContextUi(row, fetchResults, contextQuery)}</div>
         )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div className={loading ? styles.hidden : ''}>
