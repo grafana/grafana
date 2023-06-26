@@ -2,12 +2,10 @@ package models
 
 import (
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // PublicDashboardErr represents a dashboard error.
@@ -106,6 +104,22 @@ func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
 }
 
+type PublicDashboardListQuery struct {
+	OrgID  int64
+	Query  string
+	Page   int
+	Limit  int
+	Offset int
+	User   *user.SignedInUser
+}
+
+type PublicDashboardListResponseWithPagination struct {
+	PublicDashboards []*PublicDashboardListResponse `json:"publicDashboards"`
+	TotalCount       int64                          `json:"totalCount"`
+	Page             int                            `json:"page"`
+	PerPage          int                            `json:"perPage"`
+}
+
 type PublicDashboardListResponse struct {
 	Uid          string `json:"uid" xorm:"uid"`
 	AccessToken  string `json:"accessToken" xorm:"access_token"`
@@ -127,25 +141,6 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 	return json.Marshal(ts)
 }
 
-// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
-func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
-	from := dashboard.Data.GetPath("time", "from").MustString()
-	to := dashboard.Data.GetPath("time", "to").MustString()
-
-	if pd.TimeSelectionEnabled {
-		from = reqDTO.TimeRange.From
-		to = reqDTO.TimeRange.To
-	}
-
-	timeRange := legacydata.NewDataTimeRange(from, to)
-
-	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
-	return TimeSettings{
-		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
-		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
-	}
-}
-
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
 	DashboardUid    string
@@ -153,11 +148,17 @@ type SavePublicDashboardDTO struct {
 	PublicDashboard *PublicDashboardDTO
 }
 
+type TimeRangeDTO struct {
+	From     string
+	To       string
+	Timezone string
+}
+
 type PublicDashboardQueryDTO struct {
 	IntervalMs      int64
 	MaxDataPoints   int64
 	QueryCachingTTL int64
-	TimeRange       TimeSettings
+	TimeRange       TimeRangeDTO
 }
 
 type AnnotationsQueryDTO struct {

@@ -63,6 +63,7 @@ datasources:
       prometheusVersion: 2.40.0
 
   - name: gdev-slow-prometheus
+    uid: gdev-slow-prometheus-uid
     type: prometheus
     access: proxy
     url: http://localhost:3011

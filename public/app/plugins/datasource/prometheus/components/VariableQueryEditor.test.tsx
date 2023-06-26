@@ -4,6 +4,7 @@ import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { PrometheusDatasource } from '../datasource';
+import PrometheusLanguageProvider from '../language_provider';
 import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
 
 import { PromVariableQueryEditor, Props, variableMigration } from './VariableQueryEditor';
@@ -62,15 +63,23 @@ describe('PromVariableQueryEditor', () => {
   beforeEach(() => {
     props = {
       datasource: {
-        hasLabelsMatchAPISupport: () => 1,
+        hasLabelsMatchAPISupport: () => true,
         languageProvider: {
           start: () => Promise.resolve([]),
           syntax: () => {},
           getLabelKeys: () => [],
           metrics: [],
-        },
+          metricsMetadata: {},
+          getLabelValues: jest.fn().mockImplementation(() => ['that']),
+          fetchSeriesLabelsMatch: jest.fn().mockImplementation(() => Promise.resolve({ those: 'those' })),
+        } as Partial<PrometheusLanguageProvider> as PrometheusLanguageProvider,
         getInitHints: () => [],
-      } as unknown as PrometheusDatasource,
+        getDebounceTimeInMilliseconds: jest.fn(),
+        getTagKeys: jest.fn().mockImplementation(() => Promise.resolve(['this'])),
+        getVariables: jest.fn().mockImplementation(() => []),
+        metricFindQuery: jest.fn().mockImplementation(() => Promise.resolve(['that'])),
+        getSeriesLabels: jest.fn().mockImplementation(() => Promise.resolve(['that'])),
+      } as Partial<PrometheusDatasource> as PrometheusDatasource,
       query: {
         refId: 'test',
         query: 'label_names()',
@@ -94,6 +103,26 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() => expect(screen.getByText('Series query')).toBeInTheDocument());
   });
 
+  test('Calls onChange for label_names(match) query', async () => {
+    const onChange = jest.fn();
+
+    props.query = {
+      refId: 'test',
+      query: '',
+      match: 'that',
+    };
+
+    render(<PromVariableQueryEditor {...props} onChange={onChange} />);
+
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
+
+    expect(onChange).toHaveBeenCalledWith({
+      query: 'label_names(that)',
+      labelFilters: [],
+      refId,
+    });
+  });
+
   test('Calls onChange for label_names() query', async () => {
     const onChange = jest.fn();
 
@@ -108,6 +137,7 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names()',
+      labelFilters: [],
       refId,
     });
   });
@@ -117,6 +147,7 @@ describe('PromVariableQueryEditor', () => {
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Metrics');
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Query result');
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Series query');
@@ -124,25 +155,83 @@ describe('PromVariableQueryEditor', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  test('Calls onChange for metrics() with argument onBlur', async () => {
+  test('Calls onChange for metrics() after input', async () => {
     const onChange = jest.fn();
 
     props.query = {
       refId: 'test',
-      query: 'metrics(a)',
+      query: 'label_names()',
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
-    const labelSelect = screen.getByLabelText('Metric selector');
-    await userEvent.click(labelSelect);
-    const functionSelect = screen.getByLabelText('Query type').parentElement!;
-    await userEvent.click(functionSelect);
-
-    expect(onChange).toHaveBeenCalledWith({
-      query: 'metrics(a)',
-      refId,
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Metrics');
+    const metricInput = screen.getByLabelText('Metric selector');
+    await userEvent.type(metricInput, 'a').then((prom) => {
+      const queryType = screen.getByLabelText('Query type');
+      // click elsewhere to trigger the onBlur
+      return userEvent.click(queryType);
     });
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        query: 'metrics(a)',
+        labelFilters: [],
+        refId,
+      })
+    );
+  });
+
+  test('Calls onChange for label_values() after selecting label', async () => {
+    const onChange = jest.fn();
+
+    props.query = {
+      refId: 'test',
+      query: 'label_names()',
+    };
+
+    render(<PromVariableQueryEditor {...props} onChange={onChange} />);
+
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    const labelSelect = screen.getByLabelText('label-select');
+    await userEvent.type(labelSelect, 'this');
+    await selectOptionInTest(labelSelect, 'this');
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        query: 'label_values(this)',
+        labelFilters: [],
+        refId,
+      })
+    );
+  });
+
+  test('Calls onChange for label_values() after selecting metric', async () => {
+    const onChange = jest.fn();
+
+    props.query = {
+      refId: 'test',
+      query: 'label_names()',
+    };
+
+    render(<PromVariableQueryEditor {...props} onChange={onChange} />);
+
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
+    const labelSelect = screen.getByLabelText('label-select');
+    await userEvent.type(labelSelect, 'this');
+    await selectOptionInTest(labelSelect, 'this');
+
+    const metricSelect = screen.getByLabelText('Metric');
+    await userEvent.type(metricSelect, 'that');
+    await selectOptionInTest(metricSelect, 'that');
+
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith({
+        query: 'label_values(that,this)',
+        labelFilters: [],
+        refId,
+      })
+    );
   });
 
   test('Calls onChange for query_result() with argument onBlur', async () => {
@@ -162,6 +251,7 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'query_result(a)',
+      labelFilters: [],
       refId,
     });
   });
@@ -183,6 +273,7 @@ describe('PromVariableQueryEditor', () => {
 
     expect(onChange).toHaveBeenCalledWith({
       query: '{a: "example"}',
+      labelFilters: [],
       refId,
     });
   });

@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
 	"xorm.io/xorm"
 )
@@ -16,10 +15,9 @@ type PostgresDialect struct {
 	BaseDialect
 }
 
-func NewPostgresDialect(engine *xorm.Engine) Dialect {
+func NewPostgresDialect() Dialect {
 	d := PostgresDialect{}
 	d.BaseDialect.dialect = &d
-	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = Postgres
 	return &d
 }
@@ -46,16 +44,6 @@ func (db *PostgresDialect) BooleanStr(value bool) string {
 
 func (db *PostgresDialect) BatchSize() int {
 	return 1000
-}
-
-func (db *PostgresDialect) Default(col *Column) string {
-	if col.Type == DB_Bool {
-		if col.Default == "0" {
-			return "FALSE"
-		}
-		return "TRUE"
-	}
-	return col.Default
 }
 
 func (db *PostgresDialect) SQLType(c *Column) string {
@@ -130,8 +118,8 @@ func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) s
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *PostgresDialect) CleanDB() error {
-	sess := db.engine.NewSession()
+func (db *PostgresDialect) CleanDB(engine *xorm.Engine) error {
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	if _, err := sess.Exec("DROP SCHEMA public CASCADE;"); err != nil {
@@ -147,12 +135,12 @@ func (db *PostgresDialect) CleanDB() error {
 
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *PostgresDialect) TruncateDBTables() error {
-	tables, err := db.engine.DBMetas()
+func (db *PostgresDialect) TruncateDBTables(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -303,11 +291,7 @@ func (db *PostgresDialect) Lock(cfg LockCfg) error {
 	query := "SELECT pg_try_advisory_lock(?)"
 	var success bool
 
-	key, err := db.getLockKey()
-	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key: %w", err)
-	}
-	_, err = cfg.Session.SQL(query, key).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -338,11 +322,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	query := "SELECT pg_advisory_unlock(?)"
 	var success bool
 
-	key, err := db.getLockKey()
-	if err != nil {
-		return fmt.Errorf("failed to generate advisory lock key: %w", err)
-	}
-	_, err = cfg.Session.SQL(query, key).Get(&success)
+	_, err := cfg.Session.SQL(query, cfg.Key).Get(&success)
 	if err != nil {
 		return err
 	}
@@ -352,7 +332,7 @@ func (db *PostgresDialect) Unlock(cfg LockCfg) error {
 	return nil
 }
 
-func getDBName(dsn string) (string, error) {
+func (db *PostgresDialect) GetDBName(dsn string) (string, error) {
 	if strings.HasPrefix(dsn, "postgres://") || strings.HasPrefix(dsn, "postgresql://") {
 		parsedDSN, err := pq.ParseURL(dsn)
 		if err != nil {
@@ -366,16 +346,4 @@ func getDBName(dsn string) (string, error) {
 		return "", fmt.Errorf("failed to get database name")
 	}
 	return string(submatch[1]), nil
-}
-
-func (db *PostgresDialect) getLockKey() (string, error) {
-	dbName, err := getDBName(db.engine.DataSourceName())
-	if err != nil {
-		return "", err
-	}
-	key, err := database.GenerateAdvisoryLockId(dbName)
-	if err != nil {
-		return "", err
-	}
-	return key, nil
 }

@@ -33,12 +33,12 @@ Some features are enabled by default. You can disable these feature by setting t
 | `disablePrometheusExemplarSampling`              | Disable Prometheus exemplar sampling                                                                                                                                                                |                    |
 | `logsSampleInExplore`                            | Enables access to the logs sample feature in Explore                                                                                                                                                | Yes                |
 | `logsContextDatasourceUi`                        | Allow datasource to provide custom UI for context view                                                                                                                                              | Yes                |
+| `prometheusMetricEncyclopedia`                   | Adds the metrics explorer component to the Prometheus query builder as an option in metric select                                                                                                   | Yes                |
 | `prometheusDataplane`                            | Changes responses to from Prometheus to be compliant with the dataplane specification. In particular it sets the numeric Field.Name from 'Value' to the value of the `__name__` label when present. | Yes                |
 | `lokiMetricDataplane`                            | Changes metric responses from Loki to be compliant with the dataplane specification.                                                                                                                | Yes                |
 | `dataplaneFrontendFallback`                      | Support dataplane contract field name change for transformations and field name matchers where the name is different                                                                                | Yes                |
 | `alertingNotificationsPoliciesMatchingInstances` | Enables the preview of matching instances for notification policies                                                                                                                                 | Yes                |
 | `useCachingService`                              | When turned on, the new query and resource caching implementation using a wire service inject will be used in place of the previous middleware implementation                                       |                    |
-| `authenticationConfigUI`                         | Enables authentication configuration UI                                                                                                                                                             | Yes                |
 | `advancedDataSourcePicker`                       | Enable a new data source picker with contextual information, recently used order and advanced mode                                                                                                  | Yes                |
 
 ## Preview feature toggles
@@ -76,7 +76,7 @@ Experimental features might be changed or removed without prior notice.
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                        |
-| `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                       |
+| `lokiExperimentalStreaming`        | Support new streaming approach for loki (prototype, needs special loki build)                                |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                              |
 | `newTraceViewHeader`               | Shows the new trace view header                                                                              |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                             |
@@ -98,7 +98,6 @@ Experimental features might be changed or removed without prior notice.
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                               |
 | `onlyExternalOrgRoleSync`          | Prohibits a user from changing organization roles synced with external auth providers                        |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries    |
-| `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component         |
 | `timeSeriesTable`                  | Enable time series table transformer & sparkline cell type                                                   |
 | `prometheusResourceBrowserCache`   | Displays browser caching options in Prometheus data source configuration                                     |
 | `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                    |
@@ -109,10 +108,14 @@ Experimental features might be changed or removed without prior notice.
 | `alertStateHistoryLokiOnly`        | Disable Grafana alerts from emitting annotations when a remote Loki instance is available.                   |
 | `unifiedRequestLog`                | Writes error logs to the request logger                                                                      |
 | `pyroscopeFlameGraph`              | Changes flame graph to pyroscope one                                                                         |
-| `pluginsAPIManifestKey`            | Use grafana.com API to retrieve the public manifest key                                                      |
 | `extraThemes`                      | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`         | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`           | Enables the plugins frontend sandbox                                                                         |
+| `cloudWatchLogsMonacoEditor`       | Enables the Monaco editor for CloudWatch Logs queries                                                        |
+| `exploreScrollableLogsContainer`   | Improves the scrolling behavior of logs in Explore                                                           |
+| `recordedQueriesMulti`             | Enables writing multiple items from a single query within Recorded Queries                                   |
+| `alertingLokiRangeToInstant`       | Rewrites eligible loki range queries to instant queries                                                      |
+| `flameGraphV2`                     | New version of flame graph with new features                                                                 |
 
 ## Development feature toggles
 

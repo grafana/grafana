@@ -306,13 +306,13 @@ func parseNumber(value interface{}) *float64 {
 
 	number, ok := value.(json.Number)
 	if !ok {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 
 	fvalue, err := number.Float64()
 	if err != nil {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 

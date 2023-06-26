@@ -334,7 +334,7 @@ func TestEvaluatorTest(t *testing.T) {
 			})
 		})
 
-		t.Run("when evalution fails", func(t *testing.T) {
+		t.Run("when evaluation fails", func(t *testing.T) {
 			expectedError := errors.New("test-error")
 			evaluator.evalCallback = func(now time.Time) (eval.Results, error) {
 				return nil, expectedError
