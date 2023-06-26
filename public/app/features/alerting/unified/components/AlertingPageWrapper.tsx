@@ -3,8 +3,6 @@ import React, { PropsWithChildren, useEffect, useState } from 'react';
 import { Features, ToggleFeatures } from 'react-enable';
 
 import { NavModelItem } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { H1 } from '@grafana/ui/src/unstable';
 import { Page } from 'app/core/components/Page/Page';
 
 import FEATURES from '../features';
@@ -12,7 +10,6 @@ import { SelectedAlertmanagerProvider, useSelectedAlertmanager } from '../state/
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
-import { Spacer } from './Spacer';
 
 interface Props {
   pageId: string;
@@ -46,21 +43,7 @@ export const AlertingPageWrapper = ({
   return (
     <Features features={FEATURES}>
       <SelectedAlertmanagerProvider>
-        <Page
-          pageNav={pageNav}
-          navId={pageId}
-          renderTitle={(title) => (
-            <Stack direction="row" alignItems="center" flexGrow={1}>
-              <H1>{title}</H1>
-              {includeAlertmanagerSelector && (
-                <>
-                  <Spacer />
-                  <AlertManagerPicker />
-                </>
-              )}
-            </Stack>
-          )}
-        >
+        <Page pageNav={pageNav} navId={pageId} actions={includeAlertmanagerSelector ? <AlertManagerPicker /> : null}>
           <Page.Contents isLoading={isLoading}>
             <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
           </Page.Contents>

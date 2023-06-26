@@ -38,7 +38,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
           {titleElement}
           {info && <PageInfo info={info} />}
         </div>
-        {actions && <div className={styles.actions}>{actions}</div>}
+        <div className={styles.actions}>{actions}</div>
       </div>
       {sub && <div className={styles.subTitle}>{sub}</div>}
     </div>
@@ -57,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       display: 'flex',
       flexDirection: 'row',
-      flex: 1,
       h1: {
         display: 'flex',
         marginBottom: 0,
