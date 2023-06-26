@@ -16,6 +16,7 @@ import {
   Selector,
   UnwrapExpr,
   String,
+  PipelineStage,
 } from '@grafana/lezer-logql';
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
@@ -70,7 +71,7 @@ export function removeLabelFromQuery(query: string, key: string, operator: strin
 
 function removeLabelFilter(query: string, matcher: SyntaxNode): string {
   const pipelineStage = matcher.parent?.parent;
-  if (!pipelineStage) {
+  if (!pipelineStage || pipelineStage.type.id !== PipelineStage) {
     return query;
   }
   return (query.substring(0, pipelineStage.from) + query.substring(pipelineStage.to)).trim();
