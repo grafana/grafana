@@ -75,7 +75,7 @@ export const getCorrelationsBySourceUIDs = async (sourceUIDs: string[]): Promise
       method: 'GET',
       showErrorAlert: false,
       params: {
-        sourceuid: sourceUIDs,
+        sourceUID: sourceUIDs,
       },
     })
   )

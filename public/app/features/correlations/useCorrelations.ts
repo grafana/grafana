@@ -9,7 +9,6 @@ import {
   Correlation,
   CreateCorrelationParams,
   CreateCorrelationResponse,
-  GetAllCorrelationsBySourceUIDParams,
   GetCorrelationsParams,
   RemoveCorrelationParams,
   RemoveCorrelationResponse,
@@ -31,9 +30,9 @@ export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'target
 
 export interface CorrelationsData {
   correlations: CorrelationData[];
-  page?: number;
-  limit?: number;
-  totalCount?: number;
+  page: number;
+  limit: number;
+  totalCount: number;
 }
 
 const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
@@ -46,12 +45,6 @@ export const toEnrichedCorrelationsData = (correlationsResponse: CorrelationsRes
   return {
     ...correlationsResponse,
     correlations: correlationsResponse.correlations.map(toEnrichedCorrelationData),
-  };
-};
-
-export const toNonPagedEnrichedCorrelationsData = (correlationsResponse: Correlation[]): CorrelationsData => {
-  return {
-    correlations: correlationsResponse.map(toEnrichedCorrelationData),
   };
 };
 
@@ -80,22 +73,6 @@ export const useCorrelations = () => {
       )
         .then(getData)
         .then(toEnrichedCorrelationsData),
-    [backend]
-  );
-
-  const [getAllFromSourceUIDInfo, getAllFromSourceUID] = useAsyncFn<
-    (params: GetAllCorrelationsBySourceUIDParams) => Promise<CorrelationsData>
-  >(
-    (params) =>
-      lastValueFrom(
-        backend.fetch<Correlation[]>({
-          url: `/api/datasources/uid/${params.sourceUID}/correlations`,
-          method: 'GET',
-          showErrorAlert: false,
-        })
-      )
-        .then(getData)
-        .then(toNonPagedEnrichedCorrelationsData),
     [backend]
   );
 
@@ -135,10 +112,6 @@ export const useCorrelations = () => {
     get: {
       execute: get,
       ...getInfo,
-    },
-    getAllFromSourceUIDInfo: {
-      execute: getAllFromSourceUID,
-      ...getAllFromSourceUIDInfo,
     },
     remove: {
       execute: remove,

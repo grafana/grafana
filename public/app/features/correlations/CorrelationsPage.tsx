@@ -56,12 +56,6 @@ export default function CorrelationsPage() {
     get: { execute: fetchCorrelations, ...get },
   } = useCorrelations();
 
-  useEffect(() => {
-    fetchCorrelations({ page });
-    // we only want to fetch data on first render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const canWriteCorrelations = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
 
   const handleAdded = useCallback(() => {
@@ -93,7 +87,8 @@ export default function CorrelationsPage() {
     if (!remove.error && !remove.loading && remove.value) {
       fetchCorrelations({ page });
     }
-  }, [remove.error, remove.loading, remove.value, fetchCorrelations, page]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
 
   useEffect(() => {
     fetchCorrelations({ page });
@@ -210,7 +205,7 @@ export default function CorrelationsPage() {
               />
               <Pagination
                 currentPage={page}
-                numberOfPages={Math.ceil(data.totalCount! / data.limit!)}
+                numberOfPages={Math.ceil(data.totalCount / data.limit)}
                 onNavigate={(toPage: number) => {
                   setPage(toPage);
                 }}

@@ -308,7 +308,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext)
 		page = 1
 	}
 
-	sourceUIDs := c.QueryStrings("sourceuid")
+	sourceUIDs := c.QueryStrings("sourceUID")
 
 	query := GetCorrelationsQuery{
 		OrgId:      c.OrgID,
@@ -343,8 +343,10 @@ type GetCorrelationsParams struct {
 	Page int64 `json:"page"`
 	// Source datasource UID filter to be applied to correlations
 	// in:query
+	// type: array
+	// collectionFormat: multi
 	// required:false
-	SourceUIDs []string `json:"sourceuid"`
+	SourceUIDs []string `json:"sourceUID"`
 }
 
 //swagger:response getCorrelationsResponse
