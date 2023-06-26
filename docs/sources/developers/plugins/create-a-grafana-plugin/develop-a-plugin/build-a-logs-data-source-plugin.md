@@ -113,7 +113,7 @@ frame.add({ time: 1589189406480, content: 'user logged in' });
 
 Add additional information about each log line by supplying more data frame fields.
 
-If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Grafana treats subsequent text fields as [detected fields]({{< relref "../../../../explore#labels-and-detected-fields" >}}).
+If a data frame has more than one text field, then Grafana assumes the first field in the data frame to be the actual log line. Grafana treats subsequent text fields as detected fields.
 
 Any number of custom fields can be added to your data frame; Grafana comes with two dedicated fields: `levels` and `id`.
 

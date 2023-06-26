@@ -144,8 +144,8 @@ useEffect(() => {
 
 ## Forwarded HTTP headers in the plugin SDK for Go
 
-We recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders` methods when retrieving forwarded HTTP headers. See [Forward OAuth identity for the logged-in user]({{< relref "../../create-a-grafana-plugin/develop-a-plugin/add-authentication-for-data-source-plugins.md#forward-oauth-identity-for-the-logged-in-user" >}}), [Forward cookies for the logged-in user
-]({{< relref "../../create-a-grafana-plugin/develop-a-plugin/add-authentication-for-data-source-plugins.md#forward-cookies-for-the-logged-in-user" >}}) or [Forward user header for the logged-in user]({{< relref "../create-a-grafana-plugin/develop-a-plugin/add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) for example usages.
+We recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders` methods when retrieving forwarded HTTP headers. See [Forward OAuth identity for the logged-in user]({{< relref "../../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-oauth-identity-for-the-logged-in-user" >}}), [Forward cookies for the logged-in user
+]({{< relref "../../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-cookies-for-the-logged-in-user" >}}) or [Forward user header for the logged-in user]({{< relref "../create-a-grafana-plugin/extend-a-plugin/add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) for example usages.
 
 ### Technical details
 

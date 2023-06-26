@@ -14,7 +14,7 @@ weight: 600
 
 # Add support for variables
 
-Variables are placeholders for values, and you can use them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../../../../dashboards/variables" >}}).
+Variables are placeholders for values, and you can use them to create templated queries, and dashboard or panel links. For more information on variables, refer to [Templates and variables]({{< relref "../../../../dashboards/variables" >}}).
 
 In this guide, you'll see how you can turn a query string like this:
 
@@ -68,7 +68,7 @@ For data sources, you need to use the `getTemplateSrv`, which returns an instanc
 
 ## Format multi-value variables
 
-When a user selects multiple values for a variable, the value of the interpolated variable depends on the [variable format]({{< relref "../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}).
+When a user selects multiple values for a variable, the value of the interpolated variable depends on the [variable format]({{< relref "../../../../dashboards/variables/variable-syntax#advanced-variable-format-options" >}}).
 
 A data source plugin can define the default format option when no format is specified by adding a third argument to the interpolation function.
 

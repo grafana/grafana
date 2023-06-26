@@ -437,7 +437,7 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 ## Forward user header for the logged-in user
 
-When [send_user_header]({{< relref "../../../../../setup-grafana/configure-grafana#send_user_header" >}}) is enabled, Grafana passes the user header to the plugin using the `X-Grafana-User` header. You can forward this header as well as [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
+When `send_user_header` is enabled, Grafana passes the user header to the plugin using the `X-Grafana-User` header. You can forward this header as well as [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
 
 **`QueryData`**
 
