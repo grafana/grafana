@@ -84,7 +84,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
 
   const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
-  const uid_fromparams = routeParams.id;
+  const uidFromParams = routeParams.id;
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -252,7 +252,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep alertUid={uid_fromparams} />
+                  <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
             </div>
