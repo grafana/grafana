@@ -159,28 +159,27 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           ></Select>
         </InlineField>
         {/* Basic SQL auth */}
-        {jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth ||
-          (jsonData.authenticationType === MSSQLAuthenticationType.windowsAuth && (
-            <InlineFieldRow>
-              <InlineField labelWidth={SHORT_WIDTH} label="User">
-                <Input
-                  width={SHORT_WIDTH}
-                  value={dsSettings.user || ''}
-                  placeholder="user"
-                  onChange={onDSOptionChanged('user')}
-                ></Input>
-              </InlineField>
-              <InlineField label="Password" labelWidth={SHORT_WIDTH}>
-                <SecretInput
-                  width={SHORT_WIDTH}
-                  placeholder="Password"
-                  isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
-                  onReset={onResetPassword}
-                  onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
-                ></SecretInput>
-              </InlineField>
-            </InlineFieldRow>
-          ))}
+        {jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth && (
+          <InlineFieldRow>
+            <InlineField labelWidth={SHORT_WIDTH} label="User">
+              <Input
+                width={SHORT_WIDTH}
+                value={dsSettings.user || ''}
+                placeholder="user"
+                onChange={onDSOptionChanged('user')}
+              ></Input>
+            </InlineField>
+            <InlineField label="Password" labelWidth={SHORT_WIDTH}>
+              <SecretInput
+                width={SHORT_WIDTH}
+                placeholder="Password"
+                isConfigured={dsSettings.secureJsonFields && dsSettings.secureJsonFields.password}
+                onReset={onResetPassword}
+                onBlur={onUpdateDatasourceSecureJsonDataOption(props, 'password')}
+              ></SecretInput>
+            </InlineField>
+          </InlineFieldRow>
+        )}
       </FieldSet>
 
       {config.secureSocksDSProxyEnabled && (
