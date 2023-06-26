@@ -41,7 +41,6 @@ func (s *Service) Get(ctx context.Context) (string, error) {
 		return "", ErrNoCachedValue
 	}
 	return data, nil
-
 }
 
 // Set sets the cached angular detection patterns and the latest update time to time.Now().

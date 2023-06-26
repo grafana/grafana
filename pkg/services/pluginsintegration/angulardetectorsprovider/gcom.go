@@ -31,7 +31,7 @@ var errUnknownPatternType = errors.New("unknown pattern type")
 
 // Detector converts a gcomPattern into a Detector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
-func (p *GCOMPattern) detector() (angulardetector.Detector, error) {
+func (p *GCOMPattern) detector() (angulardetector.AngularDetector, error) {
 	switch p.Type {
 	case GCOMPatternTypeContains:
 		return &angulardetector.ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
@@ -48,10 +48,10 @@ func (p *GCOMPattern) detector() (angulardetector.Detector, error) {
 // GCOMPatterns is a slice of GCOMPattern
 type GCOMPatterns []GCOMPattern
 
-// Detectors converts the slice of GCOMPattern into a slice of angulardetector.Detector, by calling Detector() on each GCOMPattern.
-func (p GCOMPatterns) Detectors() ([]angulardetector.Detector, error) {
+// Detectors converts the slice of GCOMPattern into a slice of angulardetector.AngularDetector, by calling Detector() on each GCOMPattern.
+func (p GCOMPatterns) Detectors() ([]angulardetector.AngularDetector, error) {
 	var finalErr error
-	detectors := make([]angulardetector.Detector, 0, len(p))
+	detectors := make([]angulardetector.AngularDetector, 0, len(p))
 	for _, pattern := range p {
 		d, err := pattern.detector()
 		if err != nil {

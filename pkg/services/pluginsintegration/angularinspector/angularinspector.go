@@ -23,5 +23,5 @@ func ProvideService(cfg *config.Cfg, static *angulardetectorsprovider.Static, dy
 	if err != nil {
 		return nil, err
 	}
-	return &Service{&angularinspector.PatternsListInspector{detectorsProvider}}, nil
+	return &Service{Inspector: &angularinspector.PatternsListInspector{DetectorsProvider: detectorsProvider}}, nil
 }
