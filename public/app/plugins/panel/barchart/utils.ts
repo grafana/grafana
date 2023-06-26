@@ -233,6 +233,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     const args: AddArgs = {
       scaleKey,
+      config,
       customConfig,
       theme,
       seriesColor,
@@ -244,6 +245,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       allFrames,
       i,
       vizOrientation,
+      xTickLabelRotation,
       field,
     };
 
@@ -287,6 +289,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         }
 
         args.placement = placement;
+        args.axisColorOpts = axisColorOpts;
+
         addYAxix(builder, args);
       }
     }
