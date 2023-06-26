@@ -67,17 +67,12 @@ TableColoredBackgroundCellOptions: {
 	mode?: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
 
-TableCustomCellOptions: {
-	type: TableCellDisplayMode & "custom"
-	cellComponent: string
-} @cuetsy(kind="interface")
-
 // Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.
-TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions | TableCustomCellOptions @cuetsy(kind="type")
+TableCellOptions: TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions @cuetsy(kind="type") @grafana(TSVeneer="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
 // Generally defines alignment, filtering capabilties, display options, etc.
@@ -91,5 +86,5 @@ TableFieldOptions: {
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
-} @cuetsy(kind="interface")
+} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 

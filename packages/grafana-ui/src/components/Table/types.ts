@@ -44,16 +44,6 @@ export type CellComponent = FC<TableCellProps>;
 
 export type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export interface CustomCellRendererProps {
-  field: Field;
-  index: number;
-  frame: DataFrame;
-  value: any;
-  // what else to pass in order to make it more agnostic to table internals?
-  // can we find the full data frame?
-  // row values?
-}
-
 export type GrafanaTableColumn = Column & {
   field: Field;
   sortType: 'number' | 'basic' | 'alphanumeric-insensitive';

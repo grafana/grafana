@@ -757,11 +757,6 @@ export interface TableColoredBackgroundCellOptions {
   type: TableCellDisplayMode.ColorBackground;
 }
 
-export interface TableCustomCellOptions {
-  cellComponent: string;
-  type: TableCellDisplayMode.Custom;
-}
-
 /**
  * Height of a table cell
  */
@@ -775,7 +770,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions | TableCustomCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -892,7 +887,6 @@ export interface TableFieldOptions {
   inspect: boolean;
   minWidth?: number;
   width?: number;
-  hideHeader?: boolean;
 }
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
