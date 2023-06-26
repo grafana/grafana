@@ -29,7 +29,7 @@ Since Grafana v7.0, we have supported server-side plugins that remove this limit
 
 The following examples give some common use cases for backend plugins:
 
-- Enable [Grafana Alerting]({{< relref "../../../../alerting" >}}) for data sources.
+- Enable [Grafana Alerting]({{< relref "../../../../../alerting" >}}) for data sources.
 - Connect to SQL database servers and other non-HTTP services that normally can't be connected to from a browser.
 - Keep state between users, for example, by query caching for data sources.
 - Use custom authentication methods and/or authorization checks that aren't supported in Grafana.
@@ -96,4 +96,4 @@ The Grafana HTTP API offers an endpoint (`/api/plugins/<plugin id>/metrics`) tha
 
 #### Streaming
 
-The streaming capability allows a backend plugin to handle data source queries that are streaming. For more information, refer to [Build a streaming data source plugin]({{<relref  "../../create-a-grafana-plugin/develop-a-plugin/build-a-streaming-data-source-plugin.md">}})
+The streaming capability allows a backend plugin to handle data source queries that are streaming. For more information, refer to [Build a streaming data source plugin]({{<relref  "../../create-a-grafana-plugin/develop-a-plugin/build-a-streaming-data-source-plugin.md" >}})

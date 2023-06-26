@@ -18,7 +18,7 @@ The [data frame]({{< relref "../../introduction-to-plugin-development/data-frame
 
 The `DataFrame` interface contains a `name` and an array of `fields` where each field contains the name, type, and the values for the field.
 
-> **Note:** If you want to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "../../migration-guide#migrate-to-data-frames" >}}).
+> **Note:** If you want to migrate an existing plugin to use the data frame format, refer to [Migrate to data frames]({{< relref "../../migration-guide/v6.x-v7.x/" >}}).
 
 ## Create a data frame
 
