@@ -1,6 +1,7 @@
-import { ProxyTarget } from '@locker/near-membrane-shared';
+import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 
 import { forbiddenElements } from './constants';
+import { isReactClassComponent } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
@@ -69,6 +70,31 @@ export function markDomElementStyleAsALiveTarget(el: Element) {
     !Object.hasOwn(el.style, SANDBOX_LIVE_VALUE)
   ) {
     Reflect.defineProperty(el.style, SANDBOX_LIVE_VALUE, {});
+  }
+}
+
+/**
+ * Some specific near membrane proxies interfere with plugins
+ * an example of this is React class components state and their fast life cycles
+ * with cached objects.
+ *
+ * This function marks an object as a live target inside the sandbox
+ * but not all objects, only the ones that are allowed to be modified
+ */
+export function patchObjectAsLiveTarget(obj: unknown) {
+  if (
+    obj &&
+    // do not define it twice
+    !Object.hasOwn(obj, SANDBOX_LIVE_VALUE) &&
+    // only for proxies
+    isNearMembraneProxy(obj) &&
+    // do not patch functions
+    !(obj instanceof Function) &&
+    // conditions for allowed objects
+    // react class components
+    isReactClassComponent(obj)
+  ) {
+    Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   }
 }
 
