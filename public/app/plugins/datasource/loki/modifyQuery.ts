@@ -98,7 +98,7 @@ function removeSelector(query: string, matcher: SyntaxNode): string {
   return prefix + modeller.renderQuery(matchVisQuery.query) + suffix;
 }
 
-function getMatchersWithFilter(query: string, key: string, operator: string, value: string): SyntaxNode[] {
+function getMatchersWithFilter(query: string, label: string, operator: string, value: string): SyntaxNode[] {
   const tree = parser.parse(query);
   const matchers: SyntaxNode[] = [];
   tree.iterate({
@@ -116,7 +116,7 @@ function getMatchersWithFilter(query: string, key: string, operator: string, val
       return false;
     }
     const labelName = query.substring(labelNode.from, labelNode.to);
-    if (labelName !== key) {
+    if (labelName !== label) {
       return false;
     }
     const labelValue = query.substring(valueNode.from, valueNode.to);
