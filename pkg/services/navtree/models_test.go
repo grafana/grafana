@@ -7,58 +7,6 @@ import (
 )
 
 func TestNavTreeRoot(t *testing.T) {
-	t.Run("Should remove empty admin and server admin sections", func(t *testing.T) {
-		treeRoot := NavTreeRoot{
-			Children: []*NavLink{
-				{Id: NavIDCfg},
-				{Id: NavIDAdmin},
-			},
-		}
-
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(false)
-
-		require.Equal(t, 0, len(treeRoot.Children))
-	})
-
-	t.Run("Should not remove admin sections when they have children", func(t *testing.T) {
-		treeRoot := NavTreeRoot{
-			Children: []*NavLink{
-				{Id: NavIDCfg, Children: []*NavLink{{Id: "child"}}},
-				{Id: NavIDAdmin, Children: []*NavLink{{Id: "child"}}},
-			},
-		}
-
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(false)
-
-		require.Equal(t, 2, len(treeRoot.Children))
-	})
-
-	t.Run("Should create 3 new sections in the Admin node when topnav is enabled", func(t *testing.T) {
-		treeRoot := NavTreeRoot{
-			Children: []*NavLink{
-				{Id: NavIDCfg},
-				{Id: NavIDAdmin, Children: []*NavLink{{Id: "upgrading"}, {Id: "plugins"}, {Id: "teams"}}},
-			},
-		}
-
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(true)
-
-		require.Equal(t, "Administration", treeRoot.Children[0].Text)
-	})
-
-	t.Run("Should move reports into Dashboards", func(t *testing.T) {
-		treeRoot := NavTreeRoot{
-			Children: []*NavLink{
-				{Id: NavIDDashboards},
-				{Id: NavIDReporting},
-			},
-		}
-
-		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(true)
-
-		require.Equal(t, NavIDReporting, treeRoot.Children[0].Children[0].Id)
-	})
-
 	t.Run("Sorting by index", func(t *testing.T) {
 		treeRoot := NavTreeRoot{
 			Children: []*NavLink{

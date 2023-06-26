@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/singleflight"
 
@@ -311,7 +312,7 @@ func TestUserAuthToken(t *testing.T) {
 		require.Nil(t, err)
 		require.NotNil(t, lookedUpUserToken)
 		require.Equal(t, model.Id, lookedUpUserToken.Id)
-		require.True(t, lookedUpUserToken.AuthTokenSeen)
+		require.False(t, lookedUpUserToken.AuthTokenSeen)
 
 		getTime = func() time.Time {
 			return now.Add(time.Hour + (2 * time.Minute))
@@ -320,7 +321,7 @@ func TestUserAuthToken(t *testing.T) {
 		lookedUpUserToken, err = ctx.tokenService.LookupToken(context.Background(), unhashedPrev)
 		require.Nil(t, err)
 		require.NotNil(t, lookedUpUserToken)
-		require.True(t, lookedUpUserToken.AuthTokenSeen)
+		require.False(t, lookedUpUserToken.AuthTokenSeen)
 
 		lookedUpModel, err := ctx.getAuthTokenByID(lookedUpUserToken.Id)
 		require.Nil(t, err)
@@ -390,7 +391,7 @@ func TestUserAuthToken(t *testing.T) {
 		require.True(t, lookedUpModel.AuthTokenSeen)
 	})
 
-	t.Run("Rotate token", func(t *testing.T) {
+	t.Run("TryRotateToken", func(t *testing.T) {
 		t.Run("Should rotate current token and previous token when auth token seen", func(t *testing.T) {
 			getTime = func() time.Time { return now }
 			userToken, err := ctx.tokenService.CreateToken(context.Background(), user,
@@ -468,6 +469,59 @@ func TestUserAuthToken(t *testing.T) {
 			require.False(t, storedToken.AuthTokenSeen)
 			require.Equal(t, prevToken, storedToken.PrevAuthToken)
 			require.NotEqual(t, prevToken, storedToken.AuthToken)
+		})
+	})
+
+	t.Run("RotateToken", func(t *testing.T) {
+		var prev string
+		token, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+		require.NoError(t, err)
+		t.Run("should rotate token when called with current auth token", func(t *testing.T) {
+			prev = token.UnhashedToken
+			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: token.UnhashedToken})
+			require.NoError(t, err)
+			assert.True(t, token.UnhashedToken != prev)
+			assert.True(t, token.PrevAuthToken == hashToken(prev))
+		})
+
+		t.Run("should rotate token when called with previous", func(t *testing.T) {
+			newPrev := token.UnhashedToken
+			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prev})
+			require.NoError(t, err)
+			assert.True(t, token.PrevAuthToken == hashToken(newPrev))
+		})
+
+		t.Run("should not rotate token when called with old previous", func(t *testing.T) {
+			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prev})
+			require.ErrorIs(t, err, auth.ErrUserTokenNotFound)
+		})
+
+		t.Run("should return error when token is revoked", func(t *testing.T) {
+			revokedToken, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+			require.NoError(t, err)
+			// mark token as revoked
+			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Exec("UPDATE user_auth_token SET revoked_at = 1 WHERE id = ?", revokedToken.Id)
+				return err
+			})
+			require.NoError(t, err)
+
+			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: revokedToken.UnhashedToken})
+			assert.ErrorIs(t, err, auth.ErrInvalidSessionToken)
+		})
+
+		t.Run("should return error when token has expired", func(t *testing.T) {
+			expiredToken, err := ctx.tokenService.CreateToken(context.Background(), user, nil, "")
+			require.NoError(t, err)
+			// mark token as expired
+			err = ctx.sqlstore.WithDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Exec("UPDATE user_auth_token SET created_at = 1 WHERE id = ?", expiredToken.Id)
+				return err
+			})
+			require.NoError(t, err)
+
+			_, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: expiredToken.UnhashedToken})
+			assert.ErrorIs(t, err, auth.ErrInvalidSessionToken)
 		})
 	})
 

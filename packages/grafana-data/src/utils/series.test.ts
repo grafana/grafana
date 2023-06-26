@@ -1,25 +1,24 @@
 import { Field, FieldType } from '../types';
-import { ArrayVector } from '../vector';
 
 import { getSeriesTimeStep, hasMsResolution } from './series';
 
 const uniformTimeField: Field = {
   name: 'time',
   type: FieldType.time,
-  values: new ArrayVector([0, 100, 200, 300]),
+  values: [0, 100, 200, 300],
   config: {},
 };
 const nonUniformTimeField: Field = {
   name: 'time',
   type: FieldType.time,
-  values: new ArrayVector([0, 100, 300, 350]),
+  values: [0, 100, 300, 350],
   config: {},
 };
 
 const msResolutionTimeField: Field = {
   name: 'time',
   type: FieldType.time,
-  values: new ArrayVector([0, 1572951685007, 300, 350]),
+  values: [0, 1572951685007, 300, 350],
   config: {},
 };
 

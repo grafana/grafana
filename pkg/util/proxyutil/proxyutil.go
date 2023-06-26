@@ -1,6 +1,7 @@
 package proxyutil
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"sort"
@@ -73,6 +74,16 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 // Sets Content-Security-Policy: sandbox
 func SetProxyResponseHeaders(header http.Header) {
 	header.Set("Content-Security-Policy", "sandbox")
+}
+
+// SetViaHeader adds Grafana's reverse proxy to the proxy chain.
+// Defined in RFC 9110 7.6.3 https://datatracker.ietf.org/doc/html/rfc9110#name-via
+func SetViaHeader(header http.Header, major, minor int) {
+	via := fmt.Sprintf("%d.%d grafana", major, minor)
+	if old := header.Get("Via"); old != "" {
+		via = fmt.Sprintf("%s, %s", via, old)
+	}
+	header.Set("Via", via)
 }
 
 // ApplyUserHeader Set the X-Grafana-User header if needed (and remove if not).

@@ -3,12 +3,9 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
@@ -51,8 +48,8 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		}
 
 		// The most recently defined state
-		if add.State != FeatureStateUnknown {
-			flag.State = add.State
+		if add.Stage != FeatureStageUnknown {
+			flag.Stage = add.Stage
 		}
 
 		// Only gets more restrictive
@@ -131,7 +128,7 @@ func (fm *FeatureManager) IsEnabled(flag string) bool {
 	return fm.enabled[flag]
 }
 
-// GetEnabled returns a map contaning only the features that are enabled
+// GetEnabled returns a map containing only the features that are enabled
 func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 	enabled := make(map[string]bool, len(fm.enabled))
 	for key, val := range fm.enabled {
@@ -149,20 +146,6 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 		v = append(v, *value)
 	}
 	return v
-}
-
-func (fm *FeatureManager) HandleGetSettings(c *contextmodel.ReqContext) {
-	res := make(map[string]interface{}, 3)
-	res["enabled"] = fm.GetEnabled(c.Req.Context())
-
-	vv := make([]*FeatureFlag, 0, len(fm.flags))
-	for _, v := range fm.flags {
-		vv = append(vv, v)
-	}
-
-	res["info"] = vv
-
-	response.JSON(http.StatusOK, res).WriteTo(c)
 }
 
 // WithFeatures is used to define feature toggles for testing.

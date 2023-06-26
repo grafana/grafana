@@ -46,7 +46,7 @@ To build a backend for your data source plugin, Grafana requires a binary that i
 The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
 
 ```
-npx @grafana/create-plugin
+npx @grafana/create-plugin@latest
 ```
 
 Follow the steps and select **datasource** as your plugin type and answer **yes** when prompted to create a backend for your plugin.
@@ -144,6 +144,10 @@ When editing a data source in Grafana's UI, you can **Save & Test** to verify th
 In this sample data source, there is a 50% chance that the health check will be successful. Make sure to return appropriate error messages to the users, informing them about what is misconfigured in the data source.
 
 Open `/pkg/plugin/plugin.go`. In this file you'll see that the `SampleDatasource` struct also implements the [backend.CheckHealthHandler](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend?tab=doc#CheckHealthHandler) interface. Navigate to the `CheckHealth` method to see how the health check for this sample plugin is implemented.
+
+## Add authentication
+
+Implementing authentication allows your plugin to access protected resources like databases or APIs. You can read more about how to [authenticate using a backend plugin in our docs](/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/#authenticate-using-a-backend-plugin).
 
 ## Enable Grafana Alerting
 

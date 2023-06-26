@@ -71,7 +71,7 @@ describe('EventBus', () => {
   describe('Legacy emitter behavior', () => {
     it('Supports legacy events', () => {
       const bus = new EventBusSrv();
-      const events: any = [];
+      const events: LegacyEventPayload[] = [];
       const handler = (event: LegacyEventPayload) => {
         events.push(event);
       };
@@ -88,8 +88,8 @@ describe('EventBus', () => {
 
     it('Interoperability with legacy events', () => {
       const bus = new EventBusSrv();
-      const legacyEvents: any = [];
-      const newEvents: any = [];
+      const legacyEvents: LegacyEventPayload[] = [];
+      const newEvents: AlertSuccessEvent[] = [];
 
       bus.on(legacyEvent, (event) => {
         legacyEvents.push(event);

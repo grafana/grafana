@@ -7,9 +7,9 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -51,7 +51,7 @@ func basicCollector(cfg *setting.Cfg) supportbundles.Collector {
 			loc, _ := time.LoadLocation("UTC")
 			now := collectionDate.In(loc)
 
-			data, err := json.Marshal(basicInfo{
+			info := basicInfo{
 				Version:         cfg.BuildVersion,
 				Commit:          cfg.BuildCommit,
 				CollectionDate:  now,
@@ -69,7 +69,8 @@ func basicCollector(cfg *setting.Cfg) supportbundles.Collector {
 				GoOS:            runtime.GOOS,
 				GoArch:          runtime.GOARCH,
 				GoCompiler:      runtime.Compiler,
-			})
+			}
+			data, err := json.MarshalIndent(info, "", " ")
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +92,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
 			current := settings.Current()
-			data, err := json.Marshal(current)
+			data, err := json.MarshalIndent(current, "", " ")
 			if err != nil {
 				return nil, err
 			}
@@ -104,32 +105,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	}
 }
 
-func usageStatesCollector(stats usagestats.Service) supportbundles.Collector {
-	return supportbundles.Collector{
-		UID:               "usage-stats",
-		DisplayName:       "Usage statistics",
-		Description:       "Usage statistics of the Grafana instance",
-		IncludedByDefault: false,
-		Default:           true,
-		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			report, err := stats.GetUsageReport(context.Background())
-			if err != nil {
-				return nil, err
-			}
-
-			data, err := json.Marshal(report)
-			if err != nil {
-				return nil, err
-			}
-			return &supportbundles.SupportItem{
-				Filename:  "usage-stats.json",
-				FileBytes: data,
-			}, nil
-		},
-	}
-}
-
-func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service) supportbundles.Collector {
+func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service, logger log.Logger) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "plugins",
 		DisplayName:       "Plugin information",
@@ -137,60 +113,71 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			type pluginInfo struct {
-				data  plugins.JSONData
-				Class plugins.Class
+			type PluginInfo struct {
+				id          string
+				Name        string
+				Description string
+				PluginType  string `json:"type"`
 
-				// App fields
-				IncludedInAppID string
-				DefaultNavURL   string
-				Pinned          bool
+				Author          plugins.InfoLink `json:"author,omitempty"`
+				SignatureStatus plugins.SignatureStatus
+				SignatureType   plugins.SignatureType
+				SignatureOrg    string
 
-				// Signature fields
-				Signature plugins.SignatureStatus
+				GrafanaVersionDependency string `json:"grafanaVersionDependency,omitempty"`
 
-				// SystemJS fields
-				Module  string
-				BaseURL string
-
-				PluginVersion string
-				Enabled       bool
-				Updated       time.Time
+				Settings []pluginsettings.InfoDTO `json:"settings,omitempty"`
 			}
 
-			plugins := pluginStore.Plugins(context.Background())
+			// plugin definitions
+			plugins := pluginStore.Plugins(ctx)
 
-			var pluginInfoList []pluginInfo
+			// plugin settings
+			settings, err := pluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{})
+			if err != nil {
+				logger.Debug("failed to fetch plugin settings:", "err", err)
+			}
+
+			settingMap := make(map[string][]*pluginsettings.InfoDTO)
+			for _, ps := range settings {
+				settingMap[ps.PluginID] = append(settingMap[ps.PluginID], ps)
+			}
+
+			var pluginInfoList []PluginInfo
 			for _, plugin := range plugins {
-				// skip builtin plugins
-				if plugin.BuiltIn {
+				// skip builtin and core plugins
+				if plugin.BuiltIn || plugin.IsCorePlugin() {
+					continue
+				}
+				// skip plugins that are included in another plugin
+				if plugin.IncludedInAppID != "" {
 					continue
 				}
 
-				pInfo := pluginInfo{
-					data:            plugin.JSONData,
-					Class:           plugin.Class,
-					IncludedInAppID: plugin.IncludedInAppID,
-					DefaultNavURL:   plugin.DefaultNavURL,
-					Pinned:          plugin.Pinned,
-					Signature:       plugin.Signature,
-					Module:          plugin.Module,
-					BaseURL:         plugin.BaseURL,
+				pInfo := PluginInfo{
+					id:                       plugin.ID,
+					Name:                     plugin.Name,
+					Description:              plugin.Info.Description,
+					PluginType:               string(plugin.Type),
+					Author:                   plugin.Info.Author,
+					SignatureStatus:          plugin.Signature,
+					SignatureType:            plugin.SignatureType,
+					SignatureOrg:             plugin.SignatureOrg,
+					GrafanaVersionDependency: plugin.Dependencies.GrafanaVersion,
 				}
 
-				// TODO need to loop through all the orgs
-				// TODO ignore the error for now, not all plugins have settings
-				settings, err := pluginSettings.GetPluginSettingByPluginID(context.Background(), &pluginsettings.GetByPluginIDArgs{PluginID: plugin.ID, OrgID: 1})
-				if err == nil {
-					pInfo.PluginVersion = settings.PluginVersion
-					pInfo.Enabled = settings.Enabled
-					pInfo.Updated = settings.Updated
+				for _, ps := range settingMap[plugin.ID] {
+					pInfo.Settings = append(pInfo.Settings, pluginsettings.InfoDTO{
+						OrgID:         ps.OrgID,
+						Enabled:       ps.Enabled,
+						PluginVersion: ps.PluginVersion,
+					})
 				}
 
 				pluginInfoList = append(pluginInfoList, pInfo)
 			}
 
-			data, err := json.Marshal(pluginInfoList)
+			data, err := json.MarshalIndent(pluginInfoList, "", " ")
 			if err != nil {
 				return nil, err
 			}

@@ -62,7 +62,6 @@ def build_e2e(trigger, ver_mode):
     ]
 
     build_steps = []
-    variants = None
 
     if ver_mode == "pr":
         build_steps.extend(
@@ -72,20 +71,13 @@ def build_e2e(trigger, ver_mode):
             ],
         )
 
-        variants = [
-            "linux-amd64",
-            "linux-amd64-musl",
-            "darwin-amd64",
-            "windows-amd64",
-        ]
-
     build_steps.extend(
         [
             build_backend_step(edition = edition, ver_mode = ver_mode),
             build_frontend_step(edition = edition, ver_mode = ver_mode),
             build_frontend_package_step(edition = edition, ver_mode = ver_mode),
             build_plugins_step(edition = edition, ver_mode = ver_mode),
-            package_step(edition = edition, variants = variants, ver_mode = ver_mode),
+            package_step(edition = edition, ver_mode = ver_mode),
             grafana_server_step(edition = edition),
             e2e_tests_step("dashboards-suite"),
             e2e_tests_step("smoke-tests-suite"),
@@ -152,6 +144,20 @@ def build_e2e(trigger, ver_mode):
                         "amd64",
                     ],
                     edition = edition,
+                ),
+                build_docker_images_step(
+                    archs = [
+                        "amd64",
+                    ],
+                    edition = edition,
+                    ubuntu = True,
+                ),
+                publish_images_step(
+                    docker_repo = "grafana",
+                    edition = edition,
+                    mode = "",
+                    trigger = trigger_oss,
+                    ver_mode = ver_mode,
                 ),
             ],
         )

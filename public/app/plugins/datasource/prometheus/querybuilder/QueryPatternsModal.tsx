@@ -32,7 +32,7 @@ export const QueryPatternsModal = (props: Props) => {
   const styles = useStyles2(getStyles);
   const hasNewQueryOption = !!onAddQuery;
   const hasPreviousQuery = useMemo(() => {
-    const visualQuery = buildVisualQueryFromString(query.expr);
+    const visualQuery = buildVisualQueryFromString(query.expr ?? '');
     // has anything entered in the query, metric, labels, operations, or binary queries
     const hasOperations = visualQuery.query.operations.length > 0,
       hasMetric = visualQuery.query.metric,

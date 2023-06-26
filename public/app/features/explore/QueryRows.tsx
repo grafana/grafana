@@ -2,23 +2,22 @@ import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useMemo } from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { runQueries, changeQueriesAction, importQueries } from './state/query';
+import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
-const makeSelectors = (exploreId: ExploreId) => {
+const makeSelectors = (exploreId: string) => {
   const exploreItemSelector = getExploreItemSelector(exploreId);
   return {
     getQueries: createSelector(exploreItemSelector, (s) => s!.queries),
@@ -39,36 +38,21 @@ export const QueryRows = ({ exploreId }: Props) => {
     [exploreId]
   );
 
-  const queries = useSelector(getQueries)!;
-  const dsSettings = useSelector(getDatasourceInstanceSettings)!;
-  const queryResponse = useSelector(getQueryResponse)!;
+  const queries = useSelector(getQueries);
+  const dsSettings = useSelector(getDatasourceInstanceSettings);
+  const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
 
   const onRunQueries = useCallback(() => {
-    dispatch(runQueries(exploreId));
+    dispatch(runQueries({ exploreId }));
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    async (newQueries: DataQuery[]) => {
-      dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
-
-      for (const newQuery of newQueries) {
-        for (const oldQuery of queries) {
-          if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-            const queryDatasource = await getDataSourceSrv().get(newQuery.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
-            dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, newQuery.refId));
-          }
-        }
-      }
-
-      // if we are removing a query we want to run the remaining ones
-      if (newQueries.length < queries.length) {
-        onRunQueries();
-      }
+    (newQueries: DataQuery[]) => {
+      dispatch(changeQueries({ exploreId, queries: newQueries }));
     },
-    [dispatch, exploreId, onRunQueries, queries]
+    [dispatch, exploreId]
   );
 
   const onAddQuery = useCallback(

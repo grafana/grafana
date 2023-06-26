@@ -11,7 +11,9 @@ weight: 300
 
 Custom branding allows you to replace the Grafana brand and logo with your own corporate brand and logo.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud).
+{{% /admonition %}}
 
 Grafana Enterprise has custom branding options in the `grafana.ini` file. As with all configuration options, you can also set them with environment variables.
 
@@ -32,7 +34,7 @@ You can change the following elements:
 
 {{< figure src="/static/img/docs/v66/whitelabeling_1.png" max-width="800px" caption="Custom branding example" >}}
 
-The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../../configure-grafana/" >}}).
+The configuration file in Grafana Enterprise contains the following options. Each option is defined in the file. For more information about configuring Grafana, refer to [Configuration]({{< relref "../../configure-grafana" >}}).
 
 ```ini
 # Enterprise only
@@ -94,7 +96,9 @@ GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_TEXT=Custom Text
 GF_WHITE_LABELING_FOOTER_LINKS_EXTRACUSTOM_URL=http://your.custom.site
 ```
 
-> **Note:** The following two links are always present in the footer:
+{{% admonition type="note" %}}
+The following two links are always present in the footer:
+{{% /admonition %}}
 
 - Grafana edition
 - Grafana version with build number

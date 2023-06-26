@@ -1,14 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo } from 'react';
 
-import {
-  DataSourceJsonData,
-  DataSourceInstanceSettings,
-  DataSourcePluginOptionsEditorProps,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
-import { InlineField, InlineFieldRow, Input, useStyles2, InlineSwitch } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -69,12 +66,13 @@ export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOption
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles2(getStyles);
   const supportedDataSourceTypes = [
     'loki',
     'elasticsearch',
     'grafana-splunk-datasource', // external
     'grafana-opensearch-datasource', // external
+    'grafana-falconlogscale-datasource', // external
+    'googlecloud-logging-datasource', // external
   ];
 
   const traceToLogs = useMemo(
@@ -104,14 +102,12 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
   return (
     <div className={css({ width: '100%' })}>
-      <h3 className="page-heading">Trace to logs</h3>
-
-      <div className={styles.infoText}>
-        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
-      </div>
-
       <InlineFieldRow>
-        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
+        <InlineField
+          tooltip="The logs data source the trace is going to navigate to"
+          label="Data source"
+          labelWidth={26}
+        >
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
             filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
@@ -165,7 +161,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Use custom query with possibility to interpolate variables from the trace or span."
+          tooltip="Use a custom query with the possibility to interpolate variables from the trace or span"
           label="Use custom query"
           labelWidth={26}
         >
@@ -183,7 +179,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField
           label="Query"
           labelWidth={26}
-          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
+          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword"
           grow
         >
           <Input
@@ -238,11 +234,11 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
         label={`Span ${props.type} time shift`}
         labelWidth={26}
         grow
-        tooltip={`Shifts the ${props.type} time of the span. Default 0 Time units can be used here, for example: 5s, 1m, 3h`}
+        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
       >
         <Input
           type="text"
-          placeholder="1h"
+          placeholder="0"
           width={40}
           onChange={(e) => props.onChange(e.currentTarget.value)}
           value={props.value}
@@ -252,9 +248,21 @@ function TimeRangeShift(props: TimeRangeShiftProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-});
+export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
+  return (
+    <ConfigSection
+      title="Trace to logs"
+      description={
+        <ConfigDescriptionLink
+          description="Navigate from a trace span to the selected data source's logs."
+          suffix={`${options.type}/#trace-to-logs`}
+          feature="trace to logs"
+        />
+      }
+      isCollapsible={true}
+      isInitiallyOpen={true}
+    >
+      <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
+    </ConfigSection>
+  );
+};

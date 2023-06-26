@@ -43,16 +43,6 @@ function mockLocationHref(href: string) {
   };
 }
 
-function setUTCTimeZone() {
-  (window as any).Intl.DateTimeFormat = () => {
-    return {
-      resolvedOptions: () => {
-        return { timeZone: 'UTC' };
-      },
-    };
-  };
-}
-
 const mockUid = 'abc123';
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -80,7 +70,13 @@ describe('ShareModal', () => {
 
   beforeEach(() => {
     const defaultTimeRange = getDefaultTimeRange();
-    setUTCTimeZone();
+    jest.spyOn(window.Intl, 'DateTimeFormat').mockImplementation(() => {
+      return {
+        resolvedOptions: () => {
+          return { timeZone: 'UTC' };
+        },
+      } as Intl.DateTimeFormat;
+    });
     mockLocationHref('http://server/#!/test');
     config.rendererAvailable = true;
     config.bootData.user.orgId = 1;

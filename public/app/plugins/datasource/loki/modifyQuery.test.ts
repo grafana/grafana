@@ -1,8 +1,11 @@
+import { SyntaxNode } from '@lezer/common';
+
 import {
   addLabelFormatToQuery,
   addLabelToQuery,
   addNoPipelineErrorToQuery,
   addParserToQuery,
+  NodePosition,
   removeCommentsFromQuery,
 } from './modifyQuery';
 
@@ -52,6 +55,8 @@ describe('addLabelToQuery()', () => {
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with an other escaped value'}                             | ${'bar'} | ${'='}   | ${'baz\\\\'}   | ${'{foo="bar"} | logfmt | bar=`baz\\`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
     ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser with escaped value and regex operator'}                   | ${'bar'} | ${'~='}  | ${'\\"baz\\"'} | ${'{foo="bar"} | logfmt | bar~=`"baz"`'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, > operator and number value'}                            | ${'bar'} | ${'>'}   | ${'5'}         | ${'{foo="bar"} | logfmt | bar>5'}
+    ${'{foo="bar"} | logfmt'}                                                                                                         | ${'query with parser, < operator and non-number value'}                        | ${'bar'} | ${'<'}   | ${'5KiB'}      | ${'{foo="bar"} | logfmt | bar<`5KiB`'}
   `(
     'should add label to query:  $query, description: $description',
     ({ query, description, label, operator, value, expectedResult }) => {
@@ -183,5 +188,61 @@ describe('removeCommentsFromQuery', () => {
     ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}     | ${'rate({job="grafana"} | logfmt | foo="bar" [10m])'}
   `('returns original query if no comments in metrics query:  {$query}', ({ query, expectedResult }) => {
     expect(removeCommentsFromQuery(query)).toBe(expectedResult);
+  });
+});
+
+describe('NodePosition', () => {
+  describe('contains', () => {
+    it('should return true if the position is contained within the current position', () => {
+      const position = new NodePosition(5, 10);
+      const containedPosition = new NodePosition(6, 9);
+      const result = position.contains(containedPosition);
+      expect(result).toBe(true);
+    });
+
+    it('should return false if the position is not contained within the current position', () => {
+      const position = new NodePosition(5, 10);
+      const outsidePosition = new NodePosition(11, 15);
+      const result = position.contains(outsidePosition);
+      expect(result).toBe(false);
+    });
+
+    it('should return true if the position is the same as the current position', () => {
+      const position = new NodePosition(5, 10);
+      const samePosition = new NodePosition(5, 10);
+      const result = position.contains(samePosition);
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('getExpression', () => {
+    it('should return the substring of the query within the given position', () => {
+      const position = new NodePosition(7, 12);
+      const query = 'Hello, world!';
+      const result = position.getExpression(query);
+      expect(result).toBe('world');
+    });
+
+    it('should return an empty string if the position is out of range', () => {
+      const position = new NodePosition(15, 20);
+      const query = 'Hello, world!';
+      const result = position.getExpression(query);
+      expect(result).toBe('');
+    });
+  });
+
+  describe('fromNode', () => {
+    it('should create a new NodePosition instance from a SyntaxNode', () => {
+      const syntaxNode = {
+        from: 5,
+        to: 10,
+        type: 'identifier',
+      } as unknown as SyntaxNode;
+      const result = NodePosition.fromNode(syntaxNode);
+      expect(result).toBeInstanceOf(NodePosition);
+      expect(result.from).toBe(5);
+      expect(result.to).toBe(10);
+      expect(result.type).toBe('identifier');
+    });
   });
 });

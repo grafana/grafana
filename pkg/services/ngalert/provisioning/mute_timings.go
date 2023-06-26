@@ -82,7 +82,7 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		if err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, mt.Provenance)
+		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		if err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, mt.Provenance)
+		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 		if err != nil {
 			return err
 		}

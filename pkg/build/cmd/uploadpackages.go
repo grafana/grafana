@@ -141,7 +141,7 @@ func bucketForEnterprise2(releaseModeConfig *config.BuildConfig, event string) (
 
 func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 	switch cfg.versionMode {
-	case config.TagMode:
+	case config.TagMode, config.CloudMode:
 		return releaseFolder, nil
 	case config.MainMode, config.DownstreamMode:
 		return mainFolder, nil

@@ -23,7 +23,7 @@ export function PanelHeaderMenuProvider({ panel, dashboard, loadingState, childr
   const angularComponent = useSelector((state) => getPanelStateForModel(state, panel)?.angularComponent);
 
   useEffect(() => {
-    setItems(getPanelMenu(dashboard, panel, loadingState, angularComponent));
+    setItems(getPanelMenu(dashboard, panel, angularComponent));
   }, [dashboard, panel, angularComponent, loadingState, setItems]);
 
   return children({ items });

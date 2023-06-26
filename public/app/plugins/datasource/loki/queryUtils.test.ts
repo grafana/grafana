@@ -1,6 +1,8 @@
+import { String } from '@grafana/lezer-logql';
+
 import {
   getHighlighterExpressionsFromQuery,
-  getNormalizedLokiQuery,
+  getLokiQueryType,
   isLogsQuery,
   isQueryWithLabelFormat,
   isQueryWithParser,
@@ -8,6 +10,13 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
+  requestSupportsSplitting,
+  isQueryWithDistinct,
+  isQueryWithRangeVariable,
+  isQueryPipelineErrorFiltering,
+  getLogQueryFromMetricsQuery,
+  getNormalizedLokiQuery,
+  getNodePositionsFromQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -113,50 +122,69 @@ describe('getHighlighterExpressionsFromQuery', () => {
 });
 
 describe('getNormalizedLokiQuery', () => {
-  function expectNormalized(inputProps: Object, outputQueryType: LokiQueryType) {
-    const input: LokiQuery = { refId: 'A', expr: 'test1', ...inputProps };
+  it('removes deprecated instant property', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', instant: true };
     const output = getNormalizedLokiQuery(input);
-    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: outputQueryType });
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Instant });
+  });
+
+  it('removes deprecated range property', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true };
+    const output = getNormalizedLokiQuery(input);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+  });
+
+  it('removes deprecated range and instant properties if query with queryType', () => {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', range: true, instant: false, queryType: LokiQueryType.Range };
+    const output = getNormalizedLokiQuery(input);
+    expect(output).toStrictEqual({ refId: 'A', expr: 'test1', queryType: LokiQueryType.Range });
+  });
+});
+describe('getLokiQueryType', () => {
+  function expectCorrectQueryType(inputProps: Object, outputQueryType: LokiQueryType) {
+    const input: LokiQuery = { refId: 'A', expr: 'test1', ...inputProps };
+    const output = getLokiQueryType(input);
+    expect(output).toStrictEqual(outputQueryType);
   }
 
   it('handles no props case', () => {
-    expectNormalized({}, LokiQueryType.Range);
+    expectCorrectQueryType({}, LokiQueryType.Range);
   });
 
   it('handles old-style instant case', () => {
-    expectNormalized({ instant: true, range: false }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false }, LokiQueryType.Instant);
   });
 
   it('handles old-style range case', () => {
-    expectNormalized({ instant: false, range: true }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true }, LokiQueryType.Range);
   });
 
   it('handles new+old style instant', () => {
-    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: true, range: false, queryType: LokiQueryType.Range }, LokiQueryType.Range);
   });
 
   it('handles new+old style range', () => {
-    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: false, range: true, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
 
   it('handles new<>old conflict (new wins), range', () => {
-    expectNormalized({ instant: false, range: true, queryType: LokiQueryType.Range }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true, queryType: LokiQueryType.Range }, LokiQueryType.Range);
   });
 
   it('handles new<>old conflict (new wins), instant', () => {
-    expectNormalized({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false, queryType: LokiQueryType.Instant }, LokiQueryType.Instant);
   });
 
   it('handles invalid new, range', () => {
-    expectNormalized({ queryType: 'invalid' }, LokiQueryType.Range);
+    expectCorrectQueryType({ queryType: 'invalid' }, LokiQueryType.Range);
   });
 
   it('handles invalid new, when old-range exists, use old', () => {
-    expectNormalized({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
+    expectCorrectQueryType({ instant: false, range: true, queryType: 'invalid' }, LokiQueryType.Range);
   });
 
   it('handles invalid new, when old-instant exists, use old', () => {
-    expectNormalized({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
+    expectCorrectQueryType({ instant: true, range: false, queryType: 'invalid' }, LokiQueryType.Instant);
   });
 });
 
@@ -280,6 +308,40 @@ describe('isQueryWithLabelFormat', () => {
   });
 });
 
+describe('isQueryWithDistinct', () => {
+  it('identifies queries using distinct', () => {
+    expect(isQueryWithDistinct('{job="grafana"} | distinct id')).toBe(true);
+    expect(isQueryWithDistinct('count_over_time({job="grafana"} | distinct id [1m])')).toBe(true);
+  });
+
+  it('does not return false positives', () => {
+    expect(isQueryWithDistinct('{label="distinct"} | logfmt')).toBe(false);
+    expect(isQueryWithDistinct('count_over_time({job="distinct"} | json [1m])')).toBe(false);
+  });
+});
+
+describe('isQueryWithRangeVariableDuration', () => {
+  it('identifies queries using $__range variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range])')).toBe(true);
+  });
+
+  it('identifies queries using $__range_s variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range_s])')).toBe(true);
+  });
+
+  it('identifies queries using $__range_ms variable', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"}[$__range_ms])')).toBe(true);
+  });
+
+  it('does not return false positives', () => {
+    expect(isQueryWithRangeVariable('rate({job="grafana"} | logfmt | value="$__range" [5m])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} | logfmt | value="[$__range]" [5m])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$range])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$_range])')).toBe(false);
+    expect(isQueryWithRangeVariable('rate({job="grafana"} [$_range_ms])')).toBe(false);
+  });
+});
+
 describe('getParserFromQuery', () => {
   it('returns no parser', () => {
     expect(getParserFromQuery('{job="grafana"}')).toBeUndefined();
@@ -290,5 +352,91 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
+  });
+});
+
+describe('requestSupportsSplitting', () => {
+  it('hidden requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+        hide: true,
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
+  });
+  it('special requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'do-not-chunk',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
+  });
+  it('empty requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '',
+        refId: 'A',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(false);
+  });
+  it('all other requests are partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+      },
+      {
+        expr: 'count_over_time({a="b"}[1h])',
+        refId: 'B',
+      },
+    ];
+    expect(requestSupportsSplitting(requests)).toBe(true);
+  });
+});
+
+describe('isQueryPipelineErrorFiltering', () => {
+  it('identifies pipeline error filters', () => {
+    expect(isQueryPipelineErrorFiltering('{job="grafana"} | logfmt | __error__=""')).toBe(true);
+    expect(isQueryPipelineErrorFiltering('{job="grafana"} | logfmt | error=""')).toBe(false);
+  });
+});
+
+describe('getLogQueryFromMetricsQuery', () => {
+  it('returns the log query from a metric query', () => {
+    expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} | logfmt | label="value" [1m])')).toBe(
+      '{job="grafana"} | logfmt | label="value"'
+    );
+    expect(getLogQueryFromMetricsQuery('count_over_time({job="grafana"} [1m])')).toBe('{job="grafana"}');
+    expect(
+      getLogQueryFromMetricsQuery(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
+      )
+    ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+});
+
+describe('getNodePositionsFromQuery', () => {
+  it('returns the right amount of positions without type', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    expect(getNodePositionsFromQuery('{job="grafana"}').length).toBe(9);
+  });
+
+  it('returns the right position of a string in a stream selector', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    const nodePositions = getNodePositionsFromQuery('{job="grafana"}', [String]);
+    expect(nodePositions.length).toBe(1);
+    expect(nodePositions[0].from).toBe(5);
+    expect(nodePositions[0].to).toBe(14);
+  });
+
+  it('returns an empty array with a wrong expr', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    const nodePositions = getNodePositionsFromQuery('not loql', [String]);
+    expect(nodePositions.length).toBe(0);
   });
 });

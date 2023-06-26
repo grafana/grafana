@@ -10,14 +10,10 @@
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export enum PanelLayout {
-  List = 'list',
-  Previews = 'previews',
-}
-
-export interface PanelOptions {
+export interface Options {
   folderId?: number;
-  layout?: PanelLayout;
+  includeVars: boolean;
+  keepTime: boolean;
   maxItems: number;
   query: string;
   showHeadings: boolean;
@@ -27,8 +23,9 @@ export interface PanelOptions {
   tags: Array<string>;
 }
 
-export const defaultPanelOptions: Partial<PanelOptions> = {
-  layout: PanelLayout.List,
+export const defaultOptions: Partial<Options> = {
+  includeVars: false,
+  keepTime: false,
   maxItems: 10,
   query: '',
   showHeadings: true,

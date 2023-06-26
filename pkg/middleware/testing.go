@@ -99,7 +99,10 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	for k, v := range queryParams {
 		q.Add(k, v)
 	}
+
 	req.URL.RawQuery = q.Encode()
+	req.RequestURI = req.URL.RequestURI()
+
 	require.NoError(sc.t, err)
 
 	reqCtx := &contextmodel.ReqContext{
@@ -135,6 +138,7 @@ func (sc *scenarioContext) exec() {
 			Value: sc.tokenSessionCookie,
 		})
 	}
+
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {

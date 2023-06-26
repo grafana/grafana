@@ -2,6 +2,7 @@ package remotecache
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
@@ -11,15 +12,15 @@ import (
 
 const memcachedCacheType = "memcached"
 
+var ErrNotImplemented = errors.New("not implemented")
+
 type memcachedStorage struct {
-	c     *memcache.Client
-	codec codec
+	c *memcache.Client
 }
 
-func newMemcachedStorage(opts *setting.RemoteCacheOptions, codec codec) *memcachedStorage {
+func newMemcachedStorage(opts *setting.RemoteCacheOptions) *memcachedStorage {
 	return &memcachedStorage{
-		c:     memcache.New(opts.ConnStr),
-		codec: codec,
+		c: memcache.New(opts.ConnStr),
 	}
 }
 
@@ -31,27 +32,21 @@ func newItem(sid string, data []byte, expire int32) *memcache.Item {
 	}
 }
 
-// Set sets value to given key in the cache.
-func (s *memcachedStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
-	item := &cachedItem{Val: val}
-	bytes, err := s.codec.Encode(ctx, item)
-	if err != nil {
-		return err
-	}
-
+// SetByteArray stores an byte array in the cache
+func (s *memcachedStorage) Set(ctx context.Context, key string, data []byte, expires time.Duration) error {
 	var expiresInSeconds int64
 	if expires != 0 {
 		expiresInSeconds = int64(expires) / int64(time.Second)
 	}
 
-	memcachedItem := newItem(key, bytes, int32(expiresInSeconds))
+	memcachedItem := newItem(key, data, int32(expiresInSeconds))
 	return s.c.Set(memcachedItem)
 }
 
-// Get gets value by given key in the cache.
-func (s *memcachedStorage) Get(ctx context.Context, key string) (interface{}, error) {
+// GetByteArray returns the cached value as an byte array
+func (s *memcachedStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	memcachedItem, err := s.c.Get(key)
-	if err != nil && err.Error() == "memcache: cache miss" {
+	if errors.Is(err, memcache.ErrCacheMiss) {
 		return nil, ErrCacheItemNotFound
 	}
 
@@ -59,14 +54,11 @@ func (s *memcachedStorage) Get(ctx context.Context, key string) (interface{}, er
 		return nil, err
 	}
 
-	item := &cachedItem{}
+	return memcachedItem.Value, nil
+}
 
-	err = s.codec.Decode(ctx, memcachedItem.Value, item)
-	if err != nil {
-		return nil, err
-	}
-
-	return item.Val, nil
+func (s *memcachedStorage) Count(ctx context.Context, prefix string) (int64, error) {
+	return 0, ErrNotImplemented
 }
 
 // Delete delete a key from the cache

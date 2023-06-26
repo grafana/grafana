@@ -26,9 +26,9 @@ var (
 )
 
 type AlertNotification struct {
-	Id                    int64             `json:"id"`
-	Uid                   string            `json:"-"`
-	OrgId                 int64             `json:"-"`
+	ID                    int64             `json:"id" xorm:"pk autoincr 'id'"`
+	UID                   string            `json:"-" xorm:"uid"`
+	OrgID                 int64             `json:"-" xorm:"org_id"`
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	SendReminder          bool              `json:"sendReminder"`
@@ -42,7 +42,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
-	Uid                   string            `json:"uid"`
+	UID                   string            `json:"uid"`
 	Name                  string            `json:"name"  binding:"Required"`
 	Type                  string            `json:"type"  binding:"Required"`
 	SendReminder          bool              `json:"sendReminder"`
@@ -52,13 +52,13 @@ type CreateAlertNotificationCommand struct {
 	Settings              *simplejson.Json  `json:"settings"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId                   int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
 }
 
 type UpdateAlertNotificationCommand struct {
-	Id                    int64             `json:"id"  binding:"Required"`
-	Uid                   string            `json:"uid"`
+	ID                    int64             `json:"id"  binding:"Required"`
+	UID                   string            `json:"uid"`
 	Name                  string            `json:"name"  binding:"Required"`
 	Type                  string            `json:"type"  binding:"Required"`
 	SendReminder          bool              `json:"sendReminder"`
@@ -68,13 +68,13 @@ type UpdateAlertNotificationCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId                   int64             `json:"-"`
+	OrgID                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
-	Uid                   string            `json:"-"`
-	NewUid                string            `json:"uid"`
+	UID                   string            `json:"-"`
+	NewUID                string            `json:"uid"`
 	Name                  string            `json:"name"  binding:"Required"`
 	Type                  string            `json:"type"  binding:"Required"`
 	SendReminder          bool              `json:"sendReminder"`
@@ -84,50 +84,50 @@ type UpdateAlertNotificationWithUidCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId int64 `json:"-"`
+	OrgID int64 `json:"-"`
 }
 
 type DeleteAlertNotificationCommand struct {
-	Id    int64
-	OrgId int64
+	ID    int64
+	OrgID int64
 }
 type DeleteAlertNotificationWithUidCommand struct {
-	Uid   string
-	OrgId int64
+	UID   string
+	OrgID int64
 
-	DeletedAlertNotificationId int64
+	DeletedAlertNotificationID int64
 }
 
 type GetAlertNotificationUidQuery struct {
-	Id    int64
-	OrgId int64
+	ID    int64
+	OrgID int64
 }
 
 type GetAlertNotificationsQuery struct {
 	Name  string
-	Id    int64
-	OrgId int64
+	ID    int64
+	OrgID int64
 }
 
 type GetAlertNotificationsWithUidQuery struct {
-	Uid   string
-	OrgId int64
+	UID   string
+	OrgID int64
 }
 
 type GetAlertNotificationsWithUidToSendQuery struct {
-	Uids  []string
-	OrgId int64
+	UIDs  []string
+	OrgID int64
 }
 
 type GetAllAlertNotificationsQuery struct {
-	OrgId int64
+	OrgID int64
 }
 
 type AlertNotificationState struct {
-	Id                           int64
-	OrgId                        int64
-	AlertId                      int64
-	NotifierId                   int64
+	ID                           int64 `xorm:"pk autoincr 'id'"`
+	OrgID                        int64 `xorm:"org_id"`
+	AlertID                      int64 `xorm:"alert_id"`
+	NotifierID                   int64 `xorm:"notifier_id"`
 	State                        AlertNotificationStateType
 	Version                      int64
 	UpdatedAt                    int64
@@ -135,7 +135,7 @@ type AlertNotificationState struct {
 }
 
 type SetAlertNotificationStateToPendingCommand struct {
-	Id                           int64
+	ID                           int64
 	AlertRuleStateUpdatedVersion int64
 	Version                      int64
 
@@ -143,12 +143,12 @@ type SetAlertNotificationStateToPendingCommand struct {
 }
 
 type SetAlertNotificationStateToCompleteCommand struct {
-	Id      int64
+	ID      int64
 	Version int64
 }
 
 type GetOrCreateNotificationStateQuery struct {
-	OrgId      int64
-	AlertId    int64
-	NotifierId int64
+	OrgID      int64
+	AlertID    int64
+	NotifierID int64
 }

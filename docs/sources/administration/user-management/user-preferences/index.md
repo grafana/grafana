@@ -22,13 +22,14 @@ You can also view important information about your account, such as the organiza
 
 You can change your Grafana password at any time.
 
-> **Note**: If your Grafana instance uses an <!--[external authentication provider]({{< relref "../../../setup-grafana/configure-security/configure-authentication/" >}})--> external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+{{% admonition type="note" %}}
+If your Grafana instance uses an external authentication provider, then you might not be able to change your password in Grafana. Contact your Grafana administrator for more information.
+{{% /admonition %}}
 
 **To change your password**:
 
 1. Sign in to Grafana.
-1. Hover your mouse over the user icon in the lower-left corner of the page.
-1. Click **Change Password**. Grafana opens the **Change Password** tab.
+1. Click the user icon in the top right corner of the page and select **Change Password**.
 1. Enter your old password and a new password.
 1. Confirm your new password.
 1. Click **Change Password**.
@@ -40,8 +41,8 @@ Your profile includes your name, user name, and email address, which you can upd
 **To edit your profile**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page and click **Preferences**.
-1. In the **Edit Profile** section, update your profile and click **Save**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
+1. In the **Profile** section, update your details and click **Save**.
 
 ## Edit your preferences
 
@@ -56,9 +57,9 @@ You can choose the way you would like data to appear in Grafana, including the U
 **To edit your preferences**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
-1. Update any of the values in the **Preferences** section.
-1. Click **Save** at the bottom of the Preferences section.
+1. Click the user icon in the top right corner of the page and select **Profile**.
+1. Update any of the values in the Preferences section.
+1. Click **Save** at the bottom of the section.
 
 ## Switch organizations
 
@@ -67,7 +68,7 @@ When you sign in to Grafana, the system signs you in to a default organization. 
 **To switch organizations**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page and click **Switch organization**.
+1. Click the user icon in the top right corner of the page and select **Switch organization**.
 1. Next to the organization that you want to sign in to, click **Switch to**.
 
 ## View your assigned organizations
@@ -77,8 +78,8 @@ Every user is a member of at least one organization. You can have different role
 **To view your assigned organizations**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page and click **Preferences**.
-1. Scroll down to the **Organizations** section and review the following information:
+1. Click the user icon in the top right corner of the page and select **Profile**.
+1. Scroll down to the Organizations section and review the following information:
    - **Name**: The name of the organizations of which you are a member.
    - **Role**: The role to which you are assigned in the organization. For more information about roles and permissions, refer to [Organization users and permissions]({{< relref "../../roles-and-permissions/#organization-users-and-permissions" >}}).
    - **Current**: Grafana indicates the organization that you are currently signed into as _Current_. If you are a member of multiple organizations, you can click **Select** to switch to that organization.
@@ -90,7 +91,7 @@ Grafana logs your sessions in each Grafana instance. You can review this section
 **To view your Grafana sessions**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
 1. Scroll down to the **Sessions** section.
 
 ## Sign out a user session
@@ -100,6 +101,6 @@ You can sign out other sessions using your account in order to prevent other peo
 **To sign out one of your Grafana sessions**:
 
 1. Sign in to Grafana.
-1. Hover your cursor over the user icon in the lower-left corner of the page, and click **Preferences**.
+1. Click the user icon in the top right corner of the page and select **Profile**.
 1. Scroll down to the **Sessions** section.
 1. Click the red "sign out" icon next to the session you would like to sign out.

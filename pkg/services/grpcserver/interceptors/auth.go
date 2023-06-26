@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -79,7 +79,7 @@ func (a *authenticator) tokenAuth(ctx context.Context) (context.Context, error) 
 }
 
 func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*user.SignedInUser, error) {
-	decoded, err := apikeygenprefix.Decode(token)
+	decoded, err := satokengen.Decode(token)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (a *authenticator) getSignedInUser(ctx context.Context, token string) (*use
 		return nil, status.Error(codes.Unauthenticated, "api key does not have a service account")
 	}
 
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgID}
 	signedInUser, err := a.UserService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err

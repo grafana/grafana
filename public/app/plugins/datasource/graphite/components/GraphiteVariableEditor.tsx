@@ -8,7 +8,7 @@ import { convertToGraphiteQueryObject } from './helpers';
 
 interface Props {
   query: GraphiteQuery | string;
-  onChange: (query: GraphiteQuery) => void;
+  onChange: (query: GraphiteQuery, definition: string) => void;
 }
 
 const GRAPHITE_QUERY_VARIABLE_TYPE_OPTIONS = [
@@ -36,10 +36,13 @@ export const GraphiteVariableEditor = (props: Props) => {
             });
 
             if (value.target) {
-              onChange({
-                ...value,
-                queryType: selectableValue.value,
-              });
+              onChange(
+                {
+                  ...value,
+                  queryType: selectableValue.value,
+                },
+                value.target ?? ''
+              );
             }
           }}
         />
@@ -48,7 +51,7 @@ export const GraphiteVariableEditor = (props: Props) => {
         <Input
           aria-label="Variable editor query input"
           value={value.target}
-          onBlur={() => onChange(value)}
+          onBlur={() => onChange(value, value.target ?? '')}
           onChange={(e) => {
             setValue({
               ...value,

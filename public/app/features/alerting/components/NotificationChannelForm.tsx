@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Button, FormAPI, HorizontalGroup, Spinner, useStyles2 } from '@grafana/ui';
@@ -26,7 +26,7 @@ export interface NotificationSettingsProps
   currentFormValues: NotificationChannelDTO;
 }
 
-export const NotificationChannelForm: FC<Props> = ({
+export const NotificationChannelForm = ({
   control,
   errors,
   selectedChannel,
@@ -38,7 +38,7 @@ export const NotificationChannelForm: FC<Props> = ({
   onTestChannel,
   resetSecureField,
   secureFields,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {

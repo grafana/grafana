@@ -1,6 +1,6 @@
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
-import { FormatRegistryID } from '@grafana/scenes';
+import { VariableFormatID } from '@grafana/schema';
 import { applyQueryDefaults } from 'app/features/plugins/sql/defaults';
 import { SQLQuery, SqlQueryModel } from 'app/features/plugins/sql/types';
 
@@ -16,7 +16,7 @@ export class PostgresQueryModel implements SqlQueryModel {
   }
 
   interpolate() {
-    return this.templateSrv?.replace(this.target.rawSql, this.scopedVars, FormatRegistryID.sqlString) || '';
+    return this.templateSrv?.replace(this.target.rawSql, this.scopedVars, VariableFormatID.SQLString) || '';
   }
 
   quoteLiteral(value: string) {

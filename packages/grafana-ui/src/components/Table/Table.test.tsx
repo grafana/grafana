@@ -65,7 +65,7 @@ function getDefaultDataFrame(): DataFrame {
       overrides: [],
     },
     replaceVariables: (value, vars, format) => {
-      return vars && value === '${__value.text}' ? vars['__value'].value.text : value;
+      return vars && value === '${__value.text}' ? '${__value.text} interpolation' : value;
     },
     timeZone: 'utc',
     theme: createTheme(),
@@ -144,10 +144,10 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
     });
   });
@@ -171,10 +171,10 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
       ]);
     });
   });
@@ -445,7 +445,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
@@ -471,7 +471,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
 
@@ -516,7 +516,7 @@ describe('Table', () => {
   });
 
   describe('when mounted with data and sub-data', () => {
-    it('then correct rows should be rendered and new table is rendered when expander is clicked', () => {
+    it('then correct rows should be rendered and new table is rendered when expander is clicked', async () => {
       getTestContext({
         subData: new Array(getDefaultDataFrame().length).fill(0).map((i) =>
           toDataFrame({
@@ -550,13 +550,13 @@ describe('Table', () => {
       const rows = within(getTable()).getAllByRole('row');
       expect(rows).toHaveLength(5);
       expect(getRowsData(rows)).toEqual([
-        { time: '2021-01-01 00:00:00', temperature: '10', link: '10' },
-        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: 'NaN' },
-        { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
-        { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
+        { time: '2021-01-01 00:00:00', temperature: '10', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 03:00:00', temperature: 'NaN', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 01:00:00', temperature: '11', link: '${__value.text} interpolation' },
+        { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
 
-      within(rows[1]).getByLabelText('Expand row').click();
+      await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       const rowsAfterClick = within(getTable()).getAllByRole('row');
       expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
       expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();

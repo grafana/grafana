@@ -6,10 +6,12 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   FieldType,
+  PluginMetaInfo,
   PluginType,
   ScopedVars,
 } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
@@ -35,14 +37,14 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-const timeSrvStub: any = {
-  timeRange(): any {
+const timeSrvStub = {
+  timeRange() {
     return {
       from: dateTime(1531468681),
       to: dateTime(1531489712),
     };
   },
-};
+} as TimeSrv;
 
 describe('JaegerDatasource', () => {
   beforeEach(() => {
@@ -111,7 +113,7 @@ describe('JaegerDatasource', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<JaegerQuery>)
     );
     expect(response.error?.message).toBe('The JSON file uploaded is not in a valid Jaeger format');
     expect(response.data.length).toBe(0);
@@ -317,7 +319,7 @@ describe('when performing testDataSource', () => {
   });
 });
 
-function setupFetchMock(response: any, mock?: any) {
+function setupFetchMock(response: unknown, mock?: ReturnType<typeof backendSrv.fetch>) {
   const defaultMock = () => mock ?? of(createFetchResponse(response));
 
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
@@ -336,7 +338,7 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
     id: 'jaeger',
     name: 'jaeger',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },
@@ -350,7 +352,6 @@ const defaultSettings: DataSourceInstanceSettings<JaegerJsonData> = {
 
 const defaultQuery: DataQueryRequest<JaegerQuery> = {
   requestId: '1',
-  dashboardId: 0,
   interval: '0',
   intervalMs: 10,
   panelId: 0,

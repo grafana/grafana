@@ -1,5 +1,3 @@
-import { ArrayVector } from '@grafana/data';
-
 import { ZipkinSpan } from '../types';
 
 export const zipkinResponse: ZipkinSpan[] = [
@@ -127,4 +125,4 @@ export const traceFrameFields = [
       [],
     ],
   },
-].map((f) => ({ ...f, values: new ArrayVector<any>(f.values) }));
+].map((f) => ({ ...f, values: f.values }));

@@ -49,7 +49,7 @@ export interface CascaderOption {
   /**
    *  The value used under the hood
    */
-  value: any;
+  value: string;
   /**
    *  The label to display in the UI
    */

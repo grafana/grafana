@@ -6,7 +6,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 // Types
 import { ExploreItemState, StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 // Components, enums
 import { ExploreDrawer } from '../ExploreDrawer';
@@ -24,10 +23,9 @@ import { RichHistory, Tabs } from './RichHistory';
 
 //Actions
 
-function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
+function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }) {
   const explore = state.explore;
-  // @ts-ignore
-  const item: ExploreItemState = explore[exploreId];
+  const item: ExploreItemState = explore.panes[exploreId]!;
   const richHistorySearchFilters = item.richHistorySearchFilters;
   const richHistorySettings = explore.richHistorySettings;
   const { datasourceInstance } = item;
@@ -57,7 +55,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps {
   width: number;
-  exploreId: ExploreId;
+  exploreId: string;
   onClose: () => void;
 }
 export type Props = ConnectedProps<typeof connector> & OwnProps;

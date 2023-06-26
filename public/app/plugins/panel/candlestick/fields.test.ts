@@ -1,12 +1,12 @@
 import { createTheme, toDataFrame } from '@grafana/data';
 
 import { prepareCandlestickFields } from './fields';
-import { CandlestickOptions, VizDisplayMode } from './models.gen';
+import { Options, VizDisplayMode } from './types';
 
 const theme = createTheme();
 
 describe('Candlestick data', () => {
-  const options: CandlestickOptions = {} as CandlestickOptions;
+  const options = {} as Options;
 
   it('require a time field', () => {
     const info = prepareCandlestickFields(
@@ -81,7 +81,7 @@ describe('Candlestick data', () => {
     expect(info.names.close).toMatchInlineSnapshot(`"Next open"`);
 
     // Close should be offset by one and dupliate last point
-    expect({ open: info.open!.values.toArray(), close: info.close!.values.toArray() }).toMatchInlineSnapshot(`
+    expect({ open: info.open!.values, close: info.close!.values }).toMatchInlineSnapshot(`
       {
         "close": [
           5,
@@ -117,15 +117,15 @@ describe('Candlestick data', () => {
       theme
     )!;
 
-    expect(info.open!.values.toArray()).toEqual([1, 1, 2, 3, 4]);
-    expect(info.close!.values.toArray()).toEqual([1, 2, 3, 4, 5]);
+    expect(info.open!.values).toEqual([1, 1, 2, 3, 4]);
+    expect(info.close!.values).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('will unmap high & low fields in volume-only mode', () => {
-    const options: CandlestickOptions = {
+    const options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: true,
-    } as CandlestickOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [
@@ -184,10 +184,10 @@ describe('Candlestick data', () => {
   });
 
   it('will unmap volume field in candles-only mode', () => {
-    const options: CandlestickOptions = {
+    const options = {
       mode: VizDisplayMode.Candles,
       includeAllFields: false,
-    } as CandlestickOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [
@@ -246,10 +246,10 @@ describe('Candlestick data', () => {
   });
 
   it("will not remove open field from frame when it's also mapped to high in volume-only mode", () => {
-    const options: CandlestickOptions = {
+    const options = {
       mode: VizDisplayMode.Volume,
       includeAllFields: false,
-    } as CandlestickOptions;
+    } as Options;
 
     const info = prepareCandlestickFields(
       [

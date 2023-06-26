@@ -38,13 +38,7 @@ export interface SaveDashboardAsFormProps extends SaveDashboardFormProps {
   isNew?: boolean;
 }
 
-export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
-  dashboard,
-  isNew,
-  onSubmit,
-  onCancel,
-  onSuccess,
-}) => {
+export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSuccess }: SaveDashboardAsFormProps) => {
   const defaultValues: SaveDashboardAsFormDTO = {
     title: isNew ? dashboard.title : `${dashboard.title} Copy`,
     $folder: {
@@ -58,8 +52,9 @@ export const SaveDashboardAsForm: React.FC<SaveDashboardAsFormProps> = ({
     if (dashboardName && dashboardName === getFormValues().$folder.title?.trim()) {
       return 'Dashboard name cannot be the same as folder name';
     }
+
     try {
-      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid, dashboardName);
+      await validationSrv.validateNewDashboardName(getFormValues().$folder.uid ?? 'general', dashboardName);
       return true;
     } catch (e) {
       return e instanceof Error ? e.message : 'Dashboard name is invalid';

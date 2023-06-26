@@ -2,9 +2,13 @@ import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
-import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
+import {
+  QueryOperationAction,
+  QueryOperationToggleAction,
+} from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import {
   QueryOperationRow,
   QueryOperationRowRenderProps,
@@ -19,7 +23,7 @@ interface TransformationOperationRowProps {
   id: string;
   index: number;
   data: DataFrame[];
-  uiConfig: TransformerRegistryItem<any>;
+  uiConfig: TransformerRegistryItem<null>;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
   onChange: (index: number, config: DataTransformerConfig) => void;
@@ -36,7 +40,7 @@ export const TransformationOperationRow = ({
 }: TransformationOperationRowProps) => {
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, toggleHelp] = useToggle(false);
-  const disabled = configs[index].transformation.disabled;
+  const disabled = !!configs[index].transformation.disabled;
   const filter = configs[index].transformation.filter != null;
   const showFilter = filter || data.length > 1;
 
@@ -65,22 +69,50 @@ export const TransformationOperationRow = ({
     onChange(index, current);
   }, [onChange, index, configs]);
 
+  // Instrument toggle callback
+  const instrumentToggleCallback = useCallback(
+    (callback: (e: React.MouseEvent) => void, toggleId: string, active: boolean | undefined) =>
+      (e: React.MouseEvent) => {
+        reportInteraction('panel_editor_tabs_transformations_toggle', {
+          action: active ? 'off' : 'on',
+          toggleId,
+          transformationId: configs[index].transformation.id,
+        });
+
+        callback(e);
+      },
+    [configs, index]
+  );
+
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
       <HorizontalGroup align="center" width="auto">
         {uiConfig.state && <PluginStateInfo state={uiConfig.state} />}
-        <QueryOperationAction
-          title="Show/hide transform help"
+        <QueryOperationToggleAction
+          title="Show transform help"
           icon="info-circle"
-          onClick={toggleHelp}
+          onClick={instrumentToggleCallback(toggleHelp, 'help', showHelp)}
           active={showHelp}
         />
-        {showFilter && <QueryOperationAction title="Filter" icon="filter" onClick={toggleFilter} active={filter} />}
-        <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} active={showDebug} />
-        <QueryOperationAction
-          title="Disable/Enable transformation"
+        {showFilter && (
+          <QueryOperationToggleAction
+            title="Filter"
+            icon="filter"
+            onClick={instrumentToggleCallback(toggleFilter, 'filter', filter)}
+            active={filter}
+          />
+        )}
+        <QueryOperationToggleAction
+          title="Debug"
+          disabled={!isOpen}
+          icon="bug"
+          onClick={instrumentToggleCallback(toggleDebug, 'debug', showDebug)}
+          active={showDebug}
+        />
+        <QueryOperationToggleAction
+          title="Disable transformation"
           icon={disabled ? 'eye-slash' : 'eye'}
-          onClick={() => onDisableToggle(index)}
+          onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
         />
         <QueryOperationAction title="Remove" icon="trash-alt" onClick={() => onRemove(index)} />
@@ -113,7 +145,7 @@ export const TransformationOperationRow = ({
   );
 };
 
-function prepMarkdown(uiConfig: TransformerRegistryItem<any>) {
+function prepMarkdown(uiConfig: TransformerRegistryItem<null>) {
   let helpMarkdown = uiConfig.help ?? uiConfig.description;
 
   return `

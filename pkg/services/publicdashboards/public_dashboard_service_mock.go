@@ -46,13 +46,27 @@ func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.Signed
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, orgId, uid
-func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string) error {
-	ret := _m.Called(ctx, orgId, uid)
+// Delete provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string) error {
+	ret := _m.Called(ctx, uid)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
-		r0 = rf(ctx, orgId, uid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, uid)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteByDashboard provides a mock function with given fields: ctx, dashboard
+func (_m *FakePublicDashboardService) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
+	ret := _m.Called(ctx, dashboard)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) error); ok {
+		r0 = rf(ctx, dashboard)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -125,22 +139,22 @@ func (_m *FakePublicDashboardService) Find(ctx context.Context, uid string) (*mo
 	return r0, r1
 }
 
-// FindAll provides a mock function with given fields: ctx, u, orgId
-func (_m *FakePublicDashboardService) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]models.PublicDashboardListResponse, error) {
-	ret := _m.Called(ctx, u, orgId)
+// FindAllWithPagination provides a mock function with given fields: ctx, query
+func (_m *FakePublicDashboardService) FindAllWithPagination(ctx context.Context, query *models.PublicDashboardListQuery) (*models.PublicDashboardListResponseWithPagination, error) {
+	ret := _m.Called(ctx, query)
 
-	var r0 []models.PublicDashboardListResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64) []models.PublicDashboardListResponse); ok {
-		r0 = rf(ctx, u, orgId)
+	var r0 *models.PublicDashboardListResponseWithPagination
+	if rf, ok := ret.Get(0).(func(context.Context, *models.PublicDashboardListQuery) *models.PublicDashboardListResponseWithPagination); ok {
+		r0 = rf(ctx, query)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.PublicDashboardListResponse)
+			r0 = ret.Get(0).(*models.PublicDashboardListResponseWithPagination)
 		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64) error); ok {
-		r1 = rf(ctx, u, orgId)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.PublicDashboardListQuery) error); ok {
+		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -240,6 +254,38 @@ func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, orgId i
 	return r0, r1
 }
 
+// FindEnabledPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
+	ret := _m.Called(ctx, accessToken)
+
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, accessToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.PublicDashboard)
+		}
+	}
+
+	var r1 *dashboards.Dashboard
+	if rf, ok := ret.Get(1).(func(context.Context, string) *dashboards.Dashboard); ok {
+		r1 = rf(ctx, accessToken)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*dashboards.Dashboard)
+		}
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, accessToken)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // FindPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
 func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
@@ -314,13 +360,13 @@ func (_m *FakePublicDashboardService) GetOrgIdByAccessToken(ctx context.Context,
 	return r0, r1
 }
 
-// GetQueryDataResponse provides a mock function with given fields: ctx, skipCache, reqDTO, panelId, accessToken
-func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, skipCache bool, reqDTO models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	ret := _m.Called(ctx, skipCache, reqDTO, panelId, accessToken)
+// GetQueryDataResponse provides a mock function with given fields: ctx, skipDSCache, reqDTO, panelId, accessToken
+func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, skipDSCache bool, reqDTO models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
+	ret := _m.Called(ctx, skipDSCache, reqDTO, panelId, accessToken)
 
 	var r0 *backend.QueryDataResponse
 	if rf, ok := ret.Get(0).(func(context.Context, bool, models.PublicDashboardQueryDTO, int64, string) *backend.QueryDataResponse); ok {
-		r0 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
+		r0 = rf(ctx, skipDSCache, reqDTO, panelId, accessToken)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*backend.QueryDataResponse)
@@ -329,7 +375,7 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, bool, models.PublicDashboardQueryDTO, int64, string) error); ok {
-		r1 = rf(ctx, skipCache, reqDTO, panelId, accessToken)
+		r1 = rf(ctx, skipDSCache, reqDTO, panelId, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}

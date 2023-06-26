@@ -11,9 +11,13 @@ import {
 } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './types';
+import { Options, UpdateConfig } from './panelcfg.gen';
 
-type Props = PanelProps<DebugPanelOptions>;
+type Props = PanelProps<Options>;
+
+type UpdateCounters = {
+  [K in keyof UpdateConfig]: number;
+};
 
 export class RenderInfoViewer extends Component<Props> {
   // Intentionally not state to avoid overhead -- yes, things will be 1 tick behind
@@ -55,7 +59,11 @@ export class RenderInfoViewer extends Component<Props> {
 
   render() {
     const { data, options } = this.props;
-    const showCounters = options.counters ?? ({} as UpdateConfig);
+    const showCounters = options.counters ?? {
+      render: false,
+      dataChanged: false,
+      schemaChanged: false,
+    };
     this.counters.render++;
     const now = Date.now();
     const elapsed = now - this.lastRender;
@@ -66,7 +74,7 @@ export class RenderInfoViewer extends Component<Props> {
     return (
       <div>
         <div>
-          <IconButton name="step-backward" title="reset counters" onClick={this.resetCounters} />
+          <IconButton name="step-backward" title="reset counters" onClick={this.resetCounters} tooltip="Step back" />
           <span>
             {showCounters.render && <span>Render: {this.counters.render}&nbsp;</span>}
             {showCounters.dataChanged && <span>Data: {this.counters.dataChanged}&nbsp;</span>}

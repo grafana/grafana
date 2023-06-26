@@ -13,10 +13,9 @@ type SQLite3 struct {
 	BaseDialect
 }
 
-func NewSQLite3Dialect(engine *xorm.Engine) Dialect {
+func NewSQLite3Dialect() Dialect {
 	d := SQLite3{}
 	d.BaseDialect.dialect = &d
-	d.BaseDialect.engine = engine
 	d.BaseDialect.driverName = SQLite
 	return &d
 }
@@ -89,19 +88,19 @@ func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
-func (db *SQLite3) CleanDB() error {
+func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 	return nil
 }
 
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *SQLite3) TruncateDBTables() error {
-	tables, err := db.engine.DBMetas()
+func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
+	tables, err := engine.DBMetas()
 	if err != nil {
 		return err
 	}
 
-	sess := db.engine.NewSession()
+	sess := engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
@@ -148,7 +147,7 @@ func (db *SQLite3) ErrorMessage(err error) string {
 }
 
 func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
+	return db.isThisError(err, int(sqlite3.ErrConstraintUnique)) || db.isThisError(err, int(sqlite3.ErrConstraintPrimaryKey))
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {

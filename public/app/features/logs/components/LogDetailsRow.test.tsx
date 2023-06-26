@@ -9,8 +9,8 @@ type Props = ComponentProps<typeof LogDetailsRow>;
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    parsedValue: '',
-    parsedKey: '',
+    parsedValues: [''],
+    parsedKeys: [''],
     isLabel: true,
     wrapLogMessage: false,
     getStats: () => null,
@@ -20,6 +20,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onClickHideField: () => {},
     displayedFields: [],
     row: {} as LogRowModel,
+    disableActions: false,
   };
 
   Object.assign(props, propOverrides);
@@ -40,11 +41,11 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('LogDetailsRow', () => {
   it('should render parsed key', () => {
-    setup({ parsedKey: 'test key' });
+    setup({ parsedKeys: ['test key'] });
     expect(screen.getByText('test key')).toBeInTheDocument();
   });
   it('should render parsed value', () => {
-    setup({ parsedValue: 'test value' });
+    setup({ parsedValues: ['test value'] });
     expect(screen.getByText('test value')).toBeInTheDocument();
   });
 
@@ -73,8 +74,8 @@ describe('LogDetailsRow', () => {
 
   it('should render stats when stats icon is clicked', () => {
     setup({
-      parsedKey: 'key',
-      parsedValue: 'value',
+      parsedKeys: ['key'],
+      parsedValues: ['value'],
       getStats: () => {
         return [
           {

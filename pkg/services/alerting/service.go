@@ -34,7 +34,7 @@ func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, qu
 }
 
 func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) (res *models.AlertNotification, err error) {
-	if util.IsShortUIDTooLong(cmd.Uid) {
+	if util.IsShortUIDTooLong(cmd.UID) {
 		return nil, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
 
@@ -57,7 +57,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 }
 
 func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) (res *models.AlertNotification, err error) {
-	if util.IsShortUIDTooLong(cmd.Uid) {
+	if util.IsShortUIDTooLong(cmd.UID) {
 		return nil, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
 
@@ -67,8 +67,8 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 	}
 
 	model := models.AlertNotification{
-		Id:       cmd.Id,
-		OrgId:    cmd.OrgId,
+		ID:       cmd.ID,
+		OrgID:    cmd.OrgID,
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -106,7 +106,7 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Cont
 }
 
 func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) (res *models.AlertNotification, err error) {
-	if util.IsShortUIDTooLong(cmd.Uid) || util.IsShortUIDTooLong(cmd.NewUid) {
+	if util.IsShortUIDTooLong(cmd.UID) || util.IsShortUIDTooLong(cmd.NewUID) {
 		return nil, ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
 
@@ -124,10 +124,10 @@ func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx contex
 func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
 	secureSettingsMap := map[string]string{}
 
-	if model.Id > 0 {
+	if model.ID > 0 {
 		query := &models.GetAlertNotificationsQuery{
-			OrgId: model.OrgId,
-			Id:    model.Id,
+			OrgID: model.OrgID,
+			ID:    model.ID,
 		}
 		res, err := s.SQLStore.GetAlertNotifications(ctx, query)
 		if err != nil {

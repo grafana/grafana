@@ -19,9 +19,10 @@ export const InnerBox = ({ children, enterAnimation = true }: React.PropsWithChi
 export interface LoginLayoutProps {
   /** Custom branding settings that can be used e.g. for previewing the Login page changes */
   branding?: BrandingSettings;
+  isChangingPassword?: boolean;
 }
 
-export const LoginLayout = ({ children, branding }: React.PropsWithChildren<LoginLayoutProps>) => {
+export const LoginLayout = ({ children, branding, isChangingPassword }: React.PropsWithChildren<LoginLayoutProps>) => {
   const loginStyles = useStyles2(getLoginStyles);
   const [startAnim, setStartAnim] = useState(false);
   const subTitle = branding?.loginSubtitle ?? Branding.GetLoginSubTitle();
@@ -39,8 +40,14 @@ export const LoginLayout = ({ children, branding }: React.PropsWithChildren<Logi
         <div className={loginStyles.loginLogoWrapper}>
           <Branding.LoginLogo className={loginStyles.loginLogo} logo={loginLogo} />
           <div className={loginStyles.titleWrapper}>
-            <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
-            {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+            {isChangingPassword ? (
+              <h1 className={loginStyles.mainTitle}>Update your password</h1>
+            ) : (
+              <>
+                <h1 className={loginStyles.mainTitle}>{loginTitle}</h1>
+                {subTitle && <h3 className={loginStyles.subTitle}>{subTitle}</h3>}
+              </>
+            )}
           </div>
         </div>
         <div className={loginStyles.loginOuterBox}>{children}</div>
@@ -144,7 +151,7 @@ export const getLoginStyles = (theme: GrafanaTheme2) => {
       justify-content: center;
     `,
     loginInnerBox: css`
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing(0, 2, 2, 2)};
 
       display: flex;
       flex-direction: column;

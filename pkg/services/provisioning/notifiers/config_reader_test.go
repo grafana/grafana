@@ -3,7 +3,6 @@ package notifiers
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -70,7 +69,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 		t.Run("Can read correct properties", func(t *testing.T) {
 			setup()
-			_ = os.Setenv("TEST_VAR", "default")
+			t.Setenv("TEST_VAR", "default")
 			cfgProvider := &configReader{
 				orgService:        orgService,
 				encryptionService: encryptionService,
@@ -78,7 +77,6 @@ func TestNotificationAsConfig(t *testing.T) {
 			}
 
 			cfg, err := cfgProvider.readConfig(context.Background(), correctProperties)
-			_ = os.Unsetenv("TEST_VAR")
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -151,7 +149,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			t.Run("no notification in database", func(t *testing.T) {
 				setup()
 				fakeAlertNotification := &fakeAlertNotification{}
-				fakeAlertNotification.ExpectedAlertNotification = &models.AlertNotification{OrgId: 1}
+				fakeAlertNotification.ExpectedAlertNotification = &models.AlertNotification{OrgID: 1}
 				dc := newNotificationProvisioner(orgService, fakeAlertNotification, encryptionService, nil, logger)
 
 				err := dc.applyChanges(context.Background(), twoNotificationsConfig)
@@ -164,14 +162,14 @@ func TestNotificationAsConfig(t *testing.T) {
 				setup()
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel1",
-					OrgId: 1,
-					Uid:   "notifier1",
+					OrgID: 1,
+					UID:   "notifier1",
 					Type:  "slack",
 				}
 				res, err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgID: 1}
 				results, err := ns.SQLStore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.NotNil(t, results)
@@ -201,22 +199,22 @@ func TestNotificationAsConfig(t *testing.T) {
 				setup()
 				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel0",
-					OrgId: 1,
-					Uid:   "notifier0",
+					OrgID: 1,
+					UID:   "notifier0",
 					Type:  "slack",
 				}
 				_, err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
 				existingNotificationCmd = models.CreateAlertNotificationCommand{
 					Name:  "channel3",
-					OrgId: 1,
-					Uid:   "notifier3",
+					OrgID: 1,
+					UID:   "notifier3",
 					Type:  "slack",
 				}
 				_, err = ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
 
-				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgID: 1}
 				res, err := ns.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.NotNil(t, res)
@@ -237,8 +235,8 @@ func TestNotificationAsConfig(t *testing.T) {
 
 			existingNotificationCmd := models.CreateAlertNotificationCommand{
 				Name:  "default-notification-delete",
-				OrgId: 1,
-				Uid:   "notifier2",
+				OrgID: 1,
+				UID:   "notifier2",
 				Type:  "slack",
 			}
 			_, err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
@@ -272,7 +270,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
-				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgID: 1}
 				res, err := ns.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.Empty(t, res)

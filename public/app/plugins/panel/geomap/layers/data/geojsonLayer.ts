@@ -11,7 +11,7 @@ import VectorSource from 'ol/source/Vector';
 import GeoJSON from 'ol/format/GeoJSON';
 import { unByKey } from 'ol/Observable';
 import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesStyleRule';
-import { ComparisonOperation, FeatureRuleConfig, FeatureStyleConfig } from '../../types';
+import { FeatureRuleConfig, FeatureStyleConfig } from '../../types';
 import { Style } from 'ol/style';
 import { FeatureLike } from 'ol/Feature';
 import { GeomapStyleRulesEditor } from '../../editor/GeomapStyleRulesEditor';
@@ -23,6 +23,7 @@ import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getPublicGeoJSONFiles } from '../../utils/utils';
+import { ComparisonOperation } from '@grafana/schema';
 
 export interface GeoJSONMapperConfig {
   // URL for a geojson file

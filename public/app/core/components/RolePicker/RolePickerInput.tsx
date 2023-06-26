@@ -60,7 +60,7 @@ export const RolePickerInput = ({
     <div className={styles.wrapper}>
       {showBasicRole && <ValueContainer>{basicRole}</ValueContainer>}
       {appliedRoles.map((role) => (
-        <ValueContainer key={role.uid}>{role.displayName}</ValueContainer>
+        <ValueContainer key={role.uid}>{role.displayName || role.name}</ValueContainer>
       ))}
 
       {!disabled && (

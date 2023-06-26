@@ -6,7 +6,7 @@ import { prepData, prepScatter } from './scatter';
 
 interface XYChartPanelProps extends PanelProps<XYChartOptions> {}
 
-export const XYChartPanel: React.FC<XYChartPanelProps> = ({
+export const XYChartPanel = ({
   data,
   width,
   height,
@@ -14,7 +14,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   fieldConfig,
   timeRange,
   //onFieldConfigChange,
-}) => {
+}: XYChartPanelProps) => {
   const theme = useTheme2();
 
   const info = useMemo(() => {

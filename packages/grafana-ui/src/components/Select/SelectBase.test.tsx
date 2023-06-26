@@ -9,7 +9,7 @@ import { selectOptionInTest } from '../../../../../public/test/helpers/selectOpt
 import { SelectBase } from './SelectBase';
 
 describe('SelectBase', () => {
-  const onChangeHandler = () => jest.fn();
+  const onChangeHandler = jest.fn();
   const options: Array<SelectableValue<number>> = [
     {
       label: 'Option 1',
@@ -205,6 +205,60 @@ describe('SelectBase', () => {
         { label: 'Option 2', value: 2 },
         { action: 'select-option', name: undefined, option: undefined }
       );
+    });
+
+    it('hideSelectedOptions prop - when false does not hide selected', async () => {
+      render(<SelectBase onChange={jest.fn()} options={options} aria-label="My select" hideSelectedOptions={false} />);
+
+      const selectEl = screen.getByLabelText('My select');
+
+      await selectOptionInTest(selectEl, 'Option 2');
+      await userEvent.click(screen.getByText(/option 2/i));
+      const menuOptions = screen.getAllByLabelText('Select option');
+      expect(menuOptions).toHaveLength(2);
+    });
+  });
+
+  describe('Multi select', () => {
+    it('calls on change to remove an item when the user presses the remove button', async () => {
+      const value = [
+        {
+          label: 'Option 1',
+          value: 1,
+        },
+      ];
+      render(
+        <SelectBase onChange={onChangeHandler} options={options} isMulti={true} value={value} aria-label="My select" />
+      );
+
+      expect(screen.getByLabelText('My select')).toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByLabelText('Remove')[0]);
+      expect(onChangeHandler).toHaveBeenCalledWith([], {
+        action: 'remove-value',
+        name: undefined,
+        removedValue: { label: 'Option 1', value: 1 },
+      });
+    });
+    it('does not allow deleting selected values when disabled', async () => {
+      const value = [
+        {
+          label: 'Option 1',
+          value: 1,
+        },
+      ];
+      render(
+        <SelectBase
+          onChange={onChangeHandler}
+          options={options}
+          disabled
+          isMulti={true}
+          value={value}
+          aria-label="My select"
+        />
+      );
+
+      expect(screen.queryByLabelText('Remove Option 1')).not.toBeInTheDocument();
     });
   });
 });

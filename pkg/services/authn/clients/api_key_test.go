@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
+	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -43,8 +43,8 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				},
 			}},
 			expectedKey: &apikey.APIKey{
-				Id:    1,
-				OrgId: 1,
+				ID:    1,
+				OrgID: 1,
 				Key:   hash,
 				Role:  org.RoleAdmin,
 			},
@@ -52,6 +52,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				ID:       "api-key:1",
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 		},
 		{
@@ -62,8 +65,8 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				},
 			}},
 			expectedKey: &apikey.APIKey{
-				Id:               1,
-				OrgId:            1,
+				ID:               1,
+				OrgID:            1,
 				Key:              hash,
 				ServiceAccountId: intPtr(1),
 			},
@@ -82,6 +85,9 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				Name:           "test",
 				OrgRoles:       map[int64]org.RoleType{1: org.RoleViewer},
 				IsGrafanaAdmin: boolPtr(false),
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 		},
 		{
@@ -194,7 +200,7 @@ func genApiKey(legacy bool) (string, string) {
 		res, _ := apikeygen.New(1, "test")
 		return res.ClientSecret, res.HashedKey
 	}
-	res, _ := apikeygenprefix.New("test")
+	res, _ := satokengen.New("test")
 	return res.ClientSecret, res.HashedKey
 }
 

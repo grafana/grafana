@@ -22,7 +22,14 @@ const loadTranslations: BackendModule = {
 export function initializeI18n(language: string) {
   const validLocale = VALID_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
 
-  i18n
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file
+  t(
+    '_comment',
+    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
+  );
+
+  return i18n
     .use(loadTranslations)
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
@@ -37,13 +44,6 @@ export function initializeI18n(language: string) {
 
       pluralSeparator: '__',
     });
-
-  // This is a placeholder so we can put a 'comment' in the message json files.
-  // Starts with an underscore so it's sorted to the top of the file
-  t(
-    '_comment',
-    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
-  );
 }
 
 export function changeLanguage(locale: string) {

@@ -156,7 +156,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 	}
 
 	cmd := &alertmodels.SetAlertNotificationStateToCompleteCommand{
-		Id:      notifierState.state.Id,
+		ID:      notifierState.state.ID,
 		Version: notifierState.state.Version,
 	}
 
@@ -166,7 +166,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
 		setPendingCmd := &alertmodels.SetAlertNotificationStateToPendingCommand{
-			Id:                           notifierState.state.Id,
+			ID:                           notifierState.state.ID,
 			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
 		}
@@ -257,7 +257,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 }
 
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &alertmodels.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
+	query := &alertmodels.GetAlertNotificationsWithUidToSendQuery{OrgID: orgID, UIDs: notificationUids}
 
 	res, err := n.sqlStore.GetAlertNotificationsWithUidToSend(evalContext.Ctx, query)
 	if err != nil {
@@ -268,19 +268,19 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 	for _, notification := range res {
 		not, err := InitNotifier(notification, n.decryptFn, n.notificationService)
 		if err != nil {
-			n.log.Error("Could not create notifier", "notifier", notification.Uid, "error", err)
+			n.log.Error("Could not create notifier", "notifier", notification.UID, "error", err)
 			continue
 		}
 
 		query := &alertmodels.GetOrCreateNotificationStateQuery{
-			NotifierId: notification.Id,
-			AlertId:    evalContext.Rule.ID,
-			OrgId:      evalContext.Rule.OrgID,
+			NotifierID: notification.ID,
+			AlertID:    evalContext.Rule.ID,
+			OrgID:      evalContext.Rule.OrgID,
 		}
 
 		state, err := n.sqlStore.GetOrCreateAlertNotificationState(evalContext.Ctx, query)
 		if err != nil {
-			n.log.Error("Could not get notification state.", "notifier", notification.Id, "error", err)
+			n.log.Error("Could not get notification state.", "notifier", notification.ID, "error", err)
 			continue
 		}
 

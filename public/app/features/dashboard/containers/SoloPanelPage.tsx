@@ -123,9 +123,10 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: Sol
               dashboard={dashboard}
               panel={panel}
               isEditing={false}
-              isViewing={false}
+              isViewing={true}
               lazy={false}
               timezone={timezone}
+              hideMenu={true}
             />
           );
         }}

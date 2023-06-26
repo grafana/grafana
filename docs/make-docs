@@ -1,0 +1,449 @@
+#!/bin/sh
+# The source of this file is https://raw.githubusercontent.com/grafana/writers-toolkit/main/docs/make-docs.
+# 4.1.0 (2023-06-16)
+
+set -ef
+
+readonly DOCS_CONTAINER="${DOCS_CONTAINER:-make-docs}"
+readonly DOCS_HOST_PORT="${DOCS_HOST_PORT:-3002}"
+readonly DOCS_IMAGE="${DOCS_IMAGE:-grafana/docs-base:latest}"
+
+readonly DOC_VALIDATOR_INCLUDE="${DOC_VALIDATOR_INCLUDE:-.+\.md$}"
+readonly DOC_VALIDATOR_SKIP_CHECKS="${DOC_VALIDATOR_SKIP_CHECKS:-^image-}"
+
+readonly HUGO_REFLINKSERRORLEVEL="${HUGO_REFLINKSERRORLEVEL:-WARNING}"
+readonly VALE_MINALERTLEVEL="${VALE_MINALERTLEVEL:-error}"
+readonly WEBSITE_EXEC="${WEBSITE_EXEC:-make server-docs}"
+# If set, the docs-base image will run a prebuild script that sets up Hugo mounts.
+readonly WEBSITE_MOUNTS="${WEBSITE_MOUNTS:-}"
+
+PODMAN="$(if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)"
+
+about() {
+  cat <<EOF
+Test documentation locally with multiple source repositories.
+
+The REPOS_PATH environment variable is a colon (:) separated list of paths in which to look for project repositories.
+EOF
+}
+
+usage() {
+  cat <<EOF
+Usage:
+  REPOS_PATH=<PATH[:<PATH>...]> $0 [<PROJECT>[:<VERSION>[:<REPO>[:<DIR>]]]...]
+
+Examples:
+  REPOS_PATH=~/ext/grafana/ $0 writers-toolkit tempo:latest helm-charts/mimir-distributed:latest:mimir:docs/sources/mimir-distributed
+EOF
+}
+
+if [ $# -lt 1 ]; then
+  cat <<EOF >&2
+ERRR: arguments required but not supplied.
+
+$(about)
+
+$(usage)
+EOF
+  exit 1
+fi
+
+readonly REPOS_PATH="${REPOS_PATH:-$(realpath "$(git rev-parse --show-toplevel)/..")}"
+
+if [ -z "${REPOS_PATH}" ]; then
+  cat <<EOF >&2
+ERRR: REPOS_PATH environment variable is required but has not been provided.
+
+$(usage)
+EOF
+  exit 1
+fi
+
+SOURCES_as_code='as-code-docs'
+SOURCES_enterprise_metrics='backend-enterprise'
+SOURCES_enterprise_metrics_='backend-enterprise'
+SOURCES_grafana_cloud='website'
+SOURCES_grafana_cloud_k6='k6-docs'
+SOURCES_grafana_cloud_data_configuration_integrations='cloud-onboarding'
+SOURCES_grafana_cloud_frontend_observability_faro_web_sdk='faro-web-sdk'
+SOURCES_grafana_cloud_machine_learning='machine-learning'
+SOURCES_helm_charts_mimir_distributed='mimir'
+SOURCES_helm_charts_tempo_distributed='tempo'
+SOURCES_opentelemetry='opentelemetry-docs'
+
+VERSIONS_as_code='UNVERSIONED'
+VERSIONS_grafana_cloud='UNVERSIONED'
+VERSIONS_grafana_cloud_k6='UNVERSIONED'
+VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
+VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
+VERSIONS_grafana_cloud_machine_learning='UNVERSIONED'
+VERSIONS_opentelemetry='UNVERSIONED'
+VERSIONS_technical_documentation='UNVERSIONED'
+VERSIONS_website='UNVERSIONED'
+VERSIONS_writers_toolkit='UNVERSIONED'
+
+PATHS_grafana_cloud='content/docs/grafana-cloud'
+PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
+PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
+PATHS_mimir='docs/sources/mimir'
+PATHS_tempo='docs/sources/tempo'
+PATHS_website='content/docs'
+
+# identifier STR
+# Replace characters that are not valid in an identifier with underscores.
+identifier() {
+  echo "$1" | tr -C '[:alnum:]_\n' '_'
+}
+
+# aget ARRAY KEY
+# Get the value of KEY from associative array ARRAY.
+# Characters that are not valid in an identifier are replaced with underscores.
+aget() {
+  eval echo '$'"$(identifier "$1")_$(identifier "$2")"
+}
+
+# new_proj populates a new project structure.
+new_proj() {
+  _project="$1"
+  _version="$2"
+  _repo="$3"
+  _path="$4"
+
+  # If version is not set, use the script mapping of project to default versions if it exists.
+  # Fallback to 'latest'.
+  if [ -z "${_version}" ]; then
+    if [ -z "$(aget VERSIONS "${_project}")" ]; then
+      _version=latest
+    else
+      _version="$(aget VERSIONS "${_project}")"
+    fi
+  fi
+
+  # If repo is not set, use the script mapping of project to repo name if it exists.
+  # Fallback to using the project name.
+  if [ -z "${_repo}" ]; then
+    if [ -z "$(aget SOURCES "${_project}")" ]; then
+      _repo="${_project}"
+    else
+      _repo="$(aget SOURCES "${_project}")"
+    fi
+  fi
+
+  # If path is not set, use the script mapping of project to docs sources path if it exists.
+  # Fallback to using 'docs/sources'.
+  if [ -z "${_path}" ]; then
+    if [ -z "$(aget PATHS "${_project}")" ]; then
+      _path="docs/sources"
+    else
+      _path="$(aget PATHS "${_project}")"
+    fi
+  fi
+
+  echo "${_project}:${_version}:${_repo}:${_path}"
+  unset _project _version _repo _path
+}
+
+# proj_url returns the webserver URL for a project.
+# It expects a complete project structure as input.
+proj_url() {
+  IFS=: read -r _project _version _ _ <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  if [ "${_project}" = 'website' ]; then
+    echo "http://localhost:${DOCS_HOST_PORT}/docs/"
+
+    unset _project _version
+    return
+  fi
+
+  if [ -z "${_version}" ] || [ "${_version}" = 'UNVERSIONED' ]; then
+    echo "http://localhost:${DOCS_HOST_PORT}/docs/${_project}/"
+  else
+    echo "http://localhost:${DOCS_HOST_PORT}/docs/${_project}/${_version}/"
+  fi
+
+  unset _project _version
+}
+
+# proj_ver returns the version for a project.
+# It expects a complete project structure as input.
+proj_ver() {
+  IFS=: read -r _ _ver _ _ <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  echo "${_ver}"
+  unset _ver
+}
+
+# proj_dst returns the container path to content source for a project.
+# It expects a complete project structure as input.
+proj_dst() {
+  IFS=: read -r _project _version _ _ <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  if [ "${_project}" = 'website' ]; then
+    echo '/hugo/content/docs'
+
+    unset _project _version
+    return
+  fi
+
+  if [ -z "${_version}" ] || [ "${_version}" = 'UNVERSIONED' ]; then
+    echo "/hugo/content/docs/${_project}"
+  else
+    echo "/hugo/content/docs/${_project}/${_version}"
+  fi
+
+  unset _project _version
+}
+
+# repo_path returns the host path to the project repository.
+# It looks for the provided repository name in each of the paths specified in the REPOS_PATH environment variable.
+repo_path() {
+  _repo="$1"
+  IFS=:
+  for lookup in ${REPOS_PATH}; do
+    if [ -d "${lookup}/${_repo}" ]; then
+      echo "${lookup}/${_repo}"
+      unset _path _repo
+      return
+    fi
+  done
+  unset IFS
+
+  echo "ERRR: could not find project '${_repo}' in any of the paths in REPOS_PATH '${REPOS_PATH}'." >&2
+  echo "NOTE: you must have a checkout of the project '${_repo}' at '${REPOS_PATH##:*}/${_repo}'." >&2
+  echo "NOTE: if you have cloned the repository into a directory with a different name, consider changing it to ${_repo}." >&2
+  unset _repo
+  exit 1
+}
+
+# proj_src returns the host path to content source for a project.
+# It expects a complete project structure as input.
+# It looks for the provided repository name in each of the paths specified in the REPOS_PATH environment variable.
+proj_src() {
+  IFS=: read -r _ _ _repo _path <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  _repo="$(repo_path "${_repo}")"
+  echo "${_repo}/${_path}"
+
+  unset _path _repo
+}
+
+# proj_canonical returns the canonical absolute path partial URI for a project.
+# It expects a complete project structure as input.
+proj_canonical() {
+  IFS=: read -r _project _version _ _ <<POSIX_HERESTRING
+$1
+POSIX_HERESTRING
+
+  if [ "${_project}" = 'website' ]; then
+    echo '/docs'
+
+    unset _project _version
+    return
+  fi
+
+  if [ -z "${_version}" ] || [ "${_version}" = 'UNVERSIONED' ]; then
+    echo "/docs/${_project}"
+  else
+    echo "/docs/${_project}/${_version}"
+  fi
+
+  unset _project _version
+}
+
+proj_to_url_src_dst_ver() {
+  _url="$(proj_url "$1")"
+  _src="$(proj_src "$1")"
+  _dst="$(proj_dst "$1")"
+  _ver="$(proj_ver "$1")"
+
+  echo "${_url}^${_src}^${_dst}^${_ver}"
+  unset _url _src _dst _ver
+}
+
+url_src_dst_vers() {
+  for arg in "$@"; do
+    IFS=: read -r _project _version _repo _path <<POSIX_HERESTRING
+$arg
+POSIX_HERESTRING
+
+    case "${_project}" in
+      # Workaround for arbitrary mounts where the version field is expected to be the local directory
+      # and the repo field is expected to be the container directory.
+      arbitrary)
+        echo "${_project}^${_version}^${_repo}^" # TODO
+        ;;
+      logs)
+        proj_to_url_src_dst_ver "$(new_proj loki "${_version}")"
+        proj_to_url_src_dst_ver "$(new_proj enterprise-logs "${_version}")"
+        ;;
+      metrics)
+        proj_to_url_src_dst_ver "$(new_proj mimir "${_version}")"
+        proj_to_url_src_dst_ver "$(new_proj helm-charts/mimir-distributed "${_version}")"
+        proj_to_url_src_dst_ver "$(new_proj enterprise-metrics "${_version}")"
+        ;;
+      traces)
+        proj_to_url_src_dst_ver "$(new_proj tempo "${_version}")"
+        proj_to_url_src_dst_ver "$(new_proj enterprise-traces "${_version}")"
+        ;;
+      *)
+        proj_to_url_src_dst_ver "$(new_proj "${_project}" "${_version}" "${_repo}" "${_path}")"
+        ;;
+    esac
+  done
+
+  unset _project _version _repo _path
+}
+
+url_src_dst_vers="$(url_src_dst_vers "$@")"
+
+volumes=""
+redirects=""
+
+for arg in "$@"; do
+  IFS=: read -r _project _ _repo _ <<POSIX_HERESTRING
+${arg}
+POSIX_HERESTRING
+  if [ "${_project}" = website ]; then
+    _repo="$(repo_path website)"
+    volumes="--volume=${_repo}/config:/hugo/config"
+    volumes="${volumes} --volume=${_repo}/layouts/partials:/hugo/layouts/partials"
+    volumes="${volumes} --volume=${_repo}/layouts/shortcodes:/hugo/layouts/shortcodes"
+  fi
+  unset _project _repo
+done
+
+for x in ${url_src_dst_vers}; do
+  IFS='^' read -r _url _src _dst _ver <<POSIX_HERESTRING
+$x
+POSIX_HERESTRING
+
+  if [ "${_url}" != "arbitrary" ]; then
+    if [ ! -f "${_src}/_index.md" ]; then
+      echo "ERRR: Index file '${_src}/_index.md' does not exist." >&2
+      echo "Is '${_src}' the correct source directory?" >&2
+      exit 1
+    fi
+  fi
+
+  echo "DEBG: Mounting '${_src}' at container path '${_dst}'" >&2
+  if [ -z "${volumes}" ]; then
+    volumes="--volume=${_src}:${_dst}"
+  else
+    volumes="${volumes} --volume=${_src}:${_dst}"
+  fi
+
+  if [ -n "${_ver}" ] && [ "${_ver}" != 'UNVERSIONED' ]; then
+    if [ -z "${redirects}" ]; then
+      redirects="${_dst}^${_ver}"
+    else
+      redirects="${redirects} ${_dst}^${_ver}"
+    fi
+  fi
+  unset _url _src _dst _ver
+done
+
+IFS=':' read -r image _ <<POSIX_HERESTRING
+${DOCS_IMAGE}
+POSIX_HERESTRING
+
+case "${image}" in
+  'grafana/doc-validator')
+    proj="$(new_proj "$1")"
+    echo
+    "${PODMAN}" run \
+      --init \
+      --interactive \
+      --name "${DOCS_CONTAINER}" \
+      --platform linux/amd64 \
+      --rm \
+      --tty \
+      ${volumes} \
+      "${DOCS_IMAGE}" \
+      "--include=${DOC_VALIDATOR_INCLUDE}" \
+      "--skip-checks=${DOC_VALIDATOR_SKIP_CHECKS}" \
+      /hugo/content/docs \
+      "$(proj_canonical "${proj}")" | sed "s#$(proj_dst "${proj}")#sources#"
+    ;;
+  'grafana/vale')
+    proj="$(new_proj "$1")"
+    echo
+    "${PODMAN}" run \
+      --init \
+      --interactive \
+      --name "${DOCS_CONTAINER}" \
+      --platform linux/amd64 \
+      --rm \
+      --tty \
+      ${volumes} \
+      "${DOCS_IMAGE}" \
+      "--minAlertLevel=${VALE_MINALERTLEVEL}" \
+      --config=/etc/vale/.vale.ini \
+      --output=line \
+      /hugo/content/docs | sed "s#$(proj_dst "${proj}")#sources#"
+    ;;
+  *)
+    tempfile="$(mktemp -t make-docs.XXX)"
+    cat <<EOF >"${tempfile}"
+#!/usr/bin/env bash
+for redirect in ${redirects}; do
+  IFS='^' read -r path ver <<<"\${redirect}"
+  echo -e "---\\nredirectURL: \"\${path/\/hugo\/content/}\"\\ntype: redirect\\nversioned: true\\n---\\n" > "\${path/\${ver}/_index.md}"
+done
+
+for x in "${url_src_dst_vers}"; do
+  IFS='^' read -r _ _ dst _ <<<"\${x}"
+
+  while [[ -n "\${dst}" ]]; do
+    touch "\${dst}/_index.md"
+    dst="\${dst%/*}"
+  done
+done
+
+if [[ -n "${WEBSITE_MOUNTS}" ]]; then
+  unset WEBSITE_SKIP_MOUNTS
+fi
+
+${WEBSITE_EXEC}
+EOF
+    chmod +x "${tempfile}"
+    volumes="${volumes} --volume=$(realpath "${tempfile}"):/entrypoint"
+    readonly volumes
+
+    echo
+    echo "Documentation will be served at the following URLs:"
+    for x in ${url_src_dst_vers}; do
+      IFS='^' read -r url _ _ <<POSIX_HERESTRING
+$x
+POSIX_HERESTRING
+
+      if [ -n "${url}" ]; then
+        if [ "${_url}" != "arbitrary" ]; then
+          echo "  ${url}"
+        fi
+      fi
+    done
+
+    echo
+    "${PODMAN}" run \
+      --env "HUGO_REFLINKSERRORLEVEL=${HUGO_REFLINKSERRORLEVEL}" \
+      --init \
+      --interactive \
+      --name "${DOCS_CONTAINER}" \
+      --platform linux/amd64 \
+      --publish "${DOCS_HOST_PORT}:3002" \
+      --publish "3003:3003" \
+      --rm \
+      --tty \
+      ${volumes} \
+      "${DOCS_IMAGE}" \
+      /entrypoint
+    ;;
+esac

@@ -1,17 +1,12 @@
 import React, { useCallback } from 'react';
 
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 import { getPublicOrAbsoluteUrl, ResourceFolderName } from '..';
-import {
-  MediaType,
-  ResourceDimensionConfig,
-  ResourceDimensionMode,
-  ResourceDimensionOptions,
-  ResourcePickerSize,
-} from '../types';
+import { MediaType, ResourceDimensionOptions, ResourcePickerSize } from '../types';
 
 import { ResourcePicker } from './ResourcePicker';
 

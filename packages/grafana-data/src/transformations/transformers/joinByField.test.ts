@@ -1,7 +1,6 @@
 import { toDataFrame } from '../../dataframe';
 import { FieldType, DataTransformerConfig } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -257,9 +256,9 @@ describe('JOIN Transformer', () => {
         },
       };
 
-      everySecondSeries.fields[0].values = new ArrayVector(everySecondSeries.fields[0].values.toArray().reverse());
-      everySecondSeries.fields[1].values = new ArrayVector(everySecondSeries.fields[1].values.toArray().reverse());
-      everySecondSeries.fields[2].values = new ArrayVector(everySecondSeries.fields[2].values.toArray().reverse());
+      everySecondSeries.fields[0].values = everySecondSeries.fields[0].values.reverse();
+      everySecondSeries.fields[1].values = everySecondSeries.fields[1].values.reverse();
+      everySecondSeries.fields[2].values = everySecondSeries.fields[2].values.reverse();
 
       await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
         (received) => {
@@ -771,9 +770,9 @@ describe('JOIN Transformer', () => {
         },
       };
 
-      seriesA.fields[0].values = new ArrayVector(seriesA.fields[0].values.toArray().reverse());
-      seriesA.fields[1].values = new ArrayVector(seriesA.fields[1].values.toArray().reverse());
-      seriesA.fields[2].values = new ArrayVector(seriesA.fields[2].values.toArray().reverse());
+      seriesA.fields[0].values = seriesA.fields[0].values.reverse();
+      seriesA.fields[1].values = seriesA.fields[1].values.reverse();
+      seriesA.fields[2].values = seriesA.fields[2].values.reverse();
 
       await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
         const data = received[0];

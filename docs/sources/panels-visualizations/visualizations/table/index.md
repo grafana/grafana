@@ -27,19 +27,21 @@ The table panel visualization is very flexible, supporting multiple modes for ti
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
-## Annotation support
+## Annotation and alert support
 
-Annotations are not currently supported in the new table panel. This might be added back in a future release.
+Annotations and alerts are not currently supported in the new table panel.
 
 ## Sort column
 
-Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can only sort by one column at a time.
+Click a column title to change the sort order from default to descending to ascending. Each time you click, the sort order changes to the next option in the cycle. You can sort multiple columns by holding the `shift` key and clicking the column name.
 
 ![Sort descending](/static/img/docs/tables/sort-descending.png 'Sort descending')
 
 ## Table options
 
-> **Note:** If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
+{{% admonition type="note" %}}
+If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
+{{% /admonition %}}
 
 ### Show header
 
@@ -72,7 +74,9 @@ Choose how Grafana should align cell contents:
 
 By default, Grafana automatically chooses display settings. You can override the settings by choosing one of the following options to set the default for all fields. Additional configuration is available for some cell types.
 
-> **Note:** If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
+{{% admonition type="note" %}}
+If you set these in the Field tab, then the type will apply to all fields, including the time field. Many options will work best if you set them in the Override tab so that they can be restricted to one or more fields.
+{{% /admonition %}}
 
 ### Color text
 
@@ -108,6 +112,22 @@ The gauge is split up in small cells that are lit or unlit.
 
 {{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="500px" caption="LCD gauge" class="docs-image--no-shadow" >}}
 
+#### Label Options
+
+Additionally, labels displayed alongside of the gauges can be set to be colored by value, match the theme text color, or be hidden.
+
+**Value Color**
+
+{{< figure src="/static/img/docs/tables/value-color-mode.png" max-width="500px" caption="Color Label by Value" class="docs-image--no-shadow" >}}
+
+**Text Color**
+
+{{< figure src="/static/img/docs/tables/text-color-mode.png" max-width="500px" caption="Color Label by theme color" class="docs-image--no-shadow" >}}
+
+**Hidden**
+
+{{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="500px" caption="Hide Label" class="docs-image--no-shadow" >}}
+
 ### JSON view
 
 Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover.
@@ -122,11 +142,23 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 {{< figure src="/static/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
 
+### Sparkline
+
+{{% admonition type="note" %}}
+This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
+{{% /admonition %}}
+
+Shows value rendered as a sparkline. Requires [time series to table]({{< relref "../../query-transform-data/transform-data/#time-series-to-table-transform" >}}) data transform.
+
+{{< figure src="/static/img/docs/tables/sparkline.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
+
 ## Cell value inspect
 
 Enables value inspection from table cell. The raw value is presented in a modal window.
 
-> **Note:** Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
+{{% admonition type="note" %}}
+Cell value inspection is only available when cell display mode is set to Auto, Color text, Color background or JSON View.
+{{% /admonition %}}
 
 ## Column filter
 

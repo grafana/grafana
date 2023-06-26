@@ -30,7 +30,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
@@ -67,7 +67,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 		sc.userService.ExpectedUser = &user.User{Password: encoded, ID: id, Salt: salt}
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{UserID: id}
-		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, nil, sc.userService)
+		login.ProvideService(sc.mockSQLStore, &logintest.LoginServiceFake{}, nil, sc.userService, sc.cfg)
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()

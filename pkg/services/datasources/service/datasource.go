@@ -97,7 +97,7 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -115,11 +115,12 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 		}
 
 		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID}
-		if err := db.GetDataSource(ctx, &query); err != nil {
+		dataSource, err := db.GetDataSource(ctx, &query)
+		if err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(dataSource.UID)}, nil
 	})
 }
 
@@ -143,32 +144,35 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 		}
 
 		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID}
-		if err := db.GetDataSource(ctx, &query); err != nil {
+		dataSource, err := db.GetDataSource(ctx, &query)
+		if err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(dataSource.UID)}, nil
 	})
 }
 
-func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
-func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
-func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	var dataSource *datasources.DataSource
+
+	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -188,7 +192,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return s.SecretsStore.Set(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 		}
 
-		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		dataSource, err = s.SQLStore.AddDataSource(ctx, cmd)
+		if err != nil {
 			return err
 		}
 
@@ -205,7 +210,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
 			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, cmd.Result.UID, permissions...); err != nil {
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
 				return err
 			}
 		}
@@ -224,20 +229,21 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	var dataSource *datasources.DataSource
+	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
 			ID:    cmd.ID,
 			OrgID: cmd.OrgID,
 		}
-		err = s.SQLStore.GetDataSource(ctx, query)
+		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
 
-		err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
+		err = s.fillWithSecureJSONData(ctx, cmd, dataSource)
 		if err != nil {
 			return err
 		}
@@ -249,8 +255,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 					return err
 				}
 
-				if query.Result.Name != cmd.Name {
-					err := s.SecretsStore.Rename(ctx, cmd.OrgID, query.Result.Name, kvstore.DataSourceSecretType, cmd.Name)
+				if dataSource.Name != cmd.Name {
+					err := s.SecretsStore.Rename(ctx, cmd.OrgID, dataSource.Name, kvstore.DataSourceSecretType, cmd.Name)
 					if err != nil {
 						return err
 					}
@@ -260,11 +266,12 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
-		return s.SQLStore.UpdateDataSource(ctx, cmd)
+		dataSource, err = s.SQLStore.UpdateDataSource(ctx, cmd)
+		return err
 	})
 }
 
-func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
+func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
 	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 
@@ -417,10 +424,11 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		opts.CustomOptions["grafanaData"] = make(map[string]interface{})
+		deepJsonDataCopy := make(map[string]interface{}, len(opts.CustomOptions))
 		for k, v := range opts.CustomOptions {
-			opts.CustomOptions[k] = v
+			deepJsonDataCopy[k] = v
 		}
+		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {
 		password, err := s.DecryptedBasicAuthPassword(ctx, ds)
@@ -553,8 +561,8 @@ func (s *Service) getCustomHeaders(jsonData *simplejson.Json, decryptedValues ma
 	index := 0
 	for {
 		index++
-		headerNameSuffix := fmt.Sprintf("httpHeaderName%d", index)
-		headerValueSuffix := fmt.Sprintf("httpHeaderValue%d", index)
+		headerNameSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderName, index)
+		headerValueSuffix := fmt.Sprintf("%s%d", datasources.CustomHeaderValue, index)
 
 		key := jsonData.Get(headerNameSuffix).MustString()
 		if key == "" {
@@ -642,4 +650,13 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits.Set(globalQuotaTag, cfg.Quota.Global.DataSource)
 	limits.Set(orgQuotaTag, cfg.Quota.Org.DataSource)
 	return limits, nil
+}
+
+// CustomerHeaders returns the custom headers specified in the datasource. The context is used for the decryption operation that might use the store, so consider setting an acceptable timeout for your use case.
+func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	values, err := s.SecretsService.DecryptJsonData(ctx, ds.SecureJsonData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom headers: %w", err)
+	}
+	return s.getCustomHeaders(ds.JsonData, values), nil
 }

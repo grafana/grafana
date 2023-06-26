@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
@@ -47,7 +47,7 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 
 		buf := new(bytes.Buffer)
 		if err := tmpls.Lookup("gen_header.tmpl").Execute(buf, tvars_gen_header{
-			MainGenerator: maingen,
+			MainGenerator: filepath.ToSlash(maingen),
 			Using:         f.From,
 			Leader:        leader,
 		}); err != nil {

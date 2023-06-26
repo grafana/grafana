@@ -9,16 +9,17 @@ import { StoreState } from '../../types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from './constants';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
 import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
- * \$(\w+)                          $var1
- * \[\[(\w+?)(?::(\w+))?\]\]        [[var2]] or [[var2:fmt2]]
- * \${(\w+)(?::(\w+))?}             ${var3} or ${var3:fmt3}
+ * There are 6 capture groups that replace will return
+ * \$(\w+)                                    $var1
+ * \[\[(\w+?)(?::(\w+))?\]\]                  [[var2]] or [[var2:fmt2]]
+ * \${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}   ${var3} or ${var3.fieldPath} or ${var3:fmt3} (or ${var3.fieldPath:fmt3} but that is not a separate capture group)
  */
 export const variableRegex = /\$(\w+)|\[\[(\w+?)(?::(\w+))?\]\]|\${(\w+)(?:\.([^:^\}]+))?(?::([^\}]+))?}/g;
 
@@ -224,7 +225,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   const changes: ExtendedUrlQueryMap = {};
 
   for (const key in query) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 
@@ -238,7 +239,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   }
 
   for (const key in old) {
-    if (!key.startsWith('var-')) {
+    if (!key.startsWith(VARIABLE_PREFIX)) {
       continue;
     }
 

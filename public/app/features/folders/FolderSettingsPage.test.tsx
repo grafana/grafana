@@ -184,7 +184,7 @@ describe('FolderSettingsPage', () => {
     await userEvent.click(deleteButton);
     const deleteModal = screen.getByRole('dialog', { name: 'Delete' });
     expect(deleteModal).toBeInTheDocument();
-    const deleteButtonModal = within(deleteModal).getByRole('button', { name: 'Confirm Modal Danger Button' });
+    const deleteButtonModal = within(deleteModal).getByRole('button', { name: 'Delete' });
     await userEvent.click(deleteButtonModal);
     expect(mockDeleteFolder).toHaveBeenCalledWith(mockFolder.uid);
   });

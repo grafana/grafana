@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/url"
@@ -13,8 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
 )
 
-func NamespacesHandler(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
-	reqCtx, err := reqCtxFactory(pluginCtx, "default")
+func NamespacesHandler(ctx context.Context, pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, _ url.Values) ([]byte, *models.HttpError) {
+	reqCtx, err := reqCtxFactory(ctx, pluginCtx, "default")
 	if err != nil {
 		return nil, models.NewHttpError("error in NamespacesHandler", http.StatusInternalServerError, err)
 	}

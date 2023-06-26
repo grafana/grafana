@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import { History, Location } from 'history';
 import React, { ComponentType } from 'react';
+import { match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setEchoSrv } from '@grafana/runtime';
@@ -7,12 +9,13 @@ import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, Props } from './GrafanaRoute';
+import { GrafanaRouteComponentProps } from './types';
 
 function setup(overrides: Partial<Props>) {
   const props: Props = {
-    location: { search: '?query=hello&test=asd' } as any,
-    history: {} as any,
-    match: {} as any,
+    location: { search: '?query=hello&test=asd' } as Location,
+    history: {} as History,
+    match: {} as match,
     route: {
       path: '/',
       component: () => <div />,
@@ -33,14 +36,14 @@ describe('GrafanaRoute', () => {
   });
 
   it('Parses search', () => {
-    let capturedProps: any;
-    const PageComponent = (props: any) => {
+    let capturedProps: GrafanaRouteComponentProps;
+    const PageComponent = (props: GrafanaRouteComponentProps) => {
       capturedProps = props;
       return <div />;
     };
 
     setup({ route: { component: PageComponent, path: '' } });
-    expect(capturedProps.queryParams.query).toBe('hello');
+    expect(capturedProps!.queryParams.query).toBe('hello');
   });
 
   it('Shows loading on lazy load', async () => {

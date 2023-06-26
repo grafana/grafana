@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -31,22 +32,20 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
-	for _, app := range enabledPlugins[plugins.App] {
-		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
-				Path:    app.Module,
-				Version: app.Info.Version,
-			})
-		}
+	apps := make(map[string]*plugins.AppDTO, 0)
+	for _, ap := range availablePlugins[plugins.TypeApp] {
+		apps[ap.Plugin.ID] = newAppDTO(
+			ap.Plugin,
+			ap.Settings,
+		)
 	}
 
-	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
+	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
 	}
@@ -59,27 +58,29 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
-	for _, panel := range enabledPlugins[plugins.Panel] {
-		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
+	for _, ap := range availablePlugins[plugins.TypePanel] {
+		panel := ap.Plugin
+		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
 
-		hideFromList := panel.HideFromList
-		if panel.ID == "flamegraph" {
-			hideFromList = !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph)
+		if panel.ID == "datagrid" && !hs.Features.IsEnabled(featuremgmt.FlagEnableDatagridEditing) {
+			continue
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:            panel.ID,
-			Name:          panel.Name,
-			Info:          panel.Info,
-			Module:        panel.Module,
-			BaseURL:       panel.BaseURL,
-			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  hideFromList,
-			ReleaseState:  string(panel.State),
-			Signature:     string(panel.Signature),
-			Sort:          getPanelSort(panel.ID),
+			ID:              panel.ID,
+			Name:            panel.Name,
+			Alias:           panel.Alias,
+			Info:            panel.Info,
+			Module:          panel.Module,
+			BaseURL:         panel.BaseURL,
+			SkipDataQuery:   panel.SkipDataQuery,
+			HideFromList:    panel.HideFromList,
+			ReleaseState:    string(panel.State),
+			Signature:       string(panel.Signature),
+			Sort:            getPanelSort(panel.ID),
+			AngularDetected: panel.AngularDetected,
 		}
 	}
 
@@ -96,24 +97,26 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
+	trustedTypesDefaultPolicyEnabled := (hs.Cfg.CSPEnabled && strings.Contains(hs.Cfg.CSPTemplate, "require-trusted-types-for")) || (hs.Cfg.CSPReportOnlyEnabled && strings.Contains(hs.Cfg.CSPReportOnlyTemplate, "require-trusted-types-for"))
 
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
 		MinRefreshInterval:                  setting.MinRefreshInterval,
 		Panels:                              panels,
+		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		AuthProxyEnabled:                    setting.AuthProxyEnabled,
-		LdapEnabled:                         hs.Cfg.LDAPEnabled,
+		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
+		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
 		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
 		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
 		AlertingMinInterval:                 setting.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
-		AutoAssignOrg:                       setting.AutoAssignOrg,
+		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
 		AzureAuthEnabled:                    setting.AzureAuthEnabled,
@@ -121,41 +124,44 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExploreEnabled:                      setting.ExploreEnabled,
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
+		NewsFeedEnabled:                     setting.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		RudderstackWriteKey:                 setting.RudderstackWriteKey,
-		RudderstackDataPlaneUrl:             setting.RudderstackDataPlaneUrl,
-		RudderstackSdkUrl:                   setting.RudderstackSdkUrl,
-		RudderstackConfigUrl:                setting.RudderstackConfigUrl,
+		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
+		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		RudderstackWriteKey:                 hs.Cfg.RudderstackWriteKey,
+		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
+		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
+		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
-		DisableLoginForm:                    setting.DisableLoginForm,
+		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
 		DisableUserSignUp:                   !setting.AllowUserSignUp,
 		LoginHint:                           setting.LoginHint,
 		PasswordHint:                        setting.PasswordHint,
 		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
 		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
 		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
-		ViewersCanEdit:                      setting.ViewersCanEdit,
+		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
-		PluginsToPreload:                    pluginsToPreload,
+		TrustedTypesDefaultPolicyEnabled:    trustedTypesDefaultPolicyEnabled,
+		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
+		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
 			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
 			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
 			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
 			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
 			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
 			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:       hs.Cfg.GithubSkipOrgRoleSync,
+			GithubSkipOrgRoleSync:       hs.Cfg.GitHubSkipOrgRoleSync,
 			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
 			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
 			DisableSyncLock:             hs.Cfg.DisableSyncLock,
@@ -175,17 +181,17 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
 			Expiry:          hs.License.Expiry(),
 			StateInfo:       hs.License.StateInfo(),
-			LicenseUrl:      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
+			LicenseUrl:      hs.License.LicenseURL(hasAccess(licensing.PageAccess)),
 			Edition:         hs.License.Edition(),
 			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
 		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
-		Sentry:                           hs.Cfg.Sentry,
 		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
@@ -199,6 +205,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Azure: dtos.FrontendSettingsAzureDTO{
 			Cloud:                  hs.Cfg.Azure.Cloud,
 			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
+			UserIdentityEnabled:    hs.Cfg.Azure.UserIdentityEnabled,
 		},
 
 		Caching: dtos.FrontendSettingsCachingDTO{
@@ -221,6 +228,17 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
 
 		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
+
+		SqlConnectionLimits: dtos.FrontendSettingsSqlConnectionLimitsDTO{
+			MaxOpenConns:    hs.Cfg.SqlDatasourceMaxOpenConnsDefault,
+			MaxIdleConns:    hs.Cfg.SqlDatasourceMaxIdleConnsDefault,
+			ConnMaxLifetime: hs.Cfg.SqlDatasourceMaxConnLifetimeDefault,
+		},
+	}
+
+	if hs.Cfg.UnifiedAlerting.StateHistory.Enabled {
+		frontendSettings.UnifiedAlerting.AlertStateHistoryBackend = hs.Cfg.UnifiedAlerting.StateHistory.Backend
+		frontendSettings.UnifiedAlerting.AlertStateHistoryPrimary = hs.Cfg.UnifiedAlerting.StateHistory.MultiPrimary
 	}
 
 	if hs.Cfg.UnifiedAlerting.Enabled != nil {
@@ -239,10 +257,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
-	if hs.ThumbService != nil {
-		frontendSettings.DashboardPreviews = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
-	}
-
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
 		frontendSettings.GeomapDefaultBaseLayerConfig = &hs.Cfg.GeomapDefaultBaseLayerConfig
 	}
@@ -255,24 +269,23 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
-		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
-func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
 		}
 
 		if c.IsPublicDashboardView {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
-			orgDataSources = query.Result
+			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
 			if err != nil {
 				return nil, err
 			}
@@ -300,11 +313,13 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
+		ap, exists := availablePlugins.Get(plugins.TypeDataSource, ds.Type)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
+		plugin := ap.Plugin
+		dsDTO.Type = plugin.ID
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
@@ -313,6 +328,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
 		}
+		dsDTO.AngularDetected = plugin.AngularDetected
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]interface{})
@@ -359,6 +375,16 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			}
 		}
 
+		// Update `jsonData.database` for outdated provisioned SQL datasources created WITHOUT the `jsonData` object in their configuration.
+		// In these cases, the `Database` value is defined (if at all) on the root level of the provisioning config object.
+		// This is done for easier warning/error checking on the front end.
+		if (ds.Type == datasources.DS_MSSQL) || (ds.Type == datasources.DS_MYSQL) || (ds.Type == datasources.DS_POSTGRES) {
+			// Only update if the value isn't already assigned.
+			if dsDTO.JSONData["database"] == nil || dsDTO.JSONData["database"] == "" {
+				dsDTO.JSONData["database"] = ds.Database
+			}
+		}
+
 		if (ds.Type == datasources.DS_INFLUXDB) || (ds.Type == datasources.DS_ES) {
 			dsDTO.Database = ds.Database
 		}
@@ -373,7 +399,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 
 	// add data sources that are built in (meaning they are not added via data sources page, nor have any entry in
 	// the datasource table)
-	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.DataSource) {
+	for _, ds := range hs.pluginStore.Plugins(c.Req.Context(), plugins.TypeDataSource) {
 		if ds.BuiltIn {
 			dto := plugins.DataSourceDTO{
 				Type:     string(ds.Type),
@@ -385,6 +411,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
 				},
+				AngularDetected: ds.AngularDetected,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
@@ -395,6 +422,22 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 	}
 
 	return dataSources, nil
+}
+
+func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+	app := &plugins.AppDTO{
+		ID:              plugin.ID,
+		Version:         plugin.Info.Version,
+		Path:            plugin.Module,
+		Preload:         false,
+		AngularDetected: plugin.AngularDetected,
+	}
+
+	if settings.Enabled {
+		app.Preload = plugin.Preload
+	}
+
+	return app
 }
 
 func getPanelSort(id string) int {
@@ -438,52 +481,71 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-// EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
-// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
-type EnabledPlugins map[plugins.Type]map[string]plugins.PluginDTO
-
-func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (plugins.PluginDTO, bool) {
-	if _, exists := ep[pluginType][pluginID]; exists {
-		return ep[pluginType][pluginID], true
-	}
-
-	return plugins.PluginDTO{}, false
+type availablePluginDTO struct {
+	Plugin   plugins.PluginDTO
+	Settings pluginsettings.InfoDTO
 }
 
-func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
-	ep := make(EnabledPlugins)
+// AvailablePlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
+type AvailablePlugins map[plugins.Type]map[string]*availablePluginDTO
+
+func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*availablePluginDTO, bool) {
+	p, exists := ap[pluginType][pluginID]
+	if exists {
+		return p, true
+	}
+	for _, p = range ap[pluginType] {
+		if p.Plugin.ID == pluginID || p.Plugin.Alias == pluginID {
+			return p, true
+		}
+	}
+	return nil, false
+}
+
+func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (AvailablePlugins, error) {
+	ap := make(AvailablePlugins)
 
 	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
-		return ep, err
+		return ap, err
 	}
 
-	apps := make(map[string]plugins.PluginDTO)
-	for _, app := range hs.pluginStore.Plugins(ctx, plugins.App) {
-		if b, exists := pluginSettingMap[app.ID]; exists {
-			app.Pinned = b.Pinned
-			apps[app.ID] = app
+	apps := make(map[string]*availablePluginDTO)
+	for _, app := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
+		if s, exists := pluginSettingMap[app.ID]; exists {
+			app.Pinned = s.Pinned
+			apps[app.ID] = &availablePluginDTO{
+				Plugin:   app,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.App] = apps
+	ap[plugins.TypeApp] = apps
 
-	dataSources := make(map[string]plugins.PluginDTO)
-	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.DataSource) {
-		if _, exists := pluginSettingMap[ds.ID]; exists {
-			dataSources[ds.ID] = ds
+	dataSources := make(map[string]*availablePluginDTO)
+	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.TypeDataSource) {
+		if s, exists := pluginSettingMap[ds.ID]; exists {
+			dataSources[ds.ID] = &availablePluginDTO{
+				Plugin:   ds,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.DataSource] = dataSources
+	ap[plugins.TypeDataSource] = dataSources
 
-	panels := make(map[string]plugins.PluginDTO)
-	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Panel) {
-		if _, exists := pluginSettingMap[p.ID]; exists {
-			panels[p.ID] = p
+	panels := make(map[string]*availablePluginDTO)
+	for _, p := range hs.pluginStore.Plugins(ctx, plugins.TypePanel) {
+		if s, exists := pluginSettingMap[p.ID]; exists {
+			panels[p.ID] = &availablePluginDTO{
+				Plugin:   p,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.Panel] = panels
+	ap[plugins.TypePanel] = panels
 
-	return ep, nil
+	return ap, nil
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
@@ -499,7 +561,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 	}
 
 	// fill settings from app plugins
-	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.App) {
+	for _, plugin := range hs.pluginStore.Plugins(ctx, plugins.TypeApp) {
 		// ignore settings that already exist
 		if _, exists := pluginSettings[plugin.ID]; exists {
 			continue

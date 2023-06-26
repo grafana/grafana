@@ -10,7 +10,7 @@
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions {
+export interface Options {
   /**
    * Name of the alertmanager used as a source for alerts
    */

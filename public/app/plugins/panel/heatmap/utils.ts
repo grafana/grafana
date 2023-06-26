@@ -16,15 +16,14 @@ import {
   TimeRange,
   FieldType,
 } from '@grafana/data';
-import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
+import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation, HeatmapCellLayout } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { HeatmapData } from './fields';
-import { PanelFieldConfig, YAxisConfig } from './models.gen';
+import { FieldConfig, YAxisConfig } from './types';
 
 interface PathbuilderOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -290,8 +289,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     return builder; // early abort (avoids error)
   }
 
-  // eslint-ignore @typescript-eslint/no-explicit-any
-  const yFieldConfig = yField.config?.custom as PanelFieldConfig | undefined;
+  const yFieldConfig: FieldConfig | undefined = yField.config?.custom;
   const yScale = yFieldConfig?.scaleDistribution ?? { type: ScaleDistribution.Linear };
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
@@ -968,7 +966,7 @@ export const boundedMinMax = (
 };
 
 export const valuesToFills = (values: number[], palette: string[], minValue: number, maxValue: number) => {
-  let range = Math.max(maxValue - minValue, 1);
+  let range = maxValue - minValue || 1;
 
   let paletteSize = palette.length;
 

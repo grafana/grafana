@@ -97,6 +97,10 @@ type AlertQuery struct {
 	modelProps map[string]interface{}
 }
 
+func (aq *AlertQuery) String() string {
+	return fmt.Sprintf("refID: %s, queryType: %s, datasourceUID: %s", aq.RefID, aq.QueryType, aq.DatasourceUID)
+}
+
 func (aq *AlertQuery) setModelProps() error {
 	aq.modelProps = make(map[string]interface{})
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
@@ -109,7 +113,7 @@ func (aq *AlertQuery) setModelProps() error {
 
 // IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
-	return expr.IsDataSource(aq.DatasourceUID), nil
+	return expr.NodeTypeFromDatasourceUID(aq.DatasourceUID) == expr.TypeCMDNode, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

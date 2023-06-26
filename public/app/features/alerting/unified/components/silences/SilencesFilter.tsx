@@ -2,36 +2,26 @@ import { css } from '@emotion/css';
 import { debounce, uniqueId } from 'lodash';
 import React, { FormEvent, useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Label, Icon, Input, Tooltip, RadioButtonGroup, useStyles2, Button, Field } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { SilenceState } from 'app/plugins/datasource/alertmanager/types';
 
 import { parseMatchers } from '../../utils/alertmanager';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';
-
-const stateOptions: SelectableValue[] = Object.entries(SilenceState).map(([key, value]) => ({
-  label: key,
-  value,
-}));
 
 const getQueryStringKey = () => uniqueId('query-string-');
 
 export const SilencesFilter = () => {
   const [queryStringKey, setQueryStringKey] = useState(getQueryStringKey());
   const [queryParams, setQueryParams] = useQueryParams();
-  const { queryString, silenceState } = getSilenceFiltersFromUrlParams(queryParams);
+  const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
   const styles = useStyles2(getStyles);
 
   const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     setQueryParams({ queryString: target.value || null });
   }, 400);
-
-  const handleSilenceStateChange = (state: string) => {
-    setQueryParams({ silenceState: state });
-  };
 
   const clearFilters = () => {
     setQueryParams({
@@ -77,10 +67,8 @@ export const SilencesFilter = () => {
           data-testid="search-query-input"
         />
       </Field>
-      <Field className={styles.rowChild} label="State">
-        <RadioButtonGroup options={stateOptions} value={silenceState} onChange={handleSilenceStateChange} />
-      </Field>
-      {(queryString || silenceState) && (
+
+      {queryString && (
         <div className={styles.rowChild}>
           <Button variant="secondary" icon="times" onClick={clearFilters}>
             Clear filters
@@ -99,8 +87,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     flex-direction: row;
     align-items: flex-end;
-    padding-bottom: ${theme.spacing(2)};
-    border-bottom: 1px solid ${theme.colors.border.strong};
+    padding-bottom: ${theme.spacing(3)};
+    border-bottom: 1px solid ${theme.colors.border.medium};
   `,
   rowChild: css`
     margin-right: ${theme.spacing(1)};

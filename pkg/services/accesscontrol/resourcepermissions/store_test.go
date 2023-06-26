@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
@@ -490,7 +491,7 @@ func TestIntegrationStore_GetResourcePermissions(t *testing.T) {
 func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore, orgService org.Service, actions []string, resource, resourceID, resourceAttribute string, numUsers int) {
 	t.Helper()
 	var orgModel *org.Org
-	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil))
+	usrSvc, err := userimpl.ProvideService(sql, orgService, sql.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	for i := 0; i < numUsers; i++ {

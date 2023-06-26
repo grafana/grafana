@@ -53,6 +53,11 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		revision.cfg.TemplateFiles = map[string]string{}
 	}
 	revision.cfg.TemplateFiles[tmpl.Name] = tmpl.Template
+	tmpls := make([]string, 0, len(revision.cfg.TemplateFiles))
+	for name := range revision.cfg.TemplateFiles {
+		tmpls = append(tmpls, name)
+	}
+	revision.cfg.AlertmanagerConfig.Templates = tmpls
 
 	serialized, err := serializeAlertmanagerConfig(*revision.cfg)
 	if err != nil {
@@ -70,7 +75,7 @@ func (t *TemplateService) SetTemplate(ctx context.Context, orgID int64, tmpl def
 		if err != nil {
 			return err
 		}
-		err = t.prov.SetProvenance(ctx, &tmpl, orgID, tmpl.Provenance)
+		err = t.prov.SetProvenance(ctx, &tmpl, orgID, models.Provenance(tmpl.Provenance))
 		if err != nil {
 			return err
 		}

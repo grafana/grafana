@@ -84,10 +84,10 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       evalContext.Rule.OrgID,
-			DashboardId: evalContext.Rule.DashboardID,
-			PanelId:     evalContext.Rule.PanelID,
-			AlertId:     evalContext.Rule.ID,
+			OrgID:       evalContext.Rule.OrgID,
+			DashboardID: evalContext.Rule.DashboardID,
+			PanelID:     evalContext.Rule.PanelID,
+			AlertID:     evalContext.Rule.ID,
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),

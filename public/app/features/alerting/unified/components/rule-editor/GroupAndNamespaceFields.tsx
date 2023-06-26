@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -16,7 +16,7 @@ interface Props {
   rulesSourceName: string;
 }
 
-export const GroupAndNamespaceFields: FC<Props> = ({ rulesSourceName }) => {
+export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
   const {
     control,
     watch,

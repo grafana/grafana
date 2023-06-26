@@ -1,8 +1,13 @@
 import React from 'react';
 
 import { PanelOptionsEditorBuilder } from '..';
-import { identityOverrideProcessor, standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../field';
-import { FieldConfigProperty } from '../types';
+import {
+  identityOverrideProcessor,
+  standardEditorsRegistry,
+  StandardEditorsRegistryItem,
+  standardFieldConfigEditorRegistry,
+} from '../field';
+import { FieldConfigProperty, FieldConfigPropertyItem } from '../types';
 
 import { PanelPlugin } from './PanelPlugin';
 
@@ -19,14 +24,14 @@ describe('PanelPlugin', () => {
             id: FieldConfigProperty.Max,
             path: 'max',
           },
-        ] as any;
+        ] as FieldConfigPropertyItem[];
       });
       standardEditorsRegistry.setInit(() => {
         return [
           {
             id: 'number',
           },
-        ] as any;
+        ] as StandardEditorsRegistryItem[];
       });
     });
 
@@ -202,7 +207,7 @@ describe('PanelPlugin', () => {
               name: 'Option editor',
               description: 'Option editor description',
               defaultValue: 10,
-            } as any);
+            } as FieldConfigPropertyItem);
           },
         });
         expect(() => panel.fieldConfigRegistry).toThrowErrorMatchingInlineSnapshot(
