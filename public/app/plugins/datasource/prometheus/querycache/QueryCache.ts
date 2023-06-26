@@ -56,7 +56,6 @@ interface ProfileData extends DatasourceProfileData {
   panelId?: number;
   from: string;
   rawFrom: string;
-  rawTo: string;
 }
 
 /**
@@ -100,7 +99,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
       datasource: string;
       from: string;
       rawFrom: string;
-      rawTo: string;
     }
   >();
 
@@ -180,7 +178,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         sent: false,
                         from: currentRequest.from ?? '',
                         rawFrom: currentRequest.rawFrom ?? '',
-                        rawTo: currentRequest.rawTo ?? '',
                       });
 
                       // We don't need to save each subsequent request, only the first one
@@ -225,7 +222,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
           interval: value.interval.toString(),
           from: value.from.toString(),
           rawFrom: value.rawFrom.toString(),
-          rawTo: value.rawTo.toString(),
         };
 
         if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
@@ -281,7 +277,6 @@ export class QueryCache<T extends SupportedQueryTypes> {
           dashboardUID: request.dashboardUID ?? '',
           from: request.rangeRaw?.from.toString() ?? '',
           rawFrom: request.range.from.toString() ?? '',
-          rawTo: request.range.to.toString() ?? '',
         });
       }
 
