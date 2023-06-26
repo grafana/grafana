@@ -47,7 +47,6 @@ export class NodePosition {
     return query.substring(this.from, this.to);
   }
 }
-export type Position = { from: number; to: number };
 
 /**
  * Checks for the presence of a given label=value filter in any Matcher expression in the query.
