@@ -24,6 +24,7 @@ import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
+import { flameGraphEmptyData } from './testData/flameGraphEmptyResponse';
 import { flameGraphData } from './testData/flameGraphResponse';
 import { TestDataVariableSupport } from './variables';
 
@@ -96,6 +97,9 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
           break;
         case 'flame_graph':
           streams.push(this.flameGraphQuery());
+          break;
+        case 'flame_graph_empty':
+          streams.push(this.flameGraphEmptyQuery());
           break;
         case 'trace':
           streams.push(this.trace(target, options));
@@ -244,6 +248,10 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
 
   flameGraphQuery(): Observable<DataQueryResponse> {
     return of({ data: [flameGraphData] }).pipe(delay(100));
+  }
+
+  flameGraphEmptyQuery(): Observable<DataQueryResponse> {
+    return of({ data: [flameGraphEmptyData] }).pipe(delay(100));
   }
 
   trace(target: TestData, options: DataQueryRequest<TestData>): Observable<DataQueryResponse> {

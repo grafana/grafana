@@ -51,6 +51,31 @@
       ],
       "title": "Flame Graph",
       "type": "flamegraph"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 10
+      },
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "A",
+          "scenarioId": "flame_graph_empty"
+        }
+      ],
+      "title": "Flame Graph - Empty",
+      "type": "flamegraph"
     }
   ],
   "refresh": "",
@@ -96,6 +121,6 @@
   "timezone": "",
   "title": "Panel Tests - Flame Graph",
   "uid": "16f11TZWk",
-  "version": 7,
+  "version": 2,
   "weekStart": ""
 }
