@@ -58,15 +58,32 @@ function useNormalizeQuery(
 ) {
   useEffect(() => {
     const normalizedQuery = normalizeQuery(query, app);
-    if (!query.profileTypeId && profileTypes.length > 0) {
-      // Select the first thing so the profile type selector isn't empty
-      normalizedQuery.profileTypeId = profileTypes[0].id;
+    // Query can be stored with some old type, or we can have query from different pyro datasource
+    const selectedProfile = query.profileTypeId && profileTypes.find((p) => p.id === query.profileTypeId);
+    if (profileTypes.length && !selectedProfile) {
+      normalizedQuery.profileTypeId = defaultProfileType(profileTypes);
     }
-    // Makes sure we don't have a infinite loop updates
+    // Makes sure we don't have an infinite loop updates because the normalization creates a new object
     if (!deepEqual(query, normalizedQuery)) {
       onChange(normalizedQuery);
     }
   }, [app, query, profileTypes, onChange]);
+}
+
+function defaultProfileType(profileTypes: ProfileTypeMessage[]): string {
+  const cpuProfiles = profileTypes.filter((p) => p.id.indexOf('cpu') >= 0);
+  if (cpuProfiles.length) {
+    // Prefer cpu time profile if available instead of samples
+    const cpuTimeProfile = cpuProfiles.find((p) => p.id.indexOf('samples') === -1);
+    if (cpuTimeProfile) {
+      return cpuTimeProfile.id;
+    }
+    // Fallback to first cpu profile type
+    return cpuProfiles[0].id;
+  }
+
+  // Fallback to first profile type from response data
+  return profileTypes[0].id;
 }
 
 function useLabels(
