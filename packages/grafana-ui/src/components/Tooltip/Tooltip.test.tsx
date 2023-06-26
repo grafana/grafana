@@ -39,6 +39,17 @@ describe('Tooltip', () => {
 
     expect(refObj.current).not.toBeNull();
   });
+  it('to be shown on hover and be dismissable by pressing Esc key when show is undefined', async () => {
+    render(
+      <Tooltip content="Tooltip content">
+        <span>On the page</span>
+      </Tooltip>
+    );
+    await userEvent.hover(screen.getByText('On the page'));
+    expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
+  });
   it('is always visible when show prop is true', async () => {
     render(
       <Tooltip content="Tooltip content" show={true}>
@@ -57,17 +68,6 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     await userEvent.hover(screen.getByText('On the page'));
-    expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
-  });
-  it('to be shown on hover and be dismissable by pressing Esc key when show is undefined', async () => {
-    render(
-      <Tooltip content="Tooltip content">
-        <span>On the page</span>
-      </Tooltip>
-    );
-    await userEvent.hover(screen.getByText('On the page'));
-    expect(screen.getByText('Tooltip content')).toBeInTheDocument();
-    await userEvent.keyboard('{Escape}');
     expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
   });
 });
