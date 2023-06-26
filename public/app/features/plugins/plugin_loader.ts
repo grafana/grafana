@@ -46,7 +46,7 @@ import builtInPlugins from './built_in_plugins';
 import { PLUGIN_CDN_URL_KEY } from './constants';
 import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
-import { locateWithCache2, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
+import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
 
 // Help the 6.4 to 6.5 migration
 // The base classes were moved from @grafana/ui to @grafana/data
@@ -207,7 +207,7 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
   // CDN paths are unique as they contain the version in the path
   const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
-  const cachedId = shouldUseQueryCache ? locateWithCache2(id) : id;
+  const cachedId = shouldUseQueryCache ? locateWithCache(id) : id;
   try {
     return originalResolve.apply(this, [cachedId, parentUrl]);
   } catch (err) {

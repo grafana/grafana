@@ -9,41 +9,34 @@ type CacheablePlugin = {
 };
 
 export function registerPluginInCache({ path, version }: CacheablePlugin): void {
-  if (!cache[path]) {
-    cache[path] = encodeURI(version);
+  const key = extractPath(path);
+  if (key && !cache[key]) {
+    cache[key] = encodeURI(version);
   }
+  console.log(cache);
 }
 
 export function invalidatePluginInCache(pluginId: string): void {
-  const path = `./public/plugins/${pluginId}/module.js`;
+  const path = `plugins/${pluginId}/module`;
   if (cache[path]) {
     delete cache[path];
   }
   clearPluginSettingsCache(pluginId);
 }
 
-export function locateWithCache(load: { address: string }, defaultBust = initializedAt): string {
-  const { address } = load;
-  const path = extractPath(address);
-
+export function locateWithCache(url: string, defaultBust = initializedAt): string {
+  const path = extractPath(url);
   if (!path) {
-    return `${address}?_cache=${defaultBust}`;
+    return `${url}?_cache=${defaultBust}`;
   }
 
   const version = cache[path];
-  const bust = version || defaultBust;
-  return `${address}?_cache=${bust}`;
-}
-
-// TODO: Clean this up!
-export function locateWithCache2(url: string, defaultBust = initializedAt): string {
-  const version = cache[url];
   const bust = version || defaultBust;
   return `${url}?_cache=${bust}`;
 }
 
 function extractPath(address: string): string | undefined {
-  const match = /\/public\/(plugins\/.+\/module)\.js/i.exec(address);
+  const match = /\/.+\/(plugins\/.+\/module)\.js/i.exec(address);
   if (!match) {
     return;
   }
