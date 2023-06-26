@@ -256,7 +256,11 @@ type Cfg struct {
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	MetricsGrafanaEnvironmentInfo    map[string]string
+	// MetricsIncludeTeamLabel configures grafana to set a label for
+	// the team responsible for the code at Grafana labs. We don't expect anyone else to
+	// use this setting.
+	MetricsIncludeTeamLabel       bool
+	MetricsGrafanaEnvironmentInfo map[string]string
 
 	// Dashboards
 	DefaultHomeDashboardPath string
@@ -1083,6 +1087,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
 	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
 	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
 
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)

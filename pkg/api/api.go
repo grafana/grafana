@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -72,7 +73,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", quota(string(auth.QuotaTargetSrv)), routing.Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota(string(auth.QuotaTargetSrv)), hs.OAuthLogin)
-	r.Get("/login", hs.LoginView)
+	r.Get("/login", requestmeta.SetOwner(requestmeta.TeamAuth), hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
 	// authed views
@@ -532,7 +533,7 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/:alertId", hs.ValidateOrgAlert, routing.Wrap(hs.GetAlert))
 			alertsRoute.Get("/", routing.Wrap(hs.GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", routing.Wrap(hs.GetAlertStatesForDashboard))
-		})
+		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		var notifiersAuthHandler web.Handler
 		if hs.Cfg.UnifiedAlerting.IsEnabled() {
@@ -541,7 +542,7 @@ func (hs *HTTPServer) registerRoutes() {
 			notifiersAuthHandler = reqEditorRole
 		}
 
-		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, routing.Wrap(
+		apiRoute.Get("/alert-notifiers", notifiersAuthHandler, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers(hs.Cfg.UnifiedAlerting.IsEnabled())),
 		)
 
@@ -555,12 +556,12 @@ func (hs *HTTPServer) registerRoutes() {
 			alertNotifications.Get("/uid/:uid", routing.Wrap(hs.GetAlertNotificationByUID))
 			alertNotifications.Put("/uid/:uid", routing.Wrap(hs.UpdateAlertNotificationByUID))
 			alertNotifications.Delete("/uid/:uid", routing.Wrap(hs.DeleteAlertNotificationByUID))
-		}, reqEditorRole)
+		}, reqEditorRole, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		// alert notifications without requirement of user to be org editor
 		apiRoute.Group("/alert-notifications", func(orgRoute routing.RouteRegister) {
 			orgRoute.Get("/lookup", routing.Wrap(hs.GetAlertNotificationLookup))
-		})
+		}, requestmeta.SetOwner(requestmeta.TeamAlerting))
 
 		apiRoute.Get("/annotations", authorize(ac.EvalPermission(ac.ActionAnnotationsRead)), routing.Wrap(hs.GetAnnotations))
 		apiRoute.Post("/annotations/mass-delete", authorize(ac.EvalPermission(ac.ActionAnnotationsDelete)), routing.Wrap(hs.MassDeleteAnnotations))
