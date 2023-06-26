@@ -127,7 +127,7 @@ Grafana 7.4 and higher can show exemplars data alongside a metric both in Explor
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Screenshot showing the detail window of an Exemplar" >}}
 
-<!-- To configure exemplars see [Exemplars]({{< relref "./configure-prometheus-data-source#exemplars" >}}) -->
+See the Exemplars section in [Configure Prometheus data source](/docs/grafana/latest/datasources/prometheus/configure-prometheus-data-source/).
 
 {{< figure src="/static/img/docs/prometheus/exemplars-10-1.png" max-width="500px" class="docs-image--no-shadow" caption="Exemplars" >}}
 
