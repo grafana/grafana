@@ -679,13 +679,13 @@ Set the policy template that will be used when adding the `Content-Security-Poli
 This currently defaults to `true` but will default to `false` in a future release. When set to false the angular framework and support components will not be loaded. This means that
 all plugins and core features that depend on angular support will stop working.
 
-Current core features that will stop working:
+The core features that depend on angular are:
 
 - Old graph panel
 - Old table panel
 - Legacy alerting edit rule UI
 
-These features each have supported alternatives, and we reccomend using them.
+These features each have supported alternatives, and we recommend using them.
 
 ### csrf_trusted_origins
 
