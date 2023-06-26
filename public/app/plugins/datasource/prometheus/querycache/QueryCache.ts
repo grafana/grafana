@@ -57,7 +57,7 @@ interface ProfileData extends DatasourceProfileData {
   panelId?: number;
   from: string;
   queryRangeSeconds: number;
-  refreshInterval: number;
+  refreshIntervalMs: number;
 }
 
 /**
@@ -96,7 +96,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       panelId: string;
       dashId: string;
       expr: string;
-      refreshInterval: number;
+      refreshIntervalMs: number;
       sent: boolean;
       datasource: string;
       from: string;
@@ -176,7 +176,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         panelId: currentRequest.panelId?.toString() ?? '',
                         dashId: currentRequest.dashboardUID ?? '',
                         expr: currentRequest.expr ?? '',
-                        refreshInterval: currentRequest.refreshInterval ?? 0,
+                        refreshIntervalMs: currentRequest.refreshIntervalMs ?? 0,
                         sent: false,
                         from: currentRequest.from ?? '',
                         queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
@@ -203,7 +203,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
       // Send any pending profile information when the user navigates away
-      // window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
 
@@ -221,10 +221,12 @@ export class QueryCache<T extends SupportedQueryTypes> {
           panelId: value.panelId.toString(),
           dashId: value.dashId.toString(),
           expr: value.expr.toString(),
-          refreshInterval: value.refreshInterval.toString(),
+          refreshIntervalMs: value.refreshIntervalMs.toString(),
           from: value.from.toString(),
           queryRangeSeconds: value.queryRangeSeconds.toString(),
         };
+
+        console.log('Sending profile event', JSON.stringify(event));
 
         if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
           reportInteraction('grafana_incremental_queries_profile', event);
@@ -260,7 +262,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
     let doPartialQuery = shouldCache;
     let prevTo: TimestampMs | undefined = undefined;
 
-    const refreshInterval = getTimeSrv().refreshMS;
+    const refreshIntervalMs = getTimeSrv().refreshMS;
 
     // pre-compute reqTargSigs
     const reqTargSigs = new Map<TargetIdent, TargetSig>();
@@ -277,7 +279,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           dashboardUID: request.dashboardUID ?? '',
           from: request.rangeRaw?.from.toString() ?? '',
           queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
-          refreshInterval: refreshInterval ?? 0,
+          refreshIntervalMs: refreshIntervalMs ?? 0,
         });
       }
 
