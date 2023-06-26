@@ -11,12 +11,7 @@ import (
 	"cuelang.org/go/pkg/strings"
 	"github.com/go-logr/logr"
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana-apiserver/pkg/apis/kinds/install"
 	grafanaapiserveroptions "github.com/grafana/grafana-apiserver/pkg/cmd/server/options"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authentication/authenticator"
 	"k8s.io/apiserver/pkg/authentication/request/headerrequest"
 	"k8s.io/apiserver/pkg/authentication/user"
@@ -94,31 +89,6 @@ func ProvideService(cfg *setting.Cfg, rr routing.RouteRegister) (*service, error
 	})
 
 	return s, nil
-}
-
-var (
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-
-	// if you modify this, make sure you update the crEncoder
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-	}
-)
-
-func init() {
-	install.Install(Scheme)
-
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
-
-	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
 }
 
 func (s *service) GetRestConfig() *rest.Config {
