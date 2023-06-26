@@ -66,7 +66,7 @@ func TestService_AddDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "datasource name is too long, max length is 255")
+		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.AddDataSourceCommand{
 			OrgID: 1,
@@ -74,7 +74,7 @@ func TestService_AddDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.AddDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "datasource url is too long, max length is 255")
+		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
 	})
 }
 
@@ -116,7 +116,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "datasource name is too long, max length is 255")
+		require.EqualError(t, err, "[datasource.nameInvalid] max length is 190")
 
 		cmd = &datasources.UpdateDataSourceCommand{
 			ID:    1,
@@ -125,7 +125,7 @@ func TestService_UpdateDataSource(t *testing.T) {
 		}
 
 		_, err = dsService.UpdateDataSource(context.Background(), cmd)
-		require.EqualError(t, err, "datasource url is too long, max length is 255")
+		require.EqualError(t, err, "[datasource.urlInvalid] max length is 255")
 	})
 
 	t.Run("should return no error if updated datasource", func(t *testing.T) {

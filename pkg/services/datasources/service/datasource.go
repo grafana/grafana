@@ -26,6 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	maxDatasourceNameLen = 190
+	maxDatasourceUrlLen  = 255
+)
+
 type Service struct {
 	SQLStore           Store
 	SecretsStore       kvstore.SecretsKVStore
@@ -172,7 +177,7 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	if err := cmd.Validate(); err != nil {
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
 		return dataSource, err
 	}
 
@@ -236,7 +241,7 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
-	if err := cmd.Validate(); err != nil {
+	if err := validateFields(cmd.Name, cmd.URL); err != nil {
 		return dataSource, err
 	}
 
@@ -650,6 +655,18 @@ func (s *Service) fillWithSecureJSONData(ctx context.Context, cmd *datasources.U
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func validateFields(name, url string) error {
+	if len(name) > maxDatasourceNameLen {
+		return datasources.ErrDataSourceNameInvalid.Errorf("max length is %d", maxDatasourceNameLen)
+	}
+
+	if len(url) > maxDatasourceUrlLen {
+		return datasources.ErrDataSourceURLInvalid.Errorf("max length is %d", maxDatasourceUrlLen)
 	}
 
 	return nil

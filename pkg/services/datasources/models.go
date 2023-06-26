@@ -111,18 +111,6 @@ type AddDataSourceCommand struct {
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 }
 
-func (cmd AddDataSourceCommand) Validate() error {
-	if len(cmd.Name) > 255 {
-		return ValidationError{Reason: "datasource name is too long, max length is 255"}
-	}
-
-	if len(cmd.URL) > 255 {
-		return ValidationError{Reason: "datasource url is too long, max length is 255"}
-	}
-
-	return nil
-}
-
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
 	Name            string            `json:"name" binding:"Required"`
@@ -145,18 +133,6 @@ type UpdateDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-}
-
-func (cmd UpdateDataSourceCommand) Validate() error {
-	if len(cmd.Name) > 255 {
-		return ValidationError{Reason: "datasource name is too long, max length is 255"}
-	}
-
-	if len(cmd.URL) > 255 {
-		return ValidationError{Reason: "datasource url is too long, max length is 255"}
-	}
-
-	return nil
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

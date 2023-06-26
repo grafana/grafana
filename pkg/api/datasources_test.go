@@ -278,7 +278,7 @@ func TestUpdateDataSourceByID_DataSourceNameExists(t *testing.T) {
 
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 
-	assert.Equal(t, 409, sc.resp.Code)
+	require.Equal(t, http.StatusConflict, sc.resp.Code)
 }
 
 func TestAPI_datasources_AccessControl(t *testing.T) {
