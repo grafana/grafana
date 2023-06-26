@@ -905,7 +905,9 @@ URL to redirect the user to after they sign out. To support [OpenID Connect RP-I
 
 Eg. signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 
-> **Note**: `post_logout_redirect_uri` parameter needs to be given after the openid-connect logout url.
+{{% admonition type="note" %}}
+The `post_logout_redirect_uri` parameter must be given after the openid-connect logout url.
+{{% /admonition %}}
 
 ### oauth_auto_login
 
