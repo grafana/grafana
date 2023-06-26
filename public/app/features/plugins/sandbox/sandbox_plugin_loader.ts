@@ -54,7 +54,7 @@ async function doImportPluginModuleInSandbox(meta: PluginMeta): Promise<unknown>
     }
     const distortion = generalDistortionMap.get(originalValue);
     if (distortion) {
-      return distortion(originalValue) as ProxyTarget;
+      return distortion(originalValue, meta.id) as ProxyTarget;
     }
     return originalValue;
   }

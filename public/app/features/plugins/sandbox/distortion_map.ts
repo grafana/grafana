@@ -1,5 +1,7 @@
 import { cloneDeep, isFunction } from 'lodash';
 
+import { config, logWarning } from '@grafana/runtime';
+
 import { forbiddenElements } from './constants';
 
 /**
@@ -53,8 +55,10 @@ import { forbiddenElements } from './constants';
  * The code in this file defines that generalDistortionMap.
  */
 
-type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown) => unknown>;
+type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown, pluginId: string) => unknown>;
 const generalDistortionMap: DistortionMap = new Map();
+
+const monitorOnly = config.frontendSandboxMonitorOnly || false;
 
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {
@@ -72,7 +76,16 @@ export function getGeneralSandboxDistortionMap() {
   return generalDistortionMap;
 }
 
-function failToSet() {
+function failToSet(originalAttrOrMethod: unknown, pluginId: string) {
+  logWarning(`Plugin ${pluginId} tried to set a sandboxed property`, {
+    pluginId,
+    attrOrMethod: String(originalAttrOrMethod),
+    entity: 'window',
+    monitorOnly: String(monitorOnly),
+  });
+  if (monitorOnly) {
+    return originalAttrOrMethod;
+  }
   return () => {
     throw new Error('Plugins are not allowed to set sandboxed properties');
   };
@@ -85,11 +98,23 @@ function distortIframeAttributes(distortions: DistortionMap) {
   for (const property of iframeHtmlForbiddenProperties) {
     const descriptor = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, property);
     if (descriptor) {
-      function fail() {
+      function fail(originalAttrOrMethod: unknown, pluginId: string) {
+        logWarning(`Plugin ${pluginId} tried to access iframe.${property}`, {
+          pluginId,
+          attrOrMethod: property,
+          entity: 'iframe',
+          monitorOnly: String(monitorOnly),
+        });
+
+        if (monitorOnly) {
+          return originalAttrOrMethod;
+        }
+
         return () => {
           throw new Error('iframe.' + property + ' is not allowed in sandboxed plugins');
         };
       }
+
       if (descriptor.value) {
         distortions.set(descriptor.value, fail);
       }
@@ -107,20 +132,23 @@ function distortIframeAttributes(distortions: DistortionMap) {
 function distortConsole(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(window, 'console');
   if (descriptor?.value) {
-    function sandboxLog(...args: unknown[]) {
-      console.log(`[plugin]`, ...args);
-    }
-    const sandboxConsole = {
-      log: sandboxLog,
-      warn: sandboxLog,
-      error: sandboxLog,
-      info: sandboxLog,
-      debug: sandboxLog,
-      table: sandboxLog,
-    };
+    function getSandboxConsole(originalAttrOrMethod: unknown, pluginId: string) {
+      // we don't monitor the console because we expect a high volume of calls
+      if (monitorOnly) {
+        return originalAttrOrMethod;
+      }
 
-    function getSandboxConsole() {
-      return sandboxConsole;
+      function sandboxLog(...args: unknown[]) {
+        console.log(`[plugin ${pluginId}]`, ...args);
+      }
+      return {
+        log: sandboxLog,
+        warn: sandboxLog,
+        error: sandboxLog,
+        info: sandboxLog,
+        debug: sandboxLog,
+        table: sandboxLog,
+      };
     }
 
     distortions.set(descriptor.value, getSandboxConsole);
@@ -132,9 +160,20 @@ function distortConsole(distortions: DistortionMap) {
 
 // set distortions to alert to always output to the console
 function distortAlert(distortions: DistortionMap) {
-  function getAlertDistortion() {
+  function getAlertDistortion(originalAttrOrMethod: unknown, pluginId: string) {
+    logWarning(`Plugin ${pluginId} accessed window.alert`, {
+      pluginId,
+      attrOrMethod: 'alert',
+      entity: 'window',
+      monitorOnly: String(monitorOnly),
+    });
+
+    if (monitorOnly) {
+      return originalAttrOrMethod;
+    }
+
     return function (...args: unknown[]) {
-      console.log(`[plugin]`, ...args);
+      console.log(`[plugin ${pluginId}]`, ...args);
     };
   }
   const descriptor = Object.getOwnPropertyDescriptor(window, 'alert');
@@ -147,12 +186,23 @@ function distortAlert(distortions: DistortionMap) {
 }
 
 function distortInnerHTML(distortions: DistortionMap) {
-  function getInnerHTMLDistortion(originalMethod: unknown) {
+  function getInnerHTMLDistortion(originalMethod: unknown, pluginId: string) {
     return function innerHTMLDistortion(this: HTMLElement, ...args: string[]) {
       for (const arg of args) {
         const lowerCase = arg?.toLowerCase() || '';
         for (const forbiddenElement of forbiddenElements) {
           if (lowerCase.includes('<' + forbiddenElement)) {
+            logWarning(`Plugin ${pluginId} tried to set ${forbiddenElement} in innerHTML`, {
+              pluginId,
+              attrOrMethod: 'innerHTML',
+              param: forbiddenElement,
+              entity: 'HTMLElement',
+              monitorOnly: String(monitorOnly),
+            });
+
+            if (monitorOnly) {
+              continue;
+            }
             throw new Error('<' + forbiddenElement + '> is not allowed in sandboxed plugins');
           }
         }
@@ -181,10 +231,19 @@ function distortInnerHTML(distortions: DistortionMap) {
 }
 
 function distortCreateElement(distortions: DistortionMap) {
-  function getCreateElementDistortion(originalMethod: unknown) {
+  function getCreateElementDistortion(originalMethod: unknown, pluginId: string) {
     return function createElementDistortion(this: HTMLElement, arg?: string, options?: unknown) {
       if (arg && forbiddenElements.includes(arg)) {
-        return document.createDocumentFragment();
+        if (!monitorOnly) {
+          return document.createDocumentFragment();
+        }
+        logWarning(`Plugin ${pluginId} tried to create ${arg}`, {
+          pluginId,
+          attrOrMethod: 'createElement',
+          param: arg,
+          entity: 'document',
+          monitorOnly: String(monitorOnly),
+        });
       }
       if (isFunction(originalMethod)) {
         return originalMethod.apply(this, [arg, options]);
@@ -198,10 +257,21 @@ function distortCreateElement(distortions: DistortionMap) {
 }
 
 function distortInsert(distortions: DistortionMap) {
-  function getInsertDistortion(originalMethod: unknown) {
+  function getInsertDistortion(originalMethod: unknown, pluginId: string) {
     return function insertChildDistortion(this: HTMLElement, node?: Node, ref?: Node) {
-      if (node && forbiddenElements.includes(node.nodeName.toLowerCase())) {
-        return document.createDocumentFragment();
+      const nodeType = node?.nodeName?.toLowerCase() || '';
+
+      if (node && forbiddenElements.includes(nodeType)) {
+        logWarning(`Plugin ${pluginId} tried to insert ${nodeType}`, {
+          pluginId,
+          attrOrMethod: 'insertChild',
+          param: nodeType,
+          entity: 'HTMLElement',
+          monitorOnly: String(monitorOnly),
+        });
+        if (!monitorOnly) {
+          return document.createDocumentFragment();
+        }
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, node, ref);
@@ -209,10 +279,21 @@ function distortInsert(distortions: DistortionMap) {
     };
   }
 
-  function getinsertAdjacentElementDistortion(originalMethod: unknown) {
+  function getinsertAdjacentElementDistortion(originalMethod: unknown, pluginId: string) {
     return function insertAdjacentElementDistortion(this: HTMLElement, position?: string, node?: Node) {
-      if (node && forbiddenElements.includes(node.nodeName.toLowerCase())) {
-        return document.createDocumentFragment();
+      const nodeType = node?.nodeName?.toLowerCase() || '';
+      if (node && forbiddenElements.includes(nodeType)) {
+        logWarning(`Plugin ${pluginId} tried to insert ${nodeType}`, {
+          pluginId,
+          attrOrMethod: 'insertAdjacentElement',
+          param: nodeType,
+          entity: 'HTMLElement',
+          monitorOnly: String(monitorOnly),
+        });
+
+        if (!monitorOnly) {
+          return document.createDocumentFragment();
+        }
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, position, node);
@@ -240,9 +321,24 @@ function distortInsert(distortions: DistortionMap) {
 // set distortions to append elements to the document
 function distortAppend(distortions: DistortionMap) {
   // append accepts an array of nodes to append https://developer.mozilla.org/en-US/docs/Web/API/Node/append
-  function getAppendDistortion(originalMethod: unknown) {
+  function getAppendDistortion(originalMethod: unknown, pluginId: string) {
     return function appendDistortion(this: HTMLElement, ...args: Node[]) {
-      const acceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
+      let acceptedNodes = args;
+      const filteredAcceptedNodes = args?.filter((node) => !forbiddenElements.includes(node.nodeName.toLowerCase()));
+      if (!monitorOnly) {
+        acceptedNodes = filteredAcceptedNodes;
+      }
+
+      if (acceptedNodes.length !== filteredAcceptedNodes.length) {
+        logWarning(`Plugin ${pluginId} tried to append fobiddenElements`, {
+          pluginId,
+          attrOrMethod: 'append',
+          param: args?.filter((node) => forbiddenElements.includes(node.nodeName.toLowerCase()))?.join(',') || '',
+          entity: 'HTMLElement',
+          monitorOnly: String(monitorOnly),
+        });
+      }
+
       if (isFunction(originalMethod)) {
         originalMethod.apply(this, acceptedNodes);
       }
@@ -252,10 +348,21 @@ function distortAppend(distortions: DistortionMap) {
   }
 
   // appendChild accepts a single node to add https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
-  function getAppendChildDistortion(originalMethod: unknown) {
+  function getAppendChildDistortion(originalMethod: unknown, pluginId: string) {
     return function appendChildDistortion(this: HTMLElement, arg?: Node) {
-      if (arg && forbiddenElements.includes(arg.nodeName.toLowerCase())) {
-        return document.createDocumentFragment();
+      const nodeType = arg?.nodeName?.toLowerCase() || '';
+      if (arg && forbiddenElements.includes(nodeType)) {
+        logWarning(`Plugin ${pluginId} tried to append ${nodeType}`, {
+          pluginId,
+          attrOrMethod: 'appendChild',
+          param: nodeType,
+          entity: 'HTMLElement',
+          monitorOnly: String(monitorOnly),
+        });
+
+        if (!monitorOnly) {
+          return document.createDocumentFragment();
+        }
       }
       if (isFunction(originalMethod)) {
         return originalMethod.call(this, arg);
@@ -284,6 +391,7 @@ function distortAppend(distortions: DistortionMap) {
   }
 }
 
+// this is not a distortion for security reasons but to make plugins using web workers work correctly.
 function distortWorkers(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(Worker.prototype, 'postMessage');
   function getPostMessageDistortion(originalMethod: unknown) {
@@ -306,6 +414,7 @@ function distortWorkers(distortions: DistortionMap) {
   }
 }
 
+// this is not a distortion for security reasons but to make plugins using document.defaultView work correctly.
 function distortDocument(distortions: DistortionMap) {
   const descriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'defaultView');
   if (descriptor?.get) {
