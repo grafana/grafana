@@ -404,6 +404,10 @@
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
       "duration-selected": "以当前所选间隔 {{durationAriaLabel}} 选择刷新时间间隔"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "开启直播流",
       "label": "直播"
