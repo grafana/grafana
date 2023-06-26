@@ -10,18 +10,34 @@ export function getAllPanelPluginMeta(): PanelPluginMeta[] {
     .sort((a: PanelPluginMeta, b: PanelPluginMeta) => a.sort - b.sort);
 }
 
+export function getWidgetPluginMeta(): PanelPluginMeta[] {
+  return getAllPanelPluginMeta().filter((panel) => !!panel.skipDataQuery);
+}
+
+export function filterWidgetList(widgetsList: PanelPluginMeta[], searchQuery: string, current?: PanelPluginMeta) {
+  if (!searchQuery.length) {
+    return getNotDeprecatedPluginList(widgetsList, current);
+  }
+
+  return widgetsList.filter((plugin) => plugin.name.toLowerCase().includes(searchQuery.toLowerCase()));
+}
+
+function getNotDeprecatedPluginList(pluginsList: PanelPluginMeta[], current?: PanelPluginMeta): PanelPluginMeta[] {
+  return pluginsList.filter((p) => {
+    if (p.state === PluginState.deprecated) {
+      return current?.id === p.id;
+    }
+    return true;
+  });
+}
+
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],
   searchQuery: string, // Note: this will be an escaped regex string as it comes from `FilterInput`
   current: PanelPluginMeta
 ): PanelPluginMeta[] {
   if (!searchQuery.length) {
-    return pluginsList.filter((p) => {
-      if (p.state === PluginState.deprecated) {
-        return current.id === p.id;
-      }
-      return true;
-    });
+    return getNotDeprecatedPluginList(pluginsList, current);
   }
 
   const query = unEscapeStringFromRegex(searchQuery).toLowerCase();
