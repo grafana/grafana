@@ -1198,7 +1198,19 @@ describe('modifyQuery', () => {
       );
     });
 
+    it('should toggle the filter', () => {
+      query.query = 'foo:"bar"';
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe('');
+    });
+
     it('should add the negative filter', () => {
+      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+        '-foo:"bar"'
+      );
+    });
+
+    it('should remove a positive filter to add a negative filter', () => {
+      query.query = 'foo:"bar"';
       expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
         '-foo:"bar"'
       );

@@ -52,6 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
+import { addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -898,17 +899,22 @@ export class ElasticDatasource
     let expression = query.query ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        if (expression.length > 0) {
-          expression += ' AND ';
-        }
-        expression += `${action.options.key}:"${action.options.value}"`;
+        // This gives the user the ability to toggle a filter on and off.
+        expression = queryHasFilter(expression, action.options.key, action.options.value)
+          ? removeFilterFromQuery(expression, action.options.key, action.options.value)
+          : addFilterToQuery(expression, action.options.key, action.options.value);
         break;
       }
       case 'ADD_FILTER_OUT': {
-        if (expression.length > 0) {
-          expression += ' AND ';
+        /**
+         * If there is a filter with the same key and value, remove it.
+         * This prevents the user from seeing no changes in the query when they apply
+         * this filter.
+         */
+        if (queryHasFilter(expression, action.options.key, action.options.value)) {
+          expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
         }
-        expression += `-${action.options.key}:"${action.options.value}"`;
+        expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
         break;
       }
     }
