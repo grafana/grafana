@@ -46,7 +46,7 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     await userEvent.hover(screen.getByText('On the page'));
-    expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+    expect(await screen.findByText('Tooltip content')).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
   });
