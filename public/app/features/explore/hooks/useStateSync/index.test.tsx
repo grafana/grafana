@@ -6,8 +6,8 @@ import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { UrlQueryMap } from '@grafana/data';
-import { HistoryWrapper, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceApi, UrlQueryMap } from '@grafana/data';
+import { HistoryWrapper, setDataSourceSrv, DataSourceSrv } from '@grafana/runtime';
 import { setLastUsedDatasourceUID } from 'app/core/utils/explore';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { configureStore } from 'app/store/configureStore';
@@ -17,11 +17,33 @@ import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
 
+function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] {
+  return (datasource) => {
+    let ds;
+    if (!datasource) {
+      ds = datasources[0]?.api;
+    } else {
+      ds = datasources.find((ds) =>
+        typeof datasource === 'string'
+          ? ds.api.name === datasource || ds.api.uid === datasource
+          : ds.api.uid === datasource?.uid
+      )?.api;
+    }
+
+    if (ds) {
+      return Promise.resolve(ds);
+    }
+
+    return Promise.reject();
+  };
+}
+
 interface SetupParams {
   queryParams?: UrlQueryMap;
   exploreMixedDatasource?: boolean;
+  datasourceGetter?: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>) => DataSourceSrv['get'];
 }
-function setup({ queryParams = {}, exploreMixedDatasource = false }: SetupParams) {
+function setup({ queryParams = {}, exploreMixedDatasource = false, datasourceGetter = defaultDsGetter }: SetupParams) {
   const history = createMemoryHistory({
     initialEntries: [{ pathname: '/explore', search: stringify(queryParams) }],
   });
@@ -38,24 +60,7 @@ function setup({ queryParams = {}, exploreMixedDatasource = false }: SetupParams
   }
 
   setDataSourceSrv({
-    get(datasource) {
-      let ds;
-      if (!datasource) {
-        ds = datasources[0]?.api;
-      } else {
-        ds = datasources.find((ds) =>
-          typeof datasource === 'string'
-            ? ds.api.name === datasource || ds.api.uid === datasource
-            : ds.api.uid === datasource?.uid
-        )?.api;
-      }
-
-      if (ds) {
-        return Promise.resolve(ds);
-      }
-
-      return Promise.reject();
-    },
+    get: datasourceGetter(datasources),
     getInstanceSettings: jest.fn(),
     getList: jest.fn(),
     reload: jest.fn(),
@@ -125,7 +130,7 @@ describe('useStateSync', () => {
     expect(search.panes).toBeDefined();
   });
 
-  it('inits an explore pane for each key in the panes search object', async () => {
+  it('correctly inits an explore pane for each key in the panes search object', async () => {
     const { location, waitForNextUpdate, store } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -133,6 +138,32 @@ describe('useStateSync', () => {
           two: { datasource: 'elastic-uid', queries: [{ datasource: { name: 'elastic', uid: 'elastic-uid' } }] },
         }),
         schemaVersion: 1,
+      },
+      datasourceGetter: (datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DataSourceSrv['get'] => {
+        return (datasource) => {
+          let ds: DataSourceApi | undefined;
+          if (!datasource) {
+            ds = datasources[0]?.api;
+          } else {
+            ds = datasources.find((ds) =>
+              typeof datasource === 'string'
+                ? ds.api.name === datasource || ds.api.uid === datasource
+                : ds.api.uid === datasource?.uid
+            )?.api;
+          }
+
+          return new Promise((resolve, reject) => {
+            if (ds) {
+              if (typeof datasource === 'string' && datasource === 'loki-uid') {
+                setTimeout(() => Promise.resolve(ds));
+              } else {
+                resolve(ds);
+              }
+            }
+
+            reject();
+          });
+        };
       },
     });
 
@@ -142,15 +173,14 @@ describe('useStateSync', () => {
 
     expect(location.getHistory().length).toBe(initialHistoryLength);
 
-    const search = location.getSearchObject();
-    expect(search.panes).toBeDefined();
-    expect(Object.keys(store.getState().explore.panes)).toHaveLength(2);
-
-    // check if the URL is properly encoded when finishing rendering the hook. (this would '1 2' otherwise)
     const panes = location.getSearch().get('panes');
     expect(panes).not.toBeNull();
-    if (panes !== null) {
+    if (panes) {
+      // check if the URL is properly encoded when finishing rendering the hook. (this would be '1 2' otherwise)
       expect(JSON.parse(panes)['one'].queries[0].refId).toBe('1+2');
+
+      // we expect panes in the state to be in the same order as the ones in the URL
+      expect(Object.keys(store.getState().explore.panes)).toStrictEqual(Object.keys(JSON.parse(panes)));
     }
   });
 
