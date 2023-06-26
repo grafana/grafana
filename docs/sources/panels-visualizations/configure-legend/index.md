@@ -31,11 +31,11 @@ When you apply your changes, the visualization changes appear to all users of th
 This topic currently applies to the following visualizations:
 
 - [Bar chart]({{< relref "../visualizations/bar-chart/" >}})
-- [Histogram]({{< relref "../histogram/" >}})
-- [Pie chart]({{< relref "../pie-chart/" >}})
-- [State timeline]({{< relref "../state-timeline/" >}})
-- [Status history]({{< relref "../status-history/" >}})
-- [Time series]({{< relref "../time-series/" >}})
+- [Histogram]({{< relref "../visualizations/histogram/" >}})
+- [Pie chart]({{< relref "../visualizations/pie-chart/" >}})
+- [State timeline]({{< relref "../visualizations/state-timeline/" >}})
+- [Status history]({{< relref "../visualizations/status-history/" >}})
+- [Time series]({{< relref "../visualizations/time-series/" >}})
 
 ## Add values to a legend
 
