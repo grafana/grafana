@@ -56,7 +56,7 @@ interface ProfileData extends DatasourceProfileData {
   dashboardUID: string;
   panelId?: number;
   from: string;
-  duration: number;
+  queryRangeSeconds: number;
   refreshInterval: number;
 }
 
@@ -100,7 +100,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       sent: boolean;
       datasource: string;
       from: string;
-      duration: number;
+      queryRangeSeconds: number;
     }
   >();
 
@@ -179,7 +179,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
                         refreshInterval: currentRequest.refreshInterval ?? 0,
                         sent: false,
                         from: currentRequest.from ?? '',
-                        duration: currentRequest.duration ?? 0,
+                        queryRangeSeconds: currentRequest.queryRangeSeconds ?? 0,
                       });
 
                       // We don't need to save each subsequent request, only the first one
@@ -203,7 +203,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
       setInterval(this.sendPendingTrackingEvents, this.sendEventsInterval);
 
       // Send any pending profile information when the user navigates away
-      window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
+      // window.addEventListener('beforeunload', this.sendPendingTrackingEvents);
     }
   }
 
@@ -223,7 +223,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           expr: value.expr.toString(),
           refreshInterval: value.refreshInterval.toString(),
           from: value.from.toString(),
-          duration: value.duration.toString(),
+          queryRangeSeconds: value.queryRangeSeconds.toString(),
         };
 
         if (config.featureToggles.prometheusIncrementalQueryInstrumentation) {
@@ -276,7 +276,7 @@ export class QueryCache<T extends SupportedQueryTypes> {
           panelId: request.panelId,
           dashboardUID: request.dashboardUID ?? '',
           from: request.rangeRaw?.from.toString() ?? '',
-          duration: request.range.to.diff(request.range.from, 'seconds') ?? '',
+          queryRangeSeconds: request.range.to.diff(request.range.from, 'seconds') ?? '',
           refreshInterval: refreshInterval ?? 0,
         });
       }
