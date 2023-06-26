@@ -9,7 +9,7 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertingFeature } from './features';
 
 const DetailViewV1 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v1'));
-const DetailViewV2 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v2'));
+const DetailViewV2 = SafeDynamicImport(() => import('./components/rule-viewer/v2/RuleViewer.v2'));
 
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;

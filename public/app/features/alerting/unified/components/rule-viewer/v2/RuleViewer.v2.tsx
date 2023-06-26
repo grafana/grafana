@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
-import { Alert, Badge, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { H1, Span } from '@grafana/ui/src/unstable';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
-import { useRuleViewerPageTitle } from '../../hooks/alert-details/useRuleViewerPageTitle';
-import { useCombinedRule } from '../../hooks/useCombinedRule';
-import * as ruleId from '../../utils/rule-id';
-import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
-import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
-import { Spacer } from '../Spacer';
-
-import { History } from './tabs/History';
-import { InstancesList } from './tabs/Instances';
-import { QueryResults } from './tabs/Query';
-import { Routing } from './tabs/Routing';
+import { useRuleViewerPageTitle } from '../../../hooks/alert-details/useRuleViewerPageTitle';
+import { useCombinedRule } from '../../../hooks/useCombinedRule';
+import * as ruleId from '../../../utils/rule-id';
+import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../../utils/rules';
+import { AlertStateDot } from '../../AlertStateDot';
+import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { Spacer } from '../../Spacer';
+import { History } from '../tabs/History';
+import { InstancesList } from '../tabs/Instances';
+import { QueryResults } from '../tabs/Query';
+import { Routing } from '../tabs/Routing';
 
 type RuleViewerProps = GrafanaRouteComponentProps<{
   id: string;
@@ -40,6 +40,9 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
   const [activeTab, setActiveTab] = useState<Tabs>(Tabs.Instances);
 
   const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
+
+  // we're setting the document title ourselves, the pageNav isn't very well suited to dynamic titles
+  // (it does work) but requires a lot of boilerplate code
   useRuleViewerPageTitle(rule);
 
   if (loading) {
@@ -152,9 +155,12 @@ interface TitleProps {
 const Title = ({ name, state }: TitleProps) => (
   <header>
     <Stack alignItems={'center'} gap={1}>
+      <AlertStateDot size="md" state={state} />
       {/* <Button variant="secondary" fill="outline" icon="angle-left" /> */}
-      <H1>{name}</H1>
-      <Badge color="red" text={state} icon="exclamation-circle" />
+      <H1 variant="h2" weight="bold">
+        {name}
+      </H1>
+      {/* <Badge color="red" text={state} icon="exclamation-circle" /> */}
     </Stack>
   </header>
 );
