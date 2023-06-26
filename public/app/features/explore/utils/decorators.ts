@@ -38,7 +38,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const customFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
-    if (frame.meta?.preferredVisualisationPluginId && canFindPanel(frame)) {
+    if (canFindPanel(frame)) {
       customFrames.push(frame);
       continue;
     }

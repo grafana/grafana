@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { get } from 'lodash';
+import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { createRef } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -15,7 +15,6 @@ import {
   EventBus,
   SplitOpenOptions,
   SupplementaryQueryType,
-  DataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
@@ -288,16 +287,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   renderCustom(width: number) {
     const { timeZone, queryResponse, absoluteRange } = this.props;
 
-    const groupedByPlugin = queryResponse?.customFrames.reduce((acc: Record<string, DataFrame[]>, cur) => {
-      // cur.meta?.preferredVisualisationPluginId could be undefined by the API, but it won't be if we
-      // got here as it is checked in decorators.ts
-      if (!acc[`${cur.meta?.preferredVisualisationPluginId}`]) {
-        acc[`${cur.meta?.preferredVisualisationPluginId}`] = [cur];
-      } else {
-        acc[`${cur.meta?.preferredVisualisationPluginId}`].push(cur);
-      }
-      return acc;
-    }, {});
+    const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (

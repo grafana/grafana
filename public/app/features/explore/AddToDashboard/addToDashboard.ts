@@ -81,7 +81,8 @@ function getPanelType(queries: DataQuery[], queryResponse: ExplorePanelData) {
       return 'traces';
     }
     if (queryResponse.customFrames.some(hasQueryRefId)) {
-      return queryResponse.customFrames[0].meta?.preferredVisualisationPluginId ?? 'table';
+      // we will always have a custom frame and meta, it should never default to 'table' (but all paths must return a string)
+      return queryResponse.customFrames.find(hasQueryRefId)?.meta?.preferredVisualisationPluginId ?? 'table';
     }
   }
 

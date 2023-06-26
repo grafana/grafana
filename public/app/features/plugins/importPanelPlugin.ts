@@ -14,7 +14,7 @@ export function importPanelPlugin(id: string): Promise<PanelPlugin> {
     return loaded;
   }
 
-  const meta = config.panels[id] || Object.values(config.panels).find((p) => p.alias === id);
+  const meta = getPanelPluginMeta(id);
 
   if (!meta) {
     throw new Error(`Plugin ${id} not found`);
