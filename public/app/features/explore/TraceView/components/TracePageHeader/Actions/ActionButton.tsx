@@ -10,9 +10,9 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: ActionButton;
       overflow: hidden;
       position: relative;
-      width: 110px;
-      height: 30px;
-      justify-content: center;
+      /* width: 110px; */
+      /* height: 30px; */
+      /* justify-content: center; */
       &:after {
         content: '';
         background: ${theme.colors.primary.main};
@@ -47,6 +47,7 @@ export default function ActionButton(props: ActionButtonProps) {
   return (
     <Button
       className={styles.ActionButton}
+      size="sm"
       variant="secondary"
       fill={'outline'}
       type="button"

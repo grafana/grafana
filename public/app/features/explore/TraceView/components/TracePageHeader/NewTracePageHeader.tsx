@@ -24,7 +24,6 @@ import ExternalLinks from '../common/ExternalLinks';
 import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags } from '../model/trace-viewer';
 import { Trace } from '../types';
-import { formatDuration } from '../utils/date';
 
 import { SpanFilters } from './SpanFilters/SpanFilters';
 import { timestamp, getStyles } from './TracePageHeader';
@@ -95,7 +94,6 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
       </div>
 
       <div className={styles.subtitle}>
-        <small className={styles.duration}>Duration: {formatDuration(trace.duration)}</small>
         <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
         <span className={styles.tagMeta}>
           {method && method.length > 0 && (
@@ -166,10 +164,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     tag: css`
       margin: 0 0.5em 0 0;
-    `,
-    duration: css`
-      color: #aaa;
-      margin: 0 0.75em;
     `,
     timestamp: css`
       vertical-align: middle;
