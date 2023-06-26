@@ -42,7 +42,7 @@ You must use relative references when linking to docs within the Grafana repo. P
 
 #### You are affected if:
 
-You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}).
+You create a new Grafana Cloud stack and intend to use any panel or data source plugins written using the Angular.js JavaScript framework. See the [list of Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins" >}}).
 
 #### Background
 
@@ -56,7 +56,7 @@ Angular is disabled by default for all new Grafana Cloud stacks. Existing stacks
 
 #### How to mitigate
 
-If you're using Angular plugins in Grafana, try an alternative panel or data source that doesn't use Angular. This list of detected [Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins/" >}}) offers alternatives where they exist.
+If you're using Angular plugins in Grafana, try an alternative panel or data source that doesn't use Angular. This list of detected [Angular plugins]({{< relref "../developers/angular_deprecation/angular-plugins" >}}) offers alternatives where they exist.
 
 If you're a developer maintaining a plugin that uses Angular, we recommend you refactor or rewrite its frontend using React.js instead. The team at Grafana is ready to help and provide tools and guidance; you can reach us in [Slack](https://grafana.slack.com/archives/C3HJV5PNE) or on our [Forum](https://community.grafana.com/c/plugin-development/30).
 
