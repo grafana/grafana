@@ -13,7 +13,6 @@ export function registerPluginInCache({ path, version }: CacheablePlugin): void 
   if (key && !cache[key]) {
     cache[key] = encodeURI(version);
   }
-  console.log(cache);
 }
 
 export function invalidatePluginInCache(pluginId: string): void {
