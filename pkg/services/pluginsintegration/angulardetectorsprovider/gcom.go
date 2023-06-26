@@ -29,9 +29,9 @@ type GCOMPattern struct {
 // errUnknownPatternType is returned when a pattern type is not known.
 var errUnknownPatternType = errors.New("unknown pattern type")
 
-// Detector converts a gcomPattern into a Detector, based on its Type.
+// angularDetector converts a gcomPattern into a Detector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
-func (p *GCOMPattern) detector() (angulardetector.AngularDetector, error) {
+func (p *GCOMPattern) angularDetector() (angulardetector.AngularDetector, error) {
 	switch p.Type {
 	case GCOMPatternTypeContains:
 		return &angulardetector.ContainsBytesDetector{Pattern: []byte(p.Pattern)}, nil
@@ -47,26 +47,3 @@ func (p *GCOMPattern) detector() (angulardetector.AngularDetector, error) {
 
 // GCOMPatterns is a slice of GCOMPattern
 type GCOMPatterns []GCOMPattern
-
-// Detectors converts the slice of GCOMPattern into a slice of angulardetector.AngularDetector, by calling Detector() on each GCOMPattern.
-func (p GCOMPatterns) Detectors() ([]angulardetector.AngularDetector, error) {
-	var finalErr error
-	detectors := make([]angulardetector.AngularDetector, 0, len(p))
-	for _, pattern := range p {
-		d, err := pattern.detector()
-		if err != nil {
-			// Fail silently in case of an errUnknownPatternType.
-			// This allows us to introduce new pattern types without breaking old Grafana versions
-			if !errors.Is(err, errUnknownPatternType) {
-				// Other error, do not ignore it
-				finalErr = errors.Join(finalErr, err)
-			}
-			continue
-		}
-		detectors = append(detectors, d)
-	}
-	if finalErr != nil {
-		return nil, finalErr
-	}
-	return detectors, nil
-}

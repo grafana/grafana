@@ -51,6 +51,31 @@ func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dyna
 	}, nil
 }
 
+// patternsToDetectors converts a slice of gcomPattern into a slice of angulardetector.AngularDetector, by calling
+// angularDetector() on each gcomPattern.
+func (d *Dynamic) patternsToDetectors(patterns GCOMPatterns) ([]angulardetector.AngularDetector, error) {
+	var finalErr error
+	detectors := make([]angulardetector.AngularDetector, 0, len(patterns))
+	for _, pattern := range patterns {
+		ad, err := pattern.angularDetector()
+		if err != nil {
+			// Fail silently in case of an errUnknownPatternType.
+			// This allows us to introduce new pattern types without breaking old Grafana versions
+			if errors.Is(err, errUnknownPatternType) {
+				d.log.Debug("Unknown angular pattern", "name", pattern.Name, "type", pattern.Type, "error", err)
+				continue
+			}
+			// Other error, do not ignore it
+			finalErr = errors.Join(finalErr, err)
+		}
+		detectors = append(detectors, ad)
+	}
+	if finalErr != nil {
+		return nil, finalErr
+	}
+	return detectors, nil
+}
+
 // fetch fetches the angular patterns from GCOM and returns them as GCOMPatterns.
 // Call detectors() on the returned value to get the corresponding detectors.
 func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
@@ -94,7 +119,7 @@ func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector
 	}
 
 	// Convert the patterns to detectors
-	newDetectors, err := patterns.Detectors()
+	newDetectors, err := d.patternsToDetectors(patterns)
 	if err != nil {
 		return nil, fmt.Errorf("patterns convert to detectors: %w", err)
 	}
@@ -145,11 +170,11 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 		// Swallow ErrNoCachedValue without changing cache
 		return nil
 	case err == nil:
-		// Try to unmarshal, convert to detectors and set local cachje
+		// Try to unmarshal, convert to detectors and set local cache
 		if err := json.Unmarshal([]byte(rawCached), &cachedPatterns); err != nil {
 			return fmt.Errorf("json unmarshal: %w", err)
 		}
-		cachedDetectors, err := cachedPatterns.Detectors()
+		cachedDetectors, err := d.patternsToDetectors(cachedPatterns)
 		if err != nil {
 			return fmt.Errorf("convert to detectors: %w", err)
 		}
