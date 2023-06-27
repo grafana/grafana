@@ -53,7 +53,7 @@ try {
 }
 ```
 
-> **Note:** Grafana displays the exception message in the UI as written, so use grammatically correct sentences. For more information, refer to the [Documentation style guide](https://github.com/grafana/grafana/blob/main/contribute/style-guides/documentation-style-guide.md).
+> **Note:** Grafana displays the exception message in the UI as written, so use grammatically correct sentences. For more information, refer to the [Documentation style guide](https://grafana.com/docs/writers-toolkit/).
 
 ## Common error scenarios
 

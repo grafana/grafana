@@ -41,7 +41,7 @@ In this tutorial, you'll:
 
 ## Create a new plugin
 
-To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
+To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](../../../introduction-to-plugin-development/backend/grafana-plugin-sdk-for-go/).
 
 The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
 
@@ -62,7 +62,7 @@ yarn install
 yarn build
 ```
 
-Run the following to update [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
+Run the following to update [Grafana plugin SDK for Go](../../../introduction-to-plugin-development/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
 
 ```bash
 go get -u github.com/grafana/grafana-plugin-sdk-go
@@ -147,7 +147,7 @@ Open `/pkg/plugin/plugin.go`. In this file you'll see that the `SampleDatasource
 
 ## Add authentication
 
-Implementing authentication allows your plugin to access protected resources like databases or APIs. You can read more about how to [authenticate using a backend plugin in our docs](/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/#authenticate-using-a-backend-plugin).
+Implementing authentication allows your plugin to access protected resources like databases or APIs. To learn more about how to authenticate using a backend plugin, refer to [our documentation](../../extend-a-plugin/add-authentication-for-data-source-plugins/#authenticate-using-a-backend-plugin).
 
 ## Enable Grafana Alerting
 

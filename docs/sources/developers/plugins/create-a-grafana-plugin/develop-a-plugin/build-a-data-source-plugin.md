@@ -38,7 +38,7 @@ In this tutorial, you'll:
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="latest" >}}
 
-To learn how to create a backend data source plugin, see [Build a data source backend plugin](/docs/grafana/latest/tutorials/build-a-data-source-backend-plugin).
+To learn how to create a backend data source plugin, see [Build a data source backend plugin](./build-a-data-source-backend-plugin.md).
 
 ## Anatomy of a plugin
 
@@ -311,9 +311,9 @@ Just like query editor, the form field in the config editor calls the registered
 
 So far, you've generated the data returned by the data source. A more realistic use case would be to fetch data from an external API.
 
-While you can use something like [axios](https://github.com/axios/axios) or the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make requests, we recommend using the [`getBackendSrv`](/docs/grafana/latest/packages_api/runtime/getbackendsrv/) function from the [grafana/runtime](/docs/grafana/latest/packages_api/runtime/) package.
+While you can use something like [axios](https://github.com/axios/axios) or the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make requests, we recommend using the [`getBackendSrv` function](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts) from the [`grafana-runtime` package](https://github.com/grafana/grafana/tree/main/packages/grafana-runtime).
 
-The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins](/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/).
+The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins](../../extend-a-plugin/add-authentication-for-data-source-plugins.md).
 
 1. Import `getBackendSrv`.
 

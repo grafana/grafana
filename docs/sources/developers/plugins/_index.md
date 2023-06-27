@@ -11,7 +11,7 @@ weight: 200
 
 You can extend Grafana's built-in capabilities with plugins. Plugins enable Grafana to accomplish specialized tasks, custom-tailored to your requirements. By making a plugin for your organization, you can connect Grafana to other data sources, ticketing tools, and CI/CD tooling.
 
-You can create plugins for private use or contribute them to the open source community by publishing to the [Grafana plugin catalog](/grafana/plugins). This catalog has hundreds of other community and commercial plugins.
+You can create plugins for private use or contribute them to the open source community by publishing to the [Grafana plugin catalog](https://grafana.com/grafana/plugins/). This catalog has hundreds of other community and commercial plugins.
 
 If you are a Grafana plugin developer or want to become one, this plugin developer's guide contains the tutorials and reference materials to help you get started.
 
