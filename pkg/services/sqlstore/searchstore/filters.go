@@ -111,10 +111,6 @@ type TagsFilter struct {
 	Tags []string
 }
 
-func (f TagsFilter) GroupBy() (string, []interface{}) {
-	return `dashboard.id HAVING COUNT(dashboard.id) >= ?`, []interface{}{len(f.Tags)}
-}
-
 func (f TagsFilter) Where() (string, []interface{}) {
 	params := make([]interface{}, len(f.Tags))
 	for i, tag := range f.Tags {
