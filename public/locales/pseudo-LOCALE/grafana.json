@@ -9,6 +9,9 @@
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş"
     },
+    "folder-actions-button": {
+      "folder-actions": "Főľđęř äčŧįőŉş"
+    },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
@@ -566,6 +569,16 @@
       "default-label": "Đęƒäūľŧ"
     },
     "title": "Přęƒęřęŉčęş"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş"
+    },
+    "nav-models": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "manage-folder-subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
+    }
   },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",
