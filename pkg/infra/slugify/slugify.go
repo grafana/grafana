@@ -118,6 +118,10 @@ func getDefaultOmitments() map[rune]struct{} {
 		'\n':   {},
 		'\r':   {},
 		'\x00': {},
+		'?':    {},
+		'.':    {},
+		'(':    {},
+		')':    {},
 	}
 }
 
