@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 )
 
@@ -19,10 +21,10 @@ func ProvideService(os oauthserver.OAuth2Server) *Service {
 }
 
 // RegisterExternalService is a simplified wrapper around SaveExternalService for the plugin use case.
-func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *oauth.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+func (s *Service) RegisterExternalService(ctx context.Context, svcName string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
 	impersonation := oauthserver.ImpersonationCfg{}
 	if svc.Impersonation != nil {
-		impersonation.Permissions = svc.Impersonation.Permissions
+		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
 		if svc.Impersonation.Enabled != nil {
 			impersonation.Enabled = *svc.Impersonation.Enabled
 		} else {
@@ -37,7 +39,7 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 
 	self := oauthserver.SelfCfg{}
 	if svc.Self != nil {
-		self.Permissions = svc.Self.Permissions
+		self.Permissions = toAccessControlPermissions(svc.Self.Permissions)
 		if svc.Self.Enabled != nil {
 			self.Enabled = *svc.Self.Enabled
 		} else {
@@ -59,4 +61,19 @@ func (s *Service) RegisterExternalService(ctx context.Context, svcName string, s
 		ClientSecret: extSvc.Secret,
 		PrivateKey:   extSvc.KeyResult.PrivatePem,
 	}, nil
+}
+
+func toAccessControlPermissions(ps []plugindef.Permission) []accesscontrol.Permission {
+	res := make([]accesscontrol.Permission, 0, len(ps))
+	for _, p := range ps {
+		scope := ""
+		if p.Scope != nil {
+			scope = *p.Scope
+		}
+		res = append(res, accesscontrol.Permission{
+			Action: p.Action,
+			Scope:  scope,
+		})
+	}
+	return res
 }
