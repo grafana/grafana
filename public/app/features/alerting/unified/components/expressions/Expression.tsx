@@ -60,9 +60,10 @@ export const Expression: FC<ExpressionProps> = ({
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
+  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
-  const showSummary = isAlertCondition && hasResults;
+  //const showSummary = isAlertCondition && hasResults;
 
   const groupedByState = {
     [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) >= 1),
@@ -127,19 +128,23 @@ export const Expression: FC<ExpressionProps> = ({
           <div className={styles.expression.description}>{selectedExpressionDescription}</div>
           {renderExpressionType(query)}
         </div>
-        {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
+        {hasResults && (
+          <>
+            <ExpressionResult series={series} isAlertCondition={isAlertCondition} />
 
-        {showSummary && (
-          <div className={styles.footer}>
-            <Stack direction="row" alignItems="center">
-              <Spacer />
+            <div className={styles.footer}>
+              <Stack direction="row" alignItems="center">
+                <Spacer />
 
-              <PreviewSummary
-                firing={groupedByState[PromAlertingRuleState.Firing].length}
-                normal={groupedByState[PromAlertingRuleState.Inactive].length}
-              />
-            </Stack>
-          </div>
+                <PreviewSummary
+                  isCondition={Boolean(isAlertCondition)}
+                  firing={groupedByState[PromAlertingRuleState.Firing].length}
+                  normal={groupedByState[PromAlertingRuleState.Inactive].length}
+                  seriesCount={seriesCount}
+                />
+              </Stack>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -213,9 +218,17 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
   );
 };
 
-export const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
+export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: boolean; seriesCount: number }> = ({
+  firing,
+  normal,
+  isCondition,
+  seriesCount,
+}) => {
   const { mutedText } = useStyles2(getStyles);
-  return <span className={mutedText}>{`${firing} firing, ${normal} normal`}</span>;
+  if (isCondition) {
+    return <span className={mutedText}>{`${seriesCount} series: ${firing} firing, ${normal} normal`}</span>;
+  }
+  return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
 interface HeaderProps {
