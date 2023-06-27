@@ -14,7 +14,7 @@ import { useCleanup } from '../../../core/hooks/useCleanup';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
@@ -61,8 +61,7 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-
-  const { selectedAlertmanager } = useSelectedAlertmanager({ withPermissions: 'notification' });
+  const { selectedAlertmanager } = useSelectedAlertmanager();
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -331,12 +330,10 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   };
 }
 
-function NotificationPoliciesPage() {
-  return (
-    <AlertingPageWrapper pageId="am-routes" includeAlertmanagerSelector>
-      <AmRoutes />
-    </AlertingPageWrapper>
-  );
-}
+const NotificationPoliciesPage = () => (
+  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
+    <AmRoutes />
+  </AlertmanagerPageWrapper>
+);
 
 export default withErrorBoundary(NotificationPoliciesPage, { style: 'page' });

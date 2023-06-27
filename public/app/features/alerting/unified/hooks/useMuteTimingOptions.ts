@@ -10,7 +10,7 @@ import { initialAsyncRequestState } from '../utils/redux';
 import { useUnifiedAlertingSelector } from './useUnifiedAlertingSelector';
 
 export function useMuteTimingOptions(): Array<SelectableValue<string>> {
-  const { selectedAlertmanager } = useSelectedAlertmanager({ withPermissions: 'notification' });
+  const { selectedAlertmanager } = useSelectedAlertmanager();
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
   return useMemo(() => {

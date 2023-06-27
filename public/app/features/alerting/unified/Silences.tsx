@@ -6,7 +6,7 @@ import { Silence } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { featureDiscoveryApi } from './api/featureDiscoveryApi';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
@@ -18,7 +18,7 @@ import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences = () => {
-  const [alertManagerSourceName] = useAlertManagerSourceName({ withPermissions: 'instance' });
+  const [alertManagerSourceName] = useAlertManagerSourceName();
 
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
@@ -112,9 +112,9 @@ function SilencesPage() {
   const pageNav = useSilenceNavData();
 
   return (
-    <AlertingPageWrapper pageId="silences" pageNav={pageNav} includeAlertmanagerSelector>
+    <AlertmanagerPageWrapper pageId="silences" pageNav={pageNav} accessType="instance">
       <Silences />
-    </AlertingPageWrapper>
+    </AlertmanagerPageWrapper>
   );
 }
 

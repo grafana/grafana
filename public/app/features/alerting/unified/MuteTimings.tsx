@@ -6,7 +6,7 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { useSelectedAlertmanager } from './state/AlertmanagerContext';
@@ -16,7 +16,7 @@ import { initialAsyncRequestState } from './utils/redux';
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
-  const { selectedAlertmanager } = useSelectedAlertmanager({ withPermissions: 'notification' });
+  const { selectedAlertmanager } = useSelectedAlertmanager();
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 
@@ -89,12 +89,10 @@ const MuteTimings = () => {
   );
 };
 
-const MuteTimingsPage = () => {
-  return (
-    <AlertingPageWrapper pageId="am-routes" includeAlertmanagerSelector>
-      <MuteTimings />
-    </AlertingPageWrapper>
-  );
-};
+const MuteTimingsPage = () => (
+  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
+    <MuteTimings />
+  </AlertmanagerPageWrapper>
+);
 
 export default MuteTimingsPage;

@@ -11,23 +11,19 @@ import { SelectedAlertmanagerProvider, useSelectedAlertmanager } from '../state/
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
 
-interface Props {
-  pageId: string;
-  isLoading?: boolean;
-  pageNav?: NavModelItem;
-  includeAlertmanagerSelector?: boolean;
-}
-
 const SHOW_TOGGLES_KEY_COMBO = 'ctrl+1';
 const combokeys = new Mousetrap(document.body);
 
-export const AlertingPageWrapper = ({
-  children,
-  pageId,
-  pageNav,
-  isLoading,
-  includeAlertmanagerSelector = false,
-}: React.PropsWithChildren<Props>) => {
+/**
+ * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
+ */
+interface AlertingPageWrapperProps extends PropsWithChildren {
+  pageId: string;
+  isLoading?: boolean;
+  pageNav?: NavModelItem;
+  actions?: React.ReactNode;
+}
+export const AlertingPageWrapper = ({ children, pageId, pageNav, actions, isLoading }: AlertingPageWrapperProps) => {
   const [showFeatureToggle, setShowFeatureToggles] = useState(false);
 
   useEffect(() => {
@@ -42,18 +38,34 @@ export const AlertingPageWrapper = ({
 
   return (
     <Features features={FEATURES}>
-      <SelectedAlertmanagerProvider>
-        <Page pageNav={pageNav} navId={pageId} actions={includeAlertmanagerSelector ? <AlertManagerPicker /> : null}>
-          <Page.Contents isLoading={isLoading}>
-            <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
-          </Page.Contents>
-        </Page>
-      </SelectedAlertmanagerProvider>
+      <Page pageNav={pageNav} navId={pageId} actions={actions}>
+        <Page.Contents isLoading={isLoading}>{children}</Page.Contents>
+      </Page>
       {showFeatureToggle ? <ToggleFeatures defaultOpen={true} /> : null}
     </Features>
   );
 };
 
+/**
+ * This wrapper is for pages that use the Alertmanager API
+ */
+interface AlertmanagerPageWrapperProps extends AlertingPageWrapperProps {
+  accessType: 'instance' | 'notification';
+}
+export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: AlertmanagerPageWrapperProps) => {
+  return (
+    <SelectedAlertmanagerProvider accessType={accessType}>
+      <AlertingPageWrapper {...props} actions={<AlertManagerPicker />}>
+        <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
+      </AlertingPageWrapper>
+    </SelectedAlertmanagerProvider>
+  );
+};
+
+/**
+ * This component will render an error message if the user doesn't have sufficient permissions or if the requested
+ * alertmanager doesn't exist
+ */
 const AlertManagerPagePermissionsCheck = ({ children }: PropsWithChildren) => {
   const { availableAlertManagers, selectedAlertmanager } = useSelectedAlertmanager();
 

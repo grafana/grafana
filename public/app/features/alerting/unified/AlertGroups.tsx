@@ -9,7 +9,7 @@ import { useDispatch } from 'app/types';
 import { AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from './api/alertmanagerApi';
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
@@ -25,7 +25,7 @@ import { initialAsyncRequestState } from './utils/redux';
 const AlertGroups = () => {
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
 
-  const [alertManagerSourceName] = useAlertManagerSourceName({ withPermissions: 'instance' });
+  const [alertManagerSourceName] = useAlertManagerSourceName();
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);
@@ -95,9 +95,9 @@ const AlertGroups = () => {
 };
 
 const AlertGroupsPage = () => (
-  <AlertingPageWrapper pageId="groups" includeAlertmanagerSelector>
+  <AlertmanagerPageWrapper pageId="groups" accessType="instance">
     <AlertGroups />
-  </AlertingPageWrapper>
+  </AlertmanagerPageWrapper>
 );
 
 const getStyles = (theme: GrafanaTheme2) => ({

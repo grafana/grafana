@@ -8,20 +8,20 @@ import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Context {
-  permissions: 'instance' | 'notification';
   selectedAlertmanager: string | undefined;
   availableAlertManagers: AlertManagerDataSource[];
   setSelectedAlertmanager: (name: string) => void;
-  setPermissions: (accessType: Context['permissions']) => void;
 }
 
 const SelectedAlertmanagerContext = React.createContext<Context | undefined>(undefined);
 
-// TODO don't use setPermissions but pass permissions down to the alertmanager provider via props
-const SelectedAlertmanagerProvider = ({ children }: React.PropsWithChildren) => {
-  const [permissions, setPermissions] = React.useState<Context['permissions']>('instance');
+interface Props extends React.PropsWithChildren {
+  accessType: 'instance' | 'notification';
+}
+
+const SelectedAlertmanagerProvider = ({ children, accessType }: Props) => {
   const [queryParams, updateQueryParams] = useQueryParams();
-  const availableAlertManagers = useAlertManagersByPermission(permissions);
+  const availableAlertManagers = useAlertManagersByPermission(accessType);
 
   const updateSelectedAlertmanager = React.useCallback(
     (selectedAlertManager: string) => {
@@ -52,8 +52,6 @@ const SelectedAlertmanagerProvider = ({ children }: React.PropsWithChildren) => 
 
   const value: Context = {
     selectedAlertmanager,
-    permissions,
-    setPermissions,
     availableAlertManagers,
     setSelectedAlertmanager: updateSelectedAlertmanager,
   };
@@ -61,22 +59,12 @@ const SelectedAlertmanagerProvider = ({ children }: React.PropsWithChildren) => 
   return <SelectedAlertmanagerContext.Provider value={value}>{children}</SelectedAlertmanagerContext.Provider>;
 };
 
-interface Props {
-  withPermissions: Context['permissions'];
-}
-
-function useSelectedAlertmanager(props?: Props) {
+function useSelectedAlertmanager() {
   const context = React.useContext(SelectedAlertmanagerContext);
 
   if (context === undefined) {
     throw new Error('useSelectedAlertmanager must be used within a SelectedAlertmanagerContext');
   }
-
-  React.useEffect(() => {
-    if (props?.withPermissions) {
-      context.setPermissions(props.withPermissions);
-    }
-  }, [context, props]);
 
   return context;
 }

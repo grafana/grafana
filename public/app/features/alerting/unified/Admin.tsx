@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { AlertingPageWrapper } from './components/AlertingPageWrapper';
+import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import AlertmanagerConfig from './components/admin/AlertmanagerConfig';
 import { ExternalAlertmanagers } from './components/admin/ExternalAlertmanagers';
 import { useSelectedAlertmanager } from './state/AlertmanagerContext';
@@ -8,9 +8,9 @@ import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
 export default function Admin(): JSX.Element {
   return (
-    <AlertingPageWrapper pageId="alerting-admin" includeAlertmanagerSelector>
+    <AlertmanagerPageWrapper pageId="alerting-admin" accessType="notification">
       <AdminPageContents />
-    </AlertingPageWrapper>
+    </AlertmanagerPageWrapper>
   );
 }
 

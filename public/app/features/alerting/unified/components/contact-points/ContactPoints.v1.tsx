@@ -23,7 +23,7 @@ export interface NotificationErrorProps {
 }
 
 const Receivers = () => {
-  const { selectedAlertmanager: alertManagerSourceName } = useSelectedAlertmanager({ withPermissions: 'notification' });
+  const { selectedAlertmanager: alertManagerSourceName } = useSelectedAlertmanager();
   const dispatch = useDispatch();
 
   const location = useLocation();
