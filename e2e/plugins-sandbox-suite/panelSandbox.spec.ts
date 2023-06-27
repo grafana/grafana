@@ -14,11 +14,26 @@ describe('Panel sandbox', () => {
       e2e.flows.importDashboard(panelSandboxDashboard, 1000, true);
       e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams });
 
-      cy.get('[data-testid="panel-button-1"]').click();
+      cy.get('[data-testid="button-create-iframes"]').click();
 
       cy.get('#createElementIframe').should('exist');
       cy.get('#innerHTMLIframe').should('exist');
       cy.get('#adjacentIframe').should('exist');
+    });
+  });
+
+  describe('Sandbox enabled', () => {
+    const queryParams = { '__feature.pluginsFrontendSandbox': true };
+
+    it('Add iframe to body', () => {
+      e2e.flows.importDashboard(panelSandboxDashboard, 1000, true);
+      e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams });
+
+      cy.get('[data-testid="button-create-iframes"]').click();
+
+      cy.get('#createElementIframe').should('not.exist');
+      cy.get('#innerHTMLIframe').should('not.exist');
+      cy.get('#adjacentIframe').should('not.exist');
     });
   });
 

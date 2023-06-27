@@ -29,7 +29,11 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
     return React.createElement(
       'div',
       { className: 'frontend-sandbox-test' },
-      React.createElement('button', { onClick: createIframe, 'data-testid': 'panel-button-1' }, 'Craete iframes'),
+      React.createElement(
+        'button',
+        { onClick: createIframe, 'data-testid': 'button-create-iframes' },
+        'Create iframes'
+      ),
       React.createElement('button', { onClick: handleClick2, 'data-testid': 'panel-button-2' }, 'Button 2'),
       React.createElement('button', { onClick: handleClick3, 'data-testid': 'panel-button-3' }, 'Button 3')
     );
