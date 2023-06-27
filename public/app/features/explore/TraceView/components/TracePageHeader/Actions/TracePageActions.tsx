@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp, DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { useTheme2, LinkButton } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 
 import { config } from '../../../../../../core/config';
 import { downloadTraceAsJson } from '../../../../../inspector/utils/download';
@@ -16,6 +16,14 @@ export const getStyles = (theme: GrafanaTheme2) => {
       label: TracePageActions;
       display: flex;
       gap: 4px;
+    `,
+    feedback: css`
+      margin: 6px;
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      &:hover {
+        color: ${theme.colors.text.link};
+      }
     `,
   };
 };
@@ -52,18 +60,15 @@ export default function TracePageActions(props: TracePageActionsProps) {
 
   return (
     <div className={styles.TracePageActions}>
-      <LinkButton
+      <a
         href="https://forms.gle/RZDEx8ScyZNguDoC8"
+        className={styles.feedback}
         title="Share your thoughts about tracing in Grafana."
         target="_blank"
         rel="noreferrer noopener"
-        variant="secondary"
-        fill="text"
-        size="sm"
-        icon="comment-alt-message"
       >
-        Give feedback
-      </LinkButton>
+        <Icon name="comment-alt-message" /> Give feedback
+      </a>
 
       <ActionButton
         onClick={copyTraceId}
