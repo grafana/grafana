@@ -33,6 +33,11 @@ import {
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
+import {
+  isAsyncRequestMapSlicePartiallyDispatched,
+  isAsyncRequestMapSlicePartiallyFulfilled,
+  isAsyncRequestMapSlicePending,
+} from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -102,7 +107,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
 
-  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
+  const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -166,13 +171,11 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
 
-  const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
-  const haveResults = rulesDataSourceNames.some(
-    (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
-  );
+  const someRulerRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(rulerRulesRequests);
+  const haveResults = isAsyncRequestMapSlicePartiallyFulfilled(promRulesRequests);
 
   const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
-  const loading = rulesDataSourceNames.some((name) => promRulesRequests[name]?.loading);
+  const loading = isAsyncRequestMapSlicePending(promRulesRequests);
 
   const styles = useStyles2(getStyles);
 
