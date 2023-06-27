@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { negate } from 'lodash';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
@@ -42,7 +42,7 @@ const loaderWrapper = css`
 export default function CorrelationsPage() {
   const navModel = useNavModel('correlations');
   const [isAdding, setIsAddingValue] = useState(false);
-  const [page, setPage] = useState(1);
+  const page = useRef(1);
 
   const setIsAdding = (value: boolean) => {
     setIsAddingValue(value);
@@ -60,44 +60,31 @@ export default function CorrelationsPage() {
 
   const handleAdded = useCallback(() => {
     reportInteraction('grafana_correlations_added');
-    fetchCorrelations({ page });
+    fetchCorrelations({ page: page.current });
     setIsAdding(false);
-  }, [fetchCorrelations, page]);
+  }, [fetchCorrelations]);
 
   const handleUpdated = useCallback(() => {
     reportInteraction('grafana_correlations_edited');
-    fetchCorrelations({ page });
-  }, [fetchCorrelations, page]);
+    fetchCorrelations({ page: page.current });
+  }, [fetchCorrelations]);
 
   const handleDelete = useCallback(
-    (params: RemoveCorrelationParams, isLastRow: boolean) => {
-      remove.execute(params);
+    async (params: RemoveCorrelationParams, isLastRow: boolean) => {
+      await remove.execute(params);
+      reportInteraction('grafana_correlations_deleted');
+
       if (isLastRow) {
-        setPage(page - 1);
+        page.current--;
       }
+      fetchCorrelations({ page: page.current });
     },
-    [remove, page]
+    [remove, fetchCorrelations]
   );
 
-  // onDelete - triggers when deleting a correlation
   useEffect(() => {
-    if (remove.value) {
-      reportInteraction('grafana_correlations_deleted');
-    }
-  }, [remove.value]);
-
-  useEffect(() => {
-    if (!remove.error && !remove.loading && remove.value) {
-      fetchCorrelations({ page });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
-
-  useEffect(() => {
-    if (!remove.value) {
-      fetchCorrelations({ page });
-    }
-  }, [fetchCorrelations, page, remove.value]);
+    fetchCorrelations({ page: page.current });
+  }, [fetchCorrelations]);
 
   const RowActions = useCallback(
     ({
@@ -114,7 +101,7 @@ export default function CorrelationsPage() {
           <DeleteButton
             aria-label="delete correlation"
             onConfirm={() =>
-              handleDelete({ sourceUID, uid }, page > 0 && index === 0 && data?.correlations.length === 1)
+              handleDelete({ sourceUID, uid }, page.current > 0 && index === 0 && data?.correlations.length === 1)
             }
             closeOnConfirm
           />
@@ -216,10 +203,10 @@ export default function CorrelationsPage() {
                 getRowId={(correlation) => `${correlation.source.uid}-${correlation.uid}`}
               />
               <Pagination
-                currentPage={page}
+                currentPage={page.current}
                 numberOfPages={Math.ceil(data.totalCount / data.limit)}
                 onNavigate={(toPage: number) => {
-                  setPage(toPage);
+                  fetchCorrelations({ page: (page.current = toPage) });
                 }}
               />
             </>
