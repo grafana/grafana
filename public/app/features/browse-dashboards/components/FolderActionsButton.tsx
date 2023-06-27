@@ -101,12 +101,10 @@ export function FolderActionsButton({ folder }: Props) {
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">
-          <Button variant="secondary">
-            Folder actions
-            <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
-          </Button>
-        </Trans>
+        <Button variant="secondary">
+          <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
+          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
+        </Button>
       </Dropdown>
       {showPermissionsDrawer && (
         <Drawer
