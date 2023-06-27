@@ -105,4 +105,5 @@ export interface FeatureToggles {
   alertingLokiRangeToInstant?: boolean;
   flameGraphV2?: boolean;
   elasticToggleableFilters?: boolean;
+  vizAndWidgetSplit?: boolean;
 }
