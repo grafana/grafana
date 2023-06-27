@@ -134,20 +134,6 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 
   useEffect(() => {
-    if (props.options.groupMode === GroupMode.Default && !promRulesRequests.loading) {
-      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
-    }
-  }, [
-    props.options.groupMode,
-    limitInstances,
-    dispatch,
-    matcherList,
-    stateList,
-    dataSourceName,
-    promRulesRequests.loading,
-  ]);
-
-  useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     if (!promRulesRequests.loading) {
       fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
@@ -158,16 +144,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     return () => {
       sub?.unsubscribe();
     };
-  }, [
-    dispatch,
-    dashboard,
-    matcherList,
-    stateList,
-    toggleLimit,
-    limitInstances,
-    dataSourceName,
-    promRulesRequests.loading,
-  ]);
+  }, [dispatch, dashboard, matcherList, stateList, limitInstances, dataSourceName, promRulesRequests.loading]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
