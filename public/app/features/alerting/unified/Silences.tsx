@@ -10,33 +10,33 @@ import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
-import { useAlertManagerSourceName } from './hooks/useAlertManagerSourceName';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
+import { useSelectedAlertmanager } from './state/AlertmanagerContext';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences = () => {
-  const [alertManagerSourceName] = useAlertManagerSourceName();
+  const { selectedAlertmanager } = useSelectedAlertmanager();
 
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);
   const alertsRequests = useUnifiedAlertingSelector((state) => state.amAlerts);
-  const alertsRequest = alertManagerSourceName
-    ? alertsRequests[alertManagerSourceName] || initialAsyncRequestState
+  const alertsRequest = selectedAlertmanager
+    ? alertsRequests[selectedAlertmanager] || initialAsyncRequestState
     : undefined;
 
   const { currentData: amFeatures } = featureDiscoveryApi.useDiscoverAmFeaturesQuery(
-    { amSourceName: alertManagerSourceName ?? '' },
-    { skip: !alertManagerSourceName }
+    { amSourceName: selectedAlertmanager ?? '' },
+    { skip: !selectedAlertmanager }
   );
 
   useEffect(() => {
     function fetchAll() {
-      if (alertManagerSourceName) {
-        dispatch(fetchSilencesAction(alertManagerSourceName));
-        dispatch(fetchAmAlertsAction(alertManagerSourceName));
+      if (selectedAlertmanager) {
+        dispatch(fetchSilencesAction(selectedAlertmanager));
+        dispatch(fetchAmAlertsAction(selectedAlertmanager));
       }
     }
     fetchAll();
@@ -44,23 +44,23 @@ const Silences = () => {
     return () => {
       clearInterval(interval);
     };
-  }, [alertManagerSourceName, dispatch]);
+  }, [selectedAlertmanager, dispatch]);
 
   const { result, loading, error }: AsyncRequestState<Silence[]> =
-    (alertManagerSourceName && silences[alertManagerSourceName]) || initialAsyncRequestState;
+    (selectedAlertmanager && silences[selectedAlertmanager]) || initialAsyncRequestState;
 
   const getSilenceById = useCallback((id: string) => result && result.find((silence) => silence.id === id), [result]);
 
   const mimirLazyInitError =
     error?.message?.includes('the Alertmanager is not configured') && amFeatures?.lazyConfigInit;
 
-  if (!alertManagerSourceName) {
+  if (!selectedAlertmanager) {
     return null;
   }
 
   return (
     <>
-      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
 
       {mimirLazyInitError && (
         <Alert title="The selected Alertmanager has no configuration" severity="warning">
@@ -84,11 +84,11 @@ const Silences = () => {
             <SilencesTable
               silences={result}
               alertManagerAlerts={alertsRequest?.result ?? []}
-              alertManagerSourceName={alertManagerSourceName}
+              alertManagerSourceName={selectedAlertmanager}
             />
           </Route>
           <Route exact path="/alerting/silence/new">
-            <SilencesEditor alertManagerSourceName={alertManagerSourceName} />
+            <SilencesEditor alertManagerSourceName={selectedAlertmanager} />
           </Route>
           <Route exact path="/alerting/silence/:id/edit">
             {({ match }: RouteChildrenProps<{ id: string }>) => {
@@ -96,7 +96,7 @@ const Silences = () => {
                 match?.params.id && (
                   <SilencesEditor
                     silence={getSilenceById(match.params.id)}
-                    alertManagerSourceName={alertManagerSourceName}
+                    alertManagerSourceName={selectedAlertmanager}
                   />
                 )
               );
