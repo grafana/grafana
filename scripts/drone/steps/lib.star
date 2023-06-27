@@ -16,7 +16,7 @@ load(
     "windows_images",
 )
 
-grabpl_version = "v3.0.38"
+grabpl_version = "v3.0.39"
 
 trigger_oss = {
     "repo": [
@@ -1359,7 +1359,7 @@ def publish_grafanacom_step(edition, ver_mode):
       ver_mode: if ver_mode == 'main', pass the DRONE_BUILD_NUMBER environment
         variable as the value for the --build-id option.
         TODO: is this actually used by the grafanacom subcommand? I think it might
-        just use the environment varaiable directly.
+        just use the environment variable directly.
 
     Returns:
       Drone step.

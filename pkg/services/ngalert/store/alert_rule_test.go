@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
@@ -324,9 +325,10 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	store := &DBstore{
-		SQLStore:      sqlStore,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		SQLStore:       sqlStore,
+		Cfg:            cfg.UnifiedAlerting,
+		FolderService:  setupFolderService(t, sqlStore, cfg),
+		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
 	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())

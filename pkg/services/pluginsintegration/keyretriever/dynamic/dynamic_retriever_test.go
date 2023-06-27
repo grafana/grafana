@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/keystore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -47,7 +46,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -68,7 +67,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -88,7 +87,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			err := v.Run(context.Background())
 			require.NoError(t, err)
@@ -115,7 +114,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComURL = s.URL
-		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()), featuremgmt.WithFeatures(featuremgmt.FlagPluginsAPIManifestKey))
+		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		// Simulate an updated key
 		err := v.kv.SetLastUpdated(context.Background())
 		require.NoError(t, err)

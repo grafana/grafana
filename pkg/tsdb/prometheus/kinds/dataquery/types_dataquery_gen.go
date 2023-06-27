@@ -30,7 +30,7 @@ type DataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{} `json:"datasource,omitempty"`
+	Datasource *any `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	// Note this does not always imply that the query should not be executed since
@@ -61,7 +61,7 @@ type PrometheusDataQuery struct {
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
-	Datasource *interface{}     `json:"datasource,omitempty"`
+	Datasource *any             `json:"datasource,omitempty"`
 	EditorMode *QueryEditorMode `json:"editorMode,omitempty"`
 
 	// Execute an additional query to identify interesting raw samples relevant for the given expr

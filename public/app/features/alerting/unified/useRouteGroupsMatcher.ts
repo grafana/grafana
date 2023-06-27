@@ -5,11 +5,12 @@ import { useEnabled } from 'react-enable';
 import { logError } from '@grafana/runtime';
 
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
+import { Labels } from '../../../types/unified-alerting-dto';
 
 import { logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
 import { AlertingFeature } from './features';
-import type { RouteGroupsMatcher } from './routeGroupsMatcher.worker';
+import type { RouteGroupsMatcher } from './routeGroupsMatcher';
 
 let routeMatcher: comlink.Remote<RouteGroupsMatcher> | undefined;
 
@@ -44,6 +45,19 @@ function loadWorker() {
   return { disposeWorker };
 }
 
+function validateWorker(
+  toggleEnabled: boolean,
+  matcher: typeof routeMatcher
+): asserts matcher is comlink.Remote<RouteGroupsMatcher> {
+  if (!toggleEnabled) {
+    throw new Error('Matching routes preview is disabled');
+  }
+
+  if (!routeMatcher) {
+    throw new Error('Route Matcher has not been initialized');
+  }
+}
+
 export function useRouteGroupsMatcher() {
   const workerPreviewEnabled = useEnabled(AlertingFeature.NotificationPoliciesV2MatchingInstances);
 
@@ -58,13 +72,7 @@ export function useRouteGroupsMatcher() {
 
   const getRouteGroupsMap = useCallback(
     async (rootRoute: RouteWithID, alertGroups: AlertmanagerGroup[]) => {
-      if (!workerPreviewEnabled) {
-        throw new Error('Matching routes preview is disabled');
-      }
-
-      if (!routeMatcher) {
-        throw new Error('Route Matcher has not been initialized');
-      }
+      validateWorker(workerPreviewEnabled, routeMatcher);
 
       const startTime = performance.now();
 
@@ -84,5 +92,27 @@ export function useRouteGroupsMatcher() {
     [workerPreviewEnabled]
   );
 
-  return { getRouteGroupsMap };
+  const matchInstancesToRoute = useCallback(
+    async (rootRoute: RouteWithID, instancesToMatch: Labels[]) => {
+      validateWorker(workerPreviewEnabled, routeMatcher);
+
+      const startTime = performance.now();
+
+      const result = await routeMatcher.matchInstancesToRoute(rootRoute, instancesToMatch);
+
+      const timeSpent = performance.now() - startTime;
+
+      logInfo(`Instances Matched in  ${timeSpent} ms`, {
+        matchingTime: timeSpent.toString(),
+        instancesToMatchCount: instancesToMatch.length.toString(),
+        // Counting all nested routes might be too time-consuming, so we only count the first level
+        topLevelRoutesCount: rootRoute.routes?.length.toString() ?? '0',
+      });
+
+      return result;
+    },
+    [workerPreviewEnabled]
+  );
+
+  return { getRouteGroupsMap, matchInstancesToRoute };
 }

@@ -18,6 +18,7 @@ interface Props {
   app?: CoreApp;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
+  onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
 }
 
@@ -76,7 +77,7 @@ export class LogRowMessage extends PureComponent<Props> {
   };
 
   render() {
-    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles } = this.props;
+    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles, onPermalinkClick } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -108,6 +109,7 @@ export class LogRowMessage extends PureComponent<Props> {
                 onClick={this.onShowContextClick}
                 tooltip="Show context"
                 tooltipPlacement="top"
+                aria-label="Show context"
               />
             )}
             <ClipboardButton
@@ -117,9 +119,19 @@ export class LogRowMessage extends PureComponent<Props> {
               fill="text"
               size="md"
               getText={this.getLogText}
-              tooltip="Copy"
+              tooltip="Copy to clipboard"
               tooltipPlacement="top"
             />
+            {onPermalinkClick && row.uid && (
+              <IconButton
+                tooltip="Copy shortlink"
+                aria-label="Copy shortlink"
+                tooltipPlacement="top"
+                size="md"
+                name="share-alt"
+                onClick={() => onPermalinkClick(row)}
+              />
+            )}
           </span>
         </td>
       </>

@@ -99,7 +99,7 @@ func TestProvisioningApi(t *testing.T) {
 			})
 		})
 
-		t.Run("when an unspecified error occurrs", func(t *testing.T) {
+		t.Run("when an unspecified error occurs", func(t *testing.T) {
 			t.Run("GET returns 500", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				sut.policies = &fakeFailingNotificationPolicyService{}
