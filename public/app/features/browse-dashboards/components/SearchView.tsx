@@ -5,7 +5,6 @@ import { Button, Card } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
-import { LOADING_ID } from 'app/features/search/page/components/columns';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
@@ -23,7 +22,7 @@ const loadingView = {
     toDataFrame({
       fields: [
         { name: 'uid', display: true, values: Array(50).fill(null) },
-        { name: 'name', display: true, values: Array(50).fill(LOADING_ID) },
+        { name: 'name', display: true, values: Array(50).fill('') },
         { name: 'tags', display: true, values: Array(50).fill([]) },
       ],
       meta: {
@@ -34,7 +33,7 @@ const loadingView = {
     })
   ),
   loadMoreItems: () => Promise.resolve(),
-  isItemLoaded: () => true,
+  isItemLoaded: () => false,
   totalRows: 50,
 };
 

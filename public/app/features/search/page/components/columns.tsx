@@ -26,7 +26,6 @@ import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
-export const LOADING_ID = '__loading-placeholder';
 
 export const generateColumns = (
   response: QueryResponse,
@@ -117,7 +116,7 @@ export const generateColumns = (
       }
       return (
         <div className={styles.cell} {...p.cellProps}>
-          {name === LOADING_ID ? (
+          {!response.isItemLoaded(p.row.index) ? (
             <Skeleton width={200} />
           ) : (
             <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
