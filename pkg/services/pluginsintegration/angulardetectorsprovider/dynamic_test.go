@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -210,7 +211,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			// Start bg service scenario and test
-			bg := newBackgroundServiceScenario(svc)
+			bg := newBackgroundServiceScenario(svc, func() {})
+			t.Cleanup(bg.close)
 			bg.run(context.Background(), t)
 			d := svc.ProvideDetectors(context.Background())
 			checkMockDetectors(t, d)
@@ -223,9 +225,6 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			gcom := newDefaultGCOMScenario()
 			srv := gcom.newHTTPTestServer()
 			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
-			job := newFakeJober(svc)
-			t.Cleanup(job.close)
-			svc.bgJob = job
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
@@ -238,7 +237,13 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			// Start bg service and it should call GCOM immediately
-			bg := newBackgroundServiceScenario(svc)
+			callback := make(chan struct{})
+			var once sync.Once
+			bg := newBackgroundServiceScenario(svc, func() {
+				once.Do(func() {
+					callback <- struct{}{}
+				})
+			})
 			t.Cleanup(bg.close)
 			bg.run(context.Background(), t)
 
@@ -246,7 +251,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			select {
 			case <-time.After(time.Second * 10):
 				t.Fatal("timeout")
-			case <-job.callback:
+			case <-callback:
 				break
 			}
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called once")
@@ -290,23 +295,32 @@ func checkMockDetectors(t *testing.T, detectors []angulardetector.AngularDetecto
 type counter struct {
 	count           int
 	lastAssertCount int
+	mux             sync.Mutex
 }
 
 func (c *counter) inc() {
+	c.mux.Lock()
 	c.count++
+	c.mux.Unlock()
 }
 
-func (c *counter) reset() {
-	c.count = 0
+func (c *counter) calls() int {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	return c.count
 }
 
 func (c *counter) called() bool {
+	c.mux.Lock()
+	defer c.mux.Unlock()
 	r := c.count > c.lastAssertCount
 	c.lastAssertCount = c.count
 	return r
 }
 
 func (c *counter) calledOnce() bool {
+	c.mux.Lock()
+	defer c.mux.Unlock()
 	r := c.count == c.lastAssertCount+1
 	c.lastAssertCount = c.count
 	return r
@@ -390,19 +404,25 @@ func (s *mockLastUpdatePatternsStore) GetLastUpdated(_ context.Context) (time.Ti
 
 type backgroundServiceScenario struct {
 	svc         *Dynamic
+	fakeBgJob   *fakeBackgroundJob
 	bgDone      chan struct{}
+	wg          sync.WaitGroup
 	ctxCancFunc context.CancelFunc
 }
 
-func newBackgroundServiceScenario(svc *Dynamic) *backgroundServiceScenario {
-	s := &backgroundServiceScenario{svc: svc}
-	s.reset()
+func newBackgroundServiceScenario(svc *Dynamic, callback func()) *backgroundServiceScenario {
+	s := &backgroundServiceScenario{
+		svc:       svc,
+		bgDone:    make(chan struct{}),
+		fakeBgJob: newFakeJober(svc),
+	}
+	svc.bgJob = s.fakeBgJob
+	go func() {
+		for range s.fakeBgJob.callback {
+			callback()
+		}
+	}()
 	return s
-}
-
-func (s *backgroundServiceScenario) reset() {
-	s.bgDone = make(chan struct{})
-	s.ctxCancFunc = nil
 }
 
 func (s *backgroundServiceScenario) close() {
@@ -420,7 +440,7 @@ func (s *backgroundServiceScenario) exitAndWait() {
 	s.close()
 	s.ctxCancFunc = nil
 	// Wait for bg svc to quit
-	<-s.bgDone
+	s.wg.Wait()
 }
 
 func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
@@ -432,11 +452,15 @@ func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
 	s.ctxCancFunc = canc
 
 	// Start background service
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		err := s.svc.Run(ctx)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			t.Fatal(err)
 		}
+		// Make the consumer goroutine quit
+		s.fakeBgJob.close()
 		// Signal that the bg service has quit
 		close(s.bgDone)
 	}()
