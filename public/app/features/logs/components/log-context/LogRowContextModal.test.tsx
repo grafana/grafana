@@ -56,11 +56,30 @@ const dfAfter = createDataFrame({
     },
   ],
 });
+
+let uniqueRefIdCounter = 1;
+
 const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+  uniqueRefIdCounter += 1;
+  const refId = `refid_${uniqueRefIdCounter}`;
   if (options.direction === LogRowContextQueryDirection.Forward) {
-    return { data: [dfBefore] };
+    return {
+      data: [
+        {
+          refId,
+          ...dfBefore,
+        },
+      ],
+    };
   } else {
-    return { data: [dfAfter] };
+    return {
+      data: [
+        {
+          refId,
+          ...dfAfter,
+        },
+      ],
+    };
   }
 });
 const dispatchMock = jest.fn();
