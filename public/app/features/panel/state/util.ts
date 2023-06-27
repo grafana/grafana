@@ -14,6 +14,10 @@ export function getWidgetPluginMeta(): PanelPluginMeta[] {
   return getAllPanelPluginMeta().filter((panel) => !!panel.skipDataQuery);
 }
 
+export function getVizPluginMeta(): PanelPluginMeta[] {
+  return getAllPanelPluginMeta().filter((panel) => !panel.skipDataQuery);
+}
+
 export function filterWidgetList(widgetsList: PanelPluginMeta[], searchQuery: string, current?: PanelPluginMeta) {
   if (!searchQuery.length) {
     return getNotDeprecatedPluginList(widgetsList, current);

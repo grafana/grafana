@@ -6,7 +6,7 @@ import { GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, CustomScrollbar, FilterInput, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { Field } from '@grafana/ui/src/components/Forms/Field';
-import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
+import { LS_VISUALIZATION_SELECT_TAB_KEY, LS_WIDGET_SELECT_TAB_KEY } from 'app/core/constants';
 import { PanelLibraryOptionsGroup } from 'app/features/library-panels/components/PanelLibraryOptionsGroup/PanelLibraryOptionsGroup';
 import { VisualizationSuggestions } from 'app/features/panel/components/VizTypePicker/VisualizationSuggestions';
 import { VizTypeChangeDetails } from 'app/features/panel/components/VizTypePicker/types';
@@ -28,10 +28,14 @@ interface Props {
 export const VisualizationSelectPane = ({ panel, data }: Props) => {
   const plugin = useSelector(getPanelPluginWithFallback(panel.type));
   const [searchQuery, setSearchQuery] = useState('');
-  const [listMode, setListMode] = useLocalStorage(
-    LS_VISUALIZATION_SELECT_TAB_KEY,
-    VisualizationSelectPaneTab.Visualizations
-  );
+
+  // Add support to show widgets in the visualization picker
+  const isWidget = plugin.meta.skipDataQuery ?? false;
+
+  const tabKey = isWidget ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
+  const defaultTab = isWidget ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
+
+  const [listMode, setListMode] = useLocalStorage(tabKey, defaultTab);
 
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
@@ -67,6 +71,15 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
     },
   ];
 
+  const radioOptionsWidgetFlow: Array<SelectableValue<VisualizationSelectPaneTab>> = [
+    { label: 'Widgets', value: VisualizationSelectPaneTab.Widgets },
+    {
+      label: 'Library panels',
+      value: VisualizationSelectPaneTab.LibraryPanels,
+      description: 'Reusable panels you can share between multiple dashboards.',
+    },
+  ];
+
   return (
     <div className={styles.openWrapper}>
       <div className={styles.formBox}>
@@ -88,7 +101,12 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
           />
         </div>
         <Field className={styles.customFieldMargin}>
-          <RadioButtonGroup options={radioOptions} value={listMode} onChange={setListMode} fullWidth />
+          <RadioButtonGroup
+            options={isWidget ? radioOptionsWidgetFlow : radioOptions}
+            value={listMode}
+            onChange={setListMode}
+            fullWidth
+          />
         </Field>
       </div>
       <div className={styles.scrollWrapper}>
@@ -103,6 +121,17 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
                 onClose={() => {}}
               />
             )}
+            {listMode === VisualizationSelectPaneTab.Widgets && (
+              <VizTypePicker
+                current={plugin.meta}
+                onChange={onVizChange}
+                searchQuery={searchQuery}
+                data={data}
+                onClose={() => {}}
+                isWidget
+              />
+            )}
+
             {listMode === VisualizationSelectPaneTab.Suggestions && (
               <VisualizationSuggestions
                 current={plugin.meta}
