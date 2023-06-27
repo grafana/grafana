@@ -28,11 +28,7 @@ import {
 } from 'app/features/alerting/unified/state/actions';
 import { parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
-import {
-  getAllRulesSourceNames,
-  GRAFANA_DATASOURCE_NAME,
-  GRAFANA_RULES_SOURCE_NAME,
-} from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
 import {
   isAsyncRequestMapSlicePartiallyDispatched,
   isAsyncRequestMapSlicePartiallyFulfilled,
@@ -99,7 +95,6 @@ const fetchPromAndRuler = ({
 
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
-  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [limitInstances, toggleLimit] = useToggle(true);
 
   const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
