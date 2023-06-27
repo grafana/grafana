@@ -299,8 +299,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       return;
     }
 
-    setSection(place, (s) => ({
-      ...s,
+    setSection(place, (section) => ({
+      ...section,
       loadingState: LoadingState.Loading,
     }));
 
@@ -308,14 +308,14 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     try {
       const newRows = await loadMore(place);
       if (currentGen === generationRef.current) {
-        setSection(place, (s) => ({
-          rows: place === 'above' ? [...newRows, ...s.rows] : [...s.rows, ...newRows],
+        setSection(place, (section) => ({
+          rows: place === 'above' ? [...newRows, ...section.rows] : [...section.rows, ...newRows],
           loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
         }));
       }
     } catch {
-      setSection(place, (s) => ({
-        rows: s.rows,
+      setSection(place, (section) => ({
+        rows: section.rows,
         loadingState: LoadingState.Error,
       }));
     }
