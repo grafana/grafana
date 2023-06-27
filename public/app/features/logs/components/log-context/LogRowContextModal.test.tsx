@@ -99,7 +99,14 @@ describe('LogRowContextModal', () => {
 
   it('should not render modal when it is closed', async () => {
     render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={false}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(screen.queryByText('Log context')).not.toBeInTheDocument());
@@ -107,7 +114,14 @@ describe('LogRowContextModal', () => {
 
   it('should render modal when it is open', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(screen.queryByText('Log context')).toBeInTheDocument());
@@ -115,7 +129,14 @@ describe('LogRowContextModal', () => {
 
   it('should call getRowContext on open and change of row', async () => {
     render(
-      <LogRowContextModal row={row} open={false} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={false}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => expect(getRowContext).not.toHaveBeenCalled());
@@ -123,7 +144,14 @@ describe('LogRowContextModal', () => {
 
   it('should call getRowContext on open', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
   });
@@ -145,7 +173,14 @@ describe('LogRowContextModal', () => {
 
   it('should call getRowContext when limit changes', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
     await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
 
@@ -170,6 +205,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -201,6 +237,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -215,7 +252,14 @@ describe('LogRowContextModal', () => {
 
   it('should not show a split view button', async () => {
     render(
-      <LogRowContextModal row={row} open={true} onClose={() => {}} getRowContext={getRowContext} timeZone={timeZone} />
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
     );
 
     await waitFor(() => {
@@ -237,6 +281,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -254,6 +299,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -279,6 +325,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
@@ -314,6 +361,7 @@ describe('LogRowContextModal', () => {
         getRowContext={getRowContext}
         getRowContextQuery={getRowContextQuery}
         timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
       />
     );
 
