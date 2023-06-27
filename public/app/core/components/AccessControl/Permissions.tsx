@@ -132,6 +132,10 @@ export const Permissions = ({
     [items]
   );
 
+  const titleRole = t('access-control.permissions.role', 'Role');
+  const titleUser = t('access-control.permissions.user', 'User');
+  const titleTeam = t('access-control.permissions.team', 'Team');
+
   return (
     <div>
       {canSetPermissions && (
@@ -181,7 +185,7 @@ export const Permissions = ({
         </table>
       )}
       <PermissionList
-        title="Role"
+        title={titleRole}
         items={builtInRoles}
         compareKey={'builtInRole'}
         permissionLevels={desc.permissions}
@@ -190,7 +194,7 @@ export const Permissions = ({
         canSet={canSetPermissions}
       />
       <PermissionList
-        title="User"
+        title={titleUser}
         items={users}
         compareKey={'userLogin'}
         permissionLevels={desc.permissions}
@@ -199,7 +203,7 @@ export const Permissions = ({
         canSet={canSetPermissions}
       />
       <PermissionList
-        title="Team"
+        title={titleTeam}
         items={teams}
         compareKey={'team'}
         permissionLevels={desc.permissions}

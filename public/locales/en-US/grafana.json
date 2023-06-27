@@ -1,13 +1,19 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "access-control": {
+    "permission-list": {
+      "permission": " <1>Permission</1>"
+    },
     "permissions": {
       "add-a": {
         "permission": "Add a permission"
       },
       "no-permissions": "There are no permissions",
       "permissions": "Permissions",
-      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "This will change permissions for this folder and all its descendants. In total, this will affect:"
+      "role": "Role",
+      "team": "Team",
+      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "user": "User"
     }
   },
   "browse-dashboards": {
@@ -18,6 +24,11 @@
     "dashboards-tree": {
       "name-column": "Name",
       "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
     },
     "no-results": {
       "clear": "Clear search and filters",
