@@ -44,7 +44,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${config.featureToggles.newTraceViewHeader ? 0 : theme.spacing(theme.components.panel.padding)};
   `,
   duration: css({
-    color: theme.colors.action.disabledText,
+    color: '#aaa',
     ...theme.typography.bodySmall,
     alignSelf: 'center',
   }),
