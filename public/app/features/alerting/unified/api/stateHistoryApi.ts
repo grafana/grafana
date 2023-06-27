@@ -6,10 +6,10 @@ import { alertingApi } from './alertingApi';
 
 export const stateHistoryApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    getRuleHistory: build.query<DataFrameJSON, { ruleUid: string; from: number; to?: number }>({
-      query: ({ ruleUid, from, to = getUnixTime(new Date()) }) => ({
+    getRuleHistory: build.query<DataFrameJSON, { ruleUid: string; from: number; to?: number; limit?: number }>({
+      query: ({ ruleUid, from, to = getUnixTime(new Date()), limit = 100 }) => ({
         url: '/api/v1/rules/history',
-        params: { ruleUID: ruleUid, from, to },
+        params: { ruleUID: ruleUid, from, to, limit },
       }),
     }),
   }),
