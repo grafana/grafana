@@ -57,7 +57,7 @@ Alternatively, to add an annotation, Ctrl/Cmd+Click on the Time series panel and
 
 ### Built-in query
 
-After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
+After an annotation is added, it will remain visible in the panel within the dashboard. This is due to the built in annotation query that exists on all dashboards. This annotation query will
 fetch all annotation events that originate from the current dashboard and show them on the panel where they were created. This includes alert state history annotations. You can
 stop annotations from being fetched and drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
 
