@@ -72,6 +72,7 @@ type JsonData struct {
 	Database                string `json:"database"`
 	SecureDSProxy           bool   `json:"enableSecureSocksProxy"`
 	AllowCleartextPasswords bool   `json:"allowCleartextPasswords"`
+	AuthenticationType      string `json:"authenticationType"`
 }
 
 type DataSourceInfo struct {
