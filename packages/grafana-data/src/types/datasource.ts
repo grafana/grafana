@@ -551,11 +551,6 @@ export interface QueryFixAction {
   options?: KeyValue<string>;
 }
 
-export interface AnalyzeQueryOptions {
-  check: string;
-  attributes: KeyValue<string>;
-}
-
 export interface QueryHint {
   type: string;
   label: string;
