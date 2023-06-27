@@ -356,7 +356,7 @@ func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{},
 		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
 		joins = append(joins, s)
 
-		wheres = append(wheres, fmt.Sprintf("(dashboard.%s IN (SELECT d.%s FROM dashboard d %s WHERE %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, permSelector))
+		wheres = append(wheres, fmt.Sprintf("(dashboard.%s IN (SELECT d.%s FROM dashboard d %s WHERE %s.uid IN (SELECT substr(scope, 13) FROM permission WHERE scope LIKE '%s' AND %s))", leftTableCol, rightTableCol, strings.Join(joins, " "), t, "folders:uid:%", permSelector))
 		args = append(args, permSelectorArgs...)
 
 		prev = t
