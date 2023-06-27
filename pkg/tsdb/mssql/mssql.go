@@ -154,7 +154,6 @@ func ParseURL(u string) (*url.URL, error) {
 }
 
 func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, azureCredentials azcredentials.AzureCredentials) (string, error) {
-
 	const dfltPort = "0"
 	var addr util.NetworkAddress
 	if dsInfo.URL != "" {
