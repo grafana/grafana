@@ -82,7 +82,6 @@ export function TraceViewContainer(props: Props) {
             {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
           </span>
         }
-        // displayMode="transparent"
         actions={
           config.featureToggles.newTraceViewHeader ? (
             <TracePageActions
