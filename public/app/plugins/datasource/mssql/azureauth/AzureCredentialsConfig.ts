@@ -11,11 +11,11 @@ import {
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
-const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
-  return bootConfig.azure.cloud || AzureCloud.Public;
+export const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
+  return bootConfig.azure?.cloud || AzureCloud.Public;
 };
 
-const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
+export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
   if (bootConfig.azure.managedIdentityEnabled) {
     return { authType: 'msi' };
   } else {
@@ -23,7 +23,7 @@ const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsT
   }
 };
 
-const getSecret = (
+export const getSecret = (
   dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>
 ): undefined | string | ConcealedSecret => {
   if (dsSettings.secureJsonFields.azureClientSecret) {
