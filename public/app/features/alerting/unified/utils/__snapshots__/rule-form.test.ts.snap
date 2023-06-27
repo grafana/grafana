@@ -15,7 +15,6 @@ exports[`formValuesToRulerGrafanaRuleDTO should correctly convert rule form valu
     "is_paused": false,
     "no_data_state": "NoData",
     "title": "",
-    "uid": "",
   },
   "labels": {
     "": "",
@@ -54,7 +53,6 @@ exports[`formValuesToRulerGrafanaRuleDTO should not save both instant and range 
     "is_paused": false,
     "no_data_state": "NoData",
     "title": "",
-    "uid": "",
   },
   "labels": {
     "": "",

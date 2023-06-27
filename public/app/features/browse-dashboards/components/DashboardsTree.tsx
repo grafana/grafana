@@ -35,7 +35,7 @@ interface DashboardsTreeProps {
   onItemSelectionChange: (item: DashboardViewItem, newState: boolean) => void;
 
   isItemLoaded: (itemIndex: number) => boolean;
-  requestLoadMore: (startIndex: number, endIndex: number) => void;
+  requestLoadMore: (folderUid: string | undefined) => void;
 }
 
 const HEADER_HEIGHT = 35;
@@ -119,9 +119,10 @@ export function DashboardsTree({
 
   const handleLoadMore = useCallback(
     (startIndex: number, endIndex: number) => {
-      requestLoadMore(startIndex, endIndex);
+      const { parentUID } = items[startIndex];
+      requestLoadMore(parentUID);
     },
-    [requestLoadMore]
+    [requestLoadMore, items]
   );
 
   return (
