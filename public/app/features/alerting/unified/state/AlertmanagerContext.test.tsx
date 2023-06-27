@@ -26,7 +26,7 @@ const externalAmMimir: AlertManagerDataSource = {
   imgUrl: '',
 };
 
-describe('useAlertManagerSourceName', () => {
+describe('useSelectedAlertmanager', () => {
   it('Should return undefined alert manager name when there are no available alert managers', () => {
     jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce([]);
     const wrapper = ({ children }: React.PropsWithChildren) => (

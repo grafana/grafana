@@ -1,6 +1,7 @@
 import Mousetrap from 'mousetrap';
 import React, { PropsWithChildren, useEffect, useState } from 'react';
 import { Features, ToggleFeatures } from 'react-enable';
+import { useLocation } from 'react-use';
 
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
@@ -53,14 +54,27 @@ interface AlertmanagerPageWrapperProps extends AlertingPageWrapperProps {
   accessType: 'instance' | 'notification';
 }
 export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: AlertmanagerPageWrapperProps) => {
+  const disableAlertmanager = useIsDisabledAlertmanagerSelection();
+
   return (
     <SelectedAlertmanagerProvider accessType={accessType}>
-      <AlertingPageWrapper {...props} actions={<AlertManagerPicker />}>
+      <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
         <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
       </AlertingPageWrapper>
     </SelectedAlertmanagerProvider>
   );
 };
+
+/**
+ * This function tells us when we want to disable the alertmanager picker
+ * It's not great...
+ */
+function useIsDisabledAlertmanagerSelection() {
+  const location = useLocation();
+  const disabledPathSegment = ['/edit', '/new'];
+
+  return disabledPathSegment.some((match) => location?.pathname?.includes(match));
+}
 
 /**
  * This component will render an error message if the user doesn't have sufficient permissions or if the requested
