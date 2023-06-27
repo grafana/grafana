@@ -28,6 +28,7 @@ import {
   SupplementaryQueryOptions,
   DataQueryError,
   rangeUtil,
+  ensureTimeField,
   Field,
   LogRowContextQueryDirection,
   LogRowContextOptions,
@@ -577,12 +578,13 @@ export class ElasticDatasource
        */
       const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
       const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
+      const otherFields = dataFrame.fields.filter((f: Field) => f !== timestampField && f !== lineField);
       if (timestampField && lineField) {
         return {
           data: [
             {
               ...dataFrame,
-              fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+              fields: [ensureTimeField(timestampField), lineField, ...otherFields],
             },
           ],
         };
