@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type SocialService struct {
@@ -372,11 +373,45 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	return nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool) {
+var errRoleAttributePathNotSet = errutil.NewBase(errutil.StatusBadRequest,
+	"role_attribute_path not set and role_attribute_strict is set",
+	errutil.WithLogLevel(errutil.LevelError), errutil.WithPublicMessage("Instance misconfigured, please contact your administrator"))
+
+var errRoleAttributeStrictViolation = errutil.NewBase(errutil.StatusBadRequest,
+	"idP did not return a role attribute, but role_attribute_strict is set",
+	errutil.WithLogLevel(errutil.LevelError),
+	errutil.WithPublicMessage("idP did not return a role attribute, please contact your administrator"))
+
+var errInvalidRole = errutil.NewBase(errutil.StatusBadRequest, "invalid role",
+	errutil.WithLogLevel(errutil.LevelError),
+	errutil.WithPublicMessage("idP did not return a valid role attribute, please contact your administrator"))
+
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool, error) {
 	if s.roleAttributePath == "" {
-		return s.defaultRole(legacy), false
+		if s.roleAttributeStrict {
+			return "", false, errRoleAttributePathNotSet
+		}
+		return s.defaultRole(), false, nil
 	}
 
+	role, gAdmin := s.searchRole(rawJSON, groups)
+	if !role.IsValid() {
+		if s.roleAttributeStrict {
+			return "", false, errRoleAttributeStrictViolation.Errorf("invalid role: %s", role)
+		}
+
+		if role != "" {
+			return "", false, errInvalidRole.Errorf("invalid role: %s", role)
+		}
+
+		role = s.defaultRole()
+		gAdmin = false
+	}
+
+	return role, gAdmin, nil
+}
+
+func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
 	role, err := s.searchJSONForStringAttr(s.roleAttributePath, rawJSON)
 	if err == nil && role != "" {
 		return getRoleFromSearch(role)
@@ -389,29 +424,18 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy
 		}
 	}
 
-	return s.defaultRole(legacy), false
+	return "", false
 }
 
 // defaultRole returns the default role for the user based on the autoAssignOrgRole setting
 // if legacy is enabled "" is returned indicating the previous role assignment is used.
-func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
-	if s.roleAttributeStrict {
-		s.log.Debug("RoleAttributeStrict is set, returning no role.")
-		return ""
-	}
-
-	if s.autoAssignOrgRole != "" && !legacy {
+func (s *SocialBase) defaultRole() org.RoleType {
+	if s.autoAssignOrgRole != "" {
 		s.log.Debug("No role found, returning default.")
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
-	if legacy && !s.skipOrgRoleSync {
-		s.log.Warn("No valid role found. Skipping role sync. " +
-			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
-			"If role sync is not desired, set skip_org_role_sync for your provider to true")
-	}
-
-	return ""
+	return org.RoleViewer
 }
 
 // match grafana admin role and translate to org role and bool.
