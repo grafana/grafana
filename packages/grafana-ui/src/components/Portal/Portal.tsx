@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 import { useTheme2 } from '../../themes';
 
 interface Props {
+  zIndexOffset?: number;
   className?: string;
   root?: HTMLElement;
   forwardedRef?: React.ForwardedRef<HTMLDivElement>;
