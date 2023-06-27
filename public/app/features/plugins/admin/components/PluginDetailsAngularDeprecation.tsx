@@ -7,6 +7,17 @@ type Props = {
   angularSupportEnabled?: boolean;
 };
 
+function deprecationMessage(angularSupportEnabled?: boolean): string {
+  const msg = 'This plugin uses a deprecated, legacy platform based on AngularJS and ';
+  if (angularSupportEnabled === undefined) {
+    return msg + ' may be incompatible depending on your Grafana configuration.';
+  }
+  if (angularSupportEnabled) {
+    return msg + ' will stop working in future releases of Grafana.';
+  }
+  return msg + ' is incompatible with your current Grafana configuration.';
+}
+
 // An Alert showing information about Angular deprecation notice.
 // If the plugin does not use Angular (!plugin.angularDetected), it returns null.
 export function PluginDetailsAngularDeprecation({
@@ -15,15 +26,7 @@ export function PluginDetailsAngularDeprecation({
 }: Props): React.ReactElement | null {
   return (
     <Alert severity="warning" title="Angular plugin" className={className}>
-      <p>
-        This plugin uses a deprecated, legacy platform based on AngularJS and
-        {angularSupportEnabled === undefined
-          ? ' may be incompatible depending on your Grafana configuration.'
-          : angularSupportEnabled
-          ? ' will stop working in future releases of Grafana.'
-          : ' is incompatible with your current Grafana configuration.'}
-      </p>
-
+      <p>{deprecationMessage(angularSupportEnabled)}</p>
       <a
         href="https://grafana.com/docs/grafana/latest/developers/angular_deprecation/"
         className="external-link"
