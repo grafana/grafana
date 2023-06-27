@@ -8,7 +8,7 @@ keywords:
   - documentation
   - oauth
 title: Configure Azure AD OAuth2 authentication
-weight: 600
+weight: 300
 ---
 
 # Configure Azure AD OAuth2 authentication

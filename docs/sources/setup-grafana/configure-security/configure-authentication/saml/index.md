@@ -15,7 +15,7 @@ labels:
     - cloud
     - enterprise
 title: Configure SAML authentication using the configuration file
-weight: 1100
+weight: 600
 ---
 
 # Configure SAML authentication using the configuration file

@@ -8,7 +8,7 @@ keywords:
   - documentation
   - oauth
 title: Configure GitLab OAuth2 authentication
-weight: 700
+weight: 1000
 ---
 
 # Configure GitLab OAuth2 authentication

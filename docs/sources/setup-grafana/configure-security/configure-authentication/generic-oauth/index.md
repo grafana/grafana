@@ -8,7 +8,7 @@ keywords:
   - documentation
   - oauth
 title: Configure generic OAuth authentication
-weight: 200
+weight: 800
 ---
 
 # Configure generic OAuth authentication
