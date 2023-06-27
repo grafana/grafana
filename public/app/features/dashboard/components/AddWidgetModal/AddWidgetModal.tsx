@@ -4,11 +4,10 @@ import React, { useMemo, useState } from 'react';
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { CustomScrollbar, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
-
-import { useSelector } from '../../../../types';
-import { VizTypePickerPlugin } from '../../../panel/components/VizTypePicker/VizTypePickerPlugin';
-import { filterPluginList, getWidgetPluginMeta } from '../../../panel/state/util';
-import { onCreateNewWidgetPanel } from '../../utils/dashboard';
+import { onCreateNewWidgetPanel } from 'app/features/dashboard/utils/dashboard';
+import { VizTypePickerPlugin } from 'app/features/panel/components/VizTypePicker/VizTypePickerPlugin';
+import { filterPluginList, getWidgetPluginMeta } from 'app/features/panel/state/util';
+import { useSelector } from 'app/types';
 
 export const AddWidgetModal = () => {
   const styles = useStyles2(getStyles);
