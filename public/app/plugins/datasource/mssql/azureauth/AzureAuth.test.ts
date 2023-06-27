@@ -1,20 +1,26 @@
-import { DataSourceSettings } from '@grafana/data';
-import { GrafanaBootConfig } from '@grafana/runtime';
+import { AzureCredentialsType } from '../types';
 
-import { ConcealedSecret, AzureAuthSecureJSONDataType, AzureAuthJSONDataType } from '../types';
-
-import { getDefaultAzureCloud, getDefaultCredentials, getSecret, getCredentials } from './AzureCredentialsConfig';
+import {
+  concealedSecret,
+  configWithManagedIdentityEnabled,
+  configWithManagedIdentityDisabled,
+  dataSourceSettingsWithMsiCredentials,
+  dataSourceSettingsWithClientSecretOnServer,
+  dataSourceSettingsWithClientSecretInSecureJSONData,
+} from './AzureAuth.testMocks';
+import {
+  getDefaultAzureCloud,
+  getDefaultCredentials,
+  getSecret,
+  getCredentials,
+  updateCredentials,
+} from './AzureCredentialsConfig';
 
 describe('AzureAuth', () => {
   describe('AzureCredentialsConfig', () => {
     it('`getDefaultAzureCloud()` should return the correct cloud', () => {
-      const configWithDefinedCloud: GrafanaBootConfig = {
-        azure: { cloud: 'AzureCloud' },
-      } as unknown as GrafanaBootConfig;
-      const configWithUndefinedCloud: GrafanaBootConfig = { azure: {} } as unknown as GrafanaBootConfig;
-
-      const resultForDefinedCloud = getDefaultAzureCloud(configWithDefinedCloud);
-      const resultForUndefinedCloud = getDefaultAzureCloud(configWithUndefinedCloud);
+      const resultForDefinedCloud = getDefaultAzureCloud(configWithManagedIdentityDisabled);
+      const resultForUndefinedCloud = getDefaultAzureCloud(configWithManagedIdentityEnabled);
 
       // Currently, the only supported cloud is AzureCloud, so we expect the same result for both defined and undefined cases.
       expect(resultForDefinedCloud).toBe('AzureCloud');
@@ -22,13 +28,6 @@ describe('AzureAuth', () => {
     });
 
     it('`getDefaultCredentials()` should return the correct credentials based on whether the managed identity is enabled', () => {
-      const configWithManagedIdentityEnabled: GrafanaBootConfig = {
-        azure: { managedIdentityEnabled: true },
-      } as unknown as GrafanaBootConfig;
-      const configWithManagedIdentityDisabled: GrafanaBootConfig = {
-        azure: { managedIdentityEnabled: false },
-      } as unknown as GrafanaBootConfig;
-
       const resultForManagedIdentityEnabled = getDefaultCredentials(configWithManagedIdentityEnabled);
       const resultForManagedIdentityDisabled = getDefaultCredentials(configWithManagedIdentityDisabled);
 
@@ -37,65 +36,129 @@ describe('AzureAuth', () => {
     });
 
     it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
-      const concealed: ConcealedSecret = Symbol('superSecretSecret');
-      const dataSourceSettingsServerSideSecret: DataSourceSettings<{}, AzureAuthSecureJSONDataType> = {
-        secureJsonFields: { azureClientSecret: true },
-      } as unknown as DataSourceSettings<{}, AzureAuthSecureJSONDataType>;
-      const dataSourceSettingsSecureJSONDataSecret: DataSourceSettings<{}, AzureAuthSecureJSONDataType> = {
-        secureJsonFields: { azureClientSecret: false },
-        secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
-      } as unknown as DataSourceSettings<{}, AzureAuthSecureJSONDataType>;
+      const resultFromServerSideSecret = getSecret(dataSourceSettingsWithClientSecretOnServer, concealedSecret);
+      expect(resultFromServerSideSecret).toBe(concealedSecret);
 
-      const resultFromServerSideSecret = getSecret(dataSourceSettingsServerSideSecret, concealed);
-      expect(resultFromServerSideSecret).toBe(concealed);
-
-      const resultFromSecureJSONDataSecret = getSecret(dataSourceSettingsSecureJSONDataSecret, concealed);
+      const resultFromSecureJSONDataSecret = getSecret(
+        dataSourceSettingsWithClientSecretInSecureJSONData,
+        concealedSecret
+      );
       expect(resultFromSecureJSONDataSecret).toBe('XXXX-super-secret-secret-XXXX');
     });
 
-    it('`getCredentials()` should return the correct credentials based on whether the managed identity is enabled', () => {
-      const configWithManagedIdentityEnabled: GrafanaBootConfig = {
-        azure: { managedIdentityEnabled: true },
-      } as unknown as GrafanaBootConfig;
-      const configWithManagedIdentityDisabled: GrafanaBootConfig = {
-        azure: { managedIdentityEnabled: false },
-      } as unknown as GrafanaBootConfig;
+    describe('getCredentials()', () => {
+      it('should return the correct managed identity credentials', () => {
+        // If `dataSourceSettings.authType === "msi"` && `config.azure.managedIdentityEnabled === true`.
+        const resultForManagedIdentityEnabled = getCredentials(
+          dataSourceSettingsWithMsiCredentials,
+          configWithManagedIdentityEnabled,
+          concealedSecret
+        );
+        expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
 
-      const dataSourceSettingsWithMsiCredentials: DataSourceSettings<
-        AzureAuthJSONDataType,
-        AzureAuthSecureJSONDataType
-      > = {
-        jsonData: { azureCredentials: { authType: 'msi' } },
-      } as unknown as DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>;
-      const dataSourceSettingsWithClientSecretCredentials: DataSourceSettings<
-        AzureAuthJSONDataType,
-        AzureAuthSecureJSONDataType
-      > = {
-        jsonData: { azureCredentials: { authType: 'clientsecret' } },
-      } as unknown as DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>;
+        // If `dataSourceSettings.authType === "msi"` but `config.azure.managedIdentityEnabled !== true`.
+        // Default to basic client secret credentials.
+        const resultForManagedIdentityEnabledInJSONButDisabledInConfig = getCredentials(
+          dataSourceSettingsWithMsiCredentials,
+          configWithManagedIdentityDisabled,
+          concealedSecret
+        );
+        expect(resultForManagedIdentityEnabledInJSONButDisabledInConfig).toEqual({
+          authType: 'clientsecret',
+          azureCloud: 'AzureCloud',
+        });
+      });
 
-      // If `dataSourceSettings.authType === "msi"` and `config.azure.managedIdentityEnabled === true`.
-      const resultForManagedIdentityEnabled = getCredentials(
-        dataSourceSettingsWithMsiCredentials,
-        configWithManagedIdentityEnabled
-      );
-      expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
+      it('should return the correct client secret credentials', () => {
+        const basicExpectedResult = {
+          authType: 'clientsecret',
+          azureCloud: 'AzureCloud',
+          tenantId: 'XXXX-tenant-id-XXXX',
+          clientId: 'XXXX-client-id-XXXX',
+        };
 
-      // If `dataSourceSettings.authType === "clientsecret"`.
-      const resultForManagedIdentityDisabled = getCredentials(
-        dataSourceSettingsWithClientSecretCredentials,
-        configWithManagedIdentityDisabled
-      );
-      expect(resultForManagedIdentityDisabled).toEqual({ authType: 'clientsecret', azureCloud: 'AzureCloud' });
+        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == true`,
+        // i.e. the client secret is stored on the server.
+        const resultForClientSecretCredentialsOnServer = getCredentials(
+          dataSourceSettingsWithClientSecretOnServer,
+          configWithManagedIdentityDisabled,
+          concealedSecret
+        );
 
-      // If `dataSourceSettings.authType === "msi"` but `config.azure.managedIdentityEnabled !== true`.
-      const resultForManagedIdentityDisabledWithCredentials = getCredentials(
-        dataSourceSettingsWithClientSecretCredentials,
-        configWithManagedIdentityDisabled
-      );
-      expect(resultForManagedIdentityDisabledWithCredentials).toEqual({
-        authType: 'clientsecret',
-        azureCloud: 'AzureCloud',
+        expect(resultForClientSecretCredentialsOnServer).toEqual({
+          ...basicExpectedResult,
+          clientSecret: concealedSecret,
+        });
+
+        //   If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`,
+        //   i.e. the client secret is stored in the secureJson.
+        const resultForClientSecretCredentialsInSecureJSON = getCredentials(
+          dataSourceSettingsWithClientSecretInSecureJSONData,
+          configWithManagedIdentityDisabled,
+          concealedSecret
+        );
+        expect(resultForClientSecretCredentialsInSecureJSON).toEqual({
+          ...basicExpectedResult,
+          clientSecret: 'XXXX-super-secret-secret-XXXX',
+        });
+      });
+    });
+
+    describe('updateCredentials()', () => {
+      it('should update the credentials for managed service identity correctly', () => {
+        // If `dataSourceSettings.authType === "msi"` && `config.azure.managedIdentityEnabled === true`.
+        const resultForMsiCredentials = updateCredentials(
+          dataSourceSettingsWithMsiCredentials,
+          configWithManagedIdentityEnabled,
+          {
+            authType: 'msi',
+          }
+        );
+        expect(resultForMsiCredentials).toEqual({ jsonData: { azureCredentials: { authType: 'msi' } } });
+
+        // If `dataSourceSettings.authType === "msi"` but `config.azure.managedIdentityEnabled !== true`.
+        expect(() =>
+          updateCredentials(dataSourceSettingsWithMsiCredentials, configWithManagedIdentityDisabled, {
+            authType: 'msi',
+          })
+        ).toThrow('Managed Identity authentication is not enabled in Grafana config.');
+      });
+
+      it('should update the credentials for client secret correctly', () => {
+        const basicClientSecretCredentials: AzureCredentialsType = {
+          authType: 'clientsecret',
+          azureCloud: 'AzureCloud',
+          tenantId: 'XXXX-tenant-id-XXXX',
+          clientId: 'XXXX-client-id-XXXX',
+        };
+
+        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == true`.
+        const resultForClientSecretCredentials1 = updateCredentials(
+          dataSourceSettingsWithClientSecretOnServer,
+          configWithManagedIdentityDisabled,
+          basicClientSecretCredentials
+        );
+        expect(resultForClientSecretCredentials1).toEqual({
+          jsonData: {
+            azureCredentials: { ...basicClientSecretCredentials },
+          },
+          secureJsonData: { azureClientSecret: undefined },
+          secureJsonFields: { azureClientSecret: false },
+        });
+
+        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`.
+        const resultForClientSecretCredentials2 = updateCredentials(
+          dataSourceSettingsWithClientSecretInSecureJSONData,
+          configWithManagedIdentityDisabled,
+          { ...basicClientSecretCredentials, clientSecret: 'XXXX-super-secret-secret-XXXX' }
+        );
+        expect(resultForClientSecretCredentials2).toEqual({
+          jsonData: {
+            azureCredentials: { ...basicClientSecretCredentials },
+          },
+          secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
+          secureJsonFields: { azureClientSecret: false },
+        });
       });
     });
   });

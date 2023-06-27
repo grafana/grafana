@@ -19,7 +19,7 @@ export enum AzureCloud {
   None = '',
 }
 
-export type ConcealedSecret = symbol;
+export type ConcealedSecretType = symbol;
 
 export type AzureAuthType = 'msi' | 'clientsecret';
 
@@ -28,16 +28,16 @@ interface AzureCredentialsBaseType {
   defaultSubscriptionId?: string;
 }
 
-interface AzureManagedIdentityCredentialsType extends AzureCredentialsBaseType {
+export interface AzureManagedIdentityCredentialsType extends AzureCredentialsBaseType {
   authType: 'msi';
 }
 
-interface AzureClientSecretCredentialsType extends AzureCredentialsBaseType {
+export interface AzureClientSecretCredentialsType extends AzureCredentialsBaseType {
   authType: 'clientsecret';
   azureCloud?: string;
   tenantId?: string;
   clientId?: string;
-  clientSecret?: string | ConcealedSecret;
+  clientSecret?: string | ConcealedSecretType;
 }
 
 export type AzureCredentialsType = AzureManagedIdentityCredentialsType | AzureClientSecretCredentialsType;
@@ -56,7 +56,7 @@ export type AzureAuthJSONDataType = DataSourceJsonData & {
 };
 
 export type AzureAuthSecureJSONDataType = {
-  azureClientSecret: undefined | string | ConcealedSecret;
+  azureClientSecret: undefined | string | ConcealedSecretType;
 };
 
 export type AzureAuthConfigType = {
