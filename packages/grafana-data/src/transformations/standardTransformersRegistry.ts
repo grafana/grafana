@@ -37,7 +37,7 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
   /**
    * Image path for the transformer
    */
-  image?: { dark: string; light: string };
+  image?: string;
 }
 
 export enum TransformerCategory {
