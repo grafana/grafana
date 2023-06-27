@@ -55,6 +55,10 @@ In Alerting, you can only use expressions for Grafana-managed alert rules. For e
 
 You can also use classic condition, which creates an alert rule that triggers a single alert when its condition is met. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
 
+**Note:**
+
+Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
+
 **Reduce**
 
 Aggregates time series values in the selected time range into a single value.
