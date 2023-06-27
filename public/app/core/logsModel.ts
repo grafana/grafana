@@ -366,8 +366,9 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     for (let j = 0; j < series.length; j++) {
       const ts = timeField.values[j];
       const time = toUtc(ts);
+      const timeEpochMs = time.valueOf();
       const tsNs = timeNanosecondField ? timeNanosecondField.values[j] : undefined;
-      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
+      const timeEpochNs = tsNs ? tsNs : timeEpochMs + '000000';
 
       // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
       const messageValue: unknown = stringField.values[j] ?? '';
@@ -405,7 +406,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         dataFrame: series,
         logLevel,
         timeFromNow: dateTimeFormatTimeAgo(ts),
-        timeEpochMs: time.valueOf(),
+        timeEpochMs,
         timeEpochNs,
         timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
