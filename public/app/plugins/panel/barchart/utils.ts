@@ -560,14 +560,12 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  let fieldsCopy = [...fields];
   // move lines to the end
-  fieldsCopy.forEach((field) => {
-    if (field.config.custom?.drawStyle === GraphDrawStyle.Line) {
-      const index = fields.indexOf(field);
-      fields.push(field);
-      fields.splice(index, 1);
-    }
+  fields.sort((a, b) => {
+    let aIsLine = a.config.custom?.drawStyle === GraphDrawStyle.Line ? 1 : 0;
+    let bIsLine = b.config.custom?.drawStyle === GraphDrawStyle.Line ? 1 : 0;
+
+    return aIsLine - bIsLine;
   });
 
   let legendFields: Field[] = fields;
