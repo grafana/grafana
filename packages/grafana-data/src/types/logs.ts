@@ -285,5 +285,5 @@ export const hasQueryManipulationSupport = <TQuery extends DataQuery>(
   datasource: unknown,
   method: keyof DataSourceWithQueryManipulationSupport<TQuery>
 ): datasource is DataSourceWithQueryManipulationSupport<TQuery> => {
-  return Object.hasOwnProperty.call(datasource, method);
+  return datasource !== null && typeof datasource === 'object' && method in datasource;
 };
