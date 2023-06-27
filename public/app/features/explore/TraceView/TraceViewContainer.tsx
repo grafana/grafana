@@ -30,19 +30,6 @@ interface Props {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(1)};
-    background-color: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
-    position: relative;
-    border-radius: ${theme.shape.radius.default};
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
-    padding: ${config.featureToggles.newTraceViewHeader ? 0 : theme.spacing(theme.components.panel.padding)};
-  `,
   duration: css({
     color: '#aaa',
     ...theme.typography.bodySmall,
@@ -77,7 +64,7 @@ export function TraceViewContainer(props: Props) {
   }
 
   return (
-    <div className={style.container} ref={ref}>
+    <div ref={ref}>
       <PanelChrome
         padding="none"
         width={width}
@@ -95,7 +82,7 @@ export function TraceViewContainer(props: Props) {
             {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
           </span>
         }
-        displayMode="transparent"
+        // displayMode="transparent"
         actions={
           config.featureToggles.newTraceViewHeader ? (
             <TracePageActions
