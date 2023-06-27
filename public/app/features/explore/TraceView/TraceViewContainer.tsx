@@ -84,7 +84,14 @@ export function TraceViewContainer(props: Props) {
         title={getTraceName(traceProp.spans)}
         titleItems={
           <span className={style.duration}>
-            {config.featureToggles.newTraceViewHeader ? formatDuration(traceProp.duration) : traceProp.traceID}
+            {config.featureToggles.newTraceViewHeader ? (
+              <>
+                {formatDuration(traceProp.duration)}
+                {links && links.length > 0 && <ExternalLinks links={links} />}
+              </>
+            ) : (
+              traceProp.traceID
+            )}
             {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
           </span>
         }

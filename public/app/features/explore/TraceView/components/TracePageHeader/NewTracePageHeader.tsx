@@ -66,13 +66,6 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
   }, [setHeaderHeight, showSpanFilters, styles.header]);
 
-  const links = useMemo(() => {
-    if (!trace) {
-      return [];
-    }
-    return getTraceLinks(trace);
-  }, [trace]);
-
   if (!trace) {
     return null;
   }
@@ -89,10 +82,6 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
 
   return (
     <header className={styles.header}>
-      <div className={styles.titleRow}>
-        {links && links.length > 0 && <ExternalLinks links={links} className={styles.tracePageHeaderBack} />}
-      </div>
-
       <div className={styles.subtitle}>
         <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
         <span className={styles.tagMeta}>
