@@ -148,6 +148,25 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.timeNanosecondField).toBeNull();
     expect(result!.attributes).toBeNull();
   });
+
+  it('should parse a minimal old-style frame (only two fields, time and line)', () => {
+    const time = makeTime('Time', [1687185711795, 1687185711995]);
+    const line = makeString('Line', ['line1', 'line2']);
+
+    const result = parseLogsFrame({
+      fields: [time, line],
+      length: 2,
+    });
+
+    expect(result).not.toBeNull();
+
+    expect(result!.timeField.values[0]).toBe(time.values[0]);
+    expect(result!.bodyField.values[0]).toBe(line.values[0]);
+    expect(result!.severityField).toBeNull();
+    expect(result!.idField).toBeNull();
+    expect(result!.timeNanosecondField).toBeNull();
+    expect(result!.attributes).toBeNull();
+  });
 });
 
 describe('attributesToLabels', () => {
