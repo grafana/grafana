@@ -86,3 +86,4 @@ pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-ba
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
 flameGraphV2,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
+vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
