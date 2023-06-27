@@ -90,6 +90,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltip: css`
     title: tooltip;
     position: fixed;
+    z-index: ${theme.zIndex.tooltip};
   `,
   tooltipContent: css`
     title: tooltipContent;
@@ -101,7 +102,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     font-size: ${theme.typography.bodySmall.fontSize};
     padding: ${theme.spacing(0.5, 1)};
     transition: opacity 0.3s;
-    z-index: ${theme.zIndex.tooltip};
     max-width: 400px;
     overflow-wrap: break-word;
   `,
