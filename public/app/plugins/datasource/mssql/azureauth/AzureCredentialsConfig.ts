@@ -25,11 +25,11 @@ export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCrede
 
 export const getSecret = (
   dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>,
-  concealSecret: symbol
+  concealedSecret: symbol
 ): undefined | string | ConcealedSecret => {
   if (dsSettings.secureJsonFields.azureClientSecret) {
     // The secret is concealed on server
-    return concealSecret;
+    return concealedSecret;
   } else {
     const secret = dsSettings.secureJsonData?.azureClientSecret;
     return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
@@ -40,7 +40,7 @@ export const getCredentials = (
   dsSettings: DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>,
   bootConfig: GrafanaBootConfig
 ): AzureCredentialsType => {
-  const credentials = dsSettings.jsonData.azureCredentials;
+  const credentials = dsSettings.jsonData?.azureCredentials;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
