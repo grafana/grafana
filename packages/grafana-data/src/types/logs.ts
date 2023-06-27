@@ -262,6 +262,8 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
 };
 
 /**
+ * Data sources that support query manipulation though `modifyQuery` and `analyzeQuery` in Explore.
+ * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
 export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery> {
