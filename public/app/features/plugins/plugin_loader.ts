@@ -222,9 +222,18 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   }
 };
 
-// For backwards compatiblity with older plugins that use `loadPluginCss`
-// we need to translate the path for systemjs 6.x.x to understand
-const patchLoadPluginCssUrl = (id: string) => `./public/${id}`;
+// Older plugins load .css files which results in a module that matches the CSS Module spec.
+// https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
+// Because they can be nested deps here we listen for any css files which are loaded and apply their styles.
+systemJSPrototype.onload = function (err: unknown, id: string, deps: string[], isErrSource: boolean) {
+  if (id.endsWith('.css') && !err) {
+    const module = SystemJS.get(id);
+    const styles = module?.default;
+    if (styles) {
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, styles];
+    }
+  }
+};
 
 // This transform prevents a conflict between systemjs and requirejs which Monaco Editor
 // depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
