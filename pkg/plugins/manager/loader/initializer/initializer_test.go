@@ -138,9 +138,9 @@ type fakeEnvVarsProvider struct {
 	GetFunc func(ctx context.Context, p *plugins.Plugin) []string
 }
 
-func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) []string {
+func (f *fakeEnvVarsProvider) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
 	if f.GetFunc != nil {
-		return f.GetFunc(ctx, p)
+		return f.GetFunc(ctx, p), nil
 	}
-	return nil
+	return nil, nil
 }
