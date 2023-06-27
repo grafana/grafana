@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -260,6 +261,41 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			checkMockDetectors(t, svc.detectors)
 			bg.exitAndWait()
 		})
+
+		t.Run("runs the job periodically", func(t *testing.T) {
+			t.Parallel()
+			const tcRuns = 3
+
+			gcom := newDefaultGCOMScenario()
+			srv := gcom.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+			jobInterval := time.Millisecond * 500
+			svc := provideDynamic(t, srv.URL, jobInterval)
+			done := make(chan struct{})
+			var jobCalls counter
+			lastJobTime := time.Now()
+			bg := newBackgroundServiceScenario(svc, func() {
+				now := time.Now()
+				assert.WithinDuration(t, now, lastJobTime, jobInterval+jobInterval/2)
+				lastJobTime = now
+
+				jobCalls.inc()
+				if jobCalls.calls() == tcRuns {
+					// this is done ONLY once
+					done <- struct{}{}
+					close(done)
+				}
+			})
+			t.Cleanup(bg.close)
+			// Refresh cache right before running the service so we skip the initial run
+			require.NoError(t, svc.store.Set(context.Background(), mockGCOMPatterns))
+			bg.run(context.Background(), t)
+			<-done
+			bg.exitAndWait()
+
+			require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
+			require.True(t, gcom.httpCalls.calledX(tcRuns), "should have the correct number of gcom api calls")
+		})
 	})
 }
 
@@ -318,12 +354,16 @@ func (c *counter) called() bool {
 	return r
 }
 
-func (c *counter) calledOnce() bool {
+func (c *counter) calledX(x int) bool {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	r := c.count == c.lastAssertCount+1
+	r := c.count == x
 	c.lastAssertCount = c.count
 	return r
+}
+
+func (c *counter) calledOnce() bool {
+	return c.calledX(1)
 }
 
 type gcomScenario struct {
