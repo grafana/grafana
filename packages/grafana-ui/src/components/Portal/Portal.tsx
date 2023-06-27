@@ -10,7 +10,7 @@ interface Props {
 }
 
 export function Portal(props: PropsWithChildren<Props>) {
-  const { children, className, root, forwardedRef } = props;
+  const { zIndexOffset, children, className, root, forwardedRef } = props;
   const theme = useTheme2();
   const node = useRef<HTMLDivElement | null>(null);
   const portalRoot = root ?? getPortalContainer();
@@ -21,7 +21,7 @@ export function Portal(props: PropsWithChildren<Props>) {
       node.current.className = className;
     }
     node.current.style.position = 'relative';
-    node.current.style.zIndex = `${theme.zIndex.portal}`;
+    node.current.style.zIndex = `${theme.zIndex.portal}` + zIndexOffset;
   }
 
   useLayoutEffect(() => {

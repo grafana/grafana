@@ -264,7 +264,7 @@ export const TooltipPlugin = ({
   }
 
   return (
-    <Portal>
+    <Portal zIndexOffset={isActive ? 1 : 0}>
       {tooltip && coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
           {tooltip}
