@@ -8,7 +8,7 @@ describe('PluginCacheBuster', () => {
   it('should append plugin version as cache flag if plugin is registered in buster', () => {
     const slug = 'bubble-chart-1';
     const version = 'v1.0.0';
-    const path = `plugins/${slug}/module`;
+    const path = `./public/plugins/${slug}/module.js`;
     const address = `http://localhost:3000/public/${path}.js`;
 
     registerPluginInCache({ path, version });
@@ -28,7 +28,7 @@ describe('PluginCacheBuster', () => {
   it('should append Date.now as cache flag if plugin is invalidated in buster', () => {
     const slug = 'bubble-chart-3';
     const version = 'v1.0.0';
-    const path = `plugins/${slug}/module`;
+    const path = `./public/plugins/${slug}/module.js`;
     const address = `http://localhost:3000/public/${path}.js`;
 
     registerPluginInCache({ path, version });
@@ -41,7 +41,7 @@ describe('PluginCacheBuster', () => {
   it('should also clear plugin settings cache', () => {
     const slug = 'bubble-chart-3';
     const version = 'v1.0.0';
-    const path = `plugins/${slug}/module`;
+    const path = `./public/plugins/${slug}/module.js`;
 
     const clearPluginSettingsCacheSpy = jest.spyOn(pluginSettings, 'clearPluginSettingsCache');
 
