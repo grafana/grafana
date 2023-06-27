@@ -94,8 +94,10 @@ export default function CorrelationsPage() {
   }, [remove.error, remove.loading, remove.value, fetchCorrelations]);
 
   useEffect(() => {
-    fetchCorrelations({ page });
-  }, [fetchCorrelations, page]);
+    if (!remove.value) {
+      fetchCorrelations({ page });
+    }
+  }, [fetchCorrelations, page, remove.value]);
 
   const RowActions = useCallback(
     ({
