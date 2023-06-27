@@ -27,12 +27,6 @@ function getField(cache: FieldCache, name: string, fieldType: FieldType): FieldW
   return field.type === fieldType ? field : undefined;
 }
 
-const z: undefined | number = undefined;
-
-if (z ?? 0 > 0) {
-  console.log('yo');
-}
-
 const DATAPLANE_TIMESTAMP_NAME = 'timestamp';
 const DATAPLANE_BODY_NAME = 'body';
 const DATAPLANE_SEVERITY_NAME = 'severity';
