@@ -13,7 +13,6 @@ GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
-GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 targets := $(shell echo '$(sources)' | tr "," " ")

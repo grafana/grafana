@@ -138,6 +138,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Indonesian Rupiah (Rp)', id: 'currencyIDR', fn: currency('Rp') },
       { name: 'Philippine Peso (PHP)', id: 'currencyPHP', fn: currency('PHP') },
       { name: 'Vietnamese Dong (VND)', id: 'currencyVND', fn: currency('đ', true) },
+      { name: 'Turkish Lira (₺)', id: 'currencyTRY', fn: currency('₺', true) },
     ],
   },
   {

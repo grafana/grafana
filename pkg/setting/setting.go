@@ -301,8 +301,9 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
-	OAuthAutoLogin    bool
-	OAuthCookieMaxAge int
+	OAuthAutoLogin                bool
+	OAuthCookieMaxAge             int
+	OAuthAllowInsecureEmailLookup bool
 
 	// JWT Auth
 	JWTAuthEnabled                 bool
@@ -1477,13 +1478,14 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
 	cfg.LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
-
 	const defaultMaxInactiveLifetime = "7d"
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", defaultMaxInactiveLifetime)
 	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
+
+	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
 
 	const defaultMaxLifetime = "30d"
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)
