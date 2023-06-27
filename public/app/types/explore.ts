@@ -15,21 +15,13 @@ import {
   DataQueryResponse,
   ExplorePanelsState,
   SupplementaryQueryType,
+  UrlQueryMap,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
-export enum ExploreId {
-  left = 'left',
-  right = 'right',
-}
-
-export type ExploreQueryParams = {
-  left?: string;
-  right?: string;
-};
-
+export type ExploreQueryParams = UrlQueryMap;
 /**
  * Global Explore state
  */
@@ -39,13 +31,7 @@ export interface ExploreState {
    */
   syncedTimes: boolean;
 
-  // This being optional wouldn't be needed with noUncheckedIndexedAccess set to true, but it cause more than 5k errors currently.
-  // In order to be safe, we declare each item as pssobly undefined to force existence checks.
-  // This will have the side effect of also forcing undefined checks when iterating over this object entries, but
-  // it's better to error on the safer side.
-  panes: {
-    [paneId in ExploreId]?: ExploreItemState;
-  };
+  panes: Record<string, ExploreItemState | undefined>;
 
   correlations?: CorrelationData[];
 
@@ -82,7 +68,7 @@ export interface ExploreState {
 }
 
 export const EXPLORE_GRAPH_STYLES = ['lines', 'bars', 'points', 'stacked_lines', 'stacked_bars'] as const;
-export type ExploreGraphStyle = (typeof EXPLORE_GRAPH_STYLES)[number];
+export type ExploreGraphStyle = typeof EXPLORE_GRAPH_STYLES[number];
 
 export interface ExploreItemState {
   /**
@@ -135,7 +121,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -259,7 +244,7 @@ export enum TABLE_RESULTS_STYLE {
   raw = 'raw',
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
-export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
+export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
 
 export interface SupplementaryQuery {
   enabled: boolean;

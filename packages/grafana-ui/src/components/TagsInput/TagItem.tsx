@@ -28,8 +28,7 @@ export const TagItem = ({ name, disabled, onRemove }: Props) => {
         name="times"
         size="lg"
         disabled={disabled}
-        ariaLabel={`Remove "${name}" tag`}
-        tooltip="Remove tag"
+        tooltip={`Remove "${name}" tag`}
         onClick={() => onRemove(name)}
         className={styles.buttonStyles}
       />

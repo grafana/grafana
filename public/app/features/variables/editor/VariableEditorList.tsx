@@ -59,7 +59,7 @@ export function VariableEditorList({
               <thead>
                 <tr>
                   <th>Variable</th>
-                  <th>Description</th>
+                  <th>Definition</th>
                   <th colSpan={5} />
                 </tr>
               </thead>

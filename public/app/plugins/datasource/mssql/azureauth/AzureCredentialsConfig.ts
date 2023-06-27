@@ -39,7 +39,7 @@ export const getCredentials = (
   dsSettings: DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>,
   bootConfig: GrafanaBootConfig
 ): AzureCredentialsType => {
-  const credentials = dsSettings.jsonData.azureCredentials as AzureCredentialsType | undefined;
+  const credentials = dsSettings.jsonData.azureCredentials;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled

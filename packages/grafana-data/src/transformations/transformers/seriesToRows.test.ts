@@ -124,7 +124,7 @@ describe('Series to rows', () => {
     });
   });
 
-  it('combine two time series, where first series fields has displayName, into one and displayNameFromDS overrides frame.name', async () => {
+  it('combine two time series, where first serie fields has displayName, into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -156,7 +156,7 @@ describe('Series to rows', () => {
 
       const expected: Field[] = [
         createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-        createField('Metric', FieldType.string, ['dsName', 'dsName', 'B', 'B', 'dsName', 'B']),
+        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
         createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
       ];
 
