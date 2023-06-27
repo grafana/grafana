@@ -206,7 +206,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						if !strings.HasPrefix(uidScope, "dashboards:") {
 							continue
 						}
-						args = append(args, strings.TrimPrefix(uidScope, "dashboards:uid:"))
+						args = append(args, strings.TrimPrefix(uidScope, dashboards.ScopeDashboardsPrefix))
 					}
 				}
 				// Only add the IN clause if we have any dashboards to check
@@ -243,7 +243,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						if !strings.HasPrefix(uidScope, "folders:") {
 							continue
 						}
-						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, "folders:uid:"))
+						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, dashboards.ScopeFoldersPrefix))
 					}
 				}
 				// Only add the IN clause if we have any folders to check
@@ -315,7 +315,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 						if !strings.HasPrefix(uidScope, "folders:") {
 							continue
 						}
-						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, "folders:uid:"))
+						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, dashboards.ScopeFoldersPrefix))
 					}
 				}
 				if len(permSelectorArgs) > 0 {
