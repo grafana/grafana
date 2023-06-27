@@ -32,7 +32,6 @@ package slugify
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -50,13 +49,11 @@ var (
 
 // Slugify creates a URL safe version from a given string that is at most 50 bytes long.
 func Slugify(value string) string {
-	s := simpleSlugger.Slugify(value)
-	if s == "" {
-		s = base64.RawURLEncoding.EncodeToString([]byte(value))
-		if len(s) > 50 || s == "" {
-			s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
-		}
+	s := simpleSlugger.Slugify(strings.TrimSpace(value))
+	if len(s) > 50 || s == "" {
+		s = uuid.NewSHA1(uuid.NameSpaceOID, []byte(value)).String()
 	}
+
 	return s
 }
 
@@ -65,6 +62,9 @@ func validCharacter(c rune) bool {
 		return true
 	}
 	if c >= '0' && c <= '9' {
+		return true
+	}
+	if c == '_' || c == '-' {
 		return true
 	}
 	return false
@@ -123,6 +123,8 @@ func getDefaultOmitments() map[rune]struct{} {
 
 func getDefaultReplacements() map[rune]string {
 	return map[rune]string{
+		' ': "-",
+
 		'&': "and",
 		'@': "at",
 		'©': "c",
