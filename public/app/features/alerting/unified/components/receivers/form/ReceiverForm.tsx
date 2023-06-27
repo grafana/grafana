@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { FieldErrors, FormProvider, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -66,7 +66,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.
-    defaultValues: JSON.parse(JSON.stringify(defaultValues)),
+    defaultValues: structuredClone(defaultValues),
   });
 
   useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
@@ -78,7 +78,14 @@ export function ReceiverForm<R extends ChannelValues>({
     register,
     formState: { errors },
     getValues,
+    reset,
   } = formAPI;
+
+  useEffect(() => {
+    // TS issue with react-form-hooks and generic types
+    // @ts-expect-error
+    reset(normalizeFormValues(initialValues));
+  }, [initialValues, reset]);
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
@@ -91,12 +98,6 @@ export function ReceiverForm<R extends ChannelValues>({
   );
 
   const submitCallback = async (values: ReceiverFormValues<R>) => {
-    // console.log(values);
-    //
-    // setError('items.[0].settings.integration_name', {
-    //   type: 'validate',
-    //   message: 'A receiver with this name already exists',
-    // });
     await onSubmit({
       ...values,
       items: values.items.filter((item) => !item.__deleted),
@@ -139,6 +140,7 @@ export function ReceiverForm<R extends ChannelValues>({
           return (
             <ChannelSubForm<R>
               defaultValues={field}
+              initialValues={initialItem}
               key={field.__id}
               onDuplicate={() => {
                 const currentValues: R = getValues().items[index];

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -14,6 +14,7 @@ import { CollapsibleSection } from './CollapsibleSection';
 
 interface Props<R extends FieldValues> {
   defaultValues: R;
+  initialValues?: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
   onDuplicate: () => void;
@@ -31,6 +32,7 @@ interface Props<R extends FieldValues> {
 
 export function ChannelSubForm<R extends ChannelValues>({
   defaultValues,
+  initialValues,
   pathPrefix,
   onDuplicate,
   onDelete,
@@ -44,9 +46,11 @@ export function ChannelSubForm<R extends ChannelValues>({
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
-  const name = (fieldName: string) => `${pathPrefix}${fieldName}`;
+
+  const fieldName = useCallback((fieldName: string) => `${pathPrefix}${fieldName}`, [pathPrefix]);
+
   const { control, watch, register, trigger, formState, setValue } = useFormContext();
-  const selectedType = watch(name('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
+  const selectedType = watch(fieldName('type')) ?? defaultValues.type; // nope, setting "default" does not work at all.
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
   useEffect(() => {
@@ -55,6 +59,17 @@ export function ChannelSubForm<R extends ChannelValues>({
      be lost when testing a contact point */
     register(`${pathPrefix}.secureFields`);
   }, [register, pathPrefix]);
+
+  // Restore values when switching back from a changed integration to the default one
+  useEffect(() => {
+    const subscription = watch((_, { name, type, value }) => {
+      if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
+        setValue(fieldName('settings'), initialValues.settings);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [selectedType, initialValues, setValue, fieldName, watch]);
 
   const [_secureFields, setSecureFields] = useState(secureFields ?? {});
 
@@ -101,7 +116,7 @@ export function ChannelSubForm<R extends ChannelValues>({
         <div>
           <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
-              name={name('type')}
+              name={fieldName('type')}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
                 <Select

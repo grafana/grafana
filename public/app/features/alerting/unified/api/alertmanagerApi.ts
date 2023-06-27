@@ -8,6 +8,7 @@ import {
   ExternalAlertmanagersResponse,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
+import { NotifierDTO } from '../../../../types';
 import { matcherToOperator } from '../utils/alertmanager';
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
@@ -66,6 +67,10 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: ({ amSourceName }) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(amSourceName)}/api/v2/alerts/groups`,
       }),
+    }),
+
+    grafanaNotifiers: build.query<NotifierDTO[], void>({
+      query: () => ({ url: '/api/alert-notifiers' }),
     }),
 
     getAlertmanagerChoiceStatus: build.query<AlertmanagersChoiceResponse, void>({
