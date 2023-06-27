@@ -1,7 +1,6 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { act } from 'react-dom/test-utils';
 import { render } from 'test/redux-rtl';
 
 import {
@@ -64,8 +63,6 @@ const getRowContext = jest.fn().mockImplementation(async (_, options) => {
     return { data: [dfAfter] };
   }
 });
-const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
-
 const dispatchMock = jest.fn();
 jest.mock('app/types', () => ({
   ...jest.requireActual('app/types'),
