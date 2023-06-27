@@ -1,3 +1,8 @@
+/*
+ * This is a dummy plugin to test the frontend sandbox
+ * It is not meant to be used in any other way
+ * This file doesn't require any compilation
+ */
 define(['react', '@grafana/data'], function (React, grafanaData) {
   const HelloWorld = () => {
     const createIframe = () => {
@@ -19,11 +24,9 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
       const adjacentIframe = `<iframe src="about:blank" id="adjacentIframe" width="10%" height="10%" frameBorder="0"></iframe>`;
       document.querySelector('body').insertAdjacentHTML('beforeend', adjacentIframe);
     };
-    const handleClick2 = () => {
-      console.log('hello world 2');
-    };
-    const handleClick3 = () => {
-      console.log('hello world 3');
+    const reachOut = (e) => {
+      const outsideEl = e.target.parentElement.parentElement.parentElement.parentElement.parentElement;
+      outsideEl.dataset.sandboxTest = 'true';
     };
 
     return React.createElement(
@@ -34,8 +37,7 @@ define(['react', '@grafana/data'], function (React, grafanaData) {
         { onClick: createIframe, 'data-testid': 'button-create-iframes' },
         'Create iframes'
       ),
-      React.createElement('button', { onClick: handleClick2, 'data-testid': 'panel-button-2' }, 'Button 2'),
-      React.createElement('button', { onClick: handleClick3, 'data-testid': 'panel-button-3' }, 'Button 3')
+      React.createElement('button', { onClick: reachOut, 'data-testid': 'button-reach-out' }, 'Reach out')
     );
   };
 
