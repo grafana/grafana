@@ -1,5 +1,15 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "permissions": {
+      "add-a": {
+        "permission": ""
+      },
+      "no-permissions": "",
+      "permissions": "",
+      "this-will-change-permissions-for-this-folder-and-all-its-descendants": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",

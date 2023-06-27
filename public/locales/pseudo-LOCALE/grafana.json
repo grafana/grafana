@@ -1,5 +1,15 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "access-control": {
+    "permissions": {
+      "add-a": {
+        "permission": "Åđđ ä pęřmįşşįőŉ"
+      },
+      "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
+      "permissions": "Pęřmįşşįőŉş",
+      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:"
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "Đęľęŧę",

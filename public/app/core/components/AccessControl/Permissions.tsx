@@ -7,6 +7,7 @@ import { Space } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
+import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 
@@ -39,9 +40,9 @@ export type Props = {
 };
 
 export const Permissions = ({
-  title = 'Permissions',
-  buttonLabel = 'Add a permission',
-  emptyLabel = 'There are no permissions',
+  title = t('access-control.permissions.permissions', 'Permissions'),
+  buttonLabel = t('access-control.permissions.add-a.permission', 'Add a permission'),
+  emptyLabel = t('access-control.permissions.no-permissions', 'There are no permissions'),
   resource,
   resourceId,
   canSetPermissions,
@@ -137,7 +138,9 @@ export const Permissions = ({
         <>
           {config.featureToggles.nestedFolders && resource === 'folders' && (
             <>
-              This will change permissions for this folder and all its descendants. In total, this will affect:
+              <Trans i18nKey="access-control.permissions.this-will-change-permissions-for-this-folder-and-all-its-descendants">
+                This will change permissions for this folder and all its descendants. In total, this will affect:
+              </Trans>
               <DescendantCount
                 selectedItems={{
                   folder: { [resourceId]: true },

@@ -1,5 +1,15 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "permissions": {
+      "add-a": {
+        "permission": ""
+      },
+      "no-permissions": "",
+      "permissions": "",
+      "this-will-change-permissions-for-this-folder-and-all-its-descendants": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",
