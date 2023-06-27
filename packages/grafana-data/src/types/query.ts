@@ -96,3 +96,13 @@ export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
 };
+
+/**
+ * @internal
+ */
+export const hasQueryManipulationSupport = <TQuery extends SchemaDataQuery>(
+  datasource: unknown,
+  method: keyof DataSourceWithQueryManipulationSupport<TQuery>
+): datasource is DataSourceWithQueryManipulationSupport<TQuery> => {
+  return Object.hasOwnProperty.call(datasource, method);
+};
