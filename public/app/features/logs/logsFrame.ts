@@ -56,7 +56,7 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const bodyField = getField(cache, DATAPLANE_BODY_NAME, FieldType.string);
 
   // these two are mandatory
-  if (timestampField == null || bodyField == null) {
+  if (timestampField === undefined || bodyField === undefined) {
     return null;
   }
 
@@ -64,7 +64,7 @@ function parseDataplaneLogsFrame(frame: DataFrame): LogsFrame | null {
   const idField = getField(cache, DATAPLANE_ID_NAME, FieldType.string) ?? null;
   const attributesField = getField(cache, DATAPLANE_ATTRIBUTES_NAME, FieldType.other) ?? null;
 
-  const attributes = attributesField == null ? null : attributesField.values;
+  const attributes = attributesField === null ? null : attributesField.values;
 
   return {
     timeField: timestampField,

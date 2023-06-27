@@ -7,7 +7,7 @@ function getLabels(frame: DataFrame, cache: FieldCache, lineField: Field): Label
 
   if (!useLabelsField) {
     const lineLabels = lineField.labels;
-    if (lineLabels != null) {
+    if (lineLabels !== undefined) {
       const result = new Array(frame.length);
       result.fill(lineLabels);
       return result;
