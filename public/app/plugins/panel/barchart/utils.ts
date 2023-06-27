@@ -552,14 +552,6 @@ export function prepareBarChartDisplayValues(
     };
   }
 
-  // move lines to the end
-  fields.forEach((field, idx) => {
-    if (field.config.custom?.drawStyle === GraphDrawStyle.Line) {
-      fields.push(field);
-      fields.splice(idx, 1);
-    }
-  });
-
   // Show the first number value
   if (colorByField && fields.length > 1) {
     const firstNumber = fields.find((f) => f !== colorByField);
@@ -567,6 +559,16 @@ export function prepareBarChartDisplayValues(
       fields = [firstNumber];
     }
   }
+
+  let fieldsCopy = [...fields];
+  // move lines to the end
+  fieldsCopy.forEach((field) => {
+    if (field.config.custom?.drawStyle === GraphDrawStyle.Line) {
+      const index = fields.indexOf(field);
+      fields.push(field);
+      fields.splice(index, 1);
+    }
+  });
 
   let legendFields: Field[] = fields;
   if (options.stacking === StackingMode.Percent) {
