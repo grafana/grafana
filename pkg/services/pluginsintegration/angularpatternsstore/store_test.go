@@ -52,11 +52,12 @@ func TestAngularPatternsStore(t *testing.T) {
 			require.NoError(t, err)
 
 			lastUpdated, err := svc.GetLastUpdated(context.Background())
+			require.NoError(t, err)
 			require.WithinDuration(t, time.Now(), lastUpdated, time.Second*10)
 		})
 
 		t.Run("invalid timestamp stored", func(t *testing.T) {
-			err := svc.kv.Set(context.Background(), keyLastUpdated, "abcd")
+			err := svc.(*KVStoreService).kv.Set(context.Background(), keyLastUpdated, "abcd")
 			require.NoError(t, err)
 
 			lastUpdated, err := svc.GetLastUpdated(context.Background())

@@ -165,6 +165,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 			// Patterns in store should not be modified
 			dbV, err := svc.store.Get(context.Background())
+			require.NoError(t, err)
 			require.NotEmpty(t, dbV)
 			var newPatterns GCOMPatterns
 			err = json.Unmarshal([]byte(dbV), &newPatterns)
@@ -497,7 +498,7 @@ func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
 		defer s.wg.Done()
 		err := s.svc.Run(ctx)
 		if err != nil && !errors.Is(err, context.Canceled) {
-			t.Fatal(err)
+			panic(err)
 		}
 		// Make the consumer goroutine quit
 		s.fakeBgJob.close()
