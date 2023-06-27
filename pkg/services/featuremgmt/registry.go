@@ -587,7 +587,7 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
-			Name:         "elasticFiltersToggle",
+			Name:         "elasticToggleableFilters",
 			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,

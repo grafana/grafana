@@ -897,7 +897,7 @@ export class ElasticDatasource
     }
 
     let expression = query.query ?? '';
-    if (config.featureToggles.elasticFiltersToggle) {
+    if (config.featureToggles.elasticToggleableFilters) {
       switch (action.type) {
         case 'ADD_FILTER': {
           // This gives the user the ability to toggle a filter on and off.

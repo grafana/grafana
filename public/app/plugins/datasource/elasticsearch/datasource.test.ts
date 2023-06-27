@@ -1185,7 +1185,7 @@ describe('modifyQuery', () => {
   let ds: ElasticDatasource;
   beforeEach(() => {
     ds = getTestContext().ds;
-    config.featureToggles.elasticFiltersToggle = true;
+    config.featureToggles.elasticToggleableFilters = true;
   });
   describe('with empty query', () => {
     let query: ElasticsearchQuery;
@@ -1247,7 +1247,7 @@ describe('modifyQuery', () => {
 
   describe('legacy behavior', () => {
     beforeEach(() => {
-      config.featureToggles.elasticFiltersToggle = false;
+      config.featureToggles.elasticToggleableFilters = false;
     });
     it('should not modify other filters in the query', () => {
       expect(

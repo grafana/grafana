@@ -351,7 +351,7 @@ const (
 	// New version of flame graph with new features
 	FlagFlameGraphV2 = "flameGraphV2"
 
-	// FlagElasticFiltersToggle
+	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
-	FlagElasticFiltersToggle = "elasticFiltersToggle"
+	FlagElasticToggleableFilters = "elasticToggleableFilters"
 )
