@@ -11,6 +11,8 @@ import {
   DataSourceJsonData,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
+  DateTimeInput,
+  Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
@@ -317,16 +319,29 @@ interface LogInfo {
 }
 
 function parseTime(
-  // we must use `any` here, we literally do not know the type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  timeFieldValue: any,
-  timeNsFieldValue: string | undefined
-): { timeEpochMs: number; timeEpochNs: string } {
-  const time = toUtc(timeFieldValue);
+  timeField: Field,
+  timeNsField: Field | undefined,
+  index: number
+): { ts: DateTimeInput; timeEpochMs: number; timeEpochNs: string } {
+  const ts = timeField.values[index];
+  const time = toUtc(ts);
   const timeEpochMs = time.valueOf();
-  const timeEpochNs = timeNsFieldValue ? timeNsFieldValue : timeEpochMs + '000000';
 
-  return { timeEpochMs, timeEpochNs };
+  if (timeNsField) {
+    return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
+  }
+
+  if (timeField.nanos !== undefined) {
+    const ns = timeField.nanos[index].toString().padStart(6, '0');
+    const timeEpochNs = `${timeEpochMs}${ns}`;
+    return { ts, timeEpochMs, timeEpochNs };
+  }
+
+  return {
+    ts,
+    timeEpochMs,
+    timeEpochNs: timeEpochMs + '000000',
+  };
 }
 
 /**
@@ -377,8 +392,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeField.values[j];
-      const { timeEpochMs, timeEpochNs } = parseTime(ts, timeNanosecondField?.values[j]);
+      const { ts, timeEpochMs, timeEpochNs } = parseTime(timeField, timeNanosecondField ?? undefined, j);
 
       // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
       const messageValue: unknown = stringField.values[j] ?? '';
