@@ -1,12 +1,15 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { getDefaultRelativeTimeRange } from '@grafana/data';
+import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
+import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import { H5 } from '@grafana/ui/src/unstable';
 import { isExpressionQuery } from 'app/features/expressions/guards';
+import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
@@ -15,6 +18,7 @@ import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource
 import { isPromOrLokiQuery } from '../../../utils/rule-form';
 import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
+import { NeedHelpInfo } from '../NeedHelpInfo';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
@@ -223,8 +227,17 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     }
   }, [condition, queries, handleSetCondition]);
 
+  const onClickType = useCallback(
+    (type: ExpressionQueryType) => {
+      dispatch(addNewExpression(type));
+    },
+    [dispatch]
+  );
+
+  const styles = useStyles2(getStyles);
+
   return (
-    <RuleEditorSection stepNo={2} title="Set a query and alert condition">
+    <RuleEditorSection stepNo={2} title="Define query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
       {/* This is the PromQL Editor for recording rules */}
@@ -266,6 +279,22 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       {isGrafanaManagedType && (
         <Stack direction="column">
           {/* Data Queries */}
+          <Stack direction="row" gap={1} alignItems="baseline">
+            <div className={styles.mutedText}>
+              Define queries and/or expressions and then choose one of them as the alert rule condition. This is the
+              threshold that an alert rule must meet or exceed in order to fire.
+            </div>
+
+            <NeedHelpInfo
+              contentText={`An alert rule consists of one or more queries and expressions that select the data you want to measure.
+          Define queries and/or expressions and then choose one of them as the alert rule condition. This is the threshold that an alert rule must meet or exceed in order to fire.
+          For more information on queries and expressions, see Query and transform data.`}
+              externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
+              linkText={`Read about query and condition`}
+              title="Define query and alert condition"
+            />
+          </Stack>
+
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
@@ -276,7 +305,23 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
             condition={condition}
             onSetCondition={handleSetCondition}
           />
+          <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+            <Button
+              type="button"
+              onClick={() => {
+                dispatch(addNewDataQuery());
+              }}
+              variant="secondary"
+              aria-label={selectors.components.QueryTab.addQuery}
+              disabled={noCompatibleDataSources}
+              className={styles.addQueryButton}
+            >
+              Add query
+            </Button>
+          </Tooltip>
           {/* Expression Queries */}
+          <H5>Expressions</H5>
+          <div className={styles.mutedText}>Manipulate data returned from queries with math and other operations</div>
           <ExpressionsEditor
             queries={queries}
             panelData={queryPreviewData}
@@ -295,33 +340,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           />
           {/* action buttons */}
           <Stack direction="row">
-            <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
-              <Button
-                type="button"
-                icon="plus"
-                onClick={() => {
-                  dispatch(addNewDataQuery());
-                }}
-                variant="secondary"
-                aria-label={selectors.components.QueryTab.addQuery}
-                disabled={noCompatibleDataSources}
-              >
-                Add query
-              </Button>
-            </Tooltip>
-
-            {config.expressionsEnabled && (
-              <Button
-                type="button"
-                icon="plus"
-                onClick={() => {
-                  dispatch(addNewExpression());
-                }}
-                variant="secondary"
-              >
-                Add expression
-              </Button>
-            )}
+            {config.expressionsEnabled && <TypeSelectorButton onClickType={onClickType} />}
 
             {isPreviewLoading && (
               <Button icon="fa fa-spinner" type="button" variant="destructive" onClick={cancelQueries}>
@@ -346,3 +365,56 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
     </RuleEditorSection>
   );
 };
+
+function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
+  const newMenu = (
+    <Menu>
+      {expressionTypes.map((type) => (
+        <Tooltip key={type.value} content={type.description ?? ''} placement="right">
+          <MenuItem
+            key={type.value}
+            onClick={() => onClickType(type.value ?? ExpressionQueryType.math)}
+            label={type.label ?? ''}
+          />
+        </Tooltip>
+      ))}
+    </Menu>
+  );
+
+  return (
+    <Dropdown overlay={newMenu}>
+      <Button variant="secondary">
+        Add expression
+        <Icon name="angle-down" />
+      </Button>
+    </Dropdown>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  mutedText: css`
+    color: ${theme.colors.text.secondary};
+    font-size: ${theme.typography.size.sm};
+    margin-top: ${theme.spacing(-1)};
+  `,
+  addQueryButton: css`
+    width: fit-content;
+  `,
+  helpInfo: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: fit-content;
+    font-weight: ${theme.typography.fontWeightMedium};
+    margin-left: ${theme.spacing(1)};
+    font-size: ${theme.typography.size.sm};
+    cursor: pointer;
+  `,
+  helpInfoText: css`
+    margin-left: ${theme.spacing(0.5)};
+    text-decoration: underline;
+  `,
+  infoLink: css`
+    color: ${theme.colors.text.link};
+  `,
+});

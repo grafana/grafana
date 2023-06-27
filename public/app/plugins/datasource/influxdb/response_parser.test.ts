@@ -1,18 +1,15 @@
 import { size } from 'lodash';
 import { of } from 'rxjs';
-import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { AnnotationEvent, DataQueryRequest, FieldType, MutableDataFrame } from '@grafana/data';
+import { AnnotationEvent, DataQueryRequest, dateTime, FieldType, MutableDataFrame } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
-import InfluxDatasource from '../datasource';
-import InfluxQueryModel from '../influx_query_model';
-import ResponseParser, { getSelectedParams } from '../response_parser';
-
-//@ts-ignore
-const templateSrv = new TemplateSrvStub();
+import InfluxQueryModel from './influx_query_model';
+import ResponseParser, { getSelectedParams } from './response_parser';
+import { getMockDS, getMockDSInstanceSettings } from './specs/mocks';
+import { InfluxQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -300,13 +297,14 @@ describe('influxdb response parser', () => {
   });
 
   describe('When issuing annotationQuery', () => {
-    const ctx: any = {
-      instanceSettings: { url: 'url', name: 'influxDb' },
+    const ctx = {
+      ds: getMockDS(getMockDSInstanceSettings()),
     };
 
     const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
-    const annotation = {
+    const annotation: InfluxQuery = {
+      refId: 'A',
       fromAnnotations: true,
       name: 'Anno',
       query: 'select * from logs where time >= now() - 15m and time <= now()',
@@ -314,118 +312,134 @@ describe('influxdb response parser', () => {
       tagsColumn: 'host,path',
     };
 
-    const queryOptions = {
+    const queryOptions: DataQueryRequest = {
+      app: 'explore',
+      interval: '',
+      intervalMs: 0,
+      requestId: '',
+      scopedVars: {},
+      startTime: 0,
+      timezone: '',
       targets: [annotation],
       range: {
-        from: '2018-01-01T00:00:00Z',
-        to: '2018-01-02T00:00:00Z',
+        from: dateTime().subtract(1, 'h'),
+        to: dateTime(),
+        raw: { from: '1h', to: 'now' },
       },
-    } as unknown as DataQueryRequest;
+    };
     let response: AnnotationEvent[];
 
     beforeEach(async () => {
-      fetchMock.mockImplementation(() => {
-        return of({
-          data: {
-            results: {
-              metricFindQuery: {
-                frames: [
-                  {
-                    schema: {
-                      name: 'logs.host',
-                      fields: [
-                        {
-                          name: 'time',
-                          type: 'time',
-                        },
-                        {
-                          name: 'value',
-                          type: 'string',
-                        },
-                      ],
-                    },
-                    data: {
-                      values: [
-                        [1645208701000, 1645208702000],
-                        ['cbfa07e0e3bb 1', 'cbfa07e0e3bb 2'],
-                      ],
-                    },
+      const mockResponse: FetchResponse = {
+        config: { url: '' },
+        headers: new Headers(),
+        ok: false,
+        redirected: false,
+        status: 0,
+        statusText: '',
+        type: 'basic',
+        url: '',
+        data: {
+          results: {
+            metricFindQuery: {
+              frames: [
+                {
+                  schema: {
+                    name: 'logs.host',
+                    fields: [
+                      {
+                        name: 'time',
+                        type: 'time',
+                      },
+                      {
+                        name: 'value',
+                        type: 'string',
+                      },
+                    ],
                   },
-                  {
-                    schema: {
-                      name: 'logs.message',
-                      fields: [
-                        {
-                          name: 'time',
-                          type: 'time',
-                        },
-                        {
-                          name: 'value',
-                          type: 'string',
-                        },
-                      ],
-                    },
-                    data: {
-                      values: [
-                        [1645208701000, 1645208702000],
-                        [
-                          'Station softwareupdated[447]: Adding client 1',
-                          'Station softwareupdated[447]: Adding client 2',
-                        ],
-                      ],
-                    },
+                  data: {
+                    values: [
+                      [1645208701000, 1645208702000],
+                      ['cbfa07e0e3bb 1', 'cbfa07e0e3bb 2'],
+                    ],
                   },
-                  {
-                    schema: {
-                      name: 'logs.path',
-                      fields: [
-                        {
-                          name: 'time',
-                          type: 'time',
-                        },
-                        {
-                          name: 'value',
-                          type: 'string',
-                        },
-                      ],
-                    },
-                    data: {
-                      values: [
-                        [1645208701000, 1645208702000],
-                        ['/var/log/host/install.log 1', '/var/log/host/install.log 2'],
-                      ],
-                    },
+                },
+                {
+                  schema: {
+                    name: 'logs.message',
+                    fields: [
+                      {
+                        name: 'time',
+                        type: 'time',
+                      },
+                      {
+                        name: 'value',
+                        type: 'string',
+                      },
+                    ],
                   },
-                  {
-                    schema: {
-                      name: 'textColumn',
-                      fields: [
-                        {
-                          name: 'time',
-                          type: 'time',
-                        },
-                        {
-                          name: 'value',
-                          type: 'string',
-                        },
+                  data: {
+                    values: [
+                      [1645208701000, 1645208702000],
+                      [
+                        'Station softwareupdated[447]: Adding client 1',
+                        'Station softwareupdated[447]: Adding client 2',
                       ],
-                    },
-                    data: {
-                      values: [
-                        [1645208701000, 1645208702000],
-                        ['text 1', 'text 2'],
-                      ],
-                    },
+                    ],
                   },
-                ],
-              },
+                },
+                {
+                  schema: {
+                    name: 'logs.path',
+                    fields: [
+                      {
+                        name: 'time',
+                        type: 'time',
+                      },
+                      {
+                        name: 'value',
+                        type: 'string',
+                      },
+                    ],
+                  },
+                  data: {
+                    values: [
+                      [1645208701000, 1645208702000],
+                      ['/var/log/host/install.log 1', '/var/log/host/install.log 2'],
+                    ],
+                  },
+                },
+                {
+                  schema: {
+                    name: 'textColumn',
+                    fields: [
+                      {
+                        name: 'time',
+                        type: 'time',
+                      },
+                      {
+                        name: 'value',
+                        type: 'string',
+                      },
+                    ],
+                  },
+                  data: {
+                    values: [
+                      [1645208701000, 1645208702000],
+                      ['text 1', 'text 2'],
+                    ],
+                  },
+                },
+              ],
             },
           },
-        } as FetchResponse);
+        },
+      };
+
+      fetchMock.mockImplementation(() => {
+        return of(mockResponse);
       });
 
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
-      ctx.ds.access = 'proxy';
       config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
