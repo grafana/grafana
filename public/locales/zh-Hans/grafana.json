@@ -9,6 +9,9 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "folder-actions": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -566,6 +569,16 @@
       "default-label": "默认"
     },
     "title": "首选项"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "加载中...",

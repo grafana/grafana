@@ -440,6 +440,10 @@
             {
               "text": "Vietnamese Dong (VND)",
               "value": "currencyVND"
+            },
+            {
+              "text": "Turkish Lira (₺)",
+              "value": "currencyTRY"
             }
           ],
           "text": "currency"
