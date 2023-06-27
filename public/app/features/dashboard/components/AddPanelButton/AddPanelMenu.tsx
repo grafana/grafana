@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { Menu, ModalsController } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import {
@@ -15,7 +15,6 @@ import {
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../../state/reducers';
-import { AddWidgetModal } from '../AddWidgetModal/AddWidgetModal';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -39,21 +38,17 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           dispatch(setInitialDatasource(undefined));
         }}
       />
-      <ModalsController>
-        {({ showModal, hideModal }) => (
-          <Menu.Item
-            key="add-widget"
-            testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
-            label={t('dashboard.add-menu.widget', 'Widget')}
-            onClick={() => {
-              reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_widget' });
-              showModal(AddWidgetModal, {
-                onDismiss: hideModal,
-              });
-            }}
-          />
-        )}
-      </ModalsController>
+      {config.featureToggles.vizAndWidgetSplit && (
+        <Menu.Item
+          key="add-widget"
+          testId={selectors.pages.AddDashboard.itemButton('Add new widget menu item')}
+          label={t('dashboard.add-menu.widget', 'Widget')}
+          onClick={() => {
+            reportInteraction('dashboards_toolbar_add_clicked', { item: 'add_widget' });
+            locationService.partial({ addWidget: true });
+          }}
+        />
+      )}
       <Menu.Item
         key="add-row"
         testId={selectors.pages.AddDashboard.itemButton('Add new row menu item')}

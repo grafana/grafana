@@ -3,15 +3,14 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService, reportInteraction } from '@grafana/runtime';
-import { Button, ModalsController, useStyles2 } from '@grafana/ui';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { Button, useStyles2 } from '@grafana/ui';
 import { H1, H3, P } from '@grafana/ui/src/unstable';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onCreateNewRow } from 'app/features/dashboard/utils/dashboard';
 import { useDispatch, useSelector } from 'app/types';
 
-import { AddWidgetModal } from '../components/AddWidgetModal/AddWidgetModal';
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
@@ -59,36 +58,32 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           </Button>
         </div>
         <div className={cx(styles.centeredContent, styles.others)}>
-          <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
-            <div className={styles.headerSmall}>
-              <H3 textAlignment="center" weight="medium">
-                <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
-              </H3>
+          {config.featureToggles.vizAndWidgetSplit && (
+            <div className={cx(styles.containerBox, styles.centeredContent, styles.widgetContainer)}>
+              <div className={styles.headerSmall}>
+                <H3 textAlignment="center" weight="medium">
+                  <Trans i18nKey="dashboard.empty.add-widget-header">Add a widget</Trans>
+                </H3>
+              </div>
+              <div className={styles.bodySmall}>
+                <P textAlignment="center" color="secondary">
+                  <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
+                </P>
+              </div>
+              <Button
+                icon="plus"
+                fill="outline"
+                data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
+                onClick={() => {
+                  reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
+                  locationService.partial({ addWidget: true });
+                }}
+                disabled={!canCreate}
+              >
+                <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
+              </Button>
             </div>
-            <div className={styles.bodySmall}>
-              <P textAlignment="center" color="secondary">
-                <Trans i18nKey="dashboard.empty.add-widget-body">Create lists, markdowns and other widgets</Trans>
-              </P>
-            </div>
-            <ModalsController>
-              {({ showModal, hideModal }) => (
-                <Button
-                  icon="plus"
-                  fill="outline"
-                  data-testid={selectors.pages.AddDashboard.itemButton('Create new widget button')}
-                  onClick={() => {
-                    reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_widget' });
-                    showModal(AddWidgetModal, {
-                      onDismiss: hideModal,
-                    });
-                  }}
-                  disabled={!canCreate}
-                >
-                  <Trans i18nKey="dashboard.empty.add-widget-button">Add widget</Trans>
-                </Button>
-              )}
-            </ModalsController>
-          </div>
+          )}
           <div className={cx(styles.containerBox, styles.centeredContent, styles.rowContainer)}>
             <div className={styles.headerSmall}>
               <H3 textAlignment="center" weight="medium">

@@ -2,32 +2,37 @@ import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelPluginMeta } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { CustomScrollbar, Icon, Input, Modal, useStyles2 } from '@grafana/ui';
 
+import { useSelector } from '../../../../types';
 import { VizTypePickerPlugin } from '../../../panel/components/VizTypePicker/VizTypePickerPlugin';
-import { filterWidgetList, getWidgetPluginMeta } from '../../../panel/state/util';
+import { filterPluginList, getWidgetPluginMeta } from '../../../panel/state/util';
+import { onCreateNewWidgetPanel } from '../../utils/dashboard';
 
-interface Props {
-  onDismiss: () => void;
-}
-export const AddWidgetModal = ({ onDismiss }: Props) => {
+export const AddWidgetModal = () => {
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
+  const dashboard = useSelector((state) => state.dashboard.getModel());
 
   const widgetsList: PanelPluginMeta[] = useMemo(() => {
     return getWidgetPluginMeta();
   }, []);
 
   const filteredWidgetsTypes = useMemo((): PanelPluginMeta[] => {
-    return filterWidgetList(widgetsList, searchQuery);
+    return filterPluginList(widgetsList, searchQuery);
   }, [widgetsList, searchQuery]);
+
+  const onDismiss = () => {
+    locationService.partial({ addWidget: null });
+  };
 
   return (
     <Modal
       title="Select widget type"
-      closeOnEscape={true}
-      closeOnBackdropClick={true}
-      isOpen={true}
+      closeOnEscape
+      closeOnBackdropClick
+      isOpen
       className={styles.modal}
       onClickBackdrop={onDismiss}
       onDismiss={onDismiss}
@@ -51,7 +56,10 @@ export const AddWidgetModal = ({ onDismiss }: Props) => {
               key={plugin.id}
               isCurrent={false}
               plugin={plugin}
-              onClick={(e) => {}}
+              onClick={(e) => {
+                const id = onCreateNewWidgetPanel(dashboard!, plugin.id);
+                locationService.partial({ editPanel: id, addWidget: null });
+              }}
             />
           ))}
         </div>
@@ -74,6 +82,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   grid: css`
     display: grid;
-    grid-gap: ${theme.spacing(0.5)};
+    grid-gap: ${theme.spacing(1)};
   `,
 });

@@ -17,31 +17,18 @@ export function getWidgetPluginMeta(): PanelPluginMeta[] {
 export function getVizPluginMeta(): PanelPluginMeta[] {
   return getAllPanelPluginMeta().filter((panel) => !panel.skipDataQuery);
 }
-
-export function filterWidgetList(widgetsList: PanelPluginMeta[], searchQuery: string, current?: PanelPluginMeta) {
-  if (!searchQuery.length) {
-    return getNotDeprecatedPluginList(widgetsList, current);
-  }
-
-  return widgetsList.filter((plugin) => plugin.name.toLowerCase().includes(searchQuery.toLowerCase()));
-}
-
-function getNotDeprecatedPluginList(pluginsList: PanelPluginMeta[], current?: PanelPluginMeta): PanelPluginMeta[] {
-  return pluginsList.filter((p) => {
-    if (p.state === PluginState.deprecated) {
-      return current?.id === p.id;
-    }
-    return true;
-  });
-}
-
 export function filterPluginList(
   pluginsList: PanelPluginMeta[],
   searchQuery: string, // Note: this will be an escaped regex string as it comes from `FilterInput`
-  current: PanelPluginMeta
+  current?: PanelPluginMeta
 ): PanelPluginMeta[] {
   if (!searchQuery.length) {
-    return getNotDeprecatedPluginList(pluginsList, current);
+    return pluginsList.filter((p) => {
+      if (p.state === PluginState.deprecated) {
+        return current?.id === p.id;
+      }
+      return true;
+    });
   }
 
   const query = unEscapeStringFromRegex(searchQuery).toLowerCase();
@@ -50,7 +37,7 @@ export function filterPluginList(
   const isGraphQuery = 'graph'.startsWith(query);
 
   for (const item of pluginsList) {
-    if (item.state === PluginState.deprecated && current.id !== item.id) {
+    if (item.state === PluginState.deprecated && current?.id !== item.id) {
       continue;
     }
 
