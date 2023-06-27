@@ -170,6 +170,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         onPermalinkClick: this.props.onPermalinkClick,
         scrollIntoView: this.props.scrollIntoView,
         permalinkedRowId: this.props.permalinkedRowId,
+        isFilterLabelActive: this.props.isFilterLabelActive,
       };
     };
     return (
@@ -177,65 +178,6 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         <tbody>
           {hasData && firstRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
           {hasData && renderAll && lastRows.map((row) => <LogRow key={row.uid} {...getLogRowProperties(row)} />)}
-          {hasData &&
-            firstRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                row={row}
-                showContextToggle={showContextToggle}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                displayedFields={displayedFields}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                enableLogDetails={enableLogDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                forceEscape={forceEscape}
-                onOpenContext={this.openContext}
-                onLogRowHover={onLogRowHover}
-                app={app}
-                styles={styles}
-                isFilterLabelActive={this.props.isFilterLabelActive}
-              />
-            ))}
-          {hasData &&
-            renderAll &&
-            lastRows.map((row, index) => (
-              <LogRow
-                key={row.uid}
-                getRows={getRows}
-                row={row}
-                showContextToggle={showContextToggle}
-                showDuplicates={showDuplicates}
-                showLabels={showLabels}
-                showTime={showTime}
-                displayedFields={displayedFields}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                enableLogDetails={enableLogDetails}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowField={onClickShowField}
-                onClickHideField={onClickHideField}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                forceEscape={forceEscape}
-                onOpenContext={this.openContext}
-                onLogRowHover={onLogRowHover}
-                app={app}
-                styles={styles}
-                isFilterLabelActive={this.props.isFilterLabelActive}
-              />
-            ))}
           {hasData && !renderAll && (
             <tr>
               <td colSpan={5}>Rendering {orderedRows.length - previewLimit!} rows...</td>
