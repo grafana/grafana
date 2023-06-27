@@ -17,13 +17,14 @@ interface SearchViewProps {
   canSelect: boolean;
 }
 
+const NUM_PLACEHOLDER_ROWS = 50;
 const loadingView = {
   view: new DataFrameView(
     toDataFrame({
       fields: [
-        { name: 'uid', display: true, values: Array(50).fill(null) },
-        { name: 'name', display: true, values: Array(50).fill('') },
-        { name: 'tags', display: true, values: Array(50).fill([]) },
+        { name: 'uid', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill(null) },
+        { name: 'name', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'tags', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill([]) },
       ],
       meta: {
         custom: {
@@ -33,8 +34,9 @@ const loadingView = {
     })
   ),
   loadMoreItems: () => Promise.resolve(),
+  // this is key and controls whether to show the skeleton in generateColumns
   isItemLoaded: () => false,
-  totalRows: 50,
+  totalRows: NUM_PLACEHOLDER_ROWS,
 };
 
 export function SearchView({ width, height, canSelect }: SearchViewProps) {
