@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useId, useMemo } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { TextModifier } from '@grafana/ui/src/unstable';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -39,12 +38,7 @@ export function NestedFolderList({ items, selectedFolder, onFolderClick, onSelec
   );
 }
 
-interface VirtualData {
-  items: DashboardsTreeItem[];
-  selectedFolder: NestedFolderListProps['selectedFolder'];
-  onFolderClick: NestedFolderListProps['onFolderClick'];
-  onSelectionChange: NestedFolderListProps['onSelectionChange'];
-}
+interface VirtualData extends NestedFolderListProps {}
 
 interface RowProps {
   index: number;
@@ -55,6 +49,8 @@ interface RowProps {
 function Row({ index, style, data }: RowProps) {
   const { items, selectedFolder, onFolderClick, onSelectionChange } = data;
   const { item, isOpen, level } = items[index];
+
+  const id = useId() + `-uid-${item.uid}`;
   const styles = useStyles2(getRowStyles);
 
   const handleClick = useCallback(
@@ -74,30 +70,29 @@ function Row({ index, style, data }: RowProps) {
     [item, onSelectionChange]
   );
 
+  if (item.kind !== 'folder') {
+    return process.env.NODE_ENV !== 'production' ? <span>Non-folder item</span> : null;
+  }
+
   return (
     <div style={style} className={styles}>
       <Indent level={level} />
       <input
         type="radio"
-        value={item.uid}
-        id={item.uid}
+        value={id}
+        id={id}
         name="folder"
         checked={item.uid === selectedFolder}
         onChange={handleRadioChange}
       />
 
-      <label htmlFor={item.uid}>
-        {item.kind === 'folder' && (
-          <IconButton
-            onClick={handleClick}
-            aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
-            name={isOpen ? 'angle-down' : 'angle-right'}
-          />
-        )}
-        {item.kind === 'folder' && <span>{item.title}</span>}
-        {item.kind === 'ui' && item.uiKind === 'empty-folder' && (
-          <TextModifier color="secondary">this folder has folders in it :)</TextModifier>
-        )}
+      <label htmlFor={id}>
+        <IconButton
+          onClick={handleClick}
+          aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+          name={isOpen ? 'angle-down' : 'angle-right'}
+        />
+        <span>{item.title}</span>
       </label>
     </div>
   );

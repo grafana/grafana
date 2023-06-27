@@ -60,12 +60,22 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     }
 
     const result = createFlatTree(undefined, rootCollection, childrenCollections, folderOpenState, 0, false);
+    result.unshift({
+      isOpen: false,
+      level: 0,
+      item: {
+        kind: 'folder',
+        title: 'Dashboards',
+        uid: '',
+      },
+    });
 
     return result;
   }, [childrenForUID, folderOpenState, state.loading, state.value]);
 
   const handleSelectionChange = useCallback(
     (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => {
+      console.log('selected', item);
       if (onChange) {
         onChange({ title: item.title, uid: item.uid });
       }
