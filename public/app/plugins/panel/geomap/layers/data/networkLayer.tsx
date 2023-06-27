@@ -127,6 +127,9 @@ export const networkLayer: MapLayerRegistryItem<MarkersConfig> = {
         console.log(data.series);
         for (const frame of data.series) {
           dataFrames.push(frame);
+        }
+        // TODO find a better way to handle multiple frames
+        for (const frame of data.series) {
           style.dims = getStyleDimension(frame, style, theme);
 
           // Post updates to the legend component
@@ -138,7 +141,10 @@ export const networkLayer: MapLayerRegistryItem<MarkersConfig> = {
               layer: vectorLayer,
             });
           }
-          // break; // Only the first frame for now!
+          // If text style has been found, don't overide with next frame
+          if (style.dims.text && !style.dims.text.isAssumed){
+            break
+          }
         }
         source.updateEdge(dataFrames);
       },
