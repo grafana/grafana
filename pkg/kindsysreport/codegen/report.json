@@ -232,6 +232,30 @@
       "pluralName": "BarGaugePanelCfgs",
       "schemaInterface": "PanelCfg"
     },
+    "candlestickpanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-edge-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/candlestickpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/candlestick/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/candlestick/panelcfg.gen.ts"
+      },
+      "machineName": "candlestickpanelcfg",
+      "maturity": "experimental",
+      "name": "CandlestickPanelCfg",
+      "pluralMachineName": "candlestickpanelcfgs",
+      "pluralName": "CandlestickPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "cloudwatchdataquery": {
       "category": "composable",
       "codeowners": [
@@ -1951,6 +1975,7 @@
           "azuremonitordatasourcecfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
+          "candlestickpanelcfg",
           "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
@@ -2040,6 +2065,8 @@
           "annotationslistpanelcfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
+          "candlestickpanelcfg",
+          "cloudwatchdataquery",
           "dashboard",
           "dashboardlistpanelcfg",
           "debugpanelcfg",
