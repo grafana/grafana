@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -312,7 +313,7 @@ func TestInitializer_oauthEnvVars(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:                          "test",
-				ExternalServiceRegistration: &oauth.ExternalServiceRegistration{},
+				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
 			},
 			ExternalService: &oauth.ExternalService{
 				ClientID:     "clientID",
