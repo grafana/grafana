@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse, AnalyzeQueryOptions, QueryFixAction } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -259,4 +259,31 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContextUi !== undefined;
+};
+
+/**
+ * @internal
+ */
+export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery> {
+  /**
+   * Used in explore
+   */
+  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore for Log details
+   *
+   * @alpha
+   */
+  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
+}
+
+/**
+ * @internal
+ */
+export const hasQueryManipulationSupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  method: keyof DataSourceWithQueryManipulationSupport<TQuery>
+): datasource is DataSourceWithQueryManipulationSupport<TQuery> => {
+  return Object.hasOwnProperty.call(datasource, method);
 };

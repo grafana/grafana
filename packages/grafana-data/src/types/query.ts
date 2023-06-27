@@ -1,7 +1,5 @@
 import { DataQuery as SchemaDataQuery, DataSourceRef as SchemaDataSourceRef } from '@grafana/schema';
 
-import { AnalyzeQueryOptions, QueryFixAction } from './datasource';
-
 /**
  * @deprecated use the type from @grafana/schema
  */
@@ -65,23 +63,6 @@ export interface DataSourceWithQueryExportSupport<TQuery extends SchemaDataQuery
 /**
  * @internal
  */
-export interface DataSourceWithQueryManipulationSupport<TQuery extends SchemaDataQuery> {
-  /**
-   * Used in explore
-   */
-  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
-
-  /**
-   * Used in explore for Log details
-   *
-   * @alpha
-   */
-  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
-}
-
-/**
- * @internal
- */
 export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
@@ -95,14 +76,4 @@ export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
   return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
-};
-
-/**
- * @internal
- */
-export const hasQueryManipulationSupport = <TQuery extends SchemaDataQuery>(
-  datasource: unknown,
-  method: keyof DataSourceWithQueryManipulationSupport<TQuery>
-): datasource is DataSourceWithQueryManipulationSupport<TQuery> => {
-  return Object.hasOwnProperty.call(datasource, method);
 };
