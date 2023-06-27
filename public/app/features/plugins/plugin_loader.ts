@@ -167,19 +167,18 @@ const imports = buildImportMap(importMap);
 // to the imports above.
 SystemJS.addImportMap({ imports });
 
-// const moduleTypesRegEx = /^[^#?]+\.(css|html|json|wasm)([?#].*)?$/;
 const loadPluginCssRegEx = /^plugins.+\.css$/i;
-const jsContentTypeRegEx = /^text\/javascript(;|$)/;
-
-// In an ideal world we'd only use this for loading from CDN
-// but Monaco Editors reliance on RequireJS means we need to transform
-// the content of the plugin code at runtime.
-SystemJS.shouldFetch = function () {
-  return true;
-};
+const jsContentTypeRegEx = /^(text|application)\/(x-)?javascript(;|$)/;
+const endsWithFileExtension = /\/?\.[a-zA-Z]{2,}$/;
+const isSystemModule = /System.register\(/;
 
 const systemJSPrototype = SystemJS.constructor.prototype;
 const systemJSFetch = systemJSPrototype.fetch;
+
+// Ideally we'd only use fetch/eval for CDN loading
+// but Monaco Editors reliance on RequireJS means we need to transform
+// the content of the plugin code at runtime.
+systemJSPrototype.shouldFetch = () => true;
 
 systemJSPrototype.fetch = function (url: string, options: Record<string, unknown>) {
   return systemJSFetch(url, options).then(async (res: Response) => {
@@ -187,7 +186,10 @@ systemJSPrototype.fetch = function (url: string, options: Record<string, unknown
 
     if (jsContentTypeRegEx.test(contentType)) {
       const source = await res.text();
-      const transformedSrc = preventDefineCollision(source);
+      let transformedSrc = source;
+      if (!isSystemModule.test(transformedSrc)) {
+        transformedSrc = preventAMDLoaderCollision(source);
+      }
 
       // JS files on the CDN need their asset paths transformed in the source
       if (res.url.startsWith(config.pluginsCDNBaseURL)) {
@@ -212,10 +214,20 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
   const cachedId = shouldUseQueryCache ? locateWithCache(id) : id;
   try {
-    return originalResolve.apply(this, [cachedId, parentUrl]);
+    let url = originalResolve.apply(this, [cachedId, parentUrl]);
+    if (url.endsWith('!')) {
+      url = url.slice(0, -1);
+    }
+    // handle legacy SystemJS.config.defaultExtension for System.register deps like './my_ctrl' that are missing extension
+    const shouldAddDefaultExtension = url.startsWith('app:') || endsWithFileExtension.test(url);
+    const result = shouldAddDefaultExtension ? url : url + '.js';
+
+    return result;
   } catch (err) {
+    // For backwards compatiblity with older plugins that use `loadPluginCss`
+    // we need to translate the path for systemjs 6.x.x to understand
     if (loadPluginCssRegEx.test(id)) {
-      return patchLoadPluginCssUrl(id);
+      return `./public/${id}`;
     }
     console.log(`SystemJS: failed to resolve '${id}'`);
     return id;
