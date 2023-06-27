@@ -105,12 +105,12 @@ The table below describes all GitHub OAuth configuration options. Continue readi
 | `tls_client_key`             | No       | Path to the key.                                                                                                                                         |                                               |
 | `tls_client_ca`              | No       | Path to the trusted certificate authority list.                                                                                                          |                                               |
 
-### Configure automatic login
+### Automatic login
 
 Set `auto_login` option to `true` to attempt login automatically, skipping the login screen.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
-### Configuring sign up
+### Sign up
 
 You may allow new users to sign-up via GitHub authentication by setting the `allow_sign_up` option to `true`.
 When this option is set to `true`, any user successfully authenticating via GitHub authentication will be automatically signed up.
@@ -120,7 +120,7 @@ When this option is set to `true`, any user successfully authenticating via GitH
 To prevent the sync of organization roles from GitHub, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
 This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
 
-### Configure allowed teams
+### Allowed teams
 
 Use `team_ids` option to restrict access to Grafana only to members of some GitHub teams.
 
@@ -134,7 +134,7 @@ Grafana instance. For example:
 team_ids = 150,300
 ```
 
-### Configure allowed organizations
+### Allowed organizations
 
 Use `allowed_organizations` option to restrict access to Grafana only to members of some GitHub organizations.
 
@@ -149,7 +149,7 @@ your Grafana instance. For example
 allowed_organizations = ["My Organization", "Octocats"]
 ```
 
-### Configure allowed domains
+### Allowed domains
 
 Use `allowed_domains` option to restrict access to Grafana only to users from one of the specified domains.
 
