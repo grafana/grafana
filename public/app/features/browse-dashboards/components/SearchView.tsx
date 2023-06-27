@@ -24,8 +24,13 @@ const loadingView = {
       fields: [
         { name: 'uid', display: true, values: Array(50).fill(null) },
         { name: 'name', display: true, values: Array(50).fill(LOADING_ID) },
-        { name: 'tags', display: false, values: Array(50).fill(null) },
+        { name: 'tags', display: true, values: Array(50).fill([]) },
       ],
+      meta: {
+        custom: {
+          locationInfo: [],
+        },
+      },
     })
   ),
   loadMoreItems: () => Promise.resolve(),
