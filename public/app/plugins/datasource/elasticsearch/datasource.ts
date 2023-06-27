@@ -909,27 +909,38 @@ export class ElasticDatasource
     }
 
     let expression = query.query ?? '';
-    switch (action.type) {
-      case 'ADD_FILTER': {
-        // This gives the user the ability to toggle a filter on and off.
-        expression = queryHasFilter(expression, action.options.key, action.options.value)
-          ? removeFilterFromQuery(expression, action.options.key, action.options.value)
-          : addFilterToQuery(expression, action.options.key, action.options.value);
-        break;
-      }
-      case 'ADD_FILTER_OUT': {
-        /**
-         * If there is a filter with the same key and value, remove it.
-         * This prevents the user from seeing no changes in the query when they apply
-         * this filter.
-         */
-        if (queryHasFilter(expression, action.options.key, action.options.value)) {
-          expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
+    if (config.featureToggles.elasticToggleableFilters) {
+      switch (action.type) {
+        case 'ADD_FILTER': {
+          // This gives the user the ability to toggle a filter on and off.
+          expression = queryHasFilter(expression, action.options.key, action.options.value)
+            ? removeFilterFromQuery(expression, action.options.key, action.options.value)
+            : addFilterToQuery(expression, action.options.key, action.options.value);
+          break;
         }
-        expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
-        break;
+        case 'ADD_FILTER_OUT': {
+          // If the opposite filter is present, remove it before adding the new one.
+          if (queryHasFilter(expression, action.options.key, action.options.value)) {
+            expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
+          }
+          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+          break;
+        }
+      }
+    } else {
+      // Legacy behavior
+      switch (action.type) {
+        case 'ADD_FILTER': {
+          expression = addFilterToQuery(expression, action.options.key, action.options.value);
+          break;
+        }
+        case 'ADD_FILTER_OUT': {
+          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+          break;
+        }
       }
     }
+
     return { ...query, query: expression };
   }
 

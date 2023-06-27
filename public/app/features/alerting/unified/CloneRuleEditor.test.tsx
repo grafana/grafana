@@ -10,12 +10,25 @@ import { config, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import 'whatwg-fetch';
+import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { RulerGrafanaRuleDTO } from '../../../types/unified-alerting-dto';
+import {
+  RulerAlertingRuleDTO,
+  RulerGrafanaRuleDTO,
+  RulerRecordingRuleDTO,
+  RulerRuleDTO,
+} from '../../../types/unified-alerting-dto';
 
-import { CloneRuleEditor } from './CloneRuleEditor';
+import { cloneRuleDefinition, CloneRuleEditor } from './CloneRuleEditor';
 import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor';
-import { mockDataSource, MockDataSourceSrv, mockRulerAlertingRule, mockRulerGrafanaRule, mockStore } from './mocks';
+import {
+  mockDataSource,
+  MockDataSourceSrv,
+  mockRulerAlertingRule,
+  mockRulerGrafanaRule,
+  mockRulerRuleGroup,
+  mockStore,
+} from './mocks';
 import { mockAlertmanagerConfigResponse } from './mocks/alertmanagerApi';
 import { mockSearchApiResponse } from './mocks/grafanaApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from './mocks/rulerApi';
@@ -220,6 +233,127 @@ describe('CloneRuleEditor', function () {
         expect(ui.inputs.labelValue(1).get()).toHaveTextContent('nasa');
         expect(ui.inputs.annotationValue(0).get()).toHaveTextContent('This is a very important alert rule');
       });
+    });
+  });
+
+  describe('cloneRuleDefinition', () => {
+    it("Should change the cloned rule's name accordingly for Grafana rules", () => {
+      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+        {
+          for: '1m',
+          labels: { severity: 'critical', region: 'nasa' },
+          annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+        },
+        { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
+      );
+
+      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const grafanaRule: RulerGrafanaRuleDTO = clonedRule.rule as RulerGrafanaRuleDTO;
+
+      expect(originalRule.rule.grafana_alert.title).toEqual('First Grafana Rule');
+      expect(grafanaRule.grafana_alert.title).toEqual('First Grafana Rule (copy)');
+    });
+
+    it("Should change the cloned rule's name accordingly for Ruler rules", () => {
+      const rule: RulerAlertingRuleDTO = mockRulerAlertingRule({
+        for: '1m',
+        alert: 'First Ruler Rule',
+        expr: 'vector(1) > 0',
+        labels: { severity: 'critical', region: 'nasa' },
+        annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+      });
+
+      const originalRule: RuleWithLocation<RulerAlertingRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const alertingRule: RulerAlertingRuleDTO = clonedRule.rule as RulerAlertingRuleDTO;
+
+      expect(originalRule.rule.alert).toEqual('First Ruler Rule');
+      expect(alertingRule.alert).toEqual('First Ruler Rule (copy)');
+    });
+
+    it("Should change the cloned rule's name accordingly for Recording rules", () => {
+      const rule: RulerRecordingRuleDTO = {
+        record: 'instance:node_num_cpu:sum',
+        expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
+        labels: { type: 'cpu' },
+      };
+
+      const originalRule: RuleWithLocation<RulerRecordingRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const recordingRule: RulerRecordingRuleDTO = clonedRule.rule as RulerRecordingRuleDTO;
+
+      expect(originalRule.rule.record).toEqual('instance:node_num_cpu:sum');
+      expect(recordingRule.record).toEqual('instance:node_num_cpu:sum (copy)');
+    });
+
+    it('Should remove the group for provisioned Grafana rules', () => {
+      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+        {
+          for: '1m',
+          labels: { severity: 'critical', region: 'nasa' },
+          annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+        },
+        { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [], provenance: 'foo' }
+      );
+
+      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      expect(originalRule.group.name).toEqual('group1');
+      expect(clonedRule.group.name).toEqual('');
+    });
+
+    it('The cloned rule should not contain a UID property', () => {
+      const rule: RulerGrafanaRuleDTO = mockRulerGrafanaRule(
+        {
+          for: '1m',
+          labels: { severity: 'critical', region: 'nasa' },
+          annotations: { [Annotation.summary]: 'This is a very important alert rule' },
+        },
+        { uid: 'grafana-rule-1', title: 'First Grafana Rule', data: [] }
+      );
+
+      const originalRule: RuleWithLocation<RulerGrafanaRuleDTO> = {
+        ruleSourceName: 'my-prom-ds',
+        namespace: 'namespace-one',
+        group: mockRulerRuleGroup(),
+        rule,
+      };
+
+      const clonedRule: RuleWithLocation<RulerRuleDTO> = cloneRuleDefinition(originalRule);
+
+      const grafanaRule: RulerGrafanaRuleDTO = clonedRule.rule as RulerGrafanaRuleDTO;
+
+      expect(originalRule.rule.grafana_alert.uid).toEqual('grafana-rule-1');
+      expect(grafanaRule.grafana_alert.uid).toEqual('');
     });
   });
 });
