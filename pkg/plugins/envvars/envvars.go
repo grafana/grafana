@@ -16,7 +16,7 @@ import (
 )
 
 type Provider interface {
-	Get(ctx context.Context, p *plugins.Plugin) []string
+	Get(ctx context.Context, p *plugins.Plugin) ([]string, error)
 }
 
 type Service struct {
@@ -31,7 +31,7 @@ func NewProvider(cfg *config.Cfg, license plugins.Licensing) *Service {
 	}
 }
 
-func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
+func (s *Service) Get(ctx context.Context, p *plugins.Plugin) ([]string, error) {
 	hostEnv := []string{
 		fmt.Sprintf("GF_VERSION=%s", s.cfg.BuildVersion),
 	}
@@ -46,13 +46,23 @@ func (s *Service) Get(_ context.Context, p *plugins.Plugin) []string {
 		hostEnv = append(hostEnv, s.license.Environment()...)
 	}
 
+	if p.ExternalService != nil {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_APP_URL=%s", s.cfg.GrafanaAppURL),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_ID=%s", p.ExternalService.ClientID),
+			fmt.Sprintf("GF_PLUGIN_APP_CLIENT_SECRET=%s", p.ExternalService.ClientSecret),
+			fmt.Sprintf("GF_PLUGIN_APP_PRIVATE_KEY=%s", p.ExternalService.PrivateKey),
+		)
+	}
+
 	hostEnv = append(hostEnv, s.awsEnvVars()...)
 	hostEnv = append(hostEnv, s.secureSocksProxyEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(s.cfg.Azure)...)
 	hostEnv = append(hostEnv, s.tracingEnvVars(p)...)
 
 	ev := getPluginSettings(p.ID, s.cfg).asEnvVar("GF_PLUGIN", hostEnv)
-	return ev
+	return ev, nil
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {

@@ -25,7 +25,7 @@ export const RuleEditorSection = ({
       </div>
       <div className={styles.content}>
         <FieldSet label={title} className={styles.fieldset}>
-          {description && <p className={styles.description}>{description}</p>}
+          {description && <div className={styles.description}>{description}</div>}
           {children}
         </FieldSet>
       </div>

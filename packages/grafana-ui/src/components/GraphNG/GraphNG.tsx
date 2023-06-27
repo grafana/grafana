@@ -248,7 +248,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   render() {
-    const { width, height, children, timeRange, renderLegend } = this.props;
+    const { width, height, children, renderLegend } = this.props;
     const { config, alignedFrame, alignedData } = this.state;
 
     if (!config) {
@@ -263,7 +263,6 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             data={alignedData!}
             width={vizWidth}
             height={vizHeight}
-            timeRange={timeRange}
             plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
           >
             {children ? children(config, alignedFrame) : null}

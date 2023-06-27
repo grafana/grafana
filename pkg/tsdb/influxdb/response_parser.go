@@ -122,7 +122,7 @@ func transformRows(rows []Row, query Query) data.Frames {
 				}
 			}
 
-			field := data.NewField("value", nil, values)
+			field := data.NewField("Value", nil, values)
 			frames = append(frames, data.NewFrame(row.Name, field))
 		} else {
 			for colIndex, column := range row.Columns {
@@ -169,21 +169,21 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 				name := string(formatFrameName(row, column, query, frameName[:]))
 
-				timeField := data.NewField("time", nil, timeArray)
+				timeField := data.NewField("Time", nil, timeArray)
 				if valType == "string" {
-					valueField := data.NewField("value", row.Tags, stringArray)
+					valueField := data.NewField("Value", row.Tags, stringArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "json.Number" {
-					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField := data.NewField("Value", row.Tags, floatArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "bool" {
-					valueField := data.NewField("value", row.Tags, boolArray)
+					valueField := data.NewField("Value", row.Tags, boolArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				} else if valType == "null" {
-					valueField := data.NewField("value", row.Tags, floatArray)
+					valueField := data.NewField("Value", row.Tags, floatArray)
 					valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: name})
 					frames = append(frames, newDataFrame(name, query.RawQuery, timeField, valueField))
 				}
@@ -306,13 +306,13 @@ func parseNumber(value interface{}) *float64 {
 
 	number, ok := value.(json.Number)
 	if !ok {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 
 	fvalue, err := number.Float64()
 	if err != nil {
-		// in the current inmplementation, errors become nils
+		// in the current implementation, errors become nils
 		return nil
 	}
 
