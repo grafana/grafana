@@ -2,9 +2,9 @@ import { Observable } from 'rxjs';
 
 import { DataQuery } from '@grafana/schema';
 
-import { Labels } from './data';
+import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, AnalyzeQueryOptions, QueryFixAction } from './datasource';
+import { DataQueryRequest, DataQueryResponse, QueryFixAction } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -261,12 +261,17 @@ export const hasLogsContextUiSupport = (datasource: unknown): datasource is Data
   return withLogsSupport.getLogRowContextUi !== undefined;
 };
 
+export interface AnalyzeQueryOptions {
+  check: string;
+  attributes: KeyValue<string>;
+}
+
 /**
  * Data sources that support query manipulation though `modifyQuery` and `analyzeQuery` in Explore.
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
-export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery> {
+export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery, TAnalyzeQueryResult = boolean> {
   /**
    * Used in explore
    */
@@ -277,7 +282,7 @@ export interface DataSourceWithQueryManipulationSupport<TQuery extends DataQuery
    *
    * @alpha
    */
-  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
+  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): TAnalyzeQueryResult;
 }
 
 /**
