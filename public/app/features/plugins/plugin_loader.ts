@@ -237,10 +237,10 @@ systemJSPrototype.onload = function (err: unknown, id: string, deps: string[], i
 
 // This transform prevents a conflict between systemjs and requirejs which Monaco Editor
 // depends on. See packages/grafana-runtime/src/utils/plugin.ts for more.
-function preventDefineCollision(source: string) {
-  let transformedSrc = source;
-  transformedSrc = transformedSrc.replace(/define\(/g, 'systemDefine(');
-  return transformedSrc;
+function preventAMDLoaderCollision(source: string) {
+  return `(function(define) {
+    ${source}
+  })(System.define);`;
 }
 
 // TODO: this should replace translateForCDN from './systemjsPlugins/pluginCDN'
