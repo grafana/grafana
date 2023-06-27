@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 

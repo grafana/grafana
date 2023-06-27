@@ -10,6 +10,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 )
 
+type Service interface {
+	Get(ctx context.Context) (string, error)
+	Set(ctx context.Context, patterns any) error
+	GetLastUpdated(ctx context.Context) (time.Time, error)
+}
+
 var ErrNoCachedValue = errors.New("no cached value")
 
 const (
@@ -19,20 +25,20 @@ const (
 	keyLastUpdated = "last_updated"
 )
 
-// Service allows to cache GCOM angular patterns into the database, as a cache.
-type Service struct {
+// KVStoreService allows to cache GCOM angular patterns into the database, as a cache.
+type KVStoreService struct {
 	kv *kvstore.NamespacedKVStore
 }
 
-func ProvideService(kv kvstore.KVStore) *Service {
-	return &Service{
+func ProvideService(kv kvstore.KVStore) Service {
+	return &KVStoreService{
 		kv: kvstore.WithNamespace(kv, 0, kvNamespace),
 	}
 }
 
 // Get returns the raw cached angular detection patterns. The returned value is a JSON-encoded string.
 // If no value is present, ErrNoCachedValue is returned.
-func (s *Service) Get(ctx context.Context) (string, error) {
+func (s *KVStoreService) Get(ctx context.Context) (string, error) {
 	data, ok, err := s.kv.Get(ctx, keyPatterns)
 	if err != nil {
 		return "", fmt.Errorf("kv get: %w", err)
@@ -45,7 +51,7 @@ func (s *Service) Get(ctx context.Context) (string, error) {
 
 // Set sets the cached angular detection patterns and the latest update time to time.Now().
 // patterns must implement json.Marshaler.
-func (s *Service) Set(ctx context.Context, patterns any) error {
+func (s *KVStoreService) Set(ctx context.Context, patterns any) error {
 	b, err := json.Marshal(patterns)
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)
@@ -61,7 +67,7 @@ func (s *Service) Set(ctx context.Context, patterns any) error {
 
 // GetLastUpdated returns the time when Set was last called. If the value cannot be unmarshalled correctly,
 // it returns a zero-value time.Time.
-func (s *Service) GetLastUpdated(ctx context.Context) (time.Time, error) {
+func (s *KVStoreService) GetLastUpdated(ctx context.Context) (time.Time, error) {
 	v, ok, err := s.kv.Get(ctx, keyLastUpdated)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("kv get: %w", err)

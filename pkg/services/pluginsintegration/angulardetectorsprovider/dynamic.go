@@ -20,12 +20,16 @@ import (
 
 const defaultCacheTTL = time.Hour * 1
 
+type backgroundJob interface {
+	backgroundJob(ctx context.Context)
+}
+
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
-// converts them to detectors and caches them for all future calls. It also provides a background service
-// that will periodically refresh the patterns from GCOM.
+// converts them to detectors and caches them for all future calls.
+// It also provides a background service that will periodically refresh the patterns from GCOM.
 type Dynamic struct {
 	log   log.Logger
-	store *angularpatternsstore.Service
+	store angularpatternsstore.Service
 
 	httpClient *http.Client
 	baseURL    string
@@ -38,15 +42,19 @@ type Dynamic struct {
 
 	detectors []angulardetector.AngularDetector
 	mux       sync.RWMutex
+
+	// bgJob is the implementation of the background job.
+	// This is called when scheduled by Run().
+	bgJob backgroundJob
 }
 
-func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dynamic, error) {
+func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynamic, error) {
 	// TODO: standardize gcom client
 	cl, err := httpclient.New()
 	if err != nil {
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
-	return &Dynamic{
+	d := &Dynamic{
 		log:        log.New("plugins.angulardetector.gcom"),
 		store:      store,
 		httpClient: cl,
@@ -54,7 +62,10 @@ func ProvideDynamic(cfg *config.Cfg, store *angularpatternsstore.Service) (*Dyna
 		cacheTTL:   defaultCacheTTL,
 
 		initialRestoreDone: make(chan struct{}),
-	}, nil
+	}
+	// By default, use ourselves as bgJob
+	d.bgJob = d
+	return d, nil
 }
 
 // patternsToDetectors converts a slice of gcomPattern into a slice of angulardetector.AngularDetector, by calling
@@ -168,6 +179,13 @@ func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
 	d.setDetectors(newDetectors)
 }
 
+// backgroundJob is the function executed periodically in the background by the background service.
+// It calls tryUpdateDetectors.
+func (d *Dynamic) backgroundJob(ctx context.Context) {
+	d.tryUpdateDetectors(ctx)
+}
+
+// setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	var cachedPatterns GCOMPatterns
 	rawCached, err := d.store.Get(ctx)
@@ -192,6 +210,12 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	}
 }
 
+// notifyInitialRestoreDone sets the initial restore as "done"
+func (d *Dynamic) notifyInitialRestoreDone() {
+	// Notify that the initial restore is done (see docstring for d.initialRestoreDone)
+	close(d.initialRestoreDone)
+}
+
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
 	// Set initial value by restoring cache
@@ -200,9 +224,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		d.log.Warn("Could not set detectors from cache, ignoring cache", "error", err)
 	}
 	canc()
-
-	// Notify that the initial restore is done (see docstring for d.initialRestoreDone)
-	close(d.initialRestoreDone)
+	d.notifyInitialRestoreDone()
 
 	// Determine when next run is, and check if we should run immediately
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
@@ -211,8 +233,8 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	}
 	nextRunUntil := time.Until(lastUpdate.Add(d.cacheTTL))
 	if nextRunUntil <= 0 {
-		// Restore from GCOM
-		d.tryUpdateDetectors(ctx)
+		// Do first run immediately
+		d.bgJob.backgroundJob(ctx)
 		nextRunUntil = d.cacheTTL
 	}
 
@@ -222,7 +244,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ticker.C:
-			d.tryUpdateDetectors(ctx)
+			d.bgJob.backgroundJob(ctx)
 			// Restore default TTL if we run with a shorter interval the first time
 			ticker.Reset(d.cacheTTL)
 		case <-ctx.Done():
@@ -232,6 +254,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
+// TODO: remove context here?
 func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
 	// Wait for channel to be closed, which is done after the restore from db is done
 	<-d.initialRestoreDone

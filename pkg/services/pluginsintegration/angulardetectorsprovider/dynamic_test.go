@@ -2,6 +2,8 @@ package angulardetectorsprovider
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +15,247 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 	"github.com/stretchr/testify/require"
 )
+
+func TestDynamicAngularDetectorsProvider(t *testing.T) {
+	gcom := newDefaultGCOMScenario()
+	srv := gcom.newHTTPTestServer()
+	t.Cleanup(srv.Close)
+
+	var mockGCOMPatterns GCOMPatterns
+	require.NoError(t, json.Unmarshal(mockGCOMResponse, &mockGCOMPatterns))
+	svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+	mockGCOMDetectors, err := svc.patternsToDetectors(mockGCOMPatterns)
+	require.NoError(t, err)
+
+	t.Run("patternsToDetectors", func(t *testing.T) {
+		t.Run("valid", func(t *testing.T) {
+			d, err := svc.patternsToDetectors(mockGCOMPatterns)
+			require.NoError(t, err)
+			checkMockDetectors(t, d)
+		})
+
+		t.Run("invalid regex", func(t *testing.T) {
+			_, err := svc.patternsToDetectors(GCOMPatterns{GCOMPattern{Name: "invalid", Type: GCOMPatternTypeRegex, Pattern: `[`}})
+			require.Error(t, err)
+		})
+
+		t.Run("unknown pattern type is ignored silently", func(t *testing.T) {
+			// Tests that we can introduce new pattern types in the future without breaking old Grafana versions.
+			newPatterns := make(GCOMPatterns, len(mockGCOMPatterns))
+			copy(newPatterns, mockGCOMPatterns)
+
+			// Add an unknown pattern at the end
+			newPatterns = append(newPatterns, GCOMPattern{Name: "Unknown", Pattern: "Unknown", Type: "Unknown"})
+
+			// Convert patterns to detector and the unknown one should be silently ignored
+			detectors, err := svc.patternsToDetectors(newPatterns)
+			require.NoError(t, err)
+			checkMockDetectors(t, detectors)
+		})
+	})
+
+	t.Run("ProvideDetectors", func(t *testing.T) {
+		t.Run("returns empty result by default", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
+			r := svc.ProvideDetectors(context.Background())
+			require.Empty(t, r)
+		})
+
+		t.Run("returns cached detectors", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
+			svc.setDetectors(mockGCOMDetectors)
+			checkMockDetectors(t, svc.ProvideDetectors(context.Background()))
+		})
+
+		t.Run("awaits initial restore done", func(t *testing.T) {
+			t.Parallel()
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			done := make(chan struct{})
+			go func() {
+				time.Sleep(time.Second * 1)
+				svc.setDetectors(mockGCOMDetectors)
+				svc.notifyInitialRestoreDone()
+				// ensure the value is read and this goroutine exits
+				done <- struct{}{}
+			}()
+			r := svc.ProvideDetectors(context.Background())
+			checkMockDetectors(t, r)
+			<-done
+		})
+	})
+
+	t.Run("fetch", func(t *testing.T) {
+		t.Run("returns value from gcom api", func(t *testing.T) {
+			r, err := svc.fetch(context.Background())
+			require.NoError(t, err)
+
+			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called")
+			require.Equal(t, mockGCOMPatterns, r)
+		})
+
+		t.Run("handles timeout", func(t *testing.T) {
+			// ctx that expired in the past
+			ctx, canc := context.WithDeadline(context.Background(), time.Now().Add(time.Second*-30))
+			defer canc()
+			_, err := svc.fetch(ctx)
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
+			require.Empty(t, svc.detectors)
+		})
+	})
+
+	t.Run("tryUpdateDetectors", func(t *testing.T) {
+		t.Run("successful", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+
+			// Check that store is initially empty
+			dbV, err := svc.store.Get(context.Background())
+			require.ErrorIs(t, err, angularpatternsstore.ErrNoCachedValue)
+			require.Empty(t, dbV, "initial store should be empty")
+			lastUpdated, err := svc.store.GetLastUpdated(context.Background())
+			require.NoError(t, err)
+			require.Zero(t, lastUpdated)
+
+			// Also check in-memory detectors
+			require.Empty(t, svc.detectors)
+
+			// Fetch and store value, and ensure it returns the correct value
+			svc.tryUpdateDetectors(context.Background())
+
+			// Check that the cached detectors have been updated as well
+			checkMockDetectors(t, svc.detectors)
+
+			// Check that the value has been updated in the kv store, by reading from the store directly
+			dbV, err = svc.store.Get(context.Background())
+			require.NoError(t, err)
+			require.NotEmpty(t, dbV, "new store should not be empty")
+			var patterns GCOMPatterns
+			require.NoError(t, json.Unmarshal([]byte(dbV), &patterns), "could not unmarshal stored value")
+			detectors, err := svc.patternsToDetectors(patterns)
+			require.NoError(t, err, "could not convert patterns to detectors")
+			checkMockDetectors(t, detectors)
+
+			// Check that last updated has been updated in the kv store (which is used for cache ttl)
+			lastUpdated, err = svc.store.GetLastUpdated(context.Background())
+			require.NoError(t, err)
+			require.WithinDuration(t, lastUpdated, time.Now(), time.Second*10, "last updated in store has not been updated")
+		})
+
+		t.Run("gcom error does not update store", func(t *testing.T) {
+			// GCOM scenario that always returns a 500
+			scenario := newError500GCOMScenario()
+			srv := scenario.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+
+			// Set initial cached detectors
+			svc.setDetectors(mockGCOMDetectors)
+
+			// Set initial patterns store as well
+			err = svc.store.Set(context.Background(), mockGCOMPatterns)
+			require.NoError(t, err)
+
+			// Try to update from GCOM, but it returns an error
+			svc.tryUpdateDetectors(context.Background())
+			require.True(t, scenario.httpCalls.calledOnce(), "gcom api should be called once")
+
+			// Patterns in store should not be modified
+			dbV, err := svc.store.Get(context.Background())
+			require.NotEmpty(t, dbV)
+			var newPatterns GCOMPatterns
+			err = json.Unmarshal([]byte(dbV), &newPatterns)
+			require.NoError(t, err)
+			require.Equal(t, mockGCOMPatterns, newPatterns, "store should not be modified")
+
+			// Same for in-memory detectors
+			checkMockDetectors(t, svc.detectors)
+		})
+	})
+
+	t.Run("setDetectorsFromCache", func(t *testing.T) {
+		t.Run("empty store doesn't return an error", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+
+			err := svc.setDetectorsFromCache(context.Background())
+			require.NoError(t, err)
+			require.Empty(t, svc.detectors)
+		})
+
+		t.Run("store is restored", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+
+			// Populate store
+			err := svc.store.Set(context.Background(), mockGCOMPatterns)
+			require.NoError(t, err)
+
+			// Restore
+			require.Empty(t, svc.detectors, "initial detectors should be empty")
+			err = svc.setDetectorsFromCache(context.Background())
+			require.NoError(t, err)
+			require.Equal(t, mockGCOMDetectors, svc.detectors)
+		})
+	})
+
+	t.Run("background service", func(t *testing.T) {
+		t.Run("restores value from db when it starts", func(t *testing.T) {
+			gcom := newDefaultGCOMScenario()
+			srv := gcom.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+
+			// Set initial store
+			err := svc.store.Set(context.Background(), mockGCOMPatterns)
+			require.NoError(t, err)
+
+			// Start bg service scenario and test
+			bg := newBackgroundServiceScenario(svc)
+			bg.run(context.Background(), t)
+			d := svc.ProvideDetectors(context.Background())
+			checkMockDetectors(t, d)
+			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
+
+			bg.exitAndWait()
+		})
+
+		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
+			gcom := newDefaultGCOMScenario()
+			srv := gcom.newHTTPTestServer()
+			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			job := newFakeJober(svc)
+			t.Cleanup(job.close)
+			svc.bgJob = job
+			mockStore := &mockLastUpdatePatternsStore{
+				Service: svc.store,
+				// Expire cache
+				lastUpdated: time.Now().Add(defaultCacheTTL * -2),
+			}
+			svc.store = mockStore
+
+			// Store mock GCOM pattern without the first one
+			err = mockStore.Set(context.Background(), mockGCOMPatterns[1:])
+			require.NoError(t, err)
+
+			// Start bg service and it should call GCOM immediately
+			bg := newBackgroundServiceScenario(svc)
+			t.Cleanup(bg.close)
+			bg.run(context.Background(), t)
+
+			// Await job call with timeout
+			select {
+			case <-time.After(time.Second * 10):
+				t.Fatal("timeout")
+			case <-job.callback:
+				break
+			}
+			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called once")
+
+			// Check new cached value
+			checkMockDetectors(t, svc.detectors)
+			bg.exitAndWait()
+		})
+	})
+}
 
 var mockGCOMResponse = []byte(`[{
 	"name": "PanelCtrl",
@@ -33,7 +276,7 @@ func mockGCOMHTTPHandlerFunc(writer http.ResponseWriter, request *http.Request) 
 	_, _ = writer.Write(mockGCOMResponse)
 }
 
-func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.AngularDetector) {
+func checkMockDetectors(t *testing.T, detectors []angulardetector.AngularDetector) {
 	require.Len(t, detectors, 2)
 	d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
 	require.True(t, ok)
@@ -43,164 +286,157 @@ func checkMockGCOMResponse(t *testing.T, detectors []angulardetector.AngularDete
 	require.Equal(t, `["']QueryCtrl["']`, rd.Regex.String())
 }
 
+type counter struct {
+	count           int
+	lastAssertCount int
+}
+
+func (c *counter) inc() {
+	c.count++
+}
+
+func (c *counter) reset() {
+	c.count = 0
+}
+
+func (c *counter) called() bool {
+	r := c.count > c.lastAssertCount
+	c.lastAssertCount = c.count
+	return r
+}
+
+func (c *counter) calledOnce() bool {
+	r := c.count == c.lastAssertCount+1
+	c.lastAssertCount = c.count
+	return r
+}
+
 type gcomScenario struct {
-	gcomHTTPHandlerFunc http.HandlerFunc
-	gcomHTTPCalls       int
+	httpHandlerFunc http.HandlerFunc
+	httpCalls       counter
 }
 
 func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s.gcomHTTPCalls++
-		s.gcomHTTPHandlerFunc(w, r)
+		s.httpCalls.inc()
+		s.httpHandlerFunc(w, r)
 	}))
 }
 
 func newDefaultGCOMScenario() *gcomScenario {
-	return &gcomScenario{gcomHTTPHandlerFunc: mockGCOMHTTPHandlerFunc}
-}
-
-func newError500GCOMScenario() *gcomScenario {
-	return &gcomScenario{gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-		writer.WriteHeader(http.StatusInternalServerError)
+	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+		mockGCOMHTTPHandlerFunc(w, req)
 	}}
 }
 
-func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration) *Dynamic {
+func newError500GCOMScenario() *gcomScenario {
+	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}}
+}
+
+func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration, opts ...func(*Dynamic)) *Dynamic {
 	d, err := ProvideDynamic(
 		&config.Cfg{GrafanaComURL: gcomURL},
 		angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 	)
 	require.NoError(t, err)
+	for _, opt := range opts {
+		opt(d)
+	}
 	d.cacheTTL = cacheTTL
 	return d
 }
 
-func TestGCOMDetectorsProvider(t *testing.T) {
-	t.Run("returns value returned from gcom api", func(t *testing.T) {
-		scenario := newDefaultGCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-		gcomProvider.tryUpdateDetectors(context.Background())
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
-		checkMockGCOMResponse(t, detectors)
-	})
+func dynamicWithInitialRestoreDone(dynamic *Dynamic) {
+	dynamic.notifyInitialRestoreDone()
+}
 
-	t.Run("uses cache when called multiple times", func(t *testing.T) {
-		scenario := newDefaultGCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
-		checkMockGCOMResponse(t, detectors)
+// fakeBackgroundJob wraps a backgroundJob and writes a value to the callback channel
+// whenever the job is executed.
+type fakeBackgroundJob struct {
+	inner backgroundJob
 
-		secondDetectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called only once")
-		require.Equal(t, detectors, secondDetectors)
-	})
+	// callback is a channel where a value is written after the background job is executed.
+	// Read from this channel to await when the job is executed
+	callback chan struct{}
+}
 
-	t.Run("calls gcom again when cache expires", func(t *testing.T) {
-		scenario := newDefaultGCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
+func newFakeJober(inner backgroundJob) *fakeBackgroundJob {
+	return &fakeBackgroundJob{inner: inner, callback: make(chan struct{})}
+}
 
-		// Cache expires after 1 us
-		gcomProvider := provideDynamic(t, srv.URL, time.Microsecond*1)
+func (j *fakeBackgroundJob) close() {
+	close(j.callback)
+}
 
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		checkMockGCOMResponse(t, detectors)
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom api should be called")
+func (j *fakeBackgroundJob) backgroundJob(ctx context.Context) {
+	j.inner.backgroundJob(ctx)
+	j.callback <- struct{}{}
+}
 
-		// Wait for cache to expire
-		time.Sleep(time.Microsecond * 2)
-		newDetectors := gcomProvider.ProvideDetectors(context.Background())
-		checkMockGCOMResponse(t, newDetectors)
-		require.Equal(t, 2, scenario.gcomHTTPCalls, "gcom api should be called again after cache expires")
-	})
+// mockLastUpdatePatternsStore wraps an angularpatternsstore.Service and returns a pre-defined value (lastUpdated)
+// when calling GetLastUpdated. All other method calls are sent to the wrapped angularpatternsstore.Service.
+type mockLastUpdatePatternsStore struct {
+	angularpatternsstore.Service
+	lastUpdated time.Time
+}
 
-	t.Run("error handling", func(t *testing.T) {
-		for _, tc := range []struct {
-			*gcomScenario
-			name string
-		}{
-			{name: "http error 500", gcomScenario: &gcomScenario{
-				gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-					writer.WriteHeader(http.StatusInternalServerError)
-				},
-			}},
-			{name: "invalid json", gcomScenario: &gcomScenario{
-				gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-					_, _ = writer.Write([]byte(`not json`))
-				},
-			}},
-			{name: "invalid regex", gcomScenario: &gcomScenario{
-				gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-					_, _ = writer.Write([]byte(`[{"name": "test", "type": "regex", "pattern": "((("}]`))
-				},
-			}},
-		} {
-			t.Run(tc.name, func(t *testing.T) {
-				srv := tc.newHTTPTestServer()
-				t.Cleanup(srv.Close)
-				gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-				detectors := gcomProvider.ProvideDetectors(context.Background())
-				require.Equal(t, 1, tc.gcomHTTPCalls, "gcom should be called")
-				require.Empty(t, detectors, "returned AngularDetectors should be empty")
-			})
+// GetLastUpdated always returns s.lastUpdated.
+func (s *mockLastUpdatePatternsStore) GetLastUpdated(_ context.Context) (time.Time, error) {
+	return s.lastUpdated, nil
+}
+
+type backgroundServiceScenario struct {
+	svc         *Dynamic
+	bgDone      chan struct{}
+	ctxCancFunc context.CancelFunc
+}
+
+func newBackgroundServiceScenario(svc *Dynamic) *backgroundServiceScenario {
+	s := &backgroundServiceScenario{svc: svc}
+	s.reset()
+	return s
+}
+
+func (s *backgroundServiceScenario) reset() {
+	s.bgDone = make(chan struct{})
+	s.ctxCancFunc = nil
+}
+
+func (s *backgroundServiceScenario) close() {
+	if s.ctxCancFunc == nil {
+		return
+	}
+	s.ctxCancFunc()
+}
+
+func (s *backgroundServiceScenario) exitAndWait() {
+	if s.ctxCancFunc == nil {
+		panic("run was not called")
+	}
+	// Make bg service exit
+	s.close()
+	s.ctxCancFunc = nil
+	// Wait for bg svc to quit
+	<-s.bgDone
+}
+
+func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
+	if s.ctxCancFunc != nil {
+		panic("run was called more than once")
+	}
+	ctx, canc := context.WithCancel(ctx)
+	// Store this canc func, so we can make the bg goroutine exit on demand
+	s.ctxCancFunc = canc
+
+	// Start background service
+	go func() {
+		err := s.svc.Run(ctx)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			t.Fatal(err)
 		}
-	})
-
-	t.Run("handles gcom timeout", func(t *testing.T) {
-		gcomScenario := &gcomScenario{
-			gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-				time.Sleep(time.Second * 1)
-				_, _ = writer.Write([]byte(`[{"name": "test", "type": "regex", "pattern": "((("}]`))
-			},
-		}
-		srv := gcomScenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-		// Expired context
-		ctx, canc := context.WithTimeout(context.Background(), time.Second*-1)
-		defer canc()
-		detectors := gcomProvider.ProvideDetectors(ctx)
-		require.Zero(t, gcomScenario.gcomHTTPCalls, "gcom should be not called due to request timing out")
-		require.Empty(t, detectors, "returned detectors should be empty")
-	})
-
-	t.Run("caches gcom error", func(t *testing.T) {
-		scenario := newError500GCOMScenario()
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
-		require.Empty(t, detectors, "returned detectors should be empty")
-
-		newDetectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should not be called while cache is valid")
-		require.Equal(t, detectors, newDetectors, "second call should return the same response")
-	})
-
-	t.Run("unknown pattern types do not break decoding", func(t *testing.T) {
-		// Tests that we can introduce new pattern types in the future without breaking old Grafana versions.
-
-		scenario := gcomScenario{gcomHTTPHandlerFunc: func(writer http.ResponseWriter, request *http.Request) {
-			_, _ = writer.Write([]byte(`[
-				{"name": "PanelCtrl", "type": "contains", "pattern": "PanelCtrl"},
-				{"name": "Another", "type": "unknown", "pattern": "PanelCtrl"}
-			]`))
-		}}
-		srv := scenario.newHTTPTestServer()
-		t.Cleanup(srv.Close)
-		gcomProvider := provideDynamic(t, srv.URL, defaultCacheTTL)
-		detectors := gcomProvider.ProvideDetectors(context.Background())
-		require.Equal(t, 1, scenario.gcomHTTPCalls, "gcom should be called")
-		require.Len(t, detectors, 1, "should have decoded only 1 Detector")
-		d, ok := detectors[0].(*angulardetector.ContainsBytesDetector)
-		require.True(t, ok, "decoded pattern should be of the correct type")
-		require.Equal(t, []byte("PanelCtrl"), d.Pattern, "decoded value for known pattern should be correct")
-	})
+		// Signal that the bg service has quit
+		close(s.bgDone)
+	}()
 }
