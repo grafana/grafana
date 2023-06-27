@@ -3,79 +3,61 @@ package admission
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 
-	"github.com/grafana/thema"
+	"cuelang.org/go/cue"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/thema/vmux"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 )
 
 const PluginNameSchemaValidate = "SchemaValidate"
 
 // Register registers a plugin
-func RegisterSchemaValidate(plugins *admission.Plugins) {
+func RegisterSchemaValidate(plugins *admission.Plugins, reg *corekind.Base) {
 	plugins.Register(PluginNameSchemaValidate, func(config io.Reader) (admission.Interface, error) {
-		return NewSchemaValidate(), nil
+		return NewSchemaValidate(reg), nil
 	})
 }
 
 type schemaValidate struct {
 	log log.Logger
+	reg *corekind.Base
 }
 
 var _ admission.ValidationInterface = schemaValidate{}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
-func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (st schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
-	uobj, ok := obj.(*unstructured.Unstructured)
-	if !ok {
-		// not sure if this is ever expected to happen
-		sv.log.Info("failed to cast object to unstructured")
+	ck := st.reg.ByName(obj.GetObjectKind().GroupVersionKind().Kind)
+	if ck == nil {
 		return nil
 	}
-	spec, err := json.Marshal(uobj.Object["spec"])
+	cv, err := unstructuredToCUE(ck.MachineName()+".json", obj.(*unstructured.Unstructured))
 	if err != nil {
-		sv.log.Info("failed to marshal spec", "err", err)
-		return nil
+		// TODO wrap error as k8s expects
+		return err
 	}
 
-	// this needs to be generic, but for now, just do it for dashboards
-	if obj.GetObjectKind().GroupVersionKind().Kind == "Dashboard" {
-		dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
-		if err != nil {
-			sv.log.Info("failed to create dashboard kind", "err", err)
-			return nil
-		}
-
-		// TODO thema (or codegen, or both) request: rename JSONValueMux to
-		// something that's a bit clearer; it's unmarshalling the JSON bytes to
-		// a dashboard and validating that against any schema
-		_, _, err = dk.JSONValueMux(spec)
-		if err != nil {
-			sv.log.Error("failed to validate dashboard", "err", err)
-			return nil
-		}
-
-		// JSONValueMux validates that the dashboard matches *any* schema, so we
-		// may need to translate to latest.
+	switch a.GetOperation() { //nolint:exhaustive
+	case admission.Create, admission.Update:
+		// This logic will accept any known version of the kind, not just the
+		// current/latest one that is known to the server. Errors may occur when
+		// translating to the current/latest version, but that's not this admission
+		// handler's responsibility.
 		//
-		// TODO: None of this feels correct; there should be a dashboard.Kind
-		// "validate latest" function, or something like that.
-		sch, err := dk.Lineage().Schema(thema.LatestVersion(dk.Lineage()))
-		if err != nil {
-			sv.log.Error("failed to get latest schema", "err", err)
-			return nil
-		}
-		cueVal, _ := vmux.NewJSONCodec("dashboard.json").Decode(cuectx.GrafanaCUEContext(), spec)
-		_, err = sch.Validate(cueVal)
-		if err != nil {
-			sv.log.Info("failed to validate dashboard", "err", err)
+		// TODO vanilla k8s CRDs allow specifying a subset of that kind's versions as acceptable on that server. Do we want to do that?
+		if ck.Lineage().ValidateAny(cv) != nil {
+			// TODO stop duplicating work once the ValidateAny error return is added https://github.com/grafana/thema/issues/156
+			_, err := ck.Lineage().Latest().Validate(cv)
+			// TODO wrap error as k8s expects
+			return err
 		}
 	}
 	return nil
@@ -85,15 +67,30 @@ func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o
 // where operation can be one of CREATE, UPDATE, DELETE, or CONNECT
 func (schemaValidate) Handles(operation admission.Operation) bool {
 	switch operation {
-	case admission.Connect:
+	case admission.Connect, admission.Delete:
 		return false
+	default:
+		return true
 	}
-	return true
 }
 
 // NewSchemaValidate creates a NewSchemaValidate admission handler
-func NewSchemaValidate() admission.Interface {
+func NewSchemaValidate(reg *corekind.Base) admission.Interface {
 	return schemaValidate{
 		log: log.New("admission.schema-validate"),
+		reg: reg,
 	}
+}
+
+// unstructuredToCUE converts an [*unstructured.Unstructured] to a [cue.Value]
+// by first converting it to JSON, then decoding that JSON into CUE.
+//
+// TODO if this is more widely useful, put it somewhere else
+func unstructuredToCUE(path string, u *unstructured.Unstructured) (cue.Value, error) {
+	j, err := json.Marshal(u.Object)
+	if err != nil {
+		return cue.Value{}, fmt.Errorf("failed to marshal unstructured to json: %w", err)
+	}
+
+	return vmux.NewJSONCodec(path).Decode(cuectx.GrafanaCUEContext(), j)
 }
