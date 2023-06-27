@@ -312,8 +312,6 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
           rows: place === 'above' ? [...newRows, ...s.rows] : [...s.rows, ...newRows],
           loadingState: newRows.length === 0 ? LoadingState.Done : LoadingState.NotStarted,
         }));
-      } else {
-        // do nothing, we were told to ignore the result of this fetch
       }
     } catch {
       setSection(place, (s) => ({
