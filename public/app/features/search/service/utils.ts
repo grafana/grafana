@@ -38,13 +38,13 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function getIconForKind(kind: string): IconName {
+export function getIconForKind(kind: string, isOpen?: boolean): IconName {
   if (kind === 'dashboard') {
     return 'apps';
   }
 
   if (kind === 'folder') {
-    return 'folder';
+    return isOpen ? 'folder-open' : 'folder';
   }
 
   return 'question-circle';

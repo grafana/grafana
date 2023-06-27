@@ -163,7 +163,6 @@ describe('RuleEditor grafana managed rules', () => {
               is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
-              uid: '',
             },
           },
         ],

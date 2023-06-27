@@ -33,8 +33,8 @@ Alert rules for an external Grafana Mimir or Loki instance can be edited or dele
 
 **Configure contact points**
 
-For information on how to configure contact points, see [Configure contact points]({{< relref "../manage-notifications/manage-contact-points" >}})
+For information on how to configure contact points, see [Configure contact points]({{< relref "./manage-contact-points/_index.md" >}})
 
 **Configure notification policies**
 
-For information on how to configure notification policies, see [Configure notification policies]({{< relref "../manage-notifications/manage-contact-points" >}})
+For information on how to configure notification policies, see [Configure notification policies]({{< relref "./create-notification-policy" >}})

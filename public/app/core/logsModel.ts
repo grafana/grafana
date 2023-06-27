@@ -422,7 +422,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
       // Data sources that set up searchWords on backend use meta.custom.searchWords
-      // Data sources that set up searchWords trough frontend can use meta.searchWords
+      // Data sources that set up searchWords through frontend can use meta.searchWords
       const searchWords = series.meta?.custom?.searchWords ?? series.meta?.searchWords ?? [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 

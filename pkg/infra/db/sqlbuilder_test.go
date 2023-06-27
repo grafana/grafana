@@ -480,7 +480,7 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
-	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
+	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission, "")
 	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
 	err = sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)

@@ -11,7 +11,6 @@ import {
   MutableDataFrame,
   toUtc,
 } from '@grafana/data';
-import { ExploreId } from 'app/types';
 
 import { Logs } from './Logs';
 
@@ -46,7 +45,7 @@ jest.mock('app/store/store', () => ({
 const changePanelState = jest.fn();
 jest.mock('../state/explorePane', () => ({
   ...jest.requireActual('../state/explorePane'),
-  changePanelState: (exploreId: ExploreId, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
+  changePanelState: (exploreId: string, panel: 'logs', panelState: {} | ExploreLogsPanelState) => {
     return changePanelState(exploreId, panel, panelState);
   },
 }));
@@ -85,7 +84,7 @@ describe('Logs', () => {
 
     return (
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -141,7 +140,7 @@ describe('Logs', () => {
     const scanningStarted = jest.fn();
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -178,7 +177,7 @@ describe('Logs', () => {
   it('should render a stop scanning button', () => {
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -218,7 +217,7 @@ describe('Logs', () => {
 
     render(
       <Logs
-        exploreId={ExploreId.left}
+        exploreId={'left'}
         splitOpen={() => undefined}
         logsVolumeEnabled={true}
         onSetLogsVolumeEnabled={() => null}
@@ -270,10 +269,10 @@ describe('Logs', () => {
       const panelState = { logs: { id: '1' } };
       const { rerender } = setup({ loading: false, panelState });
 
-      rerender(getComponent({ loading: true, exploreId: ExploreId.right, panelState }));
-      rerender(getComponent({ loading: false, exploreId: ExploreId.right, panelState }));
+      rerender(getComponent({ loading: true, exploreId: 'right', panelState }));
+      rerender(getComponent({ loading: false, exploreId: 'right', panelState }));
 
-      expect(changePanelState).toHaveBeenCalledWith(ExploreId.right, 'logs', { logs: {} });
+      expect(changePanelState).toHaveBeenCalledWith('right', 'logs', { logs: {} });
     });
 
     it('should scroll the scrollElement into view if rows contain id', () => {
