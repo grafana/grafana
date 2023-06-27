@@ -13,15 +13,13 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import React, { memo, useEffect, useMemo } from 'react';
+import React, { memo, useEffect } from 'react';
 
 import { CoreApp, DataFrame, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
-import ExternalLinks from '../common/ExternalLinks';
-import { getTraceLinks } from '../model/link-patterns';
 import { getHeaderTags } from '../model/trace-viewer';
 import { Trace } from '../types';
 
@@ -163,23 +161,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
       text-overflow: ellipsis;
       max-width: 30%;
       display: inline-block;
-    `,
-    tracePageHeaderBack: css`
-      label: TracePageHeaderBack;
-      align-items: center;
-      align-self: stretch;
-      background-color: #fafafa;
-      border-bottom: 1px solid #ddd;
-      border-right: 1px solid #ddd;
-      color: inherit;
-      display: flex;
-      font-size: 1.4rem;
-      padding: 0 1rem;
-      margin-bottom: -1px;
-      &:hover {
-        background-color: #f0f0f0;
-        border-color: #ccc;
-      }
     `,
   };
 };
