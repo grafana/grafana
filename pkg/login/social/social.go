@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type SocialService struct {
@@ -373,23 +372,10 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	return nil
 }
 
-var errRoleAttributePathNotSet = errutil.NewBase(errutil.StatusBadRequest,
-	"role_attribute_path not set and role_attribute_strict is set",
-	errutil.WithLogLevel(errutil.LevelError), errutil.WithPublicMessage("Instance misconfigured, please contact your administrator"))
-
-var errRoleAttributeStrictViolation = errutil.NewBase(errutil.StatusBadRequest,
-	"idP did not return a role attribute, but role_attribute_strict is set",
-	errutil.WithLogLevel(errutil.LevelError),
-	errutil.WithPublicMessage("idP did not return a role attribute, please contact your administrator"))
-
-var errInvalidRole = errutil.NewBase(errutil.StatusBadRequest, "invalid role",
-	errutil.WithLogLevel(errutil.LevelError),
-	errutil.WithPublicMessage("idP did not return a valid role attribute, please contact your administrator"))
-
 func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy bool) (org.RoleType, bool, error) {
 	if s.roleAttributePath == "" {
 		if s.roleAttributeStrict {
-			return "", false, errRoleAttributePathNotSet
+			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
 		}
 		return s.defaultRole(), false, nil
 	}
@@ -397,7 +383,7 @@ func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string, legacy
 	role, gAdmin := s.searchRole(rawJSON, groups)
 	if !role.IsValid() {
 		if s.roleAttributeStrict {
-			return "", false, errRoleAttributeStrictViolation.Errorf("invalid role: %s", role)
+			return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
 		}
 
 		if role != "" {

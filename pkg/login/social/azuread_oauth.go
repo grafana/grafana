@@ -134,7 +134,7 @@ func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token
 		}
 
 		if !role.IsValid() {
-			return nil, errRoleAttributeStrictViolation.Errorf("AzureAD OAuth: invalid role %q", role)
+			return nil, errInvalidRole.Errorf("AzureAD OAuth: invalid role %q", role)
 		}
 	}
 	s.log.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
