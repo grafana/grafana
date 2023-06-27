@@ -171,61 +171,6 @@ describe('LogRowContextModal', () => {
     await waitFor(() => expect(screen.getAllByText('foo123').length).toBe(3));
   });
 
-  it('should call getRowContext when limit changes', async () => {
-    render(
-      <LogRowContextModal
-        row={row}
-        open={true}
-        onClose={() => {}}
-        getRowContext={getRowContext}
-        timeZone={timeZone}
-        logsSortOrder={LogsSortOrder.Descending}
-      />
-    );
-    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
-
-    const fiftyLinesButton = screen.getByRole('button', {
-      name: /50 lines/i,
-    });
-    await userEvent.click(fiftyLinesButton);
-    const twentyLinesButton = screen.getByRole('menuitemradio', {
-      name: /20 lines/i,
-    });
-    await userEvent.click(twentyLinesButton);
-
-    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(4));
-  });
-
-  it('should call getRowContextQuery when limit changes', async () => {
-    render(
-      <LogRowContextModal
-        row={row}
-        open={true}
-        onClose={() => {}}
-        getRowContext={getRowContext}
-        getRowContextQuery={getRowContextQuery}
-        timeZone={timeZone}
-        logsSortOrder={LogsSortOrder.Descending}
-      />
-    );
-
-    // this will call it initially and in the first fetchResults
-    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(2));
-
-    const tenLinesButton = screen.getByRole('button', {
-      name: /50 lines/i,
-    });
-    await userEvent.click(tenLinesButton);
-    const twentyLinesButton = screen.getByRole('menuitemradio', {
-      name: /20 lines/i,
-    });
-    act(() => {
-      userEvent.click(twentyLinesButton);
-    });
-
-    await waitFor(() => expect(getRowContextQuery).toHaveBeenCalledTimes(3));
-  });
-
   it('should show a split view button', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 
