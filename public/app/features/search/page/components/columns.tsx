@@ -10,7 +10,7 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
+import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -57,38 +57,27 @@ export const generateColumns = (
 
   let width = 50;
   if (selection && selectionToggle) {
-    width = 30;
+    width = 0;
     columns.push({
       id: `column-checkbox`,
       width,
       Header: () => {
-        if (selection('*', '*')) {
-          return (
-            <div className={styles.checkboxHeader}>
-              <IconButton name="check-square" onClick={clearSelection} tooltip="Clear selection" />
-            </div>
-          );
-        }
         return (
-          <div className={styles.checkboxHeader}>
-            <Checkbox
-              checked={false}
-              onChange={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const { view } = response;
-                const count = Math.min(view.length, 50);
-                for (let i = 0; i < count; i++) {
-                  const item = view.get(i);
-                  if (item.uid && item.kind) {
-                    if (!selection(item.kind, item.uid)) {
-                      selectionToggle(item.kind, item.uid);
-                    }
-                  }
+          <Checkbox
+            indeterminate={selection('*', '*')}
+            checked={false}
+            disabled={!response}
+            onChange={(e) => {
+              const { view } = response;
+              const count = Math.min(view.length, 50);
+              for (let i = 0; i < count; i++) {
+                const item = view.get(i);
+                if (item.uid && item.kind) {
+                  selectionToggle(item.kind, item.uid);
                 }
-              }}
-            />
-          </div>
+              }
+            }}
+          />
         );
       },
       Cell: (p) => {
@@ -97,16 +86,14 @@ export const generateColumns = (
         const selected = selection(kind, uid);
         const hasUID = uid != null; // Panels don't have UID! Likely should not be shown on pages with manage options
         return (
-          <div {...p.cellProps}>
-            <div className={styles.checkbox}>
-              <Checkbox
-                disabled={!hasUID}
-                value={selected && hasUID}
-                onChange={(e) => {
-                  selectionToggle(kind, uid);
-                }}
-              />
-            </div>
+          <div {...p.cellProps} className={styles.cell}>
+            <Checkbox
+              disabled={!hasUID}
+              value={selected && hasUID}
+              onChange={(e) => {
+                selectionToggle(kind, uid);
+              }}
+            />
           </div>
         );
       },
@@ -127,14 +114,16 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       return (
-        <a {...p.cellProps} href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
-          {name}
-        </a>
+        <div className={styles.cell} {...p.cellProps}>
+          <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+            {name}
+          </a>
+        </div>
       );
     },
     id: `column-name`,
     field: access.name!,
-    Header: () => <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>,
+    Header: () => <div>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
   availableWidth -= width;
@@ -168,7 +157,7 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
         return (
-          <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
+          <div {...p.cellProps} className={cx(styles.cell)}>
             {parts.map((p) => {
               let info = meta.locationInfo[p];
               if (!info && p === 'general') {
@@ -193,7 +182,7 @@ export const generateColumns = (
   }
 
   if (availableWidth > 0 && showTags) {
-    columns.push(makeTagsColumn(access.tags, availableWidth, styles.tagList, onTagSelected));
+    columns.push(makeTagsColumn(access.tags, availableWidth, styles, onTagSelected));
   }
 
   if (sortField && sortFieldWith) {
@@ -366,7 +355,7 @@ function makeTypeColumn(
         }
       }
       return (
-        <div {...p.cellProps} className={styles.typeText}>
+        <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
           <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
           {txt}
         </div>
@@ -379,15 +368,15 @@ function makeTypeColumn(
 function makeTagsColumn(
   field: Field<string[]>,
   width: number,
-  tagListClass: string,
+  styles: Record<string, string>,
   onTagSelected: (tag: string) => void
 ): TableColumn {
   return {
     Cell: (p) => {
       const tags = field.values[p.row.index];
       return tags ? (
-        <div {...p.cellProps}>
-          <TagList className={tagListClass} tags={tags} onClick={onTagSelected} />
+        <div {...p.cellProps} className={styles.cell}>
+          <TagList className={styles.tagList} tags={tags} onClick={onTagSelected} />
         </div>
       ) : null;
     },
