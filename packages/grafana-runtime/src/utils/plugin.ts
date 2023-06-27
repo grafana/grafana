@@ -1,6 +1,7 @@
 import 'systemjs/dist/system';
 // Add ability to load plugins bundled as AMD format)
 import 'systemjs/dist/extras/amd';
+
 import { PanelPlugin } from '@grafana/data';
 
 import { config } from '../config';
@@ -56,12 +57,9 @@ export function getPluginImportUtils(): PluginImportUtils {
   return pluginImportUtils;
 }
 
-// TODO: Clean this up. Should we export the namespace?
-// The AMD extra creates a global define which RequireJS will silently bail on.
-// Grafana currently relies on requirejs for Monaco Editor so we move it
-// elsewhere otherwise monaco will fail to load.
+// The AMD extra creates a global define which causes RequireJS to silently bail.
+// Grafana relies on RequireJS for Monaco Editor so we move it so monaco continues to load.
 // @ts-ignore
-window.systemDefine = window.define;
-
+SystemJS.define = window.define;
 // @ts-ignore
 window.define = undefined;
