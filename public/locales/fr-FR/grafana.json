@@ -404,6 +404,10 @@
       "choose-interval": "Actualisation automatique désactivée. Choisir un intervalle de temps d'actualisation",
       "duration-selected": "Choisir l'intervalle de temps d'actualisation avec l'intervalle actuel {{durationAriaLabel}} sélectionné"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Activer la diffusion en direct",
       "label": "En direct"
