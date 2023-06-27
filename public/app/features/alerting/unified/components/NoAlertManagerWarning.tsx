@@ -15,8 +15,9 @@ const NoAlertManagersAvailable = () => (
 );
 
 const OtherAlertManagersAvailable = () => (
-  <Alert title="Selected Alertmanager not found. Select a different Alertmanager." severity="warning">
-    Selected Alertmanager no longer exists or you may not have permission to access it.
+  <Alert title="Selected Alertmanager not found." severity="warning">
+    The selected Alertmanager no longer exists or you may not have permission to access it. You can select a different
+    Alertmanager from the dropdown.
   </Alert>
 );
 
