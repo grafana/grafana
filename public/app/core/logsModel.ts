@@ -356,7 +356,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         };
 
         allSeries.push(info);
-        if (frameLabels != null && frameLabels.length > 0) {
+        if (frameLabels && frameLabels.length > 0) {
           allLabels.push(frameLabels);
         }
       }
