@@ -112,7 +112,10 @@ const importMap = {
     __useDefault: true,
   },
   ...jQueryFlotDeps,
-  lodash: _,
+  lodash: {
+    default: _,
+    __useDefault: true,
+  },
   moment: {
     default: moment,
     __useDefault: true,
