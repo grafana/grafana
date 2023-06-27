@@ -82,5 +82,8 @@ sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,fal
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
 recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,false,false
+pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
 flameGraphV2,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
+vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
