@@ -1,5 +1,6 @@
 import { cx } from '@emotion/css';
 import React from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import {
   DisplayProcessor,
@@ -25,6 +26,7 @@ import { TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
 const DATASOURCE_COLUMN_WIDTH = 200;
+export const LOADING_ID = '__loading-placeholder';
 
 export const generateColumns = (
   response: QueryResponse,
@@ -115,9 +117,13 @@ export const generateColumns = (
       }
       return (
         <div className={styles.cell} {...p.cellProps}>
-          <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
-            {name}
-          </a>
+          {name === LOADING_ID ? (
+            <Skeleton width={200} />
+          ) : (
+            <a href={p.userProps.href} onClick={p.userProps.onClick} className={classNames} title={name}>
+              {name}
+            </a>
+          )}
         </div>
       );
     },

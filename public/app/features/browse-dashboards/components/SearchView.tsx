@@ -1,9 +1,11 @@
 import React, { useCallback } from 'react';
 
-import { Button, Card, Spinner } from '@grafana/ui';
+import { DataFrameView, toDataFrame } from '@grafana/data';
+import { Button, Card } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
 import { SearchResultsProps, SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
+import { LOADING_ID } from 'app/features/search/page/components/columns';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch, useSelector } from 'app/types';
@@ -16,6 +18,21 @@ interface SearchViewProps {
   canSelect: boolean;
 }
 
+const loadingView = {
+  view: new DataFrameView(
+    toDataFrame({
+      fields: [
+        { name: 'uid', display: true, values: Array(50).fill(null) },
+        { name: 'name', display: true, values: Array(50).fill(LOADING_ID) },
+        { name: 'tags', display: false, values: Array(50).fill(null) },
+      ],
+    })
+  ),
+  loadMoreItems: () => Promise.resolve(),
+  isItemLoaded: () => true,
+  totalRows: 50,
+};
+
 export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const dispatch = useDispatch();
   const selectedItems = useSelector((wholeState) => wholeState.browseDashboards.selectedItems);
@@ -24,7 +41,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const { keyboardEvents } = useKeyNavigationListener();
   const [searchState, stateManager] = useSearchStateManager();
 
-  const value = searchState.result;
+  const value = searchState.result ?? loadingView;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
@@ -60,14 +77,6 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
     },
     [selectionChecker, dispatch]
   );
-
-  if (!value) {
-    return (
-      <div style={{ width }}>
-        <Spinner />
-      </div>
-    );
-  }
 
   if (value.totalRows === 0) {
     return (
