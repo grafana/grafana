@@ -85,3 +85,4 @@ recordedQueriesMulti,experimental,@grafana/observability-metrics,false,false,fal
 pluginsDynamicAngularDetectionPatterns,experimental,@grafana/plugins-platform-backend,false,false,false,false
 alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,false,false
 flameGraphV2,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
+elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
