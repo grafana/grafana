@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect } from 'react';
-import { Route, Redirect, Switch } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Route, Redirect, Switch, useRouteMatch } from 'react-router-dom';
 
+import { NavModelItem } from '@grafana/data';
 import { Alert } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
@@ -89,10 +90,35 @@ const MuteTimings = () => {
   );
 };
 
-const MuteTimingsPage = () => (
-  <AlertmanagerPageWrapper pageId="am-routes" accessType="notification">
-    <MuteTimings />
-  </AlertmanagerPageWrapper>
-);
+const MuteTimingsPage = () => {
+  const pageNav = useMuteTimingNavData();
+
+  return (
+    <AlertmanagerPageWrapper pageId="am-routes" pageNav={pageNav} accessType="notification">
+      <MuteTimings />
+    </AlertmanagerPageWrapper>
+  );
+};
+
+export function useMuteTimingNavData() {
+  const { isExact, path } = useRouteMatch();
+  const [pageNav, setPageNav] = useState<Pick<NavModelItem, 'id' | 'text' | 'icon'> | undefined>();
+
+  useEffect(() => {
+    if (path === '/alerting/routes/mute-timing/new') {
+      setPageNav({
+        id: 'alert-policy-new',
+        text: 'Add mute timing',
+      });
+    } else if (path === '/alerting/routes/mute-timing/edit') {
+      setPageNav({
+        id: 'alert-policy-edit',
+        text: 'Edit mute timing',
+      });
+    }
+  }, [path, isExact]);
+
+  return pageNav;
+}
 
 export default MuteTimingsPage;
