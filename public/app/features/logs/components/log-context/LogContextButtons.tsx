@@ -1,16 +1,7 @@
-import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
-import { ButtonGroup, InlineField, InlineFieldRow, InlineSwitch, useStyles2 } from '@grafana/ui';
-
-const getStyles = () => {
-  return {
-    buttonGroup: css`
-      display: inline-flex;
-    `,
-  };
-};
+import { InlineSwitch } from '@grafana/ui';
 
 export type Props = {
   wrapLines?: boolean;
@@ -29,15 +20,6 @@ export const LogContextButtons = (props: Props) => {
     },
     [onChangeWrapLines]
   );
-  const styles = useStyles2(getStyles);
 
-  return (
-    <ButtonGroup className={styles.buttonGroup}>
-      <InlineFieldRow>
-        <InlineField label="Wrap lines">
-          <InlineSwitch value={wrapLines} onChange={internalOnChangeWrapLines} />
-        </InlineField>
-      </InlineFieldRow>
-    </ButtonGroup>
-  );
+  return <InlineSwitch showLabel value={wrapLines} onChange={internalOnChangeWrapLines} label="Wrap lines" />;
 };
