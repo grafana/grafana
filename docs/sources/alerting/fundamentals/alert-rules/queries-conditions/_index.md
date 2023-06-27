@@ -21,7 +21,7 @@ In Alerting, you define a query to get the data you want to measure and a condit
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure.
 
-For more information on queries and expressions, see [Query and transform data]({{< relref "../../../../panels-visualizations/query-transform-data" >}}).
+For more information on queries and expressions, see [Query and transform data]({{< relref "../../panels-visualizations/query-transform-data" >}}).
 
 ## Data source queries
 
