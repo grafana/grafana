@@ -197,10 +197,10 @@ func generateConnectionString(dsInfo sqleng.DataSourceInfo, cfg *setting.Cfg, az
 			return "", err
 		}
 		connStr += azureCredentialDSNFragment
-	case sqlServerAuthentication:
-		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
 	case windowsAuthentication:
 		// No user id or password. We're using windows single sign on.
+	default:
+		connStr += fmt.Sprintf("user id=%s;password=%s;", dsInfo.User, dsInfo.DecryptedSecureJSONData["password"])
 	}
 
 	// Port number 0 means to determine the port automatically, so we can let the driver choose
