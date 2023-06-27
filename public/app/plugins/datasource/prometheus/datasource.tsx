@@ -17,6 +17,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
+  DataSourceWithQueryManipulationSupport,
   dateTime,
   LoadingState,
   QueryFixAction,
@@ -81,7 +82,10 @@ export const InstantQueryRefIdIndex = '-Instant';
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
-  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
+  implements
+    DataSourceWithQueryImportSupport<PromQuery>,
+    DataSourceWithQueryExportSupport<PromQuery>,
+    DataSourceWithQueryManipulationSupport<PromQuery>
 {
   type: string;
   ruleMappings: { [index: string]: string };

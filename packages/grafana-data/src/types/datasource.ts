@@ -319,18 +319,6 @@ abstract class DataSourceApi<
   targetContainsTemplate?(query: TQuery): boolean;
 
   /**
-   * Used in explore
-   */
-  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
-
-  /**
-   * Used in explore for Log details
-   *
-   * @alpha
-   */
-  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
-
-  /**
    * @deprecated since version 8.2.0
    * Not used anymore.
    */

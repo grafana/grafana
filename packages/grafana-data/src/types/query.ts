@@ -1,5 +1,7 @@
 import { DataQuery as SchemaDataQuery, DataSourceRef as SchemaDataSourceRef } from '@grafana/schema';
 
+import { AnalyzeQueryOptions, QueryFixAction } from './datasource';
+
 /**
  * @deprecated use the type from @grafana/schema
  */
@@ -58,6 +60,23 @@ export interface DataSourceWithQueryImportSupport<TQuery extends SchemaDataQuery
  */
 export interface DataSourceWithQueryExportSupport<TQuery extends SchemaDataQuery> {
   exportToAbstractQueries(query: TQuery[]): Promise<AbstractQuery[]>;
+}
+
+/**
+ * @internal
+ */
+export interface DataSourceWithQueryManipulationSupport<TQuery extends SchemaDataQuery> {
+  /**
+   * Used in explore
+   */
+  modifyQuery(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
+   * Used in explore for Log details
+   *
+   * @alpha
+   */
+  analyzeQuery?(query: TQuery, options: AnalyzeQueryOptions): boolean;
 }
 
 /**

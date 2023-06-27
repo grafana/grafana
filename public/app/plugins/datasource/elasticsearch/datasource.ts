@@ -32,6 +32,7 @@ import {
   toUtc,
   AnnotationEvent,
   AnalyzeQueryOptions,
+  DataSourceWithQueryManipulationSupport,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
@@ -90,7 +91,8 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
+    DataSourceWithQueryManipulationSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
