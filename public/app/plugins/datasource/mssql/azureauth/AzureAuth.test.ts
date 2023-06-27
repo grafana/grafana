@@ -1,4 +1,7 @@
+import { DataSourceSettings } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
+
+import { ConcealedSecret, AzureAuthSecureJSONDataType } from '../types';
 
 import { getDefaultAzureCloud, getDefaultCredentials, getSecret } from './AzureCredentialsConfig';
 
@@ -33,6 +36,21 @@ describe('AzureAuth', () => {
       expect(resultForManagedIdentityDisabled).toEqual({ authType: 'clientsecret', azureCloud: 'AzureCloud' });
     });
 
-    it("`getSecret()` should correctly return the client secret if it's not concealed", () => {});
+    it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
+      const concealed: ConcealedSecret = Symbol('superSecretSecret');
+      const dataSourceSettingsServerSideSecret: DataSourceSettings<{}, AzureAuthSecureJSONDataType> = {
+        secureJsonFields: { azureClientSecret: true },
+      } as unknown as DataSourceSettings<{}, AzureAuthSecureJSONDataType>;
+      const dataSourceSettingsSecureJSONDataSecret: DataSourceSettings<{}, AzureAuthSecureJSONDataType> = {
+        secureJsonFields: { azureClientSecret: false },
+        secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
+      } as unknown as DataSourceSettings<{}, AzureAuthSecureJSONDataType>;
+
+      const resultFromServerSideSecret = getSecret(dataSourceSettingsServerSideSecret, concealed);
+      expect(resultFromServerSideSecret).toBe(concealed);
+
+      const resultFromSecureJSONDataSecret = getSecret(dataSourceSettingsSecureJSONDataSecret, concealed);
+      expect(resultFromSecureJSONDataSecret).toBe('XXXX-super-secret-secret-XXXX');
+    });
   });
 });

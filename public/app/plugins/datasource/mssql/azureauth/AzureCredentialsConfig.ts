@@ -24,11 +24,12 @@ export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCrede
 };
 
 export const getSecret = (
-  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>
+  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>,
+  concealSecret: symbol
 ): undefined | string | ConcealedSecret => {
   if (dsSettings.secureJsonFields.azureClientSecret) {
     // The secret is concealed on server
-    return concealed;
+    return concealSecret;
   } else {
     const secret = dsSettings.secureJsonData?.azureClientSecret;
     return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
@@ -67,7 +68,7 @@ export const getCredentials = (
         azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
-        clientSecret: getSecret(dsSettings),
+        clientSecret: getSecret(dsSettings, concealed),
       };
   }
 };
