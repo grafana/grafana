@@ -19,14 +19,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	EntityStore_Read_FullMethodName       = "/entity.EntityStore/Read"
-	EntityStore_BatchRead_FullMethodName  = "/entity.EntityStore/BatchRead"
-	EntityStore_Write_FullMethodName      = "/entity.EntityStore/Write"
-	EntityStore_Delete_FullMethodName     = "/entity.EntityStore/Delete"
-	EntityStore_History_FullMethodName    = "/entity.EntityStore/History"
-	EntityStore_Search_FullMethodName     = "/entity.EntityStore/Search"
-	EntityStore_Watch_FullMethodName      = "/entity.EntityStore/Watch"
-	EntityStore_AdminWrite_FullMethodName = "/entity.EntityStore/AdminWrite"
+	EntityStore_Read_FullMethodName           = "/entity.EntityStore/Read"
+	EntityStore_BatchRead_FullMethodName      = "/entity.EntityStore/BatchRead"
+	EntityStore_Write_FullMethodName          = "/entity.EntityStore/Write"
+	EntityStore_Delete_FullMethodName         = "/entity.EntityStore/Delete"
+	EntityStore_History_FullMethodName        = "/entity.EntityStore/History"
+	EntityStore_Search_FullMethodName         = "/entity.EntityStore/Search"
+	EntityStore_Watch_FullMethodName          = "/entity.EntityStore/Watch"
+	EntityStore_FindReferences_FullMethodName = "/entity.EntityStore/FindReferences"
+	EntityStore_AdminWrite_FullMethodName     = "/entity.EntityStore/AdminWrite"
 )
 
 // EntityStoreClient is the client API for EntityStore service.
@@ -40,6 +41,7 @@ type EntityStoreClient interface {
 	History(ctx context.Context, in *EntityHistoryRequest, opts ...grpc.CallOption) (*EntityHistoryResponse, error)
 	Search(ctx context.Context, in *EntitySearchRequest, opts ...grpc.CallOption) (*EntitySearchResponse, error)
 	Watch(ctx context.Context, in *EntityWatchRequest, opts ...grpc.CallOption) (EntityStore_WatchClient, error)
+	FindReferences(ctx context.Context, in *ReferenceRequest, opts ...grpc.CallOption) (*EntitySearchResponse, error)
 	// TEMPORARY... while we split this into a new service (see below)
 	AdminWrite(ctx context.Context, in *AdminWriteEntityRequest, opts ...grpc.CallOption) (*WriteEntityResponse, error)
 }
@@ -138,6 +140,15 @@ func (x *entityStoreWatchClient) Recv() (*EntityWatchResponse, error) {
 	return m, nil
 }
 
+func (c *entityStoreClient) FindReferences(ctx context.Context, in *ReferenceRequest, opts ...grpc.CallOption) (*EntitySearchResponse, error) {
+	out := new(EntitySearchResponse)
+	err := c.cc.Invoke(ctx, EntityStore_FindReferences_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *entityStoreClient) AdminWrite(ctx context.Context, in *AdminWriteEntityRequest, opts ...grpc.CallOption) (*WriteEntityResponse, error) {
 	out := new(WriteEntityResponse)
 	err := c.cc.Invoke(ctx, EntityStore_AdminWrite_FullMethodName, in, out, opts...)
@@ -158,6 +169,7 @@ type EntityStoreServer interface {
 	History(context.Context, *EntityHistoryRequest) (*EntityHistoryResponse, error)
 	Search(context.Context, *EntitySearchRequest) (*EntitySearchResponse, error)
 	Watch(*EntityWatchRequest, EntityStore_WatchServer) error
+	FindReferences(context.Context, *ReferenceRequest) (*EntitySearchResponse, error)
 	// TEMPORARY... while we split this into a new service (see below)
 	AdminWrite(context.Context, *AdminWriteEntityRequest) (*WriteEntityResponse, error)
 }
@@ -186,6 +198,9 @@ func (UnimplementedEntityStoreServer) Search(context.Context, *EntitySearchReque
 }
 func (UnimplementedEntityStoreServer) Watch(*EntityWatchRequest, EntityStore_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
+}
+func (UnimplementedEntityStoreServer) FindReferences(context.Context, *ReferenceRequest) (*EntitySearchResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindReferences not implemented")
 }
 func (UnimplementedEntityStoreServer) AdminWrite(context.Context, *AdminWriteEntityRequest) (*WriteEntityResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AdminWrite not implemented")
@@ -331,6 +346,24 @@ func (x *entityStoreWatchServer) Send(m *EntityWatchResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _EntityStore_FindReferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReferenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityStoreServer).FindReferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityStore_FindReferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityStoreServer).FindReferences(ctx, req.(*ReferenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EntityStore_AdminWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AdminWriteEntityRequest)
 	if err := dec(in); err != nil {
@@ -379,6 +412,10 @@ var EntityStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Search",
 			Handler:    _EntityStore_Search_Handler,
+		},
+		{
+			MethodName: "FindReferences",
+			Handler:    _EntityStore_FindReferences_Handler,
 		},
 		{
 			MethodName: "AdminWrite",

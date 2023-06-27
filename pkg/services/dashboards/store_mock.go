@@ -422,6 +422,32 @@ func (_m *FakeDashboardStore) SaveDashboard(ctx context.Context, cmd SaveDashboa
 	return r0, r1
 }
 
+// SaveDashboardWithMetadata provides a mock function with given fields: ctx, msg, dash, provisioning
+func (_m *FakeDashboardStore) SaveDashboardWithMetadata(ctx context.Context, msg string, dash *Dashboard, provisioning *DashboardProvisioning) (*Dashboard, error) {
+	ret := _m.Called(ctx, msg, dash, provisioning)
+
+	var r0 *Dashboard
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, *Dashboard, *DashboardProvisioning) (*Dashboard, error)); ok {
+		return rf(ctx, msg, dash, provisioning)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, *Dashboard, *DashboardProvisioning) *Dashboard); ok {
+		r0 = rf(ctx, msg, dash, provisioning)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Dashboard)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, *Dashboard, *DashboardProvisioning) error); ok {
+		r1 = rf(ctx, msg, dash, provisioning)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SaveProvisionedDashboard provides a mock function with given fields: ctx, cmd, provisioning
 func (_m *FakeDashboardStore) SaveProvisionedDashboard(ctx context.Context, cmd SaveDashboardCommand, provisioning *DashboardProvisioning) (*Dashboard, error) {
 	ret := _m.Called(ctx, cmd, provisioning)

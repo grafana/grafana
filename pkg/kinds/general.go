@@ -1,6 +1,7 @@
 package kinds
 
 import (
+	"strings"
 	"time"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -53,6 +54,11 @@ type GrafanaResource[Spec interface{}, Status interface{}] struct {
 const annoKeyCreatedBy = "grafana.com/createdBy"
 const annoKeyUpdatedTimestamp = "grafana.com/updatedTimestamp"
 const annoKeyUpdatedBy = "grafana.com/updatedBy"
+const annoKeyTitle = "grafana.com/title"
+const annoKeyDescription = "grafana.com/description"
+const annoKeyTags = "grafana.com/tags"
+
+// The commit message -- note! it will be removed on save
 const AnnotationKeyCommitMessage = "grafana.com/commitMessage"
 
 // The folder identifier
@@ -60,15 +66,18 @@ const annoKeyFolder = "grafana.com/folder"
 const annoKeySlug = "grafana.com/slug"
 
 // Identify where values came from
-const annoKeyOriginName = "grafana.com/origin/name"
-const annoKeyOriginPath = "grafana.com/origin/path"
-const annoKeyOriginKey = "grafana.com/origin/key"
-const annoKeyOriginTime = "grafana.com/origin/time"
+const annoKeyOriginName = "grafana.com/origin.name"
+const annoKeyOriginPath = "grafana.com/origin.path"
+const annoKeyOriginKey = "grafana.com/origin.key"
+const annoKeyOriginTime = "grafana.com/origin.time"
 
 func (m *GrafanaResourceMetadata) set(key string, val string) {
 	if val == "" {
 		delete(m.Annotations, key)
 	} else {
+		if m.Annotations == nil {
+			m.Annotations = make(map[string]string)
+		}
 		m.Annotations[key] = val
 	}
 }
@@ -122,6 +131,46 @@ func (m *GrafanaResourceMetadata) GetSlug() string {
 
 func (m *GrafanaResourceMetadata) SetSlug(v string) {
 	m.set(annoKeySlug, v)
+}
+
+func (m *GrafanaResourceMetadata) GetTitle() string {
+	return m.Annotations[annoKeyTitle]
+}
+
+func (m *GrafanaResourceMetadata) SetTitle(v string) {
+	m.set(annoKeyTitle, v)
+}
+
+func (m *GrafanaResourceMetadata) GetDescription() string {
+	return m.Annotations[annoKeyDescription]
+}
+
+func (m *GrafanaResourceMetadata) SetDescription(v string) {
+	m.set(annoKeyDescription, v)
+}
+
+func (m *GrafanaResourceMetadata) GetTags() []string {
+	v, ok := m.Annotations[annoKeyTags]
+	if ok {
+		tags := strings.Split(v, ",")
+		for i := range tags {
+			tags[i] = strings.TrimSpace(tags[i])
+		}
+		return tags
+	}
+	return []string{}
+}
+
+// SetTags will set the tags annotation.  NOTE: any commas in the tags will get replaced with a dash
+func (m *GrafanaResourceMetadata) SetTags(tags []string) {
+	str := ""
+	if len(tags) > 0 {
+		for i := range tags {
+			tags[i] = strings.ReplaceAll(strings.TrimSpace(tags[i]), ",", "-")
+		}
+		str = strings.Join(tags, ",")
+	}
+	m.set(annoKeyTags, str)
 }
 
 func (m *GrafanaResourceMetadata) GetCommitMessage() string {

@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	applyConfig "github.com/grafana/grafana-apiserver/pkg/client/applyconfiguration/kinds/v1"
 	grdClientset "github.com/grafana/grafana-apiserver/pkg/client/clientset/clientset/typed/kinds/v1"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -60,92 +61,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, accesspolicyGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, accesspolicyGRD, metav1.CreateOptions{})
 
-	//  accesspolicyApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range accesspolicyGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    accesspolicyApplyVersions = append(accesspolicyApplyVersions, version)
-	//  }
-	//
-	//  accesspolicyApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(accesspolicyGRD.Spec.Names.Kind).
-	//    WithListKind(accesspolicyGRD.Spec.Names.ListKind).
-	//    WithSingular(accesspolicyGRD.Spec.Names.Singular).
-	//    WithPlural(accesspolicyGRD.Spec.Names.Plural).
-	//    WithCategories(accesspolicyGRD.Spec.Names.Categories...).
-	//    WithShortNames(accesspolicyGRD.Spec.Names.ShortNames...)
-	//
-	//  accesspolicyApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(accesspolicyGRD.Spec.Group).
-	//    WithNames(accesspolicyApplyNames).
-	//    WithScope(accesspolicyGRD.Spec.Scope).
-	//    WithVersions(accesspolicyApplyVersions...).
-	//    WithPreserveUnknownFields(accesspolicyGRD.Spec.PreserveUnknownFields)
-	//
-	//  accesspolicyApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(accesspolicyGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(accesspolicyGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(accesspolicyGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(accesspolicyGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(accesspolicyGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(accesspolicyGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  accesspolicyApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range accesspolicyGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    accesspolicyApplyConditions = append(accesspolicyApplyConditions, condition)
-	//  }
-	//
-	//  accesspolicyApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(accesspolicyApplyConditions...).
-	//    WithAcceptedNames(accesspolicyApplyAcceptedNames).
-	//    WithStoredVersions(accesspolicyGRD.Status.StoredVersions...)
-	//
-	//  accesspolicyApplyConfig := applyConfig.GrafanaResourceDefinition(accesspolicyGRD.ObjectMeta.Name).
-	//    WithSpec(accesspolicyApplySpec).
-	//    WithStatus(accesspolicyApplyStatus).
-	//    WithGenerateName(accesspolicyGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(accesspolicyGRD.ObjectMeta.Namespace).
-	//    WithLabels(accesspolicyGRD.ObjectMeta.Labels).
-	//    WithAnnotations(accesspolicyGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(accesspolicyGRD.ObjectMeta.Finalizers...).
-	//    WithUID(accesspolicyGRD.ObjectMeta.UID).
-	//    WithGeneration(accesspolicyGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(accesspolicyGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(accesspolicyGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if accesspolicyGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      accesspolicyApplyConfig = accesspolicyApplyConfig.WithDeletionTimestamp(*accesspolicyGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if accesspolicyGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      accesspolicyApplyConfig = accesspolicyApplyConfig.WithDeletionGracePeriodSeconds(*accesspolicyGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, accesspolicyApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	accesspolicyApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range accesspolicyGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		accesspolicyApplyVersions = append(accesspolicyApplyVersions, version)
+	}
+
+	accesspolicyApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(accesspolicyGRD.Spec.Names.Kind).
+		WithListKind(accesspolicyGRD.Spec.Names.ListKind).
+		WithSingular(accesspolicyGRD.Spec.Names.Singular).
+		WithPlural(accesspolicyGRD.Spec.Names.Plural).
+		WithCategories(accesspolicyGRD.Spec.Names.Categories...).
+		WithShortNames(accesspolicyGRD.Spec.Names.ShortNames...)
+
+	accesspolicyApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(accesspolicyGRD.Spec.Group).
+		WithNames(accesspolicyApplyNames).
+		WithScope(accesspolicyGRD.Spec.Scope).
+		WithVersions(accesspolicyApplyVersions...).
+		WithPreserveUnknownFields(accesspolicyGRD.Spec.PreserveUnknownFields)
+
+	accesspolicyApplyConfig := applyConfig.GrafanaKind(accesspolicyGRD.ObjectMeta.Name).
+		WithSpec(accesspolicyApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, accesspolicyApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Dashboard ************************/
 	dashboardGRD, err := r.getGRD(r.breg.Dashboard())
@@ -153,92 +119,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, dashboardGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, dashboardGRD, metav1.CreateOptions{})
 
-	//  dashboardApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range dashboardGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    dashboardApplyVersions = append(dashboardApplyVersions, version)
-	//  }
-	//
-	//  dashboardApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(dashboardGRD.Spec.Names.Kind).
-	//    WithListKind(dashboardGRD.Spec.Names.ListKind).
-	//    WithSingular(dashboardGRD.Spec.Names.Singular).
-	//    WithPlural(dashboardGRD.Spec.Names.Plural).
-	//    WithCategories(dashboardGRD.Spec.Names.Categories...).
-	//    WithShortNames(dashboardGRD.Spec.Names.ShortNames...)
-	//
-	//  dashboardApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(dashboardGRD.Spec.Group).
-	//    WithNames(dashboardApplyNames).
-	//    WithScope(dashboardGRD.Spec.Scope).
-	//    WithVersions(dashboardApplyVersions...).
-	//    WithPreserveUnknownFields(dashboardGRD.Spec.PreserveUnknownFields)
-	//
-	//  dashboardApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(dashboardGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(dashboardGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(dashboardGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(dashboardGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(dashboardGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(dashboardGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  dashboardApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range dashboardGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    dashboardApplyConditions = append(dashboardApplyConditions, condition)
-	//  }
-	//
-	//  dashboardApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(dashboardApplyConditions...).
-	//    WithAcceptedNames(dashboardApplyAcceptedNames).
-	//    WithStoredVersions(dashboardGRD.Status.StoredVersions...)
-	//
-	//  dashboardApplyConfig := applyConfig.GrafanaResourceDefinition(dashboardGRD.ObjectMeta.Name).
-	//    WithSpec(dashboardApplySpec).
-	//    WithStatus(dashboardApplyStatus).
-	//    WithGenerateName(dashboardGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(dashboardGRD.ObjectMeta.Namespace).
-	//    WithLabels(dashboardGRD.ObjectMeta.Labels).
-	//    WithAnnotations(dashboardGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(dashboardGRD.ObjectMeta.Finalizers...).
-	//    WithUID(dashboardGRD.ObjectMeta.UID).
-	//    WithGeneration(dashboardGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(dashboardGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(dashboardGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if dashboardGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      dashboardApplyConfig = dashboardApplyConfig.WithDeletionTimestamp(*dashboardGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if dashboardGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      dashboardApplyConfig = dashboardApplyConfig.WithDeletionGracePeriodSeconds(*dashboardGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, dashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	dashboardApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range dashboardGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		dashboardApplyVersions = append(dashboardApplyVersions, version)
+	}
+
+	dashboardApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(dashboardGRD.Spec.Names.Kind).
+		WithListKind(dashboardGRD.Spec.Names.ListKind).
+		WithSingular(dashboardGRD.Spec.Names.Singular).
+		WithPlural(dashboardGRD.Spec.Names.Plural).
+		WithCategories(dashboardGRD.Spec.Names.Categories...).
+		WithShortNames(dashboardGRD.Spec.Names.ShortNames...)
+
+	dashboardApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(dashboardGRD.Spec.Group).
+		WithNames(dashboardApplyNames).
+		WithScope(dashboardGRD.Spec.Scope).
+		WithVersions(dashboardApplyVersions...).
+		WithPreserveUnknownFields(dashboardGRD.Spec.PreserveUnknownFields)
+
+	dashboardApplyConfig := applyConfig.GrafanaKind(dashboardGRD.ObjectMeta.Name).
+		WithSpec(dashboardApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, dashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Folder ************************/
 	folderGRD, err := r.getGRD(r.breg.Folder())
@@ -246,92 +177,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, folderGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, folderGRD, metav1.CreateOptions{})
 
-	//  folderApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range folderGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    folderApplyVersions = append(folderApplyVersions, version)
-	//  }
-	//
-	//  folderApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(folderGRD.Spec.Names.Kind).
-	//    WithListKind(folderGRD.Spec.Names.ListKind).
-	//    WithSingular(folderGRD.Spec.Names.Singular).
-	//    WithPlural(folderGRD.Spec.Names.Plural).
-	//    WithCategories(folderGRD.Spec.Names.Categories...).
-	//    WithShortNames(folderGRD.Spec.Names.ShortNames...)
-	//
-	//  folderApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(folderGRD.Spec.Group).
-	//    WithNames(folderApplyNames).
-	//    WithScope(folderGRD.Spec.Scope).
-	//    WithVersions(folderApplyVersions...).
-	//    WithPreserveUnknownFields(folderGRD.Spec.PreserveUnknownFields)
-	//
-	//  folderApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(folderGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(folderGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(folderGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(folderGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(folderGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(folderGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  folderApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range folderGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    folderApplyConditions = append(folderApplyConditions, condition)
-	//  }
-	//
-	//  folderApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(folderApplyConditions...).
-	//    WithAcceptedNames(folderApplyAcceptedNames).
-	//    WithStoredVersions(folderGRD.Status.StoredVersions...)
-	//
-	//  folderApplyConfig := applyConfig.GrafanaResourceDefinition(folderGRD.ObjectMeta.Name).
-	//    WithSpec(folderApplySpec).
-	//    WithStatus(folderApplyStatus).
-	//    WithGenerateName(folderGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(folderGRD.ObjectMeta.Namespace).
-	//    WithLabels(folderGRD.ObjectMeta.Labels).
-	//    WithAnnotations(folderGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(folderGRD.ObjectMeta.Finalizers...).
-	//    WithUID(folderGRD.ObjectMeta.UID).
-	//    WithGeneration(folderGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(folderGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(folderGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if folderGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      folderApplyConfig = folderApplyConfig.WithDeletionTimestamp(*folderGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if folderGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      folderApplyConfig = folderApplyConfig.WithDeletionGracePeriodSeconds(*folderGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, folderApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	folderApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range folderGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		folderApplyVersions = append(folderApplyVersions, version)
+	}
+
+	folderApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(folderGRD.Spec.Names.Kind).
+		WithListKind(folderGRD.Spec.Names.ListKind).
+		WithSingular(folderGRD.Spec.Names.Singular).
+		WithPlural(folderGRD.Spec.Names.Plural).
+		WithCategories(folderGRD.Spec.Names.Categories...).
+		WithShortNames(folderGRD.Spec.Names.ShortNames...)
+
+	folderApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(folderGRD.Spec.Group).
+		WithNames(folderApplyNames).
+		WithScope(folderGRD.Spec.Scope).
+		WithVersions(folderApplyVersions...).
+		WithPreserveUnknownFields(folderGRD.Spec.PreserveUnknownFields)
+
+	folderApplyConfig := applyConfig.GrafanaKind(folderGRD.ObjectMeta.Name).
+		WithSpec(folderApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, folderApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ LibraryPanel ************************/
 	librarypanelGRD, err := r.getGRD(r.breg.LibraryPanel())
@@ -339,92 +235,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, librarypanelGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, librarypanelGRD, metav1.CreateOptions{})
 
-	//  librarypanelApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range librarypanelGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    librarypanelApplyVersions = append(librarypanelApplyVersions, version)
-	//  }
-	//
-	//  librarypanelApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(librarypanelGRD.Spec.Names.Kind).
-	//    WithListKind(librarypanelGRD.Spec.Names.ListKind).
-	//    WithSingular(librarypanelGRD.Spec.Names.Singular).
-	//    WithPlural(librarypanelGRD.Spec.Names.Plural).
-	//    WithCategories(librarypanelGRD.Spec.Names.Categories...).
-	//    WithShortNames(librarypanelGRD.Spec.Names.ShortNames...)
-	//
-	//  librarypanelApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(librarypanelGRD.Spec.Group).
-	//    WithNames(librarypanelApplyNames).
-	//    WithScope(librarypanelGRD.Spec.Scope).
-	//    WithVersions(librarypanelApplyVersions...).
-	//    WithPreserveUnknownFields(librarypanelGRD.Spec.PreserveUnknownFields)
-	//
-	//  librarypanelApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(librarypanelGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(librarypanelGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(librarypanelGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(librarypanelGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(librarypanelGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(librarypanelGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  librarypanelApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range librarypanelGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    librarypanelApplyConditions = append(librarypanelApplyConditions, condition)
-	//  }
-	//
-	//  librarypanelApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(librarypanelApplyConditions...).
-	//    WithAcceptedNames(librarypanelApplyAcceptedNames).
-	//    WithStoredVersions(librarypanelGRD.Status.StoredVersions...)
-	//
-	//  librarypanelApplyConfig := applyConfig.GrafanaResourceDefinition(librarypanelGRD.ObjectMeta.Name).
-	//    WithSpec(librarypanelApplySpec).
-	//    WithStatus(librarypanelApplyStatus).
-	//    WithGenerateName(librarypanelGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(librarypanelGRD.ObjectMeta.Namespace).
-	//    WithLabels(librarypanelGRD.ObjectMeta.Labels).
-	//    WithAnnotations(librarypanelGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(librarypanelGRD.ObjectMeta.Finalizers...).
-	//    WithUID(librarypanelGRD.ObjectMeta.UID).
-	//    WithGeneration(librarypanelGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(librarypanelGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(librarypanelGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if librarypanelGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      librarypanelApplyConfig = librarypanelApplyConfig.WithDeletionTimestamp(*librarypanelGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if librarypanelGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      librarypanelApplyConfig = librarypanelApplyConfig.WithDeletionGracePeriodSeconds(*librarypanelGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, librarypanelApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	librarypanelApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range librarypanelGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		librarypanelApplyVersions = append(librarypanelApplyVersions, version)
+	}
+
+	librarypanelApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(librarypanelGRD.Spec.Names.Kind).
+		WithListKind(librarypanelGRD.Spec.Names.ListKind).
+		WithSingular(librarypanelGRD.Spec.Names.Singular).
+		WithPlural(librarypanelGRD.Spec.Names.Plural).
+		WithCategories(librarypanelGRD.Spec.Names.Categories...).
+		WithShortNames(librarypanelGRD.Spec.Names.ShortNames...)
+
+	librarypanelApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(librarypanelGRD.Spec.Group).
+		WithNames(librarypanelApplyNames).
+		WithScope(librarypanelGRD.Spec.Scope).
+		WithVersions(librarypanelApplyVersions...).
+		WithPreserveUnknownFields(librarypanelGRD.Spec.PreserveUnknownFields)
+
+	librarypanelApplyConfig := applyConfig.GrafanaKind(librarypanelGRD.ObjectMeta.Name).
+		WithSpec(librarypanelApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, librarypanelApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Playlist ************************/
 	playlistGRD, err := r.getGRD(r.breg.Playlist())
@@ -432,92 +293,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, playlistGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, playlistGRD, metav1.CreateOptions{})
 
-	//  playlistApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range playlistGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    playlistApplyVersions = append(playlistApplyVersions, version)
-	//  }
-	//
-	//  playlistApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(playlistGRD.Spec.Names.Kind).
-	//    WithListKind(playlistGRD.Spec.Names.ListKind).
-	//    WithSingular(playlistGRD.Spec.Names.Singular).
-	//    WithPlural(playlistGRD.Spec.Names.Plural).
-	//    WithCategories(playlistGRD.Spec.Names.Categories...).
-	//    WithShortNames(playlistGRD.Spec.Names.ShortNames...)
-	//
-	//  playlistApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(playlistGRD.Spec.Group).
-	//    WithNames(playlistApplyNames).
-	//    WithScope(playlistGRD.Spec.Scope).
-	//    WithVersions(playlistApplyVersions...).
-	//    WithPreserveUnknownFields(playlistGRD.Spec.PreserveUnknownFields)
-	//
-	//  playlistApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(playlistGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(playlistGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(playlistGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(playlistGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(playlistGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(playlistGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  playlistApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range playlistGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    playlistApplyConditions = append(playlistApplyConditions, condition)
-	//  }
-	//
-	//  playlistApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(playlistApplyConditions...).
-	//    WithAcceptedNames(playlistApplyAcceptedNames).
-	//    WithStoredVersions(playlistGRD.Status.StoredVersions...)
-	//
-	//  playlistApplyConfig := applyConfig.GrafanaResourceDefinition(playlistGRD.ObjectMeta.Name).
-	//    WithSpec(playlistApplySpec).
-	//    WithStatus(playlistApplyStatus).
-	//    WithGenerateName(playlistGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(playlistGRD.ObjectMeta.Namespace).
-	//    WithLabels(playlistGRD.ObjectMeta.Labels).
-	//    WithAnnotations(playlistGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(playlistGRD.ObjectMeta.Finalizers...).
-	//    WithUID(playlistGRD.ObjectMeta.UID).
-	//    WithGeneration(playlistGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(playlistGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(playlistGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if playlistGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      playlistApplyConfig = playlistApplyConfig.WithDeletionTimestamp(*playlistGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if playlistGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      playlistApplyConfig = playlistApplyConfig.WithDeletionGracePeriodSeconds(*playlistGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, playlistApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	playlistApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range playlistGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		playlistApplyVersions = append(playlistApplyVersions, version)
+	}
+
+	playlistApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(playlistGRD.Spec.Names.Kind).
+		WithListKind(playlistGRD.Spec.Names.ListKind).
+		WithSingular(playlistGRD.Spec.Names.Singular).
+		WithPlural(playlistGRD.Spec.Names.Plural).
+		WithCategories(playlistGRD.Spec.Names.Categories...).
+		WithShortNames(playlistGRD.Spec.Names.ShortNames...)
+
+	playlistApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(playlistGRD.Spec.Group).
+		WithNames(playlistApplyNames).
+		WithScope(playlistGRD.Spec.Scope).
+		WithVersions(playlistApplyVersions...).
+		WithPreserveUnknownFields(playlistGRD.Spec.PreserveUnknownFields)
+
+	playlistApplyConfig := applyConfig.GrafanaKind(playlistGRD.ObjectMeta.Name).
+		WithSpec(playlistApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, playlistApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Preferences ************************/
 	preferencesGRD, err := r.getGRD(r.breg.Preferences())
@@ -525,92 +351,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, preferencesGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, preferencesGRD, metav1.CreateOptions{})
 
-	//  preferencesApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range preferencesGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    preferencesApplyVersions = append(preferencesApplyVersions, version)
-	//  }
-	//
-	//  preferencesApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(preferencesGRD.Spec.Names.Kind).
-	//    WithListKind(preferencesGRD.Spec.Names.ListKind).
-	//    WithSingular(preferencesGRD.Spec.Names.Singular).
-	//    WithPlural(preferencesGRD.Spec.Names.Plural).
-	//    WithCategories(preferencesGRD.Spec.Names.Categories...).
-	//    WithShortNames(preferencesGRD.Spec.Names.ShortNames...)
-	//
-	//  preferencesApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(preferencesGRD.Spec.Group).
-	//    WithNames(preferencesApplyNames).
-	//    WithScope(preferencesGRD.Spec.Scope).
-	//    WithVersions(preferencesApplyVersions...).
-	//    WithPreserveUnknownFields(preferencesGRD.Spec.PreserveUnknownFields)
-	//
-	//  preferencesApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(preferencesGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(preferencesGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(preferencesGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(preferencesGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(preferencesGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(preferencesGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  preferencesApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range preferencesGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    preferencesApplyConditions = append(preferencesApplyConditions, condition)
-	//  }
-	//
-	//  preferencesApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(preferencesApplyConditions...).
-	//    WithAcceptedNames(preferencesApplyAcceptedNames).
-	//    WithStoredVersions(preferencesGRD.Status.StoredVersions...)
-	//
-	//  preferencesApplyConfig := applyConfig.GrafanaResourceDefinition(preferencesGRD.ObjectMeta.Name).
-	//    WithSpec(preferencesApplySpec).
-	//    WithStatus(preferencesApplyStatus).
-	//    WithGenerateName(preferencesGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(preferencesGRD.ObjectMeta.Namespace).
-	//    WithLabels(preferencesGRD.ObjectMeta.Labels).
-	//    WithAnnotations(preferencesGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(preferencesGRD.ObjectMeta.Finalizers...).
-	//    WithUID(preferencesGRD.ObjectMeta.UID).
-	//    WithGeneration(preferencesGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(preferencesGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(preferencesGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if preferencesGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      preferencesApplyConfig = preferencesApplyConfig.WithDeletionTimestamp(*preferencesGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if preferencesGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      preferencesApplyConfig = preferencesApplyConfig.WithDeletionGracePeriodSeconds(*preferencesGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, preferencesApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	preferencesApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range preferencesGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		preferencesApplyVersions = append(preferencesApplyVersions, version)
+	}
+
+	preferencesApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(preferencesGRD.Spec.Names.Kind).
+		WithListKind(preferencesGRD.Spec.Names.ListKind).
+		WithSingular(preferencesGRD.Spec.Names.Singular).
+		WithPlural(preferencesGRD.Spec.Names.Plural).
+		WithCategories(preferencesGRD.Spec.Names.Categories...).
+		WithShortNames(preferencesGRD.Spec.Names.ShortNames...)
+
+	preferencesApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(preferencesGRD.Spec.Group).
+		WithNames(preferencesApplyNames).
+		WithScope(preferencesGRD.Spec.Scope).
+		WithVersions(preferencesApplyVersions...).
+		WithPreserveUnknownFields(preferencesGRD.Spec.PreserveUnknownFields)
+
+	preferencesApplyConfig := applyConfig.GrafanaKind(preferencesGRD.ObjectMeta.Name).
+		WithSpec(preferencesApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, preferencesApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ PublicDashboard ************************/
 	publicdashboardGRD, err := r.getGRD(r.breg.PublicDashboard())
@@ -618,92 +409,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, publicdashboardGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, publicdashboardGRD, metav1.CreateOptions{})
 
-	//  publicdashboardApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range publicdashboardGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    publicdashboardApplyVersions = append(publicdashboardApplyVersions, version)
-	//  }
-	//
-	//  publicdashboardApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(publicdashboardGRD.Spec.Names.Kind).
-	//    WithListKind(publicdashboardGRD.Spec.Names.ListKind).
-	//    WithSingular(publicdashboardGRD.Spec.Names.Singular).
-	//    WithPlural(publicdashboardGRD.Spec.Names.Plural).
-	//    WithCategories(publicdashboardGRD.Spec.Names.Categories...).
-	//    WithShortNames(publicdashboardGRD.Spec.Names.ShortNames...)
-	//
-	//  publicdashboardApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(publicdashboardGRD.Spec.Group).
-	//    WithNames(publicdashboardApplyNames).
-	//    WithScope(publicdashboardGRD.Spec.Scope).
-	//    WithVersions(publicdashboardApplyVersions...).
-	//    WithPreserveUnknownFields(publicdashboardGRD.Spec.PreserveUnknownFields)
-	//
-	//  publicdashboardApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(publicdashboardGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(publicdashboardGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(publicdashboardGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(publicdashboardGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(publicdashboardGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(publicdashboardGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  publicdashboardApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range publicdashboardGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    publicdashboardApplyConditions = append(publicdashboardApplyConditions, condition)
-	//  }
-	//
-	//  publicdashboardApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(publicdashboardApplyConditions...).
-	//    WithAcceptedNames(publicdashboardApplyAcceptedNames).
-	//    WithStoredVersions(publicdashboardGRD.Status.StoredVersions...)
-	//
-	//  publicdashboardApplyConfig := applyConfig.GrafanaResourceDefinition(publicdashboardGRD.ObjectMeta.Name).
-	//    WithSpec(publicdashboardApplySpec).
-	//    WithStatus(publicdashboardApplyStatus).
-	//    WithGenerateName(publicdashboardGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(publicdashboardGRD.ObjectMeta.Namespace).
-	//    WithLabels(publicdashboardGRD.ObjectMeta.Labels).
-	//    WithAnnotations(publicdashboardGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(publicdashboardGRD.ObjectMeta.Finalizers...).
-	//    WithUID(publicdashboardGRD.ObjectMeta.UID).
-	//    WithGeneration(publicdashboardGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(publicdashboardGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(publicdashboardGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if publicdashboardGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      publicdashboardApplyConfig = publicdashboardApplyConfig.WithDeletionTimestamp(*publicdashboardGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if publicdashboardGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      publicdashboardApplyConfig = publicdashboardApplyConfig.WithDeletionGracePeriodSeconds(*publicdashboardGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, publicdashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	publicdashboardApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range publicdashboardGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		publicdashboardApplyVersions = append(publicdashboardApplyVersions, version)
+	}
+
+	publicdashboardApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(publicdashboardGRD.Spec.Names.Kind).
+		WithListKind(publicdashboardGRD.Spec.Names.ListKind).
+		WithSingular(publicdashboardGRD.Spec.Names.Singular).
+		WithPlural(publicdashboardGRD.Spec.Names.Plural).
+		WithCategories(publicdashboardGRD.Spec.Names.Categories...).
+		WithShortNames(publicdashboardGRD.Spec.Names.ShortNames...)
+
+	publicdashboardApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(publicdashboardGRD.Spec.Group).
+		WithNames(publicdashboardApplyNames).
+		WithScope(publicdashboardGRD.Spec.Scope).
+		WithVersions(publicdashboardApplyVersions...).
+		WithPreserveUnknownFields(publicdashboardGRD.Spec.PreserveUnknownFields)
+
+	publicdashboardApplyConfig := applyConfig.GrafanaKind(publicdashboardGRD.ObjectMeta.Name).
+		WithSpec(publicdashboardApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, publicdashboardApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Role ************************/
 	roleGRD, err := r.getGRD(r.breg.Role())
@@ -711,92 +467,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, roleGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, roleGRD, metav1.CreateOptions{})
 
-	//  roleApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range roleGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    roleApplyVersions = append(roleApplyVersions, version)
-	//  }
-	//
-	//  roleApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(roleGRD.Spec.Names.Kind).
-	//    WithListKind(roleGRD.Spec.Names.ListKind).
-	//    WithSingular(roleGRD.Spec.Names.Singular).
-	//    WithPlural(roleGRD.Spec.Names.Plural).
-	//    WithCategories(roleGRD.Spec.Names.Categories...).
-	//    WithShortNames(roleGRD.Spec.Names.ShortNames...)
-	//
-	//  roleApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(roleGRD.Spec.Group).
-	//    WithNames(roleApplyNames).
-	//    WithScope(roleGRD.Spec.Scope).
-	//    WithVersions(roleApplyVersions...).
-	//    WithPreserveUnknownFields(roleGRD.Spec.PreserveUnknownFields)
-	//
-	//  roleApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(roleGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(roleGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(roleGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(roleGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(roleGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(roleGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  roleApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range roleGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    roleApplyConditions = append(roleApplyConditions, condition)
-	//  }
-	//
-	//  roleApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(roleApplyConditions...).
-	//    WithAcceptedNames(roleApplyAcceptedNames).
-	//    WithStoredVersions(roleGRD.Status.StoredVersions...)
-	//
-	//  roleApplyConfig := applyConfig.GrafanaResourceDefinition(roleGRD.ObjectMeta.Name).
-	//    WithSpec(roleApplySpec).
-	//    WithStatus(roleApplyStatus).
-	//    WithGenerateName(roleGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(roleGRD.ObjectMeta.Namespace).
-	//    WithLabels(roleGRD.ObjectMeta.Labels).
-	//    WithAnnotations(roleGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(roleGRD.ObjectMeta.Finalizers...).
-	//    WithUID(roleGRD.ObjectMeta.UID).
-	//    WithGeneration(roleGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(roleGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(roleGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if roleGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      roleApplyConfig = roleApplyConfig.WithDeletionTimestamp(*roleGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if roleGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      roleApplyConfig = roleApplyConfig.WithDeletionGracePeriodSeconds(*roleGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, roleApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	roleApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range roleGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		roleApplyVersions = append(roleApplyVersions, version)
+	}
+
+	roleApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(roleGRD.Spec.Names.Kind).
+		WithListKind(roleGRD.Spec.Names.ListKind).
+		WithSingular(roleGRD.Spec.Names.Singular).
+		WithPlural(roleGRD.Spec.Names.Plural).
+		WithCategories(roleGRD.Spec.Names.Categories...).
+		WithShortNames(roleGRD.Spec.Names.ShortNames...)
+
+	roleApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(roleGRD.Spec.Group).
+		WithNames(roleApplyNames).
+		WithScope(roleGRD.Spec.Scope).
+		WithVersions(roleApplyVersions...).
+		WithPreserveUnknownFields(roleGRD.Spec.PreserveUnknownFields)
+
+	roleApplyConfig := applyConfig.GrafanaKind(roleGRD.ObjectMeta.Name).
+		WithSpec(roleApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, roleApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ RoleBinding ************************/
 	rolebindingGRD, err := r.getGRD(r.breg.RoleBinding())
@@ -804,92 +525,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, rolebindingGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, rolebindingGRD, metav1.CreateOptions{})
 
-	//  rolebindingApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range rolebindingGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    rolebindingApplyVersions = append(rolebindingApplyVersions, version)
-	//  }
-	//
-	//  rolebindingApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(rolebindingGRD.Spec.Names.Kind).
-	//    WithListKind(rolebindingGRD.Spec.Names.ListKind).
-	//    WithSingular(rolebindingGRD.Spec.Names.Singular).
-	//    WithPlural(rolebindingGRD.Spec.Names.Plural).
-	//    WithCategories(rolebindingGRD.Spec.Names.Categories...).
-	//    WithShortNames(rolebindingGRD.Spec.Names.ShortNames...)
-	//
-	//  rolebindingApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(rolebindingGRD.Spec.Group).
-	//    WithNames(rolebindingApplyNames).
-	//    WithScope(rolebindingGRD.Spec.Scope).
-	//    WithVersions(rolebindingApplyVersions...).
-	//    WithPreserveUnknownFields(rolebindingGRD.Spec.PreserveUnknownFields)
-	//
-	//  rolebindingApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(rolebindingGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(rolebindingGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(rolebindingGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(rolebindingGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(rolebindingGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(rolebindingGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  rolebindingApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range rolebindingGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    rolebindingApplyConditions = append(rolebindingApplyConditions, condition)
-	//  }
-	//
-	//  rolebindingApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(rolebindingApplyConditions...).
-	//    WithAcceptedNames(rolebindingApplyAcceptedNames).
-	//    WithStoredVersions(rolebindingGRD.Status.StoredVersions...)
-	//
-	//  rolebindingApplyConfig := applyConfig.GrafanaResourceDefinition(rolebindingGRD.ObjectMeta.Name).
-	//    WithSpec(rolebindingApplySpec).
-	//    WithStatus(rolebindingApplyStatus).
-	//    WithGenerateName(rolebindingGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(rolebindingGRD.ObjectMeta.Namespace).
-	//    WithLabels(rolebindingGRD.ObjectMeta.Labels).
-	//    WithAnnotations(rolebindingGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(rolebindingGRD.ObjectMeta.Finalizers...).
-	//    WithUID(rolebindingGRD.ObjectMeta.UID).
-	//    WithGeneration(rolebindingGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(rolebindingGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(rolebindingGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if rolebindingGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      rolebindingApplyConfig = rolebindingApplyConfig.WithDeletionTimestamp(*rolebindingGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if rolebindingGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      rolebindingApplyConfig = rolebindingApplyConfig.WithDeletionGracePeriodSeconds(*rolebindingGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, rolebindingApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	rolebindingApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range rolebindingGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		rolebindingApplyVersions = append(rolebindingApplyVersions, version)
+	}
+
+	rolebindingApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(rolebindingGRD.Spec.Names.Kind).
+		WithListKind(rolebindingGRD.Spec.Names.ListKind).
+		WithSingular(rolebindingGRD.Spec.Names.Singular).
+		WithPlural(rolebindingGRD.Spec.Names.Plural).
+		WithCategories(rolebindingGRD.Spec.Names.Categories...).
+		WithShortNames(rolebindingGRD.Spec.Names.ShortNames...)
+
+	rolebindingApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(rolebindingGRD.Spec.Group).
+		WithNames(rolebindingApplyNames).
+		WithScope(rolebindingGRD.Spec.Scope).
+		WithVersions(rolebindingApplyVersions...).
+		WithPreserveUnknownFields(rolebindingGRD.Spec.PreserveUnknownFields)
+
+	rolebindingApplyConfig := applyConfig.GrafanaKind(rolebindingGRD.ObjectMeta.Name).
+		WithSpec(rolebindingApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, rolebindingApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	/************************ Team ************************/
 	teamGRD, err := r.getGRD(r.breg.Team())
@@ -897,92 +583,57 @@ func (r *Registry) start(ctx context.Context) error {
 		return err
 	}
 
-	_, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, teamGRD, metav1.CreateOptions{})
+	//_, _ = clientSet.GrafanaKinds().Create(ctx, teamGRD, metav1.CreateOptions{})
 
-	//  teamApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-	//  for _, v := range teamGRD.Spec.Versions {
-	//    subresource := applyConfig.GrafanaResourceSubresources()
-	//    if v.Subresources != nil && v.Subresources.Status != nil {
-	//      subresource = subresource.WithStatus(*v.Subresources.Status)
-	//    }
-	//
-	//    version := applyConfig.GrafanaResourceDefinitionVersion().
-	//      WithName(v.Name).
-	//      WithServed(v.Served).
-	//      WithStorage(v.Storage).
-	//      WithDeprecated(v.Deprecated).
-	//      WithSubresources(subresource)
-	//    if v.DeprecationWarning != nil {
-	//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-	//    }
-	//    teamApplyVersions = append(teamApplyVersions, version)
-	//  }
-	//
-	//  teamApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-	//    WithKind(teamGRD.Spec.Names.Kind).
-	//    WithListKind(teamGRD.Spec.Names.ListKind).
-	//    WithSingular(teamGRD.Spec.Names.Singular).
-	//    WithPlural(teamGRD.Spec.Names.Plural).
-	//    WithCategories(teamGRD.Spec.Names.Categories...).
-	//    WithShortNames(teamGRD.Spec.Names.ShortNames...)
-	//
-	//  teamApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-	//    WithGroup(teamGRD.Spec.Group).
-	//    WithNames(teamApplyNames).
-	//    WithScope(teamGRD.Spec.Scope).
-	//    WithVersions(teamApplyVersions...).
-	//    WithPreserveUnknownFields(teamGRD.Spec.PreserveUnknownFields)
-	//
-	//  teamApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-	//      WithKind(teamGRD.Status.AcceptedNames.Kind).
-	//      WithListKind(teamGRD.Status.AcceptedNames.ListKind).
-	//      WithSingular(teamGRD.Status.AcceptedNames.Singular).
-	//      WithPlural(teamGRD.Status.AcceptedNames.Plural).
-	//      WithCategories(teamGRD.Status.AcceptedNames.Categories...).
-	//      WithShortNames(teamGRD.Status.AcceptedNames.ShortNames...)
-	//
-	//
-	//  teamApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-	//  for _, c := range teamGRD.Status.Conditions {
-	//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-	//      WithType(c.Type).
-	//      WithStatus(c.Status).
-	//      WithLastTransitionTime(c.LastTransitionTime).
-	//      WithReason(c.Reason).
-	//      WithMessage(c.Message)
-	//    teamApplyConditions = append(teamApplyConditions, condition)
-	//  }
-	//
-	//  teamApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-	//    WithConditions(teamApplyConditions...).
-	//    WithAcceptedNames(teamApplyAcceptedNames).
-	//    WithStoredVersions(teamGRD.Status.StoredVersions...)
-	//
-	//  teamApplyConfig := applyConfig.GrafanaResourceDefinition(teamGRD.ObjectMeta.Name).
-	//    WithSpec(teamApplySpec).
-	//    WithStatus(teamApplyStatus).
-	//    WithGenerateName(teamGRD.ObjectMeta.GenerateName).
-	//    WithNamespace(teamGRD.ObjectMeta.Namespace).
-	//    WithLabels(teamGRD.ObjectMeta.Labels).
-	//    WithAnnotations(teamGRD.ObjectMeta.Annotations).
-	//    WithFinalizers(teamGRD.ObjectMeta.Finalizers...).
-	//    WithUID(teamGRD.ObjectMeta.UID).
-	//    WithGeneration(teamGRD.ObjectMeta.Generation).
-	//    WithCreationTimestamp(teamGRD.ObjectMeta.CreationTimestamp).
-	//    WithResourceVersion(teamGRD.ObjectMeta.ResourceVersion)
-	//
-	//    if teamGRD.ObjectMeta.DeletionTimestamp != nil {
-	//      teamApplyConfig = teamApplyConfig.WithDeletionTimestamp(*teamGRD.ObjectMeta.DeletionTimestamp)
-	//    }
-	//
-	//    if teamGRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-	//      teamApplyConfig = teamApplyConfig.WithDeletionGracePeriodSeconds(*teamGRD.ObjectMeta.DeletionGracePeriodSeconds)
-	//    }
-	//
-	//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, teamApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-	//  if err != nil {
-	//    return err
-	//  }
+	teamApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+	for _, v := range teamGRD.Spec.Versions {
+		subresource := applyConfig.GrafanaResourceSubresources()
+		if v.Subresources != nil && v.Subresources.Status != nil {
+			subresource = subresource.WithStatus(*v.Subresources.Status)
+		}
+
+		if v.Subresources != nil && v.Subresources.Ref != nil {
+			subresource = subresource.WithRef(*v.Subresources.Ref)
+		}
+
+		if v.Subresources != nil && v.Subresources.History != nil {
+			subresource = subresource.WithHistory(*v.Subresources.History)
+		}
+
+		version := applyConfig.GrafanaKindVersion().
+			WithName(v.Name).
+			WithServed(v.Served).
+			WithStorage(v.Storage).
+			WithDeprecated(v.Deprecated).
+			WithSubresources(subresource)
+		if v.DeprecationWarning != nil {
+			version = version.WithDeprecationWarning(*v.DeprecationWarning)
+		}
+		teamApplyVersions = append(teamApplyVersions, version)
+	}
+
+	teamApplyNames := applyConfig.GrafanaKindNames().
+		WithKind(teamGRD.Spec.Names.Kind).
+		WithListKind(teamGRD.Spec.Names.ListKind).
+		WithSingular(teamGRD.Spec.Names.Singular).
+		WithPlural(teamGRD.Spec.Names.Plural).
+		WithCategories(teamGRD.Spec.Names.Categories...).
+		WithShortNames(teamGRD.Spec.Names.ShortNames...)
+
+	teamApplySpec := applyConfig.GrafanaKindSpec().
+		WithGroup(teamGRD.Spec.Group).
+		WithNames(teamApplyNames).
+		WithScope(teamGRD.Spec.Scope).
+		WithVersions(teamApplyVersions...).
+		WithPreserveUnknownFields(teamGRD.Spec.PreserveUnknownFields)
+
+	teamApplyConfig := applyConfig.GrafanaKind(teamGRD.ObjectMeta.Name).
+		WithSpec(teamApplySpec)
+
+	_, err = clientSet.GrafanaKinds().Apply(ctx, teamApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -992,7 +643,7 @@ func (r *Registry) run(ctx context.Context) error {
 	return nil
 }
 
-func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, error) {
+func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 	kind, is := k.(kindsys.Core)
 	if !is {
 		return nil, nil
@@ -1007,24 +658,24 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 		return nil, err
 	}
 
-	resource := kindsv1.GrafanaResourceDefinition{
+	resource := kindsv1.GrafanaKind{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kinds.grafana.com/v1",
-			Kind:       "GrafanaResourceDefinition",
+			Kind:       "GrafanaKind",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s.%s.%s", props.PluralMachineName, props.MachineName, "kinds.grafana.com"),
+			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, "core.kinds.grafana.com"),
 		},
-		Spec: kindsv1.GrafanaResourceDefinitionSpec{
-			Group: props.MachineName + ".kinds.grafana.com",
+		Spec: kindsv1.GrafanaKindSpec{
+			Group: "core.kinds.grafana.com",
 			Scope: "Namespaced",
-			Names: kindsv1.GrafanaResourceDefinitionNames{
+			Names: kindsv1.GrafanaKindNames{
 				Kind:     props.Name,
 				ListKind: props.Name + "List",
 				Singular: props.MachineName,
 				Plural:   props.PluralMachineName,
 			},
-			Versions: make([]kindsv1.GrafanaResourceDefinitionVersion, 0),
+			Versions: make([]kindsv1.GrafanaKindVersion, 0),
 		},
 	}
 	latest := lin.Latest().Version()
@@ -1032,10 +683,10 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 	for sch != nil {
 		vstr := versionString(sch.Version())
 		if props.Maturity.Less(kindsys.MaturityStable) {
-			vstr = "v0.0-alpha"
+			vstr = "v0-alpha"
 		}
 
-		ver := kindsv1.GrafanaResourceDefinitionVersion{
+		ver := kindsv1.GrafanaKindVersion{
 			Name:       vstr,
 			Served:     true,
 			Storage:    sch.Version() == latest,
@@ -1055,7 +706,9 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 }
 
 func versionString(version thema.SyntacticVersion) string {
-	return fmt.Sprintf("v%d-%d", version[0], version[1])
+	// TODO: v0.0-alpha throws the apiservice registration off in aggregated mode
+	// Cannot use dot in the DNS subdomain prefix in front of *.kinds.grafana.com
+	return fmt.Sprintf("v%d", version[0]) // , version[1]
 }
 
 func doNewRegistry(

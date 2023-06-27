@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
@@ -30,6 +30,13 @@ export function FolderActionsButton({ folder }: Props) {
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID });
+    reportInteraction('grafana_manage_dashboards_item_moved', {
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
+      source: 'folder_actions',
+    });
     dispatch(refetchChildren({ parentUID: destinationUID, pageSize: destinationUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
 
     if (folder.parentUid) {
@@ -41,6 +48,13 @@ export function FolderActionsButton({ folder }: Props) {
 
   const onDelete = async () => {
     await dispatch(deleteFolder(folder.uid));
+    reportInteraction('grafana_manage_dashboards_item_deleted', {
+      item_counts: {
+        folder: 1,
+        dashboard: 0,
+      },
+      source: 'folder_actions',
+    });
     if (folder.parentUid) {
       dispatch(
         refetchChildren({ parentUID: folder.parentUid, pageSize: folder.parentUid ? PAGE_SIZE : ROOT_PAGE_SIZE })

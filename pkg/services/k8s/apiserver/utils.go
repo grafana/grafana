@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -132,9 +133,22 @@ func contextWithFakeGrafanaUser(ctx context.Context) (context.Context, error) {
 	}
 
 	if user.OrgID < 0 || user.UserID < 0 {
-		return nil, fmt.Errorf("insufficient information on user context, couldn't determine UserID and OrgID")
+		// Aggregated mode.... need to map this to a real user somehow
+		user.OrgID = 1
+		user.UserID = 1
+		// return nil, fmt.Errorf("insufficient information on user context, couldn't determine UserID and OrgID")
 	}
 
+	// HACK alert... change to the reqested org
+	// TODO: should validate that user has access to that org/tenant
+	ns, ok := request.NamespaceFrom(ctx)
+	if ok {
+		nsorg, err := util.NamespaceToOrgID(ns)
+		if err != nil {
+			return nil, err
+		}
+		user.OrgID = nsorg
+	}
 	return appcontext.WithUser(ctx, user), nil
 }
 

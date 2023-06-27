@@ -1,5 +1,25 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "Đęľęŧę",
+      "move-button": "Mővę"
+    },
+    "dashboards-tree": {
+      "name-column": "Ńämę",
+      "tags-column": "Ŧäģş",
+      "type-column": "Ŧypę"
+    },
+    "no-results": {
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
+    },
+    "type-cell": {
+      "dashboard": "Đäşĥþőäřđ",
+      "folder": "Főľđęř",
+      "panel": "Päŉęľ"
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Cőpįęđ"
@@ -141,6 +161,12 @@
     "save": {
       "error": "Ēřřőř şävįŉģ ľįþřäřy päŉęľ: \"{{errorMsg}}\"",
       "success": "Ŀįþřäřy päŉęľ şävęđ"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
+      "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
     }
   },
   "nav": {
@@ -408,8 +434,8 @@
     "dashboard-actions": {
       "import": "Ĩmpőřŧ",
       "new": "Ńęŵ",
-      "new-dashboard": "Ńęŵ Đäşĥþőäřđ",
-      "new-folder": "Ńęŵ Főľđęř"
+      "new-dashboard": "Ńęŵ đäşĥþőäřđ",
+      "new-folder": "Ńęŵ ƒőľđęř"
     },
     "folder-view": {
       "go-to-folder": "Ğő ŧő ƒőľđęř",
@@ -432,6 +458,12 @@
     "search-input": {
       "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş, ƒőľđęřş, äŉđ päŉęľş",
       "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ ƒőľđęřş"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
+      "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
   "share-modal": {

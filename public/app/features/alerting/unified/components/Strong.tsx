@@ -6,7 +6,7 @@ interface Props {}
 
 const Strong = ({ children }: React.PropsWithChildren<Props>) => {
   const theme = useTheme2();
-  return <strong style={{ color: theme.colors.text.maxContrast }}>{children}</strong>;
+  return <strong style={{ color: theme.colors.text.primary }}>{children}</strong>;
 };
 
 export { Strong };

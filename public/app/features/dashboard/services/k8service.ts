@@ -5,7 +5,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 export interface Resource<T = any> {
-  apiVersion: string; //'dashboard.kinds.grafana.com/v0.0-alpha',
+  apiVersion: string; //'*.kinds.grafana.com/v0.0-alpha',
   kind: string; //'Dashboard',
   metadata: {
     namespace: string;
@@ -26,7 +26,7 @@ export class DashboardKindService {
   private url: string;
   namespace: string;
 
-  groupVersion = 'dashboard.kinds.grafana.com/v0.0-alpha';
+  groupVersion = 'XXXXX-NOT-USED-NOW'; // kinds.grafana.com/v0-alpha'; // HARDCODED
   kind = 'Dashboard';
   name = 'dashboards';
 

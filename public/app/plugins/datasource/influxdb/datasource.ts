@@ -29,15 +29,15 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
+import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
-import { getAllPolicies } from './influxQLMetadataQuery';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
+import { getAllPolicies } from './influxql_metadata_query';
+import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
-import { InfluxQueryBuilder } from './query_builder';
 import ResponseParser from './response_parser';
 import { InfluxOptions, InfluxQuery, InfluxVersion } from './types';
 
@@ -59,7 +59,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -310,6 +310,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
+  async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
+    return lastValueFrom(
+      super.query({
+        targets: [target],
+      } as DataQueryRequest)
+    ).then((rsp) => {
+      if (rsp.data?.length) {
+        return frameToMetricFindValue(rsp.data[0]);
+      }
+      return [];
+    });
+  }
+
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
@@ -348,14 +361,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_KEYS');
+    const query = buildMetadataQuery({
+      type: 'TAG_KEYS',
+      templateService: this.templateSrv,
+      database: this.database,
+      measurement: options.measurement || '',
+      tags: [],
+    });
     return this.metricFindQuery(query, options);
   }
 
   getTagValues(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
+    const query = buildMetadataQuery({
+      type: 'TAG_VALUES',
+      templateService: this.templateSrv,
+      database: this.database,
+      withKey: options.key,
+      measurement: options.measurement || '',
+      tags: [],
+    });
     return this.metricFindQuery(query, options);
   }
 

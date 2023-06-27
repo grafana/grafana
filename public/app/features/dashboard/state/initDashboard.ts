@@ -104,6 +104,12 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (config.featureToggles.nestedFolders && args.urlFolderUid) {
+          await dispatch(getFolderByUid(args.urlFolderUid));
+        }
         return getNewDashboardModelData(args.urlFolderUid, args.panelType);
       }
       case DashboardRoutes.Path: {

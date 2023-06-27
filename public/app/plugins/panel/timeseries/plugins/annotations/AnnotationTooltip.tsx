@@ -56,8 +56,8 @@ export const AnnotationTooltip = ({
   if (canEdit || canDelete) {
     editControls = (
       <div className={styles.editControls}>
-        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} />}
-        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} />}
+        {canEdit && <IconButton name={'pen'} size={'sm'} onClick={onEdit} tooltip="Edit" />}
+        {canDelete && <IconButton name={'trash-alt'} size={'sm'} onClick={onDelete} tooltip="Delete" />}
       </div>
     );
   }

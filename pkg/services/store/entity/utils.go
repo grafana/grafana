@@ -1,6 +1,6 @@
 package entity
 
-// :GRIMICE:
+// 😬😬😬😬 HACK HACK HACK... avoid wire circular dependency for now
 var WireCircularDependencyHack EntityStoreServer
 
 // The admin request is a superset of write request features

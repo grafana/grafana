@@ -82,15 +82,7 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
 
   return (
     <div className={styles.queryItem}>
-      <QueryField
-        query={value}
-        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-        // And slate will claim the focus, making it impossible to leave the field.
-        onBlur={() => {}}
-        onChange={onChange}
-        placeholder="Enter a lucene query"
-        portalOrigin="elasticsearch"
-      />
+      <QueryField query={value} onChange={onChange} placeholder="Enter a lucene query" portalOrigin="elasticsearch" />
     </div>
   );
 };

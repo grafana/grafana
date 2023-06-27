@@ -55,6 +55,9 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *entity.Ent
 	case entity.StandardKindDataSource:
 		return r.resolveDatasource(ctx, ref)
 
+	case entity.StandardKindLibraryPanel:
+		return r.resolveLibrayPanel(ctx, ref)
+
 	case entity.ExternalEntityReferencePlugin:
 		return r.resolvePlugin(ctx, ref)
 
@@ -120,5 +123,14 @@ func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *enti
 	return ResolutionInfo{
 		OK:        true,
 		Timestamp: getNow(),
+	}, nil
+}
+
+func (r *standardReferenceResolver) resolveLibrayPanel(ctx context.Context, ref *entity.EntityExternalReference) (ResolutionInfo, error) {
+	return ResolutionInfo{
+		OK:        true,
+		Timestamp: getNow(),
+		Key:       ref.Identifier,
+		Warning:   "TODO... lookup",
 	}, nil
 }

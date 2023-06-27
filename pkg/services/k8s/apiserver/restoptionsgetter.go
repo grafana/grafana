@@ -1,15 +1,15 @@
 package apiserver
 
 import (
-	"github.com/grafana/grafana/pkg/registry/corekind"
-	"github.com/grafana/kindsys"
 	"path"
 	"time"
 
 	"github.com/grafana/grafana-apiserver/pkg/storage/filepath"
+	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/kindsys"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -21,14 +21,14 @@ import (
 )
 
 type RESTOptionsGetter struct {
-	store    entity.EntityStoreServer
-	codec    runtime.Codec
-	registry *corekind.Base
+	dualWriter DualWriterProvider
+	codec      runtime.Codec
+	registry   *corekind.Base
 
 	fallback generic.RESTOptionsGetter
 }
 
-func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureToggles, store entity.EntityStoreServer, registry *corekind.Base) func(runtime.Codec) generic.RESTOptionsGetter {
+func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dash database.DashboardSQLStore, registry *corekind.Base) func(runtime.Codec) generic.RESTOptionsGetter {
 	return func(codec runtime.Codec) generic.RESTOptionsGetter {
 		// Default to a file based solution
 		fallback := filepath.NewRESTOptionsGetter(path.Join(cfg.DataPath, "k8s"), codec)
@@ -37,7 +37,12 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 			return fallback
 		}
 		return &RESTOptionsGetter{
-			store:    store,
+			dualWriter: func(kind string) DualWriter {
+				if kind == "Dashboard" {
+					return &dashboardDualWriter{dashboardStore: dash}
+				}
+				return &noopDualWriter{}
+			},
 			registry: registry,
 			codec:    codec,
 			fallback: fallback,
@@ -46,7 +51,7 @@ func ProvideRESTOptionsGetter(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 }
 
 func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (generic.RESTOptions, error) {
-	if resource.Resource == "grafanaresourcedefinitions" {
+	if resource.Resource == "grafanakinds" {
 		return f.fallback.GetRESTOptions(resource)
 	}
 
@@ -81,18 +86,19 @@ func (f *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 			trigger storage.IndexerFuncs,
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
-
+			var dualWrite DualWriter
 			var found kindsys.Core
 			kinds := f.registry.All()
 			for _, k := range kinds {
 				if k.Props().Common().PluralMachineName == config.GroupResource.Resource {
 					found = k
+					dualWrite = f.dualWriter(k.MachineName())
 					break
 				}
 			}
 
 			// implement this function with something like https://github.com/grafana/grafana-apiserver/blob/7a585ef1a6b082e4d164188f03e666f6df1d2ba1/pkg/storage/filepath/storage.go#L43
-			return NewEntityStorage(f.store,
+			return NewEntityStorage(dualWrite,
 				found,
 				config, resourcePrefix,
 				keyFunc, newFunc, newListFunc,

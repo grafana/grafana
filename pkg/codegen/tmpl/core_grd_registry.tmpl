@@ -45,7 +45,7 @@ type Registry struct {
 func (r *Registry) start(ctx context.Context) error {
   clientSet, err := grdClientset.NewForConfig(r.restConfigProvider.GetRestConfig())
   if err != nil {
-    return err 
+    return err
   }
   {{range $i, $k := .Kinds }}
   /************************ {{ $k.Props.Name }} ************************/
@@ -54,92 +54,57 @@ func (r *Registry) start(ctx context.Context) error {
     return err
   }
 
-  _, _ = clientSet.GrafanaResourceDefinitions().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
+  //_, _ = clientSet.GrafanaKinds().Create(ctx, {{ $k.Props.MachineName }}GRD, metav1.CreateOptions{})
  
-//  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaResourceDefinitionVersionApplyConfiguration, 0)
-//  for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
-//    subresource := applyConfig.GrafanaResourceSubresources()
-//    if v.Subresources != nil && v.Subresources.Status != nil {
-//      subresource = subresource.WithStatus(*v.Subresources.Status)
-//    }
-//
-//    version := applyConfig.GrafanaResourceDefinitionVersion().
-//      WithName(v.Name).
-//      WithServed(v.Served).
-//      WithStorage(v.Storage).
-//      WithDeprecated(v.Deprecated).
-//      WithSubresources(subresource)
-//    if v.DeprecationWarning != nil {
-//      version = version.WithDeprecationWarning(*v.DeprecationWarning)
-//    }
-//    {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
-//  }
-//
-//  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaResourceDefinitionNames().
-//    WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
-//    WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
-//    WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
-//    WithPlural({{ $k.Props.MachineName }}GRD.Spec.Names.Plural).
-//    WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
-//    WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
-//
-//  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaResourceDefinitionSpec().
-//    WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
-//    WithNames({{ $k.Props.MachineName }}ApplyNames).
-//    WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
-//    WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
-//    WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
-//
-//  {{ $k.Props.MachineName }}ApplyAcceptedNames := applyConfig.GrafanaResourceDefinitionNames().
-//      WithKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Kind).
-//      WithListKind({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ListKind).
-//      WithSingular({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Singular).
-//      WithPlural({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Plural).
-//      WithCategories({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.Categories...).
-//      WithShortNames({{ $k.Props.MachineName }}GRD.Status.AcceptedNames.ShortNames...)
-//
-//
-//  {{ $k.Props.MachineName }}ApplyConditions := make([]*applyConfig.GrafanaResourceDefinitionConditionApplyConfiguration, 0)
-//  for _, c := range {{ $k.Props.MachineName }}GRD.Status.Conditions {
-//    condition := applyConfig.GrafanaResourceDefinitionCondition().
-//      WithType(c.Type).
-//      WithStatus(c.Status).
-//      WithLastTransitionTime(c.LastTransitionTime).
-//      WithReason(c.Reason).
-//      WithMessage(c.Message)
-//    {{ $k.Props.MachineName }}ApplyConditions = append({{ $k.Props.MachineName }}ApplyConditions, condition)
-//  }
-//  
-//  {{ $k.Props.MachineName }}ApplyStatus := applyConfig.GrafanaResourceDefinitionStatus().
-//    WithConditions({{ $k.Props.MachineName }}ApplyConditions...).
-//    WithAcceptedNames({{ $k.Props.MachineName }}ApplyAcceptedNames).
-//    WithStoredVersions({{ $k.Props.MachineName }}GRD.Status.StoredVersions...)
-//
-//  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaResourceDefinition({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
-//    WithSpec({{ $k.Props.MachineName }}ApplySpec).
-//    WithStatus({{ $k.Props.MachineName }}ApplyStatus).
-//    WithGenerateName({{ $k.Props.MachineName }}GRD.ObjectMeta.GenerateName).
-//    WithNamespace({{ $k.Props.MachineName }}GRD.ObjectMeta.Namespace).
-//    WithLabels({{ $k.Props.MachineName }}GRD.ObjectMeta.Labels).
-//    WithAnnotations({{ $k.Props.MachineName }}GRD.ObjectMeta.Annotations).
-//    WithFinalizers({{ $k.Props.MachineName }}GRD.ObjectMeta.Finalizers...).
-//    WithUID({{ $k.Props.MachineName }}GRD.ObjectMeta.UID).
-//    WithGeneration({{ $k.Props.MachineName }}GRD.ObjectMeta.Generation).
-//    WithCreationTimestamp({{ $k.Props.MachineName }}GRD.ObjectMeta.CreationTimestamp).
-//    WithResourceVersion({{ $k.Props.MachineName }}GRD.ObjectMeta.ResourceVersion)
-//
-//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp != nil {
-//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionTimestamp(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionTimestamp)
-//    }
-//
-//    if {{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds != nil {
-//      {{ $k.Props.MachineName }}ApplyConfig = {{ $k.Props.MachineName }}ApplyConfig.WithDeletionGracePeriodSeconds(*{{ $k.Props.MachineName }}GRD.ObjectMeta.DeletionGracePeriodSeconds)
-//    }
-//  
-//  _, err = clientSet.GrafanaResourceDefinitions().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
-//  if err != nil {
-//    return err
-//  }
+  {{ $k.Props.MachineName }}ApplyVersions := make([]*applyConfig.GrafanaKindVersionApplyConfiguration, 0)
+  for _, v := range {{ $k.Props.MachineName }}GRD.Spec.Versions {
+    subresource := applyConfig.GrafanaResourceSubresources()
+    if v.Subresources != nil && v.Subresources.Status != nil {
+      subresource = subresource.WithStatus(*v.Subresources.Status)
+    }
+
+    if v.Subresources != nil && v.Subresources.Ref!= nil {
+      subresource = subresource.WithRef(*v.Subresources.Ref)
+    }
+
+    if v.Subresources != nil && v.Subresources.History != nil {
+      subresource = subresource.WithHistory(*v.Subresources.History)
+    }
+
+    version := applyConfig.GrafanaKindVersion().
+      WithName(v.Name).
+      WithServed(v.Served).
+      WithStorage(v.Storage).
+      WithDeprecated(v.Deprecated).
+      WithSubresources(subresource)
+    if v.DeprecationWarning != nil {
+      version = version.WithDeprecationWarning(*v.DeprecationWarning)
+    }
+    {{ $k.Props.MachineName }}ApplyVersions = append({{ $k.Props.MachineName }}ApplyVersions, version)
+  }
+
+  {{ $k.Props.MachineName }}ApplyNames := applyConfig.GrafanaKindNames().
+    WithKind({{ $k.Props.MachineName }}GRD.Spec.Names.Kind).
+    WithListKind({{ $k.Props.MachineName }}GRD.Spec.Names.ListKind).
+    WithSingular({{ $k.Props.MachineName }}GRD.Spec.Names.Singular).
+    WithPlural({{ $k.Props.MachineName }}GRD.Spec.Names.Plural).
+    WithCategories({{ $k.Props.MachineName }}GRD.Spec.Names.Categories...).
+    WithShortNames({{ $k.Props.MachineName }}GRD.Spec.Names.ShortNames...)
+
+  {{ $k.Props.MachineName }}ApplySpec := applyConfig.GrafanaKindSpec().
+    WithGroup({{ $k.Props.MachineName }}GRD.Spec.Group).
+    WithNames({{ $k.Props.MachineName }}ApplyNames).
+    WithScope({{ $k.Props.MachineName }}GRD.Spec.Scope).
+    WithVersions({{ $k.Props.MachineName }}ApplyVersions...).
+    WithPreserveUnknownFields({{ $k.Props.MachineName }}GRD.Spec.PreserveUnknownFields)
+
+  {{ $k.Props.MachineName }}ApplyConfig := applyConfig.GrafanaKind({{ $k.Props.MachineName }}GRD.ObjectMeta.Name).
+    WithSpec({{ $k.Props.MachineName }}ApplySpec)
+
+  _, err = clientSet.GrafanaKinds().Apply(ctx, {{ $k.Props.MachineName }}ApplyConfig, metav1.ApplyOptions{FieldManager: "grafana"})
+  if err != nil {
+    return err
+  }
 {{end}}
   return nil
 }
@@ -149,7 +114,7 @@ func (r *Registry) run(ctx context.Context) error {
   return nil
 }
 
-func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, error) {
+func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaKind, error) {
 	kind, is := k.(kindsys.Core)
 	if !is {
 		return nil, nil
@@ -164,24 +129,24 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 		return nil, err
 	}
 
-	resource := kindsv1.GrafanaResourceDefinition{
+	resource := kindsv1.GrafanaKind{
     TypeMeta: metav1.TypeMeta{
       APIVersion: "kinds.grafana.com/v1",
-      Kind: "GrafanaResourceDefinition",
+      Kind: "GrafanaKind",
     },
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s.%s.%s", props.PluralMachineName, props.MachineName, "kinds.grafana.com"),
+			Name: fmt.Sprintf("%s.%s", props.PluralMachineName, "core.kinds.grafana.com"),
 		},
-		Spec: kindsv1.GrafanaResourceDefinitionSpec{
-			Group: props.MachineName+ ".kinds.grafana.com",
+		Spec: kindsv1.GrafanaKindSpec{
+			Group: "core.kinds.grafana.com",
 			Scope: "Namespaced",
-			Names: kindsv1.GrafanaResourceDefinitionNames{
+			Names: kindsv1.GrafanaKindNames{
 				Kind:   props.Name,
         ListKind: props.Name + "List",
         Singular: props.MachineName,
 				Plural: props.PluralMachineName,
 			},
-			Versions: make([]kindsv1.GrafanaResourceDefinitionVersion, 0),
+			Versions: make([]kindsv1.GrafanaKindVersion, 0),
 		},
 	}
 	latest := lin.Latest().Version()
@@ -189,10 +154,10 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 	for sch != nil {
 		vstr := versionString(sch.Version())
 		if props.Maturity.Less(kindsys.MaturityStable) {
-			vstr = "v0.0-alpha"
+			vstr = "v0-alpha"
 		}
 
-		ver := kindsv1.GrafanaResourceDefinitionVersion{
+		ver := kindsv1.GrafanaKindVersion{
 			Name:       vstr,
 			Served:     true,
 			Storage:    sch.Version() == latest,
@@ -212,7 +177,9 @@ func (r *Registry) getGRD(k kindsys.Kind) (*kindsv1.GrafanaResourceDefinition, e
 }
 
 func versionString(version thema.SyntacticVersion) string {
-	return fmt.Sprintf("v%d-%d", version[0], version[1])
+  // TODO: v0.0-alpha throws the apiservice registration off in aggregated mode
+  // Cannot use dot in the DNS subdomain prefix in front of *.kinds.grafana.com
+	return fmt.Sprintf("v%d", version[0]) // , version[1]
 }
 
 func doNewRegistry(

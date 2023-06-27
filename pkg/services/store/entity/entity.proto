@@ -355,6 +355,20 @@ message EntitySearchRequest {
   bool with_fields = 10;
 }
 
+message ReferenceRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2; 
+
+  // Free text query string -- mileage may vary :)
+  string kind = 3;
+
+  // Free text query string -- mileage may vary :)
+  string uid = 4;
+}
+
 // Search result metadata for each entity
 message EntitySearchResult {
   // Entity identifier
@@ -481,6 +495,7 @@ service EntityStore {
   rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
   rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
   rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
+  rpc FindReferences(ReferenceRequest) returns (EntitySearchResponse);
   
   // TEMPORARY... while we split this into a new service (see below)
   rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);

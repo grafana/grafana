@@ -424,7 +424,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 			delete(meta.Annotations, "kubectl.kubernetes.io/last-applied-configuration")
 		} */
 		meta.ResourceVersion = fmt.Sprintf("%d", versionInfo.Version)
-		meta.Namespace = orgIdToNamespace(grn.TenantId)
+		meta.Namespace = util.OrgIdToNamespace(grn.TenantId)
 
 		meta.SetFolder(r.Folder)
 
@@ -927,4 +927,97 @@ func (s *sqlEntityServer) Search(ctx context.Context, r *entity.EntitySearchRequ
 
 func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
 	return fmt.Errorf("unimplemented")
+}
+
+func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntitySearchResponse, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, fmt.Errorf("missing user in context")
+	}
+
+	if r.NextPageToken != "" {
+		return nil, fmt.Errorf("not yet supported")
+	}
+
+	fields := []string{
+		"grn", "guid", "tenant_id", "kind", "uid",
+		"version", "folder", "slug", "errors", // errors are always returned
+		"size", "updated_at", "updated_by",
+		"name", "description", "meta",
+	}
+
+	// SELECT entity_ref.* FROM entity_ref
+	// 	JOIN entity ON entity_ref.grn = entity.grn
+	// 	WHERE family='librarypanel' AND resolved_to='a7975b7a-fb53-4ab7-951d-15810953b54f';
+
+	sql := strings.Builder{}
+	_, _ = sql.WriteString("SELECT ")
+	for i, f := range fields {
+		if i > 0 {
+			_, _ = sql.WriteString(",")
+		}
+		_, _ = sql.WriteString(fmt.Sprintf("entity.%s", f))
+	}
+	_, _ = sql.WriteString(" FROM entity_ref JOIN entity ON entity_ref.grn = entity.grn")
+	_, _ = sql.WriteString(" WHERE family=? AND resolved_to=?") // TODO tenant ID!!!!
+
+	rows, err := s.sess.Query(ctx, sql.String(), r.Kind, r.Uid)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	oid := ""
+	rsp := &entity.EntitySearchResponse{}
+	for rows.Next() {
+		result := &entity.EntitySearchResult{
+			GRN: &entity.GRN{},
+		}
+		summaryjson := summarySupport{}
+
+		args := []interface{}{
+			&oid, &result.Guid, &result.GRN.TenantId, &result.GRN.Kind, &result.GRN.UID,
+			&result.Version, &result.Folder, &result.Slug, &summaryjson.errors,
+			&result.Size, &result.UpdatedAt, &result.UpdatedBy,
+			&result.Name, &summaryjson.description, &result.Meta,
+		}
+
+		err = rows.Scan(args...)
+		if err != nil {
+			return rsp, err
+		}
+
+		// // found one more than requested
+		// if int64(len(rsp.Results)) >= entityQuery.limit {
+		// 	// TODO? should this encode start+offset?
+		// 	rsp.NextPageToken = oid
+		// 	break
+		// }
+
+		if summaryjson.description != nil {
+			result.Description = *summaryjson.description
+		}
+
+		if summaryjson.labels != nil {
+			b := []byte(*summaryjson.labels)
+			err = json.Unmarshal(b, &result.Labels)
+			if err != nil {
+				return rsp, err
+			}
+		}
+
+		if summaryjson.fields != nil {
+			result.FieldsJson = []byte(*summaryjson.fields)
+		}
+
+		if summaryjson.errors != nil {
+			result.ErrorJson = []byte(*summaryjson.errors)
+		}
+
+		rsp.Results = append(rsp.Results, result)
+	}
+
+	return rsp, err
 }

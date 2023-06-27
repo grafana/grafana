@@ -110,6 +110,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 		labels, ok := custom["labels"].(gdata.Labels)
 		require.True(t, ok)
 		assert.Equal(t, "6724404429462225363", labels["resource.label.instance_id"])
+		assert.Equal(t, "test-app", labels["metadata.label.app"])
 	})
 
 	t.Run("includes time interval", func(t *testing.T) {

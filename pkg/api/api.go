@@ -209,7 +209,7 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	if hs.License.FeatureEnabled("saml") && hs.Features.IsEnabled(featuremgmt.FlagAuthenticationConfigUI) {
+	if hs.License.FeatureEnabled("saml") {
 		// TODO change the scope when we extend the auth UI to more providers
 		r.Get("/admin/authentication/", authorize(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML)), hs.Index)
 	}

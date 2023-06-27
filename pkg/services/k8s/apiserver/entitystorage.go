@@ -9,26 +9,25 @@ import (
 	"io"
 	"strings"
 
-	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
-
-	"github.com/grafana/kindsys"
-	"k8s.io/apiserver/pkg/endpoints/request"
-
 	"github.com/grafana/grafana-apiserver/pkg/apihelpers"
 	grafanaApiServerKinds "github.com/grafana/grafana-apiserver/pkg/apis/kinds"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
+	kindsv1 "github.com/grafana/grafana-apiserver/pkg/apis/kinds/v1"
+	"github.com/grafana/kindsys"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ storage.Interface = (*entityStorage)(nil)
@@ -37,6 +36,7 @@ const MaxUpdateAttempts = 30
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type entityStorage struct {
+	dualWrite    DualWriter
 	store        entity.EntityStoreServer
 	kind         kindsys.Core
 	gr           schema.GroupResource
@@ -58,7 +58,7 @@ var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
 // NewStorage instantiates a new Storage.
 func NewEntityStorage(
-	store entity.EntityStoreServer,
+	dualWriter DualWriter,
 	kind kindsys.Core,
 	config *storagebackend.ConfigForResource,
 	resourcePrefix string,
@@ -71,7 +71,8 @@ func NewEntityStorage(
 ) (storage.Interface, factory.DestroyFunc, error) {
 	ws := NewWatchSet()
 	return &entityStorage{
-			store:        store,
+			dualWrite:    dualWriter,
+			store:        entity.WireCircularDependencyHack,
 			kind:         kind,
 			gr:           config.GroupResource,
 			codec:        config.Codec,
@@ -148,8 +149,8 @@ func getItems(listObj runtime.Object) ([]runtime.Object, error) {
 	out := make([]runtime.Object, 0)
 
 	switch list := listObj.(type) {
-	case *kindsv1.GrafanaResourceDefinitionList:
-	case *grafanaApiServerKinds.GrafanaResourceDefinitionList:
+	case *kindsv1.GrafanaKindList:
+	case *grafanaApiServerKinds.GrafanaKindList:
 	case *unstructured.UnstructuredList:
 		for _, item := range list.Items {
 			out = append(out, item.DeepCopyObject())
@@ -186,6 +187,11 @@ func (s *entityStorage) Create(ctx context.Context, key string, obj runtime.Obje
 		uObj.SetName(grn.UID)
 		uObj.SetGenerateName("")
 		key = strings.ReplaceAll(key, old, grn.UID)
+	}
+
+	uObj, err = s.dualWrite.Create(uObj)
+	if err != nil {
+		return err
 	}
 
 	rsp, err := s.write(ctx, grn, uObj)
@@ -245,6 +251,11 @@ func (s *entityStorage) Delete(
 		return err
 	}
 
+	err = s.dualWrite.Delete("namespace", "name") // TODO
+	if err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Delete(ctx, &entity.DeleteEntityRequest{
 		GRN: grn,
 	})
@@ -277,7 +288,7 @@ func (s *entityStorage) Watch(ctx context.Context, key string, opts storage.List
 	switch s.gr.Group {
 	// NOTE: this first case is currently not active as we are delegating GRD storage to filepath implementation
 	case grafanaApiServerKinds.GroupName:
-		listObj = &grafanaApiServerKinds.GrafanaResourceDefinitionList{}
+		listObj = &grafanaApiServerKinds.GrafanaKindList{}
 		break
 	default:
 		listObj = &unstructured.UnstructuredList{}
@@ -350,15 +361,19 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 			streamer.SetInputStream(i)
 			return err
 		case "ref":
-			refs := make(map[string]interface{})
-			refs["TODO"] = "find references"
+			rsp, err := s.store.FindReferences(ctx, &entity.ReferenceRequest{
+				Kind: grn.Kind,
+				Uid:  grn.UID,
+			})
+			if err != nil {
+				return err
+			}
 
 			i := func(ctx context.Context, apiVersion, acceptHeader string) (stream io.ReadCloser, flush bool, mimeType string, err error) {
-				raw, err := json.Marshal(refs)
+				raw, err := json.Marshal(rsp)
 				if err != nil {
 					return nil, false, "", err
 				}
-				fmt.Printf("REFS: %s\n", string(raw))
 				return io.NopCloser(bytes.NewReader(raw)), false, "application/json", nil
 			}
 
@@ -389,7 +404,7 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 		return err
 	}
 	// HACK???  should be saved with the payload
-	res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+	res.APIVersion = "core.kinds.grafana.com" + "/" + "v0-alpha" // << hardcoded
 	res.Kind = s.kind.Name()
 
 	jjj, _ := json.Marshal(res)
@@ -406,7 +421,6 @@ func (s *entityStorage) Get(ctx context.Context, key string, opts storage.GetOpt
 // The returned contents may be delayed, but it is guaranteed that they will
 // match 'opts.ResourceVersion' according 'opts.ResourceVersionMatch'.
 func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.ListOptions, listObj runtime.Object) error {
-	fmt.Printf("LIST:" + key)
 	if key == "" {
 		return fmt.Errorf("list requires a namespace (for now)")
 	}
@@ -448,7 +462,7 @@ func (s *entityStorage) GetList(ctx context.Context, key string, opts storage.Li
 		if err != nil {
 			return err
 		}
-		res.APIVersion = s.kind.Props().Common().MachineName + ".kinds.grafana.com" + "/" + "v0.0-alpha"
+		res.APIVersion = "core.kinds.grafana.com" + "/" + "v0.0-alpha"
 		res.Kind = s.kind.Name()
 
 		out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&res)
@@ -526,6 +540,11 @@ func (s *entityStorage) GuaranteedUpdate(
 		uObj, ok := updatedObj.(*unstructured.Unstructured)
 		if !ok {
 			return fmt.Errorf("failed to convert to *unstructured.Unstructured")
+		}
+
+		uObj, err = s.dualWrite.Update(uObj)
+		if err != nil {
+			return err
 		}
 
 		rsp, err := s.write(ctx, grn, uObj)

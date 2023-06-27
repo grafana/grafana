@@ -5,11 +5,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { DataSourceApi, LoadingState, CoreApp, createTheme, EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ExploreId } from 'app/types';
+import { configureStore } from 'app/store/configureStore';
 
 import { Explore, Props } from './Explore';
+import { initialExploreState } from './state/main';
 import { scanStopAction } from './state/query';
-import { createEmptyQueryResponse } from './state/utils';
+import { createEmptyQueryResponse, makeExplorePaneState } from './state/utils';
 
 const resizeWindow = (x: number, y: number) => {
   global.innerWidth = x;
@@ -59,8 +60,7 @@ const dummyProps: Props = {
       QueryEditorHelp: {},
     },
   } as DataSourceApi,
-  datasourceMissing: false,
-  exploreId: ExploreId.left,
+  exploreId: 'left',
   loading: false,
   modifyQueries: jest.fn(),
   scanStart: jest.fn(),
@@ -89,7 +89,6 @@ const dummyProps: Props = {
   showFlameGraph: true,
   splitOpen: jest.fn(),
   splitted: false,
-  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
   showRawPrometheus: false,
   showLogsSample: false,
@@ -119,10 +118,18 @@ jest.mock('react-virtualized-auto-sizer', () => {
 });
 
 const setup = (overrideProps?: Partial<Props>) => {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState(),
+      },
+    },
+  });
   const exploreProps = { ...dummyProps, ...overrideProps };
 
   return render(
-    <TestProvider>
+    <TestProvider store={store}>
       <Explore {...exploreProps} />
     </TestProvider>
   );
@@ -139,8 +146,7 @@ describe('Explore', () => {
   });
 
   it('should render no data with done loading state', async () => {
-    const queryResp = makeEmptyQueryResponse(LoadingState.Done);
-    setup({ queryResponse: queryResp });
+    setup({ queryResponse: makeEmptyQueryResponse(LoadingState.Done) });
 
     // Wait for the Explore component to render
     await screen.findByTestId(selectors.components.DataSourcePicker.container);

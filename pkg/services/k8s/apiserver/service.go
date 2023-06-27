@@ -138,7 +138,7 @@ func (s *service) GetRestConfig() *rest.Config {
 
 func (s *service) start(ctx context.Context) error {
 	logger := logr.New(newLogAdapter())
-	logger.V(9)
+	logger.V(10)
 	klog.SetLoggerWithOptions(logger, klog.ContextualLogger(true))
 
 	o := grafanaapiserveroptions.NewGrafanaAPIServerOptions(os.Stdout, os.Stderr)
@@ -148,8 +148,20 @@ func (s *service) start(ctx context.Context) error {
 	o.RecommendedOptions.Authorization.AlwaysAllowPaths = []string{"*"}
 	o.RecommendedOptions.Authorization.AlwaysAllowGroups = []string{user.SystemPrivilegedGroup, "grafana"}
 	o.RecommendedOptions.Etcd = nil
-	// TODO: setting CoreAPI to nil currently segfaults in grafana-apiserver
-	o.RecommendedOptions.CoreAPI = nil
+
+	if true { // standalone
+		o.RecommendedOptions.CoreAPI = nil
+	} else {
+		// TODO... currently need ext-api registered manually:
+		// https://github.com/grafana/grafana-apiserver/blob/main/deploy/local-darwin/service.yaml
+		// for now, easiest setup is checkout:
+		// - https://github.com/grafana/grafana-apiserver
+		// - run tilt up
+		// - then quit
+		// verify exists:
+		// kubectl get service ext-api -n grafana
+		o.RecommendedOptions.CoreAPI.CoreAPIKubeconfigPath = "/Users/ryan/.kube/config"
+	}
 
 	// this currently only will work for standalone mode. we are removing all default enabled plugins
 	// and replacing them with our internal admission plugins. this avoids issues with the default admission
@@ -245,6 +257,8 @@ func (s *service) start(ctx context.Context) error {
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
+
+	<-prepared.MuxAndDiscoveryCompleteSignals()["GrafanaKindDiscoveryReady"]
 
 	return nil
 }

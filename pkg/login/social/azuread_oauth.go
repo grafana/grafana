@@ -2,6 +2,7 @@ package social
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -47,7 +48,7 @@ type azureAccessClaims struct {
 	TenantID string `json:"tid"`
 }
 
-func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialAzureAD) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		return nil, ErrIDTokenNotFound
@@ -83,7 +84,7 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 	}
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
-	groups, err := s.extractGroups(client, claims, token)
+	groups, err := s.extractGroups(ctx, client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
@@ -176,7 +177,7 @@ type getAzureGroupResponse struct {
 // Note: If user groups exceeds 200 no groups will be found in claims and URL to target the Graph API will be
 // given instead.
 // See https://docs.microsoft.com/en-us/azure/active-directory/develop/id-tokens#groups-overage-claim
-func (s *SocialAzureAD) extractGroups(client *http.Client, claims azureClaims, token *oauth2.Token) ([]string, error) {
+func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, claims azureClaims, token *oauth2.Token) ([]string, error) {
 	if !s.forceUseGraphAPI {
 		logger.Debug("checking the claim for groups")
 		if len(claims.Groups) > 0 {
@@ -199,7 +200,13 @@ func (s *SocialAzureAD) extractGroups(client *http.Client, claims azureClaims, t
 		return nil, err
 	}
 
-	res, err := client.Post(endpoint, "application/json", bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

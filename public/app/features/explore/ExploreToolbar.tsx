@@ -4,13 +4,13 @@ import React, { lazy, RefObject, Suspense, useMemo } from 'react';
 import { shallowEqual } from 'react-redux';
 
 import { DataSourceInstanceSettings, RawTimeRange } from '@grafana/data';
-import { config, DataSourcePicker, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { defaultIntervals, PageToolbar, RefreshPicker, SetInterval, ToolbarButton, ButtonGroup } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { contextSrv } from 'app/core/core';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { AccessControlAction } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 import { StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
@@ -22,8 +22,8 @@ import { ExploreTimeControls } from './ExploreTimeControls';
 import { LiveTailButton } from './LiveTailButton';
 import { changeDatasource } from './state/datasource';
 import { splitClose, splitOpen, maximizePaneAction, evenPaneResizeAction } from './state/main';
-import { cancelQueries, runQueries } from './state/query';
-import { isSplit } from './state/selectors';
+import { cancelQueries, runQueries, selectIsWaitingForData } from './state/query';
+import { isSplit, selectPanesEntries } from './state/selectors';
 import { syncTimes, changeRefreshInterval } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 
@@ -38,7 +38,7 @@ const rotateIcon = css({
 });
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
   onChangeTime: (range: RawTimeRange, changedByScanner?: boolean) => void;
   topOfViewRef: RefObject<HTMLDivElement>;
 }
@@ -49,30 +49,25 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const splitted = useSelector(isSplit);
   const timeZone = useSelector((state: StoreState) => getTimeZone(state.user));
   const fiscalYearStartMonth = useSelector((state: StoreState) => getFiscalYearStartMonth(state.user));
-  const { refreshInterval, loading, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
+  const { refreshInterval, datasourceInstance, range, isLive, isPaused, syncedTimes } = useSelector(
     (state: StoreState) => ({
-      ...pick(
-        state.explore.panes[exploreId]!,
-        'refreshInterval',
-        'loading',
-        'datasourceInstance',
-        'range',
-        'isLive',
-        'isPaused'
-      ),
+      ...pick(state.explore.panes[exploreId]!, 'refreshInterval', 'datasourceInstance', 'range', 'isLive', 'isPaused'),
       syncedTimes: state.explore.syncedTimes,
     }),
     shallowEqual
   );
+  const loading = useSelector(selectIsWaitingForData(exploreId));
   const isLargerPane = useSelector((state: StoreState) => state.explore.largerExploreId === exploreId);
   const showSmallTimePicker = useSelector((state) => splitted || state.explore.panes[exploreId]!.containerWidth < 1210);
   const showSmallDataSourcePicker = useSelector(
     (state) => state.explore.panes[exploreId]!.containerWidth < (splitted ? 700 : 800)
   );
 
+  const panes = useSelector(selectPanesEntries);
+
   const shouldRotateSplitIcon = useMemo(
-    () => (exploreId === 'left' && isLargerPane) || (exploreId === 'right' && !isLargerPane),
-    [isLargerPane, exploreId]
+    () => (exploreId === panes[0][0] && isLargerPane) || (exploreId === panes[1]?.[0] && !isLargerPane),
+    [isLargerPane, exploreId, panes]
   );
 
   const onCopyShortLink = () => {
@@ -88,7 +83,7 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
     if (loading) {
       return dispatch(cancelQueries(exploreId));
     } else {
-      return dispatch(runQueries(exploreId));
+      return dispatch(runQueries({ exploreId }));
     }
   };
 
@@ -119,8 +114,8 @@ export function ExploreToolbar({ exploreId, topOfViewRef, onChangeTime }: Props)
   const onChangeFiscalYearStartMonth = (fiscalyearStartMonth: number) =>
     dispatch(updateFiscalYearStartMonthForSession(fiscalyearStartMonth));
 
-  const onChangeRefreshInterval = (item: string) => {
-    dispatch(changeRefreshInterval(exploreId, item));
+  const onChangeRefreshInterval = (refreshInterval: string) => {
+    dispatch(changeRefreshInterval({ exploreId, refreshInterval }));
   };
 
   const showExploreToDashboard = useMemo(
