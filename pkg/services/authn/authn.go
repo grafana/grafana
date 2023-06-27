@@ -269,6 +269,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Login:          i.Login,
 		Name:           i.Name,
 		Email:          i.Email,
+		AuthModule:     i.AuthModule,
 		OrgCount:       i.OrgCount,
 		IsGrafanaAdmin: isGrafanaAdmin,
 		IsAnonymous:    i.IsAnonymous,

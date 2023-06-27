@@ -40,6 +40,7 @@ const (
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
 	JWTModule           = "jwt"
+	ExtendedJWTModule   = "extended_jwt"
 	RenderModule        = "render"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
