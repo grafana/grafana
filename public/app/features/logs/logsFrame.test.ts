@@ -54,7 +54,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.timeField.values[0]).toBe(time.values[0]);
     expect(result!.bodyField.values[0]).toBe(body.values[0]);
     expect(result!.idField?.values[0]).toBe(id.values[0]);
-    expect(result!.timeNanosecondField).toBeUndefined();
+    expect(result!.timeNanosecondField).toBeNull();
     expect(result!.severityField?.values[0]).toBe(severity.values[0]);
     expect(result!.attributes).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning' },
@@ -79,7 +79,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.bodyField.values[0]).toBe(line.values[0]);
     expect(result!.idField?.values[0]).toBe(id.values[0]);
     expect(result!.timeNanosecondField?.values[0]).toBe(ns.values[0]);
-    expect(result!.severityField).toBeUndefined();
+    expect(result!.severityField).toBeNull();
     expect(result!.attributes).toStrictEqual([
       { counter: '34543', lable: 'val3', level: 'info' },
       { counter: '34543', lable: 'val3', level: 'info' },
@@ -112,7 +112,7 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.bodyField.values[0]).toBe(line.values[0]);
     expect(result!.idField?.values[0]).toBe(id.values[0]);
     expect(result!.timeNanosecondField?.values[0]).toBe(ns.values[0]);
-    expect(result!.severityField).toBeUndefined();
+    expect(result!.severityField).toBeNull();
     expect(result!.attributes).toStrictEqual([
       { counter: '38141', label: 'val2', level: 'warning' },
       { counter: '38143', label: 'val2', level: 'info' },
@@ -144,9 +144,9 @@ describe('parseLogsFrame should parse different logs-dataframe formats', () => {
     expect(result!.timeField.values[0]).toBe(time.values[0]);
     expect(result!.bodyField.values[0]).toBe(line.values[0]);
     expect(result!.severityField?.values[0]).toBe(level.values[0]);
-    expect(result!.idField).toBeUndefined();
-    expect(result!.timeNanosecondField).toBeUndefined();
-    expect(result!.attributes).toBeUndefined();
+    expect(result!.idField).toBeNull();
+    expect(result!.timeNanosecondField).toBeNull();
+    expect(result!.attributes).toBeNull();
   });
 });
 
