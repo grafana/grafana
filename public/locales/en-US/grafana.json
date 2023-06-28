@@ -10,7 +10,10 @@
       "tags-column": "Tags"
     },
     "folder-actions-button": {
-      "folder-actions": "Folder actions"
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
     },
     "no-results": {
       "clear": "Clear search and filters",
