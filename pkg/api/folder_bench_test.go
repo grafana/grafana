@@ -58,6 +58,8 @@ const (
 	LEVEL2_DASHBOARD_NUM = 30
 	TEAM_NUM             = 50
 	TEAM_MEMBER_NUM      = 5
+
+	MAXIMUM_INT_POSTGRES = 2147483647
 )
 
 type benchScenario struct {
@@ -257,7 +259,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
-		f0, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
+		f0, d := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
 
@@ -280,7 +282,7 @@ func setupDB(b testing.TB) benchScenario {
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
-			dashID := rand.Int63()
+			dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
 			dashs = append(dashs, &dashboards.Dashboard{
 				ID:       dashID,
 				OrgID:    signedInUser.OrgID,
@@ -301,13 +303,13 @@ func setupDB(b testing.TB) benchScenario {
 		}
 
 		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
-			f1, d1 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
+			f1, d1 := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
 			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
-				dashID := rand.Int63()
+				dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
 				dashs = append(dashs, &dashboards.Dashboard{
 					ID:       dashID,
 					OrgID:    signedInUser.OrgID,
@@ -328,13 +330,13 @@ func setupDB(b testing.TB) benchScenario {
 			}
 
 			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
-				f2, d2 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
+				f2, d2 := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
 				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
-					dashID := rand.Int63()
+					dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
 					dashs = append(dashs, &dashboards.Dashboard{
 						ID:       dashID,
 						OrgID:    signedInUser.OrgID,
