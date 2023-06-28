@@ -639,6 +639,41 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	assert.Equal(t, dashB.ID, results[0].ID)
 }
 
+func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.IsFeatureToggleEnabled = func(key string) bool { return false }
+	quotaService := quotatest.New(false, nil)
+	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	require.NoError(t, err)
+	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
+	t.Run("Should be able to get dashboard with existing name", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("Should not be able to get dashboard with non-existing name", func(t *testing.T) {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta"}, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	t.Run("Should be able to get dashboard with existing name in a folder", func(t *testing.T) {
+		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, true, "prod", "webapp")
+		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, false, "prod", "webapp")
+		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			_, err = getExistingDashboardByTitleAndFolder(sess, savedDash, sqlStore.GetDialect(), false, false)
+			return err
+		})
+		require.NoError(t, err)
+	})
+}
+
 func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID string) {
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		type alertQuery struct {
