@@ -150,7 +150,6 @@ func TestLokiHTTPClient(t *testing.T) {
 			require.NoError(t, err)
 			params := req.lastRequest.URL.Query()
 			require.True(t, params.Has("limit"), "query params did not contain 'limit': %#v", params)
-			// fmt.Sprint(defaultPageSize)
 			require.Equal(t, fmt.Sprint(1100), params.Get("limit"))
 		})
 
