@@ -10,7 +10,10 @@
       "tags-column": "Ŧäģş"
     },
     "folder-actions-button": {
-      "folder-actions": "Főľđęř äčŧįőŉş"
+      "delete": "Đęľęŧę",
+      "folder-actions": "Főľđęř äčŧįőŉş",
+      "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
+      "move": "Mővę"
     },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
