@@ -29,8 +29,11 @@ export const GroupBy = (props: Props) => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    !dataSource && dispatch(fetchAllPromRulesAction());
-    dataSource && dispatch(fetchPromRulesAction({ rulesSourceName: dataSource }));
+    if (dataSource) {
+      dataSource && dispatch(fetchPromRulesAction({ rulesSourceName: dataSource }));
+    } else {
+      dispatch(fetchAllPromRulesAction());
+    }
   }, [dispatch, dataSource]);
 
   const promRulesByDatasource = useUnifiedAlertingSelector((state) => state.promRules);

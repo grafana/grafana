@@ -253,10 +253,10 @@ export function fetchPromAndRulerRulesAction({
 }: {
   rulesSourceName: string;
   identifier?: RuleIdentifier;
-  filter?: FetchPromRulesFilter | undefined;
-  limitAlerts?: number | undefined;
-  matcher?: Matcher[] | undefined;
-  state?: string[] | undefined;
+  filter?: FetchPromRulesFilter;
+  limitAlerts?: number;
+  matcher?: Matcher[];
+  state?: string[];
 }): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
