@@ -21,13 +21,10 @@ replace k8s.io/api => k8s.io/api v0.27.1
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.1
 
-replace k8s.io/apiserver => /Users/charandas/go/src/github.com/kubernetes/kubernetes/staging/src/k8s.io/apiserver
-
-// replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v0.37.0
-
-// replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.35.0
-
-// replace go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.35.0
+// TODO: get this merged upstream
+// Overrides base apiserver lib from kubernetes to use a later version of otel lib
+// from https://github.com/charandas/kubernetes/tree/charandas/grafana-apiserver-otel-fixes-1.27
+replace k8s.io/apiserver => github.com/charandas/kubernetes/staging/src/k8s.io/apiserver v0.0.0-20230628231357-04cb8bb18afb
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
@@ -398,8 +395,8 @@ require (
 	k8s.io/klog v1.0.0 // indirect
 	k8s.io/kms v0.27.1 // indirect
 	k8s.io/kube-aggregator v0.27.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
-	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
+	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.1.2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
