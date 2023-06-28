@@ -34,13 +34,16 @@ export const AddPermission = ({
   const targetOptions = useMemo(() => {
     const options = [];
     if (assignments.users) {
-      options.push({ value: PermissionTarget.User, label: 'User' });
+      options.push({ value: PermissionTarget.User, label: t('access-control.add-permission.user-label', 'User') });
     }
     if (assignments.teams) {
-      options.push({ value: PermissionTarget.Team, label: 'Team' });
+      options.push({ value: PermissionTarget.Team, label: t('access-control.add-permission.team-label', 'Team') });
     }
     if (assignments.builtInRoles) {
-      options.push({ value: PermissionTarget.BuiltInRole, label: 'Role' });
+      options.push({
+        value: PermissionTarget.BuiltInRole,
+        label: t('access-control.add-permission.role-label', 'Role'),
+      });
     }
     return options;
   }, [assignments]);

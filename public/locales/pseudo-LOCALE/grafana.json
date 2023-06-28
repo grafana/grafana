@@ -2,7 +2,10 @@
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
   "access-control": {
     "add-permission": {
-      "add-permission-for": "Åđđ pęřmįşşįőŉ ƒőř"
+      "add-permission-for": "Åđđ pęřmįşşįőŉ ƒőř",
+      "role-label": "Ŗőľę",
+      "team-label": "Ŧęäm",
+      "user-label": "Ůşęř"
     },
     "add-permissions": {
       "save": "Ŝävę"
@@ -491,6 +494,12 @@
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
     }
   },
+  "select": {
+    "select-base": {
+      "choose-label": "Cĥőőşę",
+      "no-options-found-label": "Ńő őpŧįőŉş ƒőūŉđ"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Ŝĥäřę"
@@ -645,6 +654,19 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
+    }
+  },
+  "types": {
+    "dashboard-acl-targets": {
+      "team-label": "Ŧęäm",
+      "user-label": "Ůşęř"
+    },
+    "dashboard-permissions": {
+      "admin-label": "Åđmįŉ"
+    },
+    "member-label": "Męmþęř",
+    "team-permissions": {
+      "admin-label": "Åđmįŉ"
     }
   },
   "user-orgs": {

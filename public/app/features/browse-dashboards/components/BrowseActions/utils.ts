@@ -13,10 +13,10 @@ export function buildBreakdownString(
     parts.push(`${dashboardCount} ${dashboardCount === 1 ? 'dashboard' : 'dashboards'}`);
   }
   if (libraryPanelCount) {
-    parts.push(`${libraryPanelCount} ${libraryPanelCount === 1 ? 'library panel' : 'library panels'}`);
+    parts.push(`${libraryPanelCount} ${libraryPanelCount === 1 ? 'library panel' : 'library-panels'}`);
   }
   if (alertRuleCount) {
-    parts.push(`${alertRuleCount} ${alertRuleCount === 1 ? 'alert rule' : 'alert rules'}`);
+    parts.push(`${alertRuleCount} ${alertRuleCount === 1 ? 'alert-rule' : 'alert-rules'}`);
   }
   let breakdownString = `${total} ${total === 1 ? 'item' : 'items'}`;
   if (parts.length > 0) {

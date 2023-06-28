@@ -2,7 +2,10 @@
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "access-control": {
     "add-permission": {
-      "add-permission-for": "Add permission for"
+      "add-permission-for": "Add permission for",
+      "role-label": "Role",
+      "team-label": "Team",
+      "user-label": "User"
     },
     "add-permissions": {
       "save": "Save"
@@ -491,6 +494,12 @@
       "text": "No results found for your query."
     }
   },
+  "select": {
+    "select-base": {
+      "choose-label": "Choose",
+      "no-options-found-label": "No options found"
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Share"
@@ -645,6 +654,19 @@
     "zone": {
       "select-aria-label": "Time zone picker",
       "select-search-input": "Type to search (country, city, abbreviation)"
+    }
+  },
+  "types": {
+    "dashboard-acl-targets": {
+      "team-label": "Team",
+      "user-label": "User"
+    },
+    "dashboard-permissions": {
+      "admin-label": "Admin"
+    },
+    "member-label": "Member",
+    "team-permissions": {
+      "admin-label": "Admin"
     }
   },
   "user-orgs": {

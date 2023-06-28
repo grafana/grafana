@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
 import { default as ReactSelect } from 'react-select';
 import { default as ReactAsyncSelect } from 'react-select/async';
@@ -124,7 +125,7 @@ export function SelectBase<T>({
   menuPlacement = 'auto',
   menuPosition,
   menuShouldPortal = true,
-  noOptionsMessage = 'No options found',
+  noOptionsMessage = t('select.select-base.no-options-found-label', 'No options found'),
   onBlur,
   onChange,
   onCloseMenu,
@@ -137,7 +138,7 @@ export function SelectBase<T>({
   onFocus,
   openMenuOnFocus = false,
   options = [],
-  placeholder = 'Choose',
+  placeholder = t('select.select-base.choose-label', 'Choose'),
   prefix,
   renderControl,
   showAllSelectedWhenOpen = true,

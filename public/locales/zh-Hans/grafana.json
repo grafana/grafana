@@ -2,7 +2,10 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "access-control": {
     "add-permission": {
-      "add-permission-for": ""
+      "add-permission-for": "",
+      "role-label": "",
+      "team-label": "",
+      "user-label": ""
     },
     "add-permissions": {
       "save": ""
@@ -491,6 +494,12 @@
       "text": ""
     }
   },
+  "select": {
+    "select-base": {
+      "choose-label": "",
+      "no-options-found-label": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "分享"
@@ -645,6 +654,19 @@
     "zone": {
       "select-aria-label": "时区选择器",
       "select-search-input": "输入以搜索(国家、城市、缩写)"
+    }
+  },
+  "types": {
+    "dashboard-acl-targets": {
+      "team-label": "",
+      "user-label": ""
+    },
+    "dashboard-permissions": {
+      "admin-label": ""
+    },
+    "member-label": "",
+    "team-permissions": {
+      "admin-label": ""
     }
   },
   "user-orgs": {

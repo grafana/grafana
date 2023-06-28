@@ -2,7 +2,10 @@
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "access-control": {
     "add-permission": {
-      "add-permission-for": ""
+      "add-permission-for": "",
+      "role-label": "",
+      "team-label": "",
+      "user-label": ""
     },
     "add-permissions": {
       "save": ""
@@ -491,6 +494,12 @@
       "text": ""
     }
   },
+  "select": {
+    "select-base": {
+      "choose-label": "",
+      "no-options-found-label": ""
+    }
+  },
   "share-modal": {
     "dashboard": {
       "title": "Compartir"
@@ -645,6 +654,19 @@
     "zone": {
       "select-aria-label": "Selector de huso horario",
       "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
+    }
+  },
+  "types": {
+    "dashboard-acl-targets": {
+      "team-label": "",
+      "user-label": ""
+    },
+    "dashboard-permissions": {
+      "admin-label": ""
+    },
+    "member-label": "",
+    "team-permissions": {
+      "admin-label": ""
     }
   },
   "user-orgs": {
