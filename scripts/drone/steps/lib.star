@@ -1095,7 +1095,7 @@ def fetch_images_step(edition):
         "volumes": [{"name": "docker", "path": "/var/run/docker.sock"}],
     }
 
-def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
+def publish_images_step(edition, ver_mode, docker_repo, trigger = None):
     """Generates a step for publishing public Docker images with grabpl.
 
     Args:
@@ -1103,7 +1103,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         It also controls which publishing implementation is used.
       ver_mode: controls whether the image needs to be built or retrieved from a previous build.
         If ver_mode == 'release', the previously built image is fetched instead of being built again.
-      mode: uses to control the publishing of security images when mode == 'security'.
       docker_repo: the Docker image name.
         It is combined with the 'grafana/' library prefix.
       trigger: a Drone trigger for the pipeline.
@@ -1114,10 +1113,6 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     """
     name = docker_repo
     docker_repo = "grafana/{}".format(docker_repo)
-    if mode == "security":
-        mode = "--{} ".format(mode)
-    else:
-        mode = ""
 
     environment = {
         "GCP_KEY": from_secret("gcp_key"),
@@ -1128,8 +1123,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
-    cmd = "./bin/grabpl artifacts docker publish {}--dockerhub-repo {}".format(
-        mode,
+    cmd = "./bin/grabpl artifacts docker publish --dockerhub-repo {}".format(
         docker_repo,
     )
 
@@ -1609,21 +1603,6 @@ def trigger_test_release():
             ],
             "branch": "main",
         },
-    }
-
-def artifacts_page_step():
-    return {
-        "name": "artifacts-page",
-        "image": images["build_image"],
-        "depends_on": [
-            "compile-build-cmd",
-        ],
-        "environment": {
-            "GCP_KEY": from_secret("gcp_key"),
-        },
-        "commands": [
-            "./bin/build artifacts-page",
-        ],
     }
 
 def end_to_end_tests_deps():
