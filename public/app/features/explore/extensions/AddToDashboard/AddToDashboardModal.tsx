@@ -4,7 +4,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { SelectableValue } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ExploreId, AccessControlAction } from 'app/types';
+import { AccessControlAction } from 'app/types';
 
 import { AddToDashboardBody } from './AddToDashboardBody';
 
@@ -29,7 +29,7 @@ type FormDTO = SaveToNewDashboardDTO | SaveToExistingDashboard;
 
 interface Props {
   onClose: () => void;
-  exploreId: ExploreId;
+  exploreId: string;
   excludeModal?: boolean;
 }
 
