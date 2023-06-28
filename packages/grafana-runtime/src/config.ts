@@ -194,9 +194,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    if (this.buildInfo.env === 'development') {
-      overrideFeatureTogglesFromUrl(this);
-    }
+    overrideFeatureTogglesFromUrl(this);
 
     if (this.featureToggles.disableAngular) {
       this.angularSupportEnabled = false;
