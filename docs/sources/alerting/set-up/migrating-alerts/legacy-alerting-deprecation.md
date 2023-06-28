@@ -1,5 +1,7 @@
 ---
 title: Legacy alerting deprecation
+aliases:
+  - alerting/legacy-alerting-deprecation/
 description: Legacy alerting deprecation notice
 weight: 109
 keywords:
