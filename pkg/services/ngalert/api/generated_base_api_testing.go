@@ -7,6 +7,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -29,7 +30,7 @@ func (f *TestingApiHandler) BacktestConfig(ctx *contextmodel.ReqContext) respons
 	// Parse Request Body
 	conf := apimodels.BacktestConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleBacktestConfig(ctx, conf)
 }
@@ -37,7 +38,7 @@ func (f *TestingApiHandler) RouteEvalQueries(ctx *contextmodel.ReqContext) respo
 	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRouteEvalQueries(ctx, conf)
 }
@@ -47,7 +48,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *contextmodel.ReqContext) re
 	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
@@ -55,7 +56,7 @@ func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqCont
 	// Parse Request Body
 	conf := apimodels.PostableExtendedRuleNodeExtended{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRouteTestRuleGrafanaConfig(ctx, conf)
 }

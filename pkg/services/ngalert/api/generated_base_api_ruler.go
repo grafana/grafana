@@ -7,6 +7,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -95,7 +96,7 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqC
 	// Parse Request Body
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
 }
@@ -106,7 +107,7 @@ func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext)
 	// Parse Request Body
 	conf := apimodels.PostableRuleGroupConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRoutePostNameRulesConfig(ctx, conf, datasourceUIDParam, namespaceParam)
 }

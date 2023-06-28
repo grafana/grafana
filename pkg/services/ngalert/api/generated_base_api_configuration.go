@@ -7,6 +7,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -42,7 +43,7 @@ func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *contextmodel.ReqCo
 	// Parse Request Body
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, fmt.Sprintf("bad request data: %s", err.Error()), err)
 	}
 	return f.handleRoutePostNGalertConfig(ctx, conf)
 }
