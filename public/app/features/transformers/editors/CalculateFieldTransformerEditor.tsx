@@ -27,8 +27,6 @@ import {
 } from '@grafana/data/src/transformations/transformers/calculateField';
 import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 
-import { addToField } from '../img';
-
 interface CalculateFieldTransformerEditorProps extends TransformerUIProps<CalculateFieldTransformerOptions> {}
 
 interface CalculateFieldTransformerEditorState {
@@ -388,5 +386,4 @@ export const calculateFieldTransformRegistryItem: TransformerRegistryItem<Calcul
   name: 'Add field from calculation',
   description: 'Use the row values to calculate a new field',
   categories: new Set([TransformerCategory.CalculateNewFields]),
-  image: addToField,
 };

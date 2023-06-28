@@ -9,7 +9,6 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 
-import { createHeatmap } from '../img';
 import { getDefaultOptions, getTransformerOptionPane } from '../spatial/optionsHelper';
 
 import { addHeatmapCalculationOptions } from './editor/helper';
@@ -51,5 +50,4 @@ export const heatmapTransformRegistryItem: TransformerRegistryItem<HeatmapTransf
   description: heatmapTransformer.description,
   state: PluginState.alpha,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  image: createHeatmap,
 };

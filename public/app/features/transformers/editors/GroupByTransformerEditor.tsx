@@ -17,7 +17,6 @@ import {
 } from '@grafana/data/src/transformations/transformers/groupBy';
 import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
-import { groupBy } from '../img';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -152,5 +151,4 @@ export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransf
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
-  image: groupBy,
 };

@@ -10,8 +10,6 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
 
-import { prepareTimeSeries } from '../img';
-
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
 const wideInfo = {
@@ -128,5 +126,4 @@ export const prepareTimeseriesTransformerRegistryItem: TransformerRegistryItem<P
   many-frame timeseries format.
   `,
   categories: new Set([TransformerCategory.Reformat]),
-  image: prepareTimeSeries,
 };

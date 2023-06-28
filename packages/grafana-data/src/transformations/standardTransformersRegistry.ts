@@ -33,11 +33,6 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
    * Set of categories associated with the transformer
    */
   categories?: Set<TransformerCategory>;
-
-  /**
-   * Image path for the transformer
-   */
-  image?: string;
 }
 
 export enum TransformerCategory {

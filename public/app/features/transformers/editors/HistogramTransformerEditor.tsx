@@ -14,8 +14,6 @@ import {
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
-import { histogram } from '../img';
-
 export const HistogramTransformerEditor = ({
   input,
   options,
@@ -90,5 +88,4 @@ export const histogramTransformRegistryItem: TransformerRegistryItem<HistogramTr
   name: standardTransformers.histogramTransformer.name,
   description: standardTransformers.histogramTransformer.description,
   categories: new Set([TransformerCategory.CreateNewVisualization]),
-  image: histogram,
 };
