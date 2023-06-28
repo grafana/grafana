@@ -40,8 +40,8 @@ export type Props = {
 };
 
 export const Permissions = ({
-  title = t('access-control.permissions.permissions', 'Permissions'),
-  buttonLabel = t('access-control.permissions.add-a.permission', 'Add a permission'),
+  title = t('access-control.permissions.title', 'Permissions'),
+  buttonLabel = t('access-control.permissions.add-label', 'Add a permission'),
   emptyLabel = t('access-control.permissions.no-permissions', 'There are no permissions'),
   resource,
   resourceId,
@@ -142,7 +142,7 @@ export const Permissions = ({
         <>
           {config.featureToggles.nestedFolders && resource === 'folders' && (
             <>
-              <Trans i18nKey="access-control.permissions.this-will-change-permissions-for-this-folder-and-all-its-descendants">
+              <Trans i18nKey="access-control.permissions.permissions-change-warning">
                 This will change permissions for this folder and all its descendants. In total, this will affect:
               </Trans>
               <DescendantCount

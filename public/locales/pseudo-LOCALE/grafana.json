@@ -2,26 +2,24 @@
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
   "access-control": {
     "add-permission": {
-      "add-permission-for": "Åđđ pęřmįşşįőŉ ƒőř",
       "role-label": "Ŗőľę",
       "team-label": "Ŧęäm",
+      "title": "Åđđ pęřmįşşįőŉ ƒőř",
       "user-label": "Ůşęř"
     },
     "add-permissions": {
       "save": "Ŝävę"
     },
     "permission-list": {
-      "permission": "<0>Pęřmįşşįőŉ</0>"
+      "permission": "Pęřmįşşįőŉ"
     },
     "permissions": {
-      "add-a": {
-        "permission": "Åđđ ä pęřmįşşįőŉ"
-      },
+      "add-label": "Åđđ ä pęřmįşşįőŉ",
       "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
-      "permissions": "Pęřmįşşįőŉş",
+      "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
       "role": "Ŗőľę",
       "team": "Ŧęäm",
-      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
+      "title": "Pęřmįşşįőŉş",
       "user": "Ůşęř"
     }
   },
@@ -167,6 +165,10 @@
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
       "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
+    },
+    "select": {
+      "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
+      "placeholder": "Cĥőőşę"
     }
   },
   "library-panel": {
@@ -493,12 +495,6 @@
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
-    }
-  },
-  "select": {
-    "select-base": {
-      "choose-label": "Cĥőőşę",
-      "no-options-found-label": "Ńő őpŧįőŉş ƒőūŉđ"
     }
   },
   "share-modal": {

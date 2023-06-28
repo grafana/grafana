@@ -19,7 +19,7 @@ export interface Props {
 }
 
 export const AddPermission = ({
-  title = t('access-control.add-permission.add-permission-for', 'Add permission for'),
+  title = t('access-control.add-permission.title', 'Add permission for'),
   permissions,
   assignments,
   onAdd,

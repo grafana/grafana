@@ -44,9 +44,11 @@ export const PermissionList = ({ title, items, compareKey, permissionLevels, can
             <th style={{ width: '1%' }} />
             <th>{title}</th>
             <th style={{ width: '1%' }} />
-            <Trans i18nKey="access-control.permission-list.permission">
-              <th style={{ width: '40%' }}>Permission</th>
-            </Trans>
+
+            <th style={{ width: '40%' }}>
+              <Trans i18nKey="access-control.permission-list.permission">Permission</Trans>
+            </th>
+
             <th style={{ width: '1%' }} />
             <th style={{ width: '1%' }} />
           </tr>

@@ -1,5 +1,3 @@
-import { t } from 'app/core/internationalization';
-
 export enum TeamPermissionLevel {
   Admin = 4,
   Editor = 2,

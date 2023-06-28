@@ -2,26 +2,24 @@
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
   "access-control": {
     "add-permission": {
-      "add-permission-for": "Add permission for",
       "role-label": "Role",
       "team-label": "Team",
+      "title": "Add permission for",
       "user-label": "User"
     },
     "add-permissions": {
       "save": "Save"
     },
     "permission-list": {
-      "permission": "<0>Permission</0>"
+      "permission": "Permission"
     },
     "permissions": {
-      "add-a": {
-        "permission": "Add a permission"
-      },
+      "add-label": "Add a permission",
       "no-permissions": "There are no permissions",
-      "permissions": "Permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
       "role": "Role",
       "team": "Team",
-      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "title": "Permissions",
       "user": "User"
     }
   },
@@ -167,6 +165,10 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
     }
   },
   "library-panel": {
@@ -493,12 +495,6 @@
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query."
-    }
-  },
-  "select": {
-    "select-base": {
-      "choose-label": "Choose",
-      "no-options-found-label": "No options found"
     }
   },
   "share-modal": {

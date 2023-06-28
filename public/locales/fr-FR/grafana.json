@@ -2,9 +2,9 @@
   "_comment": "",
   "access-control": {
     "add-permission": {
-      "add-permission-for": "",
       "role-label": "",
       "team-label": "",
+      "title": "",
       "user-label": ""
     },
     "add-permissions": {
@@ -14,14 +14,12 @@
       "permission": ""
     },
     "permissions": {
-      "add-a": {
-        "permission": ""
-      },
+      "add-label": "",
       "no-permissions": "",
-      "permissions": "",
+      "permissions-change-warning": "",
       "role": "",
       "team": "",
-      "this-will-change-permissions-for-this-folder-and-all-its-descendants": "",
+      "title": "",
       "user": ""
     }
   },
@@ -167,6 +165,10 @@
       "error": "",
       "loading": "",
       "no-options": ""
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -493,12 +495,6 @@
     "no-results": {
       "clear": "",
       "text": ""
-    }
-  },
-  "select": {
-    "select-base": {
-      "choose-label": "",
-      "no-options-found-label": ""
     }
   },
   "share-modal": {
