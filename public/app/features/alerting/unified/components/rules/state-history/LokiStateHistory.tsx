@@ -83,7 +83,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const emptyStateMessage =
     totalRecordsCount > 0
       ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
-      : 'No state transitions have occurred in the last week';
+      : 'No state transitions have occurred in the last 7 days';
 
   return (
     <div className={styles.fullSize}>
@@ -199,7 +199,7 @@ const SearchFieldInput = React.forwardRef<HTMLInputElement, SearchFieldInputProp
 SearchFieldInput.displayName = 'SearchFieldInput';
 
 function getDefaultTimeRange(): TimeRange {
-  const fromDateTime = dateTime().subtract(168, 'h');
+  const fromDateTime = dateTime().subtract(7, 'd');
   const toDateTime = dateTime();
   return {
     from: fromDateTime,
