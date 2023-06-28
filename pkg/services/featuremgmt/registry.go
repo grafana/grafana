@@ -214,16 +214,17 @@ var (
 			Owner:       awsPluginsSquad,
 		},
 		{
-			Name:         "redshiftAsyncQueryDataSupport",
-			Description:  "Enable async query data support for Redshift",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Name:        "redshiftAsyncQueryDataSupport",
+			Description: "Enable async query data support for Redshift",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Athena",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},

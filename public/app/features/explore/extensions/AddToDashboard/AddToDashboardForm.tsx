@@ -1,5 +1,5 @@
 import { partial } from 'lodash';
-import React, { useEffect, useState } from 'react';
+import React, { type ReactElement, useEffect, useState } from 'react';
 import { DeepMap, FieldError, useForm } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
@@ -10,7 +10,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { AccessControlAction, useSelector } from 'app/types';
 
-import { getExploreItemSelector } from '../state/selectors';
+import { getExploreItemSelector } from '../../state/selectors';
 
 import { setDashboardInLocalStorage, AddToDashboardError } from './addToDashboard';
 
@@ -60,7 +60,8 @@ interface Props {
   exploreId: string;
 }
 
-export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
+export function AddToDashboardForm(props: Props): ReactElement {
+  const { exploreId, onClose } = props;
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
   const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
@@ -90,8 +91,6 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   }
 
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0].value;
-
-  const modalTitle = `Add panel to ${saveTargets.length > 1 ? 'dashboard' : saveTargets[0].label!.toLowerCase()}`;
 
   const onSubmit = async (openInNewTab: boolean, data: FormDTO) => {
     setSubmissionError(undefined);
@@ -148,71 +147,69 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   }, []);
 
   return (
-    <Modal title={modalTitle} onDismiss={onClose} isOpen>
-      <form>
-        {saveTargets.length > 1 && (
-          <InputControl
-            control={control}
-            render={({ field: { ref, ...field } }) => (
-              <Field label="Target dashboard" description="Choose where to add the panel.">
-                <RadioButtonGroup options={saveTargets} {...field} id="e2d-save-target" />
-              </Field>
-            )}
-            name="saveTarget"
-          />
-        )}
+    <form>
+      {saveTargets.length > 1 && (
+        <InputControl
+          control={control}
+          render={({ field: { ref, ...field } }) => (
+            <Field label="Target dashboard" description="Choose where to add the panel.">
+              <RadioButtonGroup options={saveTargets} {...field} id="e2d-save-target" />
+            </Field>
+          )}
+          name="saveTarget"
+        />
+      )}
 
-        {saveTarget === SaveTarget.ExistingDashboard &&
-          (() => {
-            assertIsSaveToExistingDashboardError(errors);
-            return (
-              <InputControl
-                render={({ field: { ref, value, onChange, ...field } }) => (
-                  <Field
-                    label="Dashboard"
-                    description="Select in which dashboard the panel will be created."
-                    error={errors.dashboardUid?.message}
-                    invalid={!!errors.dashboardUid}
-                  >
-                    <DashboardPicker
-                      {...field}
-                      inputId="e2d-dashboard-picker"
-                      defaultOptions
-                      onChange={(d) => onChange(d?.uid)}
-                    />
-                  </Field>
-                )}
-                control={control}
-                name="dashboardUid"
-                shouldUnregister
-                rules={{ required: { value: true, message: 'This field is required.' } }}
-              />
-            );
-          })()}
+      {saveTarget === SaveTarget.ExistingDashboard &&
+        (() => {
+          assertIsSaveToExistingDashboardError(errors);
+          return (
+            <InputControl
+              render={({ field: { ref, value, onChange, ...field } }) => (
+                <Field
+                  label="Dashboard"
+                  description="Select in which dashboard the panel will be created."
+                  error={errors.dashboardUid?.message}
+                  invalid={!!errors.dashboardUid}
+                >
+                  <DashboardPicker
+                    {...field}
+                    inputId="e2d-dashboard-picker"
+                    defaultOptions
+                    onChange={(d) => onChange(d?.uid)}
+                  />
+                </Field>
+              )}
+              control={control}
+              name="dashboardUid"
+              shouldUnregister
+              rules={{ required: { value: true, message: 'This field is required.' } }}
+            />
+          );
+        })()}
 
-        {submissionError && (
-          <Alert severity="error" title="Error adding the panel">
-            {submissionError.message}
-          </Alert>
-        )}
+      {submissionError && (
+        <Alert severity="error" title="Error adding the panel">
+          {submissionError.message}
+        </Alert>
+      )}
 
-        <Modal.ButtonRow>
-          <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="secondary"
-            onClick={handleSubmit(partial(onSubmit, true))}
-            icon="external-link-alt"
-          >
-            Open in new tab
-          </Button>
-          <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
-            Open dashboard
-          </Button>
-        </Modal.ButtonRow>
-      </form>
-    </Modal>
+      <Modal.ButtonRow>
+        <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="secondary"
+          onClick={handleSubmit(partial(onSubmit, true))}
+          icon="external-link-alt"
+        >
+          Open in new tab
+        </Button>
+        <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
+          Open dashboard
+        </Button>
+      </Modal.ButtonRow>
+    </form>
   );
-};
+}
