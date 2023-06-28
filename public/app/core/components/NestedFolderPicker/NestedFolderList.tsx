@@ -4,6 +4,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -29,12 +30,12 @@ export function NestedFolderList({ items, selectedFolder, onFolderClick, onSelec
   );
 
   return (
-    <>
-      <p className={styles.headerRow}>Name</p>
+    <div className={styles.table}>
+      <div className={styles.headerRow}>Name</div>
       <List height={LIST_HEIGHT} width="100%" itemData={virtualData} itemSize={ROW_HEIGHT} itemCount={items.length}>
         {Row}
       </List>
-    </>
+    </div>
   );
 }
 
@@ -71,7 +72,11 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   );
 
   if (item.kind !== 'folder') {
-    return process.env.NODE_ENV !== 'production' ? <span>Non-folder item</span> : null;
+    return process.env.NODE_ENV !== 'production' ? (
+      <span style={virtualStyles} className={styles.row}>
+        Non-folder item {item.uid}
+      </span>
+    ) : null;
   }
 
   return (
@@ -96,7 +101,10 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         />
 
         <label className={styles.label} htmlFor={id}>
-          <span>{item.title}</span>
+          {/* TODO: text is not truncated properly, it still overflows the container */}
+          <Text as="span" truncate>
+            {item.title}
+          </Text>
         </label>
       </div>
     </div>
@@ -114,6 +122,11 @@ const getStyles = (theme: GrafanaTheme2) => {
   });
 
   return {
+    table: css({
+      border: `solid 1px ${theme.components.input.borderColor}`,
+      background: theme.components.input.background,
+    }),
+
     headerRow: css({
       backgroundColor: theme.colors.background.secondary,
       height: ROW_HEIGHT,
@@ -126,7 +139,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       position: 'relative',
       alignItems: 'center',
-      borderBottom: `solid 1px ${theme.colors.border.weak}`,
+      borderTop: `solid 1px ${theme.components.input.borderColor}`,
     }),
 
     radio: css({
@@ -157,6 +170,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     rowBody,
 
     label: css({
+      lineHeight: ROW_HEIGHT + 'px',
+      flexGrow: 1,
       '&:hover': {
         textDecoration: 'underline',
         cursor: 'pointer',
