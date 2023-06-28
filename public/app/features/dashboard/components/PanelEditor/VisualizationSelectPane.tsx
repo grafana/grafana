@@ -31,7 +31,8 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Add support to show widgets in the visualization picker
-  const isWidgetEnabled = (plugin.meta.skipDataQuery && config.featureToggles.vizAndWidgetSplit) ?? false;
+  const isWidget = plugin.meta.skipDataQuery ?? false;
+  const isWidgetEnabled = (isWidget && config.featureToggles.vizAndWidgetSplit) ?? false;
 
   const tabKey = isWidgetEnabled ? LS_WIDGET_SELECT_TAB_KEY : LS_VISUALIZATION_SELECT_TAB_KEY;
   const defaultTab = isWidgetEnabled ? VisualizationSelectPaneTab.Widgets : VisualizationSelectPaneTab.Visualizations;
@@ -144,7 +145,12 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
               />
             )}
             {listMode === VisualizationSelectPaneTab.LibraryPanels && (
-              <PanelLibraryOptionsGroup searchQuery={searchQuery} panel={panel} key="Panel Library" />
+              <PanelLibraryOptionsGroup
+                searchQuery={searchQuery}
+                panel={panel}
+                key="Panel Library"
+                isWidget={isWidget}
+              />
             )}
           </div>
         </CustomScrollbar>
