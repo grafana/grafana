@@ -270,10 +270,7 @@ func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
 	if datasource.Type == "" {
 		return false, fmt.Errorf("missing type field '%s'", string(ds))
 	}
-	if datasource.Type != "prometheus" {
-		return false, nil
-	}
-	return true, nil
+	return datasource.Type == "prometheus", nil
 }
 
 type alertQuery struct {
