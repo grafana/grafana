@@ -1,5 +1,19 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "Delete",
+      "move-button": "Move"
+    },
+    "dashboards-tree": {
+      "name-column": "Name",
+      "tags-column": "Tags"
+    },
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -141,6 +155,12 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "Invalid username or password",
+      "unknown": "Unknown error occurred"
     }
   },
   "nav": {
@@ -384,6 +404,10 @@
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Turn on live streaming",
       "label": "Live"
@@ -432,6 +456,12 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
     }
   },
   "share-modal": {

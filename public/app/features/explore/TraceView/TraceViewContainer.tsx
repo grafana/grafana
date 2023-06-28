@@ -5,7 +5,6 @@ import { DataFrame, SplitOpen, PanelData, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { StoreState, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
 import TracePageSearchBar from './components/TracePageHeader/TracePageSearchBar';
@@ -15,7 +14,7 @@ import { transformDataFrames } from './utils/transform';
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
-  exploreId: ExploreId;
+  exploreId: string;
   scrollElement?: Element;
   queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;

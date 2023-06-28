@@ -6,7 +6,7 @@ import { locationService } from '@grafana/runtime/src';
 import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
 
 import { useDispatch } from '../../../types';
-import { RuleIdentifier } from '../../../types/unified-alerting';
+import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
@@ -30,17 +30,8 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
   }
 
   if (rule) {
-    const ruleClone = cloneDeep(rule);
-    changeRuleName(
-      ruleClone.rule,
-      generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
-    );
+    const ruleClone = cloneRuleDefinition(rule);
     const formPrefill = rulerRuleToFormValues(ruleClone);
-
-    // Provisioned alert rules have provisioned alert group which cannot be used in UI
-    if (isGrafanaRulerRule(rule.rule) && Boolean(rule.rule.grafana_alert.provenance)) {
-      formPrefill.group = '';
-    }
 
     return <AlertRuleForm prefill={formPrefill} />;
   }
@@ -73,4 +64,23 @@ function changeRuleName(rule: RulerRuleDTO, newName: string) {
   if (isRecordingRulerRule(rule)) {
     rule.record = newName;
   }
+}
+
+export function cloneRuleDefinition(rule: RuleWithLocation<RulerRuleDTO>) {
+  const ruleClone = cloneDeep(rule);
+  changeRuleName(
+    ruleClone.rule,
+    generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
+  );
+
+  if (isGrafanaRulerRule(ruleClone.rule)) {
+    ruleClone.rule.grafana_alert.uid = '';
+
+    // Provisioned alert rules have provisioned alert group which cannot be used in UI
+    if (Boolean(ruleClone.rule.grafana_alert.provenance)) {
+      ruleClone.group = { name: '', rules: ruleClone.group.rules };
+    }
+  }
+
+  return ruleClone;
 }

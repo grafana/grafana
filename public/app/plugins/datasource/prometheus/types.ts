@@ -192,6 +192,7 @@ export interface PromVariableQuery extends DataQuery {
   varQuery?: string;
   seriesQuery?: string;
   labelFilters?: QueryBuilderLabelFilter[];
+  match?: string;
 }
 
 export type StandardPromVariableQuery = {
