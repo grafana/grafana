@@ -52,7 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import { addFilterToQuery, escapeFilter, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -946,8 +946,7 @@ export class ElasticDatasource
        * Keys and values in ad hoc filters may contain characters such as
        * colons, which needs to be escaped.
        */
-      key = this.escapeAdHocFilter(key);
-      value = this.escapeAdHocFilter(value);
+      key = escapeFilter(key);
       switch (operator) {
         case '=':
           return `${key}:"${value}"`;
@@ -967,10 +966,6 @@ export class ElasticDatasource
 
     const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
     return finalQuery;
-  }
-
-  private escapeAdHocFilter(value: string) {
-    return value.replace(/:/g, '\\:');
   }
 
   // Used when running queries through backend

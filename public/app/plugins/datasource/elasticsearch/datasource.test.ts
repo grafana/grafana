@@ -1314,13 +1314,13 @@ describe('addAdHocFilters', () => {
       expect(query).toBe('test:"test1"');
     });
 
-    it('should escape characters in key and values', () => {
+    it('should escape characters in filter keys', () => {
       jest
         .mocked(templateSrvMock.getAdhocFilters)
         .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field:value', condition: '' }]);
 
       const query = ds.addAdHocFilters('');
-      expect(query).toBe('field\\:name:"field\\:value"');
+      expect(query).toBe('field\\:name:"field:value"');
     });
   });
 
