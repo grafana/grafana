@@ -216,25 +216,6 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 	// to be unintentional. In addition, this would require more robust operator precedence in classic conditions.
 	// Given these reasons, we opt to convert them to range queries and log a warning.
 
-	// Check if the query is for Prometheus.
-	ds, ok := queryData["datasource"]
-	if !ok {
-		return queryData
-	}
-	var datasource struct {
-		Type string `json:"type"`
-	}
-	if err := json.Unmarshal(ds, &datasource); err != nil {
-		// Nothing to do here, we can't parse the datasource.
-		l.Info("Failed to parse datasource", "datasource", string(ds), "err", err)
-		return queryData
-	}
-	if datasource.Type != "prometheus" {
-		// Only apply this fix to Prometheus.
-		return queryData
-	}
-
-	// Convert 'Both' type queries to range queries.
 	var instant bool
 	if instantRaw, ok := queryData["instant"]; ok {
 		if err := json.Unmarshal(instantRaw, &instant); err != nil {
@@ -252,12 +233,47 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 		}
 	}
 
-	if instant && rng {
-		l.Warn("Prometheus 'Both' type queries are not supported in unified alerting. Converting to range query.")
-		queryData["instant"] = []byte("false")
+	if !instant || !rng {
+		// Only apply this fix to 'Both' type queries.
+		return queryData
 	}
 
+	isPrometheus, err := isPrometheusQuery(queryData)
+	if err != nil {
+		l.Info("Failed to determine datasource type on alert rule that resembles a Prometheus 'Both' type query. Skipping conversion to range query.", "err", err)
+		return queryData
+	}
+	if !isPrometheus {
+		// Only apply this fix to Prometheus.
+		return queryData
+	}
+
+	// Convert 'Both' type queries to `Range` queries by disabling the `Instant` portion.
+	l.Warn("Prometheus 'Both' type queries are not supported in unified alerting. Converting to range query.")
+	queryData["instant"] = []byte("false")
+
 	return queryData
+}
+
+// isPrometheusQuery checks if the query is for Prometheus.
+func isPrometheusQuery(queryData map[string]json.RawMessage) (bool, error) {
+	ds, ok := queryData["datasource"]
+	if !ok {
+		return false, fmt.Errorf("missing datasource field")
+	}
+	var datasource struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(ds, &datasource); err != nil {
+		return false, fmt.Errorf("failed to parse datasource '%s': %w", string(ds), err)
+	}
+	if datasource.Type == "" {
+		return false, fmt.Errorf("missing type field '%s'", string(ds))
+	}
+	if datasource.Type != "prometheus" {
+		return false, nil
+	}
+	return true, nil
 }
 
 type alertQuery struct {
