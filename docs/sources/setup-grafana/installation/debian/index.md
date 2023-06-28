@@ -105,7 +105,7 @@ To uninstall Grafana, run any of the following commands in a terminal window:
    sudo apt-get remove grafana
    ```
 
-   Optionally, you can run:
+   Optional: Remove the Grafana repository
 
    ```bash
    sudo rm -i /etc/apt/sources.list.d/grafana.list
