@@ -92,6 +92,28 @@ Complete the following steps to install Grafana using DEB or the standalone bina
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) into your command line and run.
 
+## Uninstall on Debian or Ubuntu
+
+To uninstall Grafana on Debian or Ubuntu, run the following commands in a terminal window.
+
+1. Stop the systemd service for Grafana:
+
+   ```shell
+   sudo systemctl stop grafana-server
+   ```
+
+1. Uninstall Grafana:
+
+   ```shell
+   sudo apt remove grafana-server
+   ```
+
+1. (Optional) Remove the Grafana repository:
+
+   ```shell
+   sudo rm -i /etc/apt/sources.list.d/grafana.list
+   ```
+
 ## Next steps
 
 - [Start the Grafana server]({{< relref "../../start-restart-grafana" >}})
