@@ -216,15 +216,14 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			var result []eval.Result
 			evaluator.EXPECT().Evaluate(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
 
-			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
-				Expr: "",
-				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
-					Condition: data1.RefID,
-					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
-					Now:       currentTime,
-				},
+			rule := validRule()
+			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1})
+			response := srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
+				Rule:           rule,
+				NamespaceUID:   "test-folder",
+				NamespaceTitle: "test-folder",
 			})
 
 			require.Equal(t, http.StatusUnauthorized, response.Status())
@@ -232,18 +231,15 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			rc.IsSignedIn = true
 
-			response = srv.RouteTestGrafanaRuleConfig(rc, definitions.TestRulePayload{
-				Expr: "",
-				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
-					Condition: data1.RefID,
-					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
-					Now:       currentTime,
-				},
+			response = srv.RouteTestGrafanaRuleConfig(rc, definitions.PostableExtendedRuleNodeExtended{
+				Rule:           rule,
+				NamespaceUID:   "test-folder",
+				NamespaceTitle: "test-folder",
 			})
 
 			require.Equal(t, http.StatusOK, response.Status())
 
-			evaluator.AssertCalled(t, "Evaluate", mock.Anything, currentTime)
+			evaluator.AssertCalled(t, "Evaluate", mock.Anything, mock.Anything)
 		})
 	})
 }
@@ -351,7 +347,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
