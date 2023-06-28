@@ -469,3 +469,14 @@ export function relativeToTimeRange(relativeTimeRange: RelativeTimeRange, now: D
     raw: { from, to },
   };
 }
+
+/**
+ * Add 999 milliseconds to dateTime
+ */
+export const adjustDateTimeToMaxMillis = (datetime: DateTime): string => {
+  const millis = datetime.valueOf().toString().slice(-3);
+  if (millis === '000') {
+    return (datetime.valueOf() + 999).valueOf().toString();
+  }
+  return datetime.valueOf().toString();
+};

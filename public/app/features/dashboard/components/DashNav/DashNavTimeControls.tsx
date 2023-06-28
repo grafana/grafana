@@ -54,6 +54,11 @@ export class DashNavTimeControls extends Component<Props> {
     const hasDelay = panel.nowDelay && timeRange.raw.to === 'now';
 
     const adjustedFrom = dateMath.isMathString(timeRange.raw.from) ? timeRange.raw.from : timeRange.from;
+
+    if (!dateMath.isMathString(timeRange.raw.to)) {
+      timeRange.to.add(999, 'milliseconds');
+    }
+
     const adjustedTo = dateMath.isMathString(timeRange.raw.to) ? timeRange.raw.to : timeRange.to;
     const nextRange = {
       from: adjustedFrom,
