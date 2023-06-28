@@ -226,6 +226,7 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 	}
 	if err := json.Unmarshal(ds, &datasource); err != nil {
 		// Nothing to do here, we can't parse the datasource.
+		l.Info("Failed to parse datasource", "datasource", string(ds), "err", err)
 		return queryData
 	}
 	if datasource.Type != "prometheus" {
@@ -238,13 +239,15 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 	if instantRaw, ok := queryData["instant"]; ok {
 		if err := json.Unmarshal(instantRaw, &instant); err != nil {
 			// Nothing to do here, we can't parse the instant field.
+			l.Info("Failed to parse instant", "instant", string(instantRaw), "err", err)
 			return queryData
 		}
 	}
 	var rng bool
 	if rangeRaw, ok := queryData["range"]; ok {
 		if err := json.Unmarshal(rangeRaw, &rng); err != nil {
-			// Nothing to do here, we can't parse the instant field.
+			// Nothing to do here, we can't parse the range field.
+			l.Info("Failed to parse range", "range", string(rangeRaw), "err", err)
 			return queryData
 		}
 	}
