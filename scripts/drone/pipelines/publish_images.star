@@ -75,23 +75,3 @@ def publish_image_pipelines_public():
             environment = {"EDITION": "enterprise"},
         ),
     ]
-
-def publish_image_pipelines_security():
-    mode = "security"
-    trigger = {
-        "event": ["promote"],
-        "target": [mode],
-    }
-    return [
-        pipeline(
-            name = "publish-docker-enterprise-{}".format(mode),
-            trigger = trigger,
-            steps = publish_image_steps(
-                edition = "enterprise",
-                mode = mode,
-                docker_repo = "grafana-enterprise",
-            ),
-            edition = "",
-            environment = {"EDITION": "enterprise"},
-        ),
-    ]

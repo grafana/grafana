@@ -1149,10 +1149,7 @@ def publish_images_step(edition, ver_mode, mode, docker_repo, trigger = None):
     """
     name = docker_repo
     docker_repo = "grafana/{}".format(docker_repo)
-    if mode == "security":
-        mode = "--{} ".format(mode)
-    else:
-        mode = ""
+    mode = ""
 
     environment = {
         "GCP_KEY": from_secret("gcp_key"),

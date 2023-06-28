@@ -557,22 +557,16 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
     return pipelines
 
 def publish_artifacts_step(mode):
-    security = ""
-    if mode == "security":
-        security = "--security "
+
     return {
         "name": "publish-artifacts",
         "image": images["publish_image"],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
-            "ENTERPRISE2_SECURITY_PREFIX": from_secret("enterprise2_security_prefix"),
-            "SECURITY_DEST_BUCKET": from_secret("security_dest_bucket"),
         },
         "commands": [
-            "./bin/build artifacts packages {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
-                security,
-            ),
+            "./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}",
         ],
         "depends_on": ["compile-build-cmd"],
     }
@@ -624,9 +618,8 @@ def publish_artifacts_pipelines(mode):
         compile_build_cmd(),
         publish_artifacts_step(mode),
         publish_static_assets_step(),
+        publish_storybook_step(),
     ]
-    if mode != "security":
-        steps.extend([publish_storybook_step()])
 
     return [
         pipeline(
@@ -709,26 +702,6 @@ def publish_npm_pipelines():
         ),
     ]
 
-def artifacts_page_pipeline():
-    trigger = {
-        "event": ["promote"],
-        "target": "security",
-    }
-    return [
-        pipeline(
-            name = "publish-artifacts-page",
-            trigger = trigger,
-            steps = [
-                download_grabpl_step(),
-                clone_enterprise_step(source = "${DRONE_TAG}"),
-                init_enterprise_step("release"),
-                compile_build_cmd("enterprise"),
-                artifacts_page_step(),
-            ],
-            edition = "enterprise",
-            environment = {"EDITION": "enterprise"},
-        ),
-    ]
 
 def integration_test_pipelines():
     """
