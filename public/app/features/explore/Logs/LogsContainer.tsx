@@ -72,11 +72,15 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
     );
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<DataQueryResponse | []> => {
+  getLogRowContext = async (
+    row: LogRowModel,
+    origRow: LogRowModel,
+    options: LogRowContextOptions
+  ): Promise<DataQueryResponse | []> => {
     const { datasourceInstance, logsQueries } = this.props;
 
     if (hasLogsContextSupport(datasourceInstance)) {
-      const query = this.getQuery(logsQueries, row, datasourceInstance);
+      const query = this.getQuery(logsQueries, origRow, datasourceInstance);
       return datasourceInstance.getLogRowContext(row, options, query);
     }
 
