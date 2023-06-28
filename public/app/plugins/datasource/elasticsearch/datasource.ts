@@ -52,6 +52,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
+import { addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -896,22 +897,38 @@ export class ElasticDatasource
     }
 
     let expression = query.query ?? '';
-    switch (action.type) {
-      case 'ADD_FILTER': {
-        if (expression.length > 0) {
-          expression += ' AND ';
+    if (config.featureToggles.elasticToggleableFilters) {
+      switch (action.type) {
+        case 'ADD_FILTER': {
+          // This gives the user the ability to toggle a filter on and off.
+          expression = queryHasFilter(expression, action.options.key, action.options.value)
+            ? removeFilterFromQuery(expression, action.options.key, action.options.value)
+            : addFilterToQuery(expression, action.options.key, action.options.value);
+          break;
         }
-        expression += `${action.options.key}:"${action.options.value}"`;
-        break;
+        case 'ADD_FILTER_OUT': {
+          // If the opposite filter is present, remove it before adding the new one.
+          if (queryHasFilter(expression, action.options.key, action.options.value)) {
+            expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
+          }
+          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+          break;
+        }
       }
-      case 'ADD_FILTER_OUT': {
-        if (expression.length > 0) {
-          expression += ' AND ';
+    } else {
+      // Legacy behavior
+      switch (action.type) {
+        case 'ADD_FILTER': {
+          expression = addFilterToQuery(expression, action.options.key, action.options.value);
+          break;
         }
-        expression += `-${action.options.key}:"${action.options.value}"`;
-        break;
+        case 'ADD_FILTER_OUT': {
+          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+          break;
+        }
       }
     }
+
     return { ...query, query: expression };
   }
 

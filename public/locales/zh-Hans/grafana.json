@@ -9,6 +9,12 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -404,6 +410,10 @@
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
       "duration-selected": "以当前所选间隔 {{durationAriaLabel}} 选择刷新时间间隔"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "开启直播流",
       "label": "直播"
@@ -562,6 +572,16 @@
       "default-label": "默认"
     },
     "title": "首选项"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "加载中...",

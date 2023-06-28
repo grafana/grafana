@@ -9,6 +9,12 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -404,6 +410,10 @@
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
       "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Live-Streaming einschalten",
       "label": "Live"
@@ -562,6 +572,16 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Wird geladen ...",

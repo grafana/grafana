@@ -16,10 +16,6 @@ export function localeStringComparator(itemA: string, itemB: string) {
   return itemA.localeCompare(itemB);
 }
 
-export function numberSortComparator(itemA: number, itemB: number) {
-  return itemA - itemB;
-}
-
 export function classNameForSortDir(dir: number) {
   return `sorted ${dir === 1 ? 'ascending' : 'descending'}`;
 }

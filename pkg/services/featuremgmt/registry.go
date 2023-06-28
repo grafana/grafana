@@ -260,6 +260,12 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
+			Name:        "nestedFolderPicker",
+			Description: "Enables the still in-development new folder picker to support nested folders",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,
@@ -585,6 +591,20 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "elasticToggleableFilters",
+			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "vizAndWidgetSplit",
+			Description:  "Split panels between vizualizations and widgets",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )
