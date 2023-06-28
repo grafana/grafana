@@ -241,7 +241,7 @@ func getAttributeVal(attr pcommon.Value) interface{} {
 	case pcommon.ValueTypeMap, pcommon.ValueTypeSlice:
 		return attr.AsString()
 	default:
-		return attribute.Value{}
+		return nil
 	}
 }
 
