@@ -94,7 +94,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			// Ensure it doesn't restore on every call, by modifying the detectors
 			// directly and keeping hasDetectors = true
 			svc.detectors = nil
-			newR := svc.ProvideDetectors()
+			newR := svc.ProvideDetectors(context.Background())
 			require.Empty(t, newR) // restore would have filled this with mockGCOMPatterns
 		})
 	})
