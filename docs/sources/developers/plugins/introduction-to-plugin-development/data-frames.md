@@ -17,11 +17,11 @@ Grafana supports a variety of different data sources, each with its own data mod
 
 The data frame structure is a concept that's borrowed from data analysis tools like the [R programming language](https://www.r-project.org) and [Pandas](https://pandas.pydata.org/).
 
-> Data frames are available in Grafana 7.0+, and replaced the Time series and Table structures with a more generic data structure that can support a wider range of data types.
+> **Note:** Data frames are available in Grafana 7.0+, and replaced the Time series and Table structures with a more generic data structure that can support a wider range of data types.
 
 This document gives an overview of the data frame structure, and of how data is handled within Grafana.
 
-### Data frame fields
+## Data frame fields
 
 A data frame is a collection of _fields_, where each field corresponds to a column. Each field, in turn, consists of a collection of values and metadata, such as the data type of those values.
 
@@ -85,7 +85,7 @@ Each field has three values, and each value in a field must share the same type.
 
 One restriction on data frames is that all fields in the frame must be of the same length to be a valid data frame.
 
-### Field configurations
+## Field configurations
 
 Each field in a data frame contains optional information about the values in the field, such as units, scaling, and so on.
 
