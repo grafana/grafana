@@ -28,6 +28,7 @@ import { LogRows } from '../LogRows';
 
 import { LoadingIndicator } from './LoadingIndicator';
 import { LogContextButtons } from './LogContextButtons';
+import { Place } from './types';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -125,8 +126,6 @@ interface LogRowContextModalProps {
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
 }
-
-type Place = 'above' | 'below';
 
 type Section = {
   loadingState: LoadingState;
