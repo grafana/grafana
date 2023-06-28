@@ -694,7 +694,7 @@ export function getFieldConfig(
     links: [
       makePromLink(
         'Request rate',
-        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[\\$__rate_interval]))`,
+        `sum by (client, server)(rate(${totalsMetric}{${sourceField}server="\${${targetField}}"}[$__rate_interval]))`,
         datasourceUid,
         false
       ),
