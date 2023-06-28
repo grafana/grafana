@@ -957,6 +957,8 @@ def grafana_server_step(edition, port = 3001):
     environment = {"PORT": port, "ARCH": "linux-amd64"}
     if edition == "enterprise":
         environment["RUNDIR"] = "scripts/grafana-server/tmp-grafana-enterprise"
+        environment["GF_PATHS_PLUGINS"] = "e2e/custom-plugins/"
+
 
     return {
         "name": "grafana-server",
@@ -986,7 +988,6 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
         "environment": {
             "HOST": "grafana-server",
-            "GF_PATHS_PLUGINS"="../../../e2e/custom-plugins/"
         },
         "commands": [
             "apt-get install -y netcat",

@@ -3031,6 +3031,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.7.4
@@ -5531,6 +5532,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.7.4
@@ -7189,6 +7191,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5b576f21a7afb08759ad4ac7b74a54afcfbf9b5eac0e5894857ce4cdd0feed50
+hmac: 216429c0d86821ad88352baa28f6c6315db72484be55e9183f19c60184bf5132
 
 ...
