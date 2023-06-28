@@ -84,7 +84,7 @@ export const stateSlice = createSlice({
 });
 
 /**
- * Initial state for the Metrics Modal
+ * Initial state for the metrics explorer
  * @returns
  */
 export function initialState(query?: PromVisualQuery): MetricsModalState {
@@ -113,7 +113,7 @@ export function initialState(query?: PromVisualQuery): MetricsModalState {
 }
 
 /**
- * The Metrics Modal state object
+ * The metrics explorer state object
  */
 export interface MetricsModalState {
   /** Used for the loading spinner */
