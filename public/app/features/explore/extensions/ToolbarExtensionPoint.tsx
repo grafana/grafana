@@ -6,7 +6,7 @@ import { DataQuery, TimeZone } from '@grafana/schema';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
-import { AccessControlAction, ExploreId, ExplorePanelData, useSelector } from 'app/types';
+import { AccessControlAction, ExplorePanelData, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../state/selectors';
 
@@ -17,7 +17,7 @@ const AddToDashboard = lazy(() =>
 );
 
 type Props = {
-  exploreId: ExploreId;
+  exploreId: string;
   timeZone: TimeZone;
   splitted: boolean;
 };
