@@ -289,7 +289,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div className={loading ? styles.hidden : ''}>
-          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'after' : 'before'} match.
+          Showing {context.after.length} lines {logsSortOrder === LogsSortOrder.Ascending ? 'before' : 'after'} match.
         </div>
         <div>
           <LogContextButtons
@@ -364,7 +364,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       </div>
       <div>
         <div className={cx(styles.paddingTop, loading ? styles.hidden : '')}>
-          Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'after' : 'before'} match.
+          Showing {context.before.length} lines {logsSortOrder === LogsSortOrder.Descending ? 'before' : 'after'} match.
         </div>
       </div>
 
