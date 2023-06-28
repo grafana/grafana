@@ -159,6 +159,10 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagNestedFolderPicker
+	// Enables the still in-development new folder picker to support nested folders
+	FlagNestedFolderPicker = "nestedFolderPicker"
+
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
@@ -216,7 +220,7 @@ const (
 	FlagTraceqlSearch = "traceqlSearch"
 
 	// FlagPrometheusMetricEncyclopedia
-	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	// Adds the metrics explorer component to the Prometheus query builder as an option in metric select
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
 	// FlagTimeSeriesTable
@@ -339,6 +343,10 @@ const (
 	// Enables writing multiple items from a single query within Recorded Queries
 	FlagRecordedQueriesMulti = "recordedQueriesMulti"
 
+	// FlagPluginsDynamicAngularDetectionPatterns
+	// Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones
+	FlagPluginsDynamicAngularDetectionPatterns = "pluginsDynamicAngularDetectionPatterns"
+
 	// FlagAlertingLokiRangeToInstant
 	// Rewrites eligible loki range queries to instant queries
 	FlagAlertingLokiRangeToInstant = "alertingLokiRangeToInstant"
@@ -346,4 +354,12 @@ const (
 	// FlagFlameGraphV2
 	// New version of flame graph with new features
 	FlagFlameGraphV2 = "flameGraphV2"
+
+	// FlagElasticToggleableFilters
+	// Enable support to toggle filters off from the query through the Logs Details component
+	FlagElasticToggleableFilters = "elasticToggleableFilters"
+
+	// FlagVizAndWidgetSplit
+	// Split panels between vizualizations and widgets
+	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 )
