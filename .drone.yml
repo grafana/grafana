@@ -1159,6 +1159,172 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: pr-integration-benchmarks
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services:
+- environment:
+    PGDATA: /var/lib/postgresql/data/pgdata
+    POSTGRES_DB: grafanatest
+    POSTGRES_PASSWORD: grafanatest
+    POSTGRES_USER: grafanatest
+  image: postgres:12.3-alpine
+  name: postgres
+  volumes:
+  - name: postgres
+    path: /var/lib/postgresql/data/pgdata
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:5.7.39
+  name: mysql57
+  volumes:
+  - name: mysql57
+    path: /var/lib/mysql
+- commands:
+  - docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password
+  environment:
+    MYSQL_DATABASE: grafana_tests
+    MYSQL_PASSWORD: password
+    MYSQL_ROOT_PASSWORD: rootpass
+    MYSQL_USER: grafana
+  image: mysql:8.0.32
+  name: mysql80
+  volumes:
+  - name: mysql80
+    path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.11-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
+steps:
+- commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.7.4
+  name: clone-enterprise
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.4
+  name: compile-build-cmd
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.7.4
+  name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.7.4
+  name: verify-gen-jsonnet
+- commands:
+  - make gen-go
+  depends_on:
+  - verify-gen-cue
+  image: grafana/build-container:1.7.4
+  name: wire-install
+- commands:
+  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  image: grafana/build-container:1.7.4
+  name: sqlite-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: postgres
+    PGPASSWORD: grafanatest
+    POSTGRES_HOST: postgres
+  image: grafana/build-container:1.7.4
+  name: postgres-integration-benchmarks
+- commands:
+  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql57
+  image: grafana/build-container:1.7.4
+  name: mysql-integration-benchmarks-5.7
+- commands:
+  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
+  depends_on:
+  - wire-install
+  environment:
+    GRAFANA_TEST_DB: mysql
+    MYSQL_HOST: mysql80
+  image: grafana/build-container:1.7.4
+  name: mysql8-integration-benchmarks-8.0
+trigger:
+  event:
+  - pull_request
+  paths:
+    exclude:
+    - docs/**
+    - '*.md'
+    include:
+    - pkg/*/*_bench_*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+- name: postgres
+  temp:
+    medium: memory
+- name: mysql57
+  temp:
+    medium: memory
+- name: mysql80
+  temp:
+    medium: memory
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: main-docs
 node:
   type: no-parallel
@@ -7189,6 +7355,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5b576f21a7afb08759ad4ac7b74a54afcfbf9b5eac0e5894857ce4cdd0feed50
+hmac: 7addf7b63ae5909a6301fb2112f9451191b9c53fda9974a7dfd4c8f93f232e2b
 
 ...
