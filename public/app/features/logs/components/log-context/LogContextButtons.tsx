@@ -1,15 +1,28 @@
+import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { InlineSwitch } from '@grafana/ui';
+import { Button, InlineSwitch, useStyles2 } from '@grafana/ui';
 
 export type Props = {
   wrapLines?: boolean;
   onChangeWrapLines: (wrapLines: boolean) => void;
+  onScrollCenterClick: () => void;
 };
 
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    buttons: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+    }),
+  };
+}
+
 export const LogContextButtons = (props: Props) => {
-  const { wrapLines, onChangeWrapLines } = props;
+  const styles = useStyles2(getStyles);
+  const { wrapLines, onChangeWrapLines, onScrollCenterClick } = props;
   const internalOnChangeWrapLines = useCallback(
     (event: React.FormEvent<HTMLInputElement>) => {
       const state = event.currentTarget.checked;
@@ -21,5 +34,12 @@ export const LogContextButtons = (props: Props) => {
     [onChangeWrapLines]
   );
 
-  return <InlineSwitch showLabel value={wrapLines} onChange={internalOnChangeWrapLines} label="Wrap lines" />;
+  return (
+    <div className={styles.buttons}>
+      <InlineSwitch showLabel value={wrapLines} onChange={internalOnChangeWrapLines} label="Wrap lines" />
+      <Button variant="secondary" onClick={onScrollCenterClick}>
+        Center matched line
+      </Button>
+    </div>
+  );
 };
