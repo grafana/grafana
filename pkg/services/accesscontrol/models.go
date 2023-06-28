@@ -363,6 +363,8 @@ const (
 	// Server actions
 	ActionServerStatsRead = "server.stats:read"
 
+	ActionServerAuditRead = "server.audit:read"
+
 	// Settings actions
 	ActionSettingsRead  = "settings:read"
 	ActionSettingsWrite = "settings:write"

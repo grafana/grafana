@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -593,6 +594,16 @@ func (hs *HTTPServer) DeleteAlertNotification(c *contextmodel.ReqContext) respon
 		return response.Error(500, "Failed to delete alert notification", err)
 	}
 
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Notification deleted: {NotificationID:" + web.Params(c.Req)[":notificationId"] + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.Success("Notification deleted")
 }
 
@@ -619,6 +630,16 @@ func (hs *HTTPServer) DeleteAlertNotificationByUID(c *contextmodel.ReqContext) r
 			return response.Error(404, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to delete alert notification", err)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Notification deleted: {Uid:" + web.Params(c.Req)[":uid"] + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -742,6 +763,16 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		if cmd.Paused {
 			resp = alertmodels.AlertStatePaused
 			pausedState = "paused"
+		}
+
+		createAuditRecordCmd := audit.CreateAuditRecordCommand{
+			Username:  c.SignedInUser.Login,
+			Action:    pausedState + " alert: {AlertID:" + strconv.Itoa(int(alertID)) + "}",
+			IpAddress: c.RemoteAddr(),
+		}
+
+		if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+			c.Logger.Error("Could not create audit record.", "error", err)
 		}
 
 		result["state"] = resp

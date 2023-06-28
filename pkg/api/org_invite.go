@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -142,6 +143,16 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		return response.Success(fmt.Sprintf("Sent invite to %s", inviteDto.LoginOrEmail))
 	}
 
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Created invite for " + inviteDto.LoginOrEmail,
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.Success(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
@@ -169,6 +180,16 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
 			return response.Error(500, "Failed to send email invited_to_org", err)
 		}
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Existing Grafana user " + user.NameOrFallback() + " added to org " + c.OrgName,
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
@@ -292,6 +313,16 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 
 	metrics.MApiUserSignUpCompleted.Inc()
 	metrics.MApiUserSignUpInvite.Inc()
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  cmd.Name,
+		Action:    "User created and logged in ",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "User created and logged in",

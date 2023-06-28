@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
@@ -188,6 +189,16 @@ func (hs *HTTPServer) DeleteDataSourceById(c *contextmodel.ReqContext) response.
 
 	hs.Live.HandleDatasourceDelete(c.OrgID, ds.UID)
 
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Data source with ID " + strconv.Itoa(int(id)) + " deleted",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.Success("Data source deleted")
 }
 
@@ -267,6 +278,16 @@ func (hs *HTTPServer) DeleteDataSourceByUID(c *contextmodel.ReqContext) response
 
 	hs.Live.HandleDatasourceDelete(c.OrgID, ds.UID)
 
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Data source with Uid " + ds.UID + " deleted",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
 		"id":      ds.ID,
@@ -316,6 +337,16 @@ func (hs *HTTPServer) DeleteDataSourceByName(c *contextmodel.ReqContext) respons
 	}
 
 	hs.Live.HandleDatasourceDelete(c.OrgID, dataSource.UID)
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Data source with Name " + name + " deleted",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Data source deleted",
@@ -404,6 +435,16 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 	// Required for cases when caller wants to immediately interact with the newly created object
 	if !hs.AccessControl.IsDisabled() {
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Data source with Name " + cmd.Name + " added",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	ds := hs.convertModelToDtos(c.Req.Context(), dataSource)
@@ -538,6 +579,16 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 	datasourceDTO := hs.convertModelToDtos(c.Req.Context(), dataSource)
 
 	hs.Live.HandleDatasourceUpdate(c.OrgID, datasourceDTO.UID)
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Data source with Name " + cmd.Name + " updated",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message":    "Datasource updated",

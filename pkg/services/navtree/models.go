@@ -132,6 +132,7 @@ func (root *NavTreeRoot) ApplyAdminIA() {
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("audit"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("upgrading"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("licensing"))
 		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("recordedQueries")) // enterprise only

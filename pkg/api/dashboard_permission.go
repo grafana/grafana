@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -205,6 +206,16 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) res
 			return response.Error(409, err.Error(), err)
 		}
 		return response.Error(500, "Failed to create permission", err)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Dashboard permissions updated: {dashboardId:" + strconv.Itoa(int(dashID)) + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.Success("Dashboard permissions updated")

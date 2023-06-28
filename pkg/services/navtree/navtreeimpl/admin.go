@@ -89,6 +89,14 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 		})
 	}
 
+	configNodes = append(configNodes, &navtree.NavLink{
+		Text:     "Audit",
+		Id:       "audit",
+		SubTitle: "Audit user actions",
+		Icon:     "sliders-v-alt",
+		Url:      s.cfg.AppSubURL + "/admin/audit",
+	})
+
 	if authConfigUIAvailable && hasAccess(evalAuthenticationSettings()) {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Authentication",

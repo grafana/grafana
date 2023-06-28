@@ -289,6 +289,17 @@ export const Pages = {
       pauseSwitch: 'data-testid public dashboard pause switch',
     },
   },
+  AuditRecordListPage: {
+    admin: {
+      url: '/admin/audit',
+    },
+    AuditRecordListAdminPage: {
+      container: 'data-testid user-list-admin-page',
+    },
+    AuditRecordsListPage: {
+      container: 'data-testid audit-records-list-page',
+    },
+  },
   UserListPage: {
     tabs: {
       allUsers: 'data-testid all-users-tab',

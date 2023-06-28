@@ -90,6 +90,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
+	addAuditMigrations(mg)
+
 	addFolderMigrations(mg)
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagExternalServiceAuth) {

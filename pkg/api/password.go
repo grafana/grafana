@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -100,6 +101,16 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 
 	if err := hs.loginAttemptService.Reset(c.Req.Context(), username); err != nil {
 		c.Logger.Warn("could not reset login attempts", "err", err, "username", username)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "User password changed",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.Success("User password changed")

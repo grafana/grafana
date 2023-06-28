@@ -377,6 +377,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/audit',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "AuditPage" */ 'app/features/admin/AuditPage')),
+    },
+    {
       path: '/admin/ldap',
       component: LdapPage,
     },

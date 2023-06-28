@@ -3,10 +3,12 @@ package api
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -124,10 +126,10 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, c.UserID, 0, &dtoCmd)
+	return hs.updatePreferencesFor(c, c.OrgID, c.UserID, 0, &dtoCmd)
 }
 
-func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
+func (hs *HTTPServer) updatePreferencesFor(c *contextmodel.ReqContext, orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
 	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
@@ -139,7 +141,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 			// clear the value
 			dashboardID = 0
 		} else {
-			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
 				return response.Error(http.StatusNotFound, "Dashboard not found", err)
 			}
@@ -161,8 +163,18 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		CookiePreferences: dtoCmd.Cookies,
 	}
 
-	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
+	if err := hs.preferenceService.Save(c.Req.Context(), &saveCmd); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to save preferences", err)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Team preferences updated: {TeamId:" + strconv.Itoa(int(teamId)) + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.Success("Preferences updated")
@@ -257,7 +269,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, 0, 0, &dtoCmd)
+	return hs.updatePreferencesFor(c, c.OrgID, 0, 0, &dtoCmd)
 }
 
 // swagger:route PATCH /org/preferences org_preferences patchOrgPreferences

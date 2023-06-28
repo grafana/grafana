@@ -14,6 +14,8 @@ export function buildInitialState(): NavIndex {
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
   const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
 
+  console.log(rootNodes);
+
   if (homeNav) {
     buildNavIndex(navIndex, [homeNav]);
   }

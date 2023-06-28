@@ -967,6 +967,12 @@ export const mockNavModel: NavIndex = {
         url: '/admin/settings',
       },
       {
+        id: 'audit',
+        text: 'Audit',
+        icon: 'unlock',
+        url: '/admin/audit',
+      },
+      {
         id: 'upgrading',
         text: 'Stats and license',
         icon: 'unlock',
@@ -1004,6 +1010,12 @@ export const mockNavModel: NavIndex = {
           text: 'Settings',
           icon: 'sliders-v-alt',
           url: '/admin/settings',
+        },
+        {
+          id: 'audit',
+          text: 'Audit',
+          icon: 'unlock',
+          url: '/admin/audit',
         },
         {
           id: 'upgrading',
@@ -1044,6 +1056,12 @@ export const mockNavModel: NavIndex = {
           text: 'Settings',
           icon: 'sliders-v-alt',
           url: '/admin/settings',
+        },
+        {
+          id: 'audit',
+          text: 'Audit',
+          icon: 'unlock',
+          url: '/admin/audit',
         },
         {
           id: 'upgrading',
@@ -1092,6 +1110,58 @@ export const mockNavModel: NavIndex = {
           url: '/admin/settings',
         },
         {
+          id: 'audit',
+          text: 'Audit',
+          icon: 'unlock',
+          url: '/admin/audit',
+        },
+        {
+          id: 'upgrading',
+          text: 'Stats and license',
+          icon: 'unlock',
+          url: '/admin/upgrading',
+        },
+      ],
+    },
+  },
+  audit: {
+    id: 'audit',
+    text: 'Audit',
+    icon: 'unlock',
+    url: '/admin/audit',
+    parentItem: {
+      id: 'admin',
+      text: 'Server Admin',
+      subTitle: 'Manage all users and orgs',
+      icon: 'shield',
+      url: '/admin/users',
+      hideFromTabs: true,
+      children: [
+        {
+          id: 'global-users',
+          text: 'Users',
+          icon: 'user',
+          url: '/admin/users',
+        },
+        {
+          id: 'global-orgs',
+          text: 'Orgs',
+          icon: 'building',
+          url: '/admin/orgs',
+        },
+        {
+          id: 'server-settings',
+          text: 'Settings',
+          icon: 'sliders-v-alt',
+          url: '/admin/settings',
+        },
+        {
+          id: 'audit',
+          text: 'Audit',
+          icon: 'unlock',
+          url: '/admin/audit',
+        },
+        {
           id: 'upgrading',
           text: 'Stats and license',
           icon: 'unlock',
@@ -1130,6 +1200,12 @@ export const mockNavModel: NavIndex = {
           text: 'Settings',
           icon: 'sliders-v-alt',
           url: '/admin/settings',
+        },
+        {
+          id: 'audit',
+          text: 'Audit',
+          icon: 'unlock',
+          url: '/admin/audit',
         },
         {
           id: 'upgrading',

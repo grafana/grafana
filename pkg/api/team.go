@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -52,6 +53,17 @@ func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 	} else {
 		c.Logger.Warn("Could not add creator to team because is not a real user")
 	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Team created: {TeamId:" + strconv.Itoa(int(cmd.OrgID)) + ",Name:" + cmd.Name + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"teamId":  t.ID,
 		"message": "Team created",
@@ -88,6 +100,16 @@ func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 		return response.Error(500, "Failed to update Team", err)
 	}
 
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Team updated: {TeamId:" + strconv.Itoa(int(cmd.ID)) + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.Success("Team updated")
 }
 
@@ -114,6 +136,17 @@ func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Respon
 		}
 		return response.Error(500, "Failed to delete Team", err)
 	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "Team delete: {TeamId:" + strconv.Itoa(int(teamID)) + "}",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
+	}
+
 	return response.Success("Team deleted")
 }
 
@@ -246,7 +279,7 @@ func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	return hs.updatePreferencesFor(c.Req.Context(), c.OrgID, 0, teamId, &dtoCmd)
+	return hs.updatePreferencesFor(c, c.OrgID, 0, teamId, &dtoCmd)
 }
 
 // swagger:parameters updateTeamPreferences

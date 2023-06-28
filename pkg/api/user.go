@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/audit"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -137,7 +138,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 		}
 	}
 	cmd.UserID = c.UserID
-	return hs.handleUpdateUser(c.Req.Context(), cmd)
+	return hs.handleUpdateUser(c, cmd)
 }
 
 // swagger:route PUT /users/{user_id} users updateUser
@@ -167,7 +168,7 @@ func (hs *HTTPServer) UpdateUser(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
 
-	return hs.handleUpdateUser(c.Req.Context(), cmd)
+	return hs.handleUpdateUser(c, cmd)
 }
 
 // POST /api/users/:id/using/:orgId
@@ -194,9 +195,9 @@ func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.R
 	return response.Success("Active organization changed")
 }
 
-func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserCommand) response.Response {
+func (hs *HTTPServer) handleUpdateUser(c *contextmodel.ReqContext, cmd user.UpdateUserCommand) response.Response {
 	// external user -> user data cannot be updated
-	isExternal, err := hs.isExternalUser(ctx, cmd.UserID)
+	isExternal, err := hs.isExternalUser(c.Req.Context(), cmd.UserID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to validate User", err)
 	}
@@ -212,11 +213,21 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 		}
 	}
 
-	if err := hs.userService.Update(ctx, &cmd); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to update user", err)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "User updated: " + cmd.Login,
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.Success("User updated")
@@ -462,6 +473,16 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
+	}
+
+	createAuditRecordCmd := audit.CreateAuditRecordCommand{
+		Username:  c.SignedInUser.Login,
+		Action:    "User password changed",
+		IpAddress: c.RemoteAddr(),
+	}
+
+	if err := hs.auditService.CreateAuditRecord(c.Req.Context(), &createAuditRecordCmd); err != nil {
+		c.Logger.Error("Could not create audit record.", "error", err)
 	}
 
 	return response.Success("User password changed")
