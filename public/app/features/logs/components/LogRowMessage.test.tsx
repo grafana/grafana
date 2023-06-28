@@ -63,12 +63,12 @@ describe('LogRowMessage', () => {
   });
 
   describe('with permalinking', () => {
-    it('should show permalinking button when no `onPermalinkClick` is defined', () => {
+    it('should show permalinking button when `onPermalinkClick` is defined', () => {
       setup({ onPermalinkClick: jest.fn() });
       expect(screen.queryByLabelText('Copy shortlink')).toBeInTheDocument();
     });
 
-    it('should not show permalinking button when `onPermalinkClick` is defined', () => {
+    it('should not show permalinking button when `onPermalinkClick` is not defined', () => {
       setup();
       expect(screen.queryByLabelText('Copy shortlink')).not.toBeInTheDocument();
     });
@@ -81,6 +81,63 @@ describe('LogRowMessage', () => {
       await userEvent.click(button);
 
       expect(permalinkClick).toHaveBeenCalledWith(props.row);
+    });
+  });
+
+  describe('with pinning', () => {
+    describe('for `onPinLine`', () => {
+      it('should show pinning button when `onPinLine` is defined', () => {
+        setup({ onPinLine: jest.fn() });
+        expect(screen.queryByLabelText('Pin line')).toBeInTheDocument();
+      });
+
+      it('should not show pinning button when `onPinLine` and `pinned` is defined', () => {
+        setup({ onPinLine: jest.fn(), pinned: true });
+        expect(screen.queryByLabelText('Pin line')).not.toBeInTheDocument();
+      });
+
+      it('should not show pinning button when `onPinLine` is not defined', () => {
+        setup();
+        expect(screen.queryByLabelText('Pin line')).not.toBeInTheDocument();
+      });
+
+      it('should call `onPinLine` on click', async () => {
+        const onPinLine = jest.fn();
+        setup({ onPinLine });
+        const button = screen.getByLabelText('Pin line');
+
+        await userEvent.click(button);
+
+        expect(onPinLine).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('for `onUnpinLine`', () => {
+      it('should not show pinning button when `onUnpinLine` is defined', () => {
+        setup({ onUnpinLine: jest.fn() });
+        expect(screen.queryByLabelText('Unpin line')).not.toBeInTheDocument();
+      });
+
+      it('should show 2 pinning buttons when `onUnpinLine` and `pinned` is defined', () => {
+        // we show 2 because we now have an "always visible" menu, and a "hover" menu
+        setup({ onUnpinLine: jest.fn(), pinned: true });
+        expect(screen.queryAllByLabelText('Unpin line').length).toBe(2);
+      });
+
+      it('should not show pinning button when `onUnpinLine` is not defined', () => {
+        setup();
+        expect(screen.queryByLabelText('Unpin line')).not.toBeInTheDocument();
+      });
+
+      it('should call `onUnpinLine` on click', async () => {
+        const onUnpinLine = jest.fn();
+        setup({ onUnpinLine, pinned: true });
+        const button = screen.getAllByLabelText('Unpin line')[0];
+
+        await userEvent.click(button);
+
+        expect(onUnpinLine).toHaveBeenCalledTimes(1);
+      });
     });
   });
 });
