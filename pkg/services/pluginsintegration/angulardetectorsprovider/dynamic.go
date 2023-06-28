@@ -43,16 +43,15 @@ type Dynamic struct {
 	// store is the underlying angular patterns store used as a cache.
 	store angularpatternsstore.Service
 
-	// initialRestoreDone is a channel that will be closed when the first restore from db is done by the
-	// background service. It can be used to wait for the first restore to be done by reading a value from this channel.
-	initialRestoreDone chan struct{}
-
 	// detectors contains the cached angular detectors, which are created from the remote angular patterns.
 	// Use setDetectors and ProvideDetectors to write/read this value.
 	detectors []angulardetector.AngularDetector
 
-	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
+	// mux is the mutex used to read/write the cached detectors and hasDetectors in a concurrency-safe way.
 	mux sync.RWMutex
+
+	// hasDetectors is true if the detectors have been set. To (read) write it, mux must be (R)Locked.
+	hasDetectors bool
 
 	// backgroundJob is the implementation of the background job. This is periodically invoked by Run().
 	backgroundJob backgroundJob
@@ -73,7 +72,6 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynam
 		httpClient:            cl,
 		baseURL:               cfg.GrafanaComURL,
 		backgroundJobInterval: defaultBackgroundJobInterval,
-		initialRestoreDone:    make(chan struct{}),
 	}
 	// By default, use ourselves as backgroundJob
 	d.backgroundJob = d
@@ -162,10 +160,11 @@ func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector
 	return newDetectors, nil
 }
 
-// setDetectors sets the detectors by acquiring the lock first.
+// setDetectors sets the detectors and hasDetectors = true by acquiring the lock first.
 func (d *Dynamic) setDetectors(newDetectors []angulardetector.AngularDetector) {
 	d.mux.Lock()
 	d.detectors = newDetectors
+	d.hasDetectors = true
 	d.mux.Unlock()
 }
 
@@ -223,12 +222,6 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	}
 }
 
-// notifyInitialRestoreDone sets the initial restore as "done", and will unblock all goroutines waiting
-// for the initial restore to be completed.
-func (d *Dynamic) notifyInitialRestoreDone() {
-	close(d.initialRestoreDone)
-}
-
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
 	d.log.Debug("Started background service")
@@ -238,7 +231,6 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		d.log.Warn("Could not set detectors from cache, ignoring cache", "error", err)
 	}
 	canc()
-	d.notifyInitialRestoreDone()
 
 	// Determine when next run is, and check if we should run immediately
 	lastUpdate, err := d.store.GetLastUpdated(ctx)
@@ -268,11 +260,19 @@ func (d *Dynamic) Run(ctx context.Context) error {
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
+// If the initial restore hasn't been done by the background service, ProvideDetectors will do the first restore
+// rather than returning an empty result.
 func (d *Dynamic) ProvideDetectors() []angulardetector.AngularDetector {
-	// Block until channel is closed, which is done after the restore from db is done.
-	<-d.initialRestoreDone
-
 	d.mux.RLock()
+	if !d.hasDetectors {
+		d.mux.RUnlock()
+		d.log.Debug("Performing first cache restore in ProvideDetectors")
+		if err := d.setDetectorsFromCache(context.Background()); err != nil {
+			d.log.Warn("Initial restore from cache failed", "error", err)
+			return nil
+		}
+		d.mux.RLock()
+	}
 	r := d.detectors
 	d.mux.RUnlock()
 	return r
