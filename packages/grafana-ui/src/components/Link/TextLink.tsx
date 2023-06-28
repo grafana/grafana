@@ -90,14 +90,13 @@ export const getLinkStyles = (
       alignItems: 'center',
       gap: '0.25em',
       color: getLinkColor(color, inline),
-      display: 'flex',
+      display: 'inline-flex',
       '&:hover': {
         textDecoration: 'underline',
         color: theme.colors.text.link,
       },
     },
     inline && {
-      display: 'inline-flex',
       textDecoration: 'underline',
       '&:hover': {
         textDecoration: 'none',
