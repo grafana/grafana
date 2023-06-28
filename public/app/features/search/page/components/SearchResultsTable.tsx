@@ -226,6 +226,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     headerCell: css`
       align-items: center;
       display: flex;
+      overflo: hidden;
       padding: ${theme.spacing(1)};
     `,
     headerRow: css`
@@ -292,24 +293,21 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       color: ${theme.colors.error.main};
       text-decoration: line-through;
     `,
+    locationContainer: css({
+      display: 'flex',
+      flexWrap: 'nowrap',
+      gap: theme.spacing(1),
+      overflow: 'hidden',
+    }),
     locationItem: css`
       align-items: center;
       color: ${theme.colors.text.secondary};
       display: flex;
       flex-wrap: nowrap;
       gap: 4px;
-    `,
-    sortedHeader: css`
-      text-align: right;
-      padding-right: ${theme.spacing(2)};
-    `,
-    sortedItems: css`
-      text-align: right;
-      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
+      overflow: hidden;
     `,
     explainItem: css`
-      text-align: right;
-      padding: ${theme.spacing(1)} ${theme.spacing(3)} ${theme.spacing(1)} ${theme.spacing(1)};
       cursor: pointer;
     `,
     tagList: css`

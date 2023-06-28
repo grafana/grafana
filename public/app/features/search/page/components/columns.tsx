@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList } from '@grafana/ui';
+import { Span } from '@grafana/ui/src/unstable';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
@@ -137,7 +138,7 @@ export const generateColumns = (
   availableWidth -= width;
 
   width = TYPE_COLUMN_WIDTH;
-  columns.push(makeTypeColumn(access.kind, access.panel_type, width, styles));
+  columns.push(makeTypeColumn(response, access.kind, access.panel_type, width, styles));
   availableWidth -= width;
 
   // Show datasources if we have any
@@ -165,20 +166,29 @@ export const generateColumns = (
       Cell: (p) => {
         const parts = (access.location?.values[p.row.index] ?? '').split('/');
         return (
-          <div {...p.cellProps} className={cx(styles.cell)}>
-            {parts.map((p) => {
-              let info = meta.locationInfo[p];
-              if (!info && p === 'general') {
-                info = { kind: 'folder', url: '/dashboards', name: 'General' };
-              }
-              return info ? (
-                <a key={p} href={info.url} className={styles.locationItem}>
-                  <Icon name={getIconForKind(info.kind)} /> {info.name}
-                </a>
-              ) : (
-                <span key={p}>{p}</span>
-              );
-            })}
+          <div {...p.cellProps} className={styles.cell}>
+            {!response.isItemLoaded(p.row.index) ? (
+              <Skeleton width={150} />
+            ) : (
+              <div className={styles.locationContainer}>
+                {parts.map((p) => {
+                  let info = meta.locationInfo[p];
+                  if (!info && p === 'general') {
+                    info = { kind: 'folder', url: '/dashboards', name: 'General' };
+                  }
+                  return info ? (
+                    <a key={p} href={info.url} className={styles.locationItem}>
+                      <Icon name={getIconForKind(info.kind)} />
+                      <Span variant="body" truncate>
+                        {info.name}
+                      </Span>
+                    </a>
+                  ) : (
+                    <span key={p}>{p}</span>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       },
@@ -190,17 +200,17 @@ export const generateColumns = (
   }
 
   if (availableWidth > 0 && showTags) {
-    columns.push(makeTagsColumn(access.tags, availableWidth, styles, onTagSelected));
+    columns.push(makeTagsColumn(response, access.tags, availableWidth, styles, onTagSelected));
   }
 
   if (sortField && sortFieldWith) {
     const disp = sortField.display ?? getDisplayProcessor({ field: sortField, theme: config.theme2 });
 
     columns.push({
-      Header: () => <div className={styles.sortedHeader}>{getFieldDisplayName(sortField)}</div>,
+      Header: getFieldDisplayName(sortField),
       Cell: (p) => {
         return (
-          <div {...p.cellProps} className={styles.sortedItems}>
+          <div {...p.cellProps} className={styles.cell}>
             {getDisplayValue({
               sortField,
               getDisplay: disp,
@@ -236,7 +246,11 @@ export const generateColumns = (
       Header: () => <div className={styles.sortedHeader}>Score</div>,
       Cell: (p) => {
         return (
-          <div {...p.cellProps} className={styles.explainItem} onClick={() => showExplainPopup(p.row.index)}>
+          <div
+            {...p.cellProps}
+            className={cx(styles.cell, styles.explainItem)}
+            onClick={() => showExplainPopup(p.row.index)}
+          >
             {vals[p.row.index]}
           </div>
         );
@@ -311,6 +325,7 @@ function makeDataSourceColumn(
 }
 
 function makeTypeColumn(
+  response: QueryResponse,
   kindField: Field<string>,
   typeField: Field<string>,
   width: number,
@@ -364,8 +379,14 @@ function makeTypeColumn(
       }
       return (
         <div {...p.cellProps} className={cx(styles.cell, styles.typeCell)}>
-          <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
-          {txt}
+          {!response.isItemLoaded(p.row.index) ? (
+            <Skeleton width={100} />
+          ) : (
+            <>
+              <Icon name={icon} size="sm" title={txt} className={styles.typeIcon} />
+              {txt}
+            </>
+          )}
         </div>
       );
     },
@@ -374,6 +395,7 @@ function makeTypeColumn(
 }
 
 function makeTagsColumn(
+  response: QueryResponse,
   field: Field<string[]>,
   width: number,
   styles: Record<string, string>,
@@ -382,11 +404,15 @@ function makeTagsColumn(
   return {
     Cell: (p) => {
       const tags = field.values[p.row.index];
-      return tags ? (
+      return (
         <div {...p.cellProps} className={styles.cell}>
-          <TagList className={styles.tagList} tags={tags} onClick={onTagSelected} />
+          {!response.isItemLoaded(p.row.index) ? (
+            <TagList.Skeleton />
+          ) : (
+            <>{tags ? <TagList className={styles.tagList} tags={tags} onClick={onTagSelected} /> : null}</>
+          )}
         </div>
-      ) : null;
+      );
     },
     id: `column-tags`,
     field: field,

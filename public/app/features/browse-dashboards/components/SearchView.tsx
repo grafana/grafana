@@ -18,12 +18,14 @@ interface SearchViewProps {
 }
 
 const NUM_PLACEHOLDER_ROWS = 50;
-const loadingView = {
+const initialLoadingView = {
   view: new DataFrameView(
     toDataFrame({
       fields: [
         { name: 'uid', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill(null) },
+        { name: 'kind', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('dashboard') },
         { name: 'name', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
+        { name: 'location', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill('') },
         { name: 'tags', display: true, values: Array(NUM_PLACEHOLDER_ROWS).fill([]) },
       ],
       meta: {
@@ -47,7 +49,7 @@ export function SearchView({ width, height, canSelect }: SearchViewProps) {
   const { keyboardEvents } = useKeyNavigationListener();
   const [searchState, stateManager] = useSearchStateManager();
 
-  const value = searchState.result ?? loadingView;
+  const value = searchState.result ?? initialLoadingView;
 
   const selectionChecker = useCallback(
     (kind: string | undefined, uid: string): boolean => {
