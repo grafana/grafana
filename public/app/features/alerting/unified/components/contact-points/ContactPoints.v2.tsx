@@ -1,89 +1,74 @@
 import { css } from '@emotion/css';
+import { uniqueId } from 'lodash';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Badge, Button, Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
-import { GrafanaNotifierType } from 'app/types/alerting';
+import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
+import { RECEIVER_STATUS_KEY, useContactPoints } from './useContactPoints';
+
 const ContactPoints = () => {
   const styles = useStyles2(getStyles);
 
+  // TODO hardcoded for now, change this to allow selecting different alertmanager
+  const selectedAlertmanager = 'grafana';
+  const { isLoading, error, contactPoints } = useContactPoints(selectedAlertmanager);
+
+  if (error) {
+    return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
+  }
+
+  // TODO show loading skeleton?
+  if (isLoading) {
+    return <LoadingPlaceholder text={'Loading...'} />;
+  }
+
   return (
-    <Stack direction="column">
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'grafana-default-email'} policies={['', '']} />
-          <div className={styles.receiversWrapper}>
-            <ContactPointReceiver type={'email'} description="gilles.demey@grafana.com" />
-          </div>
-        </Stack>
-      </div>
+    <>
+      <Stack direction="column">
+        {contactPoints.map((contactPoint) => {
+          const contactPointKey = selectedAlertmanager + contactPoint.name;
+          // for some reason the provenance is on the receiver and not the entire contact point
+          const provenance = contactPoint.grafana_managed_receiver_configs.find(
+            (receiver) => receiver.provenance
+          )?.provenance;
 
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'New school'} provenance={'api'} />
-          <div className={styles.receiversWrapper}>
-            <Stack direction="column" gap={0}>
-              <ContactPointReceiver type={'slack'} description="#test-alerts" sendingResolved={false} />
-              <ContactPointReceiver type={'discord'} />
-            </Stack>
-          </div>
-        </Stack>
-      </div>
+          return (
+            <div className={styles.contactPointWrapper} key={contactPointKey}>
+              <Stack direction="column" gap={0}>
+                <ContactPointHeader name={contactPoint.name} policies={[]} provenance={provenance} />
+                <div className={styles.receiversWrapper}>
+                  {contactPoint.grafana_managed_receiver_configs?.map((receiver) => {
+                    const diagnostics = receiver[RECEIVER_STATUS_KEY];
+                    const sendingResolved = !Boolean(receiver.disableResolveMessage);
 
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'Japan 🇯🇵'} />
-          <div className={styles.receiversWrapper}>
-            <ContactPointReceiver type={'line'} />
-          </div>
-        </Stack>
-      </div>
-
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'Google Stuff'} />
-          <div className={styles.receiversWrapper}>
-            <ContactPointReceiver type={'googlechat'} />
-          </div>
-        </Stack>
-      </div>
-
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader name={'Chinese Contact Points'} />
-          <div className={styles.receiversWrapper}>
-            <Stack direction="column" gap={0}>
-              <ContactPointReceiver type={'dingding'} />
-              <ContactPointReceiver type={'wecom'} error="403 unauthorized" />
-            </Stack>
-          </div>
-        </Stack>
-      </div>
-
-      <div className={styles.contactPointWrapper}>
-        <Stack direction="column" gap={0}>
-          <ContactPointHeader
-            name={
-              "This is a very long title to check if we are dealing with it appropriately, it shouldn't cause any layout issues"
-            }
-          />
-          <div className={styles.receiversWrapper}>
-            <Stack direction="column" gap={0}>
-              <ContactPointReceiver type={'dingding'} />
-            </Stack>
-          </div>
-        </Stack>
-      </div>
-    </Stack>
+                    return (
+                      <ContactPointReceiver
+                        key={uniqueId()}
+                        type={receiver.type}
+                        // TODO we can figure something out to extract a "description" from each receiver type
+                        description="gilles.demey@grafana.com"
+                        diagnostics={diagnostics}
+                        sendingResolved={sendingResolved}
+                      />
+                    );
+                  })}
+                </div>
+              </Stack>
+            </div>
+          );
+        })}
+      </Stack>
+    </>
   );
 };
 
@@ -161,15 +146,16 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 interface ContactPointReceiverProps {
   type: GrafanaNotifierType | string;
   description?: string;
-  error?: string;
   sendingResolved?: boolean;
+  diagnostics?: NotifierStatus;
 }
 
 const ContactPointReceiver = (props: ContactPointReceiverProps) => {
-  const { type, description, error, sendingResolved = true } = props;
+  const { type, description, diagnostics, sendingResolved = true } = props;
   const styles = useStyles2(getStyles);
 
   const iconName = INTEGRATION_ICONS[type];
+  const hasMetadata = diagnostics !== undefined;
 
   return (
     <div className={styles.integrationWrapper}>
@@ -189,43 +175,67 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
             )}
           </Stack>
         </div>
-        <div className={styles.metadataRow}>
-          <Stack direction="row" gap={1}>
-            {error ? (
-              <>
-                {/* TODO we might need an error variant for MetaText, dito for success */}
-                {/* TODO show error details on hover or elsewhere */}
-                <Span color="error" variant="bodySmall" weight="bold">
-                  <Stack direction="row" alignItems={'center'} gap={0.5}>
-                    <Tooltip
-                      content={
-                        'failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused'
-                      }
-                    >
-                      <span>
-                        <Icon name="exclamation-circle" /> Last delivery attempt failed
-                      </span>
-                    </Tooltip>
-                  </Stack>
-                </Span>
-              </>
-            ) : (
+        {hasMetadata && <ContactPointReceiverMetadataRow diagnostics={diagnostics} sendingResolved={sendingResolved} />}
+      </Stack>
+    </div>
+  );
+};
+
+interface ContactPointReceiverMetadata {
+  sendingResolved: boolean;
+  diagnostics: NotifierStatus;
+}
+
+const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) => {
+  const { diagnostics, sendingResolved } = props;
+  const styles = useStyles2(getStyles);
+
+  const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
+  const lastDeliveryAttempt = dateTime(diagnostics.lastNotifyAttempt);
+  const lastDeliveryAttemptDuration = diagnostics.lastNotifyAttemptDuration;
+
+  return (
+    <div className={styles.metadataRow}>
+      <Stack direction="row" gap={1}>
+        {failedToSend ? (
+          <>
+            {/* TODO we might need an error variant for MetaText, dito for success */}
+            <Span color="error" variant="bodySmall" weight="bold">
+              <Stack direction="row" alignItems={'center'} gap={0.5}>
+                <Tooltip content={diagnostics.lastNotifyAttemptError!}>
+                  <span>
+                    <Icon name="exclamation-circle" /> Last delivery attempt failed
+                  </span>
+                </Tooltip>
+              </Stack>
+            </Span>
+          </>
+        ) : (
+          <>
+            {lastDeliveryAttempt.isValid() ? (
               <>
                 <MetaText icon="clock-nine">
-                  Last delivery attempt <Strong>25 minutes ago</Strong>
+                  Last delivery attempt{' '}
+                  <Tooltip content={lastDeliveryAttempt.toLocaleString()}>
+                    <span>
+                      <Strong>{lastDeliveryAttempt.locale('en').fromNow()}</Strong>
+                    </span>
+                  </Tooltip>
                 </MetaText>
                 <MetaText icon="stopwatch">
-                  took <Strong>2s</Strong>
+                  took <Strong>{lastDeliveryAttemptDuration}</Strong>
                 </MetaText>
               </>
+            ) : (
+              <MetaText icon="clock-nine">No delivery attempt yet</MetaText>
             )}
-            {!sendingResolved && (
-              <MetaText icon="info-circle">
-                Delivering <Strong>only firing</Strong> notifications
-              </MetaText>
-            )}
-          </Stack>
-        </div>
+          </>
+        )}
+        {!sendingResolved && (
+          <MetaText icon="info-circle">
+            Delivering <Strong>only firing</Strong> notifications
+          </MetaText>
+        )}
       </Stack>
     </div>
   );

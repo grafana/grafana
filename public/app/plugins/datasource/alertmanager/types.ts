@@ -91,7 +91,7 @@ export type Receiver = {
   victorops_configs?: any[];
   wechat_configs?: any[];
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
-  [key: string]: any;
+  [key: string]: any; // what? Why? – Gilles
 };
 
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
