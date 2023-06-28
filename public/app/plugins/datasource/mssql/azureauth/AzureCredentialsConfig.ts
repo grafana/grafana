@@ -9,9 +9,7 @@ import {
   AzureAuthJSONDataType,
 } from '../types';
 
-export const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
-  return bootConfig.azure?.cloud || AzureCloud.Public;
-};
+export const getDefaultAzureCloud = (cloud: string = AzureCloud.Public): string => cloud;
 
 export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
   if (bootConfig.azure?.managedIdentityEnabled) {

@@ -13,8 +13,6 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
 
-  const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
-
   const credentials = useMemo(() => getCredentials(dsSettings, config, concealedSecret), [dsSettings, concealedSecret]);
 
   const onCredentialsChange = (credentials: AzureCredentialsType): void => {
