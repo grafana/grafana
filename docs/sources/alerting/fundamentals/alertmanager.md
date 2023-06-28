@@ -3,6 +3,7 @@ aliases:
   - ../fundamentals/alertmanager/
   - ../metrics/
   - ../unified-alerting/fundamentals/alertmanager/
+  - alerting/manage-notifications/alertmanager/
 description: Intro to the different Alertmanagers
 title: Alertmanager
 weight: 103

@@ -36,6 +36,7 @@
     },
     "folder-actions-button": {
       "delete": "Đęľęŧę",
+      "folder-actions": "Főľđęř äčŧįőŉş",
       "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
       "move": "Mővę"
     },
@@ -603,6 +604,16 @@
     },
     "title": "Přęƒęřęŉčęş"
   },
+  "state": {
+    "nav-model": {
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş"
+    },
+    "nav-models": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "manage-folder-subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
+    }
+  },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",
     "no-tags": "Ńő ŧäģş ƒőūŉđ",
@@ -654,19 +665,6 @@
     "zone": {
       "select-aria-label": "Ŧįmę žőŉę pįčĸęř",
       "select-search-input": "Ŧypę ŧő şęäřčĥ (čőūŉŧřy, čįŧy, äþþřęvįäŧįőŉ)"
-    }
-  },
-  "types": {
-    "dashboard-acl-targets": {
-      "team-label": "Ŧęäm",
-      "user-label": "Ůşęř"
-    },
-    "dashboard-permissions": {
-      "admin-label": "Åđmįŉ"
-    },
-    "member-label": "Męmþęř",
-    "team-permissions": {
-      "admin-label": "Åđmįŉ"
     }
   },
   "user-orgs": {

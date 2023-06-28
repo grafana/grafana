@@ -3,6 +3,7 @@ aliases:
   - difference-old-new/
   - unified-alerting/
   - unified-alerting/difference-old-new/
+  - alerting/migrating-alerts/
 description: Upgrade Grafana alerts
 title: Upgrade Alerting
 weight: 150

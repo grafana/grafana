@@ -60,7 +60,7 @@ export const SaveDashboardForm = ({
       {({ register, errors }) => {
         const messageProps = register('message');
         return (
-          <Stack gap={2}>
+          <Stack gap={2} direction="column" alignItems="flex-start">
             {hasTimeChanged && (
               <Checkbox
                 checked={!!options.saveTimerange}

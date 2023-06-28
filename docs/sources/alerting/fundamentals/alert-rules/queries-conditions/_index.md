@@ -13,7 +13,7 @@ keywords:
 
 In Grafana, queries play a vital role in fetching and transforming data from supported data sources, which include databases like MySQL and PostgreSQL, time series databases like Prometheus, InfluxDB and Graphite, and services like Elasticsearch, AWS CloudWatch, Azure Monitor and Google Cloud Monitoring.
 
-For more information on supported data sources, see [Data sources]({{< relref "../data-source-alerting.md" >}}).
+For more information on supported data sources, see [Data sources]({{< relref "../../data-source-alerting.md" >}}).
 
 The process of executing a query involves defining the data source, specifying the desired data to retrieve, and applying relevant filters or transformations. Query languages or syntaxes specific to the chosen data source are utilized for constructing these queries.
 
@@ -21,7 +21,7 @@ In Alerting, you define a query to get the data you want to measure and a condit
 
 An alert rule consists of one or more queries and expressions that select the data you want to measure.
 
-For more information on queries and expressions, see [Query and transform data]({{< relref "../../../panels-visualizations/query-transform-data" >}}).
+For more information on queries and expressions, see [Query and transform data]({{< relref "../../../../panels-visualizations/query-transform-data" >}}).
 
 ## Data source queries
 
@@ -54,6 +54,10 @@ By leveraging expression queries, users can perform tasks such as calculating th
 In Alerting, you can only use expressions for Grafana-managed alert rules. For each expression, you can choose from the math, reduce, and resample expressions. These are called multi-dimensional rules, because they generate a separate alert for each series.
 
 You can also use classic condition, which creates an alert rule that triggers a single alert when its condition is met. As a result, Grafana sends only a single alert even when alert conditions are met for multiple series.
+
+**Note:**
+
+Classic conditions exist mainly for compatibility reasons and should be avoided if possible.
 
 **Reduce**
 
