@@ -970,7 +970,7 @@ export class ElasticDatasource
   }
 
   private escapeAdHocFilter(value: string) {
-    return value.replace(/([:])/g, '\\$1');
+    return value.replace(/:/g, '\\:');
   }
 
   // Used when running queries through backend
