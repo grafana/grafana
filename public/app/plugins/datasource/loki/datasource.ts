@@ -455,7 +455,7 @@ export class LokiDatasource
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (!isValidQuery(query, this.interpolateString(query, placeHolderScopedVars), [])) {
+    if (!isValidQuery(this.interpolateString(query, placeHolderScopedVars))) {
       return undefined;
     }
 

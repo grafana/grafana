@@ -32,7 +32,7 @@ import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runSplitQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, QueryStats, SupportingQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
@@ -1198,31 +1198,44 @@ describe('LokiDatasource', () => {
   });
 
   describe('getQueryStats', () => {
-    it('uses statsMetadataRequest', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      const spy = jest.spyOn(ds, 'statsMetadataRequest').mockResolvedValue({} as QueryStats);
-      ds.getQueryStats('{foo="bar"}');
-      expect(spy).toHaveBeenCalled();
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+      ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
+      ds.interpolateString = jest.fn().mockImplementation((value: string) => value.replace('$__interval', '1m'));
     });
 
-    it('validates queries with variables', async () => {
-      const ds = createLokiDatasource(templateSrvStub);
-      ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
+    it('uses statsMetadataRequest', async () => {
+      const result = await ds.getQueryStats('{foo="bar"}');
 
-      expect(ds.getQueryStats('rate({instance="server\\1"}[$__interval])')).resolves.toEqual({
-        streams: 0,
-        chunks: 0,
-        bytes: 0,
-        entries: 0,
+      expect(ds.statsMetadataRequest).toHaveBeenCalled();
+      expect(result).toEqual({ streams: 1, chunks: 1, bytes: 1, entries: 1 });
+    });
+
+    it('supports queries with template variables', async () => {
+      const result = await ds.getQueryStats('rate({instance="server\\1"}[$__interval])');
+
+      expect(result).toEqual({
+        streams: 1,
+        chunks: 1,
+        bytes: 1,
+        entries: 1,
       });
     });
 
-    // it('does not call stats if the query is invalid', () => {
-    //   const ds = createLokiDatasource(templateSrvStub);
-    //   const spy = jest.spyOn(ds, 'statsMetadataRequest');
-    //   ds.getQueryStats('rate({label="value"} [$__interval');
-    //   expect(spy).not.toHaveBeenCalled();
-    // });
+    it('does not call stats if the query is invalid', async () => {
+      const result = await ds.getQueryStats('rate({label="value"}');
+
+      expect(ds.statsMetadataRequest).not.toHaveBeenCalled();
+      expect(result).toBe(undefined);
+    });
+
+    it('combines the stats of each label matcher', async () => {
+      const result = await ds.getQueryStats('count_over_time({foo="bar"}[1m]) + count_over_time({test="test"}[1m])');
+
+      expect(ds.statsMetadataRequest).toHaveBeenCalled();
+      expect(result).toEqual({ streams: 2, chunks: 2, bytes: 2, entries: 2 });
+    });
   });
 
   describe('statsMetadataRequest', () => {
