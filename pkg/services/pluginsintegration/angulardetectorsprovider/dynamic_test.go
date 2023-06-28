@@ -134,9 +134,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NotEmpty(t, dbV, "new store should not be empty")
 			var patterns GCOMPatterns
 			require.NoError(t, json.Unmarshal([]byte(dbV), &patterns), "could not unmarshal stored value")
-			detectors, err := svc.patternsToDetectors(patterns)
-			require.NoError(t, err, "could not convert patterns to detectors")
-			checkMockDetectors(t, detectors)
+			require.Equal(t, mockGCOMPatterns, patterns)
 
 			// Check that last updated has been updated in the kv store (which is used for cache ttl)
 			lastUpdated, err = svc.store.GetLastUpdated(context.Background())
@@ -405,7 +403,7 @@ func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration, opts .
 	for _, opt := range opts {
 		opt(d)
 	}
-	d.cacheTTL = cacheTTL
+	d.backgroundJobInterval = cacheTTL
 	return d
 }
 
@@ -431,8 +429,8 @@ func (j *fakeBackgroundJob) close() {
 	close(j.callback)
 }
 
-func (j *fakeBackgroundJob) backgroundJob(ctx context.Context) {
-	j.inner.backgroundJob(ctx)
+func (j *fakeBackgroundJob) runBackgroundJob(ctx context.Context) {
+	j.inner.runBackgroundJob(ctx)
 	j.callback <- struct{}{}
 }
 
@@ -462,7 +460,7 @@ func newBackgroundServiceScenario(svc *Dynamic, callback func()) *backgroundServ
 		bgDone:    make(chan struct{}),
 		fakeBgJob: newFakeJober(svc),
 	}
-	svc.bgJob = s.fakeBgJob
+	svc.backgroundJob = s.fakeBgJob
 	go func() {
 		for range s.fakeBgJob.callback {
 			callback()
