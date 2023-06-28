@@ -40,7 +40,7 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { Attributes, LogsFrame, parseLogsFrame } from '../features/logs/logsFrame';
+import { LogsFrame, parseLogsFrame } from '../features/logs/logsFrame';
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -314,16 +314,6 @@ interface LogInfo {
   rawFrame: DataFrame;
   logsFrame: LogsFrame;
   frameLabels?: Labels[];
-}
-
-export function attributesToLabels(attributes: Attributes): Labels {
-  const result: Labels = {};
-
-  Object.entries(attributes).forEach(([k, v]) => {
-    result[k] = typeof v === 'string' ? v : JSON.stringify(v);
-  });
-
-  return result;
 }
 
 /**
