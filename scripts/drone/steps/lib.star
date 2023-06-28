@@ -957,7 +957,7 @@ def grafana_server_step(edition, port = 3001):
     environment = {"PORT": port, "ARCH": "linux-amd64"}
     if edition == "enterprise":
         environment["RUNDIR"] = "scripts/grafana-server/tmp-grafana-enterprise"
-    else
+    else:
         environment["GF_PATHS_PLUGINS"] = "e2e/custom-plugins/"
 
     return {

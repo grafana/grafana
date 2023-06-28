@@ -629,6 +629,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
   image: grafana/build-container:1.7.4
   name: grafana-server
@@ -1614,6 +1615,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
   image: grafana/build-container:1.7.4
   name: grafana-server
@@ -2486,6 +2488,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
   image: grafana/build-container:1.7.4
   name: grafana-server
@@ -3031,7 +3034,6 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
-    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.7.4
@@ -4850,6 +4852,7 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
+    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
   image: grafana/build-container:1.7.4
   name: grafana-server
@@ -5532,7 +5535,6 @@ steps:
   detach: true
   environment:
     ARCH: linux-amd64
-    GF_PATHS_PLUGINS: e2e/custom-plugins/
     PORT: 3001
     RUNDIR: scripts/grafana-server/tmp-grafana-enterprise
   image: grafana/build-container:1.7.4
@@ -7191,6 +7193,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 216429c0d86821ad88352baa28f6c6315db72484be55e9183f19c60184bf5132
+hmac: 71216db277ce05dccea8bbc871de2eb914b645b0819a7c9ba5398cb63ce02092
 
 ...
