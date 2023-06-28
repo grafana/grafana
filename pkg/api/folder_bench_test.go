@@ -53,8 +53,8 @@ const (
 	LEVEL0_FOLDER_NUM    = 300
 	LEVEL1_FOLDER_NUM    = 30
 	LEVEL2_FOLDER_NUM    = 5
-	LEVEL0_DASHBOARD_NUM = 10
-	LEVEL1_DASHBOARD_NUM = 10
+	LEVEL0_DASHBOARD_NUM = 5
+	LEVEL1_DASHBOARD_NUM = 15
 	LEVEL2_DASHBOARD_NUM = 30
 	TEAM_NUM             = 50
 	TEAM_MEMBER_NUM      = 5
@@ -108,8 +108,8 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		},
 		{
 			desc:        "search specific dashboard with nested folders feature enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
-			expectedLen: 1,
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM,
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
@@ -154,6 +154,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
 	db := sqlstore.InitTestDB(b)
+	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
@@ -259,7 +260,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
-		f0, d := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d", i), nil)
+		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
 
@@ -282,7 +283,7 @@ func setupDB(b testing.TB) benchScenario {
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
-			dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
+			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
 				ID:       dashID,
 				OrgID:    signedInUser.OrgID,
@@ -303,13 +304,13 @@ func setupDB(b testing.TB) benchScenario {
 		}
 
 		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
-			f1, d1 := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
+			f1, d1 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
 			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
-				dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
+				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
 					ID:       dashID,
 					OrgID:    signedInUser.OrgID,
@@ -330,13 +331,13 @@ func setupDB(b testing.TB) benchScenario {
 			}
 
 			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
-				f2, d2 := addFolder(orgID, rand.Int63n(MAXIMUM_INT_POSTGRES), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
+				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
 				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
-					dashID := rand.Int63n(MAXIMUM_INT_POSTGRES)
+					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
 						ID:       dashID,
 						OrgID:    signedInUser.OrgID,
@@ -492,4 +493,13 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 		Updated:  now,
 	}
 	return f, d
+}
+
+func generateID(reserved map[int64]struct{}) int64 {
+	n := rand.Int63n(MAXIMUM_INT_POSTGRES)
+	if _, existing := reserved[n]; existing {
+		return generateID(reserved)
+	}
+	reserved[n] = struct{}{}
+	return n
 }
