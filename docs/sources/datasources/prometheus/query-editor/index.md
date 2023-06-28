@@ -204,7 +204,7 @@ The autocompletion dropdown includes documentation for the suggested items where
 ### Metrics browser
 
 The metrics browser locates metrics and selects relevant labels to help you build basic queries.
-When you click **Metrics browser** in code mode, it displays all available metrics and labels.
+When you click **Metrics browser** in `Code` mode, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
 {{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
