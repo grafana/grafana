@@ -27,5 +27,6 @@ This section contains how-to topics for extending or enhancing Grafana plugins.
 - [Build a custom panel option editor]({{< relref "./custom-panel-option-editors.md" >}})
 - [Create nested plugins](https://grafana.github.io/plugin-tools/docs/nested-plugins)
 - [Extend configurations](https://grafana.github.io/plugin-tools/docs/advanced-configuration)
+- [Extend the Grafana UI with links]({{< relref "./extend-the-grafana-ui-with-links.md" >}})
 - [Work with cross-plugin links]({{< relref "./cross-plugin-linking.md" >}})
 - [Work with data frames]({{< relref "./working-with-data-frames.md" >}})
