@@ -33,10 +33,12 @@ type schemaValidate struct {
 var _ admission.ValidationInterface = schemaValidate{}
 
 // Validate makes an admission decision based on the request attributes.  It is NOT allowed to mutate.
-func (st schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
+func (sv schemaValidate) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	obj := a.GetObject()
-	ck := st.reg.ByName(obj.GetObjectKind().GroupVersionKind().Kind)
+	sv.log.Info(fmt.Sprintf("validating resource of kind %s", a.GetKind().Kind))
+	ck := sv.reg.ByName(obj.GetObjectKind().GroupVersionKind().Kind)
 	if ck == nil {
+		sv.log.Info(fmt.Sprintf("did not match %s", obj.GetObjectKind().GroupVersionKind().Kind))
 		return nil
 	}
 	cv, err := unstructuredToCUE(ck.MachineName()+".json", obj.(*unstructured.Unstructured))
