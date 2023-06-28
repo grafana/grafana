@@ -9,7 +9,9 @@ import {
   AzureAuthJSONDataType,
 } from '../types';
 
-export const getDefaultAzureCloud = (cloud: string = AzureCloud.Public): string => cloud;
+export const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
+  return bootConfig.azure?.cloud || AzureCloud.Public;
+};
 
 export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
   if (bootConfig.azure?.managedIdentityEnabled) {
@@ -20,24 +22,25 @@ export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCrede
 };
 
 export const getSecret = (
-  dsSettings: DataSourceSettings<DataSourceJsonData, AzureAuthSecureJSONDataType>,
-  concealedSecret: symbol
+  hasClientSecretServerSide: boolean,
+  clientSecret: string | symbol | undefined
 ): undefined | string | ConcealedSecretType => {
-  if (dsSettings.secureJsonFields?.azureClientSecret) {
-    // The secret is concealed on server
+  const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
+  if (hasClientSecretServerSide) {
+    // The secret is concealed server side, so return the symbol
     return concealedSecret;
   } else {
-    const secret = dsSettings.secureJsonData?.azureClientSecret;
-    return typeof secret === 'string' && secret.length > 0 ? secret : undefined;
+    return typeof clientSecret === 'string' && clientSecret.length > 0 ? clientSecret : undefined;
   }
 };
 
 export const getCredentials = (
   dsSettings: DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>,
-  bootConfig: GrafanaBootConfig,
-  concealedSecret: symbol
+  bootConfig: GrafanaBootConfig
 ): AzureCredentialsType => {
   const credentials = dsSettings.jsonData?.azureCredentials;
+  const hasClientSecretServerSide = dsSettings.secureJsonFields?.azureClientSecret;
+  const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
@@ -65,7 +68,7 @@ export const getCredentials = (
         azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
-        clientSecret: getSecret(dsSettings, concealedSecret),
+        clientSecret: getSecret(hasClientSecretServerSide, clientSecret),
       };
   }
 };

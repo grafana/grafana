@@ -36,13 +36,10 @@ describe('AzureAuth', () => {
     });
 
     it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
-      const resultFromServerSideSecret = getSecret(dataSourceSettingsWithClientSecretOnServer, concealedSecret);
+      const resultFromServerSideSecret = getSecret(dataSourceSettingsWithClientSecretOnServer);
       expect(resultFromServerSideSecret).toBe(concealedSecret);
 
-      const resultFromSecureJSONDataSecret = getSecret(
-        dataSourceSettingsWithClientSecretInSecureJSONData,
-        concealedSecret
-      );
+      const resultFromSecureJSONDataSecret = getSecret(dataSourceSettingsWithClientSecretInSecureJSONData);
       expect(resultFromSecureJSONDataSecret).toBe('XXXX-super-secret-secret-XXXX');
     });
 
@@ -51,8 +48,7 @@ describe('AzureAuth', () => {
         // If `dataSourceSettings.authType === "msi"` && `config.azure.managedIdentityEnabled === true`.
         const resultForManagedIdentityEnabled = getCredentials(
           dataSourceSettingsWithMsiCredentials,
-          configWithManagedIdentityEnabled,
-          concealedSecret
+          configWithManagedIdentityEnabled
         );
         expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
 
@@ -60,8 +56,7 @@ describe('AzureAuth', () => {
         // Default to basic client secret credentials.
         const resultForManagedIdentityEnabledInJSONButDisabledInConfig = getCredentials(
           dataSourceSettingsWithMsiCredentials,
-          configWithManagedIdentityDisabled,
-          concealedSecret
+          configWithManagedIdentityDisabled
         );
         expect(resultForManagedIdentityEnabledInJSONButDisabledInConfig).toEqual({
           authType: 'clientsecret',
@@ -81,8 +76,7 @@ describe('AzureAuth', () => {
         // i.e. the client secret is stored on the server.
         const resultForClientSecretCredentialsOnServer = getCredentials(
           dataSourceSettingsWithClientSecretOnServer,
-          configWithManagedIdentityDisabled,
-          concealedSecret
+          configWithManagedIdentityDisabled
         );
 
         expect(resultForClientSecretCredentialsOnServer).toEqual({
@@ -94,8 +88,7 @@ describe('AzureAuth', () => {
         //   i.e. the client secret is stored in the secureJson.
         const resultForClientSecretCredentialsInSecureJSON = getCredentials(
           dataSourceSettingsWithClientSecretInSecureJSONData,
-          configWithManagedIdentityDisabled,
-          concealedSecret
+          configWithManagedIdentityDisabled
         );
         expect(resultForClientSecretCredentialsInSecureJSON).toEqual({
           ...basicExpectedResult,

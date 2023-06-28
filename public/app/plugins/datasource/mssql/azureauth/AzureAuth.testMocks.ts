@@ -5,13 +5,13 @@ import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType, ConcealedSecretType
 
 export const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
 
-export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
+export const configWithManagedIdentityEnabled: GrafanaBootConfig = {
   azure: { managedIdentityEnabled: true, userIdentityEnabled: false },
-};
+} as unknown as GrafanaBootConfig;
 
-export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
+export const configWithManagedIdentityDisabled: GrafanaBootConfig = {
   azure: { managedIdentityEnabled: false, userIdentityEnabled: false, cloud: 'AzureCloud' },
-};
+} as unknown as GrafanaBootConfig;
 
 export const dataSourceSettingsWithMsiCredentials: DataSourceSettings<
   AzureAuthJSONDataType,

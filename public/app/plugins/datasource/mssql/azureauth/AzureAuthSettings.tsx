@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { config } from '@grafana/runtime';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
 
-import { AzureCredentialsType, ConcealedSecretType } from '../types';
+import { AzureCredentialsType } from '../types';
 
 import { KnownAzureClouds } from './AzureCredentials';
 import { getCredentials, updateCredentials } from './AzureCredentialsConfig';
@@ -13,7 +13,7 @@ export const AzureAuthSettings = (props: HttpSettingsBaseProps) => {
   const { dataSourceConfig: dsSettings, onChange } = props;
   const managedIdentityEnabled = config.azure.managedIdentityEnabled;
 
-  const credentials = useMemo(() => getCredentials(dsSettings, config, concealedSecret), [dsSettings, concealedSecret]);
+  const credentials = useMemo(() => getCredentials(dsSettings, config), [dsSettings]);
 
   const onCredentialsChange = (credentials: AzureCredentialsType): void => {
     onChange(updateCredentials(dsSettings, config, credentials));
