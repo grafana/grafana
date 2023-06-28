@@ -2,11 +2,12 @@ import React from 'react';
 
 import { PluginExtensionPoints, type PluginExtensionLinkConfig } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ExploreId } from 'app/types';
+import { AccessControlAction } from 'app/types';
 
 import { createExtensionLinkConfig, logWarning } from '../../plugins/extensions/utils';
 
-import { AddToDashboardModal } from './AddToDashboard/AddToDashboardModal';
+import { AddToDashboardForm } from './AddToDashboard/AddToDashboardForm';
+import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
 
 export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
@@ -30,14 +31,9 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
           return {};
         },
         onClick: (_, { context, openModal }) => {
-          // temporary solution - will probably map values into context.
-          const exploreId = toExploreId(context?.exploreId);
-
           openModal({
-            title: 'Add panel to dashboard',
-            body: ({ onDismiss }) => (
-              <AddToDashboardModal excludeModal={true} onClose={onDismiss!} exploreId={exploreId} />
-            ),
+            title: getAddToDashboardTitle(),
+            body: ({ onDismiss }) => <AddToDashboardForm onClose={onDismiss!} exploreId={context?.exploreId!} />,
           });
         },
       }),
@@ -45,14 +41,5 @@ export function getExploreExtensionConfigs(): PluginExtensionLinkConfig[] {
   } catch (error) {
     logWarning(`Could not configure extensions for Explore due to: "${error}"`);
     return [];
-  }
-}
-
-function toExploreId(id: string | undefined): ExploreId {
-  switch (id) {
-    case 'left':
-      return ExploreId.left;
-    default:
-      return ExploreId.right;
   }
 }

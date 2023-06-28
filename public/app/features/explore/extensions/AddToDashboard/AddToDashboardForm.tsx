@@ -1,13 +1,14 @@
 import { partial } from 'lodash';
 import React, { type ReactElement, useEffect, useState } from 'react';
-import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
+import { DeepMap, FieldError, useForm } from 'react-hook-form';
 
 import { locationUtil, SelectableValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
+import { contextSrv } from 'app/core/services/context_srv';
 import { removeDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
-import { useSelector } from 'app/types';
+import { AccessControlAction, useSelector } from 'app/types';
 
 import { getExploreItemSelector } from '../../state/selectors';
 
@@ -57,11 +58,10 @@ interface SubmissionError {
 interface Props {
   onClose: () => void;
   exploreId: string;
-  saveTargets: Array<SelectableValue<SaveTarget>>;
 }
 
-export function AddToDashboardBody(props: Props): ReactElement {
-  const { exploreId, onClose, saveTargets } = props;
+export function AddToDashboardForm(props: Props): ReactElement {
+  const { exploreId, onClose } = props;
   const exploreItem = useSelector(getExploreItemSelector(exploreId))!;
   const [submissionError, setSubmissionError] = useState<SubmissionError | undefined>();
   const {
@@ -69,7 +69,26 @@ export function AddToDashboardBody(props: Props): ReactElement {
     control,
     formState: { errors },
     watch,
-  } = useFormContext();
+  } = useForm<FormDTO>({
+    defaultValues: { saveTarget: SaveTarget.NewDashboard },
+  });
+
+  const canCreateDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
+  const canWriteDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+
+  const saveTargets: Array<SelectableValue<SaveTarget>> = [];
+  if (canCreateDashboard) {
+    saveTargets.push({
+      label: 'New dashboard',
+      value: SaveTarget.NewDashboard,
+    });
+  }
+  if (canWriteDashboard) {
+    saveTargets.push({
+      label: 'Existing dashboard',
+      value: SaveTarget.ExistingDashboard,
+    });
+  }
 
   const saveTarget = saveTargets.length > 1 ? watch('saveTarget') : saveTargets[0].value;
 
