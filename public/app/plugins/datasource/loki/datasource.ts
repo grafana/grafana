@@ -52,8 +52,8 @@ import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
 import {
+  isValidQuery,
   placeHolderScopedVars,
-  validateQuery,
 } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
@@ -455,8 +455,7 @@ export class LokiDatasource
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    const errors = validateQuery(query, this.interpolateString(query, placeHolderScopedVars), []);
-    if (typeof errors === 'object') {
+    if (!isValidQuery(query, this.interpolateString(query, placeHolderScopedVars), [])) {
       return undefined;
     }
 

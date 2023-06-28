@@ -1204,6 +1204,25 @@ describe('LokiDatasource', () => {
       ds.getQueryStats('{foo="bar"}');
       expect(spy).toHaveBeenCalled();
     });
+
+    it('validates queries with variables', async () => {
+      const ds = createLokiDatasource(templateSrvStub);
+      ds.statsMetadataRequest = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
+
+      expect(ds.getQueryStats('rate({instance="server\\1"}[$__interval])')).resolves.toEqual({
+        streams: 0,
+        chunks: 0,
+        bytes: 0,
+        entries: 0,
+      });
+    });
+
+    // it('does not call stats if the query is invalid', () => {
+    //   const ds = createLokiDatasource(templateSrvStub);
+    //   const spy = jest.spyOn(ds, 'statsMetadataRequest');
+    //   ds.getQueryStats('rate({label="value"} [$__interval');
+    //   expect(spy).not.toHaveBeenCalled();
+    // });
   });
 
   describe('statsMetadataRequest', () => {

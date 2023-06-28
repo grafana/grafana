@@ -16,6 +16,10 @@ interface ParseError {
   node: SyntaxNode;
 }
 
+export function isValidQuery(query: string, interpolatedQuery: string, queryLines: string[]): boolean {
+  return validateQuery(query, interpolatedQuery, queryLines) === false ? true : false;
+}
+
 export function validateQuery(
   query: string,
   interpolatedQuery: string,
