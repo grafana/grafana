@@ -15,7 +15,7 @@ weight: 400
 
 # Add features to Explore queries
 
-[Explore]({{< relref "../../../../explore/" >}}) allows users can make ad-hoc queries without the use of a dashboard. This is useful when they want to troubleshoot or learn more about the data.
+[Explore]({{< relref "../../../../explore" >}}) allows users can make ad-hoc queries without the use of a dashboard. This is useful when they want to troubleshoot or learn more about the data.
 
 Your data source supports Explore by default and uses the existing query editor for the data source. This guide explains how to extend functionality for Explore queries in a data source plugin.
 

@@ -34,7 +34,7 @@ Example plugins
 
 You might also be interested in the available tutorials around authoring a plugin.
 
-- [Grafana Tutorials](../create-a-grafana-plugin/develop-a-plugin)
+- [Grafana Tutorials]({{< relref "../create-a-grafana-plugin/develop-a-plugin" >}})
 
 ## What languages?
 
@@ -46,7 +46,7 @@ You can use any build system that supports `systemjs`. All the built content sho
 
 ## Keep your plugin up to date
 
-New versions of Grafana can sometimes cause plugins to break. See our [documentation](../migration-guide/) for changes in
+New versions of Grafana can sometimes cause plugins to break. See our [documentation]({{< relref "../migration-guide" >}}) for changes in
 Grafana that can impact your plugin.
 
 ## Metadata
