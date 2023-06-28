@@ -98,6 +98,9 @@ type TempoQuery struct {
 	// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
 	Search *string `json:"search,omitempty"`
 
+	// Use (client|server)_service_namespace labels in addition to client|server to uniquely identify a service.
+	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
+
 	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 	ServiceMapQuery *string `json:"serviceMapQuery,omitempty"`
 

@@ -36,6 +36,10 @@ export interface TempoQuery extends common.DataQuery {
    */
   search?: string;
   /**
+   * Use (client|server)_service_namespace labels in addition to client|server to uniquely identify a service.
+   */
+  serviceMapIncludeNamespace?: boolean;
+  /**
    * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
    */
   serviceMapQuery?: string;
