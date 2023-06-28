@@ -1,6 +1,7 @@
 package assetpath
 
 import (
+	"net/url"
 	"strings"
 	"testing"
 
@@ -58,7 +59,10 @@ func TestService(t *testing.T) {
 			t.Run("Base", func(t *testing.T) {
 				base, err := svc.Base(jsonData["one"], plugins.ClassExternal, extPath("one"))
 				require.NoError(t, err)
-				require.Equal(t, "plugin-cdn/one/1.0.0/public/plugins/one", base)
+
+				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one")
+				require.NoError(t, err)
+				require.Equal(t, u, base)
 
 				base, err = svc.Base(jsonData["two"], plugins.ClassExternal, extPath("two"))
 				require.NoError(t, err)
@@ -72,11 +76,14 @@ func TestService(t *testing.T) {
 			t.Run("Module", func(t *testing.T) {
 				module, err := svc.Module(jsonData["one"], plugins.ClassExternal, extPath("one"))
 				require.NoError(t, err)
-				require.Equal(t, "plugin-cdn/one/1.0.0/public/plugins/one/module", module)
+
+				u, err := url.JoinPath(tc.cdnBaseURL, "/one/1.0.0/public/plugins/one/module.js")
+				require.NoError(t, err)
+				require.Equal(t, u, module)
 
 				module, err = svc.Module(jsonData["two"], plugins.ClassExternal, extPath("two"))
 				require.NoError(t, err)
-				require.Equal(t, "plugins/two/module", module)
+				require.Equal(t, "./public/plugins/two/module.js", module)
 
 				module, err = svc.Module(jsonData["table-old"], plugins.ClassCore, tableOldPath)
 				require.NoError(t, err)
