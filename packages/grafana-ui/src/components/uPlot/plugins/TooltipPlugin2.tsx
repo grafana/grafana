@@ -55,7 +55,7 @@ export const TooltipPlugin2 = ({ config }: TooltipPlugin2Props) => {
     config.addHook('setCursor', (u) => {
       setCursorPos({ left: u.cursor.left!, top: u.cursor.top! });
     });
-  });
+  }, [config, setCursorPos]);
 
   if (plotInstance.current) {
     return createPortal(
