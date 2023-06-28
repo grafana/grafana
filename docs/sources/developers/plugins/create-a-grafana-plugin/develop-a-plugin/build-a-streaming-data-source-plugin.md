@@ -19,7 +19,7 @@ In Grafana, you can set your dashboards to automatically refresh at a certain in
 
 ## Before you begin
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "build-a-data-source-plugin" >}})
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "./build-a-data-source-plugin" >}})
 
 Grafana uses [RxJS](https://rxjs.dev/) to continuously send data from a data source to a panel visualization.
 
