@@ -130,9 +130,11 @@ You can also enter text into the selector when the dropdown is open to search an
 
 {{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
-If you would like to explore your metrics further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
+If you would like to explore your metrics in the query builder further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
 
 {{< figure src="/static/img/docs/prometheus/metrics-explorer-option.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
+
+The metrics explorer is different than the metrics browser. The metrics explorer is only found in the query builder selection. The metrics browser is only found in the code editor. The metrics explorer does not have the ability to browse labels yet, but the metrics browser can display all labels on a metric name.
 
 The metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type and description for each metric. You can enter text into the search input to filter results.
 You can also filter by type.
@@ -202,7 +204,7 @@ The autocompletion dropdown includes documentation for the suggested items where
 ### Metrics browser
 
 The metrics browser locates metrics and selects relevant labels to help you build basic queries.
-When you click **Metrics browser**, it displays all available metrics and labels.
+When you click **Metrics browser** in code mode, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
 {{< figure src="/static/img/docs/prometheus/metric-browser.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics browser" >}}
