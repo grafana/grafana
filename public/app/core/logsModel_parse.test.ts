@@ -1498,4 +1498,374 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
       }
     `);
   });
+
+  it('should parse timestamps when no nanosecond data and no nanosecond field', () => {
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411, 1686142519997],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2', 'line3'],
+          },
+        ],
+        length: 3,
+      },
+    ];
+
+    expect(logSeriesToLogsModel(frames)).toMatchInlineSnapshot(`
+      {
+        "hasUniqueLabels": false,
+        "meta": [],
+        "rows": [
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line1",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line1",
+            "rowIndex": 0,
+            "searchWords": [],
+            "timeEpochMs": 1686142519756,
+            "timeEpochNs": "1686142519756000000",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00",
+            "timeLocal": "2023-06-07 06:55:19",
+            "timeUtc": "2023-06-07 12:55:19",
+            "uid": "A_0",
+            "uniqueLabels": {},
+          },
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line2",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line2",
+            "rowIndex": 1,
+            "searchWords": [],
+            "timeEpochMs": 1686142520411,
+            "timeEpochNs": "1686142520411000000",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:20-06:00",
+            "timeLocal": "2023-06-07 06:55:20",
+            "timeUtc": "2023-06-07 12:55:20",
+            "uid": "A_1",
+            "uniqueLabels": {},
+          },
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line3",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line3",
+            "rowIndex": 2,
+            "searchWords": [],
+            "timeEpochMs": 1686142519997,
+            "timeEpochNs": "1686142519997000000",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00",
+            "timeLocal": "2023-06-07 06:55:19",
+            "timeUtc": "2023-06-07 12:55:19",
+            "uid": "A_2",
+            "uniqueLabels": {},
+          },
+        ],
+      }
+    `);
+  });
+
+  it('should parse timestamps when no nanosecond data and nanosecond field', () => {
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411, 1686142519997],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2', 'line3'],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: ['1686142519756641000', '1686142520411000000', '1686142519997123456'],
+          },
+        ],
+        length: 3,
+      },
+    ];
+
+    expect(logSeriesToLogsModel(frames)).toMatchInlineSnapshot(`
+      {
+        "hasUniqueLabels": false,
+        "meta": [],
+        "rows": [
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "tsNs",
+                  "type": "string",
+                  "values": [
+                    "1686142519756641000",
+                    "1686142520411000000",
+                    "1686142519997123456",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line1",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line1",
+            "rowIndex": 0,
+            "searchWords": [],
+            "timeEpochMs": 1686142519756,
+            "timeEpochNs": "1686142519756641000",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00",
+            "timeLocal": "2023-06-07 06:55:19",
+            "timeUtc": "2023-06-07 12:55:19",
+            "uid": "A_0",
+            "uniqueLabels": {},
+          },
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "tsNs",
+                  "type": "string",
+                  "values": [
+                    "1686142519756641000",
+                    "1686142520411000000",
+                    "1686142519997123456",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line2",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line2",
+            "rowIndex": 1,
+            "searchWords": [],
+            "timeEpochMs": 1686142520411,
+            "timeEpochNs": "1686142520411000000",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:20-06:00",
+            "timeLocal": "2023-06-07 06:55:20",
+            "timeUtc": "2023-06-07 12:55:20",
+            "uid": "A_1",
+            "uniqueLabels": {},
+          },
+          {
+            "dataFrame": {
+              "fields": [
+                {
+                  "config": {},
+                  "name": "timestamp",
+                  "type": "time",
+                  "values": [
+                    1686142519756,
+                    1686142520411,
+                    1686142519997,
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "body",
+                  "type": "string",
+                  "values": [
+                    "line1",
+                    "line2",
+                    "line3",
+                  ],
+                },
+                {
+                  "config": {},
+                  "name": "tsNs",
+                  "type": "string",
+                  "values": [
+                    "1686142519756641000",
+                    "1686142520411000000",
+                    "1686142519997123456",
+                  ],
+                },
+              ],
+              "length": 3,
+              "refId": "A",
+            },
+            "datasourceType": undefined,
+            "entry": "line3",
+            "entryFieldIndex": 1,
+            "hasAnsi": false,
+            "hasUnescapedContent": false,
+            "labels": {},
+            "logLevel": "unknown",
+            "raw": "line3",
+            "rowIndex": 2,
+            "searchWords": [],
+            "timeEpochMs": 1686142519997,
+            "timeEpochNs": "1686142519997123456",
+            "timeFromNow": "mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00",
+            "timeLocal": "2023-06-07 06:55:19",
+            "timeUtc": "2023-06-07 12:55:19",
+            "uid": "A_2",
+            "uniqueLabels": {},
+          },
+        ],
+      }
+    `);
+  });
 });
