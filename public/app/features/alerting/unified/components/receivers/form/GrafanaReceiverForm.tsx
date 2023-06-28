@@ -10,13 +10,9 @@ import {
 import { NotifierDTO, NotifierType, useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
-import { onCallApi } from '../../../api/onCallApi';
-import { usePluginBridge } from '../../../hooks/usePluginBridge';
 import { testReceiversAction, updateAlertManagerConfigAction } from '../../../state/actions';
-import { SupportedPlugin } from '../../../types/pluginBridges';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
-import { option } from '../../../utils/notifier-types';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -24,6 +20,7 @@ import {
   updateConfigWithReceiver,
 } from '../../../utils/receiver-form';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallIntegration';
 
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
@@ -46,18 +43,18 @@ const defaultChannelValues: GrafanaChannelValues = Object.freeze({
 
 export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
   const dispatch = useDispatch();
-  const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
+
+  const {
+    onCallNotifier,
+    onCallFormValidators,
+    mapWebhookReceiversToOnCalls,
+    mapOnCallReceiversToWebhooks,
+    isLoadingOnCallIntegrations,
+  } = useOnCallIntegration();
 
   const { useGrafanaNotifiersQuery } = alertmanagerApi;
-  const { useCreateIntegrationMutation, useGetOnCallIntegrationsQuery } = onCallApi;
 
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
-
-  const [createIntegrationMutation] = useCreateIntegrationMutation();
-  const { data: onCallIntegrations = [], isLoading: isLoadingOnCallIntegrations } = useGetOnCallIntegrationsQuery(
-    undefined,
-    { skip: !isOnCallEnabled }
-  );
 
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
 
@@ -70,49 +67,15 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
       return [undefined, {}];
     }
 
-    const integrationUrls = onCallIntegrations.map((i) => i.integration_url);
-    const existingWithOnCall = {
-      ...existing,
-      grafana_managed_receiver_configs: existing.grafana_managed_receiver_configs?.map((config) => {
-        if (config.type === 'webhook' && integrationUrls.includes(config.settings['url'])) {
-          return {
-            ...config,
-            type: 'oncall',
-            settings: {
-              ...config.settings,
-              integration_type: 'existing_oncall_integration',
-              oncall_url: config.settings['url'],
-              url: undefined,
-            },
-          };
-        }
-        return config;
-      }),
-    };
-
+    const existingWithOnCall = mapWebhookReceiversToOnCalls(existing);
     return grafanaReceiverToFormValues(existingWithOnCall, grafanaNotifiers);
-  }, [existing, isLoadingNotifiers, grafanaNotifiers, isLoadingOnCallIntegrations, onCallIntegrations]);
+  }, [existing, isLoadingNotifiers, grafanaNotifiers, isLoadingOnCallIntegrations, mapWebhookReceiversToOnCalls]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
+    const receiverWithOnCall = await mapOnCallReceiversToWebhooks(newReceiver);
 
-    const onCallIntegrations = newReceiver.grafana_managed_receiver_configs?.filter((c) => c.type === 'oncall') ?? [];
-    const autoOnCallIntegrations = onCallIntegrations.filter(
-      (c) => c.settings['integration_type'] === 'new_oncall_integration'
-    );
-
-    const autoOnCallIntegrationsJobs = autoOnCallIntegrations.map(async (c) => {
-      const newIntegration = await createIntegrationMutation({
-        integration: 'grafana',
-        verbal_name: c.settings['integration_name'],
-      }).unwrap();
-      c.type = 'webhook';
-      c.settings['url'] = newIntegration.integration_url;
-    });
-
-    await Promise.all(autoOnCallIntegrationsJobs);
-
-    const newConfig = updateConfigWithReceiver(config, newReceiver, existing?.name);
+    const newConfig = updateConfigWithReceiver(config, receiverWithOnCall, existing?.name);
     dispatch(
       updateAlertManagerConfigAction({
         newConfig: newConfig,
@@ -165,66 +128,6 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
   const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
 
-  const onCallNotifier: NotifierDTO<NotifierType> = {
-    name: 'Grafana OnCall',
-    type: 'oncall',
-    description: 'Grafana OnCall contact point',
-    heading: 'OnCall heading',
-    options: [
-      option('integration_type', 'How to connect to OnCall', '', {
-        required: true,
-        element: 'radio',
-        selectOptions: [
-          {
-            value: 'new_oncall_integration',
-            label: 'New OnCall integration',
-            description: 'A new OnCall integration without escalation chains will be automatically created',
-          },
-          {
-            value: 'existing_oncall_integration',
-            label: 'Existing OnCall integration',
-            description: 'Use an existing OnCall integration',
-          },
-        ],
-      }),
-      option('integration_name', 'Integration name', 'The name of the new OnCall integration', {
-        required: true,
-        showWhen: { field: 'integration_type', is: 'new_oncall_integration' },
-      }),
-      option('oncall_url', 'OnCall Integration', 'The OnCall integration to send alerts to', {
-        element: 'select',
-        required: true,
-        showWhen: { field: 'integration_type', is: 'existing_oncall_integration' },
-        selectOptions: onCallIntegrations
-          ?.filter((i) => i.integration === 'grafana_alerting')
-          .map((i) => ({
-            label: i.verbal_name,
-            description: i.integration_url,
-            value: i.integration_url,
-          })),
-      }),
-      option(
-        'max_alerts',
-        'Max alerts',
-        'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
-        { placeholder: '0', validationRule: '(^\\d+$|^$)' }
-      ),
-    ],
-  };
-
-  const fieldValidators = {
-    integration_name: (value: string) => {
-      return onCallIntegrations?.map((i) => i.verbal_name).includes(value)
-        ? 'Integration of this name already exists in OnCall'
-        : true;
-    },
-    oncall_url: (value: string) => {
-      return onCallIntegrations?.map((i) => i.integration_url).includes(value)
-        ? true
-        : 'Selection of existing OnCall integration is required';
-    },
-  };
-
   if (isLoadingNotifiers) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
@@ -247,7 +150,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
         defaultItem={{ ...defaultChannelValues }}
         takenReceiverNames={takenReceiverNames}
         commonSettingsComponent={GrafanaCommonChannelSettings}
-        customValidators={fieldValidators}
+        customValidators={onCallFormValidators}
       />
       <TestContactPointModal
         onDismiss={() => setTestChannelValues(undefined)}
