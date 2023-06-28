@@ -13,6 +13,8 @@ import (
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
+type CommandType string
+
 const (
 	Outlier CommandType = "outlier"
 
@@ -22,13 +24,17 @@ const (
 	defaultInterval = 1000 * time.Millisecond
 )
 
+// Command is an interface implemented by all Machine Learning commands that can be executed against ML API.
 type Command interface {
+	// DatasourceUID returns UID of a data source that is used by machine learning as the source of data
 	DatasourceUID() string
+	// Execute creates a payload send request to the ML API by calling the function argument sendRequest, and then parses response.
+	// Function sendRequest is supposed to abstract the client configuration such creating http request, adding authorization parameters, host etc.
 	Execute(from, to time.Time, sendRequest func(method string, path string, payload []byte) (response.Response, error)) (*backend.QueryDataResponse, error)
 }
 
-type CommandType string
-
+// UnmarshalCommand parses a query parameters and creates a command. Requires key `type` to be specified.
+// It does not perform payload validation and only extracts required field. Returns Command that is ready to be executed.
 func UnmarshalCommand(query map[string]interface{}, appURL string) (Command, error) {
 	q := jsoniter.Wrap(query)
 	typeNode := q.Get("type")

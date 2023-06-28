@@ -30,6 +30,8 @@ const (
 	mlPluginID = "grafana-ml-app"
 )
 
+// MLNode is a node of expression tree that evaluates the expression by sending the payload to Machine Learning back-end.
+// See ml.UnmarshalCommand for supported commands.
 type MLNode struct {
 	baseNode
 	command   ml.Command
@@ -42,12 +44,14 @@ func (m *MLNode) NodeType() NodeType {
 	return TypeMLNode
 }
 
-// Execute runs ml.Command command and converts the response to mathexp.Results
+// Execute initializes plugin API client,  executes a ml.Command and then converts the result of the execution.
+// Returns non-empty mathexp.Results if evaluation was successful. Returns QueryError if command execution failed
 func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
 	logger := logger.FromContext(ctx).New("datasourceType", mlPluginID, "queryRefId", m.refID)
 	var result mathexp.Results
 	timeRange := m.TimeRange.AbsoluteTime(now)
 
+	// get the plugin configuration that will be used by client (auth, host, etc)
 	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId)
 	if err != nil {
 		if errors.Is(err, plugincontext.ErrPluginNotFound) {
@@ -56,6 +60,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		return result, fmt.Errorf("failed to get plugin settings: %w", err)
 	}
 
+	// responseType and respStatus will be updated below. Use defer to ensure that debug log message is always emitted
 	responseType := "unknown"
 	respStatus := "success"
 	defer func() {
@@ -78,6 +83,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 			Body:          payload,
 		}
 
+		// copy headers from the original request. Usually this contains information from upstream, e.g. FromAlert
 		for key, val := range m.request.Headers {
 			crReq.SetHTTPHeader(key, val)
 		}
@@ -98,6 +104,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		}
 	}
 
+	// data is not guaranteed to be specified. In this case simulate NoData scenario
 	if data == nil {
 		data = &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{}}
 	}
