@@ -79,7 +79,7 @@ def integration_benchmarks(trigger, prefix):
         },
         {
             "name": "mysql-integration-benchmarks-5.7",
-            "image":  images["build_image"],
+            "image": images["build_image"],
             "depends_on": ["wire-install"],
             "environment": {
                 "GRAFANA_TEST_DB": "mysql",
@@ -89,7 +89,7 @@ def integration_benchmarks(trigger, prefix):
         },
         {
             "name": "mysql8-integration-benchmarks-8.0",
-            "image":  images["build_image"],
+            "image": images["build_image"],
             "depends_on": ["wire-install"],
             "environment": {
                 "GRAFANA_TEST_DB": "mysql",
