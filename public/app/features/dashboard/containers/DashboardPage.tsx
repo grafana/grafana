@@ -51,7 +51,7 @@ export type DashboardPageRouteSearchParams = {
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
-  addWidget: boolean;
+  addWidget?: boolean;
   panelType?: string;
   inspect?: string;
   from?: string;

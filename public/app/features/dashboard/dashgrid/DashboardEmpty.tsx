@@ -149,7 +149,7 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       label: 'dashboard-empty-wrapper',
       flexDirection: 'column',
-      maxWidth: '920px',
+      maxWidth: '890px',
       gap: theme.spacing.gridSize * 4,
       paddingTop: theme.spacing(2),
 
