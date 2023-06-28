@@ -9,11 +9,11 @@ import {
   AzureAuthJSONDataType,
 } from '../types';
 
-export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
-  if (bootConfig.azure?.managedIdentityEnabled) {
+export const getDefaultCredentials = (managedIdentityEnabled: boolean, cloud: string): AzureCredentialsType => {
+  if (managedIdentityEnabled) {
     return { authType: 'msi' };
   } else {
-    return { authType: 'clientsecret', azureCloud: getDefaultAzureCloud(bootConfig) };
+    return { authType: 'clientsecret', azureCloud: cloud };
   }
 };
 
@@ -34,20 +34,26 @@ export const getCredentials = (
   dsSettings: DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>,
   bootConfig: GrafanaBootConfig
 ): AzureCredentialsType => {
+  // JSON data
   const credentials = dsSettings.jsonData?.azureCredentials;
+
+  // Secure JSON data/fields
   const clientSecretIsStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
   const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
+
+  // BootConfig data
+  const managedIdentityEnabled = !!bootConfig.azure?.managedIdentityEnabled;
   const cloud = bootConfig.azure?.cloud || AzureCloud.Public;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
   if (!credentials) {
-    return getDefaultCredentials(bootConfig);
+    return getDefaultCredentials(managedIdentityEnabled, cloud);
   }
 
   switch (credentials.authType) {
     case 'msi':
-      if (bootConfig.azure?.managedIdentityEnabled) {
+      if (managedIdentityEnabled) {
         return {
           authType: 'msi',
         };
