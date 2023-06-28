@@ -86,15 +86,15 @@ export function FolderActionsButton({ folder }: Props) {
     );
   };
 
-  const managePermissions = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
-  const move = t('browse-dashboards.folder-actions-button.move', 'Move');
-  const deleteFolderButton = t('browse-dashboards.folder-actions-button.delete', 'Delete');
+  const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
+  const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move');
+  const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete');
 
   const menu = (
     <Menu>
-      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissions} />}
-      {canMoveFolder && <MenuItem onClick={showMoveModal} label={move} />}
-      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label={deleteFolderButton} />}
+      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
+      {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
+      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
     </Menu>
   );
 
