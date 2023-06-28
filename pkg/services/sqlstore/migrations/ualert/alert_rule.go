@@ -220,7 +220,9 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 	if instantRaw, ok := queryData["instant"]; ok {
 		if err := json.Unmarshal(instantRaw, &instant); err != nil {
 			// Nothing to do here, we can't parse the instant field.
-			l.Info("Failed to parse instant", "instant", string(instantRaw), "err", err)
+			if isPrometheus, _ := isPrometheusQuery(queryData); isPrometheus {
+				l.Info("Failed to parse instant field on Prometheus query", "instant", string(instantRaw), "err", err)
+			}
 			return queryData
 		}
 	}
@@ -228,7 +230,9 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 	if rangeRaw, ok := queryData["range"]; ok {
 		if err := json.Unmarshal(rangeRaw, &rng); err != nil {
 			// Nothing to do here, we can't parse the range field.
-			l.Info("Failed to parse range", "range", string(rangeRaw), "err", err)
+			if isPrometheus, _ := isPrometheusQuery(queryData); isPrometheus {
+				l.Info("Failed to parse range field on Prometheus query", "range", string(rangeRaw), "err", err)
+			}
 			return queryData
 		}
 	}
@@ -240,7 +244,7 @@ func fixPrometheusBothTypeQuery(l log.Logger, queryData map[string]json.RawMessa
 
 	isPrometheus, err := isPrometheusQuery(queryData)
 	if err != nil {
-		l.Info("Failed to determine datasource type on alert rule that resembles a Prometheus 'Both' type query. Skipping conversion to range query.", "err", err)
+		l.Info("Unable to convert alert rule that resembles a Prometheus 'Both' type query to 'Range'", "err", err)
 		return queryData
 	}
 	if !isPrometheus {
