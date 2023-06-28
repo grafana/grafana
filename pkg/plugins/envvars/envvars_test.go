@@ -11,6 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,7 +40,8 @@ func TestInitializer_envVars(t *testing.T) {
 			},
 		}, licensing)
 
-		envVars := envVarsProvider.Get(context.Background(), p)
+		envVars, err := envVarsProvider.Get(context.Background(), p)
+		require.NoError(t, err)
 		assert.Len(t, envVars, 6)
 		assert.Equal(t, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal", envVars[0])
 		assert.Equal(t, "GF_VERSION=", envVars[1])
@@ -297,8 +301,39 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			envVarsProvider := NewProvider(tc.cfg, nil)
-			envVars := envVarsProvider.Get(context.Background(), tc.plugin)
+			envVars, err := envVarsProvider.Get(context.Background(), tc.plugin)
+			require.NoError(t, err)
 			tc.exp(t, envVars)
 		})
 	}
+}
+
+func TestInitializer_oauthEnvVars(t *testing.T) {
+	t.Run("backend datasource with oauth registration", func(t *testing.T) {
+		p := &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:                          "test",
+				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{},
+			},
+			ExternalService: &oauth.ExternalService{
+				ClientID:     "clientID",
+				ClientSecret: "clientSecret",
+				PrivateKey:   "privatePem",
+			},
+		}
+
+		envVarsProvider := NewProvider(&config.Cfg{
+			GrafanaAppURL: "https://myorg.com/",
+			Features:      featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
+		}, nil)
+		envVars, err := envVarsProvider.Get(context.Background(), p)
+
+		require.NoError(t, err)
+		assert.Len(t, envVars, 5)
+		assert.Equal(t, "GF_VERSION=", envVars[0])
+		assert.Equal(t, "GF_APP_URL=https://myorg.com/", envVars[1])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_ID=clientID", envVars[2])
+		assert.Equal(t, "GF_PLUGIN_APP_CLIENT_SECRET=clientSecret", envVars[3])
+		assert.Equal(t, "GF_PLUGIN_APP_PRIVATE_KEY=privatePem", envVars[4])
+	})
 }

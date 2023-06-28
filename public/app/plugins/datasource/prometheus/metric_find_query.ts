@@ -7,6 +7,12 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
+import {
+  PrometheusLabelNamesRegex,
+  PrometheusLabelNamesRegexWithMatch,
+  PrometheusMetricNamesRegex,
+  PrometheusQueryResultRegex,
+} from './migrations/variableMigration';
 import { PromQueryRequest } from './types';
 
 export default class PrometheusMetricFindQuery {
@@ -19,11 +25,23 @@ export default class PrometheusMetricFindQuery {
   }
 
   process(): Promise<MetricFindValue[]> {
-    const labelNamesRegex = /^label_names\(\)\s*$/;
+    const labelNamesRegex = PrometheusLabelNamesRegex;
+    const labelNamesRegexWithMatch = PrometheusLabelNamesRegexWithMatch;
     const labelValuesRegex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\)\s*$/;
-    const metricNamesRegex = /^metrics\((.+)\)\s*$/;
-    const queryResultRegex = /^query_result\((.+)\)\s*$/;
+    const metricNamesRegex = PrometheusMetricNamesRegex;
+    const queryResultRegex = PrometheusQueryResultRegex;
     const labelNamesQuery = this.query.match(labelNamesRegex);
+    const labelNamesMatchQuery = this.query.match(labelNamesRegexWithMatch);
+
+    if (labelNamesMatchQuery) {
+      const selector = `{__name__=~".*${labelNamesMatchQuery[1]}.*"}`;
+      return this.datasource.languageProvider.getSeriesLabels(selector, []).then((results) =>
+        results.map((result) => ({
+          text: result,
+        }))
+      );
+    }
+
     if (labelNamesQuery) {
       return this.datasource.getTagKeys();
     }
