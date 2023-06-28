@@ -83,6 +83,6 @@ export const fieldLookupTransformRegistryItem: TransformerRegistryItem<FieldLook
   editor: FieldLookupTransformerEditor,
   transformation: fieldLookupTransformer,
   name: 'Field lookup',
-  description: `Use a field value to lookup additional fields from an external source.  This currently supports spatial data, but will eventually support more formats`,
+  description: `Use a field value to lookup additional fields from an external source. This currently supports spatial data, but will eventually support more formats.`,
   state: PluginState.alpha,
 };
