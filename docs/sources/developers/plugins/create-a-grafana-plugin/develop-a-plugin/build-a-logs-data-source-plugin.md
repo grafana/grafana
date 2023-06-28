@@ -1,8 +1,8 @@
 ---
 title: Build a logs data source plugin
+description: How to build a logs data source plugin.
 aliases:
   - ../../../plugins/build-a-logs-data-source-plugin/
-description: How to build a logs data source plugin.
 keywords:
   - grafana
   - plugins
@@ -19,7 +19,7 @@ Grafana data source plugins support metrics, logs, and other data types. The ste
 
 ## Before you begin
 
-This guide assumes that you're already familiar with how to [Build a data source plugin](./build-a-data-source-plugin.md) for metrics. We recommend that you review this material before continuing.
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "build-a-data-source-plugin" >}}) for metrics. We recommend that you review this material before continuing.
 
 ## Add logs support to your data source
 

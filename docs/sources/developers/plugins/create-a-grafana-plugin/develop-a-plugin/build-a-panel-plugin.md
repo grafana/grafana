@@ -1,13 +1,6 @@
 ---
 title: Build a panel plugin
-summary: Learn how to create a custom visualization for your dashboards.
 description: Learn how to create a custom visualization for your dashboards.
-id: build-a-panel-plugin
-categories: ['plugins']
-tags: ['beginner']
-status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 100
 ---
 
