@@ -50,12 +50,14 @@ import (
 )
 
 const (
-	LEVEL0_FOLDER_NUM  = 300
-	LEVEL1_FOLDER_NUM  = 30
-	LEVEL2_FOLDER_NUM  = 5
-	LEAF_DASHBOARD_NUM = 50
-	TEAM_NUM           = 50
-	TEAM_MEMBER_NUM    = 5
+	LEVEL0_FOLDER_NUM    = 300
+	LEVEL1_FOLDER_NUM    = 30
+	LEVEL2_FOLDER_NUM    = 5
+	LEVEL0_DASHBOARD_NUM = 10
+	LEVEL1_DASHBOARD_NUM = 10
+	LEVEL2_DASHBOARD_NUM = 30
+	TEAM_NUM             = 50
+	TEAM_MEMBER_NUM      = 5
 )
 
 type benchScenario struct {
@@ -68,46 +70,68 @@ type benchScenario struct {
 	userSvc      user.Service
 }
 
-func BenchmarkNestedFoldersOn(b *testing.B) {
+func BenchmarkFolderListAndSearch(b *testing.B) {
 	start := time.Now()
 	b.Log("setup start")
-	features := featuremgmt.WithFeatures("nestedFolders")
 	sc := setupDB(b)
-	m := setupServer(b, sc, features)
 	b.Log("setup time:", time.Since(start))
 
-	limit := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
-	if limit > 5000 { // the search API handler return 412 if limit > 5000
+	limit := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+	if limit > 5000 { // the search API handler fails with 412 if limit > 5000
 		limit = 5000
 	}
 	benchmarks := []struct {
 		desc        string
 		url         string
 		expectedLen int
+		features    *featuremgmt.FeatureManager
 	}{
 		{
-			desc:        "get root folders",
+			desc:        "get root folders with nested folders feature enabled",
 			url:         "/api/folders",
 			expectedLen: LEVEL0_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
-			desc:        "get subfolders",
+			desc:        "get subfolders with nested folders feature enabled",
 			url:         "/api/folders?parentUid=folder0",
 			expectedLen: LEVEL1_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
-			desc:        "search inherited dashboards",
+			desc:        "search inherited dashboards with nested folders feature enabled",
 			url:         fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit),
 			expectedLen: limit,
+			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
-			desc:        "search specific dashboard",
-			url:         fmt.Sprintf("/api/search?type=dash-db&query=dashboard_0_0_0_0&limit=%d", limit),
+			desc:        "search specific dashboard with nested folders feature enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
+			features:    featuremgmt.WithFeatures("nestedFolders"),
+		},
+		{
+			desc:        "get root folders with nested folders feature disabled",
+			url:         "/api/folders",
+			expectedLen: LEVEL0_FOLDER_NUM,
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search dashboards with nestedFolders feature disabled",
+			url:         fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit),
+			expectedLen: LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM,
+			features:    featuremgmt.WithFeatures(),
+		},
+		{
+			desc:        "search specific dashboard with nestedFolders feature disabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			expectedLen: 1,
+			features:    featuremgmt.WithFeatures(),
 		},
 	}
 	for _, bm := range benchmarks {
 		b.Run(bm.desc, func(b *testing.B) {
+			m := setupServer(b, sc, bm.features)
 			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
 			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: sc.userID, OrgID: sc.signedInUser.OrgID})
 			b.ResetTimer()
@@ -228,43 +252,87 @@ func setupDB(b testing.TB) benchScenario {
 
 	foldersCap := LEVEL0_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM
 	folders := make([]*f, 0, foldersCap)
-	dashsCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEAF_DASHBOARD_NUM
+	dashsCap := LEVEL0_FOLDER_NUM * LEVEL1_FOLDER_NUM * LEVEL2_FOLDER_NUM * LEVEL2_DASHBOARD_NUM
 	dashs := make([]*dashboards.Dashboard, 0, foldersCap+dashsCap)
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
-		f, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
-		folders = append(folders, f)
+		f0, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
+		folders = append(folders, f0)
 		dashs = append(dashs, d)
 
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
 			RoleID:  roleID,
 			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
+			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 			Updated: now,
 			Created: now,
 		},
 			accesscontrol.Permission{
 				RoleID:  roleID,
 				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f.UID),
+				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
 				Updated: now,
 				Created: now,
 			},
 		)
 
+		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
+			str := fmt.Sprintf("dashboard_%d_%d", i, j)
+			dashID := rand.Int63()
+			dashs = append(dashs, &dashboards.Dashboard{
+				ID:       dashID,
+				OrgID:    signedInUser.OrgID,
+				IsFolder: false,
+				UID:      str,
+				FolderID: f0.ID,
+				Slug:     str,
+				Title:    str,
+				Data:     simplejson.New(),
+				Created:  now,
+				Updated:  now,
+			})
+
+			dashTags = append(dashTags, &dashboardTag{
+				DashboardId: dashID,
+				Term:        fmt.Sprintf("tag%d", j),
+			})
+		}
+
 		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
-			f1, d1 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d", i, j), &f.UID)
+			f1, d1 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
+
+			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
+				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
+				dashID := rand.Int63()
+				dashs = append(dashs, &dashboards.Dashboard{
+					ID:       dashID,
+					OrgID:    signedInUser.OrgID,
+					IsFolder: false,
+					UID:      str,
+					FolderID: f1.ID,
+					Slug:     str,
+					Title:    str,
+					Data:     simplejson.New(),
+					Created:  now,
+					Updated:  now,
+				})
+
+				dashTags = append(dashTags, &dashboardTag{
+					DashboardId: dashID,
+					Term:        fmt.Sprintf("tag%d", k),
+				})
+			}
 
 			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
 				f2, d2 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
-				for l := 0; l < LEAF_DASHBOARD_NUM; l++ {
+				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := rand.Int63()
 					dashs = append(dashs, &dashboards.Dashboard{
