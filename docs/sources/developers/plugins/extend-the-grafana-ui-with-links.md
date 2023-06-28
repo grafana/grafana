@@ -1,5 +1,5 @@
 ---
-title: Use extensions to add links to app plugins
+title: Use extensions to add new functionality in the Grafana user interface
 description: Learn how to add links to the Grafana user interface from an app plugin
 ---
 
@@ -7,21 +7,21 @@ description: Learn how to add links to the Grafana user interface from an app pl
 
 Before we go into details we need to cover the two major concepts in the UI extensions feature of Grafana.
 
-1. Extension point - the place in the UI where the extensions are displayed to the user. An example of this is the panel menu in Grafana dashboards.
-2. Extension - functionality that you want to provide to the user at an extension point. Ususally registered by an app plugin, that extends Grafana with some kind of new functionality. Registering an extension will provide a quick and esay way to use this functionality from the UI where the extension point is located.
+1. Extension point - a place in the UI where plugins can provide new functionality to the end user. Examples of extension points are the dashboard panel menu or toolbar in explore.
+2. Extensions - New functionality, ususally registered by an app plugin, that will be displayed at an extension point. Examples of extensions are the possibility to create an incident directly from the dashboard panel menu.
 
 ![panel menu](https://user-images.githubusercontent.com/172951/242723354-a10d6238-22f1-4458-b85e-ac3c7f014b22.png)
 
-In the example above, we have one extension point and two plugins adding extensions to that extension point. This highlights one of the benefits of using UI extensions. Once you have added an extension point to your UI it can be extended multiple times by multiple plugins.
+In the example above we have one extension point with two extensions registered. This highlights one of the benefits of using UI extensions. Once you have added an extension point to your UI it can be extended multiple times by multiple plugins.
 
 ## When should I add an extension point?
 
-If you have parts of your UI where it would improve the user experience to allow users to trigger functionality directly from the current view instead of navigating to the plugin, then it might be a good idea to consider adding an extension point.
+If you have parts of your UI where it would improve the user experience to allow users to trigger functionality directly from the current view instead of navigating to the plugin. If this is the case, then it might be a good idea to consider adding an extension point.
 
 Examples where it would be useful:
 
 - The user views a dashboard with historical data. By adding an extension point to this part of the UI the Machine Learning app plugin can give the user the ability to create a forcast for that data directly from the panel.
-- The user views a firing alert. By adding an extension point to this part of the UI the Incident app plugin can give the user the ability to create an incident directly from the firing alert view.
+- The user views a firing alert. By adding an extension point to this part of the UI the Incident app plugin can give the user the ability to create an incident directly from the alert view.
 
 ## Why should I add an extension point?
 
@@ -41,11 +41,23 @@ Extension points living in core Grafana should start with `grafana/` and extensi
 
 The second thing you need to consider is how to design the UI of the extension point so it supports a scenario where multiple extensions are being added without breaking the UI.
 
+You also need to consider if there are any information from the current view that should be shared with the extensions added to the extension point. It could be information from the current view that could let the extending plugin prefill values etc in the functionality being added via the extension.
+
 Lastly you need to call the `getPluginExtensions` with your extension point ID to recieve the list of configured extensions for your extension point.
 
-# Use extensions to add links to app plugins
+```typescript
+const extensionPointId = 'plugins/myorg-extensionpoint-app/actions';
+const context: AppExtensionContext = {
+  // Add information that should be shared with the extensions to this object.
+};
 
-You can use the Plugin extensions API with your Grafana app plugins to add links to the Grafana UI. This feature lets you send users to your plugin's pages from other spots in the Grafana application.
+const { extensions } = getPluginExtensions({
+  extensionPointId,
+  context,
+});
+```
+
+# How can I extend a plugin/Grafana with new functionality?
 
 ## Before you begin
 
@@ -60,6 +72,7 @@ Be sure your plugin meets the following requirements before proceeding:
 An _extension point_ is a location within the Grafana UI where a plugin can insert links. The IDs of all extension points within Grafana start with `grafana/`. For example, you can use the following extension point ID:
 
 - `grafana/dashboard/panel/menu`: extension point for all panel dropdown menus in dashboards
+- `grafana/explore/toolbar/action`: extension point for toolbar actions in explore
 
 ## Add a link extension within a Grafana dashboard panel menu
 
