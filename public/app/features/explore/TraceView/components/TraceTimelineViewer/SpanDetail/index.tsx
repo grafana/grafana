@@ -18,7 +18,7 @@ import cx from 'classnames';
 import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -254,13 +254,21 @@ export default function SpanDetail(props: SpanDetailProps) {
             target: '_blank',
             origin: logLinks[0].field,
             onClick: (event: React.MouseEvent) => {
+              // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+              // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+              // this interaction will not be tracked with link right clicks
               reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                 datasourceType: datasourceType,
                 grafana_version: config.buildInfo.version,
                 type: 'log',
                 location: 'spanDetails',
               });
-              logLinks?.[0].onClick?.(event);
+
+              if (logLinks?.[0].onClick) {
+                logLinks?.[0].onClick?.(event);
+              } else {
+                locationService.push(logLinks?.[0].href);
+              }
             },
           }}
           buttonProps={{ icon: 'gf-logs' }}
