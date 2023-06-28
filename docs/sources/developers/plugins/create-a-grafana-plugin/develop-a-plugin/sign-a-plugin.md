@@ -20,7 +20,7 @@ All Grafana Labs-authored backend plugins, including Enterprise plugins, are sig
 
 Before you can sign your plugin, you need to decide whether you want to sign it as a _public_ or a _private_ plugin.
 
-To make your plugin publicly available outside of your organization, sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from the [Grafana plugin catalog](/plugins) and can be installed by anyone.
+To make your plugin publicly available outside of your organization, sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from the [Grafana plugin catalog](https://grafana.com/plugins) and can be installed by anyone.
 
 If you intend to only use the plugin within your organization, sign it under a _private_ [signature level](#plugin-signature-levels).
 
@@ -28,13 +28,13 @@ If you intend to only use the plugin within your organization, sign it under a _
 
 To verify ownership of your plugin, generate an API key that you'll use every time you need to sign a new version of your plugin.
 
-1. [Create a Grafana Cloud account](/signup).
+1. [Create a Grafana Cloud account](https://grafana.com/signup).
 
 1. Make sure that the first part of the plugin ID matches the slug of your Grafana Cloud account.
 
    You can find the plugin ID in the `plugin.json` file inside your plugin directory. For example, if your account slug is `acmecorp`, you need to prefix the plugin ID with `acmecorp-`.
 
-1. [Create a Grafana Cloud API key](/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
+1. [Create a Grafana Cloud API key](https://grafana.com/docs/grafana-cloud/reference/create-api-key/) with the **PluginPublisher** role.
 
 ## Sign a public plugin
 

@@ -1,13 +1,6 @@
 ---
 title: Build a data source plugin
-summary: Create a plugin to add support for your own data sources.
 description: Create a plugin to add support for your own data sources.
-id: build-a-data-source-plugin
-categories: ['plugins']
-tags: ['beginner']
-status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 300
 ---
 
@@ -38,7 +31,7 @@ In this tutorial, you'll:
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="latest" >}}
 
-To learn how to create a backend data source plugin, see [Build a data source backend plugin](./build-a-data-source-backend-plugin.md).
+To learn how to create a backend data source plugin, see [Build a data source backend plugin]({{< relref "./build-a-data-source-backend-plugin.md" >}})
 
 ## Anatomy of a plugin
 
@@ -313,7 +306,7 @@ So far, you've generated the data returned by the data source. A more realistic 
 
 While you can use something like [axios](https://github.com/axios/axios) or the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make requests, we recommend using the [`getBackendSrv` function](https://github.com/grafana/grafana/blob/main/packages/grafana-runtime/src/services/backendSrv.ts) from the [`grafana-runtime` package](https://github.com/grafana/grafana/tree/main/packages/grafana-runtime).
 
-The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins](../../extend-a-plugin/add-authentication-for-data-source-plugins.md).
+The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins]({{< relref  "../extend-a-plugin/add-authentication-for-data-source-plugins.md" >}}).
 
 1. Import `getBackendSrv`.
 

@@ -154,7 +154,7 @@ func (d *SampleDatasource) CheckHealth(_ context.Context, req *backend.CheckHeal
 
 We strongly recommend that you not allow unsigned plugins in your Grafana installation. By allowing unsigned plugins, we can't guarantee the authenticity of the plugin, which could compromise the security of your Grafana installation.
 
-To sign your plugin, see [Sign a plugin](/docs/grafana/latest/developers/plugins/create-a-grafana-plugin/develop-a-plugin/sign-a-plugin.md).
+To sign your plugin, see [Sign a plugin]({{< relref "../../create-a-grafana-plugin/develop-a-plugin/sign-a-plugin.md" >}}).
 
 You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../../../setup-grafana/configure-grafana#allow_loading_unsigned_plugins" >}}) configuration setting.
 

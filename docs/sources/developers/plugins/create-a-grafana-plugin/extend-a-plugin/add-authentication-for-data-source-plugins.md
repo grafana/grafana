@@ -41,7 +41,7 @@ Data source plugins have two ways of storing custom configuration: `jsonData` an
 
 Users with the Viewer role can access data source configuration such as the contents of `jsonData` in cleartext. If you've enabled anonymous access, anyone who can access Grafana in their browser can see the contents of `jsonData`.
 
-Users of [Grafana Enterprise](/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](/docs/grafana/latest/enterprise/datasource_permissions).
+Users of [Grafana Enterprise](https://grafana.com/products/enterprise/grafana/) can restrict access to data sources to specific users and teams. For more information, refer to [Data source permissions](/docs/grafana/latest/enterprise/datasource_permissions).
 
 > **Important:** Do not use `jsonData` with sensitive data such as password, tokens, and API keys. If you need to store sensitive information, use `secureJsonData` instead.
 
@@ -130,7 +130,7 @@ The Grafana server comes with a proxy that lets you define templates for your re
 
 ### Add a proxy route to your plugin
 
-To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json](/docs/grafana/developers/plugins/metadata.md) file.
+To forward requests through the Grafana proxy, you need to configure one or more _proxy routes_. A proxy route is a template for any outgoing request that is handled by the proxy. You can configure proxy routes in the [plugin.json]({{< relref "../../metadata.md" >}}) file.
 
 1. Add the route to `plugin.json`:
 

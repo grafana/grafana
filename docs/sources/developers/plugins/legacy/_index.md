@@ -14,7 +14,7 @@ weight: 600
 
 > **Note:** Since Grafana 7.0, writing plugins using Angular is no longer recommended. If you're looking to build a new plugin, refer to our [Plugins]({{< relref "../../plugins" >}}) documentation.
 
-You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](/plugins/).
+You can extend Grafana by writing your own plugins and then share them with other users in [our plugin repository](https://grafana.com/plugins/).
 
 Grafana already has a strong community of contributors and plugin developers. By making it easier to develop and install plugins with resources such as this guide, we hope that the community can grow even stronger and develop new plugins that we would never think about.
 
@@ -93,7 +93,7 @@ export { WorldmapCtrl as PanelCtrl };
 There are three ways that you can start developing a Grafana plugin.
 
 1. Set up a Grafana development environment. [(described here)](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md) and place your plugin in the `data/plugins` folder.
-1. Install Grafana and place your plugin in the plugins directory which is set in your [config file](/administration/configuration). By default this is `/var/lib/grafana/plugins` on Linux systems.
+1. Install Grafana and place your plugin in the plugins directory which is set in your config file. By default this is `/var/lib/grafana/plugins` on Linux systems.
 1. Place your plugin directory anywhere you like and specify it grafana.ini.
 
 We encourage people to set up the full Grafana environment so that you can get inspiration from the rest of the Grafana code base.

@@ -14,7 +14,7 @@ weight: 200
 
 # Add anonymous usage reporting
 
-Add anonymous usage tracking to your plugin to send [reporting events]({{< relref "../../../../../setup-grafana/configure-grafana#reporting_enabled" >}}) that describe how your plugin is being used to a tracking system configured by your Grafana server administrator.
+Add anonymous usage tracking to your plugin to send [reporting events]({{< relref "../../../../setup-grafana/configure-grafana#reporting_enabled" >}}) that describe how your plugin is being used to a tracking system configured by your Grafana server administrator.
 
 ## Event reporting
 

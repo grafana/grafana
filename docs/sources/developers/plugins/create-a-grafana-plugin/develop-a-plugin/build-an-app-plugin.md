@@ -1,13 +1,6 @@
 ---
 title: Build an app plugin
-summary: Learn at how to create an app for Grafana.
 description: Learn at how to create an app for Grafana.
-id: build-an-app-plugin
-categories: ['plugins']
-tags: ['beginner']
-status: Published
-authors: ['grafana_labs']
-Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 700
 draft: true
 ---

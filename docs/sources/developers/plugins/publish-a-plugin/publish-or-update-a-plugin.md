@@ -27,7 +27,7 @@ By having your plugin published on Grafana.com, more users will be able to disco
 
 When you build a plugin from source, a `dist` folder is created. This folder contains the production build or _plugin assets_ for your plugin.
 
-To package a plugin, refer to [Package a plugin]{{< relref "package-a-plugin.md" >}}).
+To package a plugin, refer to [Package a plugin]({{< relref "./package-a-plugin.md" >}}).
 
 ### Follow our guidelines
 
@@ -38,14 +38,14 @@ Get familiar with our plugin [publishing and signing criteria]({{< relref "./pub
 To speed up the time it takes to review your plugin:
 
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
-- Read our [6 tips for improving your Grafana plugin before you publish](/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
+- Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
 - Refer to [plugin-examples](https://github.com/grafana/grafana-plugin-examples) to review best practices for building your plugin.
 
 ## Publish your plugin
 
 Follow these steps to publish your plugin for the first time.
 
-1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Plugin**. The Create Plugin Submission dialog appears.
 
@@ -76,7 +76,7 @@ Follow these steps to publish your plugin for the first time.
 
 To submit an **update** for an already published plugin:
 
-1. [Sign in](/auth/sign-in) to your Grafana Cloud account.
+1. [Sign in](https://grafana.com/auth/sign-in) to your Grafana Cloud account.
 1. In the left menu, under **Org settings**, click **My Plugins**.
 1. Click **Submit Update** for the plugin you want to update. The Create Plugin Submission dialog appears.
    {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
