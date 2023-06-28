@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -20,7 +19,6 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,27 +56,8 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 
 	conditionEval, err := srv.evaluator.Create(ctx, evalCond)
 	if err != nil {
-		return ErrResp(http.StatusInternalServerError, err, "Failed to evaluate queries")
+		return ErrResp(http.StatusBadRequest, err, "invalid condition")
 	}
-
-	cfg := state.ManagerCfg{
-		Metrics:                 nil,
-		ExternalURL:             srv.appUrl,
-		InstanceStore:           nil,
-		Images:                  &backtesting.NoopImageService{},
-		Clock:                   clock.New(),
-		Historian:               nil,
-		MaxStateSaveConcurrency: 1,
-	}
-	manager := state.NewManager(cfg)
-	includeFolder := !srv.cfg.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
-	transitions := manager.ProcessEvalResults(
-		c.Req.Context(),
-		now,
-		rule,
-		results,
-		state.GetRuleExtraLabels(rule, body.NamespaceTitle, includeFolder),
-	)
 
 	now := body.GrafanaManagedCondition.Now
 	if now.IsZero() {
