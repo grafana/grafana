@@ -986,6 +986,7 @@ def e2e_tests_step(suite, port = 3001, tries = None):
         ],
         "environment": {
             "HOST": "grafana-server",
+            "GF_PATHS_PLUGINS"="../../../e2e/custom-plugins/"
         },
         "commands": [
             "apt-get install -y netcat",

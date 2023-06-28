@@ -1,6 +1,6 @@
 import { e2e } from '@grafana/e2e';
 
-import panelSandboxDashboard from './panelSandboxDashboard.json';
+import panelSandboxDashboard from '../dashboards/PanelSandboxDashboard.json';
 
 const DASHBOARD_ID = 'c46b2460-16b7-42a5-82d1-b07fbf431950';
 
