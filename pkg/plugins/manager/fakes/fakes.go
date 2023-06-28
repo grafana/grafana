@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -428,6 +429,6 @@ type FakeOauthService struct {
 	Result *oauth.ExternalService
 }
 
-func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *oauth.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
 	return f.Result, nil
 }

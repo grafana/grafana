@@ -9,6 +9,9 @@
       "name-column": "Ńämę",
       "tags-column": "Ŧäģş"
     },
+    "folder-actions-button": {
+      "folder-actions": "Főľđęř äčŧįőŉş"
+    },
     "no-results": {
       "clear": "Cľęäř şęäřčĥ äŉđ ƒįľŧęřş",
       "text": "Ńő řęşūľŧş ƒőūŉđ ƒőř yőūř qūęřy."
@@ -404,6 +407,10 @@
       "choose-interval": "Åūŧő řęƒřęşĥ ŧūřŉęđ őƒƒ. Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ",
       "duration-selected": "Cĥőőşę řęƒřęşĥ ŧįmę įŉŧęřväľ ŵįŧĥ čūřřęŉŧ įŉŧęřväľ {{durationAriaLabel}} şęľęčŧęđ"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Ŧūřŉ őŉ ľįvę şŧřęämįŉģ",
       "label": "Ŀįvę"
@@ -562,6 +569,16 @@
       "default-label": "Đęƒäūľŧ"
     },
     "title": "Přęƒęřęŉčęş"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş"
+    },
+    "nav-models": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "manage-folder-subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
+    }
   },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",

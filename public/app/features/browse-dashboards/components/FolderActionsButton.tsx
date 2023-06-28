@@ -4,6 +4,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -101,7 +102,7 @@ export function FolderActionsButton({ folder }: Props) {
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
         <Button variant="secondary">
-          Folder actions
+          <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>

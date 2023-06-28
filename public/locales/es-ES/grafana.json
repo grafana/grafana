@@ -9,6 +9,9 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "folder-actions": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -404,6 +407,10 @@
       "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
       "duration-selected": "Elegir intervalo de tiempo de actualización con el intervalo actual {{durationAriaLabel}} seleccionado"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Activar transmisión en directo",
       "label": "En directo"
@@ -562,6 +569,16 @@
       "default-label": "Por defecto"
     },
     "title": "Preferencias"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Cargando...",
