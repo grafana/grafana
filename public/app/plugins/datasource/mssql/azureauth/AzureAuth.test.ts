@@ -1,46 +1,34 @@
-import { AzureCredentialsType } from '../types';
+import { AzureCloud, AzureCredentialsType, ConcealedSecretType } from '../types';
 
 import {
-  concealedSecret,
   configWithManagedIdentityEnabled,
   configWithManagedIdentityDisabled,
   dataSourceSettingsWithMsiCredentials,
   dataSourceSettingsWithClientSecretOnServer,
   dataSourceSettingsWithClientSecretInSecureJSONData,
 } from './AzureAuth.testMocks';
-import {
-  getDefaultAzureCloud,
-  getDefaultCredentials,
-  getSecret,
-  getCredentials,
-  updateCredentials,
-} from './AzureCredentialsConfig';
+import { getDefaultCredentials, getSecret, getCredentials, updateCredentials } from './AzureCredentialsConfig';
+
+export const CLIENT_SECRET_SYMBOL: ConcealedSecretType = Symbol('Concealed client secret');
+
+export const CLIENT_SECRET_STRING = 'XXXX-super-secret-secret-XXXX';
 
 describe('AzureAuth', () => {
   describe('AzureCredentialsConfig', () => {
-    it('`getDefaultAzureCloud()` should return the correct cloud', () => {
-      const resultForDefinedCloud = getDefaultAzureCloud(configWithManagedIdentityDisabled);
-      const resultForUndefinedCloud = getDefaultAzureCloud(configWithManagedIdentityEnabled);
-
-      // Currently, the only supported cloud is AzureCloud, so we expect the same result for both defined and undefined cases.
-      expect(resultForDefinedCloud).toBe('AzureCloud');
-      expect(resultForUndefinedCloud).toBe('AzureCloud');
-    });
-
     it('`getDefaultCredentials()` should return the correct credentials based on whether the managed identity is enabled', () => {
-      const resultForManagedIdentityEnabled = getDefaultCredentials(configWithManagedIdentityEnabled);
-      const resultForManagedIdentityDisabled = getDefaultCredentials(configWithManagedIdentityDisabled);
+      const resultForManagedIdentityEnabled = getDefaultCredentials(true, AzureCloud.Public);
+      const resultForManagedIdentityDisabled = getDefaultCredentials(false, AzureCloud.Public);
 
       expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
       expect(resultForManagedIdentityDisabled).toEqual({ authType: 'clientsecret', azureCloud: 'AzureCloud' });
     });
 
     it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
-      const resultFromServerSideSecret = getSecret(dataSourceSettingsWithClientSecretOnServer);
-      expect(resultFromServerSideSecret).toBe(concealedSecret);
+      const resultFromServerSideSecret = getSecret(false, CLIENT_SECRET_SYMBOL);
+      expect(resultFromServerSideSecret).toBe(CLIENT_SECRET_SYMBOL);
 
-      const resultFromSecureJSONDataSecret = getSecret(dataSourceSettingsWithClientSecretInSecureJSONData);
-      expect(resultFromSecureJSONDataSecret).toBe('XXXX-super-secret-secret-XXXX');
+      const resultFromSecureJSONDataSecret = getSecret(true, CLIENT_SECRET_STRING);
+      expect(resultFromSecureJSONDataSecret).toBe(CLIENT_SECRET_STRING);
     });
 
     describe('getCredentials()', () => {
@@ -81,7 +69,7 @@ describe('AzureAuth', () => {
 
         expect(resultForClientSecretCredentialsOnServer).toEqual({
           ...basicExpectedResult,
-          clientSecret: concealedSecret,
+          clientSecret: CLIENT_SECRET_SYMBOL,
         });
 
         //   If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`,
@@ -92,7 +80,7 @@ describe('AzureAuth', () => {
         );
         expect(resultForClientSecretCredentialsInSecureJSON).toEqual({
           ...basicExpectedResult,
-          clientSecret: 'XXXX-super-secret-secret-XXXX',
+          clientSecret: CLIENT_SECRET_STRING,
         });
       });
     });

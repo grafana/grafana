@@ -18,11 +18,11 @@ export const getDefaultCredentials = (managedIdentityEnabled: boolean, cloud: st
 };
 
 export const getSecret = (
-  clientSecretIsStoredServerSide: boolean,
+  clientSecretStoredServerSide: boolean,
   clientSecret: string | symbol | undefined
 ): undefined | string | ConcealedSecretType => {
   const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
-  if (clientSecretIsStoredServerSide) {
+  if (clientSecretStoredServerSide) {
     // The secret is concealed server side, so return the symbol
     return concealedSecret;
   } else {
@@ -38,7 +38,7 @@ export const getCredentials = (
   const credentials = dsSettings.jsonData?.azureCredentials;
 
   // Secure JSON data/fields
-  const clientSecretIsStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
+  const clientSecretStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
   const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
 
   // BootConfig data
@@ -71,7 +71,7 @@ export const getCredentials = (
         azureCloud: credentials.azureCloud || cloud,
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
-        clientSecret: getSecret(clientSecretIsStoredServerSide, clientSecret),
+        clientSecret: getSecret(clientSecretStoredServerSide, clientSecret),
       };
   }
 };
@@ -81,9 +81,13 @@ export const updateCredentials = (
   bootConfig: GrafanaBootConfig,
   credentials: AzureCredentialsType
 ): DataSourceSettings<AzureAuthJSONDataType> => {
+  // BootConfig data
+  const managedIdentityEnabled = !!bootConfig.azure?.managedIdentityEnabled;
+  const cloud = bootConfig.azure?.cloud || AzureCloud.Public;
+
   switch (credentials.authType) {
     case 'msi':
-      if (!bootConfig.azure?.managedIdentityEnabled) {
+      if (!managedIdentityEnabled) {
         throw new Error('Managed Identity authentication is not enabled in Grafana config.');
       }
 
@@ -106,7 +110,7 @@ export const updateCredentials = (
           ...dsSettings.jsonData,
           azureCredentials: {
             authType: 'clientsecret',
-            azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
+            azureCloud: credentials.azureCloud || cloud,
             tenantId: credentials.tenantId,
             clientId: credentials.clientId,
           },

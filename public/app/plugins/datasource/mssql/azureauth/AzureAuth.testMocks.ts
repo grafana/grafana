@@ -1,9 +1,7 @@
 import { DataSourceSettings } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
-import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType, ConcealedSecretType } from '../types';
-
-export const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
+import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType } from '../types';
 
 export const configWithManagedIdentityEnabled: GrafanaBootConfig = {
   azure: { managedIdentityEnabled: true, userIdentityEnabled: false },
