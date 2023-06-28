@@ -9,6 +9,9 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "folder-actions": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -566,6 +569,16 @@
       "default-label": "Por defecto"
     },
     "title": "Preferencias"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Cargando...",
