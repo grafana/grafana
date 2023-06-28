@@ -94,7 +94,7 @@ export function changeSize(exploreId: string, { width }: { width: number }): Pay
   return changeSizeAction({ exploreId, width });
 }
 
-interface InitializeExploreOptions {
+export interface InitializeExploreOptions {
   exploreId: string;
   datasource: DataSourceRef | string | undefined;
   queries: DataQuery[];

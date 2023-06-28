@@ -2,7 +2,7 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types';
 
-import { listDashboards, listFolders, PAGE_SIZE, ROOT_PAGE_SIZE } from '../api/services';
+import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 
 import { findItem } from './utils';
 
@@ -44,7 +44,7 @@ export const refreshParents = createAsyncThunk(
     }
 
     for (const parentUID of parentsToRefresh) {
-      dispatch(refetchChildren({ parentUID, pageSize: parentUID ? PAGE_SIZE : ROOT_PAGE_SIZE }));
+      dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE }));
     }
   }
 );

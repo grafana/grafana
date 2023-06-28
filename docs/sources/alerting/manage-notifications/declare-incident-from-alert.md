@@ -1,4 +1,6 @@
 ---
+aliases:
+  - alerting/alerting-rules/declare-incident-from-alert/
 description: Declare an incident from a firing alert
 keywords:
   - grafana

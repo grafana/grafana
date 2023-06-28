@@ -40,9 +40,19 @@ interface DataSourceModalProps {
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
-  dashboard?: boolean;
-  mixed?: boolean;
   reportedInteractionFrom?: string;
+
+  // DS filters
+  tracing?: boolean;
+  mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
 }
 
 export function DataSourceModal({
