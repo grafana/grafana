@@ -3,10 +3,10 @@ package tempo
 import (
 	"encoding/json"
 	"fmt"
-	"go.opentelemetry.io/collector/model/pdata"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/collector/model/pdata"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/ptrace"
 	"go.opentelemetry.io/otel/attribute"
