@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "10.0.2";
+
 /**
  * Identical to timeseries... except it does not have timezone settings
  */

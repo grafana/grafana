@@ -11,6 +11,8 @@
 
 import * as common from '@grafana/schema';
 
+export const pluginVersion = "10.0.2";
+
 export enum TestDataQueryType {
   Annotations = 'annotations',
   Arrow = 'arrow',

@@ -9,6 +9,8 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+export const pluginVersion = "10.0.2";
+
 export interface ArcOption {
   /**
    * The color of the arc.

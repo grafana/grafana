@@ -11,6 +11,8 @@
 
 import * as ui from '@grafana/schema';
 
+export const pluginVersion = "10.0.2";
+
 export interface Options {
   /**
    * Controls the height of the rows
