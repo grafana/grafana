@@ -1,11 +1,8 @@
 ---
 title: Sign a plugin
 aliases:
-  - ../../plugins/
-  - ../../plugins/sign-a-plugin/
+  - ../../sign-a-plugin
   - ../../sign-a-plugin/
-  - ../../sign-a-plugin.md
-  - ../plugins/sign-a-plugin
   - /docs/sources/developers/plugins/sign-a-plugin/
   - /docs/sources/developers/plugins/sign-a-plugin
 description: How to sign a Grafana plugin.
