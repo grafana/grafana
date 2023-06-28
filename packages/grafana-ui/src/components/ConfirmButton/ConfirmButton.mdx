@@ -31,7 +31,7 @@ Apart from the button variant, you can also modify the button size and the butto
 
 ## With a custom button
 
-You can pass a function as a child to the `ConfirmButton` to render a custom button. The function will receive the `buttonProps` that you can spread on your button component.
+You can pass a custom button as a child to the `ConfirmButton`. The child will automatically receive the correct `onClick` from `ConfirmButton`.
 
 ```jsx
 <ConfirmButton
@@ -43,11 +43,7 @@ You can pass a function as a child to the `ConfirmButton` to render a custom but
     console.log('Action confirmed!');
   }}
 >
-  {(buttonProps) => (
-    <Button variant="secondary" {...buttonProps}>
-      Click me
-    </Button>
-  )}
+  <Button variant="secondary">Click me</Button>
 </ConfirmButton>
 ```
 

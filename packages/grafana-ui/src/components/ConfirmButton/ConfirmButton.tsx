@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { PureComponent } from 'react';
+import React, { PureComponent, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -11,13 +11,7 @@ import { Button, ButtonVariant } from '../Button';
 export interface Props extends Themeable2 {
   /** Confirm action callback */
   onConfirm(): void;
-  /** Children */
-  children:
-    | React.ReactNode
-    | ((buttonProps: {
-        onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
-        ref: React.RefObject<HTMLButtonElement>;
-      }) => React.ReactNode);
+  children: string | ReactElement;
   /** Custom button styles */
   className?: string;
   /** Button size */
@@ -126,12 +120,12 @@ class UnThemedConfirmButton extends PureComponent<Props, State> {
       <span className={styles.buttonContainer}>
         <div className={cx(disabled && styles.disabled)}>
           <span className={buttonClass}>
-            {typeof children !== 'function' ? (
+            {typeof children === 'string' ? (
               <Button size={size} fill="text" onClick={onClick} ref={this.mainButtonRef}>
                 {children}
               </Button>
             ) : (
-              children({ onClick, ref: this.mainButtonRef })
+              React.cloneElement(children, { onClick, ref: this.mainButtonRef })
             )}
           </span>
         </div>
