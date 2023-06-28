@@ -117,3 +117,10 @@ Edit a field override when you want to make changes to an override setting. The 
    - Edit settings on existing overrides or field selection parameters.
    - Delete existing override properties by clicking the **X** next to the property.
    - Add an override properties by clicking **Add override property**.
+  
+## fix 1 RegEx could be used and should be mention 
+https://community.grafana.com/t/need-help-with-override-field-name-with-regex/73843
+
+## fix 2 y-axis UX has been moved as per issue 
+https://github.com/grafana/grafana/issues/62963
+
