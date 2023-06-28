@@ -18,13 +18,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
-const defaultCacheTTL = time.Hour * 1
+const defaultBackgroundJobInterval = time.Hour * 1
 
 // backgroundJob implements the dynamic angular detectors provider job that is periodically executed in the background.
 type backgroundJob interface {
 	// runBackgroundJob updates the dynamic angular detectors from a source.
 	runBackgroundJob(ctx context.Context)
 }
+
+var (
+	_ backgroundJob  = &Dynamic{}
+	_ DynamicUpdater = &Dynamic{}
+)
 
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
@@ -63,11 +68,11 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynam
 		return nil, fmt.Errorf("httpclient new: %w", err)
 	}
 	d := &Dynamic{
-		log:                   log.New("plugins.angulardetector.gcom"),
+		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
 		store:                 store,
 		httpClient:            cl,
 		baseURL:               cfg.GrafanaComURL,
-		backgroundJobInterval: defaultCacheTTL,
+		backgroundJobInterval: defaultBackgroundJobInterval,
 		initialRestoreDone:    make(chan struct{}),
 	}
 	// By default, use ourselves as backgroundJob
@@ -226,6 +231,7 @@ func (d *Dynamic) notifyInitialRestoreDone() {
 
 // Run is the function implementing the background service and updates the detectors periodically.
 func (d *Dynamic) Run(ctx context.Context) error {
+	d.log.Debug("Started background service")
 	// Set initial value by restoring cache
 	opCtx, canc := context.WithTimeout(ctx, time.Minute*1)
 	if err := d.setDetectorsFromCache(opCtx); err != nil {

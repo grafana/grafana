@@ -26,7 +26,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	var mockGCOMPatterns GCOMPatterns
 	require.NoError(t, json.Unmarshal(mockGCOMResponse, &mockGCOMPatterns))
-	svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+	svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 	mockGCOMDetectors, err := svc.patternsToDetectors(mockGCOMPatterns)
 	require.NoError(t, err)
 
@@ -59,20 +59,20 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("ProvideDetectors", func(t *testing.T) {
 		t.Run("returns empty result by default", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval, dynamicWithInitialRestoreDone)
 			r := svc.ProvideDetectors()
 			require.Empty(t, r)
 		})
 
 		t.Run("returns cached detectors", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval, dynamicWithInitialRestoreDone)
 			svc.setDetectors(mockGCOMDetectors)
 			checkMockDetectors(t, svc.ProvideDetectors())
 		})
 
 		t.Run("awaits initial restore done", func(t *testing.T) {
 			t.Parallel()
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			done := make(chan struct{})
 			go func() {
 				time.Sleep(time.Second * 1)
@@ -109,7 +109,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("tryUpdateDetectors", func(t *testing.T) {
 		t.Run("successful", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			// Check that store is initially empty
 			dbV, err := svc.store.Get(context.Background())
@@ -148,7 +148,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			srv := scenario.newHTTPTestServer()
 			t.Cleanup(srv.Close)
 
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			// Set initial cached detectors
 			svc.setDetectors(mockGCOMDetectors)
@@ -177,7 +177,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("setDetectorsFromCache", func(t *testing.T) {
 		t.Run("empty store doesn't return an error", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			err := svc.setDetectorsFromCache(context.Background())
 			require.NoError(t, err)
@@ -185,7 +185,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		})
 
 		t.Run("store is restored", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			// Populate store
 			err := svc.store.Set(context.Background(), mockGCOMPatterns)
@@ -204,7 +204,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			gcom := newDefaultGCOMScenario()
 			srv := gcom.newHTTPTestServer()
 			t.Cleanup(srv.Close)
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			// Set initial store
 			err := svc.store.Set(context.Background(), mockGCOMPatterns)
@@ -224,11 +224,11 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
 			gcom := newDefaultGCOMScenario()
 			srv := gcom.newHTTPTestServer()
-			svc := provideDynamic(t, srv.URL, defaultCacheTTL)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
-				lastUpdated: time.Now().Add(defaultCacheTTL * -2),
+				lastUpdated: time.Now().Add(defaultBackgroundJobInterval * -2),
 			}
 			svc.store = mockStore
 
