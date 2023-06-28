@@ -204,7 +204,7 @@ require (
 	github.com/rs/cors v1.9.0 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/segmentio/encoding v0.3.6 // indirect
-	github.com/sergi/go-diff v1.2.0 // indirect
+	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20200824052919-0d455de96546 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -265,7 +265,7 @@ require (
 	github.com/grafana/dataplane/sdata v0.0.6
 	github.com/grafana/go-mssqldb v0.9.1
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482
-	github.com/grafana/thema v0.0.0-20230523123227-db9596a7096e
+	github.com/grafana/thema v0.0.0-20230628103417-8f63313207a5
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
