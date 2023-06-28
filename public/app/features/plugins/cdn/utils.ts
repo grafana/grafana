@@ -12,7 +12,7 @@ export function extractPluginIdVersionFromUrl(address: string) {
 }
 
 /*
-  Transforms plugin's source for CDNs load, can also set load.metadata.sourceMap for full source maps support.
+  Transforms plugin's source for CDNs loa.
   Plugins that require loading via a CDN need to have their asset paths translated to point to the configured CDN.
   e.g. public/plugins/my-plugin/data/ -> http://my-host.com/my-plugin/0.3.3/public/plugins/my-plugin/data/
  */
