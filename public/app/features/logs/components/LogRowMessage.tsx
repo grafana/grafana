@@ -21,7 +21,7 @@ interface Props {
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  pinned: boolean;
+  pinned?: boolean;
   styles: LogRowStyles;
 }
 

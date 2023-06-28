@@ -448,7 +448,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               </td>
             </tr>
             <tr ref={preEntryElement}></tr>
-            <tr ref={entryElement} className={cx(styles.entry, sticky ? styles.sticky : null)}>
+            <tr ref={entryElement} className={cx(styles.entry, sticky ? styles.sticky : null)} data-testid="entry-row">
               <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={[row]}
