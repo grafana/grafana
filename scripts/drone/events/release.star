@@ -4,7 +4,6 @@ This module returns all the pipelines used in the event of a release along with 
 
 load(
     "scripts/drone/steps/lib.star",
-    "artifacts_page_step",
     "build_backend_step",
     "build_docker_images_step",
     "build_frontend_package_step",
@@ -525,7 +524,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
             publish_images_step(
                 "enterprise2",
                 "release",
-                mode = "enterprise2",
                 docker_repo = "${{DOCKER_ENTERPRISE2_REPO}}",
             ),
         ],
@@ -556,8 +554,7 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
 
     return pipelines
 
-def publish_artifacts_step(mode):
-
+def publish_artifacts_step():
     return {
         "name": "publish-artifacts",
         "image": images["publish_image"],
@@ -616,7 +613,7 @@ def publish_artifacts_pipelines(mode):
     }
     steps = [
         compile_build_cmd(),
-        publish_artifacts_step(mode),
+        publish_artifacts_step(),
         publish_static_assets_step(),
         publish_storybook_step(),
     ]
@@ -701,7 +698,6 @@ def publish_npm_pipelines():
             environment = {"EDITION": "all"},
         ),
     ]
-
 
 def integration_test_pipelines():
     """
