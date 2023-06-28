@@ -545,6 +545,13 @@ var (
 			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
+			Name:         "frontendSandboxMonitorOnly",
+			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "sqlDatasourceDatabaseSelection",
 			Description:  "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly: true,

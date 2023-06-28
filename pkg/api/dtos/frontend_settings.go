@@ -228,6 +228,4 @@ type FrontendSettingsDTO struct {
 	// Enterprise
 	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
 	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
-
-	FrontendSandboxMonitorOnly bool `json:"frontendSandboxMonitorOnly"`
 }

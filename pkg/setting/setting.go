@@ -228,8 +228,6 @@ type Cfg struct {
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
 	CSPReportOnlyTemplate string
 	AngularSupportEnabled bool
-	// Sets the frontend plugin sandbox in monitor-only mode. Defaults to false.
-	FrontendSandboxMonitorOnly bool
 
 	TempDataLifetime time.Duration
 
@@ -1409,7 +1407,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
-	cfg.FrontendSandboxMonitorOnly = security.Key("frontend_sandbox_monitor_only").MustBool(false)
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
 		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")

@@ -59,7 +59,7 @@ import { logWarning } from './utils';
 type DistortionMap = Map<unknown, (originalAttrOrMethod: unknown, pluginId: string) => unknown>;
 const generalDistortionMap: DistortionMap = new Map();
 
-const monitorOnly = config.frontendSandboxMonitorOnly || false;
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function getGeneralSandboxDistortionMap() {
   if (generalDistortionMap.size === 0) {

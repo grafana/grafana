@@ -112,6 +112,7 @@ Experimental features might be changed or removed without prior notice.
 | `extraThemes`                            | Enables extra themes                                                                                         |
 | `lokiPredefinedOperations`               | Adds predefined query operations to Loki query editor                                                        |
 | `pluginsFrontendSandbox`                 | Enables the plugins frontend sandbox                                                                         |
+| `frontendSandboxMonitorOnly`             | Enables monitor only in the plugin frontend sandbox (if enabled)                                             |
 | `cloudWatchLogsMonacoEditor`             | Enables the Monaco editor for CloudWatch Logs queries                                                        |
 | `exploreScrollableLogsContainer`         | Improves the scrolling behavior of logs in Explore                                                           |
 | `recordedQueriesMulti`                   | Enables writing multiple items from a single query within Recorded Queries                                   |

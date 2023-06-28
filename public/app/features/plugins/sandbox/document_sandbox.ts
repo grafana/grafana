@@ -7,7 +7,7 @@ import { isReactClassComponent, logWarning } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
-const monitorOnly = config.frontendSandboxMonitorOnly || false;
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');

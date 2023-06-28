@@ -5,7 +5,7 @@ import { logWarning as logWarningRuntime, logError as logErrorRuntime, config } 
 
 import { SandboxedPluginObject } from './types';
 
-const monitorOnly = config.frontendSandboxMonitorOnly || false;
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function isSandboxedPluginObject(value: unknown): value is SandboxedPluginObject {
   return !!value && typeof value === 'object' && value?.hasOwnProperty('plugin');
