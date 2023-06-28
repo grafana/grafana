@@ -56,6 +56,7 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
   emptyDashboardPage?: boolean;
@@ -104,5 +105,7 @@ export interface FeatureToggles {
   pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
   flameGraphV2?: boolean;
+  elasticToggleableFilters?: boolean;
+  vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
 }

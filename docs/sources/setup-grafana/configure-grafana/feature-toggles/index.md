@@ -27,6 +27,8 @@ Some features are enabled by default. You can disable these feature by setting t
 | `dataConnectionsConsole`                         | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.                        | Yes                |
 | `topnav`                                         | Enables new top navigation and page layouts                                                                                                                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`                 | Enables cross-account querying in CloudWatch datasources                                                                                                                                            | Yes                |
+| `redshiftAsyncQueryDataSupport`                  | Enable async query data support for Redshift                                                                                                                                                        | Yes                |
+| `athenaAsyncQueryDataSupport`                    | Enable async query data support for Athena                                                                                                                                                          | Yes                |
 | `newPanelChromeUI`                               | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                                                 | Yes                |
 | `accessTokenExpirationCheck`                     | Enable OAuth access_token expiration check and token refresh using the refresh_token                                                                                                                |                    |
 | `emptyDashboardPage`                             | Enable the redesigned user interface of a dashboard page that includes no panels                                                                                                                    | Yes                |
@@ -86,10 +88,9 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                    | Experimental framework to build interactive dashboards                                                       |
 | `disableSecretsCompatibility`               | Disable duplicated secret storage in legacy tables                                                           |
 | `logRequestsInstrumentedAsUnknown`          | Logs the path for requests that are instrumented as unknown                                                  |
-| `redshiftAsyncQueryDataSupport`             | Enable async query data support for Redshift                                                                 |
-| `athenaAsyncQueryDataSupport`               | Enable async query data support for Athena                                                                   |
 | `showDashboardValidationWarnings`           | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                           | Use double quotes to escape keyword in a MySQL query                                                         |
+| `nestedFolderPicker`                        | Enables the still in-development new folder picker to support nested folders                                 |
 | `showTraceId`                               | Show trace ids for requests                                                                                  |
 | `alertingBacktesting`                       | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                   | Enables drag and drop for CSV and Excel files                                                                |
@@ -117,6 +118,8 @@ Experimental features might be changed or removed without prior notice.
 | `pluginsDynamicAngularDetectionPatterns`    | Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones             |
 | `alertingLokiRangeToInstant`                | Rewrites eligible loki range queries to instant queries                                                      |
 | `flameGraphV2`                              | New version of flame graph with new features                                                                 |
+| `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                       |
+| `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 
 ## Development feature toggles

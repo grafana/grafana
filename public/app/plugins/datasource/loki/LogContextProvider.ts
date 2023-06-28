@@ -127,7 +127,11 @@ export class LogContextProvider {
     const query: LokiQuery = {
       expr,
       queryType: LokiQueryType.Range,
-      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
+      // refId has to be:
+      // - always different (temporarily, will be fixed later)
+      // - not increase in size
+      // because it may be called many times from logs-context
+      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}_${Math.random().toString()}`,
       maxLines: limit,
       direction: queryDirection,
       datasource: { uid: this.datasource.uid, type: this.datasource.type },

@@ -9,6 +9,12 @@
       "name-column": "Name",
       "tags-column": "Tags"
     },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
+    },
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query."
@@ -566,6 +572,16 @@
       "default-label": "Default"
     },
     "title": "Preferences"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "Dashboards",
+      "panels": "Panels"
+    },
+    "nav-models": {
+      "alert-rules": "Alert rules",
+      "manage-folder-subtitle": "Manage folder dashboards and permissions"
+    }
   },
   "tag-filter": {
     "loading": "Loading...",

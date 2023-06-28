@@ -25,6 +25,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { truncateTitle } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
@@ -324,14 +325,6 @@ export function getPanelMenu(
   }
 
   return menu;
-}
-
-function truncateTitle(title: string, length: number): string {
-  if (title.length < length) {
-    return title;
-  }
-  const part = title.slice(0, length - 3);
-  return `${part.trimEnd()}...`;
 }
 
 function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {

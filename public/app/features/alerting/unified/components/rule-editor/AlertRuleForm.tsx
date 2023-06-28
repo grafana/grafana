@@ -72,10 +72,9 @@ const AlertRuleNameInput = () => {
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
-  id?: string;
 };
 
-export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
+export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -83,8 +82,9 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
-  const routeParams = useParams<{ type: string }>();
+  const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
+  const uidFromParams = routeParams.id;
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -252,7 +252,7 @@ export const AlertRuleForm = ({ existing, prefill, id }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep alertUid={id} />
+                  <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
             </div>
