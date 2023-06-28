@@ -1,28 +1,5 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
-  "access-control": {
-    "add-permission": {
-      "role-label": "Role",
-      "team-label": "Team",
-      "title": "Add permission for",
-      "user-label": "User"
-    },
-    "add-permissions": {
-      "save": "Save"
-    },
-    "permission-list": {
-      "permission": "Permission"
-    },
-    "permissions": {
-      "add-label": "Add a permission",
-      "no-permissions": "There are no permissions",
-      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
-      "role": "Role",
-      "team": "Team",
-      "title": "Permissions",
-      "user": "User"
-    }
-  },
   "browse-dashboards": {
     "action": {
       "delete-button": "Delete",
@@ -165,10 +142,6 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
-    },
-    "select": {
-      "no-options-label": "No options found",
-      "placeholder": "Choose"
     }
   },
   "library-panel": {
