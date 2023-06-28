@@ -58,6 +58,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.5.0",
     "uplot": "1.6.24",
+    "xlsx": "^0.18.5",
     "xss": "^1.0.14"
   },
   "devDependencies": {

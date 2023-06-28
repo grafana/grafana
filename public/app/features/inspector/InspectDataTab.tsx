@@ -24,7 +24,13 @@ import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
-import { downloadAsJson, downloadDataFrameAsCsv, downloadLogsModelAsTxt, downloadTraceAsJson } from './utils/download';
+import {
+  downloadAsJson,
+  downloadDataFrameAsCsv,
+  downloadDataFrameAsExcel,
+  downloadLogsModelAsTxt,
+  downloadTraceAsJson,
+} from './utils/download';
 
 interface Props {
   isLoading: boolean;
@@ -93,6 +99,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
     const { transformId } = this.state;
 
     downloadDataFrameAsCsv(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', csvConfig, transformId);
+  };
+
+  exportExcel = (dataFrame: DataFrame) => {
+    const { panel } = this.props;
+    const { transformId } = this.state;
+
+    downloadDataFrameAsExcel(dataFrame, panel ? panel.getDisplayTitle() : 'Explore', transformId);
   };
 
   exportLogsAsTxt = () => {
@@ -240,6 +253,16 @@ export class InspectDataTab extends PureComponent<Props, State> {
             `}
           >
             <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => this.exportExcel(dataFrames[dataFrameIndex])}
+            className={css`
+              margin-bottom: 10px;
+              margin-left: 10px;
+            `}
+          >
+            <Trans i18nKey="dashboard.inspect-data.download-excel">Download Excel</Trans>
           </Button>
           {hasLogs && (
             <Button
