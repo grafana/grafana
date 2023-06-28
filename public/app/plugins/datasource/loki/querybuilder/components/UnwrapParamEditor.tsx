@@ -6,7 +6,7 @@ import { Select } from '@grafana/ui';
 import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
 import { LokiDatasource } from '../../datasource';
-import { getLogQueryFromMetricsQuery, isValidQuery } from '../../queryUtils';
+import { getLogQueryFromMetricsQuery, isQueryWithError } from '../../queryUtils';
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
 import { lokiQueryModeller } from '../LokiQueryModeller';
 import { LokiVisualQuery } from '../types';
@@ -56,7 +56,7 @@ async function loadUnwrapOptions(
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = lokiQueryModeller.renderQuery(query);
   const logExpr = getLogQueryFromMetricsQuery(queryExpr);
-  if (!isValidQuery(logExpr)) {
+  if (isQueryWithError(logExpr)) {
     return [];
   }
 

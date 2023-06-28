@@ -80,7 +80,7 @@ import {
   getNormalizedLokiQuery,
   getStreamSelectorsFromQuery,
   isLogsQuery,
-  isValidQuery,
+  isQueryWithError,
   requestSupportsSplitting,
 } from './queryUtils';
 import { doLokiChannelStream } from './streaming';
@@ -575,7 +575,7 @@ export class LokiDatasource
 
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
     // Currently works only for logs sample
-    if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
+    if (isQueryWithError(query.expr) || !isLogsQuery(query.expr)) {
       return [];
     }
 

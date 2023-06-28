@@ -176,8 +176,8 @@ export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | 
   return nodes.length > 0 ? nodes[0] : undefined;
 }
 
-export function isValidQuery(query: string): boolean {
-  return !isQueryWithNode(query, ErrorId);
+export function isQueryWithError(query: string): boolean {
+  return isQueryWithNode(query, ErrorId);
 }
 
 export function isLogsQuery(query: string): boolean {
