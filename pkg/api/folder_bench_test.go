@@ -53,19 +53,21 @@ const (
 	LEVEL0_FOLDER_NUM    = 300
 	LEVEL1_FOLDER_NUM    = 30
 	LEVEL2_FOLDER_NUM    = 5
-	LEVEL0_DASHBOARD_NUM = 10
-	LEVEL1_DASHBOARD_NUM = 10
+	LEVEL0_DASHBOARD_NUM = 300
+	LEVEL1_DASHBOARD_NUM = 90
 	LEVEL2_DASHBOARD_NUM = 30
 	TEAM_NUM             = 50
 	TEAM_MEMBER_NUM      = 5
+
+	MAXIMUM_INT_POSTGRES = 2147483647
 )
 
 type benchScenario struct {
 	db *sqlstore.SQLStore
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
-	signedInUser user.SignedInUser
-	userID       int64
+	orgID        int64
+	signedInUser *user.SignedInUser
 	teamSvc      team.Service
 	userSvc      user.Service
 }
@@ -76,10 +78,18 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	sc := setupDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	limit := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
-	if limit > 5000 { // the search API handler fails with 412 if limit > 5000
-		limit = 5000
+	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+
+	// the maximum number of dashboards that can be returned by the search API
+	// otherwise the handler fails with 422 status code
+	const limit = 5000
+	withLimit := func(res int) int {
+		if res > limit {
+			return limit
+		}
+		return res
 	}
+
 	benchmarks := []struct {
 		desc        string
 		url         string
@@ -99,31 +109,37 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
-			desc:        "search inherited dashboards with nested folders feature enabled",
-			url:         fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit),
-			expectedLen: limit,
+			desc:        "list all inherited dashboards with nested folders feature enabled",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(all),
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
-			desc:        "search specific dashboard with nested folders feature enabled",
+			desc:        "search for pattern with nested folders feature enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0&limit=5000",
+			expectedLen: withLimit(1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM),
+			features:    featuremgmt.WithFeatures("nestedFolders"),
+		},
+		{
+			desc:        "search for specific dashboard nested folders feature enabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
 			desc:        "get root folders with nested folders feature disabled",
-			url:         "/api/folders",
-			expectedLen: LEVEL0_FOLDER_NUM,
+			url:         "/api/folders?limit=5000",
+			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "search dashboards with nestedFolders feature disabled",
-			url:         fmt.Sprintf("/api/search?type=dash-db&limit=%d", limit),
-			expectedLen: LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM,
+			desc:        "list all dashboards with nested folders feature disabled",
+			url:         "/api/search?type=dash-db&limit=5000",
+			expectedLen: withLimit(LEVEL0_FOLDER_NUM * LEVEL0_DASHBOARD_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
 		{
-			desc:        "search specific dashboard with nestedFolders feature disabled",
+			desc:        "search specific dashboard with nested folders feature disabled",
 			url:         "/api/search?type=dash-db&query=dashboard_0_0",
 			expectedLen: 1,
 			features:    featuremgmt.WithFeatures(),
@@ -133,7 +149,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		b.Run(bm.desc, func(b *testing.B) {
 			m := setupServer(b, sc, bm.features)
 			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
-			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: sc.userID, OrgID: sc.signedInUser.OrgID})
+			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -152,6 +168,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 func setupDB(b testing.TB) benchScenario {
 	b.Helper()
 	db := sqlstore.InitTestDB(b)
+	IDs := map[int64]struct{}{}
 
 	opts := sqlstore.NativeSettingsForDialect(db.GetDialect())
 
@@ -257,7 +274,7 @@ func setupDB(b testing.TB) benchScenario {
 	dashTags := make([]*dashboardTag, 0, dashsCap)
 	permissions := make([]accesscontrol.Permission, 0, foldersCap*2)
 	for i := 0; i < LEVEL0_FOLDER_NUM; i++ {
-		f0, d := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d", i), nil)
+		f0, d := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d", i), nil)
 		folders = append(folders, f0)
 		dashs = append(dashs, d)
 
@@ -280,7 +297,7 @@ func setupDB(b testing.TB) benchScenario {
 
 		for j := 0; j < LEVEL0_DASHBOARD_NUM; j++ {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
-			dashID := rand.Int63()
+			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
 				ID:       dashID,
 				OrgID:    signedInUser.OrgID,
@@ -301,13 +318,13 @@ func setupDB(b testing.TB) benchScenario {
 		}
 
 		for j := 0; j < LEVEL1_FOLDER_NUM; j++ {
-			f1, d1 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
+			f1, d1 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d", i, j), &f0.UID)
 			folders = append(folders, f1)
 			dashs = append(dashs, d1)
 
 			for k := 0; k < LEVEL1_DASHBOARD_NUM; k++ {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
-				dashID := rand.Int63()
+				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
 					ID:       dashID,
 					OrgID:    signedInUser.OrgID,
@@ -328,13 +345,13 @@ func setupDB(b testing.TB) benchScenario {
 			}
 
 			for k := 0; k < LEVEL2_FOLDER_NUM; k++ {
-				f2, d2 := addFolder(orgID, rand.Int63(), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
+				f2, d2 := addFolder(orgID, generateID(IDs), fmt.Sprintf("folder%d_%d_%d", i, j, k), &f1.UID)
 				folders = append(folders, f2)
 				dashs = append(dashs, d2)
 
 				for l := 0; l < LEVEL2_DASHBOARD_NUM; l++ {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
-					dashID := rand.Int63()
+					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
 						ID:       dashID,
 						OrgID:    signedInUser.OrgID,
@@ -371,12 +388,10 @@ func setupDB(b testing.TB) benchScenario {
 		return err
 	})
 	require.NoError(b, err)
-
 	return benchScenario{
 		db:           db,
 		cfg:          cfg,
-		signedInUser: signedInUser,
-		userID:       userIDs[len(userIDs)-1],
+		signedInUser: &signedInUser,
 		teamSvc:      teamSvc,
 		userSvc:      userSvc,
 	}
@@ -390,7 +405,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		initCtx.SignedInUser = &sc.signedInUser
+		initCtx.SignedInUser = sc.signedInUser
 
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
@@ -490,4 +505,13 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 		Updated:  now,
 	}
 	return f, d
+}
+
+func generateID(reserved map[int64]struct{}) int64 {
+	n := rand.Int63n(MAXIMUM_INT_POSTGRES)
+	if _, existing := reserved[n]; existing {
+		return generateID(reserved)
+	}
+	reserved[n] = struct{}{}
+	return n
 }
