@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
@@ -37,7 +36,7 @@ var (
 type Dynamic struct {
 	log log.Logger
 
-	httpClient *http.Client
+	httpClient http.Client
 	baseURL    string
 
 	// store is the underlying angular patterns store used as a cache.
@@ -61,15 +60,10 @@ type Dynamic struct {
 }
 
 func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynamic, error) {
-	// TODO: standardize gcom client
-	cl, err := httpclient.New()
-	if err != nil {
-		return nil, fmt.Errorf("httpclient new: %w", err)
-	}
 	d := &Dynamic{
 		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
 		store:                 store,
-		httpClient:            cl,
+		httpClient:            makeHttpClient(),
 		baseURL:               cfg.GrafanaComURL,
 		backgroundJobInterval: defaultBackgroundJobInterval,
 	}
@@ -276,4 +270,24 @@ func (d *Dynamic) ProvideDetectors(ctx context.Context) []angulardetector.Angula
 	r := d.detectors
 	d.mux.RUnlock()
 	return r
+}
+
+// Same configuration as pkg/plugins/repo/client.go
+func makeHttpClient() http.Client {
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	return http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
 }
