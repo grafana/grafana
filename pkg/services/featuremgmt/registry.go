@@ -357,8 +357,9 @@ var (
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
-			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
-			Stage:        FeatureStageExperimental,
+			Description:  "Adds the metrics explorer component to the Prometheus query builder as an option in metric select",
+			Expression:   "true",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
@@ -565,6 +566,13 @@ var (
 			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
+			Name:         "pluginsDynamicAngularDetectionPatterns",
+			Description:  "Enables fetching Angular detection patterns for plugins from GCOM and fallback to hardcoded ones",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "alertingLokiRangeToInstant",
 			Description:  "Rewrites eligible loki range queries to instant queries",
 			Stage:        FeatureStageExperimental,
@@ -577,6 +585,20 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+		},
+		{
+			Name:         "elasticToggleableFilters",
+			Description:  "Enable support to toggle filters off from the query through the Logs Details component",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "vizAndWidgetSplit",
+			Description:  "Split panels between vizualizations and widgets",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )

@@ -345,18 +345,13 @@ const InheritedProperties: FC<{ properties: InhertitableProperties }> = ({ prope
     placement="top"
     content={
       <Stack direction="row" gap={0.5}>
-        {Object.entries(properties).map(([key, value]) => {
-          // no idea how to do this with TypeScript without type casting...
-          return (
-            <Label
-              key={key}
-              // @ts-ignore
-              label={routePropertyToLabel(key)}
-              // @ts-ignore
-              value={<Strong>{routePropertyToValue(key, value)}</Strong>}
-            />
-          );
-        })}
+        {Object.entries(properties).map(([key, value]) => (
+          <Label
+            key={key}
+            label={routePropertyToLabel(key)}
+            value={<Strong>{routePropertyToValue(key, value)}</Strong>}
+          />
+        ))}
       </Stack>
     }
   >
@@ -524,7 +519,7 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
   return contactPointErrors;
 }
 
-const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
+const routePropertyToLabel = (key: keyof InhertitableProperties | string): string => {
   switch (key) {
     case 'receiver':
       return 'Contact Point';
@@ -538,10 +533,15 @@ const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
       return 'Mute timings';
     case 'repeat_interval':
       return 'Repeat interval';
+    default:
+      return key;
   }
 };
 
-const routePropertyToValue = (key: keyof InhertitableProperties, value: string | string[]): React.ReactNode => {
+const routePropertyToValue = (
+  key: keyof InhertitableProperties | string,
+  value: string | string[]
+): React.ReactNode => {
   const isNotGrouping = key === 'group_by' && Array.isArray(value) && value[0] === '...';
   const isSingleGroup = key === 'group_by' && Array.isArray(value) && value.length === 0;
 

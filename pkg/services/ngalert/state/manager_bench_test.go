@@ -22,7 +22,8 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
 	hist := historian.NewAnnotationBackend(&as, nil, nil, metrics)
 	cfg := state.ManagerCfg{
-		Historian: hist,
+		Historian:               hist,
+		MaxStateSaveConcurrency: 1,
 	}
 	sut := state.NewManager(cfg)
 	now := time.Now().UTC()
