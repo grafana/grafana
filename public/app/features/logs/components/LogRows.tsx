@@ -1,5 +1,5 @@
 import memoizeOne from 'memoize-one';
-import React, { PureComponent } from 'react';
+import React, { ComponentProps, PureComponent } from 'react';
 
 import {
   TimeZone,
@@ -42,11 +42,14 @@ export interface Props extends Themeable2 {
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  pinnedRowId?: string;
 }
 
 interface State {
@@ -142,7 +145,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     // React profiler becomes unusable if we pass all rows to all rows and their labels, using getter instead
     const getRows = this.makeGetRows(orderedRows);
 
-    const getLogRowProperties = (row: LogRowModel) => {
+    const getLogRowProperties = (row: LogRowModel): ComponentProps<typeof LogRow> => {
       return {
         getRows: getRows,
         row: row,
@@ -169,6 +172,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         onPermalinkClick: this.props.onPermalinkClick,
         scrollIntoView: this.props.scrollIntoView,
         permalinkedRowId: this.props.permalinkedRowId,
+        onPinLine: this.props.onPinLine,
+        onUnpinLine: this.props.onUnpinLine,
+        pinned: this.props.pinnedRowId === row.uid,
       };
     };
     return (
