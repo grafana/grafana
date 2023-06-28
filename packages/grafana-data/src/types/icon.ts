@@ -154,6 +154,8 @@ export const availableIconsIndex = {
   'list-ol': true,
   lock: true,
   'map-marker': true,
+  'map-marker-plus': true,
+  'map-marker-minus': true,
   message: true,
   minus: true,
   'minus-circle': true,
