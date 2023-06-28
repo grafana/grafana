@@ -10,7 +10,10 @@
       "tags-column": ""
     },
     "folder-actions-button": {
-      "folder-actions": ""
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
     },
     "no-results": {
       "clear": "",
