@@ -90,6 +90,7 @@ Experimental features might be changed or removed without prior notice.
 | `athenaAsyncQueryDataSupport`            | Enable async query data support for Athena                                                                   |
 | `showDashboardValidationWarnings`        | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                        | Use double quotes to escape keyword in a MySQL query                                                         |
+| `nestedFolderPicker`                     | Enables the still in-development new folder picker to support nested folders                                 |
 | `showTraceId`                            | Show trace ids for requests                                                                                  |
 | `alertingBacktesting`                    | Rule backtesting API for alerting                                                                            |
 | `editPanelCSVDragAndDrop`                | Enables drag and drop for CSV and Excel files                                                                |

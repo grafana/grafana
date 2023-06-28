@@ -260,6 +260,12 @@ var (
 			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
+			Name:        "nestedFolderPicker",
+			Description: "Enables the still in-development new folder picker to support nested folders",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
+		},
+		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			Stage:       FeatureStageGeneralAvailability,

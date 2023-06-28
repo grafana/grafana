@@ -1,6 +1,8 @@
 import React from 'react';
 
+import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, HorizontalGroup } from '@grafana/ui';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -101,15 +103,19 @@ export const SaveDashboardAsForm = ({ dashboard, isNew, onSubmit, onCancel, onSu
           </Field>
           <Field label="Folder">
             <InputControl
-              render={({ field: { ref, ...field } }) => (
-                <FolderPicker
-                  {...field}
-                  dashboardId={dashboard.id}
-                  initialFolderUid={dashboard.meta.folderUid}
-                  initialTitle={dashboard.meta.folderTitle}
-                  enableCreateNew
-                />
-              )}
+              render={({ field: { ref, ...field } }) =>
+                config.featureToggles.nestedFolderPicker ? (
+                  <NestedFolderPicker {...field} value={field.value?.uid} />
+                ) : (
+                  <FolderPicker
+                    {...field}
+                    dashboardId={dashboard.id}
+                    initialFolderUid={dashboard.meta.folderUid}
+                    initialTitle={dashboard.meta.folderTitle}
+                    enableCreateNew
+                  />
+                )
+              }
               control={control}
               name="$folder"
             />
