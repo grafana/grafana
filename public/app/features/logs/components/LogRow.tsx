@@ -44,7 +44,7 @@ interface Props extends Themeable2 {
   scrollIntoView?: (element: HTMLElement) => void;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
-  pinned: boolean;
+  pinned?: boolean;
 }
 
 interface State {
