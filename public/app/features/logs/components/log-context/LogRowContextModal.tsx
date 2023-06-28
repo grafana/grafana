@@ -362,6 +362,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     };
   }); // on every render, why not
 
+  const scrollToCenter = useCallback(() => {
+    preEntryElement.current?.scrollIntoView({ block: 'center' });
+    entryElement.current?.scrollIntoView({ block: 'center' });
+  }, [preEntryElement, entryElement]);
+
   useLayoutEffect(() => {
     const scrollE = scrollElement.current;
     if (scrollE == null) {
@@ -373,8 +378,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     prevClientHeightRef.current = currentClientHeight;
     if (prevClientHeight !== currentClientHeight) {
       // height has changed, we scroll to the center
-      preEntryElement.current?.scrollIntoView({ block: 'center' });
-      entryElement.current?.scrollIntoView({ block: 'center' });
+      scrollToCenter();
       return;
     }
 
@@ -385,7 +389,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const newScrollTop = scrollE.scrollTop + (currentHeight - prevScrollHeight);
       scrollE.scrollTop = newScrollTop;
     }
-  }, [context.above.rows]);
+  }, [context.above.rows, scrollToCenter]);
 
   useAsync(updateContextQuery, [getRowContextQuery, row]);
 
@@ -405,7 +409,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div>
-          <LogContextButtons wrapLines={wrapLines} onChangeWrapLines={setWrapLines} />
+          <LogContextButtons
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onScrollCenterClick={scrollToCenter}
+          />
         </div>
       </div>
       <div ref={scrollElement} className={styles.logRowGroups}>
