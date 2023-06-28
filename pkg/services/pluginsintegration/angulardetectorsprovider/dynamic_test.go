@@ -59,31 +59,43 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("ProvideDetectors", func(t *testing.T) {
 		t.Run("returns empty result by default", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval, dynamicWithInitialRestoreDone)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			r := svc.ProvideDetectors()
 			require.Empty(t, r)
 		})
 
 		t.Run("returns cached detectors", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval, dynamicWithInitialRestoreDone)
+			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			svc.setDetectors(mockGCOMDetectors)
 			checkMockDetectors(t, svc.ProvideDetectors())
 		})
 
-		t.Run("awaits initial restore done", func(t *testing.T) {
-			t.Parallel()
+		t.Run("restores detectors if not set yet", func(t *testing.T) {
+			// Prepare mock store
+			mockStore := angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
+			err := mockStore.Set(context.Background(), mockGCOMPatterns)
+			require.NoError(t, err)
+
 			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
-			done := make(chan struct{})
-			go func() {
-				time.Sleep(time.Second * 1)
-				svc.setDetectors(mockGCOMDetectors)
-				svc.notifyInitialRestoreDone()
-				// ensure the value is read and this goroutine exits
-				done <- struct{}{}
-			}()
+			svc.store = mockStore
+
+			// Ensure that the detectors aren't set initially
+			require.Empty(t, svc.detectors)
+			require.False(t, svc.hasDetectors)
+
+			// First call to ProvideDetectors should restore from store
 			r := svc.ProvideDetectors()
 			checkMockDetectors(t, r)
-			<-done
+
+			// Ensure the state is modified as well for future calls
+			checkMockDetectors(t, svc.detectors)
+			require.True(t, svc.hasDetectors)
+
+			// Ensure it doesn't restore on every call, by modifying the detectors
+			// directly and keeping hasDetectors = true
+			svc.detectors = nil
+			newR := svc.ProvideDetectors()
+			require.Empty(t, newR) // restore would have filled this with mockGCOMPatterns
 		})
 	})
 
@@ -405,10 +417,6 @@ func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration, opts .
 	}
 	d.backgroundJobInterval = cacheTTL
 	return d
-}
-
-func dynamicWithInitialRestoreDone(dynamic *Dynamic) {
-	dynamic.notifyInitialRestoreDone()
 }
 
 // fakeBackgroundJob wraps a backgroundJob and writes a value to the callback channel
