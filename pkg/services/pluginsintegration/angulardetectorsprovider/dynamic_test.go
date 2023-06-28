@@ -60,14 +60,14 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	t.Run("ProvideDetectors", func(t *testing.T) {
 		t.Run("returns empty result by default", func(t *testing.T) {
 			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
-			r := svc.ProvideDetectors(context.Background())
+			r := svc.ProvideDetectors()
 			require.Empty(t, r)
 		})
 
 		t.Run("returns cached detectors", func(t *testing.T) {
 			svc := provideDynamic(t, srv.URL, defaultCacheTTL, dynamicWithInitialRestoreDone)
 			svc.setDetectors(mockGCOMDetectors)
-			checkMockDetectors(t, svc.ProvideDetectors(context.Background()))
+			checkMockDetectors(t, svc.ProvideDetectors())
 		})
 
 		t.Run("awaits initial restore done", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 				// ensure the value is read and this goroutine exits
 				done <- struct{}{}
 			}()
-			r := svc.ProvideDetectors(context.Background())
+			r := svc.ProvideDetectors()
 			checkMockDetectors(t, r)
 			<-done
 		})
@@ -214,7 +214,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			bg := newBackgroundServiceScenario(svc, func() {})
 			t.Cleanup(bg.close)
 			bg.run(context.Background(), t)
-			d := svc.ProvideDetectors(context.Background())
+			d := svc.ProvideDetectors()
 			checkMockDetectors(t, d)
 			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
 

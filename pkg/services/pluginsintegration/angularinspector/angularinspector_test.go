@@ -1,7 +1,6 @@
 package angularinspector
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ func TestProvideService(t *testing.T) {
 		require.NoError(t, err)
 		require.IsType(t, inspector.Inspector, &angularinspector.PatternsListInspector{})
 		patternsListInspector := inspector.Inspector.(*angularinspector.PatternsListInspector)
-		detectors := patternsListInspector.DetectorsProvider.ProvideDetectors(context.Background())
+		detectors := patternsListInspector.DetectorsProvider.ProvideDetectors()
 		require.NotEmpty(t, detectors, "provided detectors should not be empty")
 	})
 
@@ -42,7 +41,7 @@ func TestProvideService(t *testing.T) {
 		require.Len(t, seq, 2, "should return the correct number of providers")
 		require.IsType(t, seq[0], &angulardetectorsprovider.Dynamic{}, "first AngularDetector provided should be gcom")
 		require.IsType(t, seq[1], &angulardetector.StaticDetectorsProvider{}, "second AngularDetector provided should be static")
-		staticDetectors := seq[1].ProvideDetectors(context.Background())
+		staticDetectors := seq[1].ProvideDetectors()
 		require.NotEmpty(t, staticDetectors, "provided static detectors should not be empty")
 	})
 }

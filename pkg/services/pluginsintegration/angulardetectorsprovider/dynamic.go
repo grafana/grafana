@@ -262,8 +262,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 }
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
-// TODO: remove context here?
-func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
+func (d *Dynamic) ProvideDetectors() []angulardetector.AngularDetector {
 	// Block until channel is closed, which is done after the restore from db is done.
 	<-d.initialRestoreDone
 
