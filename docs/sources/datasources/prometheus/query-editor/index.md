@@ -142,7 +142,7 @@ There are also additional settings for the following items:
 - Include description in search. Search by name **and** description
 - Include results with no metadata. Many Prometheus metrics have no metadata. This allows users to include metrics with undefined type and description.
 - Disable text wrap.
-- Enable regex search. This uses the prometheus API to enable regex search for the metric name.
+- Enable regex search. This uses the Prometheus API to enable regex search for the metric name.
 
 ### Label filters
 
