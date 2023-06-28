@@ -70,8 +70,10 @@ export function getCompletionProvider(
       lineNumber: position.lineNumber,
     };
 
+    // Check to see if the browser supports window.getSelection()
     if (window.getSelection) {
       const selectedText = window.getSelection()?.toString();
+      // If the user has selected text, adjust the cursor position to be at the start of the selection, instead of the end
       if (selectedText && selectedText.length > 0) {
         positionClone.column = positionClone.column - selectedText.length;
       }
