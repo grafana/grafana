@@ -91,7 +91,7 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
   const emptyStateMessage =
     totalRecordsCount > 0
       ? `No matches were found for the given filters among the ${totalRecordsCount} instances`
-      : 'No state transitions have occurred in the last week';
+      : 'No state transitions have occurred in the last 30 days';
 
   return (
     <div className={styles.fullSize}>
