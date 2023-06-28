@@ -88,8 +88,6 @@ Experimental features might be changed or removed without prior notice.
 | `scenes`                                 | Experimental framework to build interactive dashboards                                                       |
 | `disableSecretsCompatibility`            | Disable duplicated secret storage in legacy tables                                                           |
 | `logRequestsInstrumentedAsUnknown`       | Logs the path for requests that are instrumented as unknown                                                  |
-| `redshiftAsyncQueryDataSupport`          | Enable async query data support for Redshift                                                                 |
-| `athenaAsyncQueryDataSupport`            | Enable async query data support for Athena                                                                   |
 | `showDashboardValidationWarnings`        | Show warnings when dashboards do not validate against the schema                                             |
 | `mysqlAnsiQuotes`                        | Use double quotes to escape keyword in a MySQL query                                                         |
 | `showTraceId`                            | Show trace ids for requests                                                                                  |
