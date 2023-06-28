@@ -3,6 +3,7 @@ aliases:
   - ../../../auth/jwt/
 description: Grafana JWT Authentication
 title: Configure JWT authentication
+menuTitle: JWT
 weight: 1600
 ---
 

@@ -11,7 +11,8 @@ keywords:
   - active directory
   - enterprise
 title: Configure enhanced LDAP integration
-weight: 500
+menuTitle: Enhanced LDAP
+weight: 400
 ---
 
 # Configure enhanced LDAP integration

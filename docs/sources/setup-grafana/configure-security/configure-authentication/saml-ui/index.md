@@ -1,8 +1,8 @@
 ---
 description: Learn how to configure SAML authentication in Grafana's UI.
-menuTitle: Configure SAML using the UI
+menuTitle: SAML user interface
 title: Configure SAML authentication using the Grafana user interface
-weight: 700
+weight: 600
 ---
 
 # Configure SAML authentication using the Grafana user interface

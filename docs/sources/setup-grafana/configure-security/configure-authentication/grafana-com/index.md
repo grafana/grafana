@@ -3,6 +3,7 @@ aliases:
   - ../../../auth/grafana-com/
 description: Grafana Com Authentication
 title: Configure Grafana Com authentication
+menuTitle: Grafana Com OAuth2
 weight: 1200
 ---
 

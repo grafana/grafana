@@ -9,6 +9,7 @@ keywords:
   - documentation
   - oauth
 title: Configure Keycloak OAuth2 authentication
+menuTitle: Keycloak OAuth2
 weight: 1300
 ---
 

@@ -9,6 +9,7 @@ keywords:
   - documentation
   - proxy
 title: Configure auth proxy authentication
+menuTitle: Auth proxy
 weight: 1500
 ---
 

@@ -3,6 +3,7 @@ aliases:
   - ../../../auth/google/
 description: Grafana OAuthentication Guide
 title: Configure Google OAuth2 authentication
+menuTitle: Google OAuth2
 weight: 1100
 ---
 

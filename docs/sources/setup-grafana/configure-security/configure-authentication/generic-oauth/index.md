@@ -7,8 +7,9 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth authentication
-weight: 800
+title: Configure generic OAuth2 authentication
+menuTitle: Generic OAuth2
+weight: 700
 ---
 
 # Configure generic OAuth authentication

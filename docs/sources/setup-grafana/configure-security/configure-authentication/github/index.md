@@ -8,6 +8,7 @@ keywords:
   - documentation
   - oauth
 title: Configure GitHub OAuth2 authentication
+menuTitle: GitHub OAuth2
 weight: 900
 ---
 
