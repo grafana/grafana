@@ -13,7 +13,7 @@ keywords:
 
 In Grafana, queries play a vital role in fetching and transforming data from supported data sources, which include databases like MySQL and PostgreSQL, time series databases like Prometheus, InfluxDB and Graphite, and services like Elasticsearch, AWS CloudWatch, Azure Monitor and Google Cloud Monitoring.
 
-For more information on supported data sources, see [Data sources]({{< relref "../data-source-alerting.md" >}}).
+For more information on supported data sources, see [Data sources]({{< relref "../../data-source-alerting.md" >}}).
 
 The process of executing a query involves defining the data source, specifying the desired data to retrieve, and applying relevant filters or transformations. Query languages or syntaxes specific to the chosen data source are utilized for constructing these queries.
 
