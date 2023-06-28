@@ -262,12 +262,12 @@ func (d *Dynamic) Run(ctx context.Context) error {
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
 // If the initial restore hasn't been done by the background service, ProvideDetectors will do the first restore
 // rather than returning an empty result.
-func (d *Dynamic) ProvideDetectors() []angulardetector.AngularDetector {
+func (d *Dynamic) ProvideDetectors(ctx context.Context) []angulardetector.AngularDetector {
 	d.mux.RLock()
 	if !d.hasDetectors {
 		d.mux.RUnlock()
 		d.log.Debug("Performing first cache restore in ProvideDetectors")
-		if err := d.setDetectorsFromCache(context.Background()); err != nil {
+		if err := d.setDetectorsFromCache(ctx); err != nil {
 			d.log.Warn("Initial restore from cache failed", "error", err)
 			return nil
 		}

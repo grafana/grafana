@@ -1,6 +1,7 @@
 package angulardetector
 
 import (
+	"context"
 	"regexp"
 	"testing"
 
@@ -43,7 +44,7 @@ func TestRegexDetector(t *testing.T) {
 
 func TestStaticDetectorsProvider(t *testing.T) {
 	p := StaticDetectorsProvider{Detectors: testDetectors}
-	detectors := p.ProvideDetectors()
+	detectors := p.ProvideDetectors(context.Background())
 	require.NotEmpty(t, detectors)
 	require.Equal(t, testDetectors, detectors)
 }
@@ -53,7 +54,7 @@ type fakeDetectorsProvider struct {
 	returns []AngularDetector
 }
 
-func (p *fakeDetectorsProvider) ProvideDetectors() []AngularDetector {
+func (p *fakeDetectorsProvider) ProvideDetectors(_ context.Context) []AngularDetector {
 	p.calls += 1
 	return p.returns
 }
@@ -112,7 +113,7 @@ func TestSequenceDetectorsProvider(t *testing.T) {
 			for _, p := range tc.fakeProviders {
 				seq = append(seq, DetectorsProvider(p))
 			}
-			detectors := seq.ProvideDetectors()
+			detectors := seq.ProvideDetectors(context.Background())
 			tc.exp(t, tc.fakeProviders, detectors)
 		})
 	}

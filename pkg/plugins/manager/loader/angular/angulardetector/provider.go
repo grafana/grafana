@@ -1,13 +1,14 @@
 package angulardetector
 
 import (
+	"context"
 	"regexp"
 )
 
 // DetectorsProvider can provide multiple AngularDetectors used for Angular detection.
 type DetectorsProvider interface {
 	// ProvideDetectors returns a slice of AngularDetector.
-	ProvideDetectors() []AngularDetector
+	ProvideDetectors(ctx context.Context) []AngularDetector
 }
 
 // StaticDetectorsProvider is a DetectorsProvider that always returns a pre-defined slice of AngularDetector.
@@ -15,7 +16,7 @@ type StaticDetectorsProvider struct {
 	Detectors []AngularDetector
 }
 
-func (p *StaticDetectorsProvider) ProvideDetectors() []AngularDetector {
+func (p *StaticDetectorsProvider) ProvideDetectors(_ context.Context) []AngularDetector {
 	return p.Detectors
 }
 
@@ -23,9 +24,9 @@ func (p *StaticDetectorsProvider) ProvideDetectors() []AngularDetector {
 // provided result that isn't empty.
 type SequenceDetectorsProvider []DetectorsProvider
 
-func (p SequenceDetectorsProvider) ProvideDetectors() []AngularDetector {
+func (p SequenceDetectorsProvider) ProvideDetectors(ctx context.Context) []AngularDetector {
 	for _, provider := range p {
-		if detectors := provider.ProvideDetectors(); len(detectors) > 0 {
+		if detectors := provider.ProvideDetectors(ctx); len(detectors) > 0 {
 			return detectors
 		}
 	}

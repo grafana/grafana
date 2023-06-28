@@ -41,7 +41,7 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	if err != nil {
 		return false, fmt.Errorf("module.js readall: %w", err)
 	}
-	for _, d := range i.DetectorsProvider.ProvideDetectors() {
+	for _, d := range i.DetectorsProvider.ProvideDetectors(ctx) {
 		if d.DetectAngular(b) {
 			isAngular = true
 			break
