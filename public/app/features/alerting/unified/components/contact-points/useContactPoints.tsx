@@ -29,17 +29,17 @@ interface ContactPointsWithStatus extends Receiver {
 
 /**
  * This hook will combine data from two endpoints;
- * 1. the alertmanager config endpoint where the definitation of the receivers lives
+ * 1. the alertmanager config endpoint where the definition of the receivers are
  * 2. (if available) the alertmanager receiver status endpoint, currently Grafana Managed only
  */
-export function useContactPoints(selectedAlertmanager: string) {
+export function useContactPointsWithStatus(selectedAlertmanager: string) {
   const isGrafanaManagedAlertmanager = selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   // fetch receiver status if we're dealing with a Grafana Managed Alertmanager
   const fetchContactPointsDiagnostics = alertmanagerApi.useGetReceiversDiagnosticsQuery(undefined, {
     refetchOnFocus: true,
-    pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL, // re-fetch status every so often
-    skip: !isGrafanaManagedAlertmanager, // skip if not Grafana AM
+    pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL, // re-fetch status every so often for up-to-date information
+    skip: !isGrafanaManagedAlertmanager, // skip fetching receiver statuses if not Grafana AM
   });
 
   // fetch the latest config from the Alertmanager

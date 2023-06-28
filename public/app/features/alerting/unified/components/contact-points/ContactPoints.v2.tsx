@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React from 'react';
+import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -14,14 +14,15 @@ import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
-import { RECEIVER_STATUS_KEY, useContactPoints } from './useContactPoints';
+import { RECEIVER_STATUS_KEY, useContactPointsWithStatus } from './useContactPoints';
+import { getReceiverDescription, isProvisioned } from './utils';
 
 const ContactPoints = () => {
   const styles = useStyles2(getStyles);
 
   // TODO hardcoded for now, change this to allow selecting different alertmanager
   const selectedAlertmanager = 'grafana';
-  const { isLoading, error, contactPoints } = useContactPoints(selectedAlertmanager);
+  const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager);
 
   if (error) {
     return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
@@ -37,15 +38,12 @@ const ContactPoints = () => {
       <Stack direction="column">
         {contactPoints.map((contactPoint) => {
           const contactPointKey = selectedAlertmanager + contactPoint.name;
-          // for some reason the provenance is on the receiver and not the entire contact point
-          const provenance = contactPoint.grafana_managed_receiver_configs.find(
-            (receiver) => receiver.provenance
-          )?.provenance;
+          const provisioned = isProvisioned(contactPoint);
 
           return (
             <div className={styles.contactPointWrapper} key={contactPointKey}>
               <Stack direction="column" gap={0}>
-                <ContactPointHeader name={contactPoint.name} policies={[]} provenance={provenance} />
+                <ContactPointHeader name={contactPoint.name} policies={[]} provisioned={provisioned} />
                 <div className={styles.receiversWrapper}>
                   {contactPoint.grafana_managed_receiver_configs?.map((receiver) => {
                     const diagnostics = receiver[RECEIVER_STATUS_KEY];
@@ -55,8 +53,7 @@ const ContactPoints = () => {
                       <ContactPointReceiver
                         key={uniqueId()}
                         type={receiver.type}
-                        // TODO we can figure something out to extract a "description" from each receiver type
-                        description="gilles.demey@grafana.com"
+                        description={getReceiverDescription(receiver)}
                         diagnostics={diagnostics}
                         sendingResolved={sendingResolved}
                       />
@@ -74,15 +71,14 @@ const ContactPoints = () => {
 
 interface ContactPointHeaderProps {
   name: string;
-  provenance?: string;
+  provisioned?: boolean;
   policies?: string[]; // some array of policies that refer to this contact point
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, provenance, policies = [] } = props;
+  const { name, provisioned = false, policies = [] } = props;
 
   const styles = useStyles2(getStyles);
-  const isProvisioned = Boolean(provenance);
 
   return (
     <div className={styles.headerWrapper}>
@@ -96,12 +92,12 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             is used by <Strong>{policies.length}</Strong> notification policies
           </MetaText>
         ) : (
-          <MetaText>is not used</MetaText>
+          <MetaText>is not used in any policy</MetaText>
         )}
-        {isProvisioned && <Badge color="purple" text="Provisioned" />}
+        {provisioned && <Badge color="purple" text="Provisioned" />}
         <Spacer />
         <ConditionalWrap
-          shouldWrap={isProvisioned}
+          shouldWrap={provisioned}
           wrap={(children) => (
             <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
               {children}
@@ -113,7 +109,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             size="sm"
             icon="edit"
             type="button"
-            disabled={isProvisioned}
+            disabled={provisioned}
             aria-label="edit-action"
             data-testid="edit-action"
           >
@@ -125,7 +121,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             <Menu>
               <Menu.Item label="Export" icon="download-alt" />
               <Menu.Divider />
-              <Menu.Item label="Delete" icon="trash-alt" destructive disabled={isProvisioned} />
+              <Menu.Item label="Delete" icon="trash-alt" destructive disabled={provisioned} />
             </Menu>
           }
         >
@@ -145,7 +141,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
 
 interface ContactPointReceiverProps {
   type: GrafanaNotifierType | string;
-  description?: string;
+  description?: ReactNode;
   sendingResolved?: boolean;
   diagnostics?: NotifierStatus;
 }
@@ -227,7 +223,7 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
                 </MetaText>
               </>
             ) : (
-              <MetaText icon="clock-nine">No delivery attempt yet</MetaText>
+              <MetaText icon="clock-nine">No delivery attempts</MetaText>
             )}
           </>
         )}

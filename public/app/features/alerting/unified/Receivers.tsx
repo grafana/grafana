@@ -16,7 +16,9 @@ const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
     <Enable feature={AlertingFeature.ContactPointsV2}>
       <ContactPointsV2 {...props} />
     </Enable>
-    <Disable feature={AlertingFeature.ContactPointsV2}>{/* <ContactPointsV1 {...props} /> */}</Disable>
+    <Disable feature={AlertingFeature.ContactPointsV2}>
+      <ContactPointsV1 {...props} />
+    </Disable>
   </AlertingPageWrapper>
 );
 
