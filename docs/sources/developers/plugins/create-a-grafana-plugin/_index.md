@@ -14,5 +14,5 @@ weight: 300
 
 This section contains how-to topics for developing and extending Grafana plugins with more advanced capabilities.
 
-- [Develop a plugin]({{< relref "./develop-a-plugin/" >}})
-- [Extend a plugin]({{< relref "./extend-a-plugin/" >}})
+- [Develop a plugin]({{< relref "./develop-a-plugin" >}})
+- [Extend a plugin]({{< relref "./extend-a-plugin" >}})
