@@ -1,4 +1,4 @@
-import { DataSourceSettings, DataSourceJsonData } from '@grafana/data';
+import { DataSourceSettings } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
 import {
@@ -9,10 +9,6 @@ import {
   AzureAuthJSONDataType,
 } from '../types';
 
-export const getDefaultAzureCloud = (bootConfig: GrafanaBootConfig): string => {
-  return bootConfig.azure?.cloud || AzureCloud.Public;
-};
-
 export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCredentialsType => {
   if (bootConfig.azure?.managedIdentityEnabled) {
     return { authType: 'msi' };
@@ -22,11 +18,11 @@ export const getDefaultCredentials = (bootConfig: GrafanaBootConfig): AzureCrede
 };
 
 export const getSecret = (
-  hasClientSecretServerSide: boolean,
+  clientSecretIsStoredServerSide: boolean,
   clientSecret: string | symbol | undefined
 ): undefined | string | ConcealedSecretType => {
   const concealedSecret: ConcealedSecretType = Symbol('Concealed client secret');
-  if (hasClientSecretServerSide) {
+  if (clientSecretIsStoredServerSide) {
     // The secret is concealed server side, so return the symbol
     return concealedSecret;
   } else {
@@ -39,8 +35,9 @@ export const getCredentials = (
   bootConfig: GrafanaBootConfig
 ): AzureCredentialsType => {
   const credentials = dsSettings.jsonData?.azureCredentials;
-  const hasClientSecretServerSide = dsSettings.secureJsonFields?.azureClientSecret;
+  const clientSecretIsStoredServerSide = dsSettings.secureJsonFields?.azureClientSecret;
   const clientSecret = dsSettings.secureJsonData?.azureClientSecret;
+  const cloud = bootConfig.azure?.cloud || AzureCloud.Public;
 
   // If no credentials saved, then return empty credentials
   // of type based on whether the managed identity enabled
@@ -59,16 +56,16 @@ export const getCredentials = (
         // then we should fallback to an empty app registration (client secret) configuration
         return {
           authType: 'clientsecret',
-          azureCloud: getDefaultAzureCloud(bootConfig),
+          azureCloud: cloud,
         };
       }
     case 'clientsecret':
       return {
         authType: 'clientsecret',
-        azureCloud: credentials.azureCloud || getDefaultAzureCloud(bootConfig),
+        azureCloud: credentials.azureCloud || cloud,
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
-        clientSecret: getSecret(hasClientSecretServerSide, clientSecret),
+        clientSecret: getSecret(clientSecretIsStoredServerSide, clientSecret),
       };
   }
 };
