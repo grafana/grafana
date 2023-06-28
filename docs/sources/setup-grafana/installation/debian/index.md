@@ -105,23 +105,11 @@ To uninstall Grafana, run any of the following commands in a terminal window:
    sudo apt-get remove grafana
    ```
 
-   Optional: Remove the Grafana repository
-
-   ```bash
-   sudo rm -i /etc/apt/sources.list.d/grafana.list
-   ```
-
 1. To uninstall Grafana OSS with init.d:
 
    ```bash
    sudo service grafana-server stop
    sudo apt-get remove grafana
-   ```
-
-   Optionally, you can run:
-
-   ```bash
-   sudo rm -i /etc/apt/sources.list.d/grafana.list
    ```
 
 1. To uninstall Grafana Enterprise with systemd:
@@ -131,12 +119,6 @@ To uninstall Grafana, run any of the following commands in a terminal window:
    sudo apt-get remove grafana-entrerprise
    ```
 
-   Optionally, you can run:
-
-   ```bash
-   sudo rm -i /etc/apt/sources.list.d/grafana.list
-   ```
-
 1. To uninstall Grafana Enterprise with init.d:
 
    ```bash
@@ -144,7 +126,7 @@ To uninstall Grafana, run any of the following commands in a terminal window:
    sudo apt-get remove grafana-enterprise
    ```
 
-   Optionally, you can run:
+1. Optional: To remove the Grafana repository:
 
    ```bash
    sudo rm -i /etc/apt/sources.list.d/grafana.list
