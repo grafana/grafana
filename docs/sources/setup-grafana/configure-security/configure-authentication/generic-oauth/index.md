@@ -12,7 +12,7 @@ menuTitle: Generic OAuth2
 weight: 700
 ---
 
-# Configure generic OAuth authentication
+# Configure generic OAuth2 authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
 
