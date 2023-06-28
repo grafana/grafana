@@ -82,6 +82,9 @@ const getStyles = (
       '&:hover': {
         transform: 'scale(1.1)',
       },
+      '@media (forced-colors: active)': {
+        forcedColorAdjust: 'none',
+      },
     }),
   };
 };
