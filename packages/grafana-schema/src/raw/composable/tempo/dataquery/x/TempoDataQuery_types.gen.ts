@@ -36,7 +36,7 @@ export interface TempoQuery extends common.DataQuery {
    */
   search?: string;
   /**
-   * Use (client|server)_service_namespace labels in addition to client|server to uniquely identify a service.
+   * Use service.namespace in addition to service.name to uniquely identify a service.
    */
   serviceMapIncludeNamespace?: boolean;
   /**
