@@ -246,13 +246,14 @@ func (c *Client) DeleteAlertmanagerConfig(ctx context.Context) error {
 }
 
 // SendAlertToAlermanager sends alerts to the Alertmanager API
-func (c *Client) SendAlertToAlermanager(ctx context.Context, alert *model.Alert) error {
+func (c *Client) SendAlertToAlermanager(ctx context.Context, alerts apimodels.PostableAlerts) error {
 	u := c.alertmanagerClient.URL("/alertmanager/api/v1/alerts", nil)
 
-	data, err := json.Marshal([]types.Alert{{Alert: *alert}})
+	data, err := json.Marshal(alerts.PostableAlerts)
 	if err != nil {
 		return fmt.Errorf("error marshaling the alert: %v", err)
 	}
+	fmt.Println("Post alerts payload:", string(data))
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), bytes.NewReader(data))
 	if err != nil {

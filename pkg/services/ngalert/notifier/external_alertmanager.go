@@ -177,7 +177,7 @@ func (am *externalAlertmanager) GetAlertGroups(active, silenced, inhibited bool,
 // TODO(santiago): implement.
 func (am *externalAlertmanager) PutAlerts(postableAlerts apimodels.PostableAlerts) error {
 	fmt.Println("externalAM.PutAlerts() called")
-	return nil
+	return am.client.SendAlertToAlermanager(context.TODO(), postableAlerts)
 }
 
 // TODO(santiago): implement.

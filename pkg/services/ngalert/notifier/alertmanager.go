@@ -376,6 +376,7 @@ func (am *alertmanager) AppURL() string {
 }
 
 // buildReceiverIntegrations builds a list of integration notifiers off of a receiver config.
+// Note(santiago): to build the integrations it needs webhook and email senders.
 func (am *alertmanager) buildReceiverIntegrations(receiver *alertingNotify.APIReceiver, tmpl *alertingTemplates.Template) ([]*alertingNotify.Integration, error) {
 	receiverCfg, err := alertingNotify.BuildReceiverConfiguration(context.Background(), receiver, am.decryptFn)
 	if err != nil {
