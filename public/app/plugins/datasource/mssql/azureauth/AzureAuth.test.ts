@@ -20,6 +20,7 @@ describe('AzureAuth', () => {
       const resultForManagedIdentityDisabled = getDefaultCredentials(false, AzureCloud.Public);
 
       expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
+
       expect(resultForManagedIdentityDisabled).toEqual({ authType: 'clientsecret', azureCloud: 'AzureCloud' });
     });
 
