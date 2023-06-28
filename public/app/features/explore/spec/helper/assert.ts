@@ -21,6 +21,12 @@ export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId
   });
 };
 
+export const assertNoQueryHistory = async (exploreId = 'left') => {
+  const selector = withinExplore(exploreId);
+
+  expect(await selector.queryByLabelText('Query text')).not.toBeInTheDocument();
+};
+
 export const assertQueryHistoryComment = async (expectedQueryComments: string[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {

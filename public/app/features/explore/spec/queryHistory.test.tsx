@@ -9,6 +9,7 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import {
   assertDataSourceFilterVisibility,
   assertLoadMoreQueryHistoryNotVisible,
+  assertNoQueryHistory,
   assertQueryHistory,
   assertQueryHistoryComment,
   assertQueryHistoryElementsShown,
@@ -218,6 +219,26 @@ describe('Explore: Query History', () => {
     // assert new settings
     assertQueryHistoryTabIsSelected('Starred');
     assertDataSourceFilterVisibility(false);
+  });
+
+  it('removes the query item from the history panel when the user deletes a regular query', async () => {
+    const { datasources } = setupExplore();
+    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+
+    // run query and open query history
+    await waitForExplore();
+    await inputQuery(USER_INPUT);
+    await runQuery();
+    await openQueryHistory();
+
+    // the query that was run is in query history
+    await assertQueryHistoryExists(RAW_QUERY);
+
+    // delete the query
+    await deleteQueryHistory(0);
+
+    // the query is removed from the query history
+    await assertNoQueryHistory();
   });
 
   it('pagination', async () => {
