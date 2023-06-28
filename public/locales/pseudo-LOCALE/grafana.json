@@ -1,8 +1,14 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
   "access-control": {
+    "add-permission": {
+      "add-permission-for": "Åđđ pęřmįşşįőŉ ƒőř"
+    },
+    "add-permissions": {
+      "save": "Ŝävę"
+    },
     "permission-list": {
-      "permission": " <1>Pęřmįşşįőŉ</1>"
+      "permission": "<0>Pęřmįşşįőŉ</0>"
     },
     "permissions": {
       "add-a": {

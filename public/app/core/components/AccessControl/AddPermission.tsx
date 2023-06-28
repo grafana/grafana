@@ -5,6 +5,7 @@ import { Button, Form, Select } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
+import { Trans, t } from 'app/core/internationalization';
 import { OrgRole } from 'app/types/acl';
 
 import { Assignments, PermissionTarget, SetPermission } from './types';
@@ -17,7 +18,13 @@ export interface Props {
   onAdd: (state: SetPermission) => void;
 }
 
-export const AddPermission = ({ title = 'Add permission for', permissions, assignments, onAdd, onCancel }: Props) => {
+export const AddPermission = ({
+  title = t('access-control.add-permission.add-permission-for', 'Add permission for'),
+  permissions,
+  assignments,
+  onAdd,
+  onCancel,
+}: Props) => {
   const [target, setPermissionTarget] = useState<PermissionTarget>(PermissionTarget.None);
   const [teamId, setTeamId] = useState(0);
   const [userId, setUserId] = useState(0);
@@ -91,7 +98,7 @@ export const AddPermission = ({ title = 'Add permission for', permissions, assig
               onChange={(v) => setPermission(v.value || '')}
             />
             <Button type="submit" disabled={!isValid()}>
-              Save
+              <Trans i18nKey="access-control.add-permissions.save">Save</Trans>
             </Button>
           </Stack>
         )}
