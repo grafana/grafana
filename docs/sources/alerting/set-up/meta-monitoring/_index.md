@@ -1,6 +1,7 @@
 ---
 aliases:
   - meta-monitoring/
+  - alerting/meta-monitoring/
 description: Meta monitoring
 keywords:
   - grafana
