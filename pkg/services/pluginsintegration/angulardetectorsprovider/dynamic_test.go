@@ -288,10 +288,15 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 				}
 			})
 			t.Cleanup(bg.close)
-			// Refresh cache right before running the service so we skip the initial run
+			// Refresh cache right before running the service, so we skip the initial run
 			require.NoError(t, svc.store.Set(context.Background(), mockGCOMPatterns))
 			bg.run(context.Background(), t)
-			<-done
+			select {
+			case <-time.After(time.Second * 10):
+				t.Fatal("timeout")
+			case <-done:
+				break
+			}
 			bg.exitAndWait()
 
 			require.True(t, jobCalls.calledX(tcRuns), "should have the correct number of job calls")
