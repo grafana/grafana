@@ -30,13 +30,8 @@ export class FlameGraphSuggestionsSupplier {
       return;
     }
 
-    try {
-      const list = this.getListWithDefaults(builder);
-      list.append({
-        name: SuggestionName.FlameGraph,
-      });
-    } catch {
-      console.log('Caught');
-    }
+    this.getListWithDefaults(builder).append({
+      name: SuggestionName.FlameGraph,
+    });
   }
 }
