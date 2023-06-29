@@ -1,3 +1,4 @@
+// tests in here should be more global, most of tests here are covered in explore/RichHistory component tests
 import React from 'react';
 import { of } from 'rxjs';
 
