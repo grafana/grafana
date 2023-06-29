@@ -572,7 +572,8 @@ function transformToTraceData(data: TraceSearchMetadata) {
 
 export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
-  instanceSettings: DataSourceInstanceSettings
+  instanceSettings: DataSourceInstanceSettings,
+  requestId: string
 ): DataFrame[] {
   const frame = new MutableDataFrame({
     fields: [
@@ -626,6 +627,9 @@ export function createTableFrameFromTraceQlQuery(
     ],
     meta: {
       preferredVisualisationType: 'table',
+      custom: {
+        tableKey: requestId,
+      },
     },
   });
 
@@ -640,7 +644,7 @@ export function createTableFrameFromTraceQlQuery(
     .reduce((rows: TraceTableData[], trace, currentIndex) => {
       const traceData: TraceTableData = transformToTraceData(trace);
       rows.push(traceData);
-      subDataFrames.push(traceSubFrame(trace, instanceSettings, currentIndex));
+      subDataFrames.push(traceSubFrame(trace, instanceSettings, currentIndex, requestId));
       return rows;
     }, []);
 
@@ -654,7 +658,8 @@ export function createTableFrameFromTraceQlQuery(
 const traceSubFrame = (
   trace: TraceSearchMetadata,
   instanceSettings: DataSourceInstanceSettings,
-  currentIndex: number
+  currentIndex: number,
+  tableKey: string
 ): DataFrame => {
   const spanDynamicAttrs: Record<string, FieldDTO> = {};
   let hasNameAttribute = false;
@@ -740,6 +745,7 @@ const traceSubFrame = (
       preferredVisualisationType: 'table',
       custom: {
         parentRowIndex: currentIndex,
+        tableKey: tableKey,
       },
     },
   });

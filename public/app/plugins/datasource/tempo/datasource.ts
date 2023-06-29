@@ -231,7 +231,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             }).pipe(
               map((response) => {
                 return {
-                  data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                  data: createTableFrameFromTraceQlQuery(
+                    response.data.traces,
+                    this.instanceSettings,
+                    options.requestId
+                  ),
                 };
               }),
               catchError((err) => {
@@ -262,7 +266,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           }).pipe(
             map((response) => {
               return {
-                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings, options.requestId),
               };
             }),
             catchError((err) => {

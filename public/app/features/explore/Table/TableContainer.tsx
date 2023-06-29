@@ -34,25 +34,22 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrame(frames: DataFrame[] | null) {
-    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
+  getMainFrames(frames: DataFrame[] | null) {
+    return (
+      frames?.filter((df) => df.meta === undefined || df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]]
+    );
   }
 
-  getTableHeight() {
-    const { tableResult } = this.props;
-    const mainFrame = this.getMainFrame(tableResult);
-
-    if (!mainFrame || mainFrame.length === 0) {
+  getTableHeight(frameLength: number, isSingleTable = true) {
+    if (frameLength === 0) {
       return 200;
     }
-
     // tries to estimate table height
-    return Math.min(600, Math.max(mainFrame.length * 36, 300) + 40 + 46);
+    return Math.min(600, Math.max(frameLength * 36, isSingleTable ? 300 : 0) + 40 + 46);
   }
 
   render() {
     const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
-    const height = this.getTableHeight();
 
     let dataFrames = tableResult;
 
@@ -85,33 +82,56 @@ export class TableContainer extends PureComponent<Props> {
       }
     }
 
-    const mainFrame = this.getMainFrame(dataFrames);
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
+    const mainFrames = this.getMainFrames(dataFrames).filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame
+    );
+
+    /* 
+    if there is only one main frame, all other frames are children of that frame's rows
+
+    if there are multiple main frames, there will need to be a matching table key between the main frame and its children
+    */
+    if (mainFrames?.length === 1) {
+      tableData.push({
+        main: mainFrames[0],
+        sub: dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined),
+      });
+    } else if (mainFrames.length > 1) {
+      mainFrames?.forEach((frame) => {
+        let subFrames: DataFrame[] = [];
+        if (frame.meta?.custom?.tableKey !== undefined) {
+          subFrames = dataFrames?.filter((df) => df.meta?.custom?.tableKey === frame.meta?.custom?.tableKey) || [];
+        }
+        tableData.push({ main: frame, sub: subFrames.length > 0 ? subFrames : undefined });
+      });
+    }
 
     return (
-      <PanelChrome
-        title="Table"
-        width={width}
-        height={height}
-        loadingState={loading ? LoadingState.Loading : undefined}
-      >
-        {(innerWidth, innerHeight) => (
-          <>
-            {mainFrame?.length ? (
-              <Table
-                ariaLabel={ariaLabel}
-                data={mainFrame}
-                subData={subFrames}
-                width={innerWidth}
-                height={innerHeight}
-                onCellFilterAdded={onCellFilterAdded}
-              />
-            ) : (
-              <MetaInfoText metaItems={[{ value: '0 series returned' }]} />
-            )}
-          </>
-        )}
-      </PanelChrome>
+      <>
+        {tableData.length === 0 && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {tableData.length > 0 &&
+          tableData.map((data, i) => (
+            <PanelChrome
+              key={data.main.meta?.custom?.tableKey || `table-${i}`}
+              title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
+              width={width}
+              height={this.getTableHeight(data.main.length, tableData.length === 1)}
+              loadingState={loading ? LoadingState.Loading : undefined}
+            >
+              {(innerWidth, innerHeight) => (
+                <Table
+                  ariaLabel={ariaLabel}
+                  data={data.main}
+                  subData={data.sub}
+                  width={innerWidth}
+                  height={innerHeight}
+                  onCellFilterAdded={onCellFilterAdded}
+                />
+              )}
+            </PanelChrome>
+          ))}
+      </>
     );
   }
 }
