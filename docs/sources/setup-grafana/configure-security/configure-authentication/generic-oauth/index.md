@@ -14,6 +14,8 @@ weight: 700
 
 # Configure generic OAuth2 authentication
 
+{{< docs/shared "auth/intro.md" >}}
+
 Grafana has specialised OAuth2 integrations for the following auth providers:
 
 - [Azure AD OAuth]({{< relref "../azuread" >}})
