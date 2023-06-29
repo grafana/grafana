@@ -85,7 +85,7 @@ export const Circle = ({ size, style, children }: React.PropsWithChildren<Circle
         position: 'absolute',
         bottom: 0,
         right: 0,
-        borderRadius: '50%',
+        borderRadius: theme.shape.radius.circle,
         ...style,
       }}
     >
