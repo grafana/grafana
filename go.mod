@@ -21,10 +21,17 @@ replace k8s.io/api => k8s.io/api v0.27.1
 
 replace k8s.io/apimachinery => k8s.io/apimachinery v0.27.1
 
-// TODO: get this merged upstream
-// Overrides base apiserver lib from kubernetes to use a later version of otel lib
-// from https://github.com/charandas/kubernetes/tree/charandas/grafana-apiserver-otel-fixes-1.27
-replace k8s.io/apiserver => github.com/charandas/kubernetes/staging/src/k8s.io/apiserver v0.0.0-20230628231357-04cb8bb18afb
+replace k8s.io/apiserver => k8s.io/apiserver v0.27.1
+
+// TODO: following otel replaces to pin the libraries so k8s.io/apiserver doesn't downgrade us inadvertantly
+// will need bumps as we upgrade otel in Grafana
+replace go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.42.0
+
+replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.16.0
+
+replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.16.0
+
+replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.16.0
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
