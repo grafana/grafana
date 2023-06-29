@@ -15,6 +15,11 @@
       "manage-permissions": "Manage permissions",
       "move": "Move"
     },
+    "new-folder-form": {
+      "cancel-label": "Cancel",
+      "create-label": "Create",
+      "field-label": "Folder name"
+    },
     "no-results": {
       "clear": "Clear search and filters",
       "text": "No results found for your query."

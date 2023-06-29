@@ -15,6 +15,11 @@
       "manage-permissions": "",
       "move": ""
     },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "field-label": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""

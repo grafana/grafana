@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { Button, Input, Form, Field, HorizontalGroup } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
@@ -29,12 +30,14 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
     }
   };
 
+  const fieldNameLabel = t('browse-dashboards.new-folder-form.field-label', 'Folder name');
+
   return (
     <Form defaultValues={initialFormModel} onSubmit={(form: FormModel) => onConfirm(form.folderName)}>
       {({ register, errors }) => (
         <>
           <Field
-            label="Folder name"
+            label={fieldNameLabel}
             invalid={!!errors.folderName}
             error={errors.folderName && errors.folderName.message}
           >
@@ -48,9 +51,11 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
           </Field>
           <HorizontalGroup>
             <Button variant="secondary" fill="outline" onClick={onCancel}>
-              Cancel
+              <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
             </Button>
-            <Button type="submit">Create</Button>
+            <Button type="submit">
+              <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
+            </Button>
           </HorizontalGroup>
         </>
       )}
