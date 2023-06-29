@@ -18,7 +18,7 @@ interface TooltipPlugin4Props {
  * @alpha
  */
 export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
-  const domRef = useRef<HTMLPreElement>(null);
+  const domRef = useRef<HTMLDivElement>(null);
   const [plot, setPlot] = useState<uPlot>();
 
   const styleRef = useRef({ transform: '' }); // boo!
@@ -41,6 +41,9 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
       if (left < 0 && top < 0) {
         if (_isVisible) {
           setVisible((_isVisible = false));
+
+          // TODO: this should be done by Dashboards onmouseenter
+          u.root.closest('.react-grid-item')!.style.zIndex = "auto";
         }
       } else {
         const transform = `translate(${left}px, ${top}px)`;
@@ -50,6 +53,9 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         } else {
           styleRef.current = { ...styleRef.current, transform: transform };
           setVisible((_isVisible = true));
+
+          // TODO: this should be done by Dashboards onmouseleave
+          u.root.closest('.react-grid-item')!.style.zIndex = "1";
         }
       }
     });
@@ -61,9 +67,9 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
 
   if (plot && isVisible) {
     return createPortal(
-      <pre className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
+      <div className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
         {contents}
-      </pre>,
+      </div>,
       plot.over
     );
   }
@@ -79,5 +85,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     pointer-events: none;
     position: absolute;
     z-index: 1;
+
+    padding: 10px;
+    white-space: pre;
   `,
 });
