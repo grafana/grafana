@@ -64,13 +64,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Empty(t, r)
 		})
 
-		t.Run("returns cached detectors", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
-			svc.setDetectors(mockGCOMDetectors)
-			checkMockDetectors(t, svc.ProvideDetectors(context.Background()))
-		})
-
-		t.Run("restores detectors if not set yet", func(t *testing.T) {
+		t.Run("awaits initial restore", func(t *testing.T) {
 			// Prepare mock store
 			mockStore := angularpatternsstore.ProvideService(kvstore.NewFakeKVStore())
 			err := mockStore.Set(context.Background(), mockGCOMPatterns)
@@ -121,7 +115,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		})
 	})
 
-	t.Run("tryUpdateDetectors", func(t *testing.T) {
+	t.Run("updateDetectors", func(t *testing.T) {
 		t.Run("successful", func(t *testing.T) {
 			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
@@ -136,10 +130,9 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			// Also check in-memory detectors
 			require.Empty(t, svc.detectors)
 
-			// Fetch and store value, and ensure it returns the correct value
-			svc.tryUpdateDetectors(context.Background())
-
-			// Check that the cached detectors have been updated as well
+			// Fetch and store value
+			err = svc.updateDetectors(context.Background())
+			require.NoError(t, err)
 			checkMockDetectors(t, svc.detectors)
 
 			// Check that the value has been updated in the kv store, by reading from the store directly
@@ -172,7 +165,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			// Try to update from GCOM, but it returns an error
-			svc.tryUpdateDetectors(context.Background())
+			err = svc.updateDetectors(context.Background())
+			require.Error(t, err)
 			require.True(t, scenario.httpCalls.calledOnce(), "gcom api should be called once")
 
 			// Patterns in store should not be modified
@@ -215,7 +209,10 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("background service", func(t *testing.T) {
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
-			gcom := newDefaultGCOMScenario()
+			gcomCallback := make(chan struct{})
+			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
+				gcomCallback <- struct{}{}
+			})
 			srv := gcom.newHTTPTestServer()
 			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			mockStore := &mockLastUpdatePatternsStore{
@@ -225,26 +222,23 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			}
 			svc.store = mockStore
 
-			// Store mock GCOM pattern without the first one
-			err = mockStore.Set(context.Background(), mockGCOMPatterns[1:])
+			// Store mock GCOM patterns
+			err = mockStore.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
+			// Ensure the detectors are initially empty
+			require.Empty(t, svc.detectors)
+
 			// Start bg service and it should call GCOM immediately
-			callback := make(chan struct{})
-			var once sync.Once
-			bg := newBackgroundServiceScenario(svc, func() {
-				once.Do(func() {
-					callback <- struct{}{}
-				})
-			})
+			bg := newBackgroundServiceScenario(svc)
 			t.Cleanup(bg.close)
-			bg.run(context.Background(), t)
+			bg.run(context.Background())
 
 			// Await job call with timeout
 			select {
 			case <-time.After(time.Second * 10):
 				t.Fatal("timeout")
-			case <-callback:
+			case <-gcomCallback:
 				break
 			}
 			require.True(t, gcom.httpCalls.calledOnce(), "gcom api should be called once")
@@ -258,15 +252,11 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			t.Parallel()
 			const tcRuns = 3
 
-			gcom := newDefaultGCOMScenario()
-			srv := gcom.newHTTPTestServer()
-			t.Cleanup(srv.Close)
-			jobInterval := time.Millisecond * 500
-			svc := provideDynamic(t, srv.URL, jobInterval)
-			done := make(chan struct{})
-			var jobCalls counter
 			lastJobTime := time.Now()
-			bg := newBackgroundServiceScenario(svc, func() {
+			var jobCalls counter
+			const jobInterval = time.Millisecond * 500
+			done := make(chan struct{})
+			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				now := time.Now()
 				assert.WithinDuration(t, now, lastJobTime, jobInterval+jobInterval/2)
 				lastJobTime = now
@@ -278,10 +268,14 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 					close(done)
 				}
 			})
+			srv := gcom.newHTTPTestServer()
+			t.Cleanup(srv.Close)
+			svc := provideDynamic(t, srv.URL, jobInterval)
+			bg := newBackgroundServiceScenario(svc)
 			t.Cleanup(bg.close)
 			// Refresh cache right before running the service, so we skip the initial run
 			require.NoError(t, svc.store.Set(context.Background(), mockGCOMPatterns))
-			bg.run(context.Background(), t)
+			bg.run(context.Background())
 			select {
 			case <-time.After(time.Second * 10):
 				t.Fatal("timeout")
@@ -375,9 +369,12 @@ func (s *gcomScenario) newHTTPTestServer() *httptest.Server {
 	}))
 }
 
-func newDefaultGCOMScenario() *gcomScenario {
+func newDefaultGCOMScenario(middlewares ...http.HandlerFunc) *gcomScenario {
 	return &gcomScenario{httpHandlerFunc: func(w http.ResponseWriter, req *http.Request) {
 		mockGCOMHTTPHandlerFunc(w, req)
+		for _, f := range middlewares {
+			f(w, req)
+		}
 	}}
 }
 
@@ -387,40 +384,14 @@ func newError500GCOMScenario() *gcomScenario {
 	}}
 }
 
-func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration, opts ...func(*Dynamic)) *Dynamic {
+func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration) *Dynamic {
 	d, err := ProvideDynamic(
 		&config.Cfg{GrafanaComURL: gcomURL},
 		angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
 	)
 	require.NoError(t, err)
-	for _, opt := range opts {
-		opt(d)
-	}
 	d.backgroundJobInterval = cacheTTL
 	return d
-}
-
-// fakeBackgroundJob wraps a backgroundJob and writes a value to the callback channel
-// whenever the job is executed.
-type fakeBackgroundJob struct {
-	inner backgroundJob
-
-	// callback is a channel where a value is written after the background job is executed.
-	// Read from this channel to await when the job is executed
-	callback chan struct{}
-}
-
-func newFakeJober(inner backgroundJob) *fakeBackgroundJob {
-	return &fakeBackgroundJob{inner: inner, callback: make(chan struct{})}
-}
-
-func (j *fakeBackgroundJob) close() {
-	close(j.callback)
-}
-
-func (j *fakeBackgroundJob) runBackgroundJob(ctx context.Context) {
-	j.inner.runBackgroundJob(ctx)
-	j.callback <- struct{}{}
 }
 
 // mockLastUpdatePatternsStore wraps an angularpatternsstore.Service and returns a pre-defined value (lastUpdated)
@@ -437,25 +408,14 @@ func (s *mockLastUpdatePatternsStore) GetLastUpdated(_ context.Context) (time.Ti
 
 type backgroundServiceScenario struct {
 	svc         *Dynamic
-	fakeBgJob   *fakeBackgroundJob
-	bgDone      chan struct{}
 	wg          sync.WaitGroup
 	ctxCancFunc context.CancelFunc
 }
 
-func newBackgroundServiceScenario(svc *Dynamic, callback func()) *backgroundServiceScenario {
-	s := &backgroundServiceScenario{
-		svc:       svc,
-		bgDone:    make(chan struct{}),
-		fakeBgJob: newFakeJober(svc),
+func newBackgroundServiceScenario(svc *Dynamic) *backgroundServiceScenario {
+	return &backgroundServiceScenario{
+		svc: svc,
 	}
-	svc.backgroundJob = s.fakeBgJob
-	go func() {
-		for range s.fakeBgJob.callback {
-			callback()
-		}
-	}()
-	return s
 }
 
 func (s *backgroundServiceScenario) close() {
@@ -476,7 +436,7 @@ func (s *backgroundServiceScenario) exitAndWait() {
 	s.wg.Wait()
 }
 
-func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
+func (s *backgroundServiceScenario) run(ctx context.Context) {
 	if s.ctxCancFunc != nil {
 		panic("run was called more than once")
 	}
@@ -492,9 +452,5 @@ func (s *backgroundServiceScenario) run(ctx context.Context, t *testing.T) {
 		if err != nil && !errors.Is(err, context.Canceled) {
 			panic(err)
 		}
-		// Make the consumer goroutine quit
-		s.fakeBgJob.close()
-		// Signal that the bg service has quit
-		close(s.bgDone)
 	}()
 }
