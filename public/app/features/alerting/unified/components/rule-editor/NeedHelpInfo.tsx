@@ -9,8 +9,9 @@ interface NeedHelpInfoProps {
   contentText: string;
   externalLink: string;
   linkText: string;
+  title: string;
 }
-export function NeedHelpInfo({ contentText, externalLink, linkText }: NeedHelpInfoProps) {
+export function NeedHelpInfo({ contentText, externalLink, linkText, title }: NeedHelpInfoProps) {
   const styles = useStyles2(getStyles);
   return (
     <Toggletip
@@ -18,7 +19,7 @@ export function NeedHelpInfo({ contentText, externalLink, linkText }: NeedHelpIn
       title={
         <Stack gap={1} direction="row">
           <Icon name="question-circle" />
-          Define query and alert condition
+          {title}
         </Stack>
       }
       footer={
@@ -53,6 +54,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-left: ${theme.spacing(1)};
     font-size: ${theme.typography.size.sm};
     cursor: pointer;
+    color: ${theme.colors.text.primary};
   `,
   helpInfoText: css`
     margin-left: ${theme.spacing(0.5)};

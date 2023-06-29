@@ -128,12 +128,12 @@ function getTestContext({
         }
       },
       containsTemplate: jest.fn().mockImplementation((text?: string) => text?.includes('$') ?? false),
-      getAdhocFilters: () => [],
+      getAdhocFilters: jest.fn().mockReturnValue([]),
     } as unknown as TemplateSrv);
 
   const ds = createElasticDatasource(settings, templateSrv);
 
-  return { timeSrv, ds, fetchMock };
+  return { timeSrv, ds, fetchMock, templateSrv };
 }
 
 describe('ElasticDatasource', () => {
@@ -1266,33 +1266,27 @@ describe('modifyQuery', () => {
   });
 });
 
-describe('addAdhocFilters', () => {
+describe('addAdHocFilters', () => {
   describe('with invalid filters', () => {
     it('should filter out ad hoc filter without key', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: '', operator: '=', value: 'a' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: '', operator: '=', value: 'a', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
     });
 
     it('should filter out ad hoc filter without value', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: 'a', operator: '=', value: '' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: '=', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
     });
 
     it('should filter out filter ad hoc filter with invalid operator', () => {
-      const templateSrvMock = {
-        getAdhocFilters: () => [{ key: 'a', operator: 'A', value: '' }],
-      } as unknown as TemplateSrv;
-      const { ds } = getTestContext({ templateSrvMock });
+      const { ds, templateSrv } = getTestContext();
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([{ key: 'a', operator: 'A', value: '', condition: '' }]);
 
       const query = ds.addAdHocFilters('foo:"bar"');
       expect(query).toBe('foo:"bar"');
@@ -1300,10 +1294,15 @@ describe('addAdhocFilters', () => {
   });
 
   describe('with 1 ad hoc filter', () => {
-    const templateSrvMock = {
-      getAdhocFilters: () => [{ key: 'test', operator: '=', value: 'test1' }],
-    } as unknown as TemplateSrv;
-    const { ds } = getTestContext({ templateSrvMock });
+    let ds: ElasticDatasource, templateSrvMock: TemplateSrv;
+    beforeEach(() => {
+      const { ds: datasource, templateSrv } = getTestContext();
+      ds = datasource;
+      templateSrvMock = templateSrv;
+      jest
+        .mocked(templateSrv.getAdhocFilters)
+        .mockReturnValue([{ key: 'test', operator: '=', value: 'test1', condition: '' }]);
+    });
 
     it('should correctly add 1 ad hoc filter when query is not empty', () => {
       const query = ds.addAdHocFilters('foo:"bar"');
@@ -1314,18 +1313,29 @@ describe('addAdhocFilters', () => {
       const query = ds.addAdHocFilters('');
       expect(query).toBe('test:"test1"');
     });
+
+    it('should escape characters in filter keys', () => {
+      jest
+        .mocked(templateSrvMock.getAdhocFilters)
+        .mockReturnValue([{ key: 'field:name', operator: '=', value: 'field:value', condition: '' }]);
+
+      const query = ds.addAdHocFilters('');
+      expect(query).toBe('field\\:name:"field:value"');
+    });
   });
 
   describe('with multiple ad hoc filters', () => {
-    const templateSrvMock = {
-      getAdhocFilters: () => [
-        { key: 'bar', operator: '=', value: 'baz' },
-        { key: 'job', operator: '!=', value: 'grafana' },
-        { key: 'service', operator: '=~', value: 'service' },
-        { key: 'count', operator: '>', value: '1' },
-      ],
-    } as unknown as TemplateSrv;
-    const { ds } = getTestContext({ templateSrvMock });
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      const { ds: datasource, templateSrv } = getTestContext();
+      ds = datasource;
+      jest.mocked(templateSrv.getAdhocFilters).mockReturnValue([
+        { key: 'bar', operator: '=', value: 'baz', condition: '' },
+        { key: 'job', operator: '!=', value: 'grafana', condition: '' },
+        { key: 'service', operator: '=~', value: 'service', condition: '' },
+        { key: 'count', operator: '>', value: '1', condition: '' },
+      ]);
+    });
 
     it('should correctly add ad hoc filters when query is not empty', () => {
       const query = ds.addAdHocFilters('foo:"bar" AND test:"test1"');

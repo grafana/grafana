@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",
@@ -8,6 +31,12 @@
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
     },
     "no-results": {
       "clear": "",
@@ -136,6 +165,10 @@
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
       "no-options": "No se ha encontrado ninguna opción"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -566,6 +599,16 @@
       "default-label": "Por defecto"
     },
     "title": "Preferencias"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Cargando...",

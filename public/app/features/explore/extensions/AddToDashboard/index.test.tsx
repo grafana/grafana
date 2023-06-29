@@ -13,7 +13,7 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreState } from 'app/types';
 
-import { createEmptyQueryResponse } from '../state/utils';
+import { createEmptyQueryResponse } from '../../state/utils';
 
 import * as api from './addToDashboard';
 

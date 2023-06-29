@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Role",
+      "team-label": "Team",
+      "title": "Add permission for",
+      "user-label": "User"
+    },
+    "add-permissions": {
+      "save": "Save"
+    },
+    "permission-list": {
+      "permission": "Permission"
+    },
+    "permissions": {
+      "add-label": "Add a permission",
+      "no-permissions": "There are no permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "role": "Role",
+      "team": "Team",
+      "title": "Permissions",
+      "user": "User"
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "Delete",
@@ -8,6 +31,12 @@
     "dashboards-tree": {
       "name-column": "Name",
       "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
     },
     "no-results": {
       "clear": "Clear search and filters",
@@ -136,6 +165,10 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
     }
   },
   "library-panel": {
@@ -566,6 +599,16 @@
       "default-label": "Default"
     },
     "title": "Preferences"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "Dashboards",
+      "panels": "Panels"
+    },
+    "nav-models": {
+      "alert-rules": "Alert rules",
+      "manage-folder-subtitle": "Manage folder dashboards and permissions"
+    }
   },
   "tag-filter": {
     "loading": "Loading...",

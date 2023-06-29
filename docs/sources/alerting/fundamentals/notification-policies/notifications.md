@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../notifications/
+  - alerting/manage-notifications/create-notification-policy/
 description: Notification policies
 keywords:
   - grafana

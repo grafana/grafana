@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",
@@ -8,6 +31,12 @@
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
     },
     "no-results": {
       "clear": "",
@@ -136,6 +165,10 @@
       "error": "加载选项失败",
       "loading": "正在加载选项...",
       "no-options": "未找到选项"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -566,6 +599,16 @@
       "default-label": "默认"
     },
     "title": "首选项"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "加载中...",
