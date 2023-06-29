@@ -40,16 +40,16 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 1. Create an OAuth2 application in your chosen OAuth2 provider.
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
 
-This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
-You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
+    This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
+    You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
 
 1. Update `[auth.generic_oauth]` section of Grafana configuration file:
-  1. Update `client_id` and `client_secret` fields to match client ID and client secret from your OAuth2 app.
-  1. Set `auth_url` field to the authorization endpoint of your OAuth2 provider.
-  1. Set `token_url` field to the token endpoint of your OAuth2 provider.
-  1. Set `api_url` field to the user information endpoint of your OAuth2 provider. Information returned by this endpoint has to be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).
-  1. Update `enabled` field to `true`.
-  1. Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
+    1. Update `client_id` and `client_secret` fields to match client ID and client secret from your OAuth2 app.
+    1. Set `auth_url` field to the authorization endpoint of your OAuth2 provider.
+    1. Set `token_url` field to the token endpoint of your OAuth2 provider.
+    1. Set `api_url` field to the user information endpoint of your OAuth2 provider. Information returned by this endpoint has to be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).
+    1. Update `enabled` field to `true`.
+    1. Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
 1. (Optional) Configure [team synchronization]({{< relref "#team-synchronization" >}}).
 1. Restart Grafana. You should now see a generic OAuth2 login button on the login page and be able to login or sign up with your OAuth2 provider.
@@ -337,7 +337,7 @@ Payload:
 }
 ```
 
-## Examples of setting up generic OAuth
+## Examples of setting up generic OAuth2
 
 ### Set up OAuth2 with Auth0
 
