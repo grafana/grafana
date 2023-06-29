@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
-	"os"
 	"reflect"
 
 	"golang.org/x/sync/errgroup"
@@ -61,38 +59,6 @@ func (r *BackgroundServiceRunner) run(ctx context.Context) error {
 		})
 	}
 
-	r.notifySystemd("READY=1")
-
 	r.log.Debug("Waiting on services...")
 	return childRoutines.Wait()
-}
-
-// notifySystemd sends state notifications to systemd.
-func (r *BackgroundServiceRunner) notifySystemd(state string) {
-	notifySocket := os.Getenv("NOTIFY_SOCKET")
-	if notifySocket == "" {
-		r.log.Debug(
-			"NOTIFY_SOCKET environment variable empty or unset, can't send systemd notification")
-		return
-	}
-
-	socketAddr := &net.UnixAddr{
-		Name: notifySocket,
-		Net:  "unixgram",
-	}
-	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
-	if err != nil {
-		r.log.Warn("Failed to connect to systemd", "err", err, "socket", notifySocket)
-		return
-	}
-	defer func() {
-		if err = conn.Close(); err != nil {
-			r.log.Warn("Failed to close connection", "err", err)
-		}
-	}()
-
-	_, err = conn.Write([]byte(state))
-	if err != nil {
-		r.log.Warn("Failed to write notification to systemd", "err", err)
-	}
 }
