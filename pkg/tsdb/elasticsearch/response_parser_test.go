@@ -2481,7 +2481,6 @@ func TestProcessBuckets(t *testing.T) {
 		  }
 		]
 	  }
-
 	`)
 
 			result, err := queryDataTest(query, response)
