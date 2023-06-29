@@ -1,4 +1,4 @@
-import { waitFor } from '@testing-library/react';
+import { waitFor, screen } from '@testing-library/react';
 
 import { withinExplore } from './setup';
 
@@ -19,6 +19,15 @@ export const assertQueryHistory = async (expectedQueryTexts: string[], exploreId
       expect(queryTexts[queryIndex]).toHaveTextContent(expectedQueryText);
     });
   });
+};
+
+export const assertStarredQueryHistoryExists = async (exploreId = 'left') => {
+  const selector = withinExplore(exploreId);
+  expect(await selector.getByRole('button', { name: 'Unstar query' })).toBeInTheDocument();
+};
+
+export const assertModalIsOpen = async () => {
+  expect(await screen.findByRole('dialog')).toBeInTheDocument();
 };
 
 export const assertNoQueryHistory = async (exploreId = 'left') => {

@@ -69,6 +69,15 @@ export const deleteQueryHistory = async (queryIndex: number, exploreId = 'left')
   await invokeAction(queryIndex, 'Delete query', exploreId);
 };
 
+export const openDeleteModal = async () => {
+  await userEvent.click(screen.getByRole('button', { name: 'Delete query' }));
+};
+
+export const confirmDeletingInModal = async () => {
+  const button = screen.getByRole('button', { name: 'Delete' });
+  await userEvent.click(button);
+};
+
 export const loadMoreQueryHistory = async (exploreId = 'left') => {
   const button = withinExplore(exploreId).getByRole('button', { name: 'Load more' });
   await userEvent.click(button);

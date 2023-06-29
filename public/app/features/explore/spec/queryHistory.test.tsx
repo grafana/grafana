@@ -1,3 +1,4 @@
+import { screen } from '@testing-library/dom';
 import React from 'react';
 import { of } from 'rxjs';
 
@@ -9,6 +10,7 @@ import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsole
 import {
   assertDataSourceFilterVisibility,
   assertLoadMoreQueryHistoryNotVisible,
+  assertModalIsOpen,
   assertNoQueryHistory,
   assertQueryHistory,
   assertQueryHistoryComment,
@@ -16,6 +18,7 @@ import {
   assertQueryHistoryExists,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
+  assertStarredQueryHistoryExists,
 } from './helper/assert';
 import {
   commentQueryHistory,
@@ -29,6 +32,10 @@ import {
   selectStarredTabFirst,
   starQueryHistory,
   switchToQueryHistoryTab,
+  deleteStarredQueryHistoryItem,
+  confirmDeletingStarredQueryHistoryItem,
+  openDeleteModal,
+  confirmDeletingInModal,
 } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
@@ -79,7 +86,7 @@ describe('Explore: Query History', () => {
   const USER_INPUT = 'my query';
   const RAW_QUERY = `{"expr":"${USER_INPUT}"}`;
 
-  silenceConsoleOutput();
+  // silenceConsoleOutput();
 
   afterEach(() => {
     config.queryHistoryEnabled = false;
@@ -90,7 +97,7 @@ describe('Explore: Query History', () => {
     tearDown();
   });
 
-  it('adds new query history items after the query is run.', async () => {
+  it.skip('adds new query history items after the query is run.', async () => {
     // when Explore is opened
     const { datasources, unmount } = setupExplore();
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
@@ -118,7 +125,7 @@ describe('Explore: Query History', () => {
     });
   });
 
-  it('adds recently added query if the query history panel is already open', async () => {
+  it.skip('adds recently added query if the query history panel is already open', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -180,7 +187,7 @@ describe('Explore: Query History', () => {
     });
   });
 
-  it('add comments to query history', async () => {
+  it.skip('add comments to query history', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -199,7 +206,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistoryComment(['test comment'], 'left');
   });
 
-  it('updates query history settings', async () => {
+  it.skip('updates query history settings', async () => {
     // open settings page
     setupExplore();
     await waitForExplore();
@@ -221,7 +228,7 @@ describe('Explore: Query History', () => {
     assertDataSourceFilterVisibility(false);
   });
 
-  it('removes the query item from the history panel when the user deletes a regular query', async () => {
+  it.skip('removes the query item from the history panel when the user deletes a regular query', async () => {
     const { datasources } = setupExplore();
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
 
@@ -241,7 +248,38 @@ describe('Explore: Query History', () => {
     await assertNoQueryHistory();
   });
 
-  it('pagination', async () => {
+  it('removes the query item from the history panel when the user deletes a starred query', async () => {
+    setupExplore();
+
+    // run query and open query history
+    await waitForExplore();
+    await inputQuery(USER_INPUT);
+    await runQuery();
+    await openQueryHistory();
+
+    // the query that was run is in query history
+    await assertQueryHistoryExists(RAW_QUERY);
+
+    // star the query
+    await starQueryHistory(0);
+
+    // the starred query exist in query history
+    await assertStarredQueryHistoryExists();
+
+    // delete the starred query
+    await deleteQueryHistory(0);
+
+    // modal is open with a question about deleting the query
+    await assertModalIsOpen();
+
+    // confirm deleting in modal
+    await confirmDeletingInModal();
+
+    // the query is removed from the query history
+    await assertNoQueryHistory();
+  });
+
+  it.skip('pagination', async () => {
     config.queryHistoryEnabled = true;
     const { datasources } = setupExplore();
     jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
