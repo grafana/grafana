@@ -165,7 +165,6 @@ export const MetricsModal = (props: MetricsModalProps) => {
         const newVal = !state.fullMetaSearch;
         dispatch(setFullMetaSearch(newVal));
         onChange({ ...query, fullMetaSearch: newVal });
-
         searchCallback(state.fuzzySearchQuery, newVal);
       }}
       onChangeIncludeNullMetadata={() => {
