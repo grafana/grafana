@@ -33,15 +33,15 @@ describe('AzureAuth', () => {
 
     describe('getCredentials()', () => {
       it('should return the correct managed identity credentials', () => {
-        // If `dataSourceSettings.authType === "msi"` && `config.azure.managedIdentityEnabled === true`.
+        // If `dataSourceSettings.authType === AzureAuthType.MSI` && `config.azure.managedIdentityEnabled === true`.
         const resultForManagedIdentityEnabled = getCredentials(
           // @ts-ignore
           dataSourceSettingsWithMsiCredentials,
           configWithManagedIdentityEnabled
         );
-        expect(resultForManagedIdentityEnabled).toEqual({ authType: 'msi' });
+        expect(resultForManagedIdentityEnabled).toEqual({ authType: AzureAuthType.MSI });
 
-        // If `dataSourceSettings.authType === "msi"` but `config.azure.managedIdentityEnabled !== true`.
+        // If `dataSourceSettings.authType === AzureAuthType.MSI` but `config.azure.managedIdentityEnabled !== true`.
         // Default to basic client secret credentials.
         const resultForManagedIdentityEnabledInJSONButDisabledInConfig = getCredentials(
           // @ts-ignore
@@ -62,7 +62,7 @@ describe('AzureAuth', () => {
           clientId: 'XXXX-client-id-XXXX',
         };
 
-        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == true`,
+        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == true`,
         // i.e. the client secret is stored on the server.
         const resultForClientSecretCredentialsOnServer = getCredentials(
           // @ts-ignore
@@ -78,7 +78,7 @@ describe('AzureAuth', () => {
         expect(resultForClientSecretCredentialsOnServer.clientId).toEqual('XXXX-client-id-XXXX');
         expect(typeof resultForClientSecretCredentialsOnServer.clientSecret).toEqual('symbol');
 
-        //   If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`,
+        //   If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == false`,
         //   i.e. the client secret is stored in the secureJson.
         const resultForClientSecretCredentialsInSecureJSON = getCredentials(
           // @ts-ignore
@@ -94,7 +94,7 @@ describe('AzureAuth', () => {
 
     describe('updateCredentials()', () => {
       it('should update the credentials for managed service identity correctly', () => {
-        // If `dataSourceSettings.authType === "msi"` && `config.azure.managedIdentityEnabled === true`.
+        // If `dataSourceSettings.authType === AzureAuthType.MSI` && `config.azure.managedIdentityEnabled === true`.
         const resultForMsiCredentials = updateCredentials(
           // @ts-ignore
           dataSourceSettingsWithMsiCredentials,
@@ -105,7 +105,7 @@ describe('AzureAuth', () => {
         );
         expect(resultForMsiCredentials).toEqual({ jsonData: { azureCredentials: { authType: 'msi' } } });
 
-        // If `dataSourceSettings.authType === "msi"` but `config.azure.managedIdentityEnabled !== true`.
+        // If `dataSourceSettings.authType === AzureAuthType.MSI` but `config.azure.managedIdentityEnabled !== true`.
         expect(() =>
           updateCredentials(
             // @ts-ignore
@@ -126,7 +126,7 @@ describe('AzureAuth', () => {
           clientId: 'XXXX-client-id-XXXX',
         };
 
-        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == true`.
+        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == true`.
         const resultForClientSecretCredentials1 = updateCredentials(
           // @ts-ignore
           dataSourceSettingsWithClientSecretOnServer,
@@ -141,7 +141,7 @@ describe('AzureAuth', () => {
           secureJsonFields: { azureClientSecret: false },
         });
 
-        // If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`.
+        // If `dataSourceSettings.authType === AzureAuthType.CLIENT_SECRET` && `secureJsonFields.azureClientSecret == false`.
         const resultForClientSecretCredentials2 = updateCredentials(
           // @ts-ignore
           dataSourceSettingsWithClientSecretInSecureJSONData,

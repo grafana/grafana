@@ -158,8 +158,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
             onChange={onAuthenticationMethodChanged}
           ></Select>
         </InlineField>
-        {/* Basic SQL auth */}
-        {jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth && (
+        {/* Basic SQL auth. Render if authType === MSSQLAuthenticationType.sqlAuth OR
+        if no authType exists, which will be the case when creating a new data source */}
+        {(jsonData.authenticationType === MSSQLAuthenticationType.sqlAuth || !jsonData.authenticationType) && (
           <InlineFieldRow>
             <InlineField labelWidth={SHORT_WIDTH} label="User">
               <Input

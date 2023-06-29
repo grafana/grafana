@@ -39,63 +39,11 @@ export const AzureCredentialsForm = (props: Props) => {
     }
   };
 
-  const onAzureCloudChange = (selected: SelectableValue<string>) => {
+  const onInputChange = ({ property, value }: { property: keyof AzureCredentialsType; value: string }) => {
     if (onCredentialsChange && credentials.authType === 'clientsecret') {
       const updated: AzureCredentialsType = {
         ...credentials,
-        azureCloud: selected.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  // JEV: use this to replace even on changes to the tenantId, clientId, and clientSecret
-  // JEV: do the same with selected.value for onAzureCloudChange and onAuthTypeChange
-  // const onInputChange = ({property, value}: { property: keyof AzureCredentialsType; value: string }) => {
-  //   if (onCredentialsChange && credentials.authType === 'clientsecret') {
-  //     const updated: AzureCredentialsType = {
-  //       ...credentials,
-  //       [property]: value,
-  //     };
-  //     onCredentialsChange(updated);
-  //   }
-  // };
-
-  const onTenantIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentialsType = {
-        ...credentials,
-        tenantId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientIdChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentialsType = {
-        ...credentials,
-        clientId: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientSecretChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentialsType = {
-        ...credentials,
-        clientSecret: event.target.value,
-      };
-      onCredentialsChange(updated);
-    }
-  };
-
-  const onClientSecretReset = () => {
-    if (onCredentialsChange && credentials.authType === 'clientsecret') {
-      const updated: AzureCredentialsType = {
-        ...credentials,
-        clientSecret: '',
+        [property]: value,
       };
       onCredentialsChange(updated);
     }
@@ -129,7 +77,10 @@ export const AzureCredentialsForm = (props: Props) => {
                 <Select
                   value={azureCloudOptions.find((opt) => opt.value === credentials.azureCloud)}
                   options={azureCloudOptions}
-                  onChange={onAzureCloudChange}
+                  onChange={(selected: SelectableValue<AzureAuthType>) => {
+                    const value = selected.value || '';
+                    onInputChange({ property: 'azureCloud', value });
+                  }}
                   isDisabled={disabled}
                 />
               </div>
@@ -143,7 +94,10 @@ export const AzureCredentialsForm = (props: Props) => {
                   className="width-30"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.tenantId || ''}
-                  onChange={onTenantIdChange}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const value = event.target.value;
+                    onInputChange({ property: 'tenantId', value });
+                  }}
                   disabled={disabled}
                 />
               </div>
@@ -157,7 +111,10 @@ export const AzureCredentialsForm = (props: Props) => {
                   className="width-30"
                   placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                   value={credentials.clientId || ''}
-                  onChange={onClientIdChange}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const value = event.target.value;
+                    onInputChange({ property: 'clientId', value });
+                  }}
                   disabled={disabled}
                 />
               </div>
@@ -174,7 +131,13 @@ export const AzureCredentialsForm = (props: Props) => {
               {!disabled && (
                 <div className="gf-form">
                   <div className="max-width-30 gf-form-inline">
-                    <Button variant="secondary" type="button" onClick={onClientSecretReset}>
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => {
+                        onInputChange({ property: 'clientSecret', value: '' });
+                      }}
+                    >
                       reset
                     </Button>
                   </div>
@@ -190,7 +153,10 @@ export const AzureCredentialsForm = (props: Props) => {
                     className="width-30"
                     placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                     value={credentials.clientSecret || ''}
-                    onChange={onClientSecretChange}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      const value = event.target.value;
+                      onInputChange({ property: 'clientSecret', value });
+                    }}
                     disabled={disabled}
                   />
                 </div>
