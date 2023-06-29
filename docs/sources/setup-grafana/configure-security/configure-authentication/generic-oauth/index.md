@@ -24,7 +24,7 @@ Grafana has specialised OAuth2 integrations for the following auth providers:
 - [KeyCloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
-If your OAuth2 provider is not among them, you can use generic OAuth authentication to integrate it with Grafana.
+If your OAuth2 provider is not among them, you can use generic OAuth2 authentication to integrate it with Grafana.
 
 ## Before you begin
 
@@ -42,9 +42,12 @@ This callback URL must match the full HTTP address that you use in your browser 
 You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
 
 1. Update `[auth.generic_oauth]` section of Grafana configuration file:
-1. Update `client_id` and `client_secret` fields to match client ID and client secret from your OAuth2 app.
-1. Update `enabled` field to `true`.
-1. Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
+  1. Update `client_id` and `client_secret` fields to match client ID and client secret from your OAuth2 app.
+  1. Set `auth_url` field to the authorization endpoint of your OAuth2 provider.
+  1. Set `token_url` field to the token endpoint of your OAuth2 provider.
+  1. Set `api_url` field to the user information endpoint of your OAuth2 provider. Information returned by this endpoint has to be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).
+  1. Update `enabled` field to `true`.
+  1. Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
 1. (Optional) Configure [team synchronization]({{< relref "#team-synchronization" >}}).
 1. Restart Grafana. You should now see a generic OAuth2 login button on the login page and be able to login or sign up with your OAuth2 provider.
@@ -55,23 +58,23 @@ The table below describes all generic OAuth2 configuration options. Continue rea
 
 | Setting                      | Required | Description                                                                                                                                                                                    | Default         |
 | ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `enabled`                    | No       | Whether generic OAuth authentication is allowed.                                                                                                                                               | `false`         |
-| `name`                       | No       | Name used to refer to the generic OAauth authentication from Grafana's user interface.                                                                                                         | `OAuth`         |
-| `icon`                       | No       | Icon used for the generic OAauth authentication in Grafana's user interface.                                                                                                                   | `signin`        |
+| `enabled`                    | No       | Whether generic OAuth2 authentication is allowed.                                                                                                                                               | `false`         |
+| `name`                       | No       | Name used to refer to the generic OAuth2 authentication from Grafana's user interface.                                                                                                         | `OAuth`         |
+| `icon`                       | No       | Icon used for the generic OAuth2 authentication in Grafana's user interface.                                                                                                                   | `signin`        |
 | `client_id`                  | Yes      | Client ID provided by your OAuth2 app.                                                                                                                                                         |                 |
 | `client_secret`              | Yes      | Client secret provided by your OAuth2 app.                                                                                                                                                     |                 |
-| `auth_url`                   | Yes      | Authorization endpoint of your OAuth provider.                                                                                                                                                 |                 |
-| `token_url`                  | Yes      | Endpoint used to obtain OAuth access token.                                                                                                                                                    |                 |
+| `auth_url`                   | Yes      | Authorization endpoint of your OAuth2 provider.                                                                                                                                                 |                 |
+| `token_url`                  | Yes      | Endpoint used to obtain OAuth2 access token.                                                                                                                                                    |                 |
 | `api_url`                    | Yes      | Endpoint used to obtain user information compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).                                                          |                 |
-| `auth_style`                 | No       | Name of the [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) to be used when ID token is requested from OAuth provider.                                                    | `AutoDetect`    |
-| `scopes`                     | No       | List of comma- or space-separated OAuth scopes.                                                                                                                                                | `user:email`    |
+| `auth_style`                 | No       | Name of the [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) to be used when ID token is requested from OAuth2 provider.                                                    | `AutoDetect`    |
+| `scopes`                     | No       | List of comma- or space-separated OAuth2 scopes.                                                                                                                                                | `user:email`    |
 | `empty_scopes`               | No       | Set to `true` to use an empty scope during authentication.                                                                                                                                     | `false`         |
-| `allow_sign_up`              | No       | Whether to allow new Grafana user creation through generic OAuth login. If set to `false`, then only existing Grafana users can log in with generic OAuth.                                     | `true`          |
-| `auto_login`                 | No       | Whether generic OAuth auto login is enabled. If set to `true`, then users will be able to log in skipping the login screen.                                                                    | `false`         |
-| `id_token_attribute_name`    | No       | Name of the key used to extract the ID token from the returned OAuth token.                                                                                                                    | `id_token`      |
+| `allow_sign_up`              | No       | Whether to allow new Grafana user creation through generic OAuth2 login. If set to `false`, then only existing Grafana users can log in with generic OAuth.                                     | `true`          |
+| `auto_login`                 | No       | Whether generic OAuth2 auto login is enabled. If set to `true`, then users will be able to log in skipping the login screen.                                                                    | `false`         |
+| `id_token_attribute_name`    | No       | Name of the key used to extract the ID token from the returned OAuth2 token.                                                                                                                    | `id_token`      |
 | `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token.                                                                                  |                 |
 | `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as user's display name.                                    |                 |
-| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the generic OAuth attribute map.                                                                                                           | `email:primary` |
+| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the generic OAuth2 attribute map.                                                                                                           | `email:primary` |
 | `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup.                                                                                                       |                 |
 | `role_attribute_strict`      | No       | Set to `true` to deny user login if Grafana role cannot be extracted using `role_attribute_path`.                                                                                              | `false`         |
 | `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of Grafana server administrator role.                                                                                                                   | `false`         |
@@ -91,22 +94,17 @@ The table below describes all generic OAuth2 configuration options. Continue rea
 
 ## Auth style
 
-`auth_style` controls which [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) is used when token is requested from OAuth provider. It determines how `client_id` and `client_secret` are sent to Oauth provider.
+`auth_style` controls which [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) is used when token is requested from OAuth2 provider. It determines how `client_id` and `client_secret` are sent to Oauth2 provider.
 Available values are `AutoDetect`, `InParams` and `InHeader`. By default, `AutoDetect` is used.
-
-### Scopes
-
-You can configure OAuth scopes through `scopes` field. By default, Grafana uses `user:email` as scope.
-Set `empty_scopes` field to true to use an empty scope during authentication.
 
 ### Email address
 
 Grafana determines a user's email address by following the steps below until it finds and e-mail address:
 
-1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth ID token.
+1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth2 ID token.
 1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
-1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth ID token. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
-1. Query the `/emails` endpoint of the OAuth provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
+1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth2 ID token. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
+1. Query the `/emails` endpoint of the OAuth2 provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
 1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
 
 ### Login
@@ -114,7 +112,7 @@ Grafana determines a user's email address by following the steps below until it 
 Grafana determines a user's login by using the [JMESPath](http://jmespath.org/examples.html) specified via the `login_attribute_path` configuration option.
 The order of operations is as follows:
 
-1. Evaluate the `login_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `login_attribute_path` JMESPath expression against the OAuth2 ID token.
 1. Evaluate the `login_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
 
 ### Display name
@@ -126,7 +124,7 @@ You can set a user's display name with [JMESPath](http://jmespath.org/examples.h
 Group mappings are made using [JMESPath](http://jmespath.org/examples.html) from the `groups_attribute_path` configuration option.
 Grafana determines a user's groups by following the steps below until it finds the groups:
 
-1. Evaluate the `groups_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `groups_attribute_path` JMESPath expression against the OAuth2 ID token.
 1. Evaluate the `groups_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
 
 The result of the JMESPath expression should be a string array of groups.
@@ -135,11 +133,11 @@ You can limit access to Grafana to only members of a given group or list of grou
 
 ### Teams
 
-OAuth provider teams are extracted using [JMESPath](http://jmespath.org/examples.html) expression from the `team_ids_attribute_path` configuration option.
+OAuth2 provider teams are extracted using [JMESPath](http://jmespath.org/examples.html) expression from the `team_ids_attribute_path` configuration option.
 The expression is evaluated against the JSON data obtained from Teams endpoint, which is specified via the `teams_url` configuration option.
-The result should be a string array of OAuth provider team IDs.
+The result should be a string array of OAuth2 provider team IDs.
 
-If `team_ids` configuration option is set, only users who are members of at least one of the specified teams will be able to authenticate to Grafana using your OAuth provider.
+If `team_ids` configuration option is set, only users who are members of at least one of the specified teams will be able to authenticate to Grafana using your OAuth2 provider.
 
 ### SSL/TLS configuration
 
@@ -171,11 +169,11 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
 
 > **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
 
-When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+When a user logs in using an OAuth2 provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To configure generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
+To configure generic OAuth2 to use a refresh token, perform one or both of the following tasks, if required:
 
 - Extend the `[auth.generic_oauth]` section with additional scopes
 - Enable the refresh token on the provider
@@ -187,13 +185,13 @@ This setting is ignored if multiple auth providers are configured to use auto lo
 
 ### Skip organization role sync
 
-To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
-This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
+To prevent the sync of organization roles from the OAuth2 provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth2 provider.
 
 ```ini
 [auth.generic_oauth]
 # ..
-# prevents the sync of org roles from the Oauth provider
+# prevents the sync of org roles from the Oauth2 provider
 skip_org_role_sync = true
 ``
 ```
@@ -204,7 +202,7 @@ Unless [`skip_org_role_sync` option]({{< relref "#skip-organization-role-sync" >
 User role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
 Grafana determines a user's role by following the steps below until it finds a role:
 
-1. Evaluate the `role_attribute_path` JMESPath expression against the OAuth ID token.
+1. Evaluate the `role_attribute_path` JMESPath expression against the OAuth2 ID token.
 1. Evaluate the `role_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
 
 The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `Viewer`, `Editor` or `Admin`.
@@ -305,10 +303,10 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || cont
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
 
-With Team Sync you can map your generic OAuth groups to teams in Grafana so that the users are automatically added to the correct teams.
+With Team Sync you can map your generic OAuth2 groups to teams in Grafana so that the users are automatically added to the correct teams.
 
-Generic OAuth groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
-Refer to [Groups]({{< relref "#groups" >}}) for information on how to configure OAuth groups with Grafana.
+Generic OAuth2 groups can be referenced by group ID, like `8bab1c86-8fba-33e5-2089-1d1c80ec267d` or `myteam`.
+Refer to [Groups]({{< relref "#groups" >}}) for information on how to configure OAuth2 groups with Grafana.
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync" >}}).
 
