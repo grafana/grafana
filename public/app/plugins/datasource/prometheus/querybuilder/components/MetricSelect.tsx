@@ -226,7 +226,7 @@ export function MetricSelect({
               // add the modal butoon option to the options
               metrics: [...metricsModalOption, ...metrics],
               isLoading: undefined,
-              // pass the initial metrics into the Metrics Modal
+              // pass the initial metrics into the metrics explorer
               initialMetrics: initialMetrics,
             });
           } else {
