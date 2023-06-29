@@ -448,3 +448,5 @@ replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421
 replace github.com/lib/pq => github.com/lib/pq v1.10.6
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/grafana/kindsys => github.com/grafana/kindsys v0.0.0-20230620102412-19255e2bfa3e
