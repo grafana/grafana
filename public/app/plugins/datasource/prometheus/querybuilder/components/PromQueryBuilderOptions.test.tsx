@@ -14,7 +14,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change query type', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.getByLabelText('Range')).toBeChecked();
 
     await userEvent.click(screen.getByLabelText('Instant'));
@@ -30,7 +30,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can set query type to "Both" on render for PanelEditor', async () => {
     setup({ instant: true, range: true });
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
 
     expect(screen.getByLabelText('Both')).toBeChecked();
   });
@@ -38,7 +38,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can set query type to "Both" on render for Explorer', async () => {
     setup({ instant: true, range: true }, CoreApp.Explore);
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
 
     expect(screen.getByLabelText('Both')).toBeChecked();
   });
@@ -51,7 +51,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change legend format to verbose', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
 
     let legendModeSelect = screen.getByText('Auto').parentElement!;
     await userEvent.click(legendModeSelect);
@@ -67,7 +67,7 @@ describe('PromQueryBuilderOptions', () => {
   it('Can change legend format to custom', async () => {
     const { props } = setup();
 
-    await userEvent.click(screen.getByTitle('Click to edit options'));
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
 
     let legendModeSelect = screen.getByText('Auto').parentElement!;
     await userEvent.click(legendModeSelect);

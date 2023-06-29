@@ -10,7 +10,6 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -46,12 +45,13 @@ func NewEngine(appUrl *url.URL, evalFactory eval.EvaluatorFactory) *Engine {
 		evalFactory: evalFactory,
 		createStateManager: func() stateManager {
 			cfg := state.ManagerCfg{
-				Metrics:       nil,
-				ExternalURL:   appUrl,
-				InstanceStore: nil,
-				Images:        &NoopImageService{},
-				Clock:         clock.New(),
-				Historian:     nil,
+				Metrics:                 nil,
+				ExternalURL:             appUrl,
+				InstanceStore:           nil,
+				Images:                  &NoopImageService{},
+				Clock:                   clock.New(),
+				Historian:               nil,
+				MaxStateSaveConcurrency: 1,
 			}
 			return state.NewManager(cfg)
 		},
@@ -72,7 +72,7 @@ func (e *Engine) Test(ctx context.Context, user *user.SignedInUser, rule *models
 
 	evaluator, err := backtestingEvaluatorFactory(ruleCtx, e.evalFactory, user, rule.GetEvalCondition())
 	if err != nil {
-		return nil, multierror.Append(ErrInvalidInputData, err)
+		return nil, errors.Join(ErrInvalidInputData, err)
 	}
 
 	stateManager := e.createStateManager()

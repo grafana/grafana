@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 
@@ -399,7 +398,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			if err == nil {
 				for _, result := range results {
 					if result.Error != nil {
-						err = multierror.Append(err, result.Error)
+						err = errors.Join(err, result.Error)
 					}
 				}
 			}

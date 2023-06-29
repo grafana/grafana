@@ -15,6 +15,11 @@ const (
 	flag2 = "flag2"
 )
 
+type flagObj struct {
+	name  string
+	value string
+}
+
 func TestRequireListWithEnvFallback(t *testing.T) {
 	var app = cli.NewApp()
 	tests := []struct {
@@ -73,7 +78,7 @@ func TestRequireStringWithEnvFallback(t *testing.T) {
 	}{
 		{
 			testName:    "string present in the context",
-			ctx:         cli.NewContext(app, setFlags(t, flag1, flag2, flag.NewFlagSet("test", flag.ContinueOnError)), nil),
+			ctx:         cli.NewContext(app, setFlags(t, flag.NewFlagSet("test", flag.ContinueOnError), flagObj{name: flag1, value: "a"}), nil),
 			name:        flag1,
 			envName:     "",
 			expected:    "a",
@@ -81,7 +86,7 @@ func TestRequireStringWithEnvFallback(t *testing.T) {
 		},
 		{
 			testName:    "string present in env",
-			ctx:         cli.NewContext(app, setFlags(t, "", "", flag.NewFlagSet("test", flag.ContinueOnError)), nil),
+			ctx:         cli.NewContext(app, setFlags(t, flag.NewFlagSet("test", flag.ContinueOnError)), nil),
 			name:        flag1,
 			envName:     setEnv(t, flag1, "a"),
 			expected:    "a",
@@ -89,7 +94,7 @@ func TestRequireStringWithEnvFallback(t *testing.T) {
 		},
 		{
 			testName:    "string absent from both context and env",
-			ctx:         cli.NewContext(app, setFlags(t, "", flag2, flag.NewFlagSet("test", flag.ContinueOnError)), nil),
+			ctx:         cli.NewContext(app, setFlags(t, flag.NewFlagSet("test", flag.ContinueOnError), flagObj{name: flag2, value: "b"}), nil),
 			name:        flag1,
 			envName:     "",
 			expected:    "",
@@ -120,13 +125,12 @@ func applyFlagSet(t *testing.T, aFlag, aValue string) *flag.FlagSet {
 	return set
 }
 
-func setFlags(t *testing.T, flag1, flag2 string, flagSet *flag.FlagSet) *flag.FlagSet {
+func setFlags(t *testing.T, flagSet *flag.FlagSet, flags ...flagObj) *flag.FlagSet {
 	t.Helper()
-	if flag1 != "" {
-		flagSet.StringVar(&flag1, "flag1", "a", "")
-	}
-	if flag2 != "" {
-		flagSet.StringVar(&flag2, "flag2", "b", "")
+	for _, f := range flags {
+		if f.name != "" {
+			flagSet.StringVar(&f.name, f.name, f.value, "")
+		}
 	}
 	return flagSet
 }

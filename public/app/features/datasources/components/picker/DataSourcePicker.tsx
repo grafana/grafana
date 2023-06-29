@@ -6,8 +6,7 @@ import {
 } from '@grafana/runtime';
 import { config } from 'app/core/config';
 
-import { DataSourceDropdown } from './DataSourceDropdown';
-import { DataSourceDropdownProps } from './types';
+import { DataSourceDropdown, DataSourceDropdownProps } from './DataSourceDropdown';
 
 type DataSourcePickerProps = DeprecatedDataSourcePickerProps | DataSourceDropdownProps;
 
