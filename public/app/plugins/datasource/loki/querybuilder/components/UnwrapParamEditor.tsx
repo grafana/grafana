@@ -5,6 +5,7 @@ import { Select } from '@grafana/ui';
 
 import { getOperationParamId } from '../../../prometheus/querybuilder/shared/operationUtils';
 import { QueryBuilderOperationParamEditorProps } from '../../../prometheus/querybuilder/shared/types';
+import { placeHolderScopedVars } from '../../components/monaco-query-field/monaco-completion-provider/validation';
 import { LokiDatasource } from '../../datasource';
 import { getLogQueryFromMetricsQuery, isQueryWithError } from '../../queryUtils';
 import { extractUnwrapLabelKeysFromDataFrame } from '../../responseUtils';
@@ -56,7 +57,7 @@ async function loadUnwrapOptions(
 ): Promise<Array<SelectableValue<string>>> {
   const queryExpr = lokiQueryModeller.renderQuery(query);
   const logExpr = getLogQueryFromMetricsQuery(queryExpr);
-  if (isQueryWithError(logExpr)) {
+  if (isQueryWithError(datasource.interpolateString(logExpr, placeHolderScopedVars))) {
     return [];
   }
 
