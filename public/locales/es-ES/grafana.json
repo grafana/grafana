@@ -49,6 +49,14 @@
     },
     "save": "Guardar"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importar de la biblioteca",
@@ -134,6 +142,11 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
@@ -170,6 +183,9 @@
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
@@ -225,6 +241,10 @@
     "config": {
       "title": "Administración"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
       "title": "Correlaciones"
@@ -247,6 +267,10 @@
     "dashboards": {
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
       "title": "Paneles de control"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",

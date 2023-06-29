@@ -49,6 +49,14 @@
     },
     "save": "Enregistrer"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
@@ -134,6 +142,11 @@
       "unmark-favorite": "Supprimer des favoris"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
@@ -170,6 +183,9 @@
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
@@ -225,6 +241,10 @@
     "config": {
       "title": "Administration"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Ajouter et configurer des corrélations",
       "title": "Corrélations"
@@ -247,6 +267,10 @@
     "dashboards": {
       "subtitle": "Créer et gérer des tableaux de bord pour visualiser vos données",
       "title": "Tableaux de bord"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Ajouter et configurer des sources de données",
