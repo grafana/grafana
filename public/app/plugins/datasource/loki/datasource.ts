@@ -65,6 +65,8 @@ import {
   addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  queryHasFilter,
+  removeLabelFromQuery,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { runSplitQuery } from './querySplitting';
@@ -263,7 +265,11 @@ export class LokiDatasource
     };
 
     const streamQueries = fixedRequest.targets.filter((q) => q.queryType === LokiQueryType.Stream);
-    if (config.featureToggles.lokiLive && streamQueries.length > 0 && fixedRequest.rangeRaw?.to === 'now') {
+    if (
+      config.featureToggles.lokiExperimentalStreaming &&
+      streamQueries.length > 0 &&
+      fixedRequest.rangeRaw?.to === 'now'
+    ) {
       // this is still an in-development feature,
       // we do not support mixing stream-queries with normal-queries for now.
       const streamRequest = {
@@ -610,13 +616,27 @@ export class LokiDatasource
       case 'ADD_FILTER': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
-          expression = addLabelToQuery(expression, action.options.key, '=', value);
+
+          // This gives the user the ability to toggle a filter on and off.
+          expression = queryHasFilter(expression, action.options.key, '=', value)
+            ? removeLabelFromQuery(expression, action.options.key, '=', value)
+            : addLabelToQuery(expression, action.options.key, '=', value);
         }
         break;
       }
       case 'ADD_FILTER_OUT': {
         if (action.options?.key && action.options?.value) {
           const value = escapeLabelValueInSelector(action.options.value);
+
+          /**
+           * If there is a filter with the same key and value, remove it.
+           * This prevents the user from seeing no changes in the query when they apply
+           * this filter.
+           */
+          if (queryHasFilter(expression, action.options.key, '=', value)) {
+            expression = removeLabelFromQuery(expression, action.options.key, '=', value);
+          }
+
           expression = addLabelToQuery(expression, action.options.key, '!=', value);
         }
         break;

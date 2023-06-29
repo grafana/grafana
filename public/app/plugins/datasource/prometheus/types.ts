@@ -16,7 +16,7 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   showingTable?: boolean;
   hinting?: boolean;
   interval?: string;
-  // store the metrics modal additional settings
+  // store the metrics explorer additional settings
   useBackend?: boolean;
   disableTextWrap?: boolean;
   fullMetaSearch?: boolean;
@@ -192,6 +192,7 @@ export interface PromVariableQuery extends DataQuery {
   varQuery?: string;
   seriesQuery?: string;
   labelFilters?: QueryBuilderLabelFilter[];
+  match?: string;
 }
 
 export type StandardPromVariableQuery = {

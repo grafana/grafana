@@ -26,7 +26,7 @@ export interface FeatureToggles {
   prometheusAzureOverrideAudience?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
-  lokiLive?: boolean;
+  lokiExperimentalStreaming?: boolean;
   featureHighlights?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
@@ -56,6 +56,7 @@ export interface FeatureToggles {
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
+  nestedFolderPicker?: boolean;
   accessTokenExpirationCheck?: boolean;
   showTraceId?: boolean;
   emptyDashboardPage?: boolean;
@@ -101,5 +102,9 @@ export interface FeatureToggles {
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
   recordedQueriesMulti?: boolean;
+  pluginsDynamicAngularDetectionPatterns?: boolean;
   alertingLokiRangeToInstant?: boolean;
+  flameGraphV2?: boolean;
+  elasticToggleableFilters?: boolean;
+  vizAndWidgetSplit?: boolean;
 }

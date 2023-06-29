@@ -20,7 +20,7 @@ import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelect
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
+import { getDefaultFormValues, getDefaultQueries, MINUTE, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -69,8 +69,6 @@ const AlertRuleNameInput = () => {
   );
 };
 
-export const MINUTE = '1m';
-
 type Props = {
   existing?: RuleWithLocation;
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
@@ -84,8 +82,9 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const [showEditYaml, setShowEditYaml] = useState(false);
   const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
 
-  const routeParams = useParams<{ type: string }>();
+  const routeParams = useParams<{ type: string; id: string }>();
   const ruleType = translateRouteParamToRuleType(routeParams.type);
+  const uidFromParams = routeParams.id;
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -245,7 +244,6 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                 <>
                   {type === RuleFormType.grafana ? (
                     <GrafanaEvaluationBehavior
-                      initialFolder={defaultValues.folder}
                       evaluateEvery={evaluateEvery}
                       setEvaluateEvery={setEvaluateEvery}
                       existing={Boolean(existing)}
@@ -254,7 +252,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                     <CloudEvaluationBehavior />
                   )}
                   <DetailsStep />
-                  <NotificationsStep />
+                  <NotificationsStep alertUid={uidFromParams} />
                 </>
               )}
             </div>
