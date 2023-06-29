@@ -16,7 +16,6 @@ weight: 700
 
 Grafana has specialised OAuth2 integrations for the following auth providers:
 
-<<<<<<< HEAD
 - [Azure AD OAuth]({{< relref "../azuread" >}})
 - [GitHub OAuth]({{< relref "../github" >}})
 - [GitLab OAuth]({{< relref "../gitlab" >}})
@@ -38,25 +37,6 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
 1. Create an OAuth2 application in your chosen OAuth2 provider.
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
-=======
-- [Configure generic OAuth authentication](#configure-generic-oauth2-authentication)
-  - [Email address](#email-address)
-  - [Groups / Teams](#groups--teams)
-  - [Login](#login)
-  - [PKCE](#pkce)
-  - [Configure refresh token](#configure-refresh-token)
-  - [Configure automatic login](#configure-automatic-login)
-  - [Set up OAuth2 with Auth0](#set-up-oauth2-with-auth0)
-  - [Set up OAuth2 with Bitbucket](#set-up-oauth2-with-bitbucket)
-  - [Set up OAuth2 with Centrify](#set-up-oauth2-with-centrify)
-  - [Set up OAuth2 with OneLogin](#set-up-oauth2-with-onelogin)
-  - [Role Mapping](#role-mapping)
-    - [JMESPath examples](#jmespath-examples)
-      - [Map user organization role](#map-user-organization-role)
-      - [Map server administrator privileges](#map-server-administrator-privileges)
-  - [Team synchronization](#team-synchronization)
-  - [Skip organization role sync](#skip-organization-role-sync)
->>>>>>> main
 
 This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 You may need to set the `root_url` option of `[server]` for the callback URL to be correct. For example, in case you are serving Grafana behind a proxy.
