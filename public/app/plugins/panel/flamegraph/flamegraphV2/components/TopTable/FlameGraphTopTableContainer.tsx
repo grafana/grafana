@@ -5,9 +5,11 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
+  CustomCellRendererProps,
   IconButton,
   Table,
   TableCellDisplayMode,
+  TableCustomCellOptions,
   TableFieldOptions,
   TableSortByFieldState,
   useStyles2,
@@ -96,42 +98,45 @@ function buildTableDataFrame(
     table[label].total = table[label].total ? table[label].total + value : value;
   }
 
+  const options: TableCustomCellOptions = {
+    type: TableCellDisplayMode.Custom,
+    cellComponent: (props: CustomCellRendererProps) => {
+      const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.index);
+      const isSearched = search === symbol;
+      const isSandwiched = sandwichItem === symbol;
+
+      return (
+        <div style={{ display: 'flex', height: '24px' }}>
+          <IconButton
+            style={{ width: '24px', marginRight: 0 }}
+            name={'search'}
+            variant={isSearched ? 'primary' : 'secondary'}
+            tooltip={isSearched ? 'Clear search' : 'Search'}
+            onClick={() => {
+              onSearch(isSearched ? '' : symbol);
+            }}
+          />
+          <IconButton
+            style={{ width: '24px', marginRight: 0 }}
+            name={'gf-show-context'}
+            tooltip={isSandwiched ? 'Remove sandwich view' : 'Show sandwich view'}
+            variant={isSandwiched ? 'primary' : 'secondary'}
+            onClick={() => {
+              onSandwich(isSandwiched ? undefined : symbol);
+            }}
+          />
+        </div>
+      );
+    },
+  };
+
   const actionFieldTableConfig: TableFieldOptions = {
     filterable: false,
     width: 61,
     hideHeader: true,
-    cellOptions: {
-      type: TableCellDisplayMode.Custom,
-      // @ts-ignore this isn't typed property from Cue
-      cellComponent: (props: CustomCellRendererProps) => {
-        const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.index);
-        const isSearched = search === symbol;
-        const isSandwiched = sandwichItem === symbol;
-
-        return (
-          <div style={{ display: 'flex', height: '24px' }}>
-            <IconButton
-              style={{ width: '24px', marginRight: 0 }}
-              name={'search'}
-              variant={isSearched ? 'primary' : 'secondary'}
-              tooltip={isSearched ? 'Clear search' : 'Search'}
-              onClick={() => {
-                onSearch(isSearched ? '' : symbol);
-              }}
-            />
-            <IconButton
-              style={{ width: '24px', marginRight: 0 }}
-              name={'gf-show-context'}
-              tooltip={isSandwiched ? 'Remove sandwich view' : 'Show sandwich view'}
-              variant={isSandwiched ? 'primary' : 'secondary'}
-              onClick={() => {
-                onSandwich(isSandwiched ? undefined : symbol);
-              }}
-            />
-          </div>
-        );
-      },
-    },
+    inspect: false,
+    align: 'auto',
+    cellOptions: options,
   };
 
   const actionField: Field = {

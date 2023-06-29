@@ -21,7 +21,7 @@ import {
   BarGaugeDisplayMode,
   TableAutoCellOptions,
   TableCellBackgroundDisplayMode,
-  TableCellOptions,
+  TableCellDisplayMode,
 } from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
@@ -34,11 +34,11 @@ import { RowExpander } from './RowExpander';
 import { SparklineCell } from './SparklineCell';
 import {
   CellComponent,
-  TableCellDisplayMode,
   TableFieldOptions,
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
+  TableCellOptions,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;

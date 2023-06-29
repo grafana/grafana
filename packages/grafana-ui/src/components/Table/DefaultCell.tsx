@@ -3,7 +3,7 @@ import React, { ReactElement } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
+import { TableCellBackgroundDisplayMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
@@ -12,7 +12,7 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions, CustomCellRendererProps } from './types';
+import { TableCellProps, TableFieldOptions, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {

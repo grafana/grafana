@@ -10,12 +10,12 @@ import {
   Field,
   DisplayValue,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
-import { TableCellProps, TableCellDisplayMode } from './types';
+import { TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
 const defaultScale: ThresholdsConfig = {

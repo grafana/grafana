@@ -1,7 +1,3 @@
-import type { FC } from 'react';
-
-import type { DataFrame, Field } from '@grafana/data';
-
 import * as raw from '../common/common.gen';
 
 import { MatcherConfig } from './dashboard.types';
@@ -49,21 +45,3 @@ export const defaultTableFieldOptions: raw.TableFieldOptions = {
     type: raw.TableCellDisplayMode.Auto,
   },
 };
-
-export interface CustomCellRendererProps {
-  field: Field;
-  index: number;
-  frame: DataFrame;
-  value: any;
-}
-
-export interface TableCustomCellOptions {
-  cellComponent: FC<CustomCellRendererProps>;
-  type: raw.TableCellDisplayMode.Custom;
-}
-
-export type TableCellOptions = raw.TableCellOptions | TableCustomCellOptions
-
-export type TableFieldOptions = raw.TableFieldOptions & {
-  cellOptions: TableCellOptions;
-}

@@ -884,6 +884,7 @@ export interface TableFieldOptions {
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
   hidden?: boolean; // ?? default is missing or false ??
+  hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
   width?: number;
