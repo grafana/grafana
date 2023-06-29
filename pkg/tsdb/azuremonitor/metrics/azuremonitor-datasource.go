@@ -42,8 +42,6 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 	e.Proxy.Do(rw, req, cli)
 }
 
-var subscriptions = map[string]string{}
-
 // executeTimeSeriesQuery does the following:
 // 1. build the AzureMonitor url and querystring for each query
 // 2. executes each query by calling the Azure Monitor API
@@ -209,7 +207,7 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 	return azureMonitorQueries, nil
 }
 
-func retrieveSubscriptionDetails(e *AzureMonitorDatasource, cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) {
+func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, ctx context.Context, logger log.Logger, tracer tracing.Tracer, subscriptionId string, baseUrl string, dsId int64, orgId int64) string {
 	req, err := e.createRequest(ctx, logger, fmt.Sprintf("%s/subscriptions/%s", baseUrl, subscriptionId))
 	if err != nil {
 		logger.Error("failed to retrieve subscription details for subscription %s: %s", subscriptionId, err)
@@ -251,7 +249,7 @@ func retrieveSubscriptionDetails(e *AzureMonitorDatasource, cli *http.Client, ct
 		logger.Warn("Failed to unmarshal subscription detail response", "error", err, "status", res.Status, "body", string(body))
 	}
 
-	subscriptions[data.SubscriptionID] = data.DisplayName
+	return data.DisplayName
 }
 
 func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Logger, query *types.AzureMonitorQuery, dsInfo types.DatasourceInfo, cli *http.Client,
@@ -306,11 +304,9 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	if _, ok := subscriptions[query.Subscription]; !ok {
-		retrieveSubscriptionDetails(e, cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
-	}
+	subscription := e.retrieveSubscriptionDetails(cli, ctx, logger, tracer, query.Subscription, dsInfo.Routes["Azure Monitor"].URL, dsInfo.DatasourceID, dsInfo.OrgID)
 
-	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
+	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl, subscription)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse
@@ -351,7 +347,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(logger log.Logger, res *http.
 	return data, nil
 }
 
-func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string) (data.Frames, error) {
+func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, query *types.AzureMonitorQuery, azurePortalUrl string, subscription string) (data.Frames, error) {
 	if len(amr.Value) == 0 {
 		return nil, nil
 	}
@@ -397,10 +393,8 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			labels["resourceName"] = resourceName
 		}
 
-		currentResource := query.Resources[resourceID]
 		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query.Alias, query.Subscription, currentResource,
-				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)
 
 			if dataField.Config != nil {
 				dataField.Config.DisplayName = displayName
@@ -552,8 +546,12 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 
 // formatAzureMonitorLegendKey builds the legend key or timeseries name
 // Alias patterns like {{resourcename}} are replaced with the appropriate data values.
-func formatAzureMonitorLegendKey(alias string, subscriptionId string, resource types.AzureMonitorResource, metricName string, metadataName string,
-	metadataValue string, namespace string, seriesID string, labels data.Labels) string {
+func formatAzureMonitorLegendKey(query *types.AzureMonitorQuery, resourceId string, amr *types.AzureMonitorResponse, labels data.Labels, subscription string) string {
+	alias := query.Alias
+	subscriptionId := query.Subscription
+	resource := query.Resources[resourceId]
+	metricName := amr.Value[0].Name.LocalizedValue
+	namespace := amr.Namespace
 	// Could be a collision problem if there were two keys that varied only in case, but I don't think that would happen in azure.
 	lowerLabels := data.Labels{}
 	for k, v := range labels {
@@ -575,11 +573,10 @@ func formatAzureMonitorLegendKey(alias string, subscriptionId string, resource t
 		}
 
 		if metaPartName == "subscription" {
-			if subscription, ok := subscriptions[subscriptionId]; ok {
-				return []byte(subscription)
-			} else {
+			if subscription == "" {
 				return []byte{}
 			}
+			return []byte(subscription)
 		}
 
 		if metaPartName == "resourcegroup" {

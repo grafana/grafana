@@ -558,7 +558,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			azData := loadTestFile(t, tt.responseFile)
-			dframes, err := datasource.parseResponse(azData, tt.mockQuery, "http://ds")
+			dframes, err := datasource.parseResponse(azData, tt.mockQuery, "http://ds", "")
 			require.NoError(t, err)
 			require.NotNil(t, dframes)
 
