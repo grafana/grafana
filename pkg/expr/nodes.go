@@ -96,7 +96,7 @@ func (gn *CMDNode) Execute(ctx context.Context, now time.Time, vars mathexp.Vars
 	return gn.Command.Execute(ctx, now, vars, s.tracer)
 }
 
-func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
+func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode, r LoadedMetricsReader) (*CMDNode, error) {
 	commandType, err := rn.GetCommandType()
 	if err != nil {
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
@@ -121,6 +121,8 @@ func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
 		node.Command, err = UnmarshalThresholdCommand(rn)
+	case TypeHysteresis:
+		node.Command, err = UnmarshalHysteresisCommand(rn, r)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}

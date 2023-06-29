@@ -19,6 +19,8 @@ type Request struct {
 	OrgId   int64
 	Queries []Query
 	User    identity.Requester
+	// LoadedMetricsReader provides the metrics that should be considered as loaded. Used by HysteresisCommand
+	LoadedMetricsReader LoadedMetricsReader
 }
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID
