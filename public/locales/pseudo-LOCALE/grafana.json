@@ -1,5 +1,28 @@
 {
   "_comment": "Đő ŉőŧ mäŉūäľľy ęđįŧ ŧĥįş ƒįľę, őř ūpđäŧę ŧĥęşę şőūřčę pĥřäşęş įŉ Cřőŵđįŉ. Ŧĥę şőūřčę őƒ ŧřūŧĥ ƒőř Ēŉģľįşĥ şŧřįŉģş äřę įŉ ŧĥę čőđę şőūřčę",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Ŗőľę",
+      "team-label": "Ŧęäm",
+      "title": "Åđđ pęřmįşşįőŉ ƒőř",
+      "user-label": "Ůşęř"
+    },
+    "add-permissions": {
+      "save": "Ŝävę"
+    },
+    "permission-list": {
+      "permission": "Pęřmįşşįőŉ"
+    },
+    "permissions": {
+      "add-label": "Åđđ ä pęřmįşşįőŉ",
+      "no-permissions": "Ŧĥęřę äřę ŉő pęřmįşşįőŉş",
+      "permissions-change-warning": "Ŧĥįş ŵįľľ čĥäŉģę pęřmįşşįőŉş ƒőř ŧĥįş ƒőľđęř äŉđ äľľ įŧş đęşčęŉđäŉŧş. Ĩŉ ŧőŧäľ, ŧĥįş ŵįľľ äƒƒęčŧ:",
+      "role": "Ŗőľę",
+      "team": "Ŧęäm",
+      "title": "Pęřmįşşįőŉş",
+      "user": "Ůşęř"
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "Đęľęŧę",
@@ -142,6 +165,10 @@
       "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
       "loading": "Ŀőäđįŉģ őpŧįőŉş...",
       "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
+    },
+    "select": {
+      "no-options-label": "Ńő őpŧįőŉş ƒőūŉđ",
+      "placeholder": "Cĥőőşę"
     }
   },
   "library-panel": {
