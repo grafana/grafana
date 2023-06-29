@@ -21,11 +21,19 @@ func newServiceListener(logger log.Logger, s *service) *serviceListener {
 }
 
 func (l *serviceListener) Healthy() {
-	l.log.Info("All modules healthy")
+	l.log.Info("All modules healthy", "modules", l.moduleNames())
 }
 
 func (l *serviceListener) Stopped() {
-	l.log.Info("All modules stopped")
+	l.log.Info("All modules stopped", "modules", l.moduleNames())
+}
+
+func (l *serviceListener) moduleNames() []string {
+	var ms []string
+	for m := range l.service.serviceMap {
+		ms = append(ms, m)
+	}
+	return ms
 }
 
 func (l *serviceListener) Failure(service services.Service) {
@@ -35,7 +43,7 @@ func (l *serviceListener) Failure(service services.Service) {
 	}
 
 	// log which module failed
-	for module, s := range l.service.ServiceMap {
+	for module, s := range l.service.serviceMap {
 		if s == service {
 			if errors.Is(service.FailureCase(), modules.ErrStopProcess) {
 				l.log.Info("Received stop signal via return error", "module", module, "err", service.FailureCase())
