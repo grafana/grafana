@@ -647,7 +647,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
-	t.Run("Should be able to get dashboard with existing name in root directory", func(t *testing.T) {
+	t.Run("Finds a dashboard with existing name in root directory and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
@@ -655,7 +655,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
 	})
 
-	t.Run("Should not be able to get dashboard with non-existing name in root directory", func(t *testing.T) {
+	t.Run("Returns no error when dashboard does not exist in a specific folder", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
@@ -663,7 +663,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Should be able to get dashboard with existing name in a folder", func(t *testing.T) {
+	t.Run("Finds a dashboard with existing name in specific folder and throws DashboardWithSameNameInFolderExists error", func(t *testing.T) {
 		savedFolder := insertTestDashboard(t, dashboardStore, "test dash folder", 1, 0, true, "prod", "webapp")
 		savedDash := insertTestDashboard(t, dashboardStore, "test dash", 1, savedFolder.ID, false, "prod", "webapp")
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
