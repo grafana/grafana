@@ -107,9 +107,11 @@ export class TableContainer extends PureComponent<Props> {
       });
     }
 
+    const isNoData = tableData.length === 0 || tableData.find((data) => data.main.length === 0);
+
     return (
       <>
-        {tableData.length === 0 && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {isNoData && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
         {tableData.length > 0 &&
           tableData.map((data, i) => (
             <PanelChrome
