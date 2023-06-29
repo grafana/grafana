@@ -292,7 +292,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     content: css({
       label: 'panel-content',
       flexGrow: 1,
-      contain: 'strict',
+      // contain: 'strict',
     }),
     headerContainer: css({
       label: 'panel-header',

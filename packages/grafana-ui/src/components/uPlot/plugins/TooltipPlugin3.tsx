@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useMountedState } from 'react-use';
+// import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -11,16 +11,16 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { getRandomContent } from './utils';
 
-interface TooltipPlugin2Props {
+interface TooltipPlugin3Props {
   config: UPlotConfigBuilder;
 }
 
 /**
  * @alpha
  */
-export const TooltipPlugin2 = ({ config }: TooltipPlugin2Props) => {
+export const TooltipPlugin3 = ({ config }: TooltipPlugin3Props) => {
   const plotInstance = useRef<uPlot>();
-  const isMounted = useMountedState();
+  // const isMounted = useMountedState();
 
   const [cursorPos, setCursorPos] = useState({ left: 0, top: 0 });
   const style = useStyles2(getStyles);
@@ -29,19 +29,19 @@ export const TooltipPlugin2 = ({ config }: TooltipPlugin2Props) => {
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
-    const plotEnter = () => {
-      if (!isMounted()) {
-        return;
-      }
-      plotInstance.current?.root.classList.add('plot-active');
-    };
+    // const plotEnter = () => {
+    //   if (!isMounted()) {
+    //     return;
+    //   }
+    //   plotInstance.current?.root.classList.add('plot-active');
+    // };
 
-    const plotLeave = () => {
-      if (!isMounted()) {
-        return;
-      }
-      plotInstance.current?.root.classList.remove('plot-active');
-    };
+    // const plotLeave = () => {
+    //   if (!isMounted()) {
+    //     return;
+    //   }
+    //   plotInstance.current?.root.classList.remove('plot-active');
+    // };
 
     // cache uPlot plotting area bounding box
     // config.addHook('syncRect', (u, rect) => (bbox = rect));
@@ -49,11 +49,11 @@ export const TooltipPlugin2 = ({ config }: TooltipPlugin2Props) => {
     config.addHook('init', (u) => {
       plotInstance.current = u;
 
-      u.root.parentElement?.addEventListener('focus', plotEnter);
-      u.over.addEventListener('mouseenter', plotEnter);
+      // u.root.parentElement?.addEventListener('focus', plotEnter);
+      // u.over.addEventListener('mouseenter', plotEnter);
 
-      u.root.parentElement?.addEventListener('blur', plotLeave);
-      u.over.addEventListener('mouseleave', plotLeave);
+      // u.root.parentElement?.addEventListener('blur', plotLeave);
+      // u.over.addEventListener('mouseleave', plotLeave);
     });
 
     config.addHook('setCursor', (u) => {
@@ -63,7 +63,7 @@ export const TooltipPlugin2 = ({ config }: TooltipPlugin2Props) => {
     config.addHook('setLegend', (u) => {
       setContents(getRandomContent());
     });
-  }, [config, setCursorPos, setContents]);
+  });
 
   if (plotInstance.current) {
     return createPortal(
