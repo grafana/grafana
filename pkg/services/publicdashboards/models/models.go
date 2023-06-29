@@ -47,7 +47,7 @@ type PublicDashboard struct {
 	CreatedAt    time.Time `json:"createdAt" xorm:"created_at"`
 	UpdatedAt    time.Time `json:"updatedAt" xorm:"updated_at"`
 	//config fields
-	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	TimeSettings         *TimeSettings `json:"-" xorm:"time_settings"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
 	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
 	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
@@ -56,11 +56,10 @@ type PublicDashboard struct {
 }
 
 type PublicDashboardDTO struct {
-	TimeSettings         *TimeSettings `json:"timeSettings"`
-	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled"`
-	IsEnabled            *bool         `json:"isEnabled"`
-	AnnotationsEnabled   *bool         `json:"annotationsEnabled"`
-	Share                ShareType     `json:"share"`
+	TimeSelectionEnabled *bool     `json:"timeSelectionEnabled"`
+	IsEnabled            *bool     `json:"isEnabled"`
+	AnnotationsEnabled   *bool     `json:"annotationsEnabled"`
+	Share                ShareType `json:"share"`
 }
 
 type EmailDTO struct {

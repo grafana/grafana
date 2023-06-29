@@ -216,7 +216,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
 				Share:                EmailShareType,
-				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -236,8 +235,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, *dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
-		// Time settings set by db
-		assert.Equal(t, timeSettings, pubdash.TimeSettings)
 		assert.Equal(t, dto.PublicDashboard.Share, pubdash.Share)
 		// accessToken is valid uuid
 		_, err = uuid.Parse(pubdash.AccessToken)
@@ -303,7 +300,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					Share:                PublicShareType,
-					TimeSettings:         timeSettings,
 				},
 			}
 
@@ -454,7 +450,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 			PublicDashboard: &PublicDashboardDTO{
 				AnnotationsEnabled: &annotationsEnabled,
 				IsEnabled:          &isEnabled,
-				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -531,7 +526,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
-				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -550,7 +544,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
-				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -568,7 +561,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, *dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
 		assert.Equal(t, *dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
 		assert.Equal(t, *dto.PublicDashboard.TimeSelectionEnabled, updatedPubdash.TimeSelectionEnabled)
-		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
 	})
@@ -594,8 +586,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -608,8 +599,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			OrgID:        9,
 			UserId:       8,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				TimeSettings: &TimeSettings{},
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -690,7 +680,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 					IsEnabled:            &isEnabled,
 					AnnotationsEnabled:   &annotationsEnabled,
 					TimeSelectionEnabled: &timeSelectionEnabled,
-					TimeSettings:         timeSettings,
 					Share:                PublicShareType,
 				},
 			}
@@ -708,7 +697,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 					IsEnabled:            tt.IsEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
-					TimeSettings:         tt.TimeSettings,
 					Share:                tt.ShareType,
 				},
 			}
@@ -719,11 +707,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			assertOldValueIfNull(t, updatedPubdash.AnnotationsEnabled, savedPubdash.AnnotationsEnabled, dto.PublicDashboard.AnnotationsEnabled)
 			assertOldValueIfNull(t, updatedPubdash.TimeSelectionEnabled, savedPubdash.TimeSelectionEnabled, dto.PublicDashboard.TimeSelectionEnabled)
 
-			if dto.PublicDashboard.TimeSettings == nil {
-				assert.Equal(t, updatedPubdash.TimeSettings, savedPubdash.TimeSettings)
-			} else {
-				assert.Equal(t, updatedPubdash.TimeSettings, dto.PublicDashboard.TimeSettings)
-			}
 			if dto.PublicDashboard.Share == "" {
 				assert.Equal(t, updatedPubdash.Share, savedPubdash.Share)
 			} else {
