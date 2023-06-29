@@ -7,15 +7,16 @@ keywords:
   - configuration
   - documentation
   - oauth
-title: Configure generic OAuth authentication
-weight: 200
+title: Configure generic OAuth2 authentication
+menuTitle: Generic OAuth2
+weight: 700
 ---
 
-# Configure generic OAuth authentication
+# Configure generic OAuth2 authentication
 
 You can configure many different OAuth2 authentication services with Grafana using the generic OAuth2 feature. Examples:
 
-- [Configure generic OAuth authentication](#configure-generic-oauth-authentication)
+- [Configure generic OAuth authentication](#configure-generic-oauth2-authentication)
   - [Email address](#email-address)
   - [Groups / Teams](#groups--teams)
   - [Login](#login)
