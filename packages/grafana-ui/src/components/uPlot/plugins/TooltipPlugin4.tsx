@@ -8,6 +8,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
+import { getRandomContent } from './utils';
+
 interface TooltipPlugin4Props {
   config: UPlotConfigBuilder;
 }
@@ -16,12 +18,14 @@ interface TooltipPlugin4Props {
  * @alpha
  */
 export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
-  const domRef = useRef<HTMLDivElement>(null);
+  const domRef = useRef<HTMLPreElement>(null);
   const [plot, setPlot] = useState<uPlot>();
 
   const styleRef = useRef({ transform: '' }); // boo!
   const visRef = useRef(false);
   const [, forceRedraw] = useState(0);
+
+  const [contents, setContents] = useState(getRandomContent);
 
   const style = useStyles2(getStyles);
 
@@ -50,13 +54,17 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         }
       }
     });
+
+    config.addHook('setLegend', (u) => {
+      setContents(getRandomContent());
+    });
   }, [config]);
 
   if (plot && visRef.current) {
     return createPortal(
-      <div className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
-        Hello!
-      </div>,
+      <pre className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
+        {contents}
+      </pre>,
       plot.over
     );
   }
@@ -68,7 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css`
     min-width: 100px;
     min-height: 10px;
-    background: palevioletred; //${theme.colors.background.secondary};
+    background: ${theme.colors.background.secondary};
     top: 0;
     left: 0;
     pointer-events: none;

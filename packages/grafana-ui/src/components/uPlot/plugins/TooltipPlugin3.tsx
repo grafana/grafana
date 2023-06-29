@@ -9,6 +9,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
+import { getRandomContent } from './utils';
+
 interface TooltipPlugin3Props {
   config: UPlotConfigBuilder;
 }
@@ -22,6 +24,8 @@ export const TooltipPlugin3 = ({ config }: TooltipPlugin3Props) => {
 
   const [cursorPos, setCursorPos] = useState({ left: 0, top: 0 });
   const style = useStyles2(getStyles);
+
+  const [contents, setContents] = useState(getRandomContent);
 
   // Add uPlot hooks to the config, or re-add when the config changed
   useLayoutEffect(() => {
@@ -55,12 +59,16 @@ export const TooltipPlugin3 = ({ config }: TooltipPlugin3Props) => {
     config.addHook('setCursor', (u) => {
       setCursorPos({ left: u.cursor.left!, top: u.cursor.top! });
     });
+
+    config.addHook('setLegend', (u) => {
+      setContents(getRandomContent());
+    });
   });
 
   if (plotInstance.current) {
     return createPortal(
       <div className={style.tooltipWrapper} style={{ transform: `translate(${cursorPos.left}px, ${cursorPos.top}px)` }}>
-        Hello!
+        {contents}
       </div>,
       plotInstance.current.over
     );
@@ -73,7 +81,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css`
     min-width: 100px;
     min-height: 10px;
-    background: palevioletred; //${theme.colors.background.secondary};
+    background: ${theme.colors.background.secondary};
     top: 0;
     left: 0;
     pointer-events: none;
