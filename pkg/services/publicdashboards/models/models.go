@@ -56,21 +56,11 @@ type PublicDashboard struct {
 }
 
 type PublicDashboardDTO struct {
-	Uid          string    `json:"uid"`
-	DashboardUid string    `json:"dashboardUid"`
-	OrgId        int64     `json:"-"` // Don't ever marshal orgId to Json
-	AccessToken  string    `json:"accessToken"`
-	CreatedBy    int64     `json:"createdBy"`
-	UpdatedBy    int64     `json:"updatedBy"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-	//config fields
 	TimeSettings         *TimeSettings `json:"timeSettings"`
 	TimeSelectionEnabled *bool         `json:"timeSelectionEnabled"`
 	IsEnabled            *bool         `json:"isEnabled"`
 	AnnotationsEnabled   *bool         `json:"annotationsEnabled"`
 	Share                ShareType     `json:"share"`
-	Recipients           []EmailDTO    `json:"recipients,omitempty"`
 }
 
 type EmailDTO struct {
@@ -143,7 +133,9 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 
 // DTO for transforming user input in the api
 type SavePublicDashboardDTO struct {
+	Uid             string
 	DashboardUid    string
+	OrgID           int64
 	UserId          int64
 	PublicDashboard *PublicDashboardDTO
 }
