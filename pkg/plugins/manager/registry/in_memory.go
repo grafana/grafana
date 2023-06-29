@@ -33,7 +33,7 @@ func (i *InMemory) Plugins(_ context.Context) []*plugins.Plugin {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
-	res := make([]*plugins.Plugin, 0)
+	res := make([]*plugins.Plugin, 0, len(i.store))
 	for _, p := range i.store {
 		res = append(res, p)
 	}

@@ -80,7 +80,7 @@ describe('QueryGroup', () => {
     await userEvent.click(addExpressionButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
-    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
@@ -97,7 +97,7 @@ describe('QueryGroup', () => {
     await userEvent.click(addQueryButton);
 
     const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
-    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('Collapse query row')).at(-1);
 
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);

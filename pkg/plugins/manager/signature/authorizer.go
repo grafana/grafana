@@ -20,7 +20,7 @@ type UnsignedPluginAuthorizer struct {
 }
 
 func (u *UnsignedPluginAuthorizer) CanLoadPlugin(p *plugins.Plugin) bool {
-	if p.Signature != plugins.SignatureUnsigned {
+	if p.Signature != plugins.SignatureStatusUnsigned {
 		return true
 	}
 

@@ -150,6 +150,7 @@ export const PlotLegend = React.memo(
           displayMode={displayMode}
           sortBy={vizLayoutLegendProps.sortBy}
           sortDesc={vizLayoutLegendProps.sortDesc}
+          isSortable={true}
         />
       </VizLayout.Legend>
     );

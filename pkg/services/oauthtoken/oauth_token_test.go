@@ -273,7 +273,7 @@ func (m *MockSocialConnector) Type() int {
 	return args.Int(0)
 }
 
-func (m *MockSocialConnector) UserInfo(client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+func (m *MockSocialConnector) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
 	args := m.Called(client, token)
 	return args.Get(0).(*social.BasicUserInfo), args.Error(1)
 }

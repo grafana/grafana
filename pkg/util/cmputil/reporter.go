@@ -86,7 +86,7 @@ func (r DiffReport) String() string {
 
 // Paths returns the slice of paths of the current DiffReport
 func (r DiffReport) Paths() []string {
-	var result = make([]string, len(r))
+	var result = make([]string, 0, len(r))
 	for _, diff := range r {
 		result = append(result, diff.Path)
 	}

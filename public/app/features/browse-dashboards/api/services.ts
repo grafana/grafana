@@ -4,8 +4,7 @@ import { getGrafanaSearcher, NestedFolderDTO } from 'app/features/search/service
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
-export const ROOT_PAGE_SIZE = 50;
-export const PAGE_SIZE = 999;
+export const PAGE_SIZE = 50;
 
 export async function listFolders(
   parentUID?: string,
@@ -38,7 +37,7 @@ export async function listDashboards(parentUID?: string, page = 1, pageSize = PA
     kind: ['dashboard'],
     query: '*',
     location: parentUID || 'general',
-    from: page * pageSize,
+    from: (page - 1) * pageSize, // our pages are 1-indexed, so we need to -1 to convert that to correct value to skip
     limit: pageSize,
   });
 

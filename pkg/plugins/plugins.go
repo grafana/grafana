@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -52,6 +54,8 @@ type Plugin struct {
 	BaseURL string
 
 	AngularDetected bool
+
+	ExternalService *oauth.ExternalService
 
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
@@ -101,11 +105,11 @@ func (p PluginDTO) Base() string {
 }
 
 func (p PluginDTO) IsApp() bool {
-	return p.Type == App
+	return p.Type == TypeApp
 }
 
 func (p PluginDTO) IsCorePlugin() bool {
-	return p.Class == Core
+	return p.Class == ClassCore
 }
 
 // JSONData represents the plugin's plugin.json
@@ -114,6 +118,7 @@ type JSONData struct {
 	ID           string       `json:"id"`
 	Type         Type         `json:"type"`
 	Name         string       `json:"name"`
+	Alias        string       `json:"alias,omitempty"`
 	Info         Info         `json:"info"`
 	Dependencies Dependencies `json:"dependencies"`
 	Includes     []*Includes  `json:"includes"`
@@ -149,6 +154,9 @@ type JSONData struct {
 
 	// Backend (Datasource + Renderer + SecretsManager)
 	Executable string `json:"executable,omitempty"`
+
+	// Oauth App Service Registration
+	ExternalServiceRegistration *plugindef.ExternalServiceRegistration `json:"externalServiceRegistration,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {
@@ -165,6 +173,10 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 	switch plugin.ID {
 	case "grafana-piechart-panel":
 		plugin.Name = "Pie Chart (old)"
+	case "grafana-pyroscope-datasource": // rebranding
+		plugin.Alias = "phlare"
+	case "debug": // panel plugin used for testing
+		plugin.Alias = "debugX"
 	}
 
 	if len(plugin.Dependencies.Plugins) == 0 {
@@ -437,6 +449,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
 		AngularDetected:   p.AngularDetected,
+		Alias:             p.Alias,
 	}
 }
 
@@ -453,35 +466,35 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == Renderer
+	return p.Type == TypeRenderer
 }
 
 func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == SecretsManager
+	return p.Type == TypeSecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == App
+	return p.Type == TypeApp
 }
 
 func (p *Plugin) IsCorePlugin() bool {
-	return p.Class == Core
+	return p.Class == ClassCore
 }
 
 func (p *Plugin) IsBundledPlugin() bool {
-	return p.Class == Bundled
+	return p.Class == ClassBundled
 }
 
 func (p *Plugin) IsExternalPlugin() bool {
-	return p.Class == External
+	return p.Class == ClassExternal
 }
 
 type Class string
 
 const (
-	Core     Class = "core"
-	Bundled  Class = "bundled"
-	External Class = "external"
+	ClassCore     Class = "core"
+	ClassBundled  Class = "bundled"
+	ClassExternal Class = "external"
 )
 
 func (c Class) String() string {
@@ -489,26 +502,26 @@ func (c Class) String() string {
 }
 
 var PluginTypes = []Type{
-	DataSource,
-	Panel,
-	App,
-	Renderer,
-	SecretsManager,
+	TypeDataSource,
+	TypePanel,
+	TypeApp,
+	TypeRenderer,
+	TypeSecretsManager,
 }
 
 type Type string
 
 const (
-	DataSource     Type = "datasource"
-	Panel          Type = "panel"
-	App            Type = "app"
-	Renderer       Type = "renderer"
-	SecretsManager Type = "secretsmanager"
+	TypeDataSource     Type = "datasource"
+	TypePanel          Type = "panel"
+	TypeApp            Type = "app"
+	TypeRenderer       Type = "renderer"
+	TypeSecretsManager Type = "secretsmanager"
 )
 
 func (pt Type) IsValid() bool {
 	switch pt {
-	case DataSource, Panel, App, Renderer, SecretsManager:
+	case TypeDataSource, TypePanel, TypeApp, TypeRenderer, TypeSecretsManager:
 		return true
 	}
 	return false

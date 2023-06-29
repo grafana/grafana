@@ -1,6 +1,6 @@
 # Errors
 
-Grafana introduced its own error type `github.com/grafana/grafana/pkg/util/errutil.Error`
+Grafana introduced its own error type [github.com/grafana/grafana/pkg/util/errutil.Error](../../pkg/util/errutil/errors.go)
 in June 2022. It's built on top of the Go `error` interface extended to
 contain all the information necessary by Grafana to handle errors in an
 informative and safe way.

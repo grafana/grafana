@@ -13,7 +13,6 @@ import {
   TypeaheadOutput,
   withTheme2,
 } from '@grafana/ui';
-import { ExploreId } from 'app/types';
 
 // Utils & Services
 // dom also includes Element polyfills
@@ -30,7 +29,7 @@ export interface CloudWatchLogsQueryFieldProps
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  exploreId: ExploreId;
+  exploreId: string;
   query: CloudWatchLogsQuery;
 }
 const plugins: Array<Plugin<Editor>> = [
@@ -102,9 +101,6 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
             cleanText={cleanText}
             placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
             portalOrigin="cloudwatch"
-            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-            // And slate will claim the focus, making it impossible to leave the field.
-            onBlur={() => {}}
           />
         </div>
         {ExtraFieldElement}

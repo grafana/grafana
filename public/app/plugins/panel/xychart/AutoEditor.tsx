@@ -132,6 +132,7 @@ export const AutoEditor = ({
                     exclude,
                   });
                 }}
+                tooltip={v.value ? 'Disable' : 'Enable'}
               />
               {v.label}
             </div>

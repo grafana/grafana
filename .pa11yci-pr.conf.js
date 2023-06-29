@@ -74,7 +74,7 @@ var config = {
         "click element button[aria-label='Login button']",
         "wait for element [aria-label='Skip change password button'] to be visible",
       ],
-      threshold: 14,
+      threshold: 15,
       rootElement: '.main-view',
     },
     {

@@ -338,13 +338,13 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 }
 
 func (s *Service) appCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.App))
+	return len(s.plugins.Plugins(ctx, plugins.TypeApp))
 }
 
 func (s *Service) panelCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.Panel))
+	return len(s.plugins.Plugins(ctx, plugins.TypePanel))
 }
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
-	return len(s.plugins.Plugins(ctx, plugins.DataSource))
+	return len(s.plugins.Plugins(ctx, plugins.TypeDataSource))
 }
