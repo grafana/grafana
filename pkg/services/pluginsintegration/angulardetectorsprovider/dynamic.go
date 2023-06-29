@@ -24,14 +24,7 @@ const (
 	gcomFetchTimeout    = time.Minute * 1
 )
 
-// backgroundJob implements the dynamic angular detectors provider job that is periodically executed in the background.
-type backgroundJob interface {
-	// runBackgroundJob updates the dynamic angular detectors from a source.
-	runBackgroundJob(ctx context.Context)
-}
-
 var (
-	_ backgroundJob  = &Dynamic{}
 	_ DynamicUpdater = &Dynamic{}
 )
 
@@ -59,9 +52,6 @@ type Dynamic struct {
 	// To wait for the initial restore to be done, simply read a value from this channel.
 	initialRestore chan struct{}
 
-	// backgroundJob is the implementation of the background job. This is periodically invoked by Run().
-	backgroundJob backgroundJob
-
 	// backgroundJobInterval is the interval between the periodic background job calls.
 	backgroundJobInterval time.Duration
 }
@@ -75,9 +65,6 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynam
 		backgroundJobInterval: defaultBackgroundJobInterval,
 		initialRestore:        make(chan struct{}),
 	}
-
-	// By default, use ourselves as backgroundJob
-	d.backgroundJob = d
 
 	// Perform the initial restore from db without blocking
 	go func() {
@@ -151,31 +138,6 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 	return out, nil
 }
 
-// fetchAndStoreDetectors fetches the patterns from GCOM, converts them into detectors, stores the new patterns into
-// the store and returns the detectors. If the patterns cannot be converted to detectors, the store is not altered.
-// The function returns the resulting detectors.
-func (d *Dynamic) fetchAndStoreDetectors(ctx context.Context) ([]angulardetector.AngularDetector, error) {
-	// Fetch patterns from GCOM
-	patterns, err := d.fetch(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("fetch: %w", err)
-	}
-
-	// Convert the patterns to detectors
-	newDetectors, err := d.patternsToDetectors(patterns)
-	if err != nil {
-		return nil, fmt.Errorf("patterns convert to detectors: %w", err)
-	}
-
-	// Update store only if the patterns can be converted to detectors
-	if err := d.store.Set(ctx, patterns); err != nil {
-		return nil, fmt.Errorf("store set: %w", err)
-	}
-
-	// Return the new detectors
-	return newDetectors, nil
-}
-
 // setDetectors sets the detectors by acquiring the lock first.
 func (d *Dynamic) setDetectors(newDetectors []angulardetector.AngularDetector) {
 	d.mux.Lock()
@@ -183,33 +145,29 @@ func (d *Dynamic) setDetectors(newDetectors []angulardetector.AngularDetector) {
 	d.mux.Unlock()
 }
 
-// tryUpdateDetectors will attempt to fetch the patterns from GCOM, convert them to detectors,
-// store the patterns in the database and update the cached detectors.
-func (d *Dynamic) tryUpdateDetectors(ctx context.Context) {
-	st := time.Now()
-	d.log.Debug("Updating patterns")
-	defer func() {
-		d.log.Debug("Patterns update finished", "duration", time.Since(st))
-	}()
-
-	opCtx, canc := context.WithTimeout(ctx, gcomFetchTimeout)
-	defer canc()
-
-	// Fetch new patterns from GCOM, store response in db and get the corresponding detectors
-	newDetectors, err := d.fetchAndStoreDetectors(opCtx)
+// updateDetectors fetches the patterns from GCOM, converts them to detectors,
+// stores the patterns in the database and update the cached detectors.
+func (d *Dynamic) updateDetectors(ctx context.Context) error {
+	// Fetch patterns from GCOM
+	patterns, err := d.fetch(ctx)
 	if err != nil {
-		d.log.Error("error while updating patterns", "error", err)
-		return
+		return fmt.Errorf("fetch: %w", err)
+	}
+
+	// Convert the patterns to detectors
+	newDetectors, err := d.patternsToDetectors(patterns)
+	if err != nil {
+		return fmt.Errorf("patterns convert to detectors: %w", err)
+	}
+
+	// Update store only if the patterns can be converted to detectors
+	if err := d.store.Set(ctx, patterns); err != nil {
+		return fmt.Errorf("store set: %w", err)
 	}
 
 	// Update cached detectors
 	d.setDetectors(newDetectors)
-}
-
-// backgroundJob is the function executed periodically in the background by the background service.
-// It calls tryUpdateDetectors.
-func (d *Dynamic) runBackgroundJob(ctx context.Context) {
-	d.tryUpdateDetectors(ctx)
+	return nil
 }
 
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
@@ -247,21 +205,40 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		return fmt.Errorf("get last updated: %w", err)
 	}
 	nextRunUntil := time.Until(lastUpdate.Add(d.backgroundJobInterval))
+
+	ticker := time.NewTicker(d.backgroundJobInterval)
+	defer ticker.Stop()
+
+	var tick <-chan time.Time
 	if nextRunUntil <= 0 {
 		// Do first run immediately
-		d.backgroundJob.runBackgroundJob(ctx)
-		nextRunUntil = d.backgroundJobInterval
+		firstTick := make(chan time.Time, 1)
+		tick = firstTick
+
+		firstTick <- time.Now()
+	} else {
+		// Do first run after a certain amount of time
+		ticker.Reset(nextRunUntil)
+		tick = ticker.C
 	}
 
 	// Keep running periodically
-	ticker := time.NewTicker(nextRunUntil)
-	defer ticker.Stop()
 	for {
 		select {
-		case <-ticker.C:
-			d.backgroundJob.runBackgroundJob(ctx)
-			// Restore default TTL if we run with a shorter interval the first time
+		case <-tick:
+			st := time.Now()
+			d.log.Debug("Updating patterns")
+
+			opCtx, canc := context.WithTimeout(ctx, gcomFetchTimeout)
+			if err := d.updateDetectors(opCtx); err != nil {
+				d.log.Error("Error while updating detectors", "error", err)
+			}
+			canc()
+			d.log.Debug("Patterns update finished", "duration", time.Since(st))
+
+			// Restore default ticker if we run with a shorter interval the first time
 			ticker.Reset(d.backgroundJobInterval)
+			tick = ticker.C
 		case <-ctx.Done():
 			return ctx.Err()
 		}
