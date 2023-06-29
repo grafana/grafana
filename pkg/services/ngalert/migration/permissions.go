@@ -1,4 +1,4 @@
-package ualert
+package migration
 
 import (
 	"fmt"
@@ -266,19 +266,4 @@ func (m *folderHelper) getACL(orgID, dashboardID int64) ([]*dashboardACL, error)
 			`
 	err = m.sess.SQL(rawSQL, orgID, dashboardID).Find(&result)
 	return result, err
-}
-
-// getOrgsThatHaveFolders returns a unique list of organization ID that have at least one folder
-func (m *folderHelper) getOrgsIDThatHaveFolders() (map[int64]struct{}, error) {
-	// get folder if exists
-	var rows []int64
-	err := m.sess.Table(&dashboard{}).Where("is_folder=?", true).Distinct("org_id").Find(&rows)
-	if err != nil {
-		return nil, err
-	}
-	result := make(map[int64]struct{}, len(rows))
-	for _, s := range rows {
-		result[s] = struct{}{}
-	}
-	return result, nil
 }

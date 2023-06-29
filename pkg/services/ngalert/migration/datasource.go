@@ -1,4 +1,4 @@
-package ualert
+package migration
 
 type dsUIDLookup map[[2]int64]string
 

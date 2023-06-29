@@ -54,7 +54,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	addCacheMigration(mg)
 	addShortURLMigrations(mg)
 	ualert.AddTablesMigrations(mg)
-	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 
 	ualert.RerunDashAlertMigration(mg)
