@@ -1,12 +1,11 @@
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Button, Modal, ModalProps, Spinner } from '@grafana/ui';
+import { Button, Modal, ModalProps } from '@grafana/ui';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 
 /**
- * This hook controls the delete modal for contact points, showing loading and error modals when appropriate
+ * This hook controls the delete modal for contact points, showing loading and error states when appropriate
  */
 export const useDeleteContactPointModal = (
   handleDelete: (name: string) => Promise<void>,
@@ -17,10 +16,14 @@ export const useDeleteContactPointModal = (
   const [error, setError] = useState<unknown | undefined>();
 
   const handleDismiss = useCallback(() => {
+    if (isLoading) {
+      return;
+    }
+
     setContactPoint(undefined);
     setShowModal(false);
     setError(undefined);
-  }, [setContactPoint]);
+  }, [isLoading]);
 
   const handleShow = useCallback((name: string) => {
     setContactPoint(name);
@@ -37,10 +40,6 @@ export const useDeleteContactPointModal = (
   }, [handleDelete, contactPoint]);
 
   const modalElement = useMemo(() => {
-    if (isLoading) {
-      return <UpdatingModal isOpen={showModal} />;
-    }
-
     if (error) {
       return <ErrorModal isOpen={showModal} onDismiss={handleDismiss} error={error} />;
     }
@@ -49,18 +48,18 @@ export const useDeleteContactPointModal = (
       <Modal
         isOpen={showModal}
         onDismiss={handleDismiss}
-        closeOnBackdropClick={true}
-        closeOnEscape={true}
+        closeOnBackdropClick={!isLoading}
+        closeOnEscape={!isLoading}
         title="Delete contact point"
       >
         <p>Deleting this contact point will permanently remove it.</p>
         <p>Are you sure you want to delete this contact point?</p>
 
         <Modal.ButtonRow>
-          <Button type="button" variant="destructive" onClick={handleSubmit}>
-            Yes, delete contact point
+          <Button type="button" variant="destructive" onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? 'Deleting...' : 'Yes, delete contact point'}
           </Button>
-          <Button type="button" variant="secondary" onClick={handleDismiss}>
+          <Button type="button" variant="secondary" onClick={handleDismiss} disabled={isLoading}>
             Cancel
           </Button>
         </Modal.ButtonRow>
@@ -70,22 +69,6 @@ export const useDeleteContactPointModal = (
 
   return [modalElement, handleShow, handleDismiss];
 };
-
-const UpdatingModal = ({ isOpen }: Pick<ModalProps, 'isOpen'>) => (
-  <Modal
-    isOpen={isOpen}
-    onDismiss={() => {}}
-    closeOnBackdropClick={false}
-    closeOnEscape={false}
-    title={
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        Updating... <Spinner inline />
-      </Stack>
-    }
-  >
-    Please wait while we update your configuration.
-  </Modal>
-);
 
 interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
   error: unknown;
