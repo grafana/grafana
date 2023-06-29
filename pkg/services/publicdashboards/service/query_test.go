@@ -706,8 +706,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 			UserId:       7,
 			OrgID:        dashboard.OrgID,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
@@ -1216,8 +1215,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		DashboardUid: publicDashboard.UID,
 		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			TimeSettings: timeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1229,8 +1227,7 @@ func TestBuildMetricRequest(t *testing.T) {
 		DashboardUid: nonPublicDashboard.UID,
 		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			TimeSettings: defaultPubdashTimeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
