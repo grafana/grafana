@@ -1,4 +1,4 @@
-import { AzureCloud, AzureCredentialsType, ConcealedSecretType } from '../types';
+import { AzureCloud, AzureCredentialsType, ConcealedSecretType, AzureClientSecretCredentialsType } from '../types';
 
 import {
   configWithManagedIdentityEnabled,
@@ -24,11 +24,11 @@ describe('AzureAuth', () => {
     });
 
     it("`getSecret()` should correctly return the client secret if it's not concealed", () => {
-      const resultFromServerSideSecret = getSecret(false, CLIENT_SECRET_SYMBOL);
-      expect(resultFromServerSideSecret).toBe(CLIENT_SECRET_SYMBOL);
+      const resultFromServerSideSecret = getSecret(false, CLIENT_SECRET_STRING);
+      expect(resultFromServerSideSecret).toBe(CLIENT_SECRET_STRING);
 
-      const resultFromSecureJSONDataSecret = getSecret(true, CLIENT_SECRET_STRING);
-      expect(resultFromSecureJSONDataSecret).toBe(CLIENT_SECRET_STRING);
+      const resultFromSecureJSONDataSecret = typeof getSecret(true, '');
+      expect(resultFromSecureJSONDataSecret).toBe('symbol');
     });
 
     describe('getCredentials()', () => {
@@ -65,12 +65,15 @@ describe('AzureAuth', () => {
         const resultForClientSecretCredentialsOnServer = getCredentials(
           dataSourceSettingsWithClientSecretOnServer,
           configWithManagedIdentityDisabled
-        );
+        ) as AzureClientSecretCredentialsType;
 
-        expect(resultForClientSecretCredentialsOnServer).toEqual({
-          ...basicExpectedResult,
-          clientSecret: CLIENT_SECRET_SYMBOL,
-        });
+        // Here we test the properties separately because the client secret is a symbol,
+        // and since JS symobls are unique, we test via the `typeof` operator.
+        expect(resultForClientSecretCredentialsOnServer.authType).toEqual('clientsecret');
+        expect(resultForClientSecretCredentialsOnServer.azureCloud).toEqual('AzureCloud');
+        expect(resultForClientSecretCredentialsOnServer.tenantId).toEqual('XXXX-tenant-id-XXXX');
+        expect(resultForClientSecretCredentialsOnServer.clientId).toEqual('XXXX-client-id-XXXX');
+        expect(typeof resultForClientSecretCredentialsOnServer.clientSecret).toEqual('symbol');
 
         //   If `dataSourceSettings.authType === "clientsecret"` && `secureJsonFields.azureClientSecret == false`,
         //   i.e. the client secret is stored in the secureJson.
