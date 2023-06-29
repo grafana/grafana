@@ -22,14 +22,15 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
   const [plot, setPlot] = useState<uPlot>();
 
   const styleRef = useRef({ transform: '' }); // boo!
-  const visRef = useRef(false);
-  const [, forceRedraw] = useState(0);
+  const [isVisible, setVisible] = useState(false);
 
   const [contents, setContents] = useState(getRandomContent);
 
   const style = useStyles2(getStyles);
 
   useLayoutEffect(() => {
+    let _isVisible = isVisible;
+
     config.addHook('init', (u) => {
       setPlot(u);
     });
@@ -38,19 +39,17 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
       let { left = -10, top = -10 } = u.cursor;
 
       if (left < 0 && top < 0) {
-        if (visRef.current) {
-          visRef.current = false;
-          forceRedraw(Math.random());
+        if (_isVisible) {
+          setVisible((_isVisible = false));
         }
       } else {
         const transform = `translate(${left}px, ${top}px)`;
 
-        if (visRef.current && domRef.current) {
+        if (_isVisible && domRef.current) {
           domRef.current.style.transform = transform;
         } else {
           styleRef.current = { ...styleRef.current, transform: transform };
-          visRef.current = true;
-          forceRedraw(Math.random());
+          setVisible((_isVisible = true));
         }
       }
     });
@@ -60,7 +59,7 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
     });
   }, [config]);
 
-  if (plot && visRef.current) {
+  if (plot && isVisible) {
     return createPortal(
       <pre className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
         {contents}
