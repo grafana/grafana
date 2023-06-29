@@ -79,9 +79,13 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 			svc.store = mockStore
 
-			// Ensure that the detectors aren't set initially
-			require.Empty(t, svc.detectors)
-			require.False(t, svc.hasDetectors)
+			// Await initial restore
+			select {
+			case <-svc.initialRestore:
+				break
+			case <-time.After(time.Second * 10):
+				t.Fatal("timeout")
+			}
 
 			// First call to ProvideDetectors should restore from store
 			r := svc.ProvideDetectors(context.Background())
@@ -89,10 +93,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 			// Ensure the state is modified as well for future calls
 			checkMockDetectors(t, svc.detectors)
-			require.True(t, svc.hasDetectors)
 
-			// Ensure it doesn't restore on every call, by modifying the detectors
-			// directly and keeping hasDetectors = true
+			// Ensure it doesn't restore on every call, by modifying the detectors directly
 			svc.detectors = nil
 			newR := svc.ProvideDetectors(context.Background())
 			require.Empty(t, newR) // restore would have filled this with mockGCOMPatterns
@@ -212,27 +214,6 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	})
 
 	t.Run("background service", func(t *testing.T) {
-		t.Run("restores value from db when it starts", func(t *testing.T) {
-			gcom := newDefaultGCOMScenario()
-			srv := gcom.newHTTPTestServer()
-			t.Cleanup(srv.Close)
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
-
-			// Set initial store
-			err := svc.store.Set(context.Background(), mockGCOMPatterns)
-			require.NoError(t, err)
-
-			// Start bg service scenario and test
-			bg := newBackgroundServiceScenario(svc, func() {})
-			t.Cleanup(bg.close)
-			bg.run(context.Background(), t)
-			d := svc.ProvideDetectors(context.Background())
-			checkMockDetectors(t, d)
-			require.False(t, gcom.httpCalls.called(), "gcom api should not be called")
-
-			bg.exitAndWait()
-		})
-
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
 			gcom := newDefaultGCOMScenario()
 			srv := gcom.newHTTPTestServer()
