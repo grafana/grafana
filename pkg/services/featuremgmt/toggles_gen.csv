@@ -1,5 +1,4 @@
 Name,State,Owner,requiresDevMode,RequiresLicense,RequiresRestart,FrontendOnly
-alertingBigTransactions,alpha,@grafana/alerting-squad,false,false,false,false
 trimDefaults,beta,@grafana/grafana-as-code,false,false,false,false
 disableEnvelopeEncryption,stable,@grafana/grafana-as-code,false,false,false,false
 database_metrics,stable,@grafana/hosted-grafana-team,false,false,false,false
