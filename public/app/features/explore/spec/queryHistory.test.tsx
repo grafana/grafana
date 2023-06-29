@@ -1,4 +1,3 @@
-import { screen } from '@testing-library/dom';
 import React from 'react';
 import { of } from 'rxjs';
 
@@ -32,9 +31,6 @@ import {
   selectStarredTabFirst,
   starQueryHistory,
   switchToQueryHistoryTab,
-  deleteStarredQueryHistoryItem,
-  confirmDeletingStarredQueryHistoryItem,
-  openDeleteModal,
   confirmDeletingInModal,
 } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
