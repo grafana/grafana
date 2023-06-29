@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/plugins/oauth"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -180,8 +182,7 @@ func (f *FakePluginRegistry) Plugin(_ context.Context, id string) (*plugins.Plug
 }
 
 func (f *FakePluginRegistry) Plugins(_ context.Context) []*plugins.Plugin {
-	var res []*plugins.Plugin
-
+	res := make([]*plugins.Plugin, 0, len(f.Store))
 	for _, p := range f.Store {
 		res = append(res, p)
 	}
@@ -200,9 +201,9 @@ func (f *FakePluginRegistry) Remove(_ context.Context, id string) error {
 }
 
 type FakePluginRepo struct {
-	GetPluginArchiveFunc         func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginArchiveByURLFunc    func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
-	GetPluginDownloadOptionsFunc func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginDownloadOptions, error)
+	GetPluginArchiveFunc      func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveByURLFunc func(_ context.Context, archiveURL string, _ repo.CompatOpts) (*repo.PluginArchive, error)
+	GetPluginArchiveInfoFunc  func(_ context.Context, pluginID, version string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error)
 }
 
 // GetPluginArchive fetches the requested plugin archive.
@@ -223,12 +224,12 @@ func (r *FakePluginRepo) GetPluginArchiveByURL(ctx context.Context, archiveURL s
 	return &repo.PluginArchive{}, nil
 }
 
-// GetPluginDownloadOptions fetches information for downloading the requested plugin.
-func (r *FakePluginRepo) GetPluginDownloadOptions(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginDownloadOptions, error) {
-	if r.GetPluginDownloadOptionsFunc != nil {
-		return r.GetPluginDownloadOptionsFunc(ctx, pluginID, version, opts)
+// GetPluginArchiveInfo fetches information for downloading the requested plugin.
+func (r *FakePluginRepo) GetPluginArchiveInfo(ctx context.Context, pluginID, version string, opts repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+	if r.GetPluginArchiveInfoFunc != nil {
+		return r.GetPluginArchiveInfoFunc(ctx, pluginID, version, opts)
 	}
-	return &repo.PluginDownloadOptions{}, nil
+	return &repo.PluginArchiveInfo{}, nil
 }
 
 type FakePluginStorage struct {
@@ -422,4 +423,12 @@ func (f *FakePluginFileStore) File(ctx context.Context, pluginID, filename strin
 		return f.FileFunc(ctx, pluginID, filename)
 	}
 	return nil, nil
+}
+
+type FakeOauthService struct {
+	Result *oauth.ExternalService
+}
+
+func (f *FakeOauthService) RegisterExternalService(ctx context.Context, name string, svc *plugindef.ExternalServiceRegistration) (*oauth.ExternalService, error) {
+	return f.Result, nil
 }

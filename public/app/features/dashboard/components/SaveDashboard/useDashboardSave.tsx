@@ -1,11 +1,12 @@
 import { useAsyncFn } from 'react-use';
 
 import { locationUtil } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { updateDashboardName } from 'app/core/reducers/navBarTree';
+import { useSaveDashboardMutation } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
 import { useDispatch } from 'app/types';
@@ -28,10 +29,19 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
 export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
+  const [saveDashboardRtkQuery] = useSaveDashboardMutation();
   const [state, onDashboardSave] = useAsyncFn(
-    async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
+    async (clone: DashboardModel, options: SaveDashboardOptions, dashboard: DashboardModel) => {
       try {
-        const result = await saveDashboard(clone, options, dashboard);
+        const queryResult = config.featureToggles.nestedFolders
+          ? await saveDashboardRtkQuery({
+              dashboard: clone,
+              folderUid: options.folderUid ?? dashboard.meta.folderUid ?? clone.meta.folderUid,
+              message: options.message,
+              overwrite: options.overwrite,
+            })
+          : await saveDashboard(clone, options, dashboard);
+        const result = config.featureToggles.nestedFolders ? queryResult.data : queryResult;
         dashboard.version = result.version;
         dashboard.clearUnsavedChanges();
 

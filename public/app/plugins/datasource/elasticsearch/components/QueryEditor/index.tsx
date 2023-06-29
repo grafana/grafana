@@ -9,12 +9,13 @@ import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
-import { isSupportedVersion, unsupportedVersionMessage } from '../../utils';
+import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
+import { QueryTypeSelector } from './QueryTypeSelector';
 import { changeAliasPattern, changeQuery } from './state';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
@@ -66,7 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   root: css`
     display: flex;
   `,
-  queryFieldWrapper: css`
+  queryItem: css`
     flex-grow: 1;
     margin: 0 ${theme.spacing(0.5)} ${theme.spacing(0.5)} 0;
   `,
@@ -80,16 +81,8 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.queryFieldWrapper}>
-      <QueryField
-        query={value}
-        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-        // And slate will claim the focus, making it impossible to leave the field.
-        onBlur={() => {}}
-        onChange={onChange}
-        placeholder="Lucene Query"
-        portalOrigin="elasticsearch"
-      />
+    <div className={styles.queryItem}>
+      <QueryField query={value} onChange={onChange} placeholder="Enter a lucene query" portalOrigin="elasticsearch" />
     </div>
   );
 };
@@ -99,32 +92,38 @@ const QueryEditorForm = ({ value }: Props) => {
   const nextId = useNextId();
   const styles = useStyles2(getStyles);
 
-  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-  const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+  const isTimeSeries = isTimeSeriesQuery(value);
 
   const showBucketAggregationsEditor = value.metrics?.every(
-    (metric) => !metricAggregationConfig[metric.type].isSingleMetric
+    (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
   );
 
   return (
     <>
       <div className={styles.root}>
-        <InlineLabel width={17}>Query</InlineLabel>
+        <InlineLabel width={17}>Query type</InlineLabel>
+        <div className={styles.queryItem}>
+          <QueryTypeSelector />
+        </div>
+      </div>
+      <div className={styles.root}>
+        <InlineLabel width={17}>Lucene Query</InlineLabel>
         <ElasticSearchQueryField onChange={(query) => dispatch(changeQuery(query))} value={value?.query} />
 
-        <InlineField
-          label="Alias"
-          labelWidth={15}
-          disabled={!isTimeSeriesQuery}
-          tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
-        >
-          <Input
-            id={`ES-query-${value.refId}_alias`}
-            placeholder="Alias Pattern"
-            onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
-            defaultValue={value.alias}
-          />
-        </InlineField>
+        {isTimeSeries && (
+          <InlineField
+            label="Alias"
+            labelWidth={15}
+            tooltip="Aliasing only works for timeseries queries (when the last group is 'Date Histogram'). For all other query types this field is ignored."
+          >
+            <Input
+              id={`ES-query-${value.refId}_alias`}
+              placeholder="Alias Pattern"
+              onBlur={(e) => dispatch(changeAliasPattern(e.currentTarget.value))}
+              defaultValue={value.alias}
+            />
+          </InlineField>
+        )}
       </div>
 
       <MetricAggregationsEditor nextId={nextId} />

@@ -44,7 +44,7 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   }
   stats.push({
     displayName: t('dashboard.inspect-stats.queries', 'Number of queries'),
-    value: data.request.targets.length,
+    value: data.request.targets?.length ?? 0,
   });
   stats.push({
     displayName: t('dashboard.inspect-stats.rows', 'Total number rows'),

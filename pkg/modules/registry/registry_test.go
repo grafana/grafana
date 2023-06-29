@@ -7,11 +7,11 @@ import (
 
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 )
 
-func TestProvideRegistry(t *testing.T) {
+func TestRegistry(t *testing.T) {
 	var registeredInvisibleModules []string
 	var registeredModules []string
 
@@ -24,11 +24,11 @@ func TestProvideRegistry(t *testing.T) {
 		},
 	}
 
-	svcRegistry := backgroundsvcs.NewBackgroundServiceRegistry()
-	svcRunner := backgroundsvcs.ProvideBackgroundServiceRunner(svcRegistry)
+	mockSvcName := "test-registry"
+	mockSvc := modules.NewMockNamedService(mockSvcName)
 
-	r := ProvideRegistry(moduleManager, svcRunner)
+	r := newRegistry(log.New("modules.registry"), moduleManager, mockSvc)
 	require.NotNil(t, r)
-	require.Equal(t, []string{modules.BackgroundServices}, registeredInvisibleModules)
+	require.Equal(t, []string{mockSvcName}, registeredInvisibleModules)
 	require.Equal(t, []string{modules.All}, registeredModules)
 }

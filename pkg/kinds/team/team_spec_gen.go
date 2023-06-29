@@ -9,35 +9,11 @@
 
 package team
 
-// Defines values for Permission.
-const (
-	PermissionN0 Permission = 0
-	PermissionN1 Permission = 1
-	PermissionN2 Permission = 2
-	PermissionN4 Permission = 4
-)
-
-// Permission defines model for Permission.
-type Permission int
-
 // Spec defines model for Spec.
 type Spec struct {
-	// AccessControl metadata associated with a given resource.
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
-
-	// AvatarUrl is the team's avatar URL.
-	AvatarUrl *string `json:"avatarUrl,omitempty"`
-
 	// Email of the team.
 	Email *string `json:"email,omitempty"`
 
-	// MemberCount is the number of the team members.
-	MemberCount int64 `json:"memberCount"`
-
 	// Name of the team.
 	Name string `json:"name"`
-
-	// OrgId is the ID of an organisation the team belongs to.
-	OrgId      int64      `json:"orgId"`
-	Permission Permission `json:"permission"`
 }

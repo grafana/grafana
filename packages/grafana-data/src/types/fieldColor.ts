@@ -37,4 +37,4 @@ export interface FieldColor {
  */
 export type FieldColorSeriesByMode = 'min' | 'max' | 'last';
 
-export const FALLBACK_COLOR = 'gray';
+export const FALLBACK_COLOR = '#808080';

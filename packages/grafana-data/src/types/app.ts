@@ -3,7 +3,12 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { type PluginExtensionLinkConfig, PluginExtensionTypes } from './pluginExtensions';
+import {
+  type PluginExtensionLinkConfig,
+  PluginExtensionTypes,
+  PluginExtensionComponentConfig,
+  PluginExtensionConfig,
+} from './pluginExtensions';
 
 /**
  * @public
@@ -51,7 +56,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
-  private _extensionConfigs: PluginExtensionLinkConfig[] = [];
+  private _extensionConfigs: PluginExtensionConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -102,6 +107,17 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
       ...extension,
       type: PluginExtensionTypes.link,
     } as PluginExtensionLinkConfig);
+
+    return this;
+  }
+
+  configureExtensionComponent<Context extends object>(
+    extension: Omit<PluginExtensionComponentConfig<Context>, 'type'>
+  ) {
+    this._extensionConfigs.push({
+      ...extension,
+      type: PluginExtensionTypes.component,
+    } as PluginExtensionComponentConfig);
 
     return this;
   }

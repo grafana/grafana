@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { default as React, useState } from 'react';
 import { Provider } from 'react-redux';
+import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 
 import { configureStore } from 'app/store/configureStore';
 
@@ -27,6 +28,10 @@ jest.mock('@grafana/ui', () => ({
     return <input data-testid="mockeditor" value={value} onChange={(e) => onBlur(e.currentTarget.value)} />;
   },
 }));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+});
 
 const PayloadEditorWithState = () => {
   const [payload, setPayload] = useState(DEFAULT_PAYLOAD);

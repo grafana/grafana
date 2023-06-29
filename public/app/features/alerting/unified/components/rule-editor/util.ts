@@ -8,6 +8,8 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ClassicCondition, ExpressionQueryType } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { RuleFormType } from '../../types/rule-form';
+
 import { createDagFromQueries, getOriginOfRefId } from './dag';
 
 export function queriesWithUpdatedReferences(
@@ -150,7 +152,7 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
       const threshold = condition.evaluator.params;
 
       // "classic_conditions" use `condition.query.params[]` and "threshold" uses `query.model.expression`
-      const refId = condition.query.params[0] ?? query.model.expression;
+      const refId = condition.query?.params[0] ?? query.model.expression;
 
       // if an expression hasn't been linked to a data query yet, it won't have a refId
       if (!refId) {
@@ -292,4 +294,12 @@ export function getStatusMessage(data: PanelData): string | undefined {
   }
 
   return data.error?.message ?? genericErrorMessage;
+}
+
+export function translateRouteParamToRuleType(param = ''): RuleFormType {
+  if (param === 'recording') {
+    return RuleFormType.cloudRecording;
+  }
+
+  return RuleFormType.grafana;
 }

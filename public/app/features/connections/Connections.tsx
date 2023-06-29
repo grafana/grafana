@@ -31,8 +31,8 @@ export default function Connections() {
         {/* Redirect to "Add new connection" by default */}
         <Route exact sensitive path={ROUTES.Base} component={() => <Redirect to={ROUTES.AddNewConnection} />} />
         <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
-        <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
+        <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact sensitive path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
         <Route exact sensitive path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
 

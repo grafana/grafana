@@ -118,7 +118,7 @@ describe('QueryEditor should render right editor', () => {
         statistic: 'Average',
       } as CloudWatchQuery;
       render(<QueryEditor {...props} query={query} />);
-      expect(await screen.findByText('Select Log Groups')).toBeInTheDocument();
+      expect(await screen.findByText('Select log groups')).toBeInTheDocument();
     });
   });
 

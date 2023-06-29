@@ -652,7 +652,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 }
 
 func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	rand := rand.New(rand.NewSource(time.Now().UnixNano() + int64(index)))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
@@ -700,7 +700,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 			SetConfig(&data.FieldConfig{
 				Interval: float64(query.Interval.Milliseconds()),
 			}),
-		data.NewField(frameNameForQuery(query, model, index), parseLabels(model), floatVec),
+		data.NewField(frameNameForQuery(query, model, index), parseLabels(model, index), floatVec),
 	)
 }
 
@@ -843,7 +843,7 @@ func predictableCSVWave(query backend.DataQuery, model *simplejson.Json) ([]*dat
 
 		frame := newSeriesForQuery(query, model, 0)
 		frame.Fields = fields
-		frame.Fields[1].Labels = parseLabelsString(subQ.Labels)
+		frame.Fields[1].Labels = parseLabelsString(subQ.Labels, 0)
 		if subQ.Name != "" {
 			frame.Name = subQ.Name
 		}
@@ -929,7 +929,7 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 
 	frame := newSeriesForQuery(query, model, 0)
 	frame.Fields = fields
-	frame.Fields[1].Labels = parseLabels(model)
+	frame.Fields[1].Labels = parseLabels(model, 0)
 
 	return frame, nil
 }
@@ -998,12 +998,12 @@ func newSeriesForQuery(query backend.DataQuery, model *simplejson.Json, index in
  *
  * '{job="foo", instance="bar"} => {job: "foo", instance: "bar"}`
  */
-func parseLabels(model *simplejson.Json) data.Labels {
+func parseLabels(model *simplejson.Json, seriesIndex int) data.Labels {
 	labelText := model.Get("labels").MustString("")
-	return parseLabelsString(labelText)
+	return parseLabelsString(labelText, seriesIndex)
 }
 
-func parseLabelsString(labelText string) data.Labels {
+func parseLabelsString(labelText string, seriesIndex int) data.Labels {
 	if labelText == "" {
 		return data.Labels{}
 	}
@@ -1020,6 +1020,7 @@ func parseLabelsString(labelText string) data.Labels {
 		key := strings.TrimSpace(keyval[:idx])
 		val := strings.TrimSpace(keyval[idx+1:])
 		val = strings.Trim(val, "\"")
+		val = strings.ReplaceAll(val, "$seriesIndex", strconv.Itoa(seriesIndex))
 		tags[key] = val
 	}
 

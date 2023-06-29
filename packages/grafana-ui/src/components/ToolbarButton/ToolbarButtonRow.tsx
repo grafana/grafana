@@ -7,6 +7,7 @@ import React, { forwardRef, HTMLAttributes, useState, useRef, useLayoutEffect, c
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
+import { getPortalContainer } from '../Portal/Portal';
 
 import { ToolbarButton } from './ToolbarButton';
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -17,9 +18,9 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
 
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
-    // null is a valid react child so we need to filter it out to prevent unnecessary padding
-    const childrenWithoutNull = React.Children.toArray(children).filter((child) => child !== null);
-    const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(true));
+    // null/undefined are valid react children so we need to filter them out to prevent unnecessary padding
+    const childrenWithoutNull = React.Children.toArray(children).filter((child) => child != null);
+    const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(false));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
     const overflowRef = useRef<HTMLDivElement>(null);
@@ -29,7 +30,10 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
         onClose: () => setShowOverflowItems(false),
         isDismissable: true,
         isOpen: showOverflowItems,
-        shouldCloseOnInteractOutside: (element: Element) => !overflowRef.current?.contains(element),
+        shouldCloseOnInteractOutside: (element: Element) => {
+          const portalContainer = getPortalContainer();
+          return !overflowRef.current?.contains(element) && !portalContainer.contains(element);
+        },
       },
       overflowItemsRef
     );

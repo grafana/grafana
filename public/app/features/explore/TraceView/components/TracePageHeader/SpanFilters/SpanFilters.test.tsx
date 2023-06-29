@@ -15,6 +15,12 @@ const trace: Trace = {
       spanID: '1ed38015486087ca',
       operationName: 'Span0',
       tags: [{ key: 'TagKey0', type: 'string', value: 'TagValue0' }],
+      kind: 'server',
+      statusCode: 2,
+      statusMessage: 'message',
+      instrumentationLibraryName: 'name',
+      instrumentationLibraryVersion: 'version',
+      traceState: 'state',
       process: {
         serviceName: 'Service0',
         tags: [{ key: 'ProcessKey0', type: 'string', value: 'ProcessValue0' }],
@@ -123,6 +129,7 @@ describe('SpanFilters', () => {
     await waitFor(() => {
       expect(screen.getByText('TagKey0')).toBeInTheDocument();
       expect(screen.getByText('TagKey1')).toBeInTheDocument();
+      expect(screen.getByText('kind')).toBeInTheDocument();
       expect(screen.getByText('ProcessKey0')).toBeInTheDocument();
       expect(screen.getByText('ProcessKey1')).toBeInTheDocument();
       expect(screen.getByText('LogKey0')).toBeInTheDocument();
@@ -164,8 +171,14 @@ describe('SpanFilters', () => {
       expect(container?.childNodes[1].textContent).toBe('ProcessKey1');
       expect(container?.childNodes[2].textContent).toBe('TagKey0');
       expect(container?.childNodes[3].textContent).toBe('TagKey1');
-      expect(container?.childNodes[4].textContent).toBe('LogKey0');
-      expect(container?.childNodes[5].textContent).toBe('LogKey1');
+      expect(container?.childNodes[4].textContent).toBe('kind');
+      expect(container?.childNodes[5].textContent).toBe('library.name');
+      expect(container?.childNodes[6].textContent).toBe('library.version');
+      expect(container?.childNodes[7].textContent).toBe('status');
+      expect(container?.childNodes[8].textContent).toBe('status.message');
+      expect(container?.childNodes[9].textContent).toBe('trace.state');
+      expect(container?.childNodes[10].textContent).toBe('LogKey0');
+      expect(container?.childNodes[11].textContent).toBe('LogKey1');
     });
   });
 
@@ -183,9 +196,9 @@ describe('SpanFilters', () => {
 
   it('should allow resetting filters', async () => {
     render(<SpanFiltersWithProps />);
-    const resetFiltersButton = screen.getByRole('button', { name: 'Reset filters button' });
-    expect(resetFiltersButton).toBeInTheDocument();
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
+    const clearFiltersButton = screen.getByRole('button', { name: 'Clear filters button' });
+    expect(clearFiltersButton).toBeInTheDocument();
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(true);
 
     const serviceValue = screen.getByLabelText('Select service name');
     const spanValue = screen.getByLabelText('Select span name');
@@ -196,8 +209,8 @@ describe('SpanFilters', () => {
     await selectAndCheckValue(user, tagKey, 'TagKey0');
     await selectAndCheckValue(user, tagValue, 'TagValue0');
 
-    expect((resetFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
-    await user.click(resetFiltersButton);
+    expect((clearFiltersButton as HTMLButtonElement)['disabled']).toBe(false);
+    await user.click(clearFiltersButton);
     expect(screen.queryByText('Service0')).not.toBeInTheDocument();
     expect(screen.queryByText('Span0')).not.toBeInTheDocument();
     expect(screen.queryByText('TagKey0')).not.toBeInTheDocument();

@@ -28,7 +28,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('renders a dialog with the correct title', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    expect(await screen.findByRole('dialog', { name: 'Delete Compute Resources' })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Delete' })).toBeInTheDocument();
   });
 
   it('displays a `Delete` button', async () => {
@@ -46,7 +46,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('only enables the `Delete` button if the confirmation text is typed', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    const confirmationInput = await screen.findByPlaceholderText('Type Delete to confirm');
+    const confirmationInput = await screen.findByPlaceholderText('Type "Delete" to confirm');
     await userEvent.type(confirmationInput, 'Delete');
 
     expect(await screen.findByRole('button', { name: 'Delete' })).toBeEnabled();
@@ -55,7 +55,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('calls onConfirm when clicking the `Delete` button', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    const confirmationInput = await screen.findByPlaceholderText('Type Delete to confirm');
+    const confirmationInput = await screen.findByPlaceholderText('Type "Delete" to confirm');
     await userEvent.type(confirmationInput, 'Delete');
 
     await userEvent.click(await screen.findByRole('button', { name: 'Delete' }));
@@ -72,7 +72,7 @@ describe('browse-dashboards DeleteModal', () => {
   it('calls onDismiss when clicking the X', async () => {
     render(<DeleteModal {...defaultProps} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Close dialog' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 });

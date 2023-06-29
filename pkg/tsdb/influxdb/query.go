@@ -60,7 +60,7 @@ func (query *Query) renderTags() []string {
 
 		// If the operator is missing we fall back to sensible defaults
 		if tag.Operator == "" {
-			if regexpOperatorPattern.Match([]byte(tag.Value)) {
+			if regexpOperatorPattern.MatchString(tag.Value) {
 				tag.Operator = "=~"
 			} else {
 				tag.Operator = "="
@@ -124,7 +124,7 @@ func (query *Query) renderMeasurement() string {
 
 	measurement := query.Measurement
 
-	if !regexpMeasurementPattern.Match([]byte(measurement)) {
+	if !regexpMeasurementPattern.MatchString(measurement) {
 		measurement = fmt.Sprintf(`"%s"`, measurement)
 	}
 

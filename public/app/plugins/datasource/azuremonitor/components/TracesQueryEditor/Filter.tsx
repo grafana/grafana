@@ -270,7 +270,7 @@ const Filter = (
         onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
         hideSelectedOptions={false}
       />
-      <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
+      <AccessoryButton aria-label="Remove filter" icon="times" variant="secondary" onClick={onDelete} type="button" />
     </HorizontalGroup>
   );
 };

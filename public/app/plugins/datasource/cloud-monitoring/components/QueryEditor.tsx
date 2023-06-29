@@ -4,7 +4,8 @@ import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
 import CloudMonitoringDatasource from '../datasource';
-import { CloudMonitoringQuery, QueryType, SLOQuery, CloudMonitoringOptions } from '../types';
+import { CloudMonitoringQuery, QueryType, SLOQuery } from '../types/query';
+import { CloudMonitoringOptions } from '../types/types';
 
 import { QueryHeader } from './QueryHeader';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
@@ -44,7 +45,7 @@ export const QueryEditor = (props: Props) => {
 
   // Use a known query type
   useEffect(() => {
-    if (!Object.values(QueryType).includes(query.queryType)) {
+    if (!query.queryType || !Object.values(QueryType).includes(query.queryType)) {
       onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
     }
   });

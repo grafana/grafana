@@ -18,6 +18,7 @@ import {
   AlertmanagerStatus,
   AlertState,
   GrafanaManagedReceiverConfig,
+  MatcherOperator,
   Silence,
   SilenceState,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -387,6 +388,12 @@ export const someGrafanaAlertManagerConfig: AlertManagerCortexConfig = {
   alertmanager_config: {
     route: {
       receiver: 'default',
+      routes: [
+        {
+          receiver: 'critical',
+          object_matchers: [['severity', MatcherOperator.equal, 'critical']],
+        },
+      ],
     },
     receivers: [
       {
@@ -540,6 +547,11 @@ export const mockFolder = (partial?: Partial<FolderDTO>): FolderDTO => {
     canDelete: true,
     canEdit: true,
     canSave: true,
+    created: '',
+    createdBy: '',
+    hasAcl: false,
+    updated: '',
+    updatedBy: '',
     ...partial,
   };
 };
@@ -623,6 +635,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>) {
     ...override,
   });
 }
+
 export function getCloudRule(override?: Partial<CombinedRule>) {
   return mockCombinedRule({
     namespace: {

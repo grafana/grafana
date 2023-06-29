@@ -375,7 +375,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(l, *newCond, da, folder.Uid)
 		if err != nil {
 			return fmt.Errorf("failed to migrate alert rule '%s' [ID:%d, DashboardUID:%s, orgID:%d]: %w", da.Name, da.Id, da.DashboardUID, da.OrgId, err)
 		}
@@ -456,6 +456,9 @@ func (m *migration) writeAlertmanagerConfig(orgID int64, amConfig *PostableUserC
 	if err != nil {
 		return err
 	}
+
+	// remove an existing configuration, which could have been left during switching back to legacy alerting
+	_, _ = m.sess.Delete(AlertConfiguration{OrgID: orgID})
 
 	// We don't need to apply the configuration, given the multi org alertmanager will do an initial sync before the server is ready.
 	_, err = m.sess.Insert(AlertConfiguration{

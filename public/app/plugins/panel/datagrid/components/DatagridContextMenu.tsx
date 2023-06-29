@@ -4,11 +4,19 @@ import React from 'react';
 
 import { DataFrame, FieldType } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
+import { reportInteraction } from '@grafana/runtime';
 import { ContextMenu, MenuGroup, MenuItem } from '@grafana/ui';
 import { MenuDivider } from '@grafana/ui/src/components/Menu/MenuDivider';
 
 import { DatagridAction, DatagridActionType } from '../state';
-import { cleanStringFieldAfterConversion, DatagridContextMenuData, deleteRows, EMPTY_DF } from '../utils';
+import {
+  cleanStringFieldAfterConversion,
+  DatagridContextMenuData,
+  deleteRows,
+  EMPTY_DF,
+  INTERACTION_EVENT_NAME,
+  INTERACTION_ITEM,
+} from '../utils';
 
 interface ContextMenuProps {
   menuData: DatagridContextMenuData;
@@ -53,10 +61,11 @@ export const DatagridContextMenu = ({
     columnDeletionLabel = `Delete ${selectedColumns.length} columns`;
   }
 
+  // Show delete/clear options on cell right click, but not on header right click, unless header column is specifically selected.
   const showDeleteRow = (row !== undefined && row >= 0) || selectedRows.length;
-  const showDeleteColumn = (column !== undefined && column >= 0) || selectedColumns.length;
+  const showDeleteColumn = (column !== undefined && column >= 0 && row !== undefined) || selectedColumns.length;
   const showClearRow = row !== undefined && row >= 0 && !selectedRows.length;
-  const showClearColumn = column !== undefined && column >= 0 && !selectedColumns.length;
+  const showClearColumn = column !== undefined && column >= 0 && row !== undefined && !selectedColumns.length;
 
   const renderContextMenuItems = () => (
     <>
@@ -71,6 +80,10 @@ export const DatagridContextMenu = ({
             }
 
             if (row !== undefined && row >= 0) {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+                menu_action: 'row_delete',
+              });
               saveData(deleteRows(data, [row], true));
             }
           }}
@@ -85,10 +98,15 @@ export const DatagridContextMenu = ({
                 ...data,
                 fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
               });
+              dispatch({ type: DatagridActionType.gridSelectionCleared });
               return;
             }
 
             if (column !== undefined && column >= 0) {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+                menu_action: 'column_delete',
+              });
               saveData({
                 ...data,
                 fields: data.fields.filter((_, index) => index !== column),
@@ -102,6 +120,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label="Clear row"
           onClick={() => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+              menu_action: 'row_clear',
+            });
             saveData(deleteRows(data, [row]));
           }}
         />
@@ -112,6 +134,10 @@ export const DatagridContextMenu = ({
           onClick={() => {
             const field = data.fields[column];
             field.values = field.values.map(() => null);
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+              menu_action: 'column_clear',
+            });
             saveData({
               ...data,
             });
@@ -122,10 +148,23 @@ export const DatagridContextMenu = ({
       <MenuItem
         label="Remove all data"
         onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+            menu_action: 'remove_all',
+          });
           saveData(EMPTY_DF);
         }}
       />
-      <MenuItem label="Search..." onClick={() => dispatch({ type: DatagridActionType.openSearch })} />
+      <MenuItem
+        label="Search..."
+        onClick={() => {
+          reportInteraction(INTERACTION_EVENT_NAME, {
+            item: INTERACTION_ITEM.CONTEXT_MENU_ACTION,
+            menu_action: 'open_search',
+          });
+          dispatch({ type: DatagridActionType.openSearch });
+        }}
+      />
     </>
   );
 
@@ -195,6 +234,10 @@ export const DatagridContextMenu = ({
                   };
                   copy.fields[column] = field;
 
+                  reportInteraction(INTERACTION_EVENT_NAME, {
+                    item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+                    menu_action: 'convert_field',
+                  });
                   saveData(copy);
                 }}
               />
@@ -205,6 +248,10 @@ export const DatagridContextMenu = ({
         <MenuItem
           label={columnFreezeLabel}
           onClick={() => {
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'column_freeze',
+            });
             if (columnFreezeIndex === columnIndex) {
               dispatch({ type: DatagridActionType.columnFreezeReset });
             } else {
@@ -215,19 +262,32 @@ export const DatagridContextMenu = ({
         <MenuItem label="Rename column" onClick={renameColumnClicked} />
         <MenuDivider />
         <MenuItem
-          label={columnDeletionLabel}
+          label="Delete column"
           onClick={() => {
-            if (selectedColumns.length) {
-              saveData({
-                ...data,
-                fields: data.fields.filter((_, index) => !selectedColumns.includes(index)),
-              });
-              return;
-            }
-
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'delete_column',
+            });
             saveData({
               ...data,
               fields: data.fields.filter((_, index) => index !== column),
+            });
+
+            // also clear selection since it will change it if the deleted column is selected or if indexes shift
+            dispatch({ type: DatagridActionType.gridSelectionCleared });
+          }}
+        />
+        <MenuItem
+          label="Clear column"
+          onClick={() => {
+            const field = data.fields[column];
+            field.values = field.values.map(() => null);
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.HEADER_MENU_ACTION,
+              menu_action: 'clear_column',
+            });
+            saveData({
+              ...data,
             });
           }}
         />

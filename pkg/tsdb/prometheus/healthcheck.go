@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/kindsys"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -24,18 +24,36 @@ var logger log.Logger = log.New("tsdb.prometheus")
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
 	logger := logger.FromContext(ctx)
-	ds, err := s.getInstance(req.PluginContext)
+	ds, err := s.getInstance(ctx, req.PluginContext)
 
 	// check that the datasource exists
 	if err != nil {
-		return getHealthCheckMessage(logger, "error getting datasource info", err)
+		return getHealthCheckMessage("error getting datasource info", err)
 	}
 
 	if ds == nil {
-		return getHealthCheckMessage(logger, "", errors.New("invalid datasource info received"))
+		return getHealthCheckMessage("", errors.New("invalid datasource info received"))
 	}
 
-	return healthcheck(ctx, req, ds)
+	hc, err := healthcheck(ctx, req, ds)
+	if err != nil {
+		logger.Warn("error performing prometheus healthcheck", "err", err.Error())
+		return nil, err
+	}
+
+	heuristics, err := getHeuristics(ctx, ds)
+	if err != nil {
+		logger.Warn("failed to get prometheus heuristics", "err", err.Error())
+	} else {
+		jsonDetails, err := json.Marshal(heuristics)
+		if err != nil {
+			logger.Warn("failed to marshal heuristics", "err", err)
+		} else {
+			hc.JSONDetails = jsonDetails
+		}
+	}
+
+	return hc, nil
 }
 
 func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instance) (*backend.CheckHealthResult, error) {
@@ -64,18 +82,18 @@ func healthcheck(ctx context.Context, req *backend.CheckHealthRequest, i *instan
 	})
 
 	if err != nil {
-		return getHealthCheckMessage(logger, "There was an error returned querying the Prometheus API.", err)
+		return getHealthCheckMessage("There was an error returned querying the Prometheus API.", err)
 	}
 
 	if resp.Responses[refID].Error != nil {
-		return getHealthCheckMessage(logger, "There was an error returned querying the Prometheus API.",
+		return getHealthCheckMessage("There was an error returned querying the Prometheus API.",
 			errors.New(resp.Responses[refID].Error.Error()))
 	}
 
-	return getHealthCheckMessage(logger, "Successfully queried the Prometheus API.", nil)
+	return getHealthCheckMessage("Successfully queried the Prometheus API.", nil)
 }
 
-func getHealthCheckMessage(logger log.Logger, message string, err error) (*backend.CheckHealthResult, error) {
+func getHealthCheckMessage(message string, err error) (*backend.CheckHealthResult, error) {
 	if err == nil {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusOk,
@@ -83,7 +101,6 @@ func getHealthCheckMessage(logger log.Logger, message string, err error) (*backe
 		}, nil
 	}
 
-	logger.Warn("error performing prometheus healthcheck", "err", err.Error())
 	errorMessage := fmt.Sprintf("%s - %s", err.Error(), message)
 
 	return &backend.CheckHealthResult{

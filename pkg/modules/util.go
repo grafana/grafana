@@ -62,3 +62,14 @@ func stringsContain(values []string, search string) bool {
 
 	return false
 }
+
+type MockNamedService struct {
+	*services.BasicService
+}
+
+func NewMockNamedService(name string) *MockNamedService {
+	startFn := func(_ context.Context) error { return nil }
+	return &MockNamedService{
+		BasicService: services.NewIdleService(startFn, nil).WithName(name),
+	}
+}

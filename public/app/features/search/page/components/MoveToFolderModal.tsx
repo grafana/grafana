@@ -129,11 +129,11 @@ export const MoveToFolderModal = ({ results, onMoveItems, onDismiss }: Props) =>
         </div>
 
         <HorizontalGroup justify="flex-end">
+          <Button variant="secondary" onClick={onDismiss} fill="outline">
+            Cancel
+          </Button>
           <Button icon={moving ? 'fa fa-spinner' : undefined} variant="primary" onClick={moveTo}>
             Move
-          </Button>
-          <Button variant="secondary" onClick={onDismiss}>
-            Cancel
           </Button>
         </HorizontalGroup>
       </>

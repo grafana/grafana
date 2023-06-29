@@ -7,6 +7,10 @@ import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
+// When set to auto, the interval will be based on the query range
+// NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
+export const AutoRefreshInterval = 'auto';
+
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
@@ -63,8 +67,6 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
 }
 
 export class ContextSrv {
-  pinned: any;
-  version: any;
   user: User;
   isSignedIn: boolean;
   isGrafanaAdmin: boolean;
@@ -156,7 +158,7 @@ export class ContextSrv {
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
   isAllowedInterval(interval: string) {
-    if (!config.minRefreshInterval) {
+    if (!config.minRefreshInterval || interval === AutoRefreshInterval) {
       return true;
     }
     return rangeUtil.intervalToMs(interval) >= rangeUtil.intervalToMs(config.minRefreshInterval);
@@ -204,8 +206,10 @@ export class ContextSrv {
 
   // schedules a job to perform token ration in the background
   private scheduleTokenRotationJob() {
-    // only schedule job if feature toggle is enabled and user is signed in
-    if (config.featureToggles.clientTokenRotation && this.isSignedIn) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isRenderRequest = !!urlParams.get('render');
+    // only schedule job if feature toggle is enabled, user is signed in and it's not a render request
+    if (config.featureToggles.clientTokenRotation && this.isSignedIn && !isRenderRequest) {
       // get the time token is going to expire
       let expires = this.getSessionExpiry();
 
@@ -245,7 +249,7 @@ export class ContextSrv {
 
   private rotateToken() {
     // We directly use fetch here to bypass the request queue from backendSvc
-    return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
+    return fetch(config.appSubUrl + '/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
           this.scheduleTokenRotationJob();

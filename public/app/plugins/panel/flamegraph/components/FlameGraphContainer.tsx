@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
@@ -11,7 +12,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer, LevelItem, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { SelectedView } from './types';
+import { SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -19,13 +20,15 @@ type Props = {
 };
 
 const FlameGraphContainer = (props: Props) => {
-  const [topLevelIndex, setTopLevelIndex] = useState(0);
-  const [selectedBarIndex, setSelectedBarIndex] = useState(0);
+  const [focusedItemIndex, setFocusedItemIndex] = useState<number>();
+
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+  const [textAlign, setTextAlign] = useState<TextAlign>('left');
+
   const theme = useTheme2();
 
   const [dataContainer, levels] = useMemo((): [FlameGraphDataContainer, LevelItem[][]] | [undefined, undefined] => {
@@ -54,8 +57,7 @@ const FlameGraphContainer = (props: Props) => {
   }, [selectedView, setSelectedView, containerWidth]);
 
   useEffect(() => {
-    setTopLevelIndex(0);
-    setSelectedBarIndex(0);
+    setFocusedItemIndex(undefined);
     setRangeMin(0);
     setRangeMax(1);
   }, [props.data]);
@@ -66,15 +68,18 @@ const FlameGraphContainer = (props: Props) => {
         <div ref={sizeRef} className={styles.container}>
           <FlameGraphHeader
             app={props.app}
-            setTopLevelIndex={setTopLevelIndex}
-            setSelectedBarIndex={setSelectedBarIndex}
-            setRangeMin={setRangeMin}
-            setRangeMax={setRangeMax}
             search={search}
             setSearch={setSearch}
             selectedView={selectedView}
             setSelectedView={setSelectedView}
             containerWidth={containerWidth}
+            onReset={() => {
+              setRangeMin(0);
+              setRangeMax(1);
+              setFocusedItemIndex(undefined);
+            }}
+            textAlign={textAlign}
+            onTextAlignChange={setTextAlign}
           />
 
           <div className={styles.body}>
@@ -83,31 +88,36 @@ const FlameGraphContainer = (props: Props) => {
                 data={dataContainer}
                 app={props.app}
                 totalLevels={levels.length}
-                selectedView={selectedView}
-                search={search}
-                setSearch={setSearch}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
-                setRangeMin={setRangeMin}
-                setRangeMax={setRangeMax}
+                onSymbolClick={(symbol) => {
+                  if (search === symbol) {
+                    setSearch('');
+                  } else {
+                    reportInteraction('grafana_flamegraph_table_item_selected', {
+                      app: props.app,
+                      grafana_version: config.buildInfo.version,
+                    });
+                    setSearch(symbol);
+                    // Reset selected level in flamegraph when selecting row in top table
+                    setRangeMin(0);
+                    setRangeMax(1);
+                  }
+                }}
               />
             )}
 
             {selectedView !== SelectedView.TopTable && (
               <FlameGraph
                 data={dataContainer}
-                app={props.app}
                 levels={levels}
-                topLevelIndex={topLevelIndex}
-                selectedBarIndex={selectedBarIndex}
                 rangeMin={rangeMin}
                 rangeMax={rangeMax}
                 search={search}
-                setTopLevelIndex={setTopLevelIndex}
-                setSelectedBarIndex={setSelectedBarIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
                 selectedView={selectedView}
+                onItemFocused={(itemIndex) => setFocusedItemIndex(itemIndex)}
+                focusedItemIndex={focusedItemIndex}
+                textAlign={textAlign}
               />
             )}
           </div>
@@ -125,7 +135,7 @@ function getStyles(theme: GrafanaTheme2) {
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
     body: css({
       display: 'flex',

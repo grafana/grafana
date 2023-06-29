@@ -78,14 +78,18 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) en
 			p.Fields["type"] = panel.Type
 
 			if panel.Type != "row" {
-				panelRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
-				dashboardRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.Panel), panel.Type)
+				panelRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.TypePanel), panel.Type)
+				dashboardRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.TypePanel), panel.Type)
+			}
+			if panel.LibraryPanel != "" {
+				panelRefs.Add(entity.StandardKindLibraryPanel, panel.Type, panel.LibraryPanel)
+				dashboardRefs.Add(entity.StandardKindLibraryPanel, panel.Type, panel.LibraryPanel)
 			}
 			for _, v := range panel.Datasource {
 				dashboardRefs.Add(entity.StandardKindDataSource, v.Type, v.UID)
 				panelRefs.Add(entity.StandardKindDataSource, v.Type, v.UID)
 				if v.Type != "" {
-					dashboardRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.DataSource), v.Type)
+					dashboardRefs.Add(entity.ExternalEntityReferencePlugin, string(plugins.TypeDataSource), v.Type)
 				}
 			}
 			for _, v := range panel.Transformer {

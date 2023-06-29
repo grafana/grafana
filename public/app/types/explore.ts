@@ -15,21 +15,13 @@ import {
   DataQueryResponse,
   ExplorePanelsState,
   SupplementaryQueryType,
+  UrlQueryMap,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
 
-export enum ExploreId {
-  left = 'left',
-  right = 'right',
-}
-
-export type ExploreQueryParams = {
-  left: string;
-  right: string;
-};
-
+export type ExploreQueryParams = UrlQueryMap;
 /**
  * Global Explore state
  */
@@ -38,14 +30,8 @@ export interface ExploreState {
    * True if time interval for panels are synced. Only possible with split mode.
    */
   syncedTimes: boolean;
-  /**
-   * Explore state of the left split (left is default in non-split view).
-   */
-  left: ExploreItemState;
-  /**
-   * Explore state of the right area in split view.
-   */
-  right?: ExploreItemState;
+
+  panes: Record<string, ExploreItemState | undefined>;
 
   correlations?: CorrelationData[];
 
@@ -68,12 +54,12 @@ export interface ExploreState {
   /**
    * On a split manual resize, we calculate which pane is larger, or if they are roughly the same size. If undefined, it is not split or they are roughly the same size
    */
-  largerExploreId?: ExploreId;
+  largerExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a maximize pane button is pressed, this indicates which side was maximized. Will be undefined if not split or if it is manually resized
    */
-  maxedExploreId?: ExploreId;
+  maxedExploreId?: keyof ExploreState['panes'];
 
   /**
    * If a minimize pane button is pressed, it will do an even split of panes. Will be undefined if split or on a manual resize
@@ -93,10 +79,6 @@ export interface ExploreItemState {
    * Datasource instance that has been selected. Datasource-specific logic can be run on this object.
    */
   datasourceInstance?: DataSourceApi | null;
-  /**
-   * True if there is no datasource to be selected.
-   */
-  datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
@@ -139,7 +121,6 @@ export interface ExploreItemState {
    */
   scanRange?: RawTimeRange;
 
-  loading: boolean;
   /**
    * Table model that combines all query table results into a single table.
    */
@@ -211,8 +192,6 @@ export interface ExploreItemState {
   supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
-
-  isFromCompactUrl?: boolean;
 }
 
 export interface ExploreUpdateState {

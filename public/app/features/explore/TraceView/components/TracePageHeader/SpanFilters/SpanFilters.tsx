@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
+import { SpanStatusCode } from '@opentelemetry/api';
 import { uniq } from 'lodash';
 import React, { useState, useEffect, memo, useCallback } from 'react';
 
@@ -31,6 +32,7 @@ import {
 } from '@grafana/ui';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
+import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { Trace } from '../../types';
 import NewTracePageSearchBar from '../NewTracePageSearchBar';
 
@@ -66,7 +68,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const [tagKeys, setTagKeys] = useState<Array<SelectableValue<string>>>();
   const [tagValues, setTagValues] = useState<{ [key: string]: Array<SelectableValue<string>> }>({});
 
-  const reset = useCallback(() => {
+  const clear = useCallback(() => {
     setServiceNames(undefined);
     setSpanNames(undefined);
     setTagKeys(undefined);
@@ -75,8 +77,8 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   }, [setSearch]);
 
   useEffect(() => {
-    reset();
-  }, [reset, trace]);
+    clear();
+  }, [clear, trace]);
 
   if (!trace) {
     return null;
@@ -119,6 +121,25 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             });
           });
         }
+
+        if (span.kind) {
+          keys.push(KIND);
+        }
+        if (span.statusCode !== undefined) {
+          keys.push(STATUS);
+        }
+        if (span.statusMessage) {
+          keys.push(STATUS_MESSAGE);
+        }
+        if (span.instrumentationLibraryName) {
+          keys.push(LIBRARY_NAME);
+        }
+        if (span.instrumentationLibraryVersion) {
+          keys.push(LIBRARY_VERSION);
+        }
+        if (span.traceState) {
+          keys.push(TRACE_STATE);
+        }
       });
       keys = uniq(keys).sort();
       logKeys = uniq(logKeys).sort();
@@ -146,6 +167,41 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
             values.push(logsTagValue.toString());
           }
         });
+      }
+
+      switch (key) {
+        case KIND:
+          if (span.kind) {
+            values.push(span.kind);
+          }
+          break;
+        case STATUS:
+          if (span.statusCode !== undefined) {
+            values.push(SpanStatusCode[span.statusCode].toLowerCase());
+          }
+          break;
+        case STATUS_MESSAGE:
+          if (span.statusMessage) {
+            values.push(span.statusMessage);
+          }
+          break;
+        case LIBRARY_NAME:
+          if (span.instrumentationLibraryName) {
+            values.push(span.instrumentationLibraryName);
+          }
+          break;
+        case LIBRARY_VERSION:
+          if (span.instrumentationLibraryVersion) {
+            values.push(span.instrumentationLibraryVersion);
+          }
+          break;
+        case TRACE_STATE:
+          if (span.traceState) {
+            values.push(span.traceState);
+          }
+          break;
+        default:
+          break;
       }
     });
 
@@ -369,7 +425,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           setShowSpanFilterMatchesOnly={setShowSpanFilterMatchesOnly}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
-          reset={reset}
+          clear={clear}
           totalSpans={trace.spans.length}
         />
       </Collapse>

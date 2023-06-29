@@ -5,14 +5,14 @@ import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';
 import { loadPanelPlugin } from 'app/features/plugins/admin/state/actions';
 import { ThunkResult } from 'app/types';
-import { PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, PanelOptionsChangedEvent, PanelQueriesChangedEvent } from 'app/types/events';
 
 import { changePanelKey, panelModelAndPluginReady, removePanel } from './reducers';
 
-export function initPanelState(panel: PanelModel): ThunkResult<void> {
+export function initPanelState(panel: PanelModel): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     if (panel.libraryPanel?.uid && !('model' in panel.libraryPanel)) {
-      // this will call init with a loaded libary panel if it loads succesfully
+      // this will call init with a loaded library panel if it loads succesfully
       dispatch(loadLibraryPanelAndUpdate(panel));
       return;
     }
@@ -142,12 +142,20 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
 }
 
 export function loadLibraryPanelAndUpdate(panel: PanelModel): ThunkResult<void> {
-  return async (dispatch) => {
+  return async (dispatch, getStore) => {
     const uid = panel.libraryPanel!.uid!;
     try {
       const libPanel = await getLibraryPanel(uid, true);
       panel.initLibraryPanel(libPanel);
-      dispatch(initPanelState(panel));
+      await dispatch(initPanelState(panel));
+      const dashboard = getStore().dashboard.getModel();
+
+      if (panel.repeat && dashboard) {
+        const panelIndex = dashboard.panels.findIndex((p) => p.id === panel.id);
+        dashboard.repeatPanel(panel, panelIndex);
+        dashboard.sortPanelsByGridPos();
+        dashboard.events.publish(new DashboardPanelsChangedEvent());
+      }
     } catch (ex) {
       console.log('ERROR: ', ex);
       dispatch(

@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
+import { AddNewDataSourceButton } from './AddNewDataSourceButton';
 import { DataSourceCard } from './DataSourceCard';
 import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
@@ -37,6 +38,7 @@ export interface DataSourceListProps {
   inputId?: string;
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
+  onClickEmptyStateCTA?: () => void;
   enableKeyboardNavigation?: boolean;
 }
 
@@ -51,8 +53,7 @@ export function DataSourceList(props: DataSourceListProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, selectedItemCssSelector);
 
-  const { className, current, onChange, enableKeyboardNavigation } = props;
-  // QUESTION: Should we use data from the Redux store as admin DS view does?
+  const { className, current, onChange, enableKeyboardNavigation, onClickEmptyStateCTA } = props;
   const dataSources = useDatasources({
     alerting: props.alerting,
     annotations: props.annotations,
@@ -67,26 +68,54 @@ export function DataSourceList(props: DataSourceListProps) {
   });
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
-    <div ref={containerRef} className={cx(className, styles.container)}>
-      {dataSources
-        .filter((ds) => (props.filter ? props.filter(ds) : true))
+    <div ref={containerRef} className={cx(className, styles.container)} data-testid="data-sources-list">
+      {filteredDataSources.length === 0 && (
+        <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
+      )}
+      {filteredDataSources
         .sort(getDataSourceCompareFn(current, recentlyUsedDataSources, getDataSourceVariableIDs()))
         .map((ds) => (
           <DataSourceCard
+            data-testid="data-source-card"
             key={ds.uid}
             ds={ds}
             onClick={() => {
               pushRecentlyUsedDataSource(ds);
               onChange(ds);
             }}
-            selected={!!isDataSourceMatch(ds, current)}
+            selected={isDataSourceMatch(ds, current)}
             {...(enableKeyboardNavigation ? navigatableProps : {})}
           />
         ))}
     </div>
   );
+}
+
+function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?: () => void }) {
+  const styles = useStyles2(getEmptyStateStyles);
+  return (
+    <div className={cx(className, styles.container)}>
+      <p className={styles.message}>No data sources found</p>
+      <AddNewDataSourceButton onClick={onClickCTA} />
+    </div>
+  );
+}
+
+function getEmptyStateStyles(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    `,
+    message: css`
+      margin-bottom: ${theme.spacing(3)};
+    `,
+  };
 }
 
 function getDataSourceVariableIDs() {
@@ -101,9 +130,15 @@ function getDataSourceVariableIDs() {
 function getStyles(theme: GrafanaTheme2, selectedItemCssSelector: string) {
   return {
     container: css`
+      display: flex;
+      flex-direction: column;
       ${selectedItemCssSelector} {
         background-color: ${theme.colors.background.secondary};
       }
+    `,
+    emptyState: css`
+      height: 100%;
+      flex: 1;
     `,
   };
 }

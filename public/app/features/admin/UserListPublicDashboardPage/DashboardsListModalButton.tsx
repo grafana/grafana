@@ -4,7 +4,10 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
-import { generatePublicDashboardUrl } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import {
+  generatePublicDashboardConfigUrl,
+  generatePublicDashboardUrl,
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { useGetActiveUserDashboardsQuery } from '../../dashboard/api/publicDashboardApi';
 
@@ -37,7 +40,7 @@ export const DashboardsListModal = ({ email, onDismiss }: { email: string; onDis
               <span className={styles.urlsDivider}>•</span>
               <a
                 className={cx('external-link', styles.url)}
-                href={`/d/${dash.dashboardUid}?shareView=share`}
+                href={generatePublicDashboardConfigUrl(dash.dashboardUid)}
                 onClick={onDismiss}
               >
                 Public dashboard settings

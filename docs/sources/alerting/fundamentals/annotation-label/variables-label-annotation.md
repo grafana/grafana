@@ -164,7 +164,7 @@ https://example.com/grafana
 
 ### graphLink
 
-The `graphLink` function returns the path to the graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+The `graphLink` function returns the path to the graphical view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
 
 #### Example
 
@@ -276,7 +276,7 @@ The `pathPrefix` function returns the path of the Grafana server as configured i
 
 ### tableLink
 
-The `tableLink` function returns the path to the tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+The `tableLink` function returns the path to the tabular view in [Explore]({{< relref "../../../explore" >}}) for the given expression and data source.
 
 #### Example
 

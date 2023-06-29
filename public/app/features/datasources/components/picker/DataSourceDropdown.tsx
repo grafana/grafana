@@ -3,20 +3,23 @@ import { useDialog } from '@react-aria/dialog';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePopper } from 'react-popper';
+import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { DataSourceJsonData } from '@grafana/schema';
-import { Button, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
+import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
+import { Button, CustomScrollbar, Icon, Input, ModalsController, Portal, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useKeyNavigationListener } from 'app/features/search/hooks/useSearchKeyboardSelection';
+import { defaultFileUploadQuery, GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 
 import { useDatasource } from '../../hooks';
 
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { PickerContentProps, DataSourceDropdownProps } from './types';
+import { applyMaxSize, maxSize } from './popperModifiers';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
@@ -25,10 +28,43 @@ const INTERACTION_ITEM = {
   SELECT_DS: 'select_ds',
   ADD_FILE: 'add_file',
   OPEN_ADVANCED_DS_PICKER: 'open_advanced_ds_picker',
+  CONFIG_NEW_DS_EMPTY_STATE: 'config_new_ds_empty_state',
 };
 
+export interface DataSourceDropdownProps {
+  onChange: (ds: DataSourceInstanceSettings<DataSourceJsonData>, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
+  current?: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
+  recentlyUsed?: string[];
+  hideTextValue?: boolean;
+  width?: number;
+  inputId?: string;
+  noDefault?: boolean;
+  disabled?: boolean;
+
+  // DS filters
+  tracing?: boolean;
+  mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
+}
+
 export function DataSourceDropdown(props: DataSourceDropdownProps) {
-  const { current, onChange, ...restProps } = props;
+  const {
+    current,
+    onChange,
+    hideTextValue = false,
+    width,
+    inputId,
+    noDefault = false,
+    disabled = false,
+    ...restProps
+  } = props;
 
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
@@ -40,6 +76,10 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     setOpen(true);
     markerElement?.focus();
   };
+  const currentDataSourceInstanceSettings = useDatasource(current);
+  const currentValue = Boolean(!current && noDefault) ? undefined : currentDataSourceInstanceSettings;
+  const prefixIcon =
+    filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
 
@@ -65,8 +105,15 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
     });
     return () => sub.unsubscribe();
   });
+  const grafanaDS = useDatasource('-- Grafana --');
 
-  const currentDataSourceInstanceSettings = useDatasource(current);
+  const onClickAddCSV = () => {
+    if (!grafanaDS) {
+      return;
+    }
+
+    onChange(grafanaDS, [defaultFileUploadQuery]);
+  };
 
   const popper = usePopper(markerElement, selectorElement, {
     placement: 'bottom-start',
@@ -77,6 +124,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
           offset: [0, 4],
         },
       },
+      maxSize,
+      applyMaxSize,
     ],
   });
 
@@ -99,24 +148,20 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   );
   const { dialogProps } = useDialog({}, ref);
 
-  const styles = useStyles2(getStylesDropdown);
+  const styles = useStyles2((theme: GrafanaTheme2) => getStylesDropdown(theme, props));
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid={selectors.components.DataSourcePicker.container}>
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div className={styles.trigger} onClick={openDropdown}>
         <Input
+          id={inputId || 'data-source-picker'}
           className={inputHasFocus ? undefined : styles.input}
-          prefix={
-            filterTerm && isOpen ? (
-              <DataSourceLogoPlaceHolder />
-            ) : (
-              <DataSourceLogo dataSource={currentDataSourceInstanceSettings} />
-            )
-          }
+          data-testid={selectors.components.DataSourcePicker.inputV2}
+          prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
-          placeholder={dataSourceLabel(currentDataSourceInstanceSettings)}
+          placeholder={hideTextValue ? '' : dataSourceLabel(currentValue)}
           onClick={openDropdown}
           onFocus={() => {
             setInputHasFocus(true);
@@ -132,6 +177,7 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             setFilterTerm(e.currentTarget.value);
           }}
           ref={setMarkerElement}
+          disabled={disabled}
         ></Input>
       </div>
       {isOpen ? (
@@ -148,17 +194,22 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
             <PickerContent
               keyboardEvents={keyboardEvents}
               filterTerm={filterTerm}
-              onChange={(ds: DataSourceInstanceSettings<DataSourceJsonData>) => {
+              onChange={(
+                ds: DataSourceInstanceSettings<DataSourceJsonData>,
+                defaultQueries?: DataQuery[] | GrafanaQuery[]
+              ) => {
                 onClose();
-                onChange(ds);
+                onChange(ds, defaultQueries);
               }}
               onClose={onClose}
-              current={currentDataSourceInstanceSettings}
+              current={currentValue}
               style={popper.styles.popper}
               ref={setSelectorElement}
+              onClickAddCSV={onClickAddCSV}
               {...restProps}
               onDismiss={onClose}
-            ></PickerContent>
+              {...popper.attributes.popper}
+            />
           </div>
         </Portal>
       ) : null}
@@ -166,23 +217,32 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
   );
 }
 
-function getStylesDropdown(theme: GrafanaTheme2) {
+function getStylesDropdown(theme: GrafanaTheme2, props: DataSourceDropdownProps) {
   return {
     container: css`
       position: relative;
+      cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
+      width: ${theme.spacing(props.width || 'auto')};
     `,
     trigger: css`
       cursor: pointer;
+      ${props.disabled && `pointer-events: none;`}
     `,
     input: css`
-      input {
-        cursor: pointer;
-      }
       input::placeholder {
-        color: ${theme.colors.text.primary};
+        color: ${props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary};
       }
     `,
   };
+}
+
+export interface PickerContentProps extends DataSourceDropdownProps {
+  onClickAddCSV?: () => void;
+  keyboardEvents: Observable<React.KeyboardEvent>;
+  style: React.CSSProperties;
+  filterTerm?: string;
+  onClose: () => void;
+  onDismiss: () => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
@@ -205,22 +265,22 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
-      <div className={styles.dataSourceList}>
+      <CustomScrollbar>
         <DataSourceList
           {...props}
           enableKeyboardNavigation
+          className={styles.dataSourceList}
           current={current}
           onChange={changeCallback}
           filter={(ds) => matchDataSourceWithSearch(ds, filterTerm)}
+          onClickEmptyStateCTA={() =>
+            reportInteraction(INTERACTION_EVENT_NAME, {
+              item: INTERACTION_ITEM.CONFIG_NEW_DS_EMPTY_STATE,
+            })
+          }
         ></DataSourceList>
-      </div>
-
+      </CustomScrollbar>
       <div className={styles.footer}>
-        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
-          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
-            Add csv or spreadsheet
-          </Button>
-        )}
         <ModalsController>
           {({ showModal, hideModal }) => (
             <Button
@@ -230,13 +290,13 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
               onClick={() => {
                 onClose();
                 showModal(DataSourceModal, {
-                  enableFileUpload: props.enableFileUpload,
-                  fileUploadOptions: props.fileUploadOptions,
                   reportedInteractionFrom: 'ds_picker',
+                  dashboard: props.dashboard,
+                  mixed: props.mixed,
                   current,
                   onDismiss: hideModal,
-                  onChange: (ds) => {
-                    onChange(ds);
+                  onChange: (ds, defaultQueries) => {
+                    onChange(ds, defaultQueries);
                     hideModal();
                   },
                 });
@@ -248,6 +308,11 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
+        {onClickAddCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+          <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
+            Add csv or spreadsheet
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -259,8 +324,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     container: css`
       display: flex;
       flex-direction: column;
-      height: 412px;
-      width: 480px;
+      max-width: 480px;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
     `,
@@ -269,11 +333,11 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
     `,
     dataSourceList: css`
       flex: 1;
-      overflow: scroll;
     `,
     footer: css`
       flex: 0;
       display: flex;
+      flex-direction: row-reverse;
       justify-content: space-between;
       padding: ${theme.spacing(1.5)};
       border-top: 1px solid ${theme.colors.border.weak};

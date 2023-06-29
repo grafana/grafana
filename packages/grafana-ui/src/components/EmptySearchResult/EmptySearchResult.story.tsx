@@ -1,4 +1,4 @@
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import React from 'react';
 
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
@@ -6,7 +6,7 @@ import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredS
 import { EmptySearchResult } from './EmptySearchResult';
 import mdx from './EmptySearchResult.mdx';
 
-const meta: ComponentMeta<typeof EmptySearchResult> = {
+const meta: Meta<typeof EmptySearchResult> = {
   title: 'Visualizations/EmptySearchResult',
   component: EmptySearchResult,
   decorators: [withCenteredStory],

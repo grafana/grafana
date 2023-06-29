@@ -34,7 +34,7 @@ title: Migration guides
 })();
 </script>
 
-# Plugin migration guides
+# Plugin migration guide
 
 The following guides help you identify the steps required to update a plugin following changes between versions of Grafana.
 

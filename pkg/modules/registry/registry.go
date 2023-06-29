@@ -2,10 +2,10 @@ package registry
 
 import (
 	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 )
 
 type Registry interface{}

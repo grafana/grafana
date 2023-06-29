@@ -63,12 +63,12 @@ describe('loki result transformer', () => {
       data.refId = 'C';
 
       ResultTransformer.appendResponseToBufferedData(tailResponse, data);
-      expect(data.get(0).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_C');
-      expect(data.get(1).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_1_C');
-      expect(data.get(2).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_C');
-      expect(data.get(3).id).toEqual('ec9bea1d-70cb-556c-8519-d5d6ae18c004_C');
-      expect(data.get(4).id).toEqual('75e72b25-8589-5f99-8d10-ccb5eb27c1b4_2_C');
-      expect(data.get(5).id).toEqual('3ca99d6b-3ab5-5970-93c0-eb3c9449088e_1_C');
+      expect(data.get(0).id).toEqual('C_75e72b25-8589-5f99-8d10-ccb5eb27c1b4');
+      expect(data.get(1).id).toEqual('C_75e72b25-8589-5f99-8d10-ccb5eb27c1b4_1');
+      expect(data.get(2).id).toEqual('C_3ca99d6b-3ab5-5970-93c0-eb3c9449088e');
+      expect(data.get(3).id).toEqual('C_ec9bea1d-70cb-556c-8519-d5d6ae18c004');
+      expect(data.get(4).id).toEqual('C_75e72b25-8589-5f99-8d10-ccb5eb27c1b4_2');
+      expect(data.get(5).id).toEqual('C_3ca99d6b-3ab5-5970-93c0-eb3c9449088e_1');
     });
   });
 });

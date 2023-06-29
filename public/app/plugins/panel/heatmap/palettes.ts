@@ -4,7 +4,7 @@ import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HeatmapColorOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './types';
+import { HeatmapColorOptions, defaultOptions, HeatmapColorMode, HeatmapColorScale } from './types';
 
 // https://observablehq.com/@d3/color-schemes?collection=@d3/d3-scale-chromatic
 
@@ -66,7 +66,7 @@ type Interpolator = (t: number) => string;
 const DEFAULT_SCHEME = colorSchemes.find((scheme) => scheme.name === 'Spectral');
 
 export function quantizeScheme(opts: HeatmapColorOptions, theme: GrafanaTheme2): string[] {
-  const options = { ...defaultPanelOptions.color, ...opts };
+  const options = { ...defaultOptions.color, ...opts };
   const palette = [];
   const steps = (options.steps ?? 128) - 1;
 

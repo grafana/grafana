@@ -67,6 +67,7 @@ import { GAEchoBackend } from './core/services/echo/backends/analytics/GABackend
 import { RudderstackBackend } from './core/services/echo/backends/analytics/RudderstackBackend';
 import { GrafanaJavascriptAgentBackend } from './core/services/echo/backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initDevFeatures } from './dev';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { initGrafanaLive } from './features/live';
@@ -74,6 +75,7 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
+import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
@@ -119,6 +121,8 @@ export class GrafanaApp {
 
       setBackendSrv(backendSrv);
       initEchoSrv();
+      // This needs to be done after the `initEchoSrv` since it is being used under the hood.
+      startMeasure('frontend_app_init');
       addClassIfNoOverlayScrollbar();
       setLocale(config.bootData.user.locale);
       setWeekStart(config.bootData.user.weekStart);
@@ -189,9 +193,16 @@ export class GrafanaApp {
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);
 
-      // Create extension registry out of the preloaded plugins
+      // Create extension registry out of preloaded plugins and core extensions
+      const extensionRegistry = createPluginExtensionRegistry([
+        { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
+        ...preloadResults,
+      ]);
+
+      // Expose the getPluginExtension function via grafana-runtime
       const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: createPluginExtensionRegistry(preloadResults) });
+        getPluginExtensions({ ...options, registry: extensionRegistry });
+
       setPluginExtensionGetter(pluginExtensionGetter);
 
       // initialize chrome service
@@ -219,6 +230,8 @@ export class GrafanaApp {
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();
+    } finally {
+      stopMeasure('frontend_app_init');
     }
   }
 }
@@ -300,6 +313,7 @@ function initEchoSrv() {
         user: config.bootData.user,
         sdkUrl: config.rudderstackSdkUrl,
         configUrl: config.rudderstackConfigUrl,
+        buildInfo: config.buildInfo,
       })
     );
   }

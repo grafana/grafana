@@ -112,14 +112,12 @@ def build_e2e(trigger, ver_mode):
                 publish_images_step(
                     docker_repo = "grafana",
                     edition = edition,
-                    mode = "",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
                 publish_images_step(
                     docker_repo = "grafana-oss",
                     edition = edition,
-                    mode = "",
                     trigger = trigger_oss,
                     ver_mode = ver_mode,
                 ),
@@ -144,6 +142,19 @@ def build_e2e(trigger, ver_mode):
                         "amd64",
                     ],
                     edition = edition,
+                ),
+                build_docker_images_step(
+                    archs = [
+                        "amd64",
+                    ],
+                    edition = edition,
+                    ubuntu = True,
+                ),
+                publish_images_step(
+                    docker_repo = "grafana",
+                    edition = edition,
+                    trigger = trigger_oss,
+                    ver_mode = ver_mode,
                 ),
             ],
         )

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -41,10 +42,11 @@ import (
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
+	sqlStore.Cfg = settings
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
-		AccessControl: acmock.New(),
+		AccessControl: acimpl.ProvideAccessControl(settings),
 	}
 
 	mockResult := user.SearchUserQueryResult{
@@ -56,6 +58,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	}
 	mock := dbtest.NewFakeDB()
 	userMock := usertest.NewUserServiceFake()
+
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
@@ -67,6 +70,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+		require.NoError(t, err)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)

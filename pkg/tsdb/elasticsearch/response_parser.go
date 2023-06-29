@@ -122,6 +122,15 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 			}
 		}
 
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
 		for key := range doc {
 			propNames[key] = true
 		}
@@ -151,7 +160,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setSearchWords(frame, searchWords)
+	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -258,15 +267,27 @@ func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []str
 	size := len(docs)
 	isFilterable := true
 	allFields := make([]*data.Field, len(propNames))
+	timeString := ""
+	timeStringOk := false
 
 	for propNameIdx, propName := range propNames {
 		// Special handling for time field
 		if propName == configuredFields.TimeField {
 			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
-				timeString, ok := doc[configuredFields.TimeField].(string)
-				if !ok {
-					continue
+				// Check if time field is a string
+				timeString, timeStringOk = doc[configuredFields.TimeField].(string)
+				// If not, it might be an array with one time string
+				if !timeStringOk {
+					timeList, ok := doc[configuredFields.TimeField].([]interface{})
+					if !ok || len(timeList) != 1 {
+						continue
+					}
+					// Check if the first element is a string
+					timeString, timeStringOk = timeList[0].(string)
+					if !timeStringOk {
+						continue
+					}
 				}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
@@ -1116,7 +1137,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1135,6 +1156,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
+		"limit":       limit,
 	}
 }
 

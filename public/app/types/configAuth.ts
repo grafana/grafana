@@ -11,6 +11,7 @@ export interface AuthConfigState {
 export interface AuthProviderStatus {
   enabled: boolean;
   configured: boolean;
+  configFoundInIniFile?: boolean;
 }
 
 export interface SettingsError {

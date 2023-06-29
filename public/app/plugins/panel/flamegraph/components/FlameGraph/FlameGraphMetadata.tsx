@@ -5,29 +5,23 @@ import { useStyles2 } from '@grafana/ui';
 
 import { Metadata } from '../types';
 
-import { FlameGraphDataContainer, LevelItem } from './dataTransform';
+import { FlameGraphDataContainer } from './dataTransform';
 
 type Props = {
   data: FlameGraphDataContainer;
-  levels: LevelItem[][];
-  topLevelIndex: number;
-  selectedBarIndex: number;
   totalTicks: number;
+  focusedItemIndex?: number;
 };
 
-const FlameGraphMetadata = React.memo(({ data, levels, topLevelIndex, selectedBarIndex, totalTicks }: Props) => {
+const FlameGraphMetadata = React.memo(({ data, focusedItemIndex, totalTicks }: Props) => {
   const styles = useStyles2(getStyles);
-  if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
-    const bar = levels[topLevelIndex][selectedBarIndex];
-    const metadata = getMetadata(data, bar, totalTicks);
-    const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
-    return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
-  }
-  return <></>;
+  const metadata = getMetadata(data, focusedItemIndex || 0, totalTicks);
+  const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
+  return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
 });
 
-export const getMetadata = (data: FlameGraphDataContainer, bar: LevelItem, totalTicks: number): Metadata => {
-  const displayValue = data.getValueDisplay(bar.itemIndex);
+export const getMetadata = (data: FlameGraphDataContainer, itemIndex: number, totalTicks: number): Metadata => {
+  const displayValue = data.getValueDisplay(itemIndex);
   const percentValue = Math.round(10000 * (displayValue.numeric / totalTicks)) / 100;
   let unitValue = displayValue.text + displayValue.suffix;
 

@@ -140,6 +140,21 @@ func WithOrgID(orgId int64) AlertRuleMutator {
 	}
 }
 
+func WithUniqueOrgID() AlertRuleMutator {
+	orgs := map[int64]struct{}{}
+	return func(rule *AlertRule) {
+		var orgID int64
+		for {
+			orgID = rand.Int63()
+			if _, ok := orgs[orgID]; !ok {
+				break
+			}
+		}
+		orgs[orgID] = struct{}{}
+		rule.OrgID = orgID
+	}
+}
+
 func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NamespaceUID = namespace.UID

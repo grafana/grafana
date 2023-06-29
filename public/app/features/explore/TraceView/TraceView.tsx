@@ -24,7 +24,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
 import { useDispatch, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
@@ -63,7 +62,7 @@ function noop(): {} {
 type Props = {
   dataFrames: DataFrame[];
   splitOpenFn?: SplitOpen;
-  exploreId?: ExploreId;
+  exploreId?: string;
   scrollElement?: Element;
   scrollElementClass?: string;
   traceProp: Trace;
@@ -122,7 +121,6 @@ export function TraceView(props: Props) {
       childrenHiddenIDs,
       detailStates,
       hoverIndentGuideIds,
-      shouldScrollToFirstUiFindMatch: false,
       spanNameColumnWidth,
       traceID: props.traceProp?.traceID,
     }),
@@ -192,7 +190,6 @@ export function TraceView(props: Props) {
           )}
           <TraceTimelineViewer
             registerAccessors={noop}
-            scrollToFirstVisibleSpan={noop}
             findMatchesIDs={config.featureToggles.newTraceViewHeader ? spanFilterMatches : spanFindMatches}
             trace={traceProp}
             datasourceType={datasourceType}
@@ -208,7 +205,6 @@ export function TraceView(props: Props) {
             expandAll={expandAll}
             expandOne={expandOne}
             childrenToggle={childrenToggle}
-            clearShouldScrollToFirstUiFindMatch={noop}
             detailLogItemToggle={detailLogItemToggle}
             detailLogsToggle={detailLogsToggle}
             detailWarningsToggle={detailWarningsToggle}
@@ -251,12 +247,12 @@ export function TraceView(props: Props) {
  * @param options
  */
 function useFocusSpanLink(options: {
-  exploreId: ExploreId;
+  exploreId: string;
   splitOpenFn: SplitOpen;
   refId?: string;
   datasource?: DataSourceApi;
 }): [string | undefined, (traceId: string, spanId: string) => LinkModel<Field>] {
-  const panelState = useSelector((state) => state.explore[options.exploreId]?.panelsState.trace);
+  const panelState = useSelector((state) => state.explore.panes[options.exploreId]?.panelsState.trace);
   const focusedSpanId = panelState?.spanId;
 
   const dispatch = useDispatch();
@@ -269,7 +265,7 @@ function useFocusSpanLink(options: {
     );
 
   const query = useSelector((state) =>
-    state.explore[options.exploreId]?.queries.find((query) => query.refId === options.refId)
+    state.explore.panes[options.exploreId]?.queries.find((query) => query.refId === options.refId)
   );
 
   const createFocusSpanLink = (traceId: string, spanId: string) => {

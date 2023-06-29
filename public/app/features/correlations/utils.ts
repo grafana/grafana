@@ -1,5 +1,7 @@
 import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 
+import { formatValueName } from '../explore/PrometheusListView/ItemLabels';
+
 import { CorrelationData } from './useCorrelations';
 
 type DataFrameRefIdToDataSourceUid = Record<string, string>;
@@ -21,7 +23,14 @@ export const attachCorrelationsToDataFrames = (
     if (!frameRefId) {
       return;
     }
-    const dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+    let dataSourceUid = dataFrameRefIdToDataSourceUid[frameRefId];
+
+    // rawPrometheus queries append a value to refId to a separate dataframe for the table view
+    if (dataSourceUid === undefined && dataFrame.meta?.preferredVisualisationType === 'rawPrometheus') {
+      const formattedRefID = formatValueName(frameRefId);
+      dataSourceUid = dataFrameRefIdToDataSourceUid[formattedRefID];
+    }
+
     const sourceCorrelations = correlations.filter((correlation) => correlation.source.uid === dataSourceUid);
     decorateDataFrameWithInternalDataLinks(dataFrame, sourceCorrelations);
   });

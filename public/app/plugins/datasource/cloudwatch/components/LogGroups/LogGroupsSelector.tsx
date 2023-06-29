@@ -112,7 +112,7 @@ export const LogGroupsSelector = ({
 
   return (
     <>
-      <Modal className={styles.modal} title="Select Log Groups" isOpen={isModalOpen} onDismiss={toggleModal}>
+      <Modal className={styles.modal} title="Select log groups" isOpen={isModalOpen} onDismiss={toggleModal}>
         <div className={styles.logGroupSelectionArea}>
           <div className={styles.searchField}>
             <EditorField label="Log group name prefix">
@@ -229,15 +229,15 @@ export const LogGroupsSelector = ({
             }}
           />
         </EditorField>
-        <Space layout="block" v={2} />
-        <div>
-          <Button onClick={handleApply} type="button" className={styles.addBtn}>
-            Add log groups
-          </Button>
-          <Button onClick={handleCancel} variant="secondary" type="button">
+
+        <Modal.ButtonRow>
+          <Button onClick={handleCancel} variant="secondary" type="button" fill="outline">
             Cancel
           </Button>
-        </div>
+          <Button onClick={handleApply} type="button">
+            Add log groups
+          </Button>
+        </Modal.ButtonRow>
       </Modal>
 
       <div>
@@ -251,7 +251,7 @@ export const LogGroupsSelector = ({
           }}
           type="button"
         >
-          Select Log Groups
+          Select log groups
         </Button>
       </div>
     </>

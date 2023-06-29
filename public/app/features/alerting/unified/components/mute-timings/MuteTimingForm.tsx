@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
-import { Alert, Field, FieldSet, Input, Button, LinkButton, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import {
   AlertmanagerConfig,
   AlertManagerCortexConfig,
@@ -30,48 +30,49 @@ interface Props {
   muteTiming?: MuteTimeInterval;
   showError?: boolean;
   provenance?: string;
+  loading?: boolean;
 }
 
 const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
-  return useMemo(() => {
-    const defaultValues = {
-      name: '',
-      time_intervals: [defaultTimeInterval],
-    };
+  const defaultValues = {
+    name: '',
+    time_intervals: [defaultTimeInterval],
+  };
 
-    if (!muteTiming) {
-      return defaultValues;
-    }
+  if (!muteTiming) {
+    return defaultValues;
+  }
 
-    const intervals = muteTiming.time_intervals.map((interval) => ({
-      times: interval.times ?? defaultTimeInterval.times,
-      weekdays: interval?.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
-      days_of_month: interval?.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
-      months: interval?.months?.join(', ') ?? defaultTimeInterval.months,
-      years: interval?.years?.join(', ') ?? defaultTimeInterval.years,
-    }));
+  const intervals = muteTiming.time_intervals.map((interval) => ({
+    times: interval.times ?? defaultTimeInterval.times,
+    weekdays: interval.weekdays?.join(', ') ?? defaultTimeInterval.weekdays,
+    days_of_month: interval.days_of_month?.join(', ') ?? defaultTimeInterval.days_of_month,
+    months: interval.months?.join(', ') ?? defaultTimeInterval.months,
+    years: interval.years?.join(', ') ?? defaultTimeInterval.years,
+    location: interval.location ?? defaultTimeInterval.location,
+  }));
 
-    return {
-      name: muteTiming.name,
-      time_intervals: intervals,
-    };
-  }, [muteTiming]);
+  return {
+    name: muteTiming.name,
+    time_intervals: intervals,
+  };
 };
 
 const defaultPageNav: Partial<NavModelItem> = {
   icon: 'sitemap',
-  breadcrumbs: [{ title: 'Notification Policies', url: 'alerting/routes' }],
 };
 
-const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
+const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) => {
   const dispatch = useDispatch();
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const styles = useStyles2(getStyles);
 
+  const [updating, setUpdating] = useState(false);
+
   const defaultAmCortexConfig = { alertmanager_config: {}, template_files: {} };
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
-  const { result = defaultAmCortexConfig, loading } =
+  const { result = defaultAmCortexConfig } =
     (alertManagerSourceName && amConfigs[alertManagerSourceName]) || initialAsyncRequestState;
 
   const config: AlertmanagerConfig = result?.alertmanager_config ?? {};
@@ -97,15 +98,22 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
       },
     };
 
-    dispatch(
+    const saveAction = dispatch(
       updateAlertManagerConfigAction({
         newConfig,
         oldConfig: result,
         alertManagerSourceName: alertManagerSourceName!,
         successMessage: 'Mute timing saved',
         redirectPath: '/alerting/routes/',
+        redirectSearch: 'tab=mute_timings',
       })
     );
+
+    setUpdating(true);
+
+    saveAction.unwrap().finally(() => {
+      setUpdating(false);
+    });
   };
 
   return (
@@ -124,11 +132,12 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
         dataSources={alertManagers}
       />
       {provenance && <ProvisioningAlert resource={ProvisionedResource.MuteTiming} />}
-      {result && !loading && (
+      {loading && <LoadingPlaceholder text="Loading mute timing" />}
+      {showError && <Alert title="No matching mute timing found" />}
+      {result && !loading && !showError && (
         <FormProvider {...formApi}>
           <form onSubmit={formApi.handleSubmit(onSubmit)} data-testid="mute-timing-form">
-            {showError && <Alert title="No matching mute timing found" />}
-            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance)}>
+            <FieldSet label={'Create mute timing'} disabled={Boolean(provenance) || updating}>
               <Field
                 required
                 label="Name"
@@ -144,7 +153,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
                         const existingMuteTiming = config?.mute_time_intervals?.find(({ name }) => value === name);
                         return existingMuteTiming ? `Mute timing already exists for "${value}"` : true;
                       }
-                      return value.length > 0 || 'Name is required';
+                      return;
                     },
                   })}
                   className={styles.input}
@@ -152,16 +161,18 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
                 />
               </Field>
               <MuteTimingTimeInterval />
+              <Button type="submit" className={styles.submitButton} disabled={updating}>
+                Save mute timing
+              </Button>
               <LinkButton
                 type="button"
                 variant="secondary"
-                href={makeAMLink('/alerting/routes/', alertManagerSourceName)}
+                fill="outline"
+                href={makeAMLink('/alerting/routes/', alertManagerSourceName, { tab: 'mute_timings' })}
+                disabled={updating}
               >
                 Cancel
               </LinkButton>
-              <Button type="submit" className={styles.submitButton}>
-                {muteTiming ? 'Save' : 'Submit'}
-              </Button>
             </FieldSet>
           </form>
         </FormProvider>
@@ -175,7 +186,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 400px;
   `,
   submitButton: css`
-    margin-left: ${theme.spacing(1)};
+    margin-right: ${theme.spacing(1)};
   `,
 });
 

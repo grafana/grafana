@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { ComponentMeta, ComponentStory } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,7 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './LoadingBar.mdx';
 
-const meta: ComponentMeta<typeof LoadingBar> = {
+const meta: Meta<typeof LoadingBar> = {
   title: 'General/LoadingBar',
   component: LoadingBar,
   decorators: [withCenteredStory],
@@ -36,7 +36,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const Basic: ComponentStory<typeof LoadingBar> = (args: LoadingBarProps) => {
+export const Basic: StoryFn<typeof LoadingBar> = (args: LoadingBarProps) => {
   const styles = useStyles2(getStyles);
 
   return (

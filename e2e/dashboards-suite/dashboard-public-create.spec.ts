@@ -141,7 +141,7 @@ e2e.scenario({
       .then((text) => e2e().wrap(text).as('url'));
 
     // Save public dashboard
-    e2e().intercept('PUT', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
+    e2e().intercept('PATCH', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');
     // Switch off enabling toggle
     e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
     e2e().wait('@update');

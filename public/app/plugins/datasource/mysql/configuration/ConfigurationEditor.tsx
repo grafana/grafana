@@ -48,7 +48,7 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
   };
 
   const WIDTH_SHORT = 15;
-  const WIDTH_MEDIUM = 22;
+  const WIDTH_MEDIUM = 25;
   const WIDTH_LONG = 40;
 
   return (
@@ -148,6 +148,26 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<My
             id="skipTLSVerify"
             onChange={onSwitchChanged('tlsSkipVerify')}
             value={jsonData.tlsSkipVerify || false}
+          ></InlineSwitch>
+        </InlineField>
+        <InlineField
+          labelWidth={WIDTH_MEDIUM}
+          tooltip={
+            <span>
+              Allows using the cleartext client side plugin if required by an account, such as one defined with the PAM
+              authentication plugin. Sending passwords in clear text may be a security problem in some configurations.
+              To avoid problems if there is any possibility that the password would be intercepted, clients should
+              connect to MySQL Server using a method that protects the password. Possibilities include TLS / SSL, IPsec,
+              or a private network.
+            </span>
+          }
+          htmlFor="allowCleartextPasswords"
+          label="Allow Cleartext Passwords"
+        >
+          <InlineSwitch
+            id="allowCleartextPasswords"
+            onChange={onSwitchChanged('allowCleartextPasswords')}
+            value={jsonData.allowCleartextPasswords || false}
           ></InlineSwitch>
         </InlineField>
       </FieldSet>
