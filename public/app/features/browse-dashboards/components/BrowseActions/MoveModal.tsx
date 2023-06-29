@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
 import { P } from '@grafana/ui/src/unstable';
+import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { FolderChange, ROOT_FOLDER } from 'app/core/components/NestedFolderPicker/types';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
 import { DashboardTreeSelection } from '../../types';
@@ -11,20 +14,31 @@ import { DescendantCount } from './DescendantCount';
 
 export interface Props {
   isOpen: boolean;
-  onConfirm: (targetFolderUid: string) => void;
+  onConfirm: (targetFolderUid: string) => Promise<void>;
   onDismiss: () => void;
   selectedItems: DashboardTreeSelection;
 }
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
+  const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
-  const onMove = () => {
+  const handleFolderChange = (newFolder: FolderChange) => {
+    setMoveTarget(newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid);
+  };
+
+  const onMove = async () => {
     if (moveTarget !== undefined) {
-      onConfirm(moveTarget);
+      setIsMoving(true);
+      try {
+        await onConfirm(moveTarget);
+        setIsMoving(false);
+        onDismiss();
+      } catch {
+        setIsMoving(false);
+      }
     }
-    onDismiss();
   };
 
   return (
@@ -38,15 +52,19 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
       <Space v={3} />
 
       <Field label="Folder name">
-        <FolderPicker allowEmpty onChange={({ uid }) => setMoveTarget(uid)} />
+        {config.featureToggles.nestedFolderPicker ? (
+          <NestedFolderPicker value={moveTarget} onChange={handleFolderChange} />
+        ) : (
+          <FolderPicker allowEmpty onChange={handleFolderChange} />
+        )}
       </Field>
 
       <Modal.ButtonRow>
         <Button onClick={onDismiss} variant="secondary" fill="outline">
           Cancel
         </Button>
-        <Button disabled={moveTarget === undefined} onClick={onMove} variant="primary">
-          Move
+        <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
+          {isMoving ? 'Moving...' : 'Move'}
         </Button>
       </Modal.ButtonRow>
     </Modal>

@@ -53,7 +53,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *contextmodel.ReqContext) re
 }
 func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
-	conf := apimodels.TestRulePayload{}
+	conf := apimodels.PostableExtendedRuleNodeExtended{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

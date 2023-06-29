@@ -43,7 +43,6 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(screen.queryByText(dashboard.item.title)).toBeInTheDocument();
-    expect(screen.queryByText('Dashboard')).toBeInTheDocument();
     expect(screen.queryByText(assertIsDefined(dashboard.item.tags)[0])).toBeInTheDocument();
     expect(screen.getByTestId(selectors.pages.BrowseDashbards.table.checkbox(dashboard.item.uid))).toBeInTheDocument();
   });
@@ -84,7 +83,6 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(screen.queryByText(folder.item.title)).toBeInTheDocument();
-    expect(screen.queryByText('Folder')).toBeInTheDocument();
   });
 
   it('calls onFolderClick when a folder button is clicked', async () => {
@@ -103,10 +101,10 @@ describe('browse-dashboards DashboardsTree', () => {
         requestLoadMore={requestLoadMore}
       />
     );
-    const folderButton = screen.getByLabelText('Collapse folder');
+    const folderButton = screen.getByLabelText('Expand folder');
     await userEvent.click(folderButton);
 
-    expect(handler).toHaveBeenCalledWith(folder.item.uid, false);
+    expect(handler).toHaveBeenCalledWith(folder.item.uid, true);
   });
 
   it('renders empty folder indicators', () => {
@@ -125,6 +123,5 @@ describe('browse-dashboards DashboardsTree', () => {
       />
     );
     expect(screen.queryByText('No items')).toBeInTheDocument();
-    expect(screen.queryByText(emptyFolderIndicator.item.kind)).not.toBeInTheDocument();
   });
 });

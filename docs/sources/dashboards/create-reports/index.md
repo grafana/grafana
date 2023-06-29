@@ -10,6 +10,10 @@ keywords:
   - reporting
   - export
   - pdf
+labels:
+  products:
+    - cloud
+    - enterprise
 menuTitle: Reporting
 title: Create and manage reports
 weight: 85

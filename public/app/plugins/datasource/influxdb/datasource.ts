@@ -29,13 +29,13 @@ import {
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
-import { AnnotationEditor } from './components/AnnotationEditor';
-import { FluxQueryEditor } from './components/FluxQueryEditor';
+import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
+import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
 import { BROWSER_MODE_DISABLED_MESSAGE } from './constants';
 import InfluxQueryModel from './influx_query_model';
 import InfluxSeries from './influx_series';
 import { getAllPolicies } from './influxql_metadata_query';
-import { InfluxQueryBuilder } from './influxql_query_builder';
+import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, replaceHardCodedRetentionPolicy } from './queryUtils';
 import ResponseParser from './response_parser';
@@ -59,7 +59,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<InfluxOptions>,
-    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+    readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
 
@@ -149,6 +149,26 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       targets: request.targets.filter((t) => t.hide !== true),
     };
 
+    // migrate annotations
+    if (filteredRequest.targets.some((target: InfluxQuery) => target.fromAnnotations)) {
+      const streams: Array<Observable<DataQueryResponse>> = [];
+
+      for (const target of filteredRequest.targets) {
+        if (target.query) {
+          streams.push(
+            new Observable((subscriber) => {
+              this.annotationEvents(filteredRequest, target)
+                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
+                .catch((ex) => subscriber.error(new Error(ex)))
+                .finally(() => subscriber.complete());
+            })
+          );
+        }
+      }
+
+      return merge(...streams);
+    }
+
     if (this.isFlux) {
       return super.query(filteredRequest);
     }
@@ -163,30 +183,31 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
             };
           }
 
-          const seriesList: any[] = [];
-
           const groupedFrames = groupBy(res.data, (x) => x.refId);
-          if (Object.keys(groupedFrames).length > 0) {
-            filteredRequest.targets.forEach((target) => {
-              const filteredFrames = groupedFrames[target.refId] ?? [];
-              switch (target.resultFormat) {
-                case 'logs':
-                case 'table':
-                  seriesList.push(
-                    this.responseParser.getTable(filteredFrames, target, {
-                      preferredVisualisationType: target.resultFormat,
-                    })
-                  );
-                  break;
-                default: {
-                  for (let i = 0; i < filteredFrames.length; i++) {
-                    seriesList.push(filteredFrames[i]);
-                  }
-                  break;
-                }
-              }
-            });
+          if (Object.keys(groupedFrames).length === 0) {
+            return { data: [] };
           }
+
+          const seriesList: any[] = [];
+          filteredRequest.targets.forEach((target) => {
+            const filteredFrames = groupedFrames[target.refId] ?? [];
+            switch (target.resultFormat) {
+              case 'logs':
+              case 'table':
+                seriesList.push(
+                  this.responseParser.getTable(filteredFrames, target, {
+                    preferredVisualisationType: target.resultFormat,
+                  })
+                );
+                break;
+              default: {
+                for (let i = 0; i < filteredFrames.length; i++) {
+                  seriesList.push(filteredFrames[i]);
+                }
+                break;
+              }
+            }
+          });
 
           return { data: seriesList };
         })
@@ -310,6 +331,19 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     };
   }
 
+  async runMetadataQuery(target: InfluxQuery): Promise<MetricFindValue[]> {
+    return lastValueFrom(
+      super.query({
+        targets: [target],
+      } as DataQueryRequest)
+    ).then((rsp) => {
+      if (rsp.data?.length) {
+        return frameToMetricFindValue(rsp.data[0]);
+      }
+      return [];
+    });
+  }
+
   async metricFindQuery(query: string, options?: any): Promise<MetricFindValue[]> {
     if (this.isFlux || this.isMigrationToggleOnAndIsAccessProxy()) {
       const target: InfluxQuery = {
@@ -348,14 +382,25 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
   getTagKeys(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_KEYS');
+    const query = buildMetadataQuery({
+      type: 'TAG_KEYS',
+      templateService: this.templateSrv,
+      database: this.database,
+      measurement: options.measurement || '',
+      tags: [],
+    });
     return this.metricFindQuery(query, options);
   }
 
   getTagValues(options: any = {}) {
-    const queryBuilder = new InfluxQueryBuilder({ measurement: options.measurement || '', tags: [] }, this.database);
-    const query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
+    const query = buildMetadataQuery({
+      type: 'TAG_VALUES',
+      templateService: this.templateSrv,
+      database: this.database,
+      withKey: options.key,
+      measurement: options.measurement || '',
+      tags: [],
+    });
     return this.metricFindQuery(query, options);
   }
 
@@ -535,26 +580,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
    * The unchanged pre 7.1 query implementation
    */
   classicQuery(options: any): Observable<DataQueryResponse> {
-    // migrate annotations
-    if (options.targets.some((target: InfluxQuery) => target.fromAnnotations)) {
-      const streams: Array<Observable<DataQueryResponse>> = [];
-
-      for (const target of options.targets) {
-        if (target.query) {
-          streams.push(
-            new Observable((subscriber) => {
-              this.annotationEvents(options, target)
-                .then((events) => subscriber.next({ data: [toDataFrame(events)] }))
-                .catch((ex) => subscriber.error(new Error(ex)))
-                .finally(() => subscriber.complete());
-            })
-          );
-        }
-      }
-
-      return merge(...streams);
-    }
-
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = cloneDeep(options.targets);

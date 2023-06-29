@@ -30,7 +30,7 @@ When you apply your changes, the visualization changes appear to all users of th
 
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../visualizations/bar-chart" >}})
+- [Bar chart]({{< relref "../visualizations/bar-chart/" >}})
 - [Histogram]({{< relref "../visualizations/histogram/" >}})
 - [Pie chart]({{< relref "../visualizations/pie-chart/" >}})
 - [State timeline]({{< relref "../visualizations/state-timeline/" >}})
@@ -72,7 +72,7 @@ You can change legend mode to **Table** and choose [calculations]({{< relref "..
 The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
 
 {{% admonition type="note" %}}
-This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+This feature is only supported in these panels: Bar chart, Histogram, Time series.
 {{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).

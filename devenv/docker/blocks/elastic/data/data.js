@@ -153,6 +153,8 @@ function getRandomLogItem(counter, timestamp) {
   };
 }
 
+let globalCounter = 0;
+
 async function main() {
   await elasticSetupIndexTemplate();
   const SLEEP_ANGLE_STEP = Math.PI / 200;
@@ -162,10 +164,10 @@ async function main() {
     return Math.trunc(1000 * Math.abs(Math.sin(sleepAngle)));
   }
 
-  for (let step = 0; step < 300; step++) {
+  while (true) {
     await sleep(getNextSineWaveSleepDuration());
     const timestamp = new Date();
-    const item = getRandomLogItem(step + 1, timestamp);
+    const item = getRandomLogItem(globalCounter++, timestamp);
     elasticSendLogItem(timestamp, item);
   }
 }

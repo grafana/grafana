@@ -53,7 +53,9 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: Props) 
                     {settings?.placeholder ?? 'Select color'}
                   </span>
                 )}
-                {settings?.isClearable && value && <IconButton name="times" onClick={() => onChange(undefined)} />}
+                {settings?.isClearable && value && (
+                  <IconButton name="times" onClick={() => onChange(undefined)} tooltip="Clear settings" />
+                )}
               </>
             )}
           </div>

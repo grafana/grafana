@@ -145,6 +145,7 @@ const DraggableFieldName = ({
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
                 onClick={() => onToggleVisibility(fieldName, visible)}
+                tooltip={visible ? 'Disable' : 'Enable'}
               />
               <span className={styles.name} title={fieldName}>
                 {fieldName}
