@@ -74,12 +74,11 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tooltipWrapper: css`
-    min-width: 100px;
-    min-height: 10px;
     background: ${theme.colors.background.secondary};
     top: 0;
     left: 0;
     pointer-events: none;
     position: absolute;
+    z-index: 1;
   `,
 });
