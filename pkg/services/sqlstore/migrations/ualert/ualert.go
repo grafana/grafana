@@ -377,7 +377,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(l, *newCond, da, folder.Uid)
 		if err != nil {
 			return err
 		}
