@@ -11,6 +11,7 @@ import (
 	"gonum.org/v1/gonum/graph/topo"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
@@ -176,11 +177,15 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		case TypeCMDNode:
 			node, err = buildCMDNode(dp, rn)
 		case TypeMLNode:
-			node, err = s.buildMLNode(dp, rn, req)
-			if err != nil {
-				err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
+			if s.features.IsEnabled(featuremgmt.FlagMlExpressions) {
+				node, err = s.buildMLNode(dp, rn, req)
+				if err != nil {
+					err = fmt.Errorf("fail to parse expression with refID %v: %w", rn.RefID, err)
+				}
 			}
-		default:
+		}
+
+		if node == nil && err == nil {
 			err = fmt.Errorf("unsupported node type '%s'", NodeTypeFromDatasourceUID(query.DataSource.UID))
 		}
 
