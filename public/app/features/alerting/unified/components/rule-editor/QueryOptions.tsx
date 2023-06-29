@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { getDefaultRelativeTimeRange, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
+import { dateTime, getDefaultRelativeTimeRange, GrafanaTheme2, RelativeTimeRange } from '@grafana/data';
+import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { clearButtonStyles, Icon, RelativeTimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertQueryOptions, MaxDataPointsOption } from './QueryWrapper';
+import { AlertQueryOptions, DEFAULT_MAX_DATA_POINTS, MaxDataPointsOption } from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;
@@ -25,6 +26,8 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
+
+  const timeRange = query.relativeTimeRange ? relativeToTimeRange(query.relativeTimeRange) : undefined;
 
   return (
     <>
@@ -54,8 +57,8 @@ export const QueryOptions = ({
       </Toggletip>
 
       <div className={styles.staticValues}>
-        <span>10m, </span>
-        <span>MD 43200</span>
+        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}, </span>
+        <span>MD {queryOptions?.maxDataPoints || DEFAULT_MAX_DATA_POINTS.toLocaleString()}</span>
       </div>
     </>
   );
