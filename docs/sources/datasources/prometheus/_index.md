@@ -144,4 +144,4 @@ Increasing the duration of the `incrementalQueryOverlapWindow` will increase the
 
 ## Recording Rules (beta)
 
-The Prometheus data source can be configured to disable recording rules under the data souce configuration or provisioning file (under `disableRecordingRules` in jsonData).
+The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
