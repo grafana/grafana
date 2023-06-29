@@ -27,9 +27,12 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 	if class == plugins.ClassCore {
 		typ := string(pluginJSON.Type)
 		baseDir := filepath.Base(pluginDir)
-		if pluginJSON.ID == "testdata" {
-			// TODO: Fix hardcoded values
-			return "public/plugins/grafana-test-datasource/dist", nil
+		if strings.Contains(pluginDir, "public/plugins") {
+			// Decoupled plugin
+			if baseDir == "dist" {
+				baseDir = filepath.Base(strings.TrimSuffix(pluginDir, "/dist")) + "/dist"
+			}
+			return path.Join("public/plugins", baseDir), nil
 		}
 		return path.Join("public/app/plugins", typ, baseDir), nil
 	}
@@ -42,12 +45,11 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 // Module returns the module.js path for the specified plugin.
 func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.ClassCore {
-		f := filepath.Base(pluginDir)
-		if pluginJSON.ID == "testdata" {
-			// TODO: Fix hardcoded values
-			return "app/plugins/datasource/testdata/module", nil
+		baseDir := filepath.Base(pluginDir)
+		if baseDir == "dist" {
+			baseDir = filepath.Base(strings.TrimSuffix(pluginDir, "/dist"))
 		}
-		return path.Join("app/plugins", string(pluginJSON.Type), f, "module"), nil
+		return path.Join("app/plugins", string(pluginJSON.Type), baseDir, "module"), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
