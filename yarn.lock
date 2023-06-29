@@ -3733,9 +3733,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/test-datasource@workspace:*, @grafana-plugins/test-datasource@workspace:plugins/grafana-test-datasource":
+"@grafana-plugins/test-datasource@workspace:*, @grafana-plugins/test-datasource@workspace:public/plugins/grafana-test-datasource":
   version: 0.0.0-use.local
-  resolution: "@grafana-plugins/test-datasource@workspace:plugins/grafana-test-datasource"
+  resolution: "@grafana-plugins/test-datasource@workspace:public/plugins/grafana-test-datasource"
   dependencies:
     "@babel/core": ^7.21.4
     "@emotion/css": ^11.1.3
@@ -12793,9 +12793,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app@link:../../public/app::locator=%40grafana-plugins%2Ftest-datasource%40workspace%3Aplugins%2Fgrafana-test-datasource":
+"app@link:../../public/app::locator=%40grafana-plugins%2Ftest-datasource%40workspace%3Apublic%2Fplugins%2Fgrafana-test-datasource":
   version: 0.0.0-use.local
-  resolution: "app@link:../../public/app::locator=%40grafana-plugins%2Ftest-datasource%40workspace%3Aplugins%2Fgrafana-test-datasource"
+  resolution: "app@link:../../public/app::locator=%40grafana-plugins%2Ftest-datasource%40workspace%3Apublic%2Fplugins%2Fgrafana-test-datasource"
   languageName: node
   linkType: soft
 

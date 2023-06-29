@@ -1,4 +1,4 @@
-module github.com/grafana/grafana/plugins/grafana-test-datasource
+module github.com/grafana/grafana/public/plugins/grafana-test-datasource
 
 go 1.20
 

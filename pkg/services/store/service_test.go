@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
+	testdatasource "github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 

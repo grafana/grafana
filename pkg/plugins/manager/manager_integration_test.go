@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
+	testdatasource "github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 

@@ -37,7 +37,7 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 func corePluginPaths(staticRootPath string) []string {
 	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
 	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
-	pluginsPath, err := filepath.Abs(filepath.Join(staticRootPath, "../plugins"))
+	pluginsPath, err := filepath.Abs(filepath.Join(staticRootPath, "plugins"))
 	fmt.Println("failed abs", "error", err)
 	return []string{datasourcePaths, panelsPath, pluginsPath}
 }

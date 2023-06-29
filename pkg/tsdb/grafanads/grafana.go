@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
+	testdatasource "github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 

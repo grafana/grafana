@@ -436,7 +436,7 @@
     "packages": [
       "packages/*",
       "plugins-bundled/internal/*",
-      "plugins/*"
+      "public/plugins/*"
     ]
   },
   "engines": {

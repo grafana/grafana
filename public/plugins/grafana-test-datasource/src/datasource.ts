@@ -18,7 +18,7 @@ import {
   AnnotationQuery,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getSearchFilterScopedVar } from 'app/features/variables/utils';
+import { getSearchFilterScopedVar } from '../../../app/features/variables/utils';
 
 import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';

@@ -6,7 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	testdatasource "github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin"
+	testdatasource "github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"

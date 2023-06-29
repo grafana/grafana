@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/plugins/grafana-test-datasource/pkg/plugin/sims"
+	"github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin/sims"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
