@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
+import { noop, uniqueId } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,8 @@ import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
 import { Strong } from '../Strong';
 
-import { RECEIVER_STATUS_KEY, useContactPointsWithStatus } from './useContactPoints';
+import { useDeleteContactPointModal } from './Modals';
+import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
 import { getReceiverDescription, isProvisioned } from './utils';
 
 const ContactPoints = () => {
@@ -77,8 +78,11 @@ interface ContactPointHeaderProps {
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
   const { name, provisioned = false, policies = [] } = props;
-
   const styles = useStyles2(getStyles);
+
+  // TODO hard-coded alertmanager source
+  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint('grafana');
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
   return (
     <div className={styles.headerWrapper}>
@@ -109,7 +113,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             size="sm"
             icon="edit"
             type="button"
-            disabled={provisioned}
+            disabled={provisioned || updateAlertmanagerState.isLoading}
             aria-label="edit-action"
             data-testid="edit-action"
           >
@@ -121,7 +125,15 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             <Menu>
               <Menu.Item label="Export" icon="download-alt" />
               <Menu.Divider />
-              <Menu.Item label="Delete" icon="trash-alt" destructive disabled={provisioned} />
+              <Menu.Item
+                label="Delete"
+                icon="trash-alt"
+                destructive
+                disabled={provisioned}
+                onClick={() => {
+                  provisioned ? noop() : showDeleteModal(name);
+                }}
+              />
             </Menu>
           }
         >
@@ -132,9 +144,11 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             type="button"
             aria-label="more-actions"
             data-testid="more-actions"
+            disabled={updateAlertmanagerState.isLoading}
           />
         </Dropdown>
       </Stack>
+      {DeleteModal}
     </div>
   );
 };
@@ -189,10 +203,12 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
   const failedToSend = Boolean(diagnostics.lastNotifyAttemptError);
   const lastDeliveryAttempt = dateTime(diagnostics.lastNotifyAttempt);
   const lastDeliveryAttemptDuration = diagnostics.lastNotifyAttemptDuration;
+  const hasDeliveryAttempt = lastDeliveryAttempt.isValid();
 
   return (
     <div className={styles.metadataRow}>
       <Stack direction="row" gap={1}>
+        {/* this is shown when the last delivery failed – we don't show any additional metadata */}
         {failedToSend ? (
           <>
             {/* TODO we might need an error variant for MetaText, dito for success */}
@@ -208,7 +224,8 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
           </>
         ) : (
           <>
-            {lastDeliveryAttempt.isValid() ? (
+            {/* this is shown when we have a last delivery attempt */}
+            {hasDeliveryAttempt && (
               <>
                 <MetaText icon="clock-nine">
                   Last delivery attempt{' '}
@@ -222,15 +239,16 @@ const ContactPointReceiverMetadataRow = (props: ContactPointReceiverMetadata) =>
                   took <Strong>{lastDeliveryAttemptDuration}</Strong>
                 </MetaText>
               </>
-            ) : (
-              <MetaText icon="clock-nine">No delivery attempts</MetaText>
+            )}
+            {/* when we have no last delivery attempt */}
+            {!hasDeliveryAttempt && <MetaText icon="clock-nine">No delivery attempts</MetaText>}
+            {/* this is only shown for contact points that only want "firing" updates */}
+            {!sendingResolved && (
+              <MetaText icon="info-circle">
+                Delivering <Strong>only firing</Strong> notifications
+              </MetaText>
             )}
           </>
-        )}
-        {!sendingResolved && (
-          <MetaText icon="info-circle">
-            Delivering <Strong>only firing</Strong> notifications
-          </MetaText>
         )}
       </Stack>
     </div>

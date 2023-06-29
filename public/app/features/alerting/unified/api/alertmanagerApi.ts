@@ -113,10 +113,23 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       query: (alertmanagerSourceName) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/config/api/v1/alerts`,
       }),
+      providesTags: ['AlertmanagerConfiguration'],
+    }),
+
+    updateAlertmanagerConfiguration: build.mutation<
+      void,
+      { selectedAlertmanager: string; config: AlertManagerCortexConfig }
+    >({
+      query: ({ selectedAlertmanager, config }) => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
+        method: 'POST',
+        data: config,
+      }),
+      invalidatesTags: ['AlertmanagerConfiguration'],
     }),
 
     // Grafana Managed Alertmanager only
-    getReceiversDiagnostics: build.query<ReceiversStateDTO[], void>({
+    getContactPointsStatus: build.query<ReceiversStateDTO[], void>({
       query: () => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(GRAFANA_RULES_SOURCE_NAME)}/config/api/v1/receivers`,
       }),
