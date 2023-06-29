@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // PublicDashboardErr represents a dashboard error.
@@ -101,6 +102,22 @@ type AnnotationEvent struct {
 
 func (pd PublicDashboard) TableName() string {
 	return "dashboard_public"
+}
+
+type PublicDashboardListQuery struct {
+	OrgID  int64
+	Query  string
+	Page   int
+	Limit  int
+	Offset int
+	User   *user.SignedInUser
+}
+
+type PublicDashboardListResponseWithPagination struct {
+	PublicDashboards []*PublicDashboardListResponse `json:"publicDashboards"`
+	TotalCount       int64                          `json:"totalCount"`
+	Page             int                            `json:"page"`
+	PerPage          int                            `json:"perPage"`
 }
 
 type PublicDashboardListResponse struct {

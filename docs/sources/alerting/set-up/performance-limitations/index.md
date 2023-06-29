@@ -1,6 +1,7 @@
 ---
 aliases:
   - alerting-limitations/
+  - alerting/performance-limitations/
 description: Performance considerations and limitations
 keywords:
   - grafana

@@ -40,6 +40,7 @@ import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import Receivers from './ContactPoints.v1';
+
 jest.mock('../../api/alertmanager');
 jest.mock('../../api/grafana');
 jest.mock('../../utils/config');
@@ -257,11 +258,9 @@ describe('Receivers', () => {
 
     await waitFor(() => expect(ui.testContactPointModal.get()).toBeInTheDocument(), { timeout: 1000 });
     await userEvent.click(ui.customContactPointOption.get());
-    await waitFor(() => expect(ui.contactPointAnnotationSelect(0).get()).toBeInTheDocument());
 
     // enter custom annotations and labels
-    await clickSelectOption(ui.contactPointAnnotationSelect(0).get(), 'Description');
-    await userEvent.type(ui.contactPointAnnotationValue(0).get(), 'Test contact point');
+    await userEvent.type(screen.getByPlaceholderText('Enter a description...'), 'Test contact point');
     await userEvent.type(ui.contactPointLabelKey(0).get(), 'foo');
     await userEvent.type(ui.contactPointLabelValue(0).get(), 'bar');
     await userEvent.click(ui.testContactPoint.get());
@@ -542,7 +541,7 @@ describe('Receivers', () => {
     expect(ui.newContactPointButton.get()).toBeInTheDocument();
   });
 
-  describe('Contact points state', () => {
+  describe('Contact points health', () => {
     it('Should render error notifications when there are some points state ', async () => {
       mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
       mocks.api.fetchConfig.mockResolvedValue(someGrafanaAlertManagerConfig);
@@ -710,6 +709,31 @@ describe('Receivers', () => {
       expect(receiverRows[0]).toHaveTextContent('default');
       expect(receiverRows[1]).toHaveTextContent('critical');
       expect(receiverRows).toHaveLength(2);
+    });
+
+    it('Should render "Unused" warning if a contact point is not used in route configuration', async () => {
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
+      mocks.api.updateConfig.mockResolvedValue();
+      mocks.api.fetchConfig.mockResolvedValue({
+        ...someGrafanaAlertManagerConfig,
+        alertmanager_config: { ...someGrafanaAlertManagerConfig.alertmanager_config, route: { receiver: 'default' } },
+      });
+
+      mocks.hooks.useGetContactPointsState.mockReturnValue(emptyContactPointsState);
+      renderReceivers();
+
+      await ui.receiversTable.find();
+      //should not render notification error
+      expect(ui.notificationError.query()).not.toBeInTheDocument();
+      //contact points are not expandable
+      expect(ui.contactPointsCollapseToggle.query()).not.toBeInTheDocument();
+      //should render receivers, only one dynamic table
+      let receiverRows = within(screen.getByTestId('dynamic-table')).getAllByTestId('row');
+
+      expect(receiverRows).toHaveLength(2);
+      expect(receiverRows[0]).toHaveTextContent('default');
+      expect(receiverRows[1]).toHaveTextContent('critical');
+      expect(receiverRows[1]).toHaveTextContent('Unused');
     });
   });
 });
