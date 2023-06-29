@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useMountedState } from 'react-use';
 import uPlot from 'uplot';
@@ -263,8 +264,12 @@ export const TooltipPlugin = ({
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
 
+  const activeTooltipClass = css`
+    z-index: ${theme.zIndex.portal + 1} !important;
+  `;
+
   return (
-    <Portal zIndexOffset={isActive ? 1 : 0}>
+    <Portal className={isActive ? activeTooltipClass : undefined}>
       {tooltip && coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
           {tooltip}

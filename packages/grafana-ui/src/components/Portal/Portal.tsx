@@ -4,14 +4,13 @@ import ReactDOM from 'react-dom';
 import { useTheme2 } from '../../themes';
 
 interface Props {
-  zIndexOffset?: number;
   className?: string;
   root?: HTMLElement;
   forwardedRef?: React.ForwardedRef<HTMLDivElement>;
 }
 
 export function Portal(props: PropsWithChildren<Props>) {
-  const { zIndexOffset, children, className, root, forwardedRef } = props;
+  const { children, className, root, forwardedRef } = props;
   const theme = useTheme2();
   const node = useRef<HTMLDivElement | null>(null);
   const portalRoot = root ?? getPortalContainer();
@@ -22,7 +21,7 @@ export function Portal(props: PropsWithChildren<Props>) {
       node.current.className = className;
     }
     node.current.style.position = 'relative';
-    node.current.style.zIndex = `${theme.zIndex.portal}` + zIndexOffset;
+    node.current.style.zIndex = `${theme.zIndex.portal}`;
   }
 
   useLayoutEffect(() => {
