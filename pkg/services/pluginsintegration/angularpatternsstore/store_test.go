@@ -21,8 +21,9 @@ func TestAngularPatternsStore(t *testing.T) {
 		svc := ProvideService(kvstore.NewFakeKVStore())
 
 		t.Run("get empty", func(t *testing.T) {
-			_, err := svc.Get(context.Background())
-			require.ErrorIs(t, err, ErrNoCachedValue)
+			_, ok, err := svc.Get(context.Background())
+			require.NoError(t, err)
+			require.False(t, ok)
 		})
 
 		t.Run("set and get", func(t *testing.T) {
@@ -32,8 +33,9 @@ func TestAngularPatternsStore(t *testing.T) {
 			expV, err := json.Marshal(mockPatterns)
 			require.NoError(t, err)
 
-			dbV, err := svc.Get(context.Background())
+			dbV, ok, err := svc.Get(context.Background())
 			require.NoError(t, err)
+			require.True(t, ok)
 			require.Equal(t, string(expV), dbV)
 		})
 	})

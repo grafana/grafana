@@ -120,8 +120,9 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
 
 			// Check that store is initially empty
-			dbV, err := svc.store.Get(context.Background())
-			require.ErrorIs(t, err, angularpatternsstore.ErrNoCachedValue)
+			dbV, ok, err := svc.store.Get(context.Background())
+			require.NoError(t, err)
+			require.False(t, ok)
 			require.Empty(t, dbV, "initial store should be empty")
 			lastUpdated, err := svc.store.GetLastUpdated(context.Background())
 			require.NoError(t, err)
@@ -136,8 +137,9 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			checkMockDetectors(t, svc.detectors)
 
 			// Check that the value has been updated in the kv store, by reading from the store directly
-			dbV, err = svc.store.Get(context.Background())
+			dbV, ok, err = svc.store.Get(context.Background())
 			require.NoError(t, err)
+			require.True(t, ok)
 			require.NotEmpty(t, dbV, "new store should not be empty")
 			var patterns GCOMPatterns
 			require.NoError(t, json.Unmarshal([]byte(dbV), &patterns), "could not unmarshal stored value")
@@ -170,8 +172,9 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.True(t, scenario.httpCalls.calledOnce(), "gcom api should be called once")
 
 			// Patterns in store should not be modified
-			dbV, err := svc.store.Get(context.Background())
+			dbV, ok, err := svc.store.Get(context.Background())
 			require.NoError(t, err)
+			require.True(t, ok)
 			require.NotEmpty(t, dbV)
 			var newPatterns GCOMPatterns
 			err = json.Unmarshal([]byte(dbV), &newPatterns)
