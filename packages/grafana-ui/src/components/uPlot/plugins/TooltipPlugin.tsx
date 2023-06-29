@@ -269,7 +269,11 @@ export const TooltipPlugin = ({
     <Portal>
       {coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
-          Hello!
+          Lorem ipsum dolor sit amet, consectetur<br/>
+          sed do eiusmod tempor incididunt ut labore et dolore magna<br/>
+          esse cillum dolore<br/>
+          occaecat cupidatat non<br/>
+          deserunt mollit anim id est laborum.<br/>
         </VizTooltipContainer>
       )}
     </Portal>
