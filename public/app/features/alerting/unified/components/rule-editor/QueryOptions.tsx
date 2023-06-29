@@ -33,20 +33,25 @@ export const QueryOptions = ({
     <>
       <Toggletip
         content={
-          <>
-            {onChangeTimeRange && (
-              <RelativeTimeRangePicker
-                timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
-                onChange={(range) => onChangeTimeRange(range, index)}
-              />
-            )}
+          <div className={styles.container}>
+            <div>
+              {onChangeTimeRange && (
+                <div className={styles.timeRangeContainer}>
+                  <span className={styles.timeRangeLabel}>Time Range</span>
+                  <RelativeTimeRangePicker
+                    timeRange={query.relativeTimeRange ?? getDefaultRelativeTimeRange()}
+                    onChange={(range) => onChangeTimeRange(range, index)}
+                  />
+                </div>
+              )}
+            </div>
             <div className={styles.queryOptions}>
               <MaxDataPointsOption
                 options={queryOptions}
                 onChange={(options) => onChangeQueryOptions(options, index)}
               />
             </div>
-          </>
+          </div>
         }
         closeButton={true}
         placement="bottom-start"
@@ -68,8 +73,25 @@ const getStyles = (theme: GrafanaTheme2) => {
   const clearButton = clearButtonStyles(theme);
 
   return {
+    container: css`
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    `,
+    timeRangeContainer: css`
+      display: flex;
+    `,
+
+    timeRangeLabel: css`
+      width: 20%;
+    `,
     queryOptions: css`
       margin-bottom: -${theme.spacing(2)};
+
+      label {
+        line-height: 12px;
+        padding: 0px;
+      }
     `,
 
     staticValues: css`
