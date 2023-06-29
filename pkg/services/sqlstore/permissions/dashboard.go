@@ -196,19 +196,10 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 				builder.WriteString(") AND NOT dashboard.is_folder)")
 			} else {
-				actions := make([]string, 0, len(toCheck))
-				for _, action := range toCheck {
-					actions = append(actions, action.(string))
-				}
+				actions := parseStringSliceFromInterfaceSlice(toCheck)
 
-				for _, action := range actions {
-					for _, uidScope := range f.user.Permissions[f.user.OrgID][action] {
-						if !strings.HasPrefix(uidScope, "dashboards:") {
-							continue
-						}
-						args = append(args, strings.TrimPrefix(uidScope, dashboards.ScopeDashboardsPrefix))
-					}
-				}
+				args = parseArguments(actions, f.user, dashboards.ScopeDashboardsPrefix)
+
 				// Only add the IN clause if we have any dashboards to check
 				if len(args) > 0 {
 					builder.WriteString("(dashboard.uid IN (?" + strings.Repeat(", ?", len(args)-1) + "")
@@ -234,21 +225,13 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
 			} else {
-				actions := make([]string, 0, len(toCheck))
-				for _, action := range toCheck {
-					actions = append(actions, action.(string))
-				}
-				for _, action := range actions {
-					for _, uidScope := range f.user.Permissions[f.user.OrgID][action] {
-						if !strings.HasPrefix(uidScope, "folders:") {
-							continue
-						}
-						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, dashboards.ScopeFoldersPrefix))
-					}
-				}
+				actions := parseStringSliceFromInterfaceSlice(toCheck)
+
+				permSelectorArgs = parseArguments(actions, f.user, dashboards.ScopeFoldersPrefix)
+
 				// Only add the IN clause if we have any folders to check
 				if len(permSelectorArgs) > 0 {
-					permSelector.WriteString("(?" + strings.Repeat(", ?", len(args)-1) + "")
+					permSelector.WriteString("(?" + strings.Repeat(", ?", len(permSelectorArgs)-1) + "")
 				} else {
 					permSelector.WriteString("(")
 				}
@@ -305,21 +288,12 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
 			} else {
-				actions := make([]string, 0, len(toCheck))
-				for _, action := range toCheck {
-					actions = append(actions, action.(string))
-				}
+				actions := parseStringSliceFromInterfaceSlice(toCheck)
 
-				for _, action := range actions {
-					for _, uidScope := range f.user.Permissions[f.user.OrgID][action] {
-						if !strings.HasPrefix(uidScope, "folders:") {
-							continue
-						}
-						permSelectorArgs = append(permSelectorArgs, strings.TrimPrefix(uidScope, dashboards.ScopeFoldersPrefix))
-					}
-				}
+				permSelectorArgs = parseArguments(actions, f.user, dashboards.ScopeFoldersPrefix)
+
 				if len(permSelectorArgs) > 0 {
-					permSelector.WriteString("(?" + strings.Repeat(", ?", len(args)-1) + "")
+					permSelector.WriteString("(?" + strings.Repeat(", ?", len(permSelectorArgs)-1) + "")
 				} else {
 					permSelector.WriteString("(")
 				}
@@ -437,4 +411,25 @@ func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{},
 	}
 
 	return strings.Join(wheres, ") OR "), args
+}
+
+func parseStringSliceFromInterfaceSlice(slice []interface{}) []string {
+	result := make([]string, 0, len(slice))
+	for _, s := range slice {
+		result = append(result, s.(string))
+	}
+	return result
+}
+
+func parseArguments(actions []string, user *user.SignedInUser, scopePrefix string) []interface{} {
+	args := make([]interface{}, 0, len(actions))
+	for _, action := range actions {
+		for _, uidScope := range user.Permissions[user.OrgID][action] {
+			if !strings.HasPrefix(uidScope, scopePrefix) {
+				continue
+			}
+			args = append(args, strings.TrimPrefix(uidScope, scopePrefix))
+		}
+	}
+	return args
 }
