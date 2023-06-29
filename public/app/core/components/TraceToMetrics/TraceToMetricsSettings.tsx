@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   DataSourceJsonData,
@@ -12,7 +12,10 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
+import { TimeRangeShift } from '../TimeRangeShift/TimeRangeShift';
+import { validateTimeShift } from '../TimeRangeShift/validation';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
+import { getTimeShiftLabel, getTimeShiftTooltip } from '../TraceToLogs/TraceToLogsSettings';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -35,6 +38,16 @@ interface Props extends DataSourcePluginOptionsEditorProps<TraceToMetricsData> {
 
 export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
+    return options.jsonData.tracesToMetrics?.spanStartTimeShift
+      ? validateTimeShift(options.jsonData.tracesToMetrics?.spanStartTimeShift)
+      : false;
+  });
+  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
+    return options.jsonData.tracesToMetrics?.spanEndTimeShift
+      ? validateTimeShift(options.jsonData.tracesToMetrics?.spanEndTimeShift)
+      : false;
+  });
 
   return (
     <div className={css({ width: '100%' })}>
@@ -76,49 +89,33 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span start time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the start time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanStartTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <TimeRangeShift
+        label={getTimeShiftLabel('start')}
+        tooltip={getTimeShiftTooltip('start')}
+        value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
+        onChange={(val) => {
+          setSpanStartTimeShiftIsInvalid(validateTimeShift(val));
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanStartTimeShift: val,
+          });
+        }}
+        isInvalid={spanStartTimeShiftIsInvalid}
+      />
 
-      <InlineFieldRow>
-        <InlineField
-          label="Span end time shift"
-          labelWidth={26}
-          grow
-          tooltip="Shifts the end time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="0"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
-                ...options.jsonData.tracesToMetrics,
-                spanEndTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+      <TimeRangeShift
+        label={getTimeShiftLabel('end')}
+        tooltip={getTimeShiftTooltip('end')}
+        value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
+        onChange={(val) => {
+          setSpanEndTimeShiftIsInvalid(validateTimeShift(val));
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
+            ...options.jsonData.tracesToMetrics,
+            spanEndTimeShift: val,
+          });
+        }}
+        isInvalid={spanEndTimeShiftIsInvalid}
+      />
 
       <InlineFieldRow>
         <InlineField tooltip="Tags that will be used in the metrics query" label="Tags" labelWidth={26}>

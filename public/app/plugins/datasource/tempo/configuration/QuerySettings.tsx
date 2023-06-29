@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, Input, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
+import { TimeRangeShift } from 'app/core/components/TimeRangeShift/TimeRangeShift';
+import { validateTimeShift } from 'app/core/components/TimeRangeShift/validation';
 
 import { TempoJsonData } from '../types';
 
@@ -10,6 +12,24 @@ interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
 export function QuerySettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
+  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
+    return options.jsonData.traceQuery?.spanStartTimeShift
+      ? validateTimeShift(options.jsonData.traceQuery?.spanStartTimeShift)
+      : false;
+  });
+  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
+    return options.jsonData.traceQuery?.spanEndTimeShift
+      ? validateTimeShift(options.jsonData.traceQuery?.spanEndTimeShift)
+      : false;
+  });
+
+  const getLabel = (type: 'start' | 'end') => {
+    return `Time shift for ${type} of search`;
+  };
+
+  const getTooltip = (type: 'start' | 'end') => {
+    return `Shifts the ${type} of the time range when searching by TraceID. Searching can return traces that do not fully fall into the search time range, so we recommend using higher time shifts for longer traces. Default: 30m (Time units can be used here, for example: 5s, 1m, 3h`;
+  };
 
   return (
     <div className={styles.container}>
@@ -29,50 +49,36 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
           }}
         />
       </InlineField>
-      <InlineFieldRow>
-        <InlineField
-          label="Time shift for start of search"
-          labelWidth={26}
-          disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
-          grow
-          tooltip="Shifts the start of the time range when searching by TraceID. Searching can return traces that do not fully fall into the search time range, so we recommend using higher time shifts for longer traces. Default: 30m (Time units can be used here, for example: 5s, 1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="30m"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
-                ...options.jsonData.traceQuery,
-                spanStartTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.traceQuery?.spanStartTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField
-          label="Time shift for end of search"
-          labelWidth={26}
-          disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
-          grow
-          tooltip="Shifts the end of the time range when searching by TraceID. Searching can return traces that do not fully fall into the search time range, so we recommend using higher time shifts for longer traces. Default: 30m (Time units can be used here, for example: 5s, 1m, 3h)"
-        >
-          <Input
-            type="text"
-            placeholder="30m"
-            width={40}
-            onChange={(v) =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
-                ...options.jsonData.traceQuery,
-                spanEndTimeShift: v.currentTarget.value,
-              })
-            }
-            value={options.jsonData.traceQuery?.spanEndTimeShift || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
+
+      <TimeRangeShift
+        label={getLabel('start')}
+        tooltip={getTooltip('start')}
+        value={options.jsonData.traceQuery?.spanStartTimeShift || ''}
+        disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
+        onChange={(val) => {
+          setSpanStartTimeShiftIsInvalid(validateTimeShift(val));
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
+            ...options.jsonData.traceQuery,
+            spanStartTimeShift: val,
+          });
+        }}
+        isInvalid={spanStartTimeShiftIsInvalid}
+      />
+
+      <TimeRangeShift
+        label={getLabel('end')}
+        tooltip={getTooltip('end')}
+        value={options.jsonData.traceQuery?.spanEndTimeShift || ''}
+        disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
+        onChange={(val) => {
+          setSpanEndTimeShiftIsInvalid(validateTimeShift(val));
+          updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
+            ...options.jsonData.traceQuery,
+            spanEndTimeShift: val,
+          });
+        }}
+        isInvalid={spanEndTimeShiftIsInvalid}
+      />
     </div>
   );
 }

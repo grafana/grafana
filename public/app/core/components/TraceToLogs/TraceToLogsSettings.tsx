@@ -1,11 +1,14 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
+
+import { TimeRangeShift } from '../TimeRangeShift/TimeRangeShift';
+import { validateTimeShift } from '../TimeRangeShift/validation';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -81,6 +84,13 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   );
   const { query = '', tags, customQuery } = traceToLogs;
 
+  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
+    return traceToLogs?.spanStartTimeShift ? validateTimeShift(traceToLogs?.spanStartTimeShift) : false;
+  });
+  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
+    return traceToLogs?.spanEndTimeShift ? validateTimeShift(traceToLogs?.spanEndTimeShift) : false;
+  });
+
   const updateTracesToLogs = useCallback(
     (value: Partial<TraceToLogsOptionsV2>) => {
       // Cannot use updateDatasourcePluginJsonDataOption here as we need to update 2 keys, and they would overwrite each
@@ -124,14 +134,24 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       </InlineFieldRow>
 
       <TimeRangeShift
-        type={'start'}
+        label={getTimeShiftLabel('start')}
+        tooltip={getTimeShiftTooltip('start')}
         value={traceToLogs.spanStartTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanStartTimeShift: val })}
+        onChange={(val) => {
+          setSpanStartTimeShiftIsInvalid(validateTimeShift(val));
+          updateTracesToLogs({ spanStartTimeShift: val });
+        }}
+        isInvalid={spanStartTimeShiftIsInvalid}
       />
       <TimeRangeShift
-        type={'end'}
+        label={getTimeShiftLabel('end')}
+        tooltip={getTimeShiftTooltip('end')}
         value={traceToLogs.spanEndTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanEndTimeShift: val })}
+        onChange={(val) => {
+          setSpanEndTimeShiftIsInvalid(validateTimeShift(val));
+          updateTracesToLogs({ spanEndTimeShift: val });
+        }}
+        isInvalid={spanEndTimeShiftIsInvalid}
       />
 
       <InlineFieldRow>
@@ -222,31 +242,13 @@ function IdFilter(props: IdFilterProps) {
   );
 }
 
-interface TimeRangeShiftProps {
-  type: 'start' | 'end';
-  value: string;
-  onChange: (val: string) => void;
-}
-function TimeRangeShift(props: TimeRangeShiftProps) {
-  return (
-    <InlineFieldRow>
-      <InlineField
-        label={`Span ${props.type} time shift`}
-        labelWidth={26}
-        grow
-        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
-      >
-        <Input
-          type="text"
-          placeholder="0"
-          width={40}
-          onChange={(e) => props.onChange(e.currentTarget.value)}
-          value={props.value}
-        />
-      </InlineField>
-    </InlineFieldRow>
-  );
-}
+export const getTimeShiftLabel = (type: 'start' | 'end') => {
+  return `Span ${type} time shift`;
+};
+
+export const getTimeShiftTooltip = (type: 'start' | 'end') => {
+  return `Shifts the ${type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`;
+};
 
 export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
   return (
