@@ -647,15 +647,15 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 	dashboardStore, err := ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Apple", 1, 0, false)
-	t.Run("Should be able to get dashboard with existing name", func(t *testing.T) {
+	t.Run("Should be able to get dashboard with existing name in root directory", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Apple", OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
 		})
-		require.Error(t, err)
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
 	})
 
-	t.Run("Should not be able to get dashboard with non-existing name", func(t *testing.T) {
+	t.Run("Should not be able to get dashboard with non-existing name in root directory", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta"}, sqlStore.GetDialect(), false, false)
 			return err
