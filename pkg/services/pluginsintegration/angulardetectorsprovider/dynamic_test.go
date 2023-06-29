@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
@@ -26,7 +27,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	var mockGCOMPatterns GCOMPatterns
 	require.NoError(t, json.Unmarshal(mockGCOMResponse, &mockGCOMPatterns))
-	svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+	svc := provideDynamic(t, srv.URL)
 	mockGCOMDetectors, err := svc.patternsToDetectors(mockGCOMPatterns)
 	require.NoError(t, err)
 
@@ -59,7 +60,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("ProvideDetectors", func(t *testing.T) {
 		t.Run("returns empty result by default", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 			r := svc.ProvideDetectors(context.Background())
 			require.Empty(t, r)
 		})
@@ -70,7 +71,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			err := mockStore.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 			svc.store = mockStore
 
 			// Await initial restore
@@ -117,7 +118,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("updateDetectors", func(t *testing.T) {
 		t.Run("successful", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 
 			// Check that store is initially empty
 			dbV, ok, err := svc.store.Get(context.Background())
@@ -157,7 +158,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			srv := scenario.newHTTPTestServer()
 			t.Cleanup(srv.Close)
 
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 
 			// Set initial cached detectors
 			svc.setDetectors(mockGCOMDetectors)
@@ -188,7 +189,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 	t.Run("setDetectorsFromCache", func(t *testing.T) {
 		t.Run("empty store doesn't return an error", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 
 			err := svc.setDetectorsFromCache(context.Background())
 			require.NoError(t, err)
@@ -196,7 +197,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		})
 
 		t.Run("store is restored", func(t *testing.T) {
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 
 			// Populate store
 			err := svc.store.Set(context.Background(), mockGCOMPatterns)
@@ -211,13 +212,25 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	})
 
 	t.Run("background service", func(t *testing.T) {
+		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL)
+			svc.features = featuremgmt.WithFeatures()
+			require.True(t, svc.IsDisabled(), "background service should be disabled")
+		})
+
+		t.Run("is enabled if feature flag is present", func(t *testing.T) {
+			svc := provideDynamic(t, srv.URL)
+			svc.features = featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
+			require.False(t, svc.IsDisabled(), "background service should be enabled")
+		})
+
 		t.Run("fetches value from gcom on start if too much time has passed", func(t *testing.T) {
 			gcomCallback := make(chan struct{})
 			gcom := newDefaultGCOMScenario(func(_ http.ResponseWriter, _ *http.Request) {
 				gcomCallback <- struct{}{}
 			})
 			srv := gcom.newHTTPTestServer()
-			svc := provideDynamic(t, srv.URL, defaultBackgroundJobInterval)
+			svc := provideDynamic(t, srv.URL)
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
@@ -273,7 +286,8 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			})
 			srv := gcom.newHTTPTestServer()
 			t.Cleanup(srv.Close)
-			svc := provideDynamic(t, srv.URL, jobInterval)
+			svc := provideDynamic(t, srv.URL)
+			svc.backgroundJobInterval = jobInterval
 			bg := newBackgroundServiceScenario(svc)
 			t.Cleanup(bg.close)
 			// Refresh cache right before running the service, so we skip the initial run
@@ -387,13 +401,13 @@ func newError500GCOMScenario() *gcomScenario {
 	}}
 }
 
-func provideDynamic(t *testing.T, gcomURL string, cacheTTL time.Duration) *Dynamic {
+func provideDynamic(t *testing.T, gcomURL string) *Dynamic {
 	d, err := ProvideDynamic(
 		&config.Cfg{GrafanaComURL: gcomURL},
 		angularpatternsstore.ProvideService(kvstore.NewFakeKVStore()),
+		featuremgmt.WithFeatures(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns),
 	)
 	require.NoError(t, err)
-	d.backgroundJobInterval = cacheTTL
 	return d
 }
 
