@@ -1,65 +1,77 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Button, Modal, ModalProps, Spinner } from '@grafana/ui';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
 
+/**
+ * This hook controls the delete modal for contact points, showing loading and error modals when appropriate
+ */
 export const useDeleteContactPointModal = (
-  handleDelete: (name: string) => void,
-  loading: boolean
+  handleDelete: (name: string) => Promise<void>,
+  isLoading: boolean
 ): ModalHook<string> => {
   const [showModal, setShowModal] = useState(false);
   const [contactPoint, setContactPoint] = useState<string>();
+  const [error, setError] = useState<unknown | undefined>();
 
   const handleDismiss = useCallback(() => {
     setContactPoint(undefined);
     setShowModal(false);
+    setError(undefined);
   }, [setContactPoint]);
 
   const handleShow = useCallback((name: string) => {
     setContactPoint(name);
     setShowModal(true);
+    setError(undefined);
   }, []);
 
   const handleSubmit = useCallback(() => {
     if (contactPoint) {
-      handleDelete(contactPoint);
+      handleDelete(contactPoint)
+        .then(() => setShowModal(false))
+        .catch(setError);
     }
   }, [handleDelete, contactPoint]);
 
-  const modalElement = useMemo(
-    () =>
-      loading ? (
-        <UpdatingModal isOpen={showModal} />
-      ) : (
-        <Modal
-          isOpen={showModal}
-          onDismiss={handleDismiss}
-          closeOnBackdropClick={true}
-          closeOnEscape={true}
-          title="Delete contact point"
-        >
-          <p>Deleting this contact point will permanently remove it.</p>
-          <p>Are you sure you want to delete this contact point?</p>
+  const modalElement = useMemo(() => {
+    if (isLoading) {
+      return <UpdatingModal isOpen={showModal} />;
+    }
 
-          <Modal.ButtonRow>
-            <Button type="button" variant="destructive" onClick={handleSubmit}>
-              Yes, delete contact point
-            </Button>
-            <Button type="button" variant="secondary" onClick={handleDismiss}>
-              Cancel
-            </Button>
-          </Modal.ButtonRow>
-        </Modal>
-      ),
-    [handleDismiss, handleSubmit, loading, showModal]
-  );
+    if (error) {
+      return <ErrorModal isOpen={showModal} onDismiss={handleDismiss} error={error} />;
+    }
+
+    return (
+      <Modal
+        isOpen={showModal}
+        onDismiss={handleDismiss}
+        closeOnBackdropClick={true}
+        closeOnEscape={true}
+        title="Delete contact point"
+      >
+        <p>Deleting this contact point will permanently remove it.</p>
+        <p>Are you sure you want to delete this contact point?</p>
+
+        <Modal.ButtonRow>
+          <Button type="button" variant="destructive" onClick={handleSubmit}>
+            Yes, delete contact point
+          </Button>
+          <Button type="button" variant="secondary" onClick={handleDismiss}>
+            Cancel
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    );
+  }, [error, handleDismiss, handleSubmit, isLoading, showModal]);
 
   return [modalElement, handleShow, handleDismiss];
 };
 
-const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
+const UpdatingModal = ({ isOpen }: Pick<ModalProps, 'isOpen'>) => (
   <Modal
     isOpen={isOpen}
     onDismiss={() => {}}
@@ -72,5 +84,23 @@ const UpdatingModal: FC<Pick<ModalProps, 'isOpen'>> = ({ isOpen }) => (
     }
   >
     Please wait while we update your configuration.
+  </Modal>
+);
+
+interface ErrorModalProps extends Pick<ModalProps, 'isOpen' | 'onDismiss'> {
+  error: unknown;
+}
+const ErrorModal = ({ isOpen, onDismiss, error }: ErrorModalProps) => (
+  <Modal
+    isOpen={isOpen}
+    onDismiss={onDismiss}
+    closeOnBackdropClick={true}
+    closeOnEscape={true}
+    title={'Something went wrong'}
+  >
+    <p>Failed to update your configuration:</p>
+    <p>
+      <code>{String(error)}</code>
+    </p>
   </Modal>
 );

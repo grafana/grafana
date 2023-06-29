@@ -4,7 +4,7 @@
  */
 
 import produce from 'immer';
-import { noop, remove } from 'lodash';
+import { remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -65,31 +65,26 @@ export function useDeleteContactPoint(selectedAlertmanager: string) {
   const [updateAlertManager, updateAlertmanagerState] =
     alertmanagerApi.endpoints.updateAlertmanagerConfiguration.useMutation();
 
-  // TODO I don't like this using promises...
-  // this doesn't allow us to set errors on "updateAlertManagerState" and can cause uncaught exceptions to bubble up
   const deleteTrigger = (contactPointName: string) => {
-    fetchAlertmanagerConfig
-      .refetch()
-      .then(({ data }) => {
-        if (!data) {
-          return;
-        }
+    return fetchAlertmanagerConfig.refetch().then(({ data }) => {
+      if (!data) {
+        return;
+      }
 
-        if (fingerprintAlertmanagerConfig(data) !== fingerprintAlertmanagerConfig(fetchAlertmanagerConfig.data)) {
-          throw new Error('someone mutated config');
-        }
+      if (fingerprintAlertmanagerConfig(data) !== fingerprintAlertmanagerConfig(fetchAlertmanagerConfig.data)) {
+        throw new Error('someone mutated config');
+      }
 
-        const newConfig = produce(data, (draft) => {
-          remove(draft?.alertmanager_config?.receivers ?? [], (receiver) => receiver.name === contactPointName);
-          return draft;
-        });
+      const newConfig = produce(data, (draft) => {
+        remove(draft?.alertmanager_config?.receivers ?? [], (receiver) => receiver.name === contactPointName);
+        return draft;
+      });
 
-        updateAlertManager({
-          selectedAlertmanager,
-          config: newConfig,
-        });
-      })
-      .catch(noop); // blergh
+      return updateAlertManager({
+        selectedAlertmanager,
+        config: newConfig,
+      }).unwrap();
+    });
   };
 
   return {

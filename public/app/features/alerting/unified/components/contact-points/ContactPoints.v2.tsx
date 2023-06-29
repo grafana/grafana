@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { noop, uniqueId } from 'lodash';
+import { uniqueId } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,9 @@ const ContactPoints = () => {
   // TODO hardcoded for now, change this to allow selecting different alertmanager
   const selectedAlertmanager = 'grafana';
   const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager);
+  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager);
+
+  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
   if (error) {
     return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
@@ -44,7 +47,13 @@ const ContactPoints = () => {
           return (
             <div className={styles.contactPointWrapper} key={contactPointKey}>
               <Stack direction="column" gap={0}>
-                <ContactPointHeader name={contactPoint.name} policies={[]} provisioned={provisioned} />
+                <ContactPointHeader
+                  name={contactPoint.name}
+                  policies={[]}
+                  provisioned={provisioned}
+                  disabled={updateAlertmanagerState.isLoading}
+                  onDelete={showDeleteModal}
+                />
                 <div className={styles.receiversWrapper}>
                   {contactPoint.grafana_managed_receiver_configs?.map((receiver) => {
                     const diagnostics = receiver[RECEIVER_STATUS_KEY];
@@ -66,23 +75,24 @@ const ContactPoints = () => {
           );
         })}
       </Stack>
+      {DeleteModal}
     </>
   );
 };
 
 interface ContactPointHeaderProps {
   name: string;
+  disabled?: boolean;
   provisioned?: boolean;
   policies?: string[]; // some array of policies that refer to this contact point
+  onDelete: (name: string) => void;
 }
 
 const ContactPointHeader = (props: ContactPointHeaderProps) => {
-  const { name, provisioned = false, policies = [] } = props;
+  const { name, disabled = false, provisioned = false, policies = [], onDelete } = props;
   const styles = useStyles2(getStyles);
 
-  // TODO hard-coded alertmanager source
-  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint('grafana');
-  const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
+  const disableActions = disabled || provisioned;
 
   return (
     <div className={styles.headerWrapper}>
@@ -113,7 +123,7 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             size="sm"
             icon="edit"
             type="button"
-            disabled={provisioned || updateAlertmanagerState.isLoading}
+            disabled={disableActions}
             aria-label="edit-action"
             data-testid="edit-action"
           >
@@ -129,10 +139,8 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
                 label="Delete"
                 icon="trash-alt"
                 destructive
-                disabled={provisioned}
-                onClick={() => {
-                  provisioned ? noop() : showDeleteModal(name);
-                }}
+                disabled={disableActions}
+                onClick={() => onDelete(name)}
               />
             </Menu>
           }
@@ -144,11 +152,10 @@ const ContactPointHeader = (props: ContactPointHeaderProps) => {
             type="button"
             aria-label="more-actions"
             data-testid="more-actions"
-            disabled={updateAlertmanagerState.isLoading}
+            disabled={disableActions}
           />
         </Dropdown>
       </Stack>
-      {DeleteModal}
     </div>
   );
 };
