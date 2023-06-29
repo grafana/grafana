@@ -53,7 +53,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	publicDashboardsMetric *publicdashboardsmetric.Service,
 	keyRetriever *dynamic.KeyRetriever,
-	dynamicAngularDetectorsUpdater angulardetectorsprovider.DynamicUpdater,
+	dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -91,7 +91,7 @@ func ProvideBackgroundServiceRegistry(
 		bundleService,
 		publicDashboardsMetric,
 		keyRetriever,
-		dynamicAngularDetectorsUpdater,
+		dynamicAngularDetectorsProvider,
 	)
 }
 

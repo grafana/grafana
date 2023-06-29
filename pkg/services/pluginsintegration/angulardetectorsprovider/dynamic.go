@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
 )
 
@@ -24,15 +25,13 @@ const (
 	gcomFetchTimeout    = time.Minute * 1
 )
 
-var (
-	_ DynamicUpdater = &Dynamic{}
-)
-
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
 // It also provides a background service that will periodically refresh the patterns from GCOM.
+// If the feature flag FlagPluginsDynamicAngularDetectionPatterns is disabled, the background service is disabled.
 type Dynamic struct {
-	log log.Logger
+	log      log.Logger
+	features featuremgmt.FeatureToggles
 
 	httpClient http.Client
 	baseURL    string
@@ -56,9 +55,10 @@ type Dynamic struct {
 	backgroundJobInterval time.Duration
 }
 
-func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service) (*Dynamic, error) {
+func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
 	d := &Dynamic{
 		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
+		features:              features,
 		store:                 store,
 		httpClient:            makeHttpClient(),
 		baseURL:               cfg.GrafanaComURL,
@@ -191,6 +191,11 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	}
 	d.setDetectors(cachedDetectors)
 	return nil
+}
+
+// IsDisabled returns true if FlagPluginsDynamicAngularDetectionPatterns is not enabled.
+func (d *Dynamic) IsDisabled() bool {
+	return !d.features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns)
 }
 
 // Run is the function implementing the background service and updates the detectors periodically.
