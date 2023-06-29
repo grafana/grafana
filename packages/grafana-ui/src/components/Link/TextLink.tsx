@@ -91,6 +91,7 @@ export const getLinkStyles = (
       gap: '0.25em',
       color: getLinkColor(color, inline),
       display: 'inline-flex',
+      textDecoration: 'none',
       '&:hover': {
         textDecoration: 'underline',
         color: theme.colors.text.link,
