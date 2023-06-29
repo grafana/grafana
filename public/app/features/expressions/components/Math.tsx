@@ -37,7 +37,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
         label={
           <InlineLabel width="auto">
             <Toggletip
-              containerClassName={styles.toggletip}
+              fitContent
               content={
                 <div className={styles.documentationContainer}>
                   <div>
@@ -113,9 +113,9 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
               closeButton={true}
               placement="bottom-start"
             >
-              <span>
+              <div className={styles.info}>
                 Expression <Icon name="info-circle" />
-              </span>
+              </div>
             </Toggletip>
           </InlineLabel>
         }
@@ -172,8 +172,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     grid-template-columns: max-content auto;
     column-gap: ${theme.spacing(2)};
   `,
-  toggletip: css`
-    max-width: fit-content;
+  info: css`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+    gap: ${theme.spacing(1)};
   `,
 });
 

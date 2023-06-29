@@ -1,4 +1,4 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
@@ -29,8 +29,8 @@ export interface ToggletipProps {
   footer?: JSX.Element | string;
   /** The UI control users interact with to display toggletips */
   children: JSX.Element;
-  /** The class name to be applied to the toggletip's container */
-  containerClassName?: string;
+  /** Determine whether the toggletip should fit its content or not */
+  fitContent?: boolean;
 }
 
 export const Toggletip = React.memo(
@@ -43,7 +43,7 @@ export const Toggletip = React.memo(
     closeButton = true,
     onClose,
     footer,
-    containerClassName,
+    fitContent = false,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
@@ -95,7 +95,7 @@ export const Toggletip = React.memo(
             <div
               data-testid="toggletip-content"
               ref={setTooltipRef}
-              {...getTooltipProps({ className: cx(style.container, containerClassName) })}
+              {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
             >
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
@@ -143,5 +143,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     info,
     error,
+    fitContent: css`
+      max-width: fit-content;
+    `,
   };
 };
