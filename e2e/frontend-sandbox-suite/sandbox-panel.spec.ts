@@ -24,9 +24,21 @@ describe('Panel sandbox', () => {
       // this button adds 3 iframes to the body
       cy.get('[data-testid="button-create-iframes"]').click();
 
-      cy.get('#createElementIframe').should('exist');
-      cy.get('#innerHTMLIframe').should('exist');
-      cy.get('#adjacentIframe').should('exist');
+      const iframeIds = [
+        'createElementIframe',
+        'innerHTMLIframe',
+        'appendIframe',
+        'prependIframe',
+        'afterIframe',
+        'beforeIframe',
+        'outerHTMLIframe',
+        'parseFromStringIframe',
+        'insertBeforeIframe',
+        'replaceChildIframe',
+      ];
+      iframeIds.forEach((id) => {
+        cy.get(`#${id}`).should('exist');
+      });
     });
 
     it('Reaches out of panel div', () => {
@@ -51,9 +63,21 @@ describe('Panel sandbox', () => {
       // this button adds 3 iframes to the body
       cy.get('[data-testid="button-create-iframes"]').click();
 
-      cy.get('#createElementIframe').should('not.exist');
-      cy.get('#innerHTMLIframe').should('not.exist');
-      cy.get('#adjacentIframe').should('not.exist');
+      const iframeIds = [
+        'createElementIframe',
+        'innerHTMLIframe',
+        'appendIframe',
+        'prependIframe',
+        'afterIframe',
+        'beforeIframe',
+        'outerHTMLIframe',
+        'parseFromStringIframe',
+        'insertBeforeIframe',
+        'replaceChildIframe',
+      ];
+      iframeIds.forEach((id) => {
+        cy.get(`#${id}`).should('not.exist');
+      });
     });
 
     it('Does not reaches out of panel div', () => {
