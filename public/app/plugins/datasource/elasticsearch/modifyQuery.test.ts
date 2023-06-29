@@ -30,6 +30,10 @@ describe('queryHasFilter', () => {
     expect(queryHasFilter('label:"value"', 'label', 'otherValue', '-')).toBe(false);
     expect(queryHasFilter('label:"value"', 'label', 'value', '-')).toBe(false);
   });
+  it('should support filters containing colons', () => {
+    expect(queryHasFilter('label\\:name:"value"', 'label:name', 'value')).toBe(true);
+    expect(queryHasFilter('-label\\:name:"value"', 'label:name', 'value', '-')).toBe(true);
+  });
 });
 
 describe('addFilterToQuery', () => {
@@ -45,12 +49,14 @@ describe('addFilterToQuery', () => {
   it('should add a negative filter to the query with other filters', () => {
     expect(addFilterToQuery('label2:"value2"', 'label', 'value', '-')).toBe('label2:"value2" AND -label:"value"');
   });
+  it('should support filters with colons', () => {
+    expect(addFilterToQuery('', 'label:name', 'value')).toBe('label\\:name:"value"');
+  });
 });
 
 describe('removeFilterFromQuery', () => {
   it('should remove filter from query', () => {
-    const query = 'label:"value"';
-    expect(removeFilterFromQuery(query, 'label', 'value')).toBe('');
+    expect(removeFilterFromQuery('label:"value"', 'label', 'value')).toBe('');
   });
   it('should remove filter from query with other filters', () => {
     expect(removeFilterFromQuery('label:"value" AND label2:"value2"', 'label', 'value')).toBe('label2:"value2"');
@@ -70,5 +76,8 @@ describe('removeFilterFromQuery', () => {
     expect(removeFilterFromQuery('-label : "value" OR label2:"value2"', 'label', 'value')).toBe(
       '-label : "value" OR label2:"value2"'
     );
+  });
+  it('should support filters with colons', () => {
+    expect(removeFilterFromQuery('label\\:name:"value"', 'label:name', 'value')).toBe('');
   });
 });
