@@ -3,7 +3,8 @@ aliases:
   - ../../../auth/grafana/
 description: Grafana OAuthentication Guide
 title: Configure Grafana authentication
-weight: 1000
+menuTitle: Basic auth
+weight: 200
 ---
 
 ## Configure Grafana authentication
