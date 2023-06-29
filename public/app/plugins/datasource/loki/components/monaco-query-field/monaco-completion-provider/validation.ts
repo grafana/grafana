@@ -17,16 +17,6 @@ interface ParseError {
 }
 
 /**
- * Simplified version of `validateQuery` to determine if a given query is valid or not.
- * Grafana variables are errors to the parser, so it is ideal to call this function with the
- * interpolated query.
- * @alpha
- */
-export function isValidQuery(interpolatedQuery: string): boolean {
-  return validateQuery(interpolatedQuery, interpolatedQuery, interpolatedQuery.split('\\n')) === false ? true : false;
-}
-
-/**
  * Conceived to work in combination with the MonacoQueryField component.
  * Given an original query, and it's interpolated version, it will return an array of ParserErrorBoundary
  * objects containing nodes which are actual errors. The interpolated version (even with placeholder variables)

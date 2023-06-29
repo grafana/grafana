@@ -176,6 +176,11 @@ export function getNodeFromQuery(query: string, nodeType: number): SyntaxNode | 
   return nodes.length > 0 ? nodes[0] : undefined;
 }
 
+/**
+ * Parses the query and looks for error nodes. If there is at least one, it returns false.
+ * Grafana variables are considered errors, so if you need to validate a query
+ * with variables you should interpolate it first.
+ */
 export function isQueryWithError(query: string): boolean {
   return isQueryWithNode(query, ErrorId);
 }

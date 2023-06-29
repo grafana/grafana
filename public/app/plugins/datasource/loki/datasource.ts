@@ -51,10 +51,7 @@ import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { LogContextProvider } from './LogContextProvider';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import {
-  isValidQuery,
-  placeHolderScopedVars,
-} from './components/monaco-query-field/monaco-completion-provider/validation';
+import { placeHolderScopedVars } from './components/monaco-query-field/monaco-completion-provider/validation';
 import { escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -455,7 +452,7 @@ export class LokiDatasource
 
   async getQueryStats(query: string): Promise<QueryStats | undefined> {
     // if query is invalid, clear stats, and don't request
-    if (!isValidQuery(this.interpolateString(query, placeHolderScopedVars))) {
+    if (isQueryWithError(this.interpolateString(query, placeHolderScopedVars))) {
       return undefined;
     }
 
@@ -574,7 +571,7 @@ export class LokiDatasource
 
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
     // Currently works only for logs sample
-    if (isQueryWithError(query.expr) || !isLogsQuery(query.expr)) {
+    if (!isLogsQuery(query.expr) || isQueryWithError(this.interpolateString(query.expr, placeHolderScopedVars))) {
       return [];
     }
 

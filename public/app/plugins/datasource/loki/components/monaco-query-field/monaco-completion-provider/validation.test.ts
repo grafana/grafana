@@ -1,4 +1,4 @@
-import { validateQuery, isValidQuery } from './validation';
+import { validateQuery } from './validation';
 
 describe('Monaco Query Validation', () => {
   test('Identifies empty queries as valid', () => {
@@ -97,45 +97,5 @@ logfmt fail
         startLineNumber: 5,
       },
     ]);
-  });
-});
-
-describe('isValidQuery()', () => {
-  test('Identifies empty queries as valid', () => {
-    expect(isValidQuery('')).toBe(true);
-  });
-
-  test('Identifies valid queries', () => {
-    expect(isValidQuery('{place="luna"}')).toBe(true);
-  });
-
-  test('Validates logs queries', () => {
-    expect(isValidQuery('{place="incomplete"')).toBe(false);
-    expect(isValidQuery('{place="luna"} | notaparser')).toBe(false);
-    expect(isValidQuery('{place="luna"} | logfmt |')).toBe(false);
-  });
-
-  test('Validates metric queries', () => {
-    expect(isValidQuery('sum(count_over_time({place="luna" | unwrap request_time [5m])) by (level)')).toBe(false);
-    expect(isValidQuery('sum(count_over_time({place="luna"} | unwrap [5m])) by (level)')).toBe(false);
-    expect(isValidQuery('sum()')).toBe(false);
-  });
-
-  test('Validates multi-line queries', () => {
-    let query = `
-{place="luna"} 
-# this is a comment 
-|
-logfmt
-|= "a"`;
-    expect(isValidQuery(query)).toBe(true);
-
-    query = `
-{place="luna"} 
-# this is a comment 
-|
-logfmt fail
-|= "a"`;
-    expect(isValidQuery(query)).toBe(false);
   });
 });
