@@ -30,11 +30,7 @@ export const DefaultCell = (props: TableCellProps) => {
   let value: string | ReactElement;
 
   if (cellOptions.type === TableCellDisplayMode.Custom) {
-    //@ts-ignore
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
-    // TODO pass a limited set of props, not the whole TableCellProps
-    // But what to pass? can we access the raw data frame? think field, rowIndex, dataFrame would be enough,
-    // and then we don't expose internal react table types. but not sure how to access dataFrame
     value = <CustomCellComponent field={field} value={cell.value} index={row.index} frame={frame} />;
   } else {
     if (React.isValidElement(cell.value)) {
