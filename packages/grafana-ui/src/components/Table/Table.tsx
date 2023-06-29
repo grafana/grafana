@@ -11,7 +11,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, ReducerID } from '@grafana/data';
+import { Field, ReducerID, DataFrame } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
@@ -239,13 +239,18 @@ export const Table = memo((props: Props) => {
   );
 
   const RenderRow = useCallback(
-    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
+    ({ index: rowIndex, style, subData }: { index: number; style: CSSProperties; subData: DataFrame[] }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];
       }
+      const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
 
       prepareRow(row);
+
+      if ((rowSubData === undefined || rowSubData.length === 0) && row.cells[0].column.id === 'expander') {
+        row.cells = row.cells.slice(1);
+      }
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
