@@ -286,7 +286,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		if errors.Is(err, store.ErrOptimisticLock) {
+		if errors.Is(err, store.ErrOptimisticLock) || errors.Is(err, alerting_models.ErrAlertRuleUniqueConstraintViolation) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		if errors.Is(err, alerting_models.ErrQuotaReached) {

@@ -328,6 +328,18 @@ func TestProvisioningApi(t *testing.T) {
 
 			require.Equal(t, 403, response.Status())
 		})
+
+		t.Run("are duplicate, POST returns 409", func(t *testing.T) {
+			sut := createProvisioningSrvSut(t)
+			rc := createTestRequestCtx()
+			rule := createTestAlertRule("rule", 1)
+			duplicateRule := createTestAlertRule("rule", 1)
+
+			sut.RoutePostAlertRule(&rc, rule)
+			response := sut.RoutePostAlertRule(&rc, duplicateRule)
+
+			require.Equal(t, 409, response.Status())
+		})
 	})
 
 	t.Run("alert rule groups", func(t *testing.T) {
