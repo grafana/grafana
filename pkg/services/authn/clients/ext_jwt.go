@@ -101,12 +101,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	signedInUser.Permissions[s.getDefaultOrgID()] = claims.Entitlements
 
-	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false})
-
-	identity.AuthID = claims.Subject
-	identity.AuthModule = login.ExtendedJWTModule
-
-	return identity, nil
+	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: false}, login.ExtendedJWTModule), nil
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
