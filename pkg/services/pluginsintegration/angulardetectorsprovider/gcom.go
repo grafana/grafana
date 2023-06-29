@@ -26,8 +26,13 @@ type GCOMPattern struct {
 	Type    GCOMPatternType
 }
 
-// errUnknownPatternType is returned when a pattern type is not known.
-var errUnknownPatternType = errors.New("unknown pattern type")
+var (
+	// errUnknownPatternType is returned when a pattern type is not known.
+	errUnknownPatternType = errors.New("unknown pattern type")
+
+	// errInvalidRegex is returned when a regex pattern has an invalid regex.
+	errInvalidRegex = errors.New("invalid regex")
+)
 
 // angularDetector converts a gcomPattern into a Detector, based on its Type.
 // If a pattern type is unknown, it returns an error wrapping errUnknownPatternType.
@@ -38,7 +43,7 @@ func (p *GCOMPattern) angularDetector() (angulardetector.AngularDetector, error)
 	case GCOMPatternTypeRegex:
 		re, err := regexp.Compile(p.Pattern)
 		if err != nil {
-			return nil, fmt.Errorf("%q regexp compile: %w", p.Pattern, err)
+			return nil, fmt.Errorf("%q regexp compile: %w: %s", p.Pattern, errInvalidRegex, err)
 		}
 		return &angulardetector.RegexDetector{Regex: re}, nil
 	}

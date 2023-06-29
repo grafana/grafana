@@ -15,7 +15,7 @@ type Service struct {
 func ProvideService(cfg *config.Cfg, dynamic *angulardetectorsprovider.Dynamic) (*Service, error) {
 	var detectorsProvider angulardetector.DetectorsProvider
 	var err error
-	static := angulardetector.NewDefaultStaticDetectorsProvider()
+	static := angularinspector.NewDefaultStaticDetectorsProvider()
 	if cfg.Features != nil && cfg.Features.IsEnabled(featuremgmt.FlagPluginsDynamicAngularDetectionPatterns) {
 		detectorsProvider = angulardetector.SequenceDetectorsProvider{dynamic, static}
 	} else {

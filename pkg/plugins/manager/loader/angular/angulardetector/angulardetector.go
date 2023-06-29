@@ -9,6 +9,9 @@ import (
 var (
 	_ AngularDetector = &ContainsBytesDetector{}
 	_ AngularDetector = &RegexDetector{}
+
+	_ DetectorsProvider = &StaticDetectorsProvider{}
+	_ DetectorsProvider = SequenceDetectorsProvider{}
 )
 
 // AngularDetector implements a check to see if a js file is using angular APIs.
