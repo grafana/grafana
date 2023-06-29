@@ -267,7 +267,7 @@ export interface AnalyzeQueryOptions {
 }
 
 /**
- * Data sources that support query manipulation though `modifyQuery` and `analyzeQuery` in Explore.
+ * Data sources that support query manipulation through `modifyQuery` and `analyzeQuery` in Explore.
  * Allows for interactions such as changing the query from logs details, or displaying filter status.
  * @internal
  */
