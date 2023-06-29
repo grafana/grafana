@@ -9,6 +9,12 @@
       "name-column": "",
       "tags-column": ""
     },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -566,6 +572,16 @@
       "default-label": "Par défaut"
     },
     "title": "Préférences"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Chargement en cours...",

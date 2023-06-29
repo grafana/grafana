@@ -43,6 +43,9 @@ interface Props extends Themeable2 {
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
   isFilterLabelActive?: (key: string, value: string) => Promise<boolean>;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinned?: boolean;
 }
 
 interface State {
@@ -237,6 +240,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onPermalinkClick={this.props.onPermalinkClick}
               app={app}
               styles={styles}
+              onPinLine={this.props.onPinLine}
+              onUnpinLine={this.props.onUnpinLine}
+              pinned={this.props.pinned}
             />
           )}
         </tr>

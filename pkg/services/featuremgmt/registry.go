@@ -214,16 +214,17 @@ var (
 			Owner:       awsPluginsSquad,
 		},
 		{
-			Name:         "redshiftAsyncQueryDataSupport",
-			Description:  "Enable async query data support for Redshift",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Name:        "redshiftAsyncQueryDataSupport",
+			Description: "Enable async query data support for Redshift",
+			Stage:       FeatureStageGeneralAvailability,
+			Expression:  "true", // enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Athena",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 			Owner:        awsPluginsSquad,
 		},
@@ -258,6 +259,12 @@ var (
 			Description: "Enable folder nesting",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaBackendPlatformSquad,
+		},
+		{
+			Name:        "nestedFolderPicker",
+			Description: "Enables the still in-development new folder picker to support nested folders",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
@@ -592,6 +599,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
+		},
+		{
+			Name:         "vizAndWidgetSplit",
+			Description:  "Split panels between vizualizations and widgets",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 	}
 )
