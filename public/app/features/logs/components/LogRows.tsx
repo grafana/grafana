@@ -141,7 +141,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 permalinkedRowId={this.props.permalinkedRowId}
                 onPinLine={this.props.onPinLine}
                 onUnpinLine={this.props.onUnpinLine}
-                pinned={this.props.pinnedRowId === row.uid
+                pinned={this.props.pinnedRowId === row.uid}
                 isFilterLabelActive={this.props.isFilterLabelActive}
                 {...rest}
               />
