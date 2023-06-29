@@ -32,7 +32,7 @@ export function TimeRangeShift(props: Props) {
         grow
         tooltip={props.tooltip}
         invalid={props.isInvalid}
-        error={'Invalid time shift. See tooltip for examples.'}
+        error={invalidTimeShiftError}
       >
         <Input
           type="text"
@@ -45,3 +45,5 @@ export function TimeRangeShift(props: Props) {
     </InlineFieldRow>
   );
 }
+
+export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';

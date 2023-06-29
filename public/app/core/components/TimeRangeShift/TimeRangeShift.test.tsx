@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
-import { TimeRangeShift } from './TimeRangeShift';
-import { invalidTimeShiftError, validateTimeShift } from './validation';
+import { invalidTimeShiftError, TimeRangeShift } from './TimeRangeShift';
+import { validateTimeShift } from './validation';
 
 describe('TimeRangeShift', () => {
   const TimeRangeShiftWithProps = ({ val }: { val: string }) => {
@@ -23,7 +23,6 @@ describe('TimeRangeShift', () => {
           setValue(v);
         }}
         isInvalid={spanTimeShiftIsInvalid}
-        invalidTimeShiftError={invalidTimeShiftError}
       />
     );
   };
