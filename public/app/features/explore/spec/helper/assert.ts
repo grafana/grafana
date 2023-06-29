@@ -26,16 +26,6 @@ export const assertStarredQueryHistoryExists = async (exploreId = 'left') => {
   expect(await selector.getByRole('button', { name: 'Unstar query' })).toBeInTheDocument();
 };
 
-export const assertModalIsOpen = async () => {
-  expect(await screen.findByRole('dialog')).toBeInTheDocument();
-};
-
-export const assertNoQueryHistory = async (exploreId = 'left') => {
-  const selector = withinExplore(exploreId);
-
-  expect(await selector.queryByLabelText('Query text')).not.toBeInTheDocument();
-};
-
 export const assertQueryHistoryComment = async (expectedQueryComments: string[], exploreId = 'left') => {
   const selector = withinExplore(exploreId);
   await waitFor(() => {
