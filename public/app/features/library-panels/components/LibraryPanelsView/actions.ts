@@ -26,22 +26,21 @@ interface SearchArgs {
 
 export function searchForLibraryPanels(args: SearchArgs): DispatchResult {
   // Functions to support filtering out library panels per plugin type that have skipDataQuery set to true
-  const getAllPluginMetaList = () => getAllPanelPluginMeta();
 
   const findPluginMeta = (pluginMeta: PanelPluginMeta, libraryPanel: LibraryPanel) =>
     pluginMeta.id === libraryPanel.type;
 
   const filterLibraryPanels = (libraryPanels: LibraryPanel[], isWidget: boolean) => {
-    const pluginMetaList = getAllPluginMetaList();
+    const pluginMetaList = getAllPanelPluginMeta();
 
     return libraryPanels.filter((libraryPanel) => {
       const matchingPluginMeta = pluginMetaList.find((pluginMeta) => findPluginMeta(pluginMeta, libraryPanel));
       // widget mode filter
       if (isWidget) {
-        return matchingPluginMeta && matchingPluginMeta.skipDataQuery;
+        return !!matchingPluginMeta?.skipDataQuery;
       }
       // non-widget mode filter
-      return matchingPluginMeta && !matchingPluginMeta.skipDataQuery;
+      return !matchingPluginMeta?.skipDataQuery;
     });
   };
 
