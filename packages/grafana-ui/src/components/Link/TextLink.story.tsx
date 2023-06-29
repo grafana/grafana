@@ -3,6 +3,7 @@ import React from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { VerticalGroup } from '../Layout/Layout';
+import { P } from '../Text/TextElements';
 
 import { TextLink } from './TextLink';
 import mdx from './TextLink.mdx';
@@ -34,19 +35,27 @@ export const Example: StoryFn = () => {
   return (
     <VerticalGroup>
       <StoryExample name="This is a 'inline + external' link with the default behaviour">
-        <TextLink href="https://google.es" inline={true} external>
-          Go to Google
-        </TextLink>
+        <P>
+          To get started with a forever free Grafana Cloud account, sign up at &#160;
+          <TextLink href="https://grafana.com/" external>
+            grafana.com
+          </TextLink>
+          .
+        </P>
       </StoryExample>
       <StoryExample name="This is a 'standalone + external' link with the default behaviour">
         <TextLink href="https://grafana.com/docs/grafana/latest/" inline={false} external>
-          Go to Grafana Docs
+          Learn how in the docs
         </TextLink>
       </StoryExample>
       <hr />
       <p>*The examples cannot contemplate an internal link due to conflicts between Storybook and React Router</p>
     </VerticalGroup>
   );
+};
+
+Example.parameters = {
+  controls: { exclude: ['href', 'external', 'variant', 'weight', 'color', 'inline', 'icon'] },
 };
 
 export const Basic: StoryFn = (args) => {
