@@ -100,43 +100,37 @@ Complete the following steps to install Grafana using the standalone binaries:
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the [download page](/grafana/download).
 1. Copy and paste the code from the [download page](/grafana/download) page into your command line and run.
 
-## Uninstall on Debian or Ubuntu
+## Uninstall on RHEL or Fedora
 
-Complete any of the following steps to uninstall Grafana.
+To uninstall Grafana, run the following commands in a terminal window:
 
-To uninstall Grafana, run any of the following commands in a terminal window:
+1. If you configured Grafana to run with systemd, stop the systemd service for Grafana server:
 
-1. To uninstall Grafana OSS with systemd:
-
-   ```bash
+   ```shell
    sudo systemctl stop grafana-server
-   sudo apt-get remove grafana
    ```
+  
+1. If you configured Grafana to run with init.d, stop the init.d service for Grafana server:
 
-1. To uninstall Grafana OSS with init.d:
-
-   ```bash
+   ```shell
    sudo service grafana-server stop
-   sudo apt-get remove grafana
    ```
 
-1. To uninstall Grafana Enterprise with systemd:
+1. To uninstall Grafana OSS: 
 
-   ```bash
-   sudo systemctl stop grafana-server
-   sudo apt-get remove grafana-entrerprise
+   ```shell
+   sudo dnf remove grafana
    ```
 
-1. To uninstall Grafana Enterprise with init.d:
+1. To uninstall Grafana Enterprise: 
 
-   ```bash
-   sudo service grafana-server stop
-   sudo apt-get remove grafana-enterprise
+   ```shell
+   sudo dnf remove grafana-enterprise
    ```
 
 1. Optional: To remove the Grafana repository:
 
-   ```bash
+   ```shell
    sudo rm -i /etc/apt/sources.list.d/grafana.list
    ```
 
