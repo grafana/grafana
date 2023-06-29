@@ -397,40 +397,6 @@ allowed_organizations =
 
 By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
-### Set up OAuth2 with Centrify
-
-1. Create a new Custom OpenID Connect application configuration in the Centrify dashboard.
-
-1. Create a memorable unique Application ID, e.g. "grafana", "grafana_aws", etc.
-
-1. Put in other basic configuration (name, description, logo, category)
-
-1. On the Trust tab, generate a long password and put it into the OpenID Connect Client Secret field.
-
-1. Put the URL to the front page of your Grafana instance into the "Resource Application URL" field.
-
-1. Add an authorized Redirect URI like `https://your-grafana-server/login/generic_oauth`
-
-1. Set up permissions, policies, etc. just like any other Centrify app
-
-1. Configure Grafana as follows:
-
-   ```bash
-   [auth.generic_oauth]
-   name = Centrify
-   enabled = true
-   allow_sign_up = true
-   auto_login = false
-   client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret>
-   scopes = openid profile email
-   auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
-   token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
-   api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
-   ```
-
-By default, a refresh token is included in the response for the **Authorization Code Grant**.
-
 ### Set up OAuth2 with OneLogin
 
 1. Create a new Custom Connector with the following settings:
