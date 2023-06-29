@@ -3439,8 +3439,9 @@ func TestFlatten(t *testing.T) {
 			"fieldName.innerFieldName": "this may be lost",
 		}
 
-		assert.Len(t, flatten(target, 10), 1)
-		_, ok := flatten(target, 10)["fieldName.innerFieldName"]
+		result := flatten(target, 10)
+		assert.Len(t, result, 1)
+		_, ok := result["fieldName.innerFieldName"]
 		assert.True(t, ok)
 	})
 }
