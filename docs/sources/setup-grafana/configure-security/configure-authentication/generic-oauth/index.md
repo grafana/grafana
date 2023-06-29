@@ -29,7 +29,7 @@ If your OAuth2 provider is not among them, you can use generic OAuth2 authentica
 
 ## Before you begin
 
-- Ensure that you have access to the [Grafana configuration file]({{< relref "docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location" >}}).
+- Ensure that you have access to the [Grafana configuration file]({{< relref "docs/grafana/latest/setup-grafana/configure-grafana#configuration-file-location" >}}).
 - Learn how to create an OAuth2 application with your chosen OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - (Optional) Learn about how to set up refresh tokens with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
