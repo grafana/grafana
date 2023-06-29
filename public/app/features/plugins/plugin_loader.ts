@@ -43,7 +43,6 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
-import { PLUGIN_CDN_URL_KEY } from './constants';
 import { sandboxPluginDependencies } from './sandbox/plugin_dependencies';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
