@@ -12,6 +12,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
@@ -34,6 +35,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
@@ -55,6 +57,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'id',
@@ -110,7 +113,7 @@ describe('logParser', () => {
         entryFieldIndex: 10,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [{ ...testStringField }],
+          fields: [testLineField, { ...testStringField }],
         }),
       });
 
@@ -181,6 +184,13 @@ describe('logParser', () => {
     });
   });
 });
+
+const testLineField = {
+  name: 'body',
+  type: FieldType.string,
+  config: {},
+  values: ['line1'],
+};
 
 const testStringField = {
   name: 'test_field_string',
