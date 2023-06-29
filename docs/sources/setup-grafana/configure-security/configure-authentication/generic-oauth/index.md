@@ -88,11 +88,7 @@ The table below describes all generic OAuth2 configuration options. Continue rea
 | `tls_client_ca`              | No       | Path to the trusted certificate authority list.                                                                                                                                                |                 |
 | `use_pkce`                   | No       | Set to `true` to use "proof key for code exchange" (PKCE).                                                                                                                                     | `false`         |
 
-### API URL
-
-Set `api_url` to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
-
-### Auth style
+## Auth style
 
 `auth_style` controls which [OAuth2 AuthStyle](https://pkg.go.dev/golang.org/x/oauth2#AuthStyle) is used when token is requested from OAuth provider. It determines how `client_id` and `client_secret` are sent to Oauth provider.
 Available values are `AutoDetect`, `InParams` and `InHeader`. By default, `AutoDetect` is used.
