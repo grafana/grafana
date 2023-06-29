@@ -1,4 +1,4 @@
-package ualert
+package migration
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
@@ -138,17 +139,17 @@ func TestMakeAlertRule(t *testing.T) {
 		t.Run("truncates very long names to max length", func(t *testing.T) {
 			m := newTestMigration(t)
 			da := createTestDashAlert()
-			da.Name = strings.Repeat("a", DefaultFieldMaxLength+1)
+			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
 			cnd := createTestDashAlertCondition()
 
 			ar, err := m.makeAlertRule(&logtest.Fake{}, cnd, da, "folder")
 
 			require.NoError(t, err)
-			require.Len(t, ar.Title, DefaultFieldMaxLength)
+			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
 			parts := strings.SplitN(ar.Title, "_", 2)
 			require.Len(t, parts, 2)
 			require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
-			require.Equal(t, DefaultFieldMaxLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+			require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 			require.Equal(t, ar.Title, ar.RuleGroup)
 		})
 	})

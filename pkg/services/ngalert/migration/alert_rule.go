@@ -1,4 +1,4 @@
-package ualert
+package migration
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
@@ -367,8 +368,8 @@ func transExecErr(l log.Logger, s string) string {
 func normalizeRuleName(daName string, uid string) string {
 	// If we have to truncate, we're losing data and so there is higher risk of uniqueness conflicts.
 	// Append the UID to the suffix to forcibly break any collisions.
-	if len(daName) > DefaultFieldMaxLength {
-		trunc := DefaultFieldMaxLength - 1 - len(uid)
+	if len(daName) > store.AlertDefinitionMaxTitleLength {
+		trunc := store.AlertDefinitionMaxTitleLength - 1 - len(uid)
 		daName = daName[:trunc] + "_" + uid
 	}
 

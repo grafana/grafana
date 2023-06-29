@@ -1,4 +1,4 @@
-package ualert
+package migration
 
 import (
 	"encoding/base64"
