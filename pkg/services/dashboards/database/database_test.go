@@ -670,7 +670,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: savedDash.Title, FolderID: savedFolder.ID, OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
 		})
-		require.NoError(t, err)
+		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
 	})
 }
 

@@ -8,7 +8,6 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -300,7 +299,6 @@ func (d *dashboardStore) Count(ctx context.Context, scopeParams *quota.ScopePara
 }
 
 func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite bool) (bool, error) {
-	spew.Dump("HELLO!")
 	dashWithIdExists := false
 	isParentFolderChanged := false
 	var existingById dashboards.Dashboard
@@ -387,6 +385,7 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 	return isParentFolderChanged, nil
 }
 
+// Returns boolean on whether the parent folder changed. Error is if the dashboard already exists.
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
@@ -395,7 +394,6 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 	if err != nil {
 		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}
-	fmt.Printf("dashboard title exists? %+v %v", dash, exists)
 	if exists && dash.ID != existing.ID {
 		if existing.IsFolder && !dash.IsFolder {
 			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameAsFolder
