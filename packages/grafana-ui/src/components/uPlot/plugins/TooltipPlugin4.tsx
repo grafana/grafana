@@ -48,7 +48,7 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         if (visRef.current && domRef.current) {
           domRef.current.style.transform = transform;
         } else {
-          styleRef.current.transform = transform;
+          styleRef.current = { ...styleRef.current, transform: transform };
           visRef.current = true;
           forceRedraw(Math.random());
         }
