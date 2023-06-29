@@ -655,7 +655,7 @@ func TestGetExistingDashboardByTitleAndFolder(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrDashboardWithSameNameInFolderExists)
 	})
 
-	t.Run("Returns no error when dashboard does not exist in a specific folder", func(t *testing.T) {
+	t.Run("Returns no error when dashboard does not exist in root folder", func(t *testing.T) {
 		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			_, err = getExistingDashboardByTitleAndFolder(sess, &dashboards.Dashboard{Title: "Beta", OrgID: 1}, sqlStore.GetDialect(), false, false)
 			return err
