@@ -128,7 +128,7 @@ func TestDefaultStaticDetectorsInspector(t *testing.T) {
 			exp: false,
 		})
 	}
-	inspector := PatternsListInspector{DetectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}
+	inspector := PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
 			isAngular, err := inspector.Inspect(context.Background(), tc.plugin)

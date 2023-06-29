@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angulardetector"
@@ -50,8 +51,28 @@ func (i *PatternsListInspector) Inspect(ctx context.Context, p *plugins.Plugin) 
 	return
 }
 
+// defaultDetectors contains all the detectors to Detect Angular plugins.
+// They are executed in the specified order.
+var defaultDetectors = []angulardetector.AngularDetector{
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("PanelCtrl")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("ConfigCtrl")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("app/plugins/sdk")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("angular.isNumber(")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("editor.html")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("ctrl.annotation")},
+	&angulardetector.ContainsBytesDetector{Pattern: []byte("getLegacyAngularInjector")},
+
+	&angulardetector.RegexDetector{Regex: regexp.MustCompile(`["']QueryCtrl["']`)},
+}
+
+// NewDefaultStaticDetectorsProvider returns a new StaticDetectorsProvider with the default (static, hardcoded) angular
+// detection patterns (defaultDetectors)
+func NewDefaultStaticDetectorsProvider() angulardetector.DetectorsProvider {
+	return &angulardetector.StaticDetectorsProvider{Detectors: defaultDetectors}
+}
+
 // NewStaticInspector returns the default Inspector, which is a PatternsListInspector that only uses the
 // static (hardcoded) angular detection patterns.
 func NewStaticInspector() (Inspector, error) {
-	return &PatternsListInspector{DetectorsProvider: angulardetector.NewDefaultStaticDetectorsProvider()}, nil
+	return &PatternsListInspector{DetectorsProvider: NewDefaultStaticDetectorsProvider()}, nil
 }
