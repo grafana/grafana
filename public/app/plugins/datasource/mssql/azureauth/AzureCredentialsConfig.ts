@@ -7,13 +7,14 @@ import {
   ConcealedSecretType,
   AzureAuthSecureJSONDataType,
   AzureAuthJSONDataType,
+  AzureAuthType,
 } from '../types';
 
 export const getDefaultCredentials = (managedIdentityEnabled: boolean, cloud: string): AzureCredentialsType => {
   if (managedIdentityEnabled) {
-    return { authType: 'msi' };
+    return { authType: AzureAuthType.MSI };
   } else {
-    return { authType: 'clientsecret', azureCloud: cloud };
+    return { authType: AzureAuthType.CLIENT_SECRET, azureCloud: cloud };
   }
 };
 
@@ -52,22 +53,22 @@ export const getCredentials = (
   }
 
   switch (credentials.authType) {
-    case 'msi':
+    case AzureAuthType.MSI:
       if (managedIdentityEnabled) {
         return {
-          authType: 'msi',
+          authType: AzureAuthType.MSI,
         };
       } else {
         // If authentication type is managed identity but managed identities were disabled in Grafana config,
         // then we should fallback to an empty app registration (client secret) configuration
         return {
-          authType: 'clientsecret',
+          authType: AzureAuthType.CLIENT_SECRET,
           azureCloud: cloud,
         };
       }
-    case 'clientsecret':
+    case AzureAuthType.CLIENT_SECRET:
       return {
-        authType: 'clientsecret',
+        authType: AzureAuthType.CLIENT_SECRET,
         azureCloud: credentials.azureCloud || cloud,
         tenantId: credentials.tenantId,
         clientId: credentials.clientId,
@@ -86,7 +87,7 @@ export const updateCredentials = (
   const cloud = bootConfig.azure?.cloud || AzureCloud.Public;
 
   switch (credentials.authType) {
-    case 'msi':
+    case AzureAuthType.MSI:
       if (!managedIdentityEnabled) {
         throw new Error('Managed Identity authentication is not enabled in Grafana config.');
       }
@@ -96,20 +97,20 @@ export const updateCredentials = (
         jsonData: {
           ...dsSettings.jsonData,
           azureCredentials: {
-            authType: 'msi',
+            authType: AzureAuthType.MSI,
           },
         },
       };
 
       return dsSettings;
 
-    case 'clientsecret':
+    case AzureAuthType.CLIENT_SECRET:
       dsSettings = {
         ...dsSettings,
         jsonData: {
           ...dsSettings.jsonData,
           azureCredentials: {
-            authType: 'clientsecret',
+            authType: AzureAuthType.CLIENT_SECRET,
             azureCloud: credentials.azureCloud || cloud,
             tenantId: credentials.tenantId,
             clientId: credentials.clientId,

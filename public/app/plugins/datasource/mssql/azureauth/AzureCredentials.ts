@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { AzureCredentialsType } from '../../mssql/types';
+import { AzureCredentialsType, AzureAuthType } from '../types';
 
 export enum AzureCloud {
   Public = 'AzureCloud',
@@ -11,9 +11,9 @@ export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [{ value: Az
 
 export function isCredentialsComplete(credentials: AzureCredentialsType): boolean {
   switch (credentials.authType) {
-    case 'msi':
+    case AzureAuthType.MSI:
       return true;
-    case 'clientsecret':
+    case AzureAuthType.CLIENT_SECRET:
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
   }
 }

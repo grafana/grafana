@@ -17,11 +17,11 @@ export interface Props {
 
 const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
   {
-    value: 'msi',
+    value: AzureAuthType.MSI,
     label: 'Managed Identity',
   },
   {
-    value: 'clientsecret',
+    value: AzureAuthType.CLIENT_SECRET,
     label: 'App Registration',
   },
 ];
@@ -33,7 +33,7 @@ export const AzureCredentialsForm = (props: Props) => {
     if (onCredentialsChange) {
       const updated: AzureCredentialsType = {
         ...credentials,
-        authType: selected.value || 'msi',
+        authType: selected.value || AzureAuthType.MSI,
       };
       onCredentialsChange(updated);
     }

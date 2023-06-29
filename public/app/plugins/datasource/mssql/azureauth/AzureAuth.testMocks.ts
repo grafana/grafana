@@ -1,30 +1,26 @@
 import { DataSourceSettings } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 
-import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType } from '../types';
+import { AzureAuthSecureJSONDataType, AzureAuthJSONDataType, AzureAuthType } from '../types';
 
-export const configWithManagedIdentityEnabled: GrafanaBootConfig = {
+export const configWithManagedIdentityEnabled: Partial<GrafanaBootConfig> = {
   azure: { managedIdentityEnabled: true, userIdentityEnabled: false },
-  // @ts-ignore
-} as unknown as GrafanaBootConfig;
+};
 
-export const configWithManagedIdentityDisabled: GrafanaBootConfig = {
+export const configWithManagedIdentityDisabled: Partial<GrafanaBootConfig> = {
   azure: { managedIdentityEnabled: false, userIdentityEnabled: false, cloud: 'AzureCloud' },
-  // @ts-ignore
-} as unknown as GrafanaBootConfig;
+};
 
-export const dataSourceSettingsWithMsiCredentials: DataSourceSettings<
-  AzureAuthJSONDataType,
-  AzureAuthSecureJSONDataType
+export const dataSourceSettingsWithMsiCredentials: Partial<
+  DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>
 > = {
-  jsonData: { azureCredentials: { authType: 'msi' } },
-  // @ts-ignore
-} as unknown as DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>;
+  jsonData: { azureCredentials: { authType: AzureAuthType.MSI } },
+};
 
 const basicJSONData = {
   jsonData: {
     azureCredentials: {
-      authType: 'clientsecret',
+      authType: AzureAuthType.CLIENT_SECRET,
       tenantId: 'XXXX-tenant-id-XXXX',
       clientId: 'XXXX-client-id-XXXX',
     },
@@ -32,21 +28,14 @@ const basicJSONData = {
 };
 
 // Will return symbol as the secret is concealed
-export const dataSourceSettingsWithClientSecretOnServer: DataSourceSettings<
-  AzureAuthJSONDataType,
-  AzureAuthSecureJSONDataType
-  // @ts-ignore
-> = { ...basicJSONData, secureJsonFields: { azureClientSecret: true } } as unknown as DataSourceSettings<
-  AzureAuthJSONDataType,
-  AzureAuthSecureJSONDataType
->;
+export const dataSourceSettingsWithClientSecretOnServer: Partial<
+  DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>
+> = { ...basicJSONData, secureJsonFields: { azureClientSecret: true } };
 
 // Will return the secret as a string from the secureJsonData
-export const dataSourceSettingsWithClientSecretInSecureJSONData: DataSourceSettings<
-  AzureAuthJSONDataType,
-  AzureAuthSecureJSONDataType
+export const dataSourceSettingsWithClientSecretInSecureJSONData: Partial<
+  DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>
 > = {
   ...basicJSONData,
   secureJsonData: { azureClientSecret: 'XXXX-super-secret-secret-XXXX' },
-  // @ts-ignore
-} as unknown as DataSourceSettings<AzureAuthJSONDataType, AzureAuthSecureJSONDataType>;
+};
