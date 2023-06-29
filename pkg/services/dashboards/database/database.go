@@ -385,15 +385,15 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 	return isParentFolderChanged, nil
 }
 
+// getExistingDashboardByTitleAndFolder returns a boolean (on whether the parent folder changed) and an error for if the dashboard already exists.
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
-	exists, err := sess.Where("org_id=? AND slug=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Slug,
+	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
 		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
 	if err != nil {
 		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}
-
 	if exists && dash.ID != existing.ID {
 		if existing.IsFolder && !dash.IsFolder {
 			return isParentFolderChanged, dashboards.ErrDashboardWithSameNameAsFolder
