@@ -5334,9 +5334,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/input-datasource@workspace:plugins-bundled/internal/input-datasource"
   dependencies:
-    "@grafana/data": 9.2.18
-    "@grafana/toolkit": 9.2.18
-    "@grafana/ui": 9.2.18
+    "@grafana/data": 9.2.20
+    "@grafana/toolkit": 9.2.20
+    "@grafana/ui": 9.2.20
     "@types/jest": 26.0.15
     "@types/lodash": 4.14.149
     "@types/react": 17.0.30
@@ -5380,12 +5380,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/data@9.2.18, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
+"@grafana/data@9.2.20, @grafana/data@workspace:*, @grafana/data@workspace:packages/grafana-data":
   version: 0.0.0-use.local
   resolution: "@grafana/data@workspace:packages/grafana-data"
   dependencies:
     "@braintree/sanitize-url": 6.0.0
-    "@grafana/schema": 9.2.18
+    "@grafana/schema": 9.2.20
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-json": 4.1.0
@@ -5444,7 +5444,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@9.2.18, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@9.2.20, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -5470,7 +5470,7 @@ __metadata:
     "@babel/core": 7.19.0
     "@babel/preset-env": 7.19.0
     "@cypress/webpack-preprocessor": 5.12.0
-    "@grafana/e2e-selectors": 9.2.18
+    "@grafana/e2e-selectors": 9.2.20
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mochajs/json-file-reporter": ^1.2.0
     "@rollup/plugin-node-resolve": 13.3.0
@@ -5557,15 +5557,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@9.2.18, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@9.2.20, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
     "@grafana/agent-web": ^0.4.0
-    "@grafana/data": 9.2.18
-    "@grafana/e2e-selectors": 9.2.18
+    "@grafana/data": 9.2.20
+    "@grafana/e2e-selectors": 9.2.20
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.2.18
+    "@grafana/ui": 9.2.20
     "@rollup/plugin-commonjs": 22.0.1
     "@rollup/plugin-node-resolve": 13.3.0
     "@sentry/browser": 6.19.7
@@ -5601,7 +5601,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/schema@9.2.18, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
+"@grafana/schema@9.2.20, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
   resolution: "@grafana/schema@workspace:packages/grafana-schema"
   dependencies:
@@ -5621,7 +5621,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/toolkit@9.2.18, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
+"@grafana/toolkit@9.2.20, @grafana/toolkit@workspace:*, @grafana/toolkit@workspace:packages/grafana-toolkit":
   version: 0.0.0-use.local
   resolution: "@grafana/toolkit@workspace:packages/grafana-toolkit"
   dependencies:
@@ -5637,10 +5637,10 @@ __metadata:
     "@babel/preset-env": 7.18.9
     "@babel/preset-react": 7.18.6
     "@babel/preset-typescript": 7.18.6
-    "@grafana/data": 9.2.18
+    "@grafana/data": 9.2.20
     "@grafana/eslint-config": 5.0.0
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.2.18
+    "@grafana/ui": 9.2.20
     "@jest/core": 27.5.1
     "@types/command-exists": ^1.2.0
     "@types/eslint": 8.4.1
@@ -5721,16 +5721,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@9.2.18, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@9.2.20, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
     "@babel/core": 7.19.0
     "@emotion/css": 11.9.0
     "@emotion/react": 11.9.3
-    "@grafana/data": 9.2.18
-    "@grafana/e2e-selectors": 9.2.18
-    "@grafana/schema": 9.2.18
+    "@grafana/data": 9.2.20
+    "@grafana/e2e-selectors": 9.2.20
+    "@grafana/schema": 9.2.20
     "@grafana/tsconfig": ^1.2.0-rc1
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.5
@@ -6013,11 +6013,11 @@ __metadata:
   resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
   dependencies:
     "@emotion/css": 11.9.0
-    "@grafana/data": 9.2.18
-    "@grafana/e2e-selectors": 9.2.18
-    "@grafana/runtime": 9.2.18
+    "@grafana/data": 9.2.20
+    "@grafana/e2e-selectors": 9.2.20
+    "@grafana/runtime": 9.2.20
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.2.18
+    "@grafana/ui": 9.2.20
     "@testing-library/jest-dom": 5.16.4
     "@testing-library/react": 12.1.4
     "@testing-library/user-event": 14.4.3
@@ -9218,7 +9218,7 @@ __metadata:
   linkType: hard
 
 "@reactour/tour@npm:^3.0.0":
-  version: 3.0.0
+  version: 3.4.0
   resolution: "@reactour/tour@npm:3.4.0"
   dependencies:
     "@reactour/mask": "*"
@@ -33776,14 +33776,14 @@ __metadata:
   linkType: hard
 
 "schema-utils@npm:>1.0.0":
-  version: 4.0.1
-  resolution: "schema-utils@npm:4.0.1"
+  version: 4.2.0
+  resolution: "schema-utils@npm:4.2.0"
   dependencies:
     "@types/json-schema": ^7.0.9
     ajv: ^8.9.0
     ajv-formats: ^2.1.1
     ajv-keywords: ^5.1.0
-  checksum: 745e7293c6b6c84940de16753c207311da821aa9911b9e2d158cfd9ffc5bf1f880147abbbe775b96cb8cd3c7f48890950fe0164f54eed9a8aabb948ebf8a3fdd
+  checksum: 26a0463d47683258106e6652e9aeb0823bf0b85843039e068b57da1892f7ae6b6b1094d48e9ed5ba5cbe9f7166469d880858b9d91abe8bd249421eb813850cde
   languageName: node
   linkType: hard
 

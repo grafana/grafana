@@ -187,6 +187,9 @@
   "AlertStateType": {
    "type": "string"
   },
+  "AlertStateType": {
+   "type": "string"
+  },
   "AlertingRule": {
    "description": "adapted from cortex",
    "properties": {
@@ -3551,6 +3554,37 @@
    "type": "array",
    "x-go-name": "GettableSilences",
    "x-go-package": "github.com/prometheus/alertmanager/api/v2/models"
+  },
+  "integration": {
+   "description": "Integration integration",
+   "properties": {
+    "lastNotifyAttempt": {
+     "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
+     "format": "date-time",
+     "type": "string"
+    },
+    "lastNotifyAttemptDuration": {
+     "description": "Duration of the last attempt to deliver a notification in humanized format (`1s` or `15ms`, etc).",
+     "type": "string"
+    },
+    "lastNotifyAttemptError": {
+     "description": "Error string for the last attempt to deliver a notification. Empty if the last attempt was successful.",
+     "type": "string"
+    },
+    "name": {
+     "description": "name",
+     "type": "string"
+    },
+    "sendResolved": {
+     "description": "send resolved",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "name",
+    "sendResolved"
+   ],
+   "type": "object"
   },
   "integration": {
    "description": "Integration integration",

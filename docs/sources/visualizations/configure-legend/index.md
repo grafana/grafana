@@ -1,17 +1,9 @@
 ---
 aliases:
-<<<<<<<< HEAD:docs/sources/visualizations/configure-legend/index.md
-  - /docs/grafana/latest/panels/working-with-panels/configure-legend/
-  - /docs/grafana/latest/visualizations/configure-legend/
-  - /docs/grafana/latest/panels-visualizations/visualizations/configure-legend/
-title: Configure a legend
-weight: 1300
-========
   - ../panels/working-with-panels/configure-legend/
   - visualizations/configure-legend/
 title: Configure a legend
 weight: 400
->>>>>>>> release-9.2.18:docs/sources/panels-visualizations/configure-legend/index.md
 ---
 
 # Configure a legend
@@ -38,12 +30,12 @@ When you apply your changes, the visualization changes appear to all users of th
 
 This topic currently applies to the following visualizations:
 
-- [Bar chart]({{< relref "../bar-chart/" >}})
-- [Histogram]({{< relref "../histogram/" >}})
-- [Pie chart]({{< relref "../pie-chart/" >}})
-- [State timeline]({{< relref "../state-timeline/" >}})
-- [Status history]({{< relref "../status-history/" >}})
-- [Time series]({{< relref "../time-series/" >}})
+- [Bar chart]({{< relref "../visualizations/bar-chart/" >}})
+- [Histogram]({{< relref "../visualizations/histogram/" >}})
+- [Pie chart]({{< relref "../visualizations/pie-chart/" >}})
+- [State timeline]({{< relref "../visualizations/state-timeline/" >}})
+- [Status history]({{< relref "../visualizations/status-history/" >}})
+- [Time series]({{< relref "../visualizations/time-series/" >}})
 
 ## Add values to a legend
 
@@ -75,10 +67,10 @@ By default, Grafana specifies the color of your series data, which you can chang
 
 ## Sort series
 
-You can change legend mode to **Table** and choose [calculations]({{< relref "../../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
+You can change legend mode to **Table** and choose [calculations]({{< relref "../calculation-types/" >}}) to be displayed in the legend. Click the calculation name header in the legend table to sort the values in the table in ascending or descending order.
 
-The sort order affects the positions of the bars in the Bar chart panel as well as the order of stacked series in the Time series and Bar chart panels.
-
-> **Note:** This feature is only supported in these panels: Bar chart, Histogram, Time series, XY Chart.
+{{% admonition type="note" %}}
+This feature is only supported in these panels: Bar chart, Histogram, Time series.
+{{% /admonition %}}
 
 ![Sort legend series](/static/img/docs/legend/legend-series-sort-8-3.png).

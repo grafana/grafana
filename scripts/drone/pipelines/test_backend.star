@@ -58,9 +58,6 @@ def test_backend(trigger, ver_mode):
     if ver_mode in ("release-branch", "release"):
         pipeline_name = "{}-{}-test-backend".format(ver_mode, "oss")
 
-    pipeline_name = '{}-test-backend'.format(ver_mode)
-    if ver_mode in ("release-branch", "release"):
-        pipeline_name = '{}-{}-test-backend'.format(ver_mode, edition)
     return pipeline(
         name = pipeline_name,
         edition = "oss",

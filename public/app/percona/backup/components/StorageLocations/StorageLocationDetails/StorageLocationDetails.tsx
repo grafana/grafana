@@ -20,6 +20,7 @@ export const StorageLocationDetails: FC<StorageLocationDetailsProps> = ({ locati
       {isS3Location(location) ? (
         <>
           <BucketBlock bucketName={location.bucketName} />
+          {/* eslint-disable-next-line jsx-a11y/no-access-key */}
           <KeysBlock accessKey={location.accessKey} secretKey={location.secretKey} />
         </>
       ) : null}

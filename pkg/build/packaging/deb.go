@@ -170,7 +170,11 @@ func UpdateDebRepo(cfg PublishConfig, workDir string) error {
 			return cli.Exit(fmt.Sprintf("failed to update Debian %q repository: %s", tp, output), 1)
 		}
 	}
+
+	// Update database in GCS
+	u = fmt.Sprintf("gs://%s/%s", cfg.DebDBBucket, strings.ToLower(string(cfg.Edition)))
 	if cfg.DryRun {
+		log.Printf("Simulating upload of Debian repo database to GCS (%s)\n", u)
 	} else {
 		log.Printf("Uploading Debian repo database to GCS (%s)...\n", u)
 		//nolint:gosec
