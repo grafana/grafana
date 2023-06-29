@@ -4,7 +4,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
