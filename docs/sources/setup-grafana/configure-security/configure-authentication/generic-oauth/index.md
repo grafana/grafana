@@ -23,14 +23,13 @@ Grafana has specialised OAuth2 integrations for the following auth providers:
 - [GitLab OAuth]({{< relref "../gitlab" >}})
 - [Google OAuth]({{< relref "../google" >}})
 - [Grafana Com OAuth]({{< relref "../grafana-com" >}})
-- [KeyCloak OAuth]({{< relref "../keycloak" >}})
 - [Okta OAuth]({{< relref "../okta" >}})
 
 If your OAuth2 provider is not among them, you can use generic OAuth2 authentication to integrate it with Grafana.
 
 ## Before you begin
 
-- Ensure that you have access to the [Grafana configuration file]({{< relref "/docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location" >}}).
+- Ensure that you have access to the [Grafana configuration file]({{< relref "docs/grafana/latest/setup-grafana/configure-grafana/#configuration-file-location" >}}).
 - Learn how to create an OAuth2 application with your chosen OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - (Optional) Learn about how to set up refresh tokens with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
@@ -180,7 +179,7 @@ To configure generic OAuth2 to use a refresh token, perform one or both of the f
 
 ## Role Mapping
 
-Unless [`skip_org_role_sync` option]({{< relref "#skip-organization-role-sync" >}}) is enabled, user's role will be set to the role obtained from the auth provider upon user login.
+Unless `skip_org_role_sync` option is enabled, user's role will be set to the role obtained from the auth provider upon user login.
 User's role is retrieved using [JMESPath](http://jmespath.org/examples.html) from the `role_attribute_path` configuration option.
 Grafana determines a user's role by following the steps below until it finds a role:
 
