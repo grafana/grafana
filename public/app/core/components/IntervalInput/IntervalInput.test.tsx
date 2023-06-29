@@ -2,46 +2,49 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
-import { invalidTimeShiftError, TimeRangeShift } from './TimeRangeShift';
-import { validateTimeShift } from './validation';
+import { invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
-describe('TimeRangeShift', () => {
-  const TimeRangeShiftWithProps = ({ val }: { val: string }) => {
-    const [spanTimeShiftIsInvalid, setSpanTimeShiftIsInvalid] = useState(() => {
-      return val ? validateTimeShift(val) : false;
+import { IntervalInput } from './IntervalInput';
+import { validateInterval } from './validation';
+
+describe('IntervalInput', () => {
+  const IntervalInputtWithProps = ({ val }: { val: string }) => {
+    const [intervalIsInvalid, setIntervalIsInvalid] = useState(() => {
+      return val ? validateInterval(val) : false;
     });
     const [value, setValue] = useState(val);
 
     return (
-      <TimeRangeShift
+      <IntervalInput
         label=""
         tooltip=""
         value={value}
         disabled={false}
         onChange={(v) => {
-          setSpanTimeShiftIsInvalid(validateTimeShift(v));
+          setIntervalIsInvalid(validateInterval(v));
           setValue(v);
         }}
-        isInvalid={spanTimeShiftIsInvalid}
+        isInvalid={intervalIsInvalid}
+        isInvalidError={invalidTimeShiftError}
       />
     );
   };
 
   describe('validates time shift correctly', () => {
     it('for previosuly saved invalid value', async () => {
-      render(<TimeRangeShiftWithProps val="77" />);
+      render(<IntervalInputtWithProps val="77" />);
       expect(screen.getByDisplayValue('77')).toBeInTheDocument();
       expect(screen.getByText(invalidTimeShiftError)).toBeInTheDocument();
     });
 
     it('for previously saved empty value', async () => {
-      render(<TimeRangeShiftWithProps val="" />);
+      render(<IntervalInputtWithProps val="" />);
       expect(screen.getByPlaceholderText('0')).toBeInTheDocument();
       expect(screen.queryByText(invalidTimeShiftError)).not.toBeInTheDocument();
     });
 
     it('for empty (valid) value', async () => {
-      render(<TimeRangeShiftWithProps val="1ms" />);
+      render(<IntervalInputtWithProps val="1ms" />);
       await userEvent.clear(screen.getByDisplayValue('1ms'));
       await waitFor(() => {
         expect(screen.queryByText(invalidTimeShiftError)).not.toBeInTheDocument();
@@ -49,7 +52,7 @@ describe('TimeRangeShift', () => {
     });
 
     it('for valid value', async () => {
-      render(<TimeRangeShiftWithProps val="10ms" />);
+      render(<IntervalInputtWithProps val="10ms" />);
       expect(screen.queryByText(invalidTimeShiftError)).not.toBeInTheDocument();
 
       const input = screen.getByDisplayValue('10ms');
@@ -67,7 +70,7 @@ describe('TimeRangeShift', () => {
     });
 
     it('for invalid value', async () => {
-      render(<TimeRangeShiftWithProps val="10ms" />);
+      render(<IntervalInputtWithProps val="10ms" />);
       const input = screen.getByDisplayValue('10ms');
       await userEvent.clear(input);
       await userEvent.type(input, 'abc');

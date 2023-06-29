@@ -7,8 +7,8 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
-import { TimeRangeShift } from '../TimeRangeShift/TimeRangeShift';
-import { validateTimeShift } from '../TimeRangeShift/validation';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
+import { validateInterval } from '../IntervalInput/validation';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -85,10 +85,10 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   const { query = '', tags, customQuery } = traceToLogs;
 
   const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
-    return traceToLogs?.spanStartTimeShift ? validateTimeShift(traceToLogs?.spanStartTimeShift) : false;
+    return traceToLogs?.spanStartTimeShift ? validateInterval(traceToLogs?.spanStartTimeShift) : false;
   });
   const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
-    return traceToLogs?.spanEndTimeShift ? validateTimeShift(traceToLogs?.spanEndTimeShift) : false;
+    return traceToLogs?.spanEndTimeShift ? validateInterval(traceToLogs?.spanEndTimeShift) : false;
   });
 
   const updateTracesToLogs = useCallback(
@@ -133,25 +133,27 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <TimeRangeShift
+      <IntervalInput
         label={getTimeShiftLabel('start')}
         tooltip={getTimeShiftTooltip('start')}
         value={traceToLogs.spanStartTimeShift || ''}
         onChange={(val) => {
-          setSpanStartTimeShiftIsInvalid(validateTimeShift(val));
+          setSpanStartTimeShiftIsInvalid(validateInterval(val));
           updateTracesToLogs({ spanStartTimeShift: val });
         }}
         isInvalid={spanStartTimeShiftIsInvalid}
+        isInvalidError={invalidTimeShiftError}
       />
-      <TimeRangeShift
+      <IntervalInput
         label={getTimeShiftLabel('end')}
         tooltip={getTimeShiftTooltip('end')}
         value={traceToLogs.spanEndTimeShift || ''}
         onChange={(val) => {
-          setSpanEndTimeShiftIsInvalid(validateTimeShift(val));
+          setSpanEndTimeShiftIsInvalid(validateInterval(val));
           updateTracesToLogs({ spanEndTimeShift: val });
         }}
         isInvalid={spanEndTimeShiftIsInvalid}
+        isInvalidError={invalidTimeShiftError}
       />
 
       <InlineFieldRow>
@@ -249,6 +251,8 @@ export const getTimeShiftLabel = (type: 'start' | 'end') => {
 export const getTimeShiftTooltip = (type: 'start' | 'end') => {
   return `Shifts the ${type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`;
 };
+
+export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';
 
 export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
   return (

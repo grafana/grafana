@@ -9,10 +9,11 @@ interface Props {
   value: string;
   onChange: (val: string) => void;
   isInvalid: boolean;
+  isInvalidError: string;
   disabled?: boolean;
 }
 
-export function TimeRangeShift(props: Props) {
+export function IntervalInput(props: Props) {
   const [localValue, setLocalValue] = useState(props.value);
 
   useDebounce(
@@ -32,7 +33,7 @@ export function TimeRangeShift(props: Props) {
         grow
         tooltip={props.tooltip}
         invalid={props.isInvalid}
-        error={invalidTimeShiftError}
+        error={props.isInvalidError}
       >
         <Input
           type="text"
@@ -45,5 +46,3 @@ export function TimeRangeShift(props: Props) {
     </InlineFieldRow>
   );
 }
-
-export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';

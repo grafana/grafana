@@ -12,10 +12,10 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
-import { TimeRangeShift } from '../TimeRangeShift/TimeRangeShift';
-import { validateTimeShift } from '../TimeRangeShift/validation';
+import { IntervalInput } from '../IntervalInput/IntervalInput';
+import { validateInterval } from '../IntervalInput/validation';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
-import { getTimeShiftLabel, getTimeShiftTooltip } from '../TraceToLogs/TraceToLogsSettings';
+import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
@@ -40,12 +40,12 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
   const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
     return options.jsonData.tracesToMetrics?.spanStartTimeShift
-      ? validateTimeShift(options.jsonData.tracesToMetrics?.spanStartTimeShift)
+      ? validateInterval(options.jsonData.tracesToMetrics?.spanStartTimeShift)
       : false;
   });
   const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
     return options.jsonData.tracesToMetrics?.spanEndTimeShift
-      ? validateTimeShift(options.jsonData.tracesToMetrics?.spanEndTimeShift)
+      ? validateInterval(options.jsonData.tracesToMetrics?.spanEndTimeShift)
       : false;
   });
 
@@ -89,32 +89,34 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         ) : null}
       </InlineFieldRow>
 
-      <TimeRangeShift
+      <IntervalInput
         label={getTimeShiftLabel('start')}
         tooltip={getTimeShiftTooltip('start')}
         value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
         onChange={(val) => {
-          setSpanStartTimeShiftIsInvalid(validateTimeShift(val));
+          setSpanStartTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
             ...options.jsonData.tracesToMetrics,
             spanStartTimeShift: val,
           });
         }}
         isInvalid={spanStartTimeShiftIsInvalid}
+        isInvalidError={invalidTimeShiftError}
       />
 
-      <TimeRangeShift
+      <IntervalInput
         label={getTimeShiftLabel('end')}
         tooltip={getTimeShiftTooltip('end')}
         value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
         onChange={(val) => {
-          setSpanEndTimeShiftIsInvalid(validateTimeShift(val));
+          setSpanEndTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
             ...options.jsonData.tracesToMetrics,
             spanEndTimeShift: val,
           });
         }}
         isInvalid={spanEndTimeShiftIsInvalid}
+        isInvalidError={invalidTimeShiftError}
       />
 
       <InlineFieldRow>
