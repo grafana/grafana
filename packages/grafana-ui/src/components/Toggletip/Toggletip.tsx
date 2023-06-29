@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { Placement } from '@popperjs/core';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
@@ -28,6 +29,8 @@ export interface ToggletipProps {
   footer?: JSX.Element | string;
   /** The UI control users interact with to display toggletips */
   children: JSX.Element;
+  /** The class name to be applied to the toggletip's container */
+  containerClassName?: string;
 }
 
 export const Toggletip = React.memo(
@@ -40,6 +43,7 @@ export const Toggletip = React.memo(
     closeButton = true,
     onClose,
     footer,
+    containerClassName,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
     const style = styles[theme];
@@ -91,7 +95,7 @@ export const Toggletip = React.memo(
             <div
               data-testid="toggletip-content"
               ref={setTooltipRef}
-              {...getTooltipProps({ className: style.container })}
+              {...getTooltipProps({ className: cx(style.container, containerClassName) })}
             >
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
