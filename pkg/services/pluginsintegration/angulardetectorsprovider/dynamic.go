@@ -173,26 +173,24 @@ func (d *Dynamic) updateDetectors(ctx context.Context) error {
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	var cachedPatterns GCOMPatterns
-	rawCached, err := d.store.Get(ctx)
-	switch {
-	case errors.Is(err, angularpatternsstore.ErrNoCachedValue):
-		// Swallow ErrNoCachedValue without changing cache
+	rawCached, ok, err := d.store.Get(ctx)
+	if !ok {
+		// No cached value found, do not alter in-memory detectors
 		return nil
-	case err == nil:
-		// Try to unmarshal, convert to detectors and set local cache
-		if err := json.Unmarshal([]byte(rawCached), &cachedPatterns); err != nil {
-			return fmt.Errorf("json unmarshal: %w", err)
-		}
-		cachedDetectors, err := d.patternsToDetectors(cachedPatterns)
-		if err != nil {
-			return fmt.Errorf("convert to detectors: %w", err)
-		}
-		d.setDetectors(cachedDetectors)
-		return nil
-	default:
-		// Other error
+	}
+	if err != nil {
 		return fmt.Errorf("get cached value: %w", err)
 	}
+	// Try to unmarshal, convert to detectors and set local cache
+	if err := json.Unmarshal([]byte(rawCached), &cachedPatterns); err != nil {
+		return fmt.Errorf("json unmarshal: %w", err)
+	}
+	cachedDetectors, err := d.patternsToDetectors(cachedPatterns)
+	if err != nil {
+		return fmt.Errorf("convert to detectors: %w", err)
+	}
+	d.setDetectors(cachedDetectors)
+	return nil
 }
 
 // Run is the function implementing the background service and updates the detectors periodically.

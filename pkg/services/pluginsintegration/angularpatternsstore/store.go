@@ -3,7 +3,6 @@ package angularpatternsstore
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,12 +10,10 @@ import (
 )
 
 type Service interface {
-	Get(ctx context.Context) (string, error)
+	Get(ctx context.Context) (string, bool, error)
 	Set(ctx context.Context, patterns any) error
 	GetLastUpdated(ctx context.Context) (time.Time, error)
 }
-
-var ErrNoCachedValue = errors.New("no cached value")
 
 const (
 	kvNamespace = "plugin.angularpatterns"
@@ -37,16 +34,9 @@ func ProvideService(kv kvstore.KVStore) Service {
 }
 
 // Get returns the raw cached angular detection patterns. The returned value is a JSON-encoded string.
-// If no value is present, ErrNoCachedValue is returned.
-func (s *KVStoreService) Get(ctx context.Context) (string, error) {
-	data, ok, err := s.kv.Get(ctx, keyPatterns)
-	if err != nil {
-		return "", fmt.Errorf("kv get: %w", err)
-	}
-	if !ok {
-		return "", ErrNoCachedValue
-	}
-	return data, nil
+// If no value is present, the second argument is false and the returned error is nil.
+func (s *KVStoreService) Get(ctx context.Context) (string, bool, error) {
+	return s.kv.Get(ctx, keyPatterns)
 }
 
 // Set sets the cached angular detection patterns and the latest update time to time.Now().
