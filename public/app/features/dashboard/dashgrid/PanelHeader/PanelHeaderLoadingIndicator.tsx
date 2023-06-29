@@ -40,7 +40,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: 10px;
       background: ${theme.colors.text.disabled};
       box-shadow: 0 0 2px ${theme.colors.text.disabled};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       position: relative;
       top: 6px;
       right: 1px;
