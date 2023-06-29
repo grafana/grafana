@@ -226,8 +226,9 @@ type Cfg struct {
 	// CSPReportEnabled toggles Content Security Policy Report Only support.
 	CSPReportOnlyEnabled bool
 	// CSPReportOnlyTemplate contains the Content Security Policy Report Only template.
-	CSPReportOnlyTemplate string
-	AngularSupportEnabled bool
+	CSPReportOnlyTemplate            string
+	AngularSupportEnabled            bool
+	FrontendSandboxDisableForPlugins []string
 
 	TempDataLifetime time.Duration
 
@@ -1407,6 +1408,12 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+
+	frontendSandboxDisableForPlugins := security.Key("frontend_sandbox_disable_for_plugins").MustString("")
+	for _, plug := range strings.Split(frontendSandboxDisableForPlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.FrontendSandboxDisableForPlugins = append(cfg.FrontendSandboxDisableForPlugins, plug)
+	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
 		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")

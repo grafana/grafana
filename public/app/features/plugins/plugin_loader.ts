@@ -220,20 +220,22 @@ export async function importPluginModule({
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
-  if (isFrontendSandboxSupported(isAngular)) {
+  if (isFrontendSandboxSupported({ isAngular, pluginId })) {
     return importPluginModuleInSandbox({ pluginId });
   }
 
   return grafanaRuntime.SystemJS.import(path);
 }
 
-function isFrontendSandboxSupported(isAngular?: boolean): boolean {
+function isFrontendSandboxSupported({ isAngular, pluginId }: { isAngular?: boolean; pluginId: string }): boolean {
   // To fast test and debug the sandbox in the browser.
   const sandboxQueryParam = location.search.includes('nosandbox') && config.buildInfo.env === 'development';
+  const isPluginExcepted = config.frontendSandboxDisableForPlugins.includes(pluginId);
   return (
     !isAngular &&
     Boolean(config.featureToggles.pluginsFrontendSandbox) &&
     process.env.NODE_ENV !== 'test' &&
+    !isPluginExcepted &&
     !sandboxQueryParam
   );
 }
