@@ -119,7 +119,7 @@ export class LogRowMessage extends PureComponent<Props> {
               <IconButton
                 className={styles.unPinButton}
                 size="md"
-                name="map-marker-minus"
+                name="gf-pin"
                 onClick={() => onUnpinLine && onUnpinLine(row)}
                 tooltip="Unpin line"
                 tooltipPlacement="top"
@@ -152,7 +152,7 @@ export class LogRowMessage extends PureComponent<Props> {
               <IconButton
                 className={styles.unPinButton}
                 size="md"
-                name="map-marker-minus"
+                name="gf-pin"
                 onClick={() => onUnpinLine && onUnpinLine(row)}
                 tooltip="Unpin line"
                 tooltipPlacement="top"
@@ -163,7 +163,7 @@ export class LogRowMessage extends PureComponent<Props> {
               <IconButton
                 className={styles.unPinButton}
                 size="md"
-                name="map-marker-plus"
+                name="gf-pin"
                 onClick={() => onPinLine && onPinLine(row)}
                 tooltip="Pin line"
                 tooltipPlacement="top"
