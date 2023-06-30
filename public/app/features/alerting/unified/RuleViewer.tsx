@@ -184,7 +184,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} className={styles.labels} />
+                <AlertLabels labels={rule.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />

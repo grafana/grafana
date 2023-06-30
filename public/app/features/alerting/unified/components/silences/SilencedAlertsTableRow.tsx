@@ -42,7 +42,7 @@ export const SilencedAlertsTableRow = ({ alert, className }: Props) => {
         <tr className={className}>
           <td></td>
           <td colSpan={5}>
-            <AlertLabels labels={alert.labels} />
+            <AlertLabels labels={alert.labels} size="sm" />
           </td>
         </tr>
       )}
