@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 
 import { Space } from '@grafana/experimental';
 import { Alert, Button, Field, Modal } from '@grafana/ui';
@@ -20,11 +20,6 @@ export interface Props {
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
-  const moveButtonText = useMemo(
-    () =>
-      isMoving ? t('browse-dashboards.action.moving', 'Moving...') : t('browse-dashboards.action.move-button', 'Move'),
-    [isMoving]
-  );
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const onMove = async () => {
@@ -66,7 +61,9 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
           <Trans i18nKey="browse-dashboards.action.cancel-button">Cancel</Trans>
         </Button>
         <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
-          {moveButtonText}
+          {isMoving
+            ? t('browse-dashboards.action.moving', 'Moving...')
+            : t('browse-dashboards.action.move-button', 'Move')}
         </Button>
       </Modal.ButtonRow>
     </Modal>
