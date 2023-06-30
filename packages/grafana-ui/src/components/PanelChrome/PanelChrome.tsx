@@ -20,7 +20,7 @@ import { TitleItem } from './TitleItem';
 /**
  * @internal
  */
-type PanelChromeProps = FixedDimensions | AutoSize;
+export type PanelChromeProps = FixedDimensions | AutoSize;
 interface BaseProps {
   padding?: PanelPadding;
   hoverHeaderOffset?: number;
@@ -57,13 +57,13 @@ interface BaseProps {
   onOpenMenu?: () => void;
 }
 
-export interface FixedDimensions extends BaseProps {
+interface FixedDimensions extends BaseProps {
   width: number;
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode | ReactNode;
 }
 
-export interface AutoSize extends BaseProps {
+interface AutoSize extends BaseProps {
   width?: never;
   height?: never;
   children: ReactNode;

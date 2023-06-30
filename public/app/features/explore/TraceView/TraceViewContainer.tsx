@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React, { RefObject, useMemo, useState } from 'react';
-import { useMeasure } from 'react-use';
 
 import { CoreApp, DataFrame, GrafanaTheme2, PanelData, SplitOpen } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -50,7 +49,6 @@ export function TraceViewContainer(props: Props) {
     (state: StoreState) => state.explore.panes[props.exploreId]?.datasourceInstance ?? undefined
   );
   const datasourceType = datasource ? datasource?.type : 'unknown';
-  const [ref, { width }] = useMeasure<HTMLDivElement>();
 
   const links = useMemo(() => {
     if (!traceProp) {
@@ -64,63 +62,58 @@ export function TraceViewContainer(props: Props) {
   }
 
   return (
-    <div ref={ref}>
-      <PanelChrome
-        padding="none"
-        width={width}
-        title={getTraceName(traceProp.spans)}
-        titleItems={
-          <span className={style.duration}>
-            {config.featureToggles.newTraceViewHeader ? (
-              <>
-                {formatDuration(traceProp.duration)}
-                {links && links.length > 0 && <ExternalLinks links={links} />}
-              </>
-            ) : (
-              traceProp.traceID
-            )}
-            {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
-          </span>
-        }
-        actions={
-          config.featureToggles.newTraceViewHeader ? (
-            <TracePageActions
-              traceId={traceProp.traceID}
-              data={dataFrames[0]}
-              app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
-            />
+    <PanelChrome
+      padding="none"
+      title={getTraceName(traceProp.spans)} // name it just "Trace" or use {getTraceName(traceProp.spans)} - but inside the component itself
+      titleItems={
+        <span className={style.duration}>
+          {config.featureToggles.newTraceViewHeader ? (
+            <>
+              {formatDuration(traceProp.duration)}
+              {links && links.length > 0 && <ExternalLinks links={links} />}
+            </>
           ) : (
-            <TracePageSearchBar
-              navigable={true}
-              searchValue={search}
-              setSearch={setSearch}
-              spanFindMatches={spanFindMatches}
-              searchBarSuffix={searchBarSuffix}
-              setSearchBarSuffix={setSearchBarSuffix}
-              focusedSpanIdForSearch={focusedSpanIdForSearch}
-              setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
-              datasourceType={datasourceType}
-            />
-          )
-        }
-      >
-        {() => (
-          <TraceView
-            exploreId={exploreId}
-            dataFrames={dataFrames}
-            splitOpenFn={splitOpenFn}
-            scrollElement={scrollElement}
-            traceProp={traceProp}
-            spanFindMatches={spanFindMatches}
-            search={search}
-            focusedSpanIdForSearch={focusedSpanIdForSearch}
-            queryResponse={queryResponse}
-            datasource={datasource}
-            topOfViewRef={topOfViewRef}
-            topOfViewRefType={TopOfViewRefType.Explore}
+            traceProp.traceID
+          )}
+          {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
+        </span>
+      }
+      actions={
+        config.featureToggles.newTraceViewHeader ? (
+          <TracePageActions
+            traceId={traceProp.traceID}
+            data={dataFrames[0]}
+            app={exploreId ? CoreApp.Explore : CoreApp.Unknown}
           />
-        )}
-      </PanelChrome>
-    </div>
+        ) : (
+          <TracePageSearchBar
+            navigable={true}
+            searchValue={search}
+            setSearch={setSearch}
+            spanFindMatches={spanFindMatches}
+            searchBarSuffix={searchBarSuffix}
+            setSearchBarSuffix={setSearchBarSuffix}
+            focusedSpanIdForSearch={focusedSpanIdForSearch}
+            setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+            datasourceType={datasourceType}
+          />
+        )
+      }
+    >
+      <TraceView
+        exploreId={exploreId}
+        dataFrames={dataFrames}
+        splitOpenFn={splitOpenFn}
+        scrollElement={scrollElement}
+        traceProp={traceProp}
+        spanFindMatches={spanFindMatches}
+        search={search}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        queryResponse={queryResponse}
+        datasource={datasource}
+        topOfViewRef={topOfViewRef}
+        topOfViewRefType={TopOfViewRefType.Explore}
+      />
+    </PanelChrome>
   );
 }
