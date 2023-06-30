@@ -107,4 +107,5 @@ export interface FeatureToggles {
   flameGraphV2?: boolean;
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
+  angularDeprecationUI?: boolean;
 }

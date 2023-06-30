@@ -362,4 +362,8 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagAngularDeprecationUI
+	// Display new Angular deprecation-related UI features
+	FlagAngularDeprecationUI = "angularDeprecationUI"
 )
