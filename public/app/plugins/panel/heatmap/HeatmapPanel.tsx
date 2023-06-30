@@ -43,6 +43,15 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
 
+  let scopedVarsFromRawData = []
+  for(const series of data.series) {
+    for(const field of series.fields) {
+      if(field.state?.scopedVars){
+        scopedVarsFromRawData.push(field.state?.scopedVars)
+      }
+    }
+  }
+
   // ugh
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
@@ -210,6 +219,8 @@ export const HeatmapPanel = ({
               data={info}
               hover={hover}
               showHistogram={options.tooltip.yHistogram}
+              replaceVars={replaceVariables}
+              scopedVars={scopedVarsFromRawData}
             />
           </VizTooltipContainer>
         )}

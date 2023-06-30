@@ -8,6 +8,9 @@ import {
   getFieldDisplayName,
   LinkModel,
   TimeRange,
+  getLinksSupplier,
+  InterpolateFunction,
+  ScopedVars
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
@@ -24,6 +27,8 @@ type Props = {
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
   timeRange: TimeRange;
+  replaceVars: InterpolateFunction;
+  scopedVars: ScopedVars[];
 };
 
 export const HeatmapHoverView = (props: Props) => {
@@ -33,7 +38,7 @@ export const HeatmapHoverView = (props: Props) => {
   return <HeatmapHoverCell {...props} />;
 };
 
-const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
+const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars }: Props) => {
   const index = hover.dataIdx;
   const xField = data.heatmap?.fields[0];
   const yField = data.heatmap?.fields[1];
@@ -120,7 +125,12 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   const linkLookup = new Set<string>();
 
   for (const field of visibleFields ?? []) {
-    // TODO: Currently always undefined? (getLinks)
+    const hasLinks = field.config.links && field.config.links.length > 0;
+    if (hasLinks && data.heatmap) {
+      let appropriateScopedVars = scopedVars.filter((sv) => sv && sv.__dataContext && sv.__dataContext.value.field.name === nonNumericOrdinalDisplay)[0]
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars ?? {}, replaceVars)
+    }
+    
     if (field.getLinks) {
       const v = field.values[index];
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
