@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
@@ -30,52 +30,75 @@ type Props = {
   onSandwich: (str?: string) => void;
 };
 
-const FlameGraphTopTableContainer = ({
-  data,
-  app,
-  onSymbolClick,
-  height,
-  search,
-  onSearch,
-  sandwichItem,
-  onSandwich,
-}: Props) => {
-  const styles = useStyles2(getStyles);
+const FlameGraphTopTableContainer = React.memo(
+  ({ data, app, onSymbolClick, height, search, onSearch, sandwichItem, onSandwich }: Props) => {
+    const styles = useStyles2(getStyles);
 
-  const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
+    const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
 
-  return (
-    <div className={styles.topTableContainer} data-testid="topTable">
-      <AutoSizer style={{ width: '100%', height }}>
-        {({ width, height }) => {
-          if (width < 3 || height < 3) {
-            return null;
-          }
+    // const sizerContentFn = useCallback(
+    //   ({ width, height }: { width: number; height: number }) => {
+    //     if (width < 3 || height < 3) {
+    //       return null;
+    //     }
+    //
+    //     const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
+    //     return (
+    //       <Table
+    //         initialSortBy={sort}
+    //         onSortByChange={(s) => {
+    //           if (s && s.length) {
+    //             reportInteraction('grafana_flamegraph_table_sort_selected', {
+    //               app,
+    //               grafana_version: config.buildInfo.version,
+    //               sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
+    //             });
+    //           }
+    //           setSort(s);
+    //         }}
+    //         data={frame}
+    //         width={width}
+    //         height={height}
+    //       />
+    //     );
+    //   },
+    //   [data, onSymbolClick, onSearch, onSandwich, search, sandwichItem, sort, app]
+    // );
 
-          const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
-          return (
-            <Table
-              initialSortBy={sort}
-              onSortByChange={(s) => {
-                if (s && s.length) {
-                  reportInteraction('grafana_flamegraph_table_sort_selected', {
-                    app,
-                    grafana_version: config.buildInfo.version,
-                    sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
-                  });
-                }
-                setSort(s);
-              }}
-              data={frame}
-              width={width}
-              height={height}
-            />
-          );
-        }}
-      </AutoSizer>
-    </div>
-  );
-};
+    return (
+      <div className={styles.topTableContainer} data-testid="topTable">
+        <AutoSizer style={{ width: '100%', height }}>
+          {({ width, height }: { width: number; height: number }) => {
+            if (width < 3 || height < 3) {
+              return null;
+            }
+
+            const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
+            return (
+              <Table
+                initialSortBy={sort}
+                onSortByChange={(s) => {
+                  if (s && s.length) {
+                    reportInteraction('grafana_flamegraph_table_sort_selected', {
+                      app,
+                      grafana_version: config.buildInfo.version,
+                      sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
+                    });
+                  }
+                  setSort(s);
+                }}
+                data={frame}
+                width={width}
+                height={height}
+              />
+            );
+          }}
+        </AutoSizer>
+      </div>
+    );
+  }
+);
+FlameGraphTopTableContainer.displayName = 'FlameGraphTopTableContainer';
 
 function buildTableDataFrame(
   data: FlameGraphDataContainer,
