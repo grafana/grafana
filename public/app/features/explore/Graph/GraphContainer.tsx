@@ -21,7 +21,6 @@ import { loadGraphStyle } from './utils';
 interface Props extends Pick<PanelChromeProps, 'statusMessage'> {
   width: number;
   height: number;
-  loading: boolean
   data: DataFrame[];
   annotations?: DataFrame[];
   eventBus: EventBus;
