@@ -8,23 +8,23 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
-import { getRandomContent } from './utils';
-
 interface TooltipPlugin4Props {
   config: UPlotConfigBuilder;
+  // or via .children() render prop callback?
+  render: (u: uPlot, dataIdxs: Array<number | null>, seriesIdx?: number | null) => React.ReactNode;
 }
 
 /**
  * @alpha
  */
-export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
+export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const [plot, setPlot] = useState<uPlot>();
 
   const styleRef = useRef({ transform: '' }); // boo!
   const [isVisible, setVisible] = useState(false);
 
-  const [contents, setContents] = useState(getRandomContent);
+  const [contents, setContents] = useState<React.ReactNode>();
 
   const style = useStyles2(getStyles);
 
@@ -38,15 +38,20 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
     let height = 0;
 
     let htmlEl = document.documentElement;
-    let winWidth = htmlEl.clientWidth - 5;
-    let winHeight = htmlEl.clientHeight - 5;
+    let winWidth = htmlEl.clientWidth - 16;
+    let winHeight = htmlEl.clientHeight - 16;
+
+    let closestSeriesIdx: number | null = null;
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        let rect = entry.target.getBoundingClientRect();
-
-        width = rect.width;
-        height = rect.height;
+        if (entry.borderBoxSize?.length > 0) {
+          width = entry.borderBoxSize[0].inlineSize;
+          height = entry.borderBoxSize[0].blockSize;
+        } else {
+          width = entry.contentRect.width;
+          height = entry.contentRect.width;
+        }
       }
     });
 
@@ -59,14 +64,27 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
       setPlot(u);
     });
 
+    // fires during mouseenters to re-sync the DOMRect of .u-over (offsetParent) after any resize/scrolls
     config.addHook('syncRect', (u, rect) => {
       overRect = rect;
     });
 
+    // fires on data value hovers/unhovers
     config.addHook('setLegend', (u) => {
-      setContents(getRandomContent());
+      setContents(render(u, u.cursor.idxs!, closestSeriesIdx));
     });
 
+    // fires on series focus/proximity changes
+    // e.g. to highlight the hovered/closest series
+    config.addHook('setSeries', (u, seriesIdx) => {
+      if (closestSeriesIdx !== seriesIdx) {
+        setContents(render(u, u.cursor.idxs!, seriesIdx));
+      }
+
+      closestSeriesIdx = seriesIdx;
+    });
+
+    // fires on mousemoves
     config.addHook('setCursor', (u) => {
       let { left = -10, top = -10 } = u.cursor;
 

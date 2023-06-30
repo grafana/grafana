@@ -25,6 +25,7 @@ import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { getRandomContent } from '@grafana/ui/src/components/uPlot/plugins/utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -107,7 +108,10 @@ export const TimeSeriesPanel = ({
                 timeZone={timeZone}
               />
             )} */}
-            {options.tooltip.mode === TooltipDisplayMode.None || <TooltipPlugin4 config={config} />}
+            {options.tooltip.mode === TooltipDisplayMode.None || <TooltipPlugin4 config={config} render={(u, dataIdxs, seriesIdx) => {
+              // console.log('render', dataIdxs, seriesIdx);
+              return getRandomContent();
+            }} />}
             {/* Renders annotation markers*/}
             {data.annotations && (
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
