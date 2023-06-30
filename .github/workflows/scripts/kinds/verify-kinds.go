@@ -351,7 +351,7 @@ func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	path := filepath.Join(j.path, "next", "core", name+".cue")
+	path := filepath.Join(j.path, "next", "core", name, name+".cue")
 	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
