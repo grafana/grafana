@@ -1,5 +1,6 @@
 ---
-title: Add annotations
+title: Enable annotations
+menuTitle: Enable annotations
 aliases:
   - ../../../plugins/add-support-for-annotations/
 description: Add support for annotations in your plugin.
@@ -11,7 +12,7 @@ keywords:
 weight: 100
 ---
 
-# Add annotations
+# Enable annotations
 
 You can add support to your plugin for annotations that will insert information into Grafana alerts. This guide explains how to add support for [annotations]({{< relref "../../../../dashboards/build-dashboards/annotate-visualizations#querying-other-data-sources" >}}) to a data source plugin.
 

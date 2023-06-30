@@ -2,7 +2,7 @@
 title: Add features to Explore queries
 aliases:
   - ../../../plugins/add-support-for-explore-queries/
-description: Add support for Explore queries to your plugin.
+description: Add features to Explore queries.
 keywords:
   - grafana
   - plugins

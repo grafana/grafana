@@ -11,7 +11,7 @@ keywords:
   - update plugin
 description: Learn how to package and share your plugin.
 type: docs
-weight: 100
+weight: 300
 ---
 
 # Publish or update a plugin

@@ -10,7 +10,7 @@ keywords:
   - plugin
   - sign plugin
   - signing plugin
-weight: 800
+weight: 400
 ---
 
 # Sign a plugin

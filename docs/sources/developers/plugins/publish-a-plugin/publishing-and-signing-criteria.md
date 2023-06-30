@@ -11,7 +11,7 @@ keywords:
   - sign plugin
   - publishing
   - signing
-weight: 300
+weight: 200
 ---
 
 # Plugin publishing and signing criteria

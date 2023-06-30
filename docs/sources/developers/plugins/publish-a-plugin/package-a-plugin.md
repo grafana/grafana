@@ -9,7 +9,7 @@ keywords:
   - packaging
   - packages
 description: How to package a plugin
-weight: 200
+weight: 100
 ---
 
 # Package a plugin
