@@ -83,8 +83,13 @@ export function getPanelChromeProps(props: CommonProps) {
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
-  // TODO: find a way to make it work with datasources as well
-  const showAngularNotice = props.plugin.angularPanelCtrl && config.featureToggles.angularDeprecationUI;
+  const isAngularPanel = props.plugin.meta.angularDetected ?? false;
+  const isAngularDatasource = Object.entries(config.datasources).some(([_, ds]) => {
+    return ds.uid === props.panel.datasource?.uid && ds.angularDetected;
+  });
+  const showAngularNotice =
+    (config.featureToggles.angularDeprecationUI ?? false) && (isAngularPanel || isAngularDatasource);
+
   const showTitleItems =
     (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
     (props.data.series.length > 0 && props.data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
