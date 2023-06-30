@@ -63,6 +63,10 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
       overRect = rect;
     });
 
+    config.addHook('setLegend', (u) => {
+      setContents(getRandomContent());
+    });
+
     config.addHook('setCursor', (u) => {
       let { left = -10, top = -10 } = u.cursor;
 
@@ -83,6 +87,8 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         if (offsetY) {
           if (clientY + height < winHeight || clientY - height < 0) {
             offsetY = 0;
+          } else if (offsetY !== -height) {
+            offsetY = -height;
           }
         } else {
           if (clientY + height > winHeight && clientY - height >= 0) {
@@ -93,6 +99,8 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         if (offsetX) {
           if (clientX + width < winWidth || clientX - width < 0) {
             offsetX = 0;
+          } else if (offsetX !== -width) {
+            offsetX = -width;
           }
         } else {
           if (clientX + width > winWidth && clientX - width >= 0) {
@@ -100,7 +108,13 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
           }
         }
 
-        const transform = `translate(${offsetX + left}px, ${offsetY + top}px)`;
+        const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
+        const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
+
+        // TODO: to a transition only when switching sides
+        // transition: transform 100ms;
+
+        const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isVisible && domRef.current) {
           domRef.current.style.transform = transform;
@@ -117,10 +131,6 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
           }, 0);
         }
       }
-    });
-
-    config.addHook('setLegend', (u) => {
-      setContents(getRandomContent());
     });
   }, [config]);
 
