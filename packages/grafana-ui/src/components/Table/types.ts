@@ -92,7 +92,7 @@ export interface CustomCellRendererProps {
   field: Field;
   index: number;
   frame: DataFrame;
-  value: any;
+  value: unknown;
 }
 
 export interface TableCustomCellOptions {
