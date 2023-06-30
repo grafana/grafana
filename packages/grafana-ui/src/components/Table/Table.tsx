@@ -239,7 +239,7 @@ export const Table = memo((props: Props) => {
   );
 
   const RenderRow = useCallback(
-    ({ index: rowIndex, style, subData }: { index: number; style: CSSProperties; subData: DataFrame[] }) => {
+    ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
         row = page[rowIndex];
@@ -270,7 +270,7 @@ export const Table = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable, timeRange]
+    [onCellFilterAdded, subData, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable, timeRange]
   );
 
   const onNavigate = useCallback(
