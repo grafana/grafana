@@ -3,16 +3,11 @@ import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
 import { DataFrame, Field, KeyValue, SelectableValue, TimeRange } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import * as schema from '@grafana/schema';
 
 import { TableStyles } from './styles';
 
-export {
-  type TableFieldOptions,
-  TableCellDisplayMode,
-  type FieldTextAlignment,
-  TableCellBackgroundDisplayMode,
-} from '@grafana/schema';
+export { type FieldTextAlignment, TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -37,6 +32,7 @@ export interface TableCellProps extends CellProps<any> {
   field: Field;
   onCellFilterAdded?: TableFilterActionCallback;
   innerWidth: number;
+  frame: DataFrame;
 }
 
 export type CellComponent = FC<TableCellProps>;
@@ -84,9 +80,26 @@ export interface Props {
   footerOptions?: TableFooterCalc;
   footerValues?: FooterItem[];
   enablePagination?: boolean;
-  cellHeight?: TableCellHeight;
+  cellHeight?: schema.TableCellHeight;
   /** @alpha */
   subData?: DataFrame[];
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
 }
+
+export interface CustomCellRendererProps<V = unknown> {
+  field: Field;
+  index: number;
+  frame: DataFrame;
+  value: V;
+}
+
+export interface TableCustomCellOptions {
+  cellComponent: FC<CustomCellRendererProps>;
+  type: schema.TableCellDisplayMode.Custom;
+}
+
+export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
+export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
+  cellOptions: TableCellOptions;
+};
