@@ -30,9 +30,37 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
 
   useLayoutEffect(() => {
     let _isVisible = isVisible;
+    let overRect: DOMRect;
+
+    let offsetX = 0;
+    let offsetY = 0;
+    let width = 0;
+    let height = 0;
+
+    let htmlEl = document.documentElement;
+    let winWidth = htmlEl.clientWidth - 5;
+    let winHeight = htmlEl.clientHeight - 5;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        let rect = entry.target.getBoundingClientRect();
+
+        width = rect.width;
+        height = rect.height;
+      }
+    });
+
+    window.addEventListener('resize', (e) => {
+      winWidth = htmlEl.clientWidth - 5;
+      winHeight = htmlEl.clientHeight - 5;
+    });
 
     config.addHook('init', (u) => {
       setPlot(u);
+    });
+
+    config.addHook('syncRect', (u, rect) => {
+      overRect = rect;
     });
 
     config.addHook('setCursor', (u) => {
@@ -43,10 +71,36 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
           setVisible((_isVisible = false));
 
           // TODO: this should be done by Dashboards onmouseleave
-          u.root.closest('.react-grid-item')!.style.zIndex = "auto";
+          u.root.closest('.react-grid-item')!.style.zIndex = 'auto';
+
+          // prolly not needed since dom will be destroyed, so this should be GCd
+          resizeObserver.unobserve(domRef.current!);
         }
       } else {
-        const transform = `translate(${left}px, ${top}px)`;
+        let clientX = overRect.left + left;
+        let clientY = overRect.top + top;
+
+        if (offsetY) {
+          if (clientY + height < winHeight || clientY - height < 0) {
+            offsetY = 0;
+          }
+        } else {
+          if (clientY + height > winHeight && clientY - height >= 0) {
+            offsetY = -height;
+          }
+        }
+
+        if (offsetX) {
+          if (clientX + width < winWidth || clientX - width < 0) {
+            offsetX = 0;
+          }
+        } else {
+          if (clientX + width > winWidth && clientX - width >= 0) {
+            offsetX = -width;
+          }
+        }
+
+        const transform = `translate(${offsetX + left}px, ${offsetY + top}px)`;
 
         if (_isVisible && domRef.current) {
           domRef.current.style.transform = transform;
@@ -55,7 +109,12 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
           setVisible((_isVisible = true));
 
           // TODO: this should be done by Dashboards onmouseenter
-          u.root.closest('.react-grid-item')!.style.zIndex = "1";
+          u.root.closest('.react-grid-item')!.style.zIndex = '1';
+
+          // boo setTimeout!
+          setTimeout(() => {
+            resizeObserver.observe(domRef.current!);
+          }, 0);
         }
       }
     });
