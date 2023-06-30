@@ -66,8 +66,6 @@ httpMethod: POST
 manageAlerts: true
 prometheusType: Prometheus
 prometheusVersion: 2.44.0
-incrementalQuerying: true
-incrementalQueryOverlapWindow: 10m
 cacheLevel: 'High'
 incrementalQuerying: true
 incrementalQueryOverlapWindow: 10m
