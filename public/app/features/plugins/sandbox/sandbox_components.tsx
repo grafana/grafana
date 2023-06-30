@@ -1,7 +1,7 @@
 import { isFunction } from 'lodash';
 import React, { ComponentType, FC } from 'react';
 
-import { PluginConfigPage, PluginExtensionConfig, PluginMeta } from '@grafana/data';
+import { PluginExtensionConfig, PluginMeta } from '@grafana/data';
 
 import { SandboxedPluginObject } from './types';
 import { isSandboxedPluginObject } from './utils';
@@ -70,17 +70,19 @@ export async function sandboxPluginComponents(
 
   // config pages
   if (Reflect.has(pluginObject, 'configPages')) {
-    const configPages: Record<string, PluginConfigPage<any>> = Reflect.get(pluginObject, 'configPages');
-    for (const [key, value] of Object.entries(configPages)) {
-      if (!value.body || !isFunction(value.body)) {
-        continue;
+    const configPages = Reflect.get(pluginObject, 'configPages');
+    if (configPages) {
+      for (const [key, value] of Object.entries(configPages)) {
+        if (!value.body || !isFunction(value.body)) {
+          continue;
+        }
+        Reflect.set(configPages, key, {
+          ...value,
+          body: withSandboxWrapper(value.body, meta.id),
+        });
       }
-      Reflect.set(configPages, key, {
-        ...value,
-        body: withSandboxWrapper(value.body, meta.id),
-      });
+      Reflect.set(pluginObject, 'configPages', configPages);
     }
-    Reflect.set(pluginObject, 'configPages', configPages);
   }
 
   return pluginExports;
