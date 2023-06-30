@@ -317,7 +317,7 @@ describe('AzureMonitorDatasource', () => {
       ],
     };
 
-    beforeEach(() => {
+    it('should return list of Metric Names', () => {
       ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
         const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
         const expected =
@@ -327,15 +327,39 @@ describe('AzureMonitorDatasource', () => {
         expect(path).toBe(expected);
         return Promise.resolve(response);
       });
-    });
-
-    it('should return list of Metric Names', () => {
       return ctx.ds.azureMonitorDatasource
         .getMetricNames({
           resourceUri:
             '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
           metricNamespace: 'microsoft.insights/components',
         })
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(2);
+          expect(results[0].text).toEqual('Used capacity');
+          expect(results[0].value).toEqual('UsedCapacity');
+          expect(results[1].text).toEqual('Free capacity');
+          expect(results[1].value).toEqual('FreeCapacity');
+        });
+    });
+
+    it('should return list of Metric Names appropriate when multiple resources are selected', () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
+        const basePath = 'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp';
+        const expected =
+          basePath +
+          '/providers/microsoft.insights/metricdefinitions?api-version=2017-12-01-preview&metricnamespace=microsoft.insights%2Fcomponents&region=region';
+        expect(path).toBe(expected);
+        return Promise.resolve(response);
+      });
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNames(
+          {
+            resourceUri: '/subscriptions/mock-subscription-id/resourceGroups/nodeapp',
+            metricNamespace: 'microsoft.insights/components',
+          },
+          true,
+          'region'
+        )
         .then((results: Array<{ text: string; value: string }>) => {
           expect(results.length).toEqual(2);
           expect(results[0].text).toEqual('Used capacity');
