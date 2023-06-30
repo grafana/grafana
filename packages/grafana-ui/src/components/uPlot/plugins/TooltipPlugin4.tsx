@@ -42,7 +42,7 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
         if (_isVisible) {
           setVisible((_isVisible = false));
 
-          // TODO: this should be done by Dashboards onmouseenter
+          // TODO: this should be done by Dashboards onmouseleave
           u.root.closest('.react-grid-item')!.style.zIndex = "auto";
         }
       } else {
@@ -54,7 +54,7 @@ export const TooltipPlugin4 = ({ config }: TooltipPlugin4Props) => {
           styleRef.current = { ...styleRef.current, transform: transform };
           setVisible((_isVisible = true));
 
-          // TODO: this should be done by Dashboards onmouseleave
+          // TODO: this should be done by Dashboards onmouseenter
           u.root.closest('.react-grid-item')!.style.zIndex = "1";
         }
       }
