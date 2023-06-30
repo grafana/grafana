@@ -4,13 +4,15 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import {
   ApplyFieldOverrideOptions,
+  DataFrame,
   dateMath,
   FieldColorModeId,
-  isPluginExtensionLink,
+  FieldType,
   NavModelItem,
   PanelData,
+  toDataFrame,
 } from '@grafana/data';
-import { getPluginExtensions } from '@grafana/runtime';
+import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -54,7 +56,6 @@ export const TestStuffPage = () => {
    */
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), [queryRunner]);
   const data = useObservable(observable);
-
   const node: NavModelItem = {
     id: 'test-page',
     text: 'Test page',
@@ -63,14 +64,148 @@ export const TestStuffPage = () => {
     url: 'sandbox/test',
   };
 
+  const dataFrame = toDataFrame({
+    name: 'A',
+    fields: [
+      {
+        name: 'time',
+        type: FieldType.time,
+        values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
+        config: {
+          custom: {
+            filterable: false,
+          },
+        },
+      },
+      {
+        name: 'temperature',
+        type: FieldType.number,
+        values: [10, null, 11, 12],
+        config: {
+          custom: {
+            filterable: false,
+          },
+          links: [
+            {
+              targetBlank: true,
+              title: 'Value link',
+              url: '${__value.text}',
+            },
+          ],
+        },
+      },
+      {
+        name: 'img',
+        type: FieldType.string,
+        values: ['data:image/png;base64,1', 'data:image/png;base64,2', 'data:image/png;base64,3'],
+        config: {
+          custom: {
+            filterable: false,
+            displayMode: 'image',
+          },
+          links: [
+            {
+              targetBlank: true,
+              title: 'Image link',
+              url: '${__value.text}',
+            },
+          ],
+        },
+      },
+    ],
+  });
+
+  const dataFrameChild = toDataFrame({
+    name: 'A',
+    meta: {
+      custom: {
+        parentRowIndex: 0,
+      },
+    },
+    fields: [
+      {
+        name: 'time_child',
+        type: FieldType.time,
+        values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
+        config: {
+          custom: {
+            filterable: false,
+          },
+        },
+      },
+      {
+        name: 'child_test_values',
+        type: FieldType.number,
+        values: [1, 2, 3, 4],
+        config: {},
+      },
+    ],
+  });
+
+  const dataFrameChild2 = toDataFrame({
+    name: 'A',
+    meta: {
+      custom: {
+        parentRowIndex: 2,
+      },
+    },
+    fields: [
+      {
+        name: 'time_child2',
+        type: FieldType.time,
+        values: [1609459200000, 1609470000000, 1609462800000],
+        config: {
+          custom: {
+            filterable: false,
+          },
+        },
+      },
+      {
+        name: 'child_test_values2',
+        type: FieldType.number,
+        values: [6, 7, 8],
+        config: {},
+      },
+    ],
+  });
+
+  const dataFrameChildEmpty = toDataFrame({
+    name: 'A',
+    meta: {
+      custom: {
+        parentRowIndex: 1,
+      },
+    },
+    fields: [
+      {
+        name: 'time_child2',
+        type: FieldType.time,
+        values: [],
+        config: {
+          custom: {
+            filterable: false,
+          },
+        },
+      },
+      {
+        name: 'child_test_values2',
+        type: FieldType.number,
+        values: [],
+        config: {},
+      },
+    ],
+  });
+
+  const pd: PanelData = { ...data!, series: [dataFrame, dataFrameChild, dataFrameChild2, dataFrameChildEmpty] };
+
   const notifyApp = useAppNotification();
 
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
-        <HorizontalGroup>
-          <LinkToBasicApp placement="grafana/sandbox/testing" />
-        </HorizontalGroup>
+        {/* <HorizontalGroup>
+          <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
+  </HorizontalGroup> */}
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
             {({ width }) => {
@@ -78,10 +213,10 @@ export const TestStuffPage = () => {
                 <div>
                   <PanelRenderer
                     title="Hello"
-                    pluginId="timeseries"
+                    pluginId="table"
                     width={width}
                     height={300}
-                    data={data}
+                    data={pd}
                     options={{}}
                     fieldConfig={{ defaults: {}, overrides: [] }}
                     timeZone="browser"
@@ -150,13 +285,12 @@ export function getDefaultState(): State {
         name: 'gdev-testdata',
       },
       maxDataPoints: 100,
-      savedQueryUid: null,
     },
   };
 }
 
-function LinkToBasicApp({ placement }: { placement: string }) {
-  const { extensions } = getPluginExtensions({ placement });
+function LinkToBasicApp({ extensionPointId }: { extensionPointId: string }) {
+  const { extensions } = getPluginExtensions({ extensionPointId });
 
   if (extensions.length === 0) {
     return null;
@@ -164,12 +298,12 @@ function LinkToBasicApp({ placement }: { placement: string }) {
 
   return (
     <div>
-      {extensions.map((extension) => {
+      {extensions.map((extension, i) => {
         if (!isPluginExtensionLink(extension)) {
           return null;
         }
         return (
-          <LinkButton href={extension.path} title={extension.description} key={extension.key}>
+          <LinkButton href={extension.path} title={extension.description} key={extension.id}>
             {extension.title}
           </LinkButton>
         );
