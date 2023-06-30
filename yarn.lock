@@ -10192,6 +10192,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-forge@npm:^1":
+  version: 1.3.2
+  resolution: "@types/node-forge@npm:1.3.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: f532326a616e946e5f6733d1461e7b8d31911bbdfbc480a6337c422053d79c1e22a0776d114a325439e26ae382a640f939d0abf156e24a3c3ca5079d04aa73f6
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*":
   version: 16.11.6
   resolution: "@types/node@npm:16.11.6"
@@ -18897,6 +18906,7 @@ __metadata:
     "@types/marked": ^4
     "@types/mousetrap": 1.6.11
     "@types/node": 18.16.16
+    "@types/node-forge": ^1
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.2.0"
     "@types/papaparse": 5.3.7
     "@types/pluralize": ^0.0.29
@@ -19033,6 +19043,7 @@ __metadata:
     msw: 1.1.0
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
+    node-forge: ^1.3.1
     node-notifier: 10.0.1
     ol: 7.2.2
     ol-ext: 4.0.6
@@ -23900,7 +23911,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-forge@npm:^1":
+"node-forge@npm:^1, node-forge@npm:^1.3.1":
   version: 1.3.1
   resolution: "node-forge@npm:1.3.1"
   checksum: 08fb072d3d670599c89a1704b3e9c649ff1b998256737f0e06fbd1a5bf41cae4457ccaee32d95052d80bbafd9ffe01284e078c8071f0267dc9744e51c5ed42a9
