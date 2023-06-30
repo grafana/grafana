@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { DataSourceJsonData, DataSourceInstanceSettings, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
@@ -8,7 +8,6 @@ import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { IntervalInput } from '../IntervalInput/IntervalInput';
-import { validateInterval } from '../IntervalInput/validation';
 
 import { TagMappingInput } from './TagMappingInput';
 
@@ -84,13 +83,6 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
   );
   const { query = '', tags, customQuery } = traceToLogs;
 
-  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
-    return traceToLogs?.spanStartTimeShift ? validateInterval(traceToLogs?.spanStartTimeShift) : false;
-  });
-  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
-    return traceToLogs?.spanEndTimeShift ? validateInterval(traceToLogs?.spanEndTimeShift) : false;
-  });
-
   const updateTracesToLogs = useCallback(
     (value: Partial<TraceToLogsOptionsV2>) => {
       // Cannot use updateDatasourcePluginJsonDataOption here as we need to update 2 keys, and they would overwrite each
@@ -138,10 +130,8 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         tooltip={getTimeShiftTooltip('start')}
         value={traceToLogs.spanStartTimeShift || ''}
         onChange={(val) => {
-          setSpanStartTimeShiftIsInvalid(validateInterval(val));
           updateTracesToLogs({ spanStartTimeShift: val });
         }}
-        isInvalid={spanStartTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
       <IntervalInput
@@ -149,10 +139,8 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         tooltip={getTimeShiftTooltip('end')}
         value={traceToLogs.spanEndTimeShift || ''}
         onChange={(val) => {
-          setSpanEndTimeShiftIsInvalid(validateInterval(val));
           updateTracesToLogs({ spanEndTimeShift: val });
         }}
-        isInvalid={spanEndTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
 

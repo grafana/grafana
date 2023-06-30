@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2, updateDatasourcePluginJsonDataOption } from '@grafana/data';
 import { InlineField, InlineSwitch, useStyles2 } from '@grafana/ui';
 import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
-import { validateInterval } from 'app/core/components/IntervalInput/validation';
 import { invalidTimeShiftError } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 
 import { TempoJsonData } from '../types';
@@ -13,16 +12,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {}
 
 export function QuerySettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
-  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
-    return options.jsonData.traceQuery?.spanStartTimeShift
-      ? validateInterval(options.jsonData.traceQuery?.spanStartTimeShift)
-      : false;
-  });
-  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
-    return options.jsonData.traceQuery?.spanEndTimeShift
-      ? validateInterval(options.jsonData.traceQuery?.spanEndTimeShift)
-      : false;
-  });
 
   const getLabel = (type: 'start' | 'end') => {
     return `Time shift for ${type} of search`;
@@ -57,13 +46,11 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
         value={options.jsonData.traceQuery?.spanStartTimeShift || ''}
         disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
         onChange={(val) => {
-          setSpanStartTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
             ...options.jsonData.traceQuery,
             spanStartTimeShift: val,
           });
         }}
-        isInvalid={spanStartTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
 
@@ -73,13 +60,11 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
         value={options.jsonData.traceQuery?.spanEndTimeShift || ''}
         disabled={!options.jsonData.traceQuery?.timeShiftEnabled}
         onChange={(val) => {
-          setSpanEndTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'traceQuery', {
             ...options.jsonData.traceQuery,
             spanEndTimeShift: val,
           });
         }}
-        isInvalid={spanEndTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
     </div>

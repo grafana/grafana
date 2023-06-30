@@ -5,13 +5,9 @@ import React, { useState } from 'react';
 import { invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
 import { IntervalInput } from './IntervalInput';
-import { validateInterval } from './validation';
 
 describe('IntervalInput', () => {
   const IntervalInputtWithProps = ({ val }: { val: string }) => {
-    const [intervalIsInvalid, setIntervalIsInvalid] = useState(() => {
-      return val ? validateInterval(val) : false;
-    });
     const [value, setValue] = useState(val);
 
     return (
@@ -21,10 +17,8 @@ describe('IntervalInput', () => {
         value={value}
         disabled={false}
         onChange={(v) => {
-          setIntervalIsInvalid(validateInterval(v));
           setValue(v);
         }}
-        isInvalid={intervalIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
     );

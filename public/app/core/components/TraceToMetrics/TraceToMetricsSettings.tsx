@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   DataSourceJsonData,
@@ -13,7 +13,6 @@ import { Button, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana
 
 import { ConfigDescriptionLink } from '../ConfigDescriptionLink';
 import { IntervalInput } from '../IntervalInput/IntervalInput';
-import { validateInterval } from '../IntervalInput/validation';
 import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 import { getTimeShiftLabel, getTimeShiftTooltip, invalidTimeShiftError } from '../TraceToLogs/TraceToLogsSettings';
 
@@ -38,16 +37,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<TraceToMetricsData> {
 
 export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
   const styles = useStyles2(getStyles);
-  const [spanStartTimeShiftIsInvalid, setSpanStartTimeShiftIsInvalid] = useState(() => {
-    return options.jsonData.tracesToMetrics?.spanStartTimeShift
-      ? validateInterval(options.jsonData.tracesToMetrics?.spanStartTimeShift)
-      : false;
-  });
-  const [spanEndTimeShiftIsInvalid, setSpanEndTimeShiftIsInvalid] = useState(() => {
-    return options.jsonData.tracesToMetrics?.spanEndTimeShift
-      ? validateInterval(options.jsonData.tracesToMetrics?.spanEndTimeShift)
-      : false;
-  });
 
   return (
     <div className={css({ width: '100%' })}>
@@ -94,13 +83,11 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         tooltip={getTimeShiftTooltip('start')}
         value={options.jsonData.tracesToMetrics?.spanStartTimeShift || ''}
         onChange={(val) => {
-          setSpanStartTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
             ...options.jsonData.tracesToMetrics,
             spanStartTimeShift: val,
           });
         }}
-        isInvalid={spanStartTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
 
@@ -109,13 +96,11 @@ export function TraceToMetricsSettings({ options, onOptionsChange }: Props) {
         tooltip={getTimeShiftTooltip('end')}
         value={options.jsonData.tracesToMetrics?.spanEndTimeShift || ''}
         onChange={(val) => {
-          setSpanEndTimeShiftIsInvalid(validateInterval(val));
           updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToMetrics', {
             ...options.jsonData.tracesToMetrics,
             spanEndTimeShift: val,
           });
         }}
-        isInvalid={spanEndTimeShiftIsInvalid}
         isInvalidError={invalidTimeShiftError}
       />
 
