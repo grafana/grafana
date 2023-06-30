@@ -59,7 +59,7 @@ Follow these steps to publish your plugin for the first time.
    - **URL:** A URL that points to a ZIP archive of your packaged plugin.
    - **Source Code URL:** A URL that points to a public Git repository or ZIP archive of your complete plugin source code.
    - **MD5:** The MD5 hash of the plugin specified by the **URL**.
-   - The remaining questions help us determine the [signature level]({{< relref "../create-a-grafana-plugin/develop-a-plugin/sign-a-plugin#plugin-signature-levels" >}}) for your plugin.
+   - The remaining questions help us determine the [signature level]({{< relref "./sign-a-plugin#plugin-signature-levels" >}}) for your plugin.
 1. Click **Submit**.
    After you submit your plugin, we run an automated validation to make sure it adheres to our guidelines.
    Once your submission passes the validation, it's placed in a review queue.

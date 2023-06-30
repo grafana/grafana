@@ -23,7 +23,7 @@ Plugins built using Angular still work in the near term, but we strongly encoura
 
 ### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "../../introduction-to-plugin-development/data-frames.md" >}}).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "../../introduction-to-plugin-development/data-frames" >}}).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
