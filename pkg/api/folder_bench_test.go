@@ -66,8 +66,8 @@ type benchScenario struct {
 	db *sqlstore.SQLStore
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
-	signedInUser user.SignedInUser
-	userID       int64
+	orgID        int64
+	signedInUser *user.SignedInUser
 	teamSvc      team.Service
 	userSvc      user.Service
 }
@@ -78,10 +78,14 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 	sc := setupDB(b)
 	b.Log("setup time:", time.Since(start))
 
-	limit := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
-	if limit > 5000 { // the search API handler fails with 412 if limit > 5000
+	all := LEVEL0_FOLDER_NUM*LEVEL0_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL1_DASHBOARD_NUM + LEVEL0_FOLDER_NUM*LEVEL1_FOLDER_NUM*LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM
+
+	// the search API handler fails with 412 if limit > 5000
+	limit := all
+	if limit > 5000 {
 		limit = 5000
 	}
+
 	benchmarks := []struct {
 		desc        string
 		url         string
@@ -108,8 +112,14 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		},
 		{
 			desc:        "search specific dashboard with nested folders feature enabled",
-			url:         "/api/search?type=dash-db&query=dashboard_0_0",
+			url:         fmt.Sprintf("/api/search?type=dash-db&query=dashboard_0_0&limit=%d", limit),
 			expectedLen: 1 + LEVEL1_DASHBOARD_NUM + LEVEL2_FOLDER_NUM*LEVEL2_DASHBOARD_NUM,
+			features:    featuremgmt.WithFeatures("nestedFolders"),
+		},
+		{
+			desc:        "search for specific dashboard ers feature enabled",
+			url:         "/api/search?type=dash-db&query=dashboard_0_0_0_0",
+			expectedLen: 1,
 			features:    featuremgmt.WithFeatures("nestedFolders"),
 		},
 		{
@@ -135,7 +145,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		b.Run(bm.desc, func(b *testing.B) {
 			m := setupServer(b, sc, bm.features)
 			req := httptest.NewRequest(http.MethodGet, bm.url, nil)
-			req = webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: sc.userID, OrgID: sc.signedInUser.OrgID})
+			req = webtest.RequestWithSignedInUser(req, sc.signedInUser)
 			b.ResetTimer()
 
 			for i := 0; i < b.N; i++ {
@@ -374,12 +384,10 @@ func setupDB(b testing.TB) benchScenario {
 		return err
 	})
 	require.NoError(b, err)
-
 	return benchScenario{
 		db:           db,
 		cfg:          cfg,
-		signedInUser: signedInUser,
-		userID:       userIDs[len(userIDs)-1],
+		signedInUser: &signedInUser,
 		teamSvc:      teamSvc,
 		userSvc:      userSvc,
 	}
@@ -393,7 +401,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
-		initCtx.SignedInUser = &sc.signedInUser
+		initCtx.SignedInUser = sc.signedInUser
 
 		c.Req = c.Req.WithContext(ctxkey.Set(c.Req.Context(), initCtx))
 	})
