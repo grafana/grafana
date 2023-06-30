@@ -72,6 +72,14 @@
     },
     "save": "Save"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Data sources"
+    },
+    "search": {
+      "placeholder": "Search all"
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Import from library",
@@ -157,6 +165,11 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Add new data source"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -198,6 +211,9 @@
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": "Add new connection"
+    },
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
@@ -253,6 +269,10 @@
     "config": {
       "title": "Administration"
     },
+    "connections": {
+      "subtitle": "Browse and create new connections",
+      "title": "Connections"
+    },
     "correlations": {
       "subtitle": "Add and configure correlations",
       "title": "Correlations"
@@ -275,6 +295,10 @@
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
       "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "View and manage your connected data source connections",
+      "title": "Data sources"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",

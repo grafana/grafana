@@ -72,6 +72,14 @@
     },
     "save": "Ŝävę"
   },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Đäŧä şőūřčęş"
+    },
+    "search": {
+      "placeholder": "Ŝęäřčĥ äľľ"
+    }
+  },
   "dashboard": {
     "add-menu": {
       "import": "Ĩmpőřŧ ƒřőm ľįþřäřy",
@@ -157,6 +165,11 @@
       "unmark-favorite": "Ůŉmäřĸ äş ƒävőřįŧę"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Åđđ ŉęŵ đäŧä şőūřčę"
+    }
+  },
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
@@ -198,6 +211,9 @@
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": "Åđđ ŉęŵ čőŉŉęčŧįőŉ"
+    },
     "admin": {
       "subtitle": "Mäŉäģę şęřvęř-ŵįđę şęŧŧįŉģş äŉđ äččęşş ŧő řęşőūřčęş şūčĥ äş őřģäŉįžäŧįőŉş, ūşęřş, äŉđ ľįčęŉşęş",
       "title": "Ŝęřvęř äđmįŉ"
@@ -253,6 +269,10 @@
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
     },
+    "connections": {
+      "subtitle": "ßřőŵşę äŉđ čřęäŧę ŉęŵ čőŉŉęčŧįőŉş",
+      "title": "Cőŉŉęčŧįőŉş"
+    },
     "correlations": {
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę čőřřęľäŧįőŉş",
       "title": "Cőřřęľäŧįőŉş"
@@ -275,6 +295,10 @@
     "dashboards": {
       "subtitle": "Cřęäŧę äŉđ mäŉäģę đäşĥþőäřđş ŧő vįşūäľįžę yőūř đäŧä",
       "title": "Đäşĥþőäřđş"
+    },
+    "data-sources": {
+      "subtitle": "Vįęŵ äŉđ mäŉäģę yőūř čőŉŉęčŧęđ đäŧä şőūřčę čőŉŉęčŧįőŉş",
+      "title": "Đäŧä şőūřčęş"
     },
     "datasources": {
       "subtitle": "Åđđ äŉđ čőŉƒįģūřę đäŧä şőūřčęş",
