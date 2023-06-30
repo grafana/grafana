@@ -158,11 +158,14 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
   //See https://github.com/grafana/grafana/pull/70482
-  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery({
-    limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-    matcher: matcherList,
-    state: stateList,
-  });
+  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery(
+    {
+      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+      matcher: matcherList,
+      state: stateList,
+    },
+    { skip: dataSourceName !== GRAFANA_RULES_SOURCE_NAME }
+  );
 
   const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
 
