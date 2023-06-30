@@ -57,6 +57,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
