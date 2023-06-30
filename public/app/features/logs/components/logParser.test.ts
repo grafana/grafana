@@ -51,6 +51,34 @@ describe('logParser', () => {
       expect(fields.find((field) => field.keys[0] === 'labels')).not.toBe(undefined);
     });
 
+    it('should not filter out field with labels name and other type and datalinks', () => {
+      const logRow = createLogRow({
+        entryFieldIndex: 10,
+        dataFrame: new MutableDataFrame({
+          refId: 'A',
+          fields: [
+            testStringField,
+            {
+              name: 'labels',
+              type: FieldType.other,
+              config: {
+                links: [
+                  {
+                    title: 'test1',
+                    url: 'url1',
+                  },
+                ],
+              },
+              values: [{ place: 'luna', source: 'data' }],
+            },
+          ],
+        }),
+      });
+      const fields = getAllFields(logRow);
+      expect(fields.length).toBe(2);
+      expect(fields.find((field) => field.keys[0] === 'labels')).not.toBe(undefined);
+    });
+
     it('should filter out field with id name', () => {
       const logRow = createLogRow({
         entryFieldIndex: 10,

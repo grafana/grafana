@@ -731,4 +731,198 @@ describe('logSeriesToLogsModel should parse different logs-dataframe formats', (
 
     expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
   });
+
+  it('should parse timestamps when nanosecond data in the time field and no nanosecond field', () => {
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411, 1686142519997],
+            nanos: [641, 0, 123456],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2', 'line3'],
+          },
+        ],
+        length: 3,
+      },
+    ];
+
+    const expected = {
+      hasUniqueLabels: false,
+      meta: [],
+      rows: [
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line1',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line1',
+          rowIndex: 0,
+          searchWords: [],
+          timeEpochMs: 1686142519756,
+          timeEpochNs: '1686142519756000641',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00',
+          timeLocal: '2023-06-07 06:55:19',
+          timeUtc: '2023-06-07 12:55:19',
+          uid: 'A_0',
+          uniqueLabels: {},
+        },
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line2',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line2',
+          rowIndex: 1,
+          searchWords: [],
+          timeEpochMs: 1686142520411,
+          timeEpochNs: '1686142520411000000',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:20-06:00',
+          timeLocal: '2023-06-07 06:55:20',
+          timeUtc: '2023-06-07 12:55:20',
+          uid: 'A_1',
+          uniqueLabels: {},
+        },
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line3',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line3',
+          rowIndex: 2,
+          searchWords: [],
+          timeEpochMs: 1686142519997,
+          timeEpochNs: '1686142519997123456',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00',
+          timeLocal: '2023-06-07 06:55:19',
+          timeUtc: '2023-06-07 12:55:19',
+          uid: 'A_2',
+          uniqueLabels: {},
+        },
+      ],
+    };
+
+    expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
+  });
+
+  it('should parse timestamps when both nanosecond data and nanosecond field, the field wins', () => {
+    // whether the dataframe-field wins or the nanosecond-data in the time-field wins,
+    // is arbitrary at the end. we simply have to pick one option, and keep doing that.
+    const frames: DataFrame[] = [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'timestamp',
+            type: FieldType.time,
+            config: {},
+            values: [1686142519756, 1686142520411, 1686142519997],
+            nanos: [1, 2, 3],
+          },
+          {
+            name: 'body',
+            type: FieldType.string,
+            config: {},
+            values: ['line1', 'line2', 'line3'],
+          },
+          {
+            name: 'tsNs',
+            type: FieldType.string,
+            config: {},
+            values: ['1686142519756000004', '1686142520411000005', '1686142519997000006'],
+          },
+        ],
+        length: 3,
+      },
+    ];
+
+    const expected = {
+      hasUniqueLabels: false,
+      meta: [],
+      rows: [
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line1',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line1',
+          rowIndex: 0,
+          searchWords: [],
+          timeEpochMs: 1686142519756,
+          timeEpochNs: '1686142519756000004',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00',
+          timeLocal: '2023-06-07 06:55:19',
+          timeUtc: '2023-06-07 12:55:19',
+          uid: 'A_0',
+          uniqueLabels: {},
+        },
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line2',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line2',
+          rowIndex: 1,
+          searchWords: [],
+          timeEpochMs: 1686142520411,
+          timeEpochNs: '1686142520411000005',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:20-06:00',
+          timeLocal: '2023-06-07 06:55:20',
+          timeUtc: '2023-06-07 12:55:20',
+          uid: 'A_1',
+          uniqueLabels: {},
+        },
+        {
+          dataFrame: frames[0],
+          datasourceType: undefined,
+          entry: 'line3',
+          entryFieldIndex: 1,
+          hasAnsi: false,
+          hasUnescapedContent: false,
+          labels: {},
+          logLevel: 'unknown',
+          raw: 'line3',
+          rowIndex: 2,
+          searchWords: [],
+          timeEpochMs: 1686142519997,
+          timeEpochNs: '1686142519997000006',
+          timeFromNow: 'mock:dateTimeFormatTimeAgo:2023-06-07T06:55:19-06:00',
+          timeLocal: '2023-06-07 06:55:19',
+          timeUtc: '2023-06-07 12:55:19',
+          uid: 'A_2',
+          uniqueLabels: {},
+        },
+      ],
+    };
+
+    expect(logSeriesToLogsModel(frames)).toStrictEqual(expected);
+  });
 });
