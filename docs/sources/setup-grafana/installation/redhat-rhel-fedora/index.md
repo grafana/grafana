@@ -109,20 +109,20 @@ To uninstall Grafana, run the following commands in a terminal window:
    ```shell
    sudo systemctl stop grafana-server
    ```
-  
+
 1. If you configured Grafana to run with init.d, stop the init.d service for Grafana server:
 
    ```shell
    sudo service grafana-server stop
    ```
 
-1. To uninstall Grafana OSS: 
+1. To uninstall Grafana OSS:
 
    ```shell
    sudo dnf remove grafana
    ```
 
-1. To uninstall Grafana Enterprise: 
+1. To uninstall Grafana Enterprise:
 
    ```shell
    sudo dnf remove grafana-enterprise
