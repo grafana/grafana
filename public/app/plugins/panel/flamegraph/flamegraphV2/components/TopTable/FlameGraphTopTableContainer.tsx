@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { applyFieldOverrides, CoreApp, DataFrame, DataLinkClickEvent, Field, FieldType } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
-  CustomCellRendererProps,
   IconButton,
   Table,
   TableCellDisplayMode,
@@ -35,35 +34,6 @@ const FlameGraphTopTableContainer = React.memo(
     const styles = useStyles2(getStyles);
 
     const [sort, setSort] = useState<TableSortByFieldState[]>([{ displayName: 'Self', desc: true }]);
-
-    // const sizerContentFn = useCallback(
-    //   ({ width, height }: { width: number; height: number }) => {
-    //     if (width < 3 || height < 3) {
-    //       return null;
-    //     }
-    //
-    //     const frame = buildTableDataFrame(data, width, onSymbolClick, onSearch, onSandwich, search, sandwichItem);
-    //     return (
-    //       <Table
-    //         initialSortBy={sort}
-    //         onSortByChange={(s) => {
-    //           if (s && s.length) {
-    //             reportInteraction('grafana_flamegraph_table_sort_selected', {
-    //               app,
-    //               grafana_version: config.buildInfo.version,
-    //               sort: s[0].displayName + '_' + (s[0].desc ? 'desc' : 'asc'),
-    //             });
-    //           }
-    //           setSort(s);
-    //         }}
-    //         data={frame}
-    //         width={width}
-    //         height={height}
-    //       />
-    //     );
-    //   },
-    //   [data, onSymbolClick, onSearch, onSandwich, search, sandwichItem, sort, app]
-    // );
 
     return (
       <div className={styles.topTableContainer} data-testid="topTable">
@@ -123,7 +93,7 @@ function buildTableDataFrame(
 
   const options: TableCustomCellOptions = {
     type: TableCellDisplayMode.Custom,
-    cellComponent: (props: CustomCellRendererProps) => {
+    cellComponent: (props) => {
       const symbol = props.frame.fields.find((f: Field) => f.name === 'Symbol')?.values.get(props.index);
       const isSearched = search === symbol;
       const isSandwiched = sandwichItem === symbol;
