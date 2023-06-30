@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",
@@ -7,17 +30,17 @@
     },
     "dashboards-tree": {
       "name-column": "",
-      "tags-column": "",
-      "type-column": ""
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
     },
     "no-results": {
       "clear": "",
       "text": ""
-    },
-    "type-cell": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
     }
   },
   "clipboard-button": {
@@ -142,6 +165,10 @@
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
       "no-options": "Keine Optionen gefunden"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -410,6 +437,10 @@
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
       "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Live-Streaming einschalten",
       "label": "Live"
@@ -568,6 +599,16 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Wird geladen ...",

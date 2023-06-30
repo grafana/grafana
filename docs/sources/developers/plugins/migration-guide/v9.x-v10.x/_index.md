@@ -33,4 +33,4 @@ Most code targeting 9.x will continue to work without any issues. An exception i
 
 When writing plugins that should run on 9.x, continue to use the Vector interfaces. In this case, when targeting versions 10+, you can now use simple arrays rather than wrapper classes.
 
-To make this transition seamless, we employed the Original JavaScript Sin™. That is, we[extended the native Array prototype](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) with several Vector methods. We will atone and undo this in v11, when Vector interfaces and classes are removed.
+To make this transition seamless, we employed the Original JavaScript Sin™. That is, we [extended the native Array prototype](https://github.com/grafana/grafana/blob/v10.0.x/packages/grafana-data/src/types/vector.ts) with several Vector methods. We will atone and undo this in v11, when Vector interfaces and classes are removed.

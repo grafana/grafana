@@ -19,6 +19,9 @@ interface Props {
   showContextToggle?: (row?: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
+  onPinLine?: (row: LogRowModel) => void;
+  onUnpinLine?: (row: LogRowModel) => void;
+  pinned?: boolean;
   styles: LogRowStyles;
 }
 
@@ -77,7 +80,17 @@ export class LogRowMessage extends PureComponent<Props> {
   };
 
   render() {
-    const { row, wrapLogMessage, prettifyLogMessage, showContextToggle, styles, onPermalinkClick } = this.props;
+    const {
+      row,
+      wrapLogMessage,
+      prettifyLogMessage,
+      showContextToggle,
+      styles,
+      onPermalinkClick,
+      onUnpinLine,
+      onPinLine,
+      pinned,
+    } = this.props;
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
@@ -101,7 +114,20 @@ export class LogRowMessage extends PureComponent<Props> {
           </div>
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
-          <span className={cx('log-row-menu', styles.rowMenu)} onClick={this.onLogRowClick}>
+          {pinned && (
+            <span className={cx('log-row-menu', 'log-row-menu-visible', styles.rowMenu)} onClick={this.onLogRowClick}>
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="map-marker-minus"
+                onClick={() => onUnpinLine && onUnpinLine(row)}
+                tooltip="Unpin line"
+                tooltipPlacement="top"
+                aria-label="Unpin line"
+              />
+            </span>
+          )}
+          <span className={cx('log-row-menu', styles.rowMenu, styles.hidden)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
                 size="md"
@@ -122,6 +148,28 @@ export class LogRowMessage extends PureComponent<Props> {
               tooltip="Copy to clipboard"
               tooltipPlacement="top"
             />
+            {pinned && onUnpinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="map-marker-minus"
+                onClick={() => onUnpinLine && onUnpinLine(row)}
+                tooltip="Unpin line"
+                tooltipPlacement="top"
+                aria-label="Unpin line"
+              />
+            )}
+            {!pinned && onPinLine && (
+              <IconButton
+                className={styles.unPinButton}
+                size="md"
+                name="map-marker-plus"
+                onClick={() => onPinLine && onPinLine(row)}
+                tooltip="Pin line"
+                tooltipPlacement="top"
+                aria-label="Pin line"
+              />
+            )}
             {onPermalinkClick && row.uid && (
               <IconButton
                 tooltip="Copy shortlink"
