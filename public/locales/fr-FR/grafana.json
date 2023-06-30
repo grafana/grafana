@@ -192,6 +192,7 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }

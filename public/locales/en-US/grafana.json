@@ -192,6 +192,7 @@
   },
   "login": {
     "error": {
+      "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
       "unknown": "Unknown error occurred"
     }
