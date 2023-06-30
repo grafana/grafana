@@ -7,7 +7,7 @@ import { FlameGraphDataContainer as FlameGraphDataContainerV2 } from './flamegra
 
 export class FlameGraphSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
-    return builder.getListAppender<any, any>({
+    return builder.getListAppender<{}, {}>({
       name: SuggestionName.FlameGraph,
       pluginId: 'flamegraph',
     });
