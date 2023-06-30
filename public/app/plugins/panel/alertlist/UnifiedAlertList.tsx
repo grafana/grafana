@@ -18,6 +18,7 @@ import {
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import { INSTANCES_DISPLAY_LIMIT } from 'app/features/alerting/unified/components/rules/RuleDetails';
 import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
@@ -59,6 +60,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
   const [limitInstances, toggleLimit] = useToggle(true);
+
+  const { usePrometheusRulesByNamespaceQuery } = alertRuleApi;
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -153,9 +156,19 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
   const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const combinedRules = useCombinedRuleNamespaces();
 
   const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
+
+  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
+  //See https://github.com/grafana/grafana/pull/70482
+  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery({
+    limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+    matcher: matcherList,
+    state: stateList,
+  });
+
+  const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
+
   const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
   const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
 
@@ -183,7 +196,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {dispatched && loading && !haveResults && <LoadingPlaceholder text="Loading..." />}
+        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
         {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
         <section>
           {props.options.viewMode === ViewMode.Stat && haveResults && (

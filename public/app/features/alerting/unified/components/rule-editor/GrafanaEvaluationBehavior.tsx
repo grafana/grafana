@@ -4,20 +4,20 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch, Tooltip, Icon } from '@grafana/ui';
+import { Button, Field, Icon, InlineLabel, Input, InputControl, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';
 import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { RuleForm, RuleFormValues } from '../../types/rule-form';
+import { RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { MINUTE } from '../../utils/rule-form';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
-import { MINUTE } from './AlertRuleForm';
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -114,11 +114,9 @@ export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | 
 };
 
 function FolderGroupAndEvaluationInterval({
-  initialFolder,
   evaluateEvery,
   setEvaluateEvery,
 }: {
-  initialFolder: RuleForm | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
 }) {
@@ -166,7 +164,7 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup initialFolder={initialFolder} />
+      <FolderAndGroup />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
@@ -248,12 +246,10 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 }
 
 export function GrafanaEvaluationBehavior({
-  initialFolder,
   evaluateEvery,
   setEvaluateEvery,
   existing,
 }: {
-  initialFolder: RuleForm | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
   existing: boolean;
@@ -269,11 +265,7 @@ export function GrafanaEvaluationBehavior({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <FolderGroupAndEvaluationInterval
-          initialFolder={initialFolder}
-          setEvaluateEvery={setEvaluateEvery}
-          evaluateEvery={evaluateEvery}
-        />
+        <FolderGroupAndEvaluationInterval setEvaluateEvery={setEvaluateEvery} evaluateEvery={evaluateEvery} />
         <ForInput evaluateEvery={evaluateEvery} />
 
         {existing && (

@@ -136,6 +136,15 @@ const (
           "interval": "",
           "legendFormat": "",
           "refId": "A"
+        },
+        {
+          "datasource": "6SOeCRrVk",
+          "exemplar": true,
+          "expr": "test{id=\"f0dd9b69-ad04-4342-8e79-ced8c245683b\", name=\"test\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
         }
       ],
       "title": "Panel Title",
@@ -654,7 +663,7 @@ func TestGetQueryDataResponse(t *testing.T) {
 	sqlStore := sqlstore.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	fakeQueryService := &query.FakeQueryService{}
 	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&backend.QueryDataResponse{}, nil)
@@ -695,11 +704,9 @@ func TestGetQueryDataResponse(t *testing.T) {
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
+			OrgID:        dashboard.OrgID,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 		pubdashDto, err := service.Create(context.Background(), SignedInUser, dto)
@@ -1100,7 +1107,7 @@ func TestGetMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	publicDashboard := &PublicDashboard{
 		Uid:          "1",
@@ -1156,9 +1163,10 @@ func TestGetUniqueDashboardDatasourceUids(t *testing.T) {
 		require.NoError(t, err)
 
 		uids := getUniqueDashboardDatasourceUids(json)
-		require.Len(t, uids, 2)
+		require.Len(t, uids, 3)
 		require.Equal(t, "abc123", uids[0])
-		require.Equal(t, "_yxMP8Ynk", uids[1])
+		require.Equal(t, "6SOeCRrVk", uids[1])
+		require.Equal(t, "_yxMP8Ynk", uids[2])
 	})
 
 	t.Run("can get no datasource uids from empty dashboard", func(t *testing.T) {
@@ -1184,7 +1192,7 @@ func TestBuildMetricRequest(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
 	require.NoError(t, err)
-	publicdashboardStore := database.ProvideStore(sqlStore)
+	publicdashboardStore := database.ProvideStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures())
 	serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 	publicDashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
 	nonPublicDashboard := insertTestDashboard(t, dashboardStore, "testNonPublicDashie", 1, 0, true, []map[string]interface{}{}, nil)
@@ -1205,11 +1213,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled := true
 	dto := &SavePublicDashboardDTO{
 		DashboardUid: publicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: timeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 
@@ -1219,11 +1225,9 @@ func TestBuildMetricRequest(t *testing.T) {
 	isEnabled = false
 	nonPublicDto := &SavePublicDashboardDTO{
 		DashboardUid: nonPublicDashboard.UID,
+		OrgID:        9999999,
 		PublicDashboard: &PublicDashboardDTO{
-			IsEnabled:    &isEnabled,
-			DashboardUid: "NOTTHESAME",
-			OrgId:        9999999,
-			TimeSettings: defaultPubdashTimeSettings,
+			IsEnabled: &isEnabled,
 		},
 	}
 

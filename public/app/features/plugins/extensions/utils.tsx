@@ -166,3 +166,30 @@ function isRecord(value: unknown): value is Record<string | number | symbol, unk
 export function isReadOnlyProxy(value: unknown): boolean {
   return isRecord(value) && value[_isProxy] === true;
 }
+
+export function createExtensionLinkConfig<T extends object>(
+  config: Omit<PluginExtensionLinkConfig<T>, 'type'>
+): PluginExtensionLinkConfig {
+  const linkConfig: PluginExtensionLinkConfig<T> = {
+    type: PluginExtensionTypes.link,
+    ...config,
+  };
+  assertLinkConfig(linkConfig);
+  return linkConfig;
+}
+
+function assertLinkConfig<T extends object>(
+  config: PluginExtensionLinkConfig<T>
+): asserts config is PluginExtensionLinkConfig {
+  if (config.type !== PluginExtensionTypes.link) {
+    throw Error('config is not a extension link');
+  }
+}
+
+export function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
+}

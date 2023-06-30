@@ -67,4 +67,10 @@ describe('LogsVolumePanelList', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onLoadCallback).toHaveBeenCalled();
   });
+
+  it('shows an info message if no log volume data is available', async () => {
+    renderPanel({ state: LoadingState.Done, data: [] });
+    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByText('No logs volume available')).toBeInTheDocument();
+  });
 });
