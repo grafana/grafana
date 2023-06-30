@@ -18,7 +18,7 @@
     "new-folder-form": {
       "cancel-label": "",
       "create-label": "",
-      "field-label": ""
+      "name-label": ""
     },
     "no-results": {
       "clear": "",

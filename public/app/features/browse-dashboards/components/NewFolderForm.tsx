@@ -30,7 +30,7 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
     }
   };
 
-  const fieldNameLabel = t('browse-dashboards.new-folder-form.field-label', 'Folder name');
+  const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
 
   return (
     <Form defaultValues={initialFormModel} onSubmit={(form: FormModel) => onConfirm(form.folderName)}>

@@ -18,7 +18,7 @@
     "new-folder-form": {
       "cancel-label": "Cancel",
       "create-label": "Create",
-      "field-label": "Folder name"
+      "name-label": "Folder name"
     },
     "no-results": {
       "clear": "Clear search and filters",
