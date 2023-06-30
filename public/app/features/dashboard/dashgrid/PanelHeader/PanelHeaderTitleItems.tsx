@@ -14,10 +14,11 @@ export interface Props {
   panelId: number;
   onShowPanelLinks?: () => Array<LinkModel<PanelModel>>;
   panelLinks?: DataLink[];
+  showAngularNotice: boolean;
 }
 
 export function PanelHeaderTitleItems(props: Props) {
-  const { alertState, data, panelId, onShowPanelLinks, panelLinks } = props;
+  const { alertState, data, panelId, onShowPanelLinks, panelLinks, showAngularNotice } = props;
   const styles = useStyles2(getStyles);
 
   // panel health
@@ -47,6 +48,14 @@ export function PanelHeaderTitleItems(props: Props) {
     </>
   );
 
+  const angularNotice = (
+    <Tooltip content="This panel or its datasource is using deprecated plugin APIs.">
+      <PanelChrome.TitleItem className={styles.angularNotice}>
+        <Icon name="exclamation-circle" size="md" />
+      </PanelChrome.TitleItem>
+    </Tooltip>
+  );
+
   return (
     <>
       {panelLinks && panelLinks.length > 0 && onShowPanelLinks && (
@@ -56,6 +65,7 @@ export function PanelHeaderTitleItems(props: Props) {
       {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
       {timeshift}
       {alertState && alertStateItem}
+      {showAngularNotice && angularNotice}
     </>
   );
 }
@@ -79,6 +89,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.link, 0.03),
       },
+    }),
+    angularNotice: css({
+      color: theme.colors.warning.text,
     }),
   };
 };

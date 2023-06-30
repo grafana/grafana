@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { LinkModel, PanelData, PanelPlugin, renderMarkdown } from '@grafana/data';
-import { getTemplateSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { config, getTemplateSrv, locationService, reportInteraction } from '@grafana/runtime';
 import { PanelPadding } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -83,10 +83,13 @@ export function getPanelChromeProps(props: CommonProps) {
   const padding: PanelPadding = props.plugin.noPadding ? 'none' : 'md';
   const alertState = props.data.alertState?.state;
 
+  // TODO: find a way to make it work with datasources as well
+  const showAngularNotice = props.plugin.angularPanelCtrl && config.featureToggles.angularDeprecationUI;
   const showTitleItems =
     (props.panel.links && props.panel.links.length > 0 && onShowPanelLinks) ||
     (props.data.series.length > 0 && props.data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
     (props.data.request && props.data.request.timeInfo) ||
+    showAngularNotice ||
     alertState;
 
   const titleItems = showTitleItems && (
@@ -95,6 +98,7 @@ export function getPanelChromeProps(props: CommonProps) {
       data={props.data}
       panelId={props.panel.id}
       panelLinks={props.panel.links}
+      showAngularNotice={showAngularNotice}
       onShowPanelLinks={onShowPanelLinks}
     />
   );
