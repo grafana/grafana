@@ -15,17 +15,16 @@ interface Props {
 }
 
 export function IntervalInput(props: Props) {
-  const [interval, setInterval] = useState(props.value);
   const [intervalIsInvalid, setIntervalIsInvalid] = useState(() => {
     return props.value ? validateInterval(props.value) : false;
   });
 
   useDebounce(
     () => {
-      setIntervalIsInvalid(validateInterval(interval));
+      setIntervalIsInvalid(validateInterval(props.value));
     },
     500,
-    [interval]
+    [props.value]
   );
 
   return (
@@ -44,10 +43,9 @@ export function IntervalInput(props: Props) {
           placeholder="0"
           width={40}
           onChange={(e) => {
-            setInterval(e.currentTarget.value);
             props.onChange(e.currentTarget.value);
           }}
-          value={interval}
+          value={props.value}
         />
       </InlineField>
     </InlineFieldRow>
