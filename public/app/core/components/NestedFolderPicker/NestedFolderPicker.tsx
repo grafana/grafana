@@ -63,7 +63,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
     const searchResults = search && searchState.value;
     const rootCollection: DashboardViewItemCollection = searchResults
       ? {
-          isFullyLoaded: searchResults.items.length < searchResults.totalRows,
+          isFullyLoaded: searchResults.items.length === searchResults.totalRows,
           lastKindHasMoreItems: false, // not relevent for search
           lastFetchedKind: 'folder', // not relevent for search
           lastFetchedPage: 1, // not relevent for search
