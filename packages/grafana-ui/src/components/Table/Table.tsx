@@ -248,8 +248,8 @@ export const Table = memo((props: Props) => {
 
       prepareRow(row);
 
-      if ((rowSubData === undefined || rowSubData.length === 0) && row.cells[0].column.id === 'expander') {
-        row.cells = row.cells.slice(1);
+      if (rowSubData === undefined || rowSubData.length === 0) {
+        row.cells = row.cells.filter((cell) => cell.column.id !== 'expander');
       }
 
       return (
