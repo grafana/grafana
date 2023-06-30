@@ -9,6 +9,9 @@ import {
 } from './AzureAuth.testMocks';
 import { getDefaultCredentials, getSecret, getCredentials, updateCredentials } from './AzureCredentialsConfig';
 
+// NOTE: @ts-ignores are used to ignore the type errors that are thrown when passing in the mocks.
+// This is because the mocks are partials of the actual types, so the types are not complete.
+
 export const CLIENT_SECRET_SYMBOL: ConcealedSecretType = Symbol('Concealed client secret');
 
 export const CLIENT_SECRET_STRING = 'XXXX-super-secret-secret-XXXX';
