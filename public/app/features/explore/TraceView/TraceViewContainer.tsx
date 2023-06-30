@@ -6,7 +6,6 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { PanelChrome } from '@grafana/ui/src/components/PanelChrome/PanelChrome';
 import { StoreState, useSelector } from 'app/types';
-import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
 import TracePageActions from './components/TracePageHeader/Actions/TracePageActions';
@@ -22,7 +21,7 @@ import { transformDataFrames } from './utils/transform';
 interface Props {
   dataFrames: DataFrame[];
   splitOpenFn: SplitOpen;
-  exploreId: ExploreId;
+  exploreId: string;
   scrollElement?: Element;
   queryResponse: PanelData;
   topOfViewRef: RefObject<HTMLDivElement>;

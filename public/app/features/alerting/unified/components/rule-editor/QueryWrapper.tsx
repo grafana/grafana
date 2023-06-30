@@ -4,7 +4,6 @@ import React, { ChangeEvent, useState } from 'react';
 
 import {
   CoreApp,
-  DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultRelativeTimeRange,
@@ -15,6 +14,7 @@ import {
   ThresholdsConfig,
 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
+import { DataQuery } from '@grafana/schema';
 import {
   GraphTresholdsStyleMode,
   Icon,
@@ -82,6 +82,11 @@ export const QueryWrapper = ({
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
+  const queryWithDefaults = {
+    ...defaults,
+    ...cloneDeep(query.model),
+  };
+
   function SelectingDataSourceTooltip() {
     const styles = useStyles2(getStyles);
     return (
@@ -139,11 +144,14 @@ export const QueryWrapper = ({
     );
   }
 
+  const showVizualisation = data.state !== LoadingState.NotStarted;
+
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
         <QueryEditorRow<DataQuery>
           alerting
+          collapsable={false}
           dataSource={dsSettings}
           onDataSourceLoaded={setDsInstance}
           onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
@@ -151,10 +159,7 @@ export const QueryWrapper = ({
           index={index}
           key={query.refId}
           data={data}
-          query={{
-            ...defaults,
-            ...cloneDeep(query.model),
-          }}
+          query={queryWithDefaults}
           onChange={(query) => onChangeQuery(query, index)}
           onRemoveQuery={onRemoveQuery}
           onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
@@ -165,7 +170,7 @@ export const QueryWrapper = ({
           hideDisableQuery={true}
         />
       </div>
-      {data.state !== LoadingState.NotStarted && (
+      {showVizualisation && (
         <VizWrapper
           data={data}
           thresholds={thresholds}
@@ -233,7 +238,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     label: AlertingQueryWrapper;
     margin-bottom: ${theme.spacing(1)};
-    border: 1px solid ${theme.colors.border.medium};
+    border: 1px solid ${theme.colors.border.weak};
     border-radius: ${theme.shape.borderRadius(1)};
   `,
   queryOptions: css`

@@ -39,6 +39,7 @@ export interface DashboardsTreeItem<T extends DashboardViewItemWithUIItems = Das
   item: T;
   level: number;
   isOpen: boolean;
+  parentUID?: string;
 }
 
 export const INDENT_AMOUNT_CSS_VAR = '--dashboards-tree-indentation';

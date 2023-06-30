@@ -11,10 +11,11 @@ import {
   DataSourceJsonData,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
+  DateTimeInput,
+  Field,
   FieldCache,
   FieldColorModeId,
   FieldType,
-  FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
   getTimeField,
@@ -41,6 +42,7 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
+import { LogsFrame, parseLogsFrame } from '../features/logs/logsFrame';
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 
 export const LIMIT_LABEL = 'Line limit';
@@ -310,42 +312,36 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   return { logSeries, metricSeries };
 }
 
-interface LogFields {
-  series: DataFrame;
-
-  timeField: FieldWithIndex;
-  stringField: FieldWithIndex;
-  labelsField?: FieldWithIndex;
-  timeNanosecondField?: FieldWithIndex;
-  logLevelField?: FieldWithIndex;
-  idField?: FieldWithIndex;
+interface LogInfo {
+  rawFrame: DataFrame;
+  logsFrame: LogsFrame;
+  frameLabels?: Labels[];
 }
 
-function getAllLabels(fields: LogFields): Labels[] {
-  // there are two types of dataframes we handle:
-  // 1. labels are in a separate field (more efficient when labels change by every log-row)
-  // 2. labels are in in the string-field's `.labels` attribute
+function parseTime(
+  timeField: Field,
+  timeNsField: Field | undefined,
+  index: number
+): { ts: DateTimeInput; timeEpochMs: number; timeEpochNs: string } {
+  const ts = timeField.values[index];
+  const time = toUtc(ts);
+  const timeEpochMs = time.valueOf();
 
-  const { stringField, labelsField } = fields;
-
-  if (labelsField !== undefined) {
-    return labelsField.values;
-  } else {
-    return [stringField.labels ?? {}];
+  if (timeNsField) {
+    return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
   }
-}
 
-function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
-  // there are two types of dataframes we handle.
-  // either labels-on-the-string-field, or labels-in-the-labels-field
-
-  const { stringField, labelsField } = fields;
-
-  if (labelsField !== undefined) {
-    return labelsField.values[index];
-  } else {
-    return stringField.labels ?? {};
+  if (timeField.nanos !== undefined) {
+    const ns = timeField.nanos[index].toString().padStart(6, '0');
+    const timeEpochNs = `${timeEpochMs}${ns}`;
+    return { ts, timeEpochMs, timeEpochNs };
   }
+
+  return {
+    ts,
+    timeEpochMs,
+    timeEpochNs: timeEpochMs + '000000',
+  };
 }
 
 /**
@@ -359,7 +355,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   const allLabels: Labels[][] = [];
 
   // Find the fields we care about and collect all labels
-  let allSeries: LogFields[] = [];
+  let allSeries: LogInfo[] = [];
 
   // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
   // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
@@ -367,31 +363,19 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
 
   if (seriesWithFields.length) {
     seriesWithFields.forEach((series) => {
-      const fieldCache = new FieldCache(series);
-      const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
-      const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
-      // NOTE: this is experimental, please do not use in your code.
-      // we will get this custom-frame-type into the "real" frame-type list soon,
-      // but the name might change, so please do not use it until then.
-      const labelsField =
-        series.meta?.custom?.frameType === 'LabeledTimeValues' ? fieldCache.getFieldByName('labels') : undefined;
-
-      if (stringField !== undefined && timeField !== undefined) {
+      const logsFrame = parseLogsFrame(series);
+      if (logsFrame != null) {
+        // for now we ignore the nested-ness of attributes, and just stringify-them
+        const frameLabels = logsFrame.getAttributesAsLabels() ?? undefined;
         const info = {
-          series,
-          timeField,
-          labelsField,
-          timeNanosecondField: fieldCache.getFieldByName('tsNs'),
-          stringField,
-          logLevelField: fieldCache.getFieldByName('level'),
-          idField: getIdField(fieldCache),
+          rawFrame: series,
+          logsFrame: logsFrame,
+          frameLabels,
         };
 
         allSeries.push(info);
-
-        const labels = getAllLabels(info);
-        if (labels.length > 0) {
-          allLabels.push(labels);
+        if (frameLabels && frameLabels.length > 0) {
+          allLabels.push(frameLabels);
         }
       }
     });
@@ -404,13 +388,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
   let hasUniqueLabels = false;
 
   for (const info of allSeries) {
-    const { timeField, timeNanosecondField, stringField, logLevelField, idField, series } = info;
+    const { logsFrame, rawFrame: series, frameLabels } = info;
+    const { timeField, timeNanosecondField, bodyField: stringField, severityField: logLevelField, idField } = logsFrame;
 
     for (let j = 0; j < series.length; j++) {
-      const ts = timeField.values[j];
-      const time = toUtc(ts);
-      const tsNs = timeNanosecondField ? timeNanosecondField.values[j] : undefined;
-      const timeEpochNs = tsNs ? tsNs : time.valueOf() + '000000';
+      const { ts, timeEpochMs, timeEpochNs } = parseTime(timeField, timeNanosecondField ?? undefined, j);
 
       // In edge cases, this can be undefined. If undefined, we want to replace it with empty string.
       const messageValue: unknown = stringField.values[j] ?? '';
@@ -422,11 +404,11 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
       const hasUnescapedContent = !!message.match(/\\n|\\t|\\r/);
 
       // Data sources that set up searchWords on backend use meta.custom.searchWords
-      // Data sources that set up searchWords trough frontend can use meta.searchWords
+      // Data sources that set up searchWords through frontend can use meta.searchWords
       const searchWords = series.meta?.custom?.searchWords ?? series.meta?.searchWords ?? [];
       const entry = hasAnsi ? ansicolor.strip(message) : message;
 
-      const labels = getLabelsForFrameRow(info, j);
+      const labels = frameLabels?.[j];
       const uniqueLabels = findUniqueLabels(labels, commonLabels);
       if (Object.keys(uniqueLabels).length > 0) {
         hasUniqueLabels = true;
@@ -448,7 +430,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
         dataFrame: series,
         logLevel,
         timeFromNow: dateTimeFormatTimeAgo(ts),
-        timeEpochMs: time.valueOf(),
+        timeEpochMs,
         timeEpochNs,
         timeLocal: dateTimeFormat(ts, { timeZone: 'browser' }),
         timeUtc: dateTimeFormat(ts, { timeZone: 'utc' }),
@@ -538,17 +520,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[
     meta,
     rows,
   };
-}
-
-function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {
-  const idFieldNames = ['id'];
-  for (const fieldName of idFieldNames) {
-    const idField = fieldCache.getFieldByName(fieldName);
-    if (idField) {
-      return idField;
-    }
-  }
-  return undefined;
 }
 
 // Used to add additional information to Line limit meta info

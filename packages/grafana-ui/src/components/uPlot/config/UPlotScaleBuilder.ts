@@ -157,7 +157,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       let minMax: uPlot.Range.MinMax = [dataMin, dataMax];
 
       // don't pad numeric x scales
-      if (scaleKey === 'x' && !isTime) {
+      if (scaleKey === 'x' && !isTime && distr === ScaleDistribution.Linear) {
         return minMax;
       }
 

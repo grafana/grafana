@@ -70,7 +70,7 @@ const getStyles = (
       height: swatchSize,
       background: `${color}`,
       border,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       outlineOffset: '1px',
       outline: isFocusVisible ? `2px solid  ${theme.colors.primary.main}` : 'none',
       boxShadow: isSelected
