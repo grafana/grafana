@@ -21,7 +21,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const [plot, setPlot] = useState<uPlot>();
 
-  const styleRef = useRef({ transform: '' }); // boo!
+  const styleRef = useRef({ transform: '', pointerEvents: 'none' }); // boo! // <CSSStyleDeclaration> ?
   const [isVisible, setVisible] = useState(false);
   const [isPinned, setPinned] = useState(false);
 
@@ -65,8 +65,15 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     config.addHook('init', (u) => {
       setPlot(u);
 
-      u.over.addEventListener('click', e => {
-        setPinned(_isPinned = !_isPinned);
+      // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
+      u.over.addEventListener('click', (e) => {
+        if (e.target === u.over) {
+          setPinned((_isPinned = !_isPinned));
+          styleRef.current = { ...styleRef.current, pointerEvents: _isPinned ? 'all' : 'none' };
+        }
+
+        // @ts-ignore
+        u.cursor._lock = _isPinned;
       });
     });
 
@@ -176,7 +183,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: ${theme.colors.background.secondary};
     top: 0;
     left: 0;
-    pointer-events: none;
     position: absolute;
     z-index: 1;
 

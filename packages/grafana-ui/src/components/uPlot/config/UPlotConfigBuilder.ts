@@ -22,7 +22,6 @@ import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { getThresholdsDrawHook, UPlotThresholdOptions } from './UPlotThresholds';
 
 const cursorDefaults: Cursor = {
-  lock: true,
   // prevent client-side zoom from triggering at the end of a selection
   drag: { setScale: false },
   points: {
