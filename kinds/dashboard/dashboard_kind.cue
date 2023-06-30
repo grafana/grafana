@@ -353,10 +353,10 @@ lineage: schemas: [{
 		#Threshold: {
 			// Value represents a specified metric for the threshold, which triggers a visual change in the dashboard when this value is met or exceeded.
 			// Nulls currently appear here when serializing -Infinity to JSON.
-			value: number @grafanamaturity(NeedsExpertReview)
+			value: number | null @grafanamaturity(NeedsExpertReview)
 			// Color represents the color of the visual change that will occur in the dashboard when the threshold value is met or exceeded.
 			color: string @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		// Thresholds can either be `absolute` (specific number) or `percentage` (relative to min or max, it will be values between 0 and 1).
 		#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum",memberNames="Absolute|Percentage")
@@ -368,10 +368,10 @@ lineage: schemas: [{
 
 			// Must be sorted by 'value', first value is always -Infinity
 			steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
-		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		// Allow to transform the visual representation of specific data values in a visualization, irrespective of their original units
-		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview) @grafana(TSVeneer="type")
+		#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 		// Supported value mapping types
 		// `value`: Maps text values to a color or different display text and color. For example, you can configure a value mapping so that all instances of the value 10 appear as Perfection! rather than the number.
@@ -395,13 +395,13 @@ lineage: schemas: [{
 			// Range to match against and the result to apply when the value is within the range
 			options: {
 				// Min value of the range. It can be null which means -Infinity
-				from: float64
+				from: float64 | null
 				// Max value of the range. It can be null which means +Infinity
-				to: float64
+				to: float64 | null
 				// Config to apply when the value is within the range
 				result: #ValueMappingResult
 			}
-		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 		// Maps regular expressions to replacement text and a color. 
 		// For example, if a value is www.example.com, you can configure a regex value mapping so that Grafana displays www and truncates the domain.
