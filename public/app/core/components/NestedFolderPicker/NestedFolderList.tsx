@@ -4,6 +4,7 @@ import { FixedSizeList as List } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -13,20 +14,28 @@ import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const LIST_HEIGHT = ROW_HEIGHT * 6.5; // show 6 and a bit rows
+const CHEVRON_SIZE = 'md';
 
 interface NestedFolderListProps {
   items: DashboardsTreeItem[];
+  foldersAreOpenable: boolean;
   selectedFolder: FolderUID | undefined;
   onFolderClick: (uid: string, newOpenState: boolean) => void;
   onSelectionChange: (event: React.FormEvent<HTMLInputElement>, item: DashboardViewItem) => void;
 }
 
-export function NestedFolderList({ items, selectedFolder, onFolderClick, onSelectionChange }: NestedFolderListProps) {
+export function NestedFolderList({
+  items,
+  foldersAreOpenable,
+  selectedFolder,
+  onFolderClick,
+  onSelectionChange,
+}: NestedFolderListProps) {
   const styles = useStyles2(getStyles);
 
   const virtualData = useMemo(
-    (): VirtualData => ({ items, selectedFolder, onFolderClick, onSelectionChange }),
-    [items, selectedFolder, onFolderClick, onSelectionChange]
+    (): VirtualData => ({ items, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange }),
+    [items, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange]
   );
 
   return (
@@ -48,7 +57,7 @@ interface RowProps {
 }
 
 function Row({ index, style: virtualStyles, data }: RowProps) {
-  const { items, selectedFolder, onFolderClick, onSelectionChange } = data;
+  const { items, foldersAreOpenable, selectedFolder, onFolderClick, onSelectionChange } = data;
   const { item, isOpen, level } = items[index];
 
   const id = useId() + `-uid-${item.uid}`;
@@ -94,11 +103,16 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       <div className={styles.rowBody}>
         <Indent level={level} />
 
-        <IconButton
-          onClick={handleClick}
-          aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
-          name={isOpen ? 'angle-down' : 'angle-right'}
-        />
+        {foldersAreOpenable ? (
+          <IconButton
+            size={CHEVRON_SIZE}
+            onClick={handleClick}
+            aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+            name={isOpen ? 'angle-down' : 'angle-right'}
+          />
+        ) : (
+          <span className={styles.folderButtonSpacer} />
+        )}
 
         <label className={styles.label} htmlFor={id}>
           {/* TODO: text is not truncated properly, it still overflows the container */}
@@ -127,12 +141,17 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.components.input.background,
     }),
 
+    // Should be the same size as the <IconButton /> for proper alignment
+    folderButtonSpacer: css({
+      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
+    }),
+
     headerRow: css({
       backgroundColor: theme.colors.background.secondary,
       height: ROW_HEIGHT,
       lineHeight: ROW_HEIGHT + 'px',
       margin: 0,
-      paddingLeft: theme.spacing(3),
+      paddingLeft: theme.spacing(3.5),
     }),
 
     row: css({

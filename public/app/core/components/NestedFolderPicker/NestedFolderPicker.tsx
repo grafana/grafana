@@ -79,22 +79,25 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
 
     const childrenCollections: Record<string, DashboardViewItemCollection | undefined> = {};
 
-    for (const parentUID in childrenForUID) {
-      const children = childrenForUID[parentUID];
-      childrenCollections[parentUID] = {
-        isFullyLoaded: !!children,
-        lastKindHasMoreItems: false,
-        lastFetchedKind: 'folder',
-        lastFetchedPage: 1,
-        items: children,
-      };
+    if (!searchResults) {
+      // We don't expand folders when searching
+      for (const parentUID in childrenForUID) {
+        const children = childrenForUID[parentUID];
+        childrenCollections[parentUID] = {
+          isFullyLoaded: !!children,
+          lastKindHasMoreItems: false,
+          lastFetchedKind: 'folder',
+          lastFetchedPage: 1,
+          items: children,
+        };
+      }
     }
 
     const result = createFlatTree(
       undefined,
       rootCollection,
       childrenCollections,
-      folderOpenState,
+      searchResults ? {} : folderOpenState,
       searchResults ? 0 : 1,
       false
     );
@@ -156,6 +159,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
             selectedFolder={value}
             onFolderClick={handleFolderClick}
             onSelectionChange={handleSelectionChange}
+            foldersAreOpenable={!(search && searchState.value)}
           />
         </div>
       </Stack>
