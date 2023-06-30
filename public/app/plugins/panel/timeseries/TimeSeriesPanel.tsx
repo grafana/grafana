@@ -117,7 +117,7 @@ export const TimeSeriesPanel = ({
               <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
             )}
             {/* Enables annotations creation*/}
-            {enableAnnotationCreation ? (
+            {/* {enableAnnotationCreation ? (
               <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
                 {({ startAnnotating }) => {
                   return (
@@ -156,7 +156,7 @@ export const TimeSeriesPanel = ({
                 replaceVariables={replaceVariables}
                 defaultItems={[]}
               />
-            )}
+            )} */}
             {data.annotations && (
               <ExemplarsPlugin
                 visibleSeries={getVisibleLabels(config, frames)}

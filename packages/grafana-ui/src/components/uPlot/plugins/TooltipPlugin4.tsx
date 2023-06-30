@@ -11,7 +11,7 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 interface TooltipPlugin4Props {
   config: UPlotConfigBuilder;
   // or via .children() render prop callback?
-  render: (u: uPlot, dataIdxs: Array<number | null>, seriesIdx?: number | null) => React.ReactNode;
+  render: (u: uPlot, dataIdxs: Array<number | null>, seriesIdx?: number | null, isPinned?: boolean) => React.ReactNode;
 }
 
 /**
@@ -23,6 +23,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
   const styleRef = useRef({ transform: '' }); // boo!
   const [isVisible, setVisible] = useState(false);
+  const [isPinned, setPinned] = useState(false);
 
   const [contents, setContents] = useState<React.ReactNode>();
 
@@ -30,6 +31,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
   useLayoutEffect(() => {
     let _isVisible = isVisible;
+    let _isPinned = isPinned;
     let overRect: DOMRect;
 
     let offsetX = 0;
@@ -62,6 +64,10 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     config.addHook('init', (u) => {
       setPlot(u);
+
+      u.over.addEventListener('click', e => {
+        setPinned(_isPinned = !_isPinned);
+      });
     });
 
     // fires during mouseenters to re-sync the DOMRect of .u-over (offsetParent) after any resize/scrolls
@@ -155,6 +161,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   if (plot && isVisible) {
     return createPortal(
       <div className={style.tooltipWrapper} style={styleRef.current} ref={domRef}>
+        <div>{isPinned ? '!!PINNED!! [X]' : ''}</div>
         {contents}
       </div>,
       plot.over
