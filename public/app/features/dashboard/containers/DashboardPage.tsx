@@ -22,6 +22,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { cancelVariables, templateVarsChangedInUrl } from '../../variables/state/actions';
 import { findTemplateVarChanges } from '../../variables/utils';
+import { AngularDeprecationNotice } from '../components/AngularDeprecationNotice/AngularDeprecationNotice';
 import { DashNav } from '../components/DashNav';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
@@ -355,6 +356,13 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       );
     }
 
+    let hasAngularPlugins = false;
+    if (config.featureToggles.angularDeprecationUI) {
+      hasAngularPlugins = dashboard.panels.some(
+        (panel) => panel.isAngularPlugin() || panel.isAngularDatasourcePlugin()
+      );
+    }
+
     return (
       <>
         <Page
@@ -385,6 +393,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
+          {hasAngularPlugins && <AngularDeprecationNotice dashboardUid={dashboard.uid} />}
           <DashboardGrid
             dashboard={dashboard}
             isEditable={!!dashboard.meta.canEdit}
