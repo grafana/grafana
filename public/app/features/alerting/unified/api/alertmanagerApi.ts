@@ -1,3 +1,4 @@
+import { BackendSrvRequest } from '@grafana/runtime';
 import { ReceiversStateDTO } from 'app/types/alerting';
 
 import {
@@ -29,6 +30,8 @@ interface AlertmanagerAlertsFilter {
   unprocessed?: boolean;
   matchers?: Matcher[];
 }
+
+type ShowSuccessOrErrorAlert = Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>;
 
 // Based on https://github.com/prometheus/alertmanager/blob/main/api/v2/openapi.yaml
 export const alertmanagerApi = alertingApi.injectEndpoints({
@@ -118,12 +121,13 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
     updateAlertmanagerConfiguration: build.mutation<
       void,
-      { selectedAlertmanager: string; config: AlertManagerCortexConfig }
+      { selectedAlertmanager: string; config: AlertManagerCortexConfig } & ShowSuccessOrErrorAlert
     >({
-      query: ({ selectedAlertmanager, config }) => ({
+      query: ({ selectedAlertmanager, config, ...rest }) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
         method: 'POST',
         data: config,
+        ...rest,
       }),
       invalidatesTags: ['AlertmanagerConfiguration'],
     }),

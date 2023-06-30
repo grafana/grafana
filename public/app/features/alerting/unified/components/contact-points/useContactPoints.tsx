@@ -9,7 +9,7 @@ import { remove } from 'lodash';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { ContactPointWithStatus, enhanceContactPointsWithStatus, fingerprintAlertmanagerConfig } from './utils';
+import { ContactPointWithStatus, enhanceContactPointsWithStatus } from './utils';
 
 export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
@@ -36,6 +36,7 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
   // fetch the latest config from the Alertmanager
   const fetchAlertmanagerConfiguration = alertmanagerApi.useGetAlertmanagerConfigurationQuery(selectedAlertmanager, {
     refetchOnFocus: true,
+    refetchOnReconnect: true,
     selectFromResult: (result) => ({
       ...result,
       contactPoints: result.data ? enhanceContactPointsWithStatus(result.data, fetchContactPointsStatus.data) : [],
@@ -55,24 +56,15 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
   };
 }
 
-// TODO add the check back in to detect of someone else had already made changes to the config file...
-//
-// maybe we can use the cached value of the endpoint? That way we can compare the hash of the file between invocation
-// of this hook and when we call "deleteTrigger" 🤔
-// this seems to work but there _has_ to be something better – maybe middleware?
 export function useDeleteContactPoint(selectedAlertmanager: string) {
-  const fetchAlertmanagerConfig = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useQuery(selectedAlertmanager);
+  const [fetchAlertmanagerConfig] = alertmanagerApi.endpoints.getAlertmanagerConfiguration.useLazyQuery();
   const [updateAlertManager, updateAlertmanagerState] =
     alertmanagerApi.endpoints.updateAlertmanagerConfiguration.useMutation();
 
   const deleteTrigger = (contactPointName: string) => {
-    return fetchAlertmanagerConfig.refetch().then(({ data }) => {
+    return fetchAlertmanagerConfig(selectedAlertmanager).then(({ data }) => {
       if (!data) {
         return;
-      }
-
-      if (fingerprintAlertmanagerConfig(data) !== fingerprintAlertmanagerConfig(fetchAlertmanagerConfig.data)) {
-        throw new Error('someone mutated config');
       }
 
       const newConfig = produce(data, (draft) => {
@@ -83,6 +75,7 @@ export function useDeleteContactPoint(selectedAlertmanager: string) {
       return updateAlertManager({
         selectedAlertmanager,
         config: newConfig,
+        showSuccessAlert: false,
       }).unwrap();
     });
   };

@@ -88,6 +88,3 @@ export function enhanceContactPointsWithStatus(
     };
   });
 }
-
-// create a unique fingerprint of the alertmanager config
-export const fingerprintAlertmanagerConfig = (config?: AlertManagerCortexConfig) => JSON.stringify(config);
