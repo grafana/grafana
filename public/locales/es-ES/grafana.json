@@ -38,6 +38,11 @@
       "manage-permissions": "",
       "move": ""
     },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
