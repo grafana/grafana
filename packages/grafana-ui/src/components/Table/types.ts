@@ -87,18 +87,23 @@ export interface Props {
   timeRange?: TimeRange;
 }
 
-export interface CustomCellRendererProps<V = unknown> {
+export interface CustomCellRendererProps {
   field: Field;
   index: number;
   frame: DataFrame;
-  value: V;
+  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
+  // types could be propagated here.
+  value: unknown;
 }
 
+// Can be used to define completely custom cell contents by providing a custom cellComponent.
 export interface TableCustomCellOptions {
   cellComponent: FC<CustomCellRendererProps>;
   type: schema.TableCellDisplayMode.Custom;
 }
 
+// As cue/schema cannot define function types (as main point of schema is to be serializable) we have to extend the
+// types here with the dynamic API. This means right now this is not usable as a table panel option for example.
 export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
