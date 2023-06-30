@@ -124,7 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       }
     `,
     avatar: css`
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       width: 16px;
       height: 16px;
       margin-right: ${theme.spacing(1)};

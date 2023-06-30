@@ -3,6 +3,7 @@ aliases:
   - difference-old-new/
   - unified-alerting/
   - unified-alerting/difference-old-new/
+  - alerting/migrating-alerts/
 description: Upgrade Grafana alerts
 title: Upgrade Alerting
 weight: 150
@@ -147,6 +148,8 @@ longer supported.
 1. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
 
 1. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
+
+1. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are migrated to Grafana Alerting as alerts with `Range` type queries.
 
 **Limitations**
 

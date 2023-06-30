@@ -20,13 +20,28 @@ export interface CorrelationData extends Omit<Correlation, 'sourceUID' | 'target
   target: DataSourceInstanceSettings;
 }
 
-const toEnrichedCorrelationData = ({ sourceUID, targetUID, ...correlation }: Correlation): CorrelationData => ({
-  ...correlation,
-  source: getDataSourceSrv().getInstanceSettings(sourceUID)!,
-  target: getDataSourceSrv().getInstanceSettings(targetUID)!,
-});
+const toEnrichedCorrelationData = ({
+  sourceUID,
+  targetUID,
+  ...correlation
+}: Correlation): CorrelationData | undefined => {
+  const sourceDatasource = getDataSourceSrv().getInstanceSettings(sourceUID);
+  if (sourceDatasource) {
+    return {
+      ...correlation,
+      source: sourceDatasource,
+      target: getDataSourceSrv().getInstanceSettings(targetUID)!,
+    };
+  } else {
+    return undefined;
+  }
+};
 
-const toEnrichedCorrelationsData = (correlations: Correlation[]) => correlations.map(toEnrichedCorrelationData);
+const validSourceFilter = (correlation: CorrelationData | undefined): correlation is CorrelationData => !!correlation;
+
+const toEnrichedCorrelationsData = (correlations: Correlation[]): CorrelationData[] => {
+  return correlations.map(toEnrichedCorrelationData).filter(validSourceFilter);
+};
 function getData<T>(response: FetchResponse<T>) {
   return response.data;
 }
@@ -55,7 +70,12 @@ export const useCorrelations = () => {
       backend
         .post<CreateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations`, correlation)
         .then((response) => {
-          return toEnrichedCorrelationData(response.result);
+          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+          if (enrichedCorrelation !== undefined) {
+            return enrichedCorrelation;
+          } else {
+            throw new Error('invalid sourceUID');
+          }
         }),
     [backend]
   );
@@ -70,7 +90,14 @@ export const useCorrelations = () => {
     ({ sourceUID, uid, ...correlation }) =>
       backend
         .patch<UpdateCorrelationResponse>(`/api/datasources/uid/${sourceUID}/correlations/${uid}`, correlation)
-        .then((response) => toEnrichedCorrelationData(response.result)),
+        .then((response) => {
+          const enrichedCorrelation = toEnrichedCorrelationData(response.result);
+          if (enrichedCorrelation !== undefined) {
+            return enrichedCorrelation;
+          } else {
+            throw new Error('invalid sourceUID');
+          }
+        }),
     [backend]
   );
 
