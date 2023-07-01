@@ -84,14 +84,15 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
     // fires on data value hovers/unhovers
     config.addHook('setLegend', (u) => {
-      setContents(render(u, u.cursor.idxs!, closestSeriesIdx));
+      setContents(render(u, u.cursor.idxs!, closestSeriesIdx, _isPinned));
     });
 
     // fires on series focus/proximity changes
     // e.g. to highlight the hovered/closest series
+    // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       if (closestSeriesIdx !== seriesIdx) {
-        setContents(render(u, u.cursor.idxs!, seriesIdx));
+        setContents(render(u, u.cursor.idxs!, seriesIdx, _isPinned));
       }
 
       closestSeriesIdx = seriesIdx;
