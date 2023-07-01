@@ -25,6 +25,13 @@ module.exports = {
       // some sub-dependencies use a different version of @emotion/react and generate warnings
       // in the browser about @emotion/react loaded twice. We want to only load it once
       '@emotion/react': require.resolve('@emotion/react'),
+      // due to our webpack configuration not understanding package.json `exports`
+      // correctly we must alias this package to the correct file
+      // the alternative to this alias is to copy-paste the file into our
+      // source code and miss out in updates
+      '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
+        '@locker/near-membrane-dom/custom-devtools-formatter.js'
+      ),
     },
     modules: ['node_modules', path.resolve('public')],
     fallback: {
@@ -60,7 +67,7 @@ module.exports = {
           },
         },
         {
-          context: path.join(require.resolve('@kusto/monaco-kusto'), '../'),
+          context: path.join(require.resolve('@kusto/monaco-kusto/package.json'), '../release/min'),
           from: '**/*',
           to: '../lib/monaco/min/vs/language/kusto/',
         },

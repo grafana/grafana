@@ -1,8 +1,10 @@
 import { DashboardViewItem } from 'app/features/search/types';
 
+import { BrowseDashboardsState } from '../types';
+
 export function findItem(
   rootItems: DashboardViewItem[],
-  childrenByUID: Record<string, DashboardViewItem[] | undefined>,
+  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   uid: string
 ): DashboardViewItem | undefined {
   for (const item of rootItems) {
@@ -17,7 +19,7 @@ export function findItem(
       continue;
     }
 
-    for (const child of children) {
+    for (const child of children.items) {
       if (child.uid === uid) {
         return child;
       }

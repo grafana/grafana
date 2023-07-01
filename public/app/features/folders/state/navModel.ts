@@ -1,5 +1,6 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
@@ -15,7 +16,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
   const model: NavModelItem = {
     icon: 'folder',
     id: FOLDER_ID,
-    subTitle: 'Manage folder dashboards and permissions',
+    subTitle: t('state.nav-models.manage-folder-subtitle', 'Manage folder dashboards and permissions'),
     url: folder.url,
     text: folder.title,
     children: [
@@ -23,7 +24,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         active: false,
         icon: 'apps',
         id: getDashboardsTabID(folder.uid),
-        text: 'Dashboards',
+        text: t('state.nav-model.dashboards', 'Dashboards'),
         url: folder.url,
       },
     ],
@@ -39,7 +40,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     active: false,
     icon: 'library-panel',
     id: getLibraryPanelsTabID(folder.uid),
-    text: 'Panels',
+    text: t('state.nav-model.panels', 'Panels'),
     url: `${folder.url}/library-panels`,
   });
 
@@ -48,7 +49,7 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       active: false,
       icon: 'bell',
       id: getAlertingTabID(folder.uid),
-      text: 'Alert rules',
+      text: t('state.nav-models.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
     });
   }
@@ -63,16 +64,16 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
         url: `${folder.url}/permissions`,
       });
     }
-  }
 
-  if (folder.canSave) {
-    model.children!.push({
-      active: false,
-      icon: 'cog',
-      id: getSettingsTabID(folder.uid),
-      text: 'Settings',
-      url: `${folder.url}/settings`,
-    });
+    if (folder.canSave) {
+      model.children!.push({
+        active: false,
+        icon: 'cog',
+        id: getSettingsTabID(folder.uid),
+        text: 'Settings',
+        url: `${folder.url}/settings`,
+      });
+    }
   }
 
   return model;

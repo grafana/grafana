@@ -42,7 +42,7 @@ export interface JoinOptions {
   frames: DataFrame[];
 
   /**
-   * The field to join -- frames that do not have this field will be droppped
+   * The field to join -- frames that do not have this field will be dropped
    */
   joinBy?: FieldMatcher;
 

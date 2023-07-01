@@ -26,6 +26,7 @@ import {
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { getIfExistsLastKey } from '../../variables/state/selectors';
+import { trackDashboardLoaded } from '../utils/tracking';
 
 import { DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
@@ -104,6 +105,12 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
+        // only the folder API has information about ancestors
+        // get parent folder (if it exists) and put it in the store
+        // this will be used to populate the full breadcrumb trail
+        if (config.featureToggles.nestedFolders && args.urlFolderUid) {
+          await dispatch(getFolderByUid(args.urlFolderUid));
+        }
         return getNewDashboardModelData(args.urlFolderUid, args.panelType);
       }
       case DashboardRoutes.Path: {
@@ -163,6 +170,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
 
     // fetch dashboard data
     const dashDTO = await fetchDashboard(args, dispatch, getState);
+
+    const versionBeforeMigration = dashDTO?.dashboard?.version;
 
     // returns null if there was a redirect or error
     if (!dashDTO) {
@@ -264,6 +273,8 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         queries: getQueriesByDatasource(dashboard.panels),
       })
     );
+
+    trackDashboardLoaded(dashboard, versionBeforeMigration);
 
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));

@@ -7,6 +7,10 @@ import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
+// When set to auto, the interval will be based on the query range
+// NOTE: this is defined here rather than TimeSrv so we avoid circular dependencies
+export const AutoRefreshInterval = 'auto';
+
 export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
@@ -154,7 +158,7 @@ export class ContextSrv {
 
   // checks whether the passed interval is longer than the configured minimum refresh rate
   isAllowedInterval(interval: string) {
-    if (!config.minRefreshInterval) {
+    if (!config.minRefreshInterval || interval === AutoRefreshInterval) {
       return true;
     }
     return rangeUtil.intervalToMs(interval) >= rangeUtil.intervalToMs(config.minRefreshInterval);
@@ -245,7 +249,7 @@ export class ContextSrv {
 
   private rotateToken() {
     // We directly use fetch here to bypass the request queue from backendSvc
-    return fetch('/api/user/auth-tokens/rotate', { method: 'POST' })
+    return fetch(config.appSubUrl + '/api/user/auth-tokens/rotate', { method: 'POST' })
       .then((res) => {
         if (res.status === 200) {
           this.scheduleTokenRotationJob();

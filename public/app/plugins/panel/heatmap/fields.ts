@@ -108,7 +108,20 @@ export function prepareHeatmapData(
         })!,
       ][0];
     } else {
-      rowsHeatmap = frames[0];
+      let frame = frames[0];
+      let numberFields = frame.fields.filter((field) => field.type === FieldType.number);
+      let allNamesNumeric = numberFields.every((field) => !Number.isNaN(parseSampleValue(field.name)));
+
+      if (allNamesNumeric) {
+        numberFields.sort((a, b) => parseSampleValue(a.name) - parseSampleValue(b.name));
+
+        rowsHeatmap = {
+          ...frame,
+          fields: [frame.fields.find((f) => f.type === FieldType.time)!, ...numberFields],
+        };
+      } else {
+        rowsHeatmap = frame;
+      }
     }
   }
 
