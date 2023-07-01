@@ -37,8 +37,10 @@ export interface ConfirmModalProps {
   alternativeText?: string;
   /** Confirm button variant */
   confirmButtonVariant?: ButtonVariant;
-  /** Confirm action callback */
-  onConfirm(): void;
+  /** Confirm action callback
+   * Return a promise to disable the confirm button until the promise is resolved
+   */
+  onConfirm(): void | Promise<void>;
   /** Dismiss action callback */
   onDismiss(): void;
   /** Alternative action callback */
@@ -83,6 +85,15 @@ export const ConfirmModal = ({
     }
   }, [isOpen, confirmationText]);
 
+  const onConfirmClick = async () => {
+    setDisabled(true);
+    try {
+      await onConfirm();
+    } finally {
+      setDisabled(false);
+    }
+  };
+
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>
@@ -102,7 +113,7 @@ export const ConfirmModal = ({
         </Button>
         <Button
           variant={confirmButtonVariant}
-          onClick={onConfirm}
+          onClick={onConfirmClick}
           disabled={disabled}
           ref={buttonRef}
           data-testid={selectors.pages.ConfirmModal.delete}

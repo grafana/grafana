@@ -104,7 +104,6 @@
 /pkg/services/dashboardsnapshots/ @grafana/backend-platform
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
-/pkg/services/featuremgmt/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
@@ -245,7 +244,7 @@
 /pkg/tsdb/graphite/ @grafana/observability-metrics
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
-/pkg/tsdb/phlare/ @grafana/observability-traces-and-profiling
+/pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/parca/ @grafana/observability-traces-and-profiling
 
 # BI backend code
@@ -305,8 +304,8 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/Gauge/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/BarGauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
@@ -379,7 +378,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/grafana-frontend-platform
 /public/app/features/org/ @grafana/grafana-frontend-platform
-/public/app/features/panel/ @grafana/grafana-frontend-platform
+/public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
 /public/app/features/profile/ @grafana/grafana-frontend-platform
@@ -400,11 +399,11 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
-/public/app/plugins/panel/bargauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/debug/ @ryantxu
 /public/app/plugins/panel/datagrid/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/gauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
@@ -413,7 +412,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
-/public/app/plugins/panel/piechart/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/piechart/ @grafana/dataviz-squad
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/grafana-bi-squad
@@ -425,7 +424,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
 /public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
-/public/app/plugins/panel/stat/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
@@ -439,6 +438,7 @@ lerna.json @grafana/frontend-ops
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
+/public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/frontend-ops
 /public/sass/ @grafana/grafana-frontend-platform
@@ -523,7 +523,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-datasources
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
-/public/app/plugins/datasource/phlare/ @grafana/observability-traces-and-profiling
+/public/app/plugins/datasource/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/parca/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
@@ -558,6 +558,7 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-operator-experience-squad
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-operator-experience-squad
 /pkg/services/caching/ @grafana/grafana-operator-experience-squad
+/pkg/services/featuremgmt/ @grafana/grafana-operator-experience-squad
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
@@ -611,13 +612,18 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
-/.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
+/.github/workflows/remove-milestone.yml @grafana/grafana-delivery
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
-/.github/workflows/stale.yml @grafana/grafana-frontend-platform
+/.github/workflows/stale.yml @grafana/grafana-delivery
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
+/.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code
+/.github/workflows/publish-kinds-next.yml @grafana/grafana-as-code
+/.github/workflows/publish-kinds-release.yml @grafana/grafana-as-code
+/.github/workflows/verify-kinds.yml @grafana/grafana-as-code
+
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot

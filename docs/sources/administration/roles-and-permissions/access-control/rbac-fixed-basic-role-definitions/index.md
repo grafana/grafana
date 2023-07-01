@@ -12,7 +12,7 @@ weight: 70
 # RBAC role definitions
 
 {{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud](/docs/grafana-cloud).
 {{% /admonition %}}
 
 The following tables list permissions associated with basic and fixed roles.
@@ -97,7 +97,7 @@ The following tables list permissions associated with basic and fixed roles.
 
 ### Alerting roles
 
-If alerting is [enabled]({{< relref "../../../../alerting/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
+If alerting is [enabled]({{< relref "../../../../alerting/set-up/migrating-alerts/opt-out/" >}}), you can use predefined roles to manage user access to alert rules, alert instances, and alert notification settings and create custom roles to limit user access to alert rules in a folder.
 
 Access to Grafana alert rules is an intersection of many permissions:
 

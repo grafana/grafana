@@ -44,7 +44,10 @@ A milestone **should** be added to every pull request. Several things in the Gra
 
 This makes it easier to track what changes go into a certain release. Without this information, release managers have to go through git commits which is not an efficient process.
 
-Always assign the milestone for the version that a PR is merged into. PRs targetting `main` should use the next minor (or major) version and backport PRs should use the same value than the target branch.
+Always assign the milestone for the version that a PR is merged into.
+For every major and minor release there is a milestone ending with `.x` (e.g. `10.0.x` for the 10.0.x releases).
+PRs targetting `main` should use the `.x` milestone of the next minor (or major) version (you can find that version number inside the `package.json` file).
+Backport PRs should use the version of the target branch (e.g. `9.4.x` for the `v9.4.x` branch).
 
 ### Include in changelog and release notes?
 

@@ -155,6 +155,8 @@ const Option = (props: React.PropsWithChildren<OptionProps>) => {
   };
 
   return (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       ref={innerRef}
       className={cx(
@@ -270,7 +272,7 @@ const Filter = (
         onCloseMenu={() => onFieldChange('filters', item, selected, onChange)}
         hideSelectedOptions={false}
       />
-      <AccessoryButton aria-label="Remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
+      <AccessoryButton aria-label="Remove filter" icon="times" variant="secondary" onClick={onDelete} type="button" />
     </HorizontalGroup>
   );
 };

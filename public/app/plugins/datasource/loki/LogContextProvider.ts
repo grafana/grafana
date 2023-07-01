@@ -14,6 +14,7 @@ import {
   LogRowContextQueryDirection,
   LogRowContextOptions,
 } from '@grafana/data';
+import { LabelParser, LabelFilter, LineFilters, PipelineStage } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -24,11 +25,18 @@ import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
 import { escapeLabelValueInExactSelector } from './languageUtils';
 import { addLabelToQuery, addParserToQuery } from './modifyQuery';
-import { getParserFromQuery, getStreamSelectorsFromQuery, isQueryWithParser } from './queryUtils';
+import {
+  getNodePositionsFromQuery,
+  getParserFromQuery,
+  getStreamSelectorsFromQuery,
+  isQueryWithParser,
+} from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
+export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
+
 export type PreservedLabels = {
   removedLabels: string[];
   selectedExtractedLabels: string[];
@@ -109,7 +117,8 @@ export class LogContextProvider {
     direction: LogRowContextQueryDirection,
     origQuery?: LokiQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> {
-    const expr = this.processContextFiltersToExpr(row, this.appliedContextFilters, origQuery);
+    const expr = this.prepareExpression(this.appliedContextFilters, origQuery);
+
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection =
@@ -118,7 +127,11 @@ export class LogContextProvider {
     const query: LokiQuery = {
       expr,
       queryType: LokiQueryType.Range,
-      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
+      // refId has to be:
+      // - always different (temporarily, will be fixed later)
+      // - not increase in size
+      // because it may be called many times from logs-context
+      refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}_${Math.random().toString()}`,
       maxLines: limit,
       direction: queryDirection,
       datasource: { uid: this.datasource.uid, type: this.datasource.type },
@@ -180,10 +193,19 @@ export class LogContextProvider {
       updateFilter,
       onClose: this.onContextClose,
       logContextProvider: this,
+      runContextQuery,
     });
   }
 
-  processContextFiltersToExpr = (row: LogRowModel, contextFilters: ContextFilter[], query: LokiQuery | undefined) => {
+  prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
+    let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
+    if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
+      preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
+    }
+    return preparedExpression;
+  }
+
+  processContextFiltersToExpr = (contextFilters: ContextFilter[], query: LokiQuery | undefined): string => {
     const labelFilters = contextFilters
       .map((filter) => {
         if (!filter.fromParser && filter.enabled) {
@@ -214,6 +236,51 @@ export class LogContextProvider {
     }
 
     return expr;
+  };
+
+  processPipelineStagesToExpr = (currentExpr: string, query: LokiQuery | undefined): string => {
+    let newExpr = currentExpr;
+    const origExpr = query?.expr ?? '';
+
+    if (isQueryWithParser(origExpr).parserCount > 1) {
+      return newExpr;
+    }
+
+    const allNodePositions = getNodePositionsFromQuery(origExpr, [
+      PipelineStage,
+      LabelParser,
+      LineFilters,
+      LabelFilter,
+    ]);
+    const pipelineStagePositions = allNodePositions.filter((position) => position.type?.id === PipelineStage);
+    const otherNodePositions = allNodePositions.filter((position) => position.type?.id !== PipelineStage);
+
+    for (const pipelineStagePosition of pipelineStagePositions) {
+      // we don't process pipeline stages that contain label parsers, line filters or label filters
+      if (otherNodePositions.some((position) => pipelineStagePosition.contains(position))) {
+        continue;
+      }
+
+      newExpr += ` ${pipelineStagePosition.getExpression(origExpr)}`;
+    }
+
+    return newExpr;
+  };
+
+  queryContainsValidPipelineStages = (query: LokiQuery | undefined): boolean => {
+    const origExpr = query?.expr ?? '';
+    const allNodePositions = getNodePositionsFromQuery(origExpr, [
+      PipelineStage,
+      LabelParser,
+      LineFilters,
+      LabelFilter,
+    ]);
+    const pipelineStagePositions = allNodePositions.filter((position) => position.type?.id === PipelineStage);
+    const otherNodePositions = allNodePositions.filter((position) => position.type?.id !== PipelineStage);
+
+    return pipelineStagePositions.some((pipelineStagePosition) =>
+      otherNodePositions.every((position) => pipelineStagePosition.contains(position) === false)
+    );
   };
 
   getInitContextFilters = async (labels: Labels, query?: LokiQuery) => {

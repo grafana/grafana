@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useId } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2, toIconName } from '@grafana/data';
@@ -8,7 +8,6 @@ import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@
 import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
-import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
@@ -91,7 +90,7 @@ export const FolderSection = ({
     }
   };
 
-  const id = useUniqueId();
+  const id = useId();
   const labelId = `section-header-label-${id}`;
 
   let icon = toIconName(section.icon ?? '');
@@ -147,6 +146,8 @@ export const FolderSection = ({
       label={
         <>
           {selectionToggle && selection && (
+            // TODO: fix keyboard a11y
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
             <div onClick={onToggleFolder}>
               <Checkbox
                 className={styles.checkbox}
