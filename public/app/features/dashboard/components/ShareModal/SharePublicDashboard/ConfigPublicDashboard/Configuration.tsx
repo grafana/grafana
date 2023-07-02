@@ -67,8 +67,11 @@ export const Configuration = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  dashboardConfig: css`
-    margin: ${theme.spacing(0, 0, 3, 0)};
-  `,
-});
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    dashboardConfig: css({
+      label: 'public dashboard configuration',
+      marginTop: theme.spacing(1),
+    }),
+  };
+};

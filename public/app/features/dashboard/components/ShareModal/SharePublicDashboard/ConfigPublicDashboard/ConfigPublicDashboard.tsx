@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
 import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
@@ -133,7 +132,7 @@ const ConfigPublicDashboard = () => {
 
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
 
-      <Field label="Dashboard URL" className={styles.publicUrl}>
+      <Field label="Dashboard URL" className={styles.fieldSpace}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
@@ -152,36 +151,40 @@ const ConfigPublicDashboard = () => {
         />
       </Field>
 
-      <Layout>
-        <Switch
-          {...register('isPaused')}
-          disabled={disableInputs}
-          onChange={(e) => {
-            reportInteraction('grafana_dashboards_public_enable_clicked', {
-              action: e.currentTarget.checked ? 'disable' : 'enable',
-            });
-            onChange('isPaused', e.currentTarget.checked);
-          }}
-          data-testid={selectors.PauseSwitch}
-        />
-        <Label
-          className={css`
-            margin-bottom: 0;
-          `}
-        >
-          Pause sharing dashboard
-        </Label>
-      </Layout>
+      <Field className={styles.fieldSpace}>
+        <Layout>
+          <Switch
+            {...register('isPaused')}
+            disabled={disableInputs}
+            onChange={(e) => {
+              reportInteraction('grafana_dashboards_public_enable_clicked', {
+                action: e.currentTarget.checked ? 'disable' : 'enable',
+              });
+              onChange('isPaused', e.currentTarget.checked);
+            }}
+            data-testid={selectors.PauseSwitch}
+          />
+          <Label
+            className={css`
+              margin-bottom: 0;
+            `}
+          >
+            Pause sharing dashboard
+          </Label>
+        </Layout>
+      </Field>
 
-      <QueryOperationRow
-        id="settings"
-        index={0}
-        title="Settings"
-        headerElement={renderCollapsedText(styles)}
-        isOpen={isSettingsOpen}
-      >
-        <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
-      </QueryOperationRow>
+      <Field className={styles.fieldSpace}>
+        <QueryOperationRow
+          id="settings"
+          index={0}
+          title="Settings"
+          headerElement={renderCollapsedText(styles)}
+          isOpen={isSettingsOpen}
+        >
+          <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
+        </QueryOperationRow>
+      </Field>
 
       <Layout
         orientation={isDesktop ? 0 : 1}
@@ -190,7 +193,6 @@ const ConfigPublicDashboard = () => {
       >
         <HorizontalGroup justify="flex-end">
           <DeletePublicDashboardButton
-            className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
             type="button"
             disabled={disableInputs}
             data-testid={selectors.DeleteButton}
@@ -214,23 +216,20 @@ const ConfigPublicDashboard = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   titleContainer: css`
+    label: 'title container';
     margin-bottom: ${theme.spacing(2)};
   `,
   title: css`
+    label: 'title';
     margin: 0;
   `,
-  publicUrl: css`
+  fieldSpace: css`
+    label: 'field space';
     width: 100%;
-    padding-top: ${theme.spacing(1)};
     margin-bottom: ${theme.spacing(3)};
   `,
-  deleteButton: css`
-    margin-left: ${theme.spacing(3)};
-  `,
-  deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)};
-  `,
   collapsedText: css`
+    label: 'collapsed text';
     margin-left: ${theme.spacing.gridSize * 2}px;
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
