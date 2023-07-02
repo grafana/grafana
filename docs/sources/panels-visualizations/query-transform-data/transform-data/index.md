@@ -65,6 +65,16 @@ The input and output results sets can help you debug a transformation.
 
 {{< figure src="/static/img/docs/transformations/debug-transformations-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
+## Disable a transformation
+
+You can disable or hide one or more transformation clicking on the eye icon on the top right side of the transformation row. This will disable the actions applied of that especific transformation and can help to identify issues when several transformations are chaned one after another.
+
+## Filter a transformation
+
+If your panel uses more than one query you can filter these and apply the selected transformation only to one of the queries. For that, click on the filter icon on the right side of the transformation row. This will open a dropdown with a list of queries used on the panel where you can select one of them. 
+
+Note that the filter icon will always appear if your panel has more than one query, but it may not work if previous transformations for merging the queries output are aplied, as one transformation takes the output of the previous one. 
+
 ## Delete a transformation
 
 We recommend that you remove transformations that you don't need. When you delete a transformation, you remove the data from the visualization.
@@ -78,6 +88,7 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Open a panel for editing.
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
+
 
 ## Transformation functions
 
@@ -165,7 +176,35 @@ The result:
 | 2019-01-01 00:00:00 | below | 29    |
 | 2020-01-01 00:00:00 | above | 22    |
 
-### Filter data by name
+### Create heatmap
+
+Use this transformation to prepare histogram data to be visualize over time. Similar to the [Heatmap panel] ({{< relref "../visualizations/heatmap" >}}) this transformation allows you to convert histograms metrics to buckets over time.
+
+#### X Bucket
+
+This setting determines how the X-axis is split into buckets. You can specify a time interval in the Size input. For example, a time range of 1h makes the cells 1-hour wide on the X-axis. Or in the case of not time related series you can use Count, to define the number of elements in a bucket.
+
+#### Y Bucket
+
+This setting determines how the Y-axis is split into buckets.
+
+#### Y Bucket scale
+
+Used for selecting the scale on the Y-axes. You can select between linear scale and Logarithmic scale with base 2 or base 10 or Symetrical Logarithmic scale (which allows negative values) with  base 2 or base 10.
+
+### Extract fields
+
+Use this transfromation to select one source of data and extract content from it in different formats:
+
+- **JSON** To parse JSON content from the source
+- **Key+value parse** To parse content in the format a=b or c:d from the source
+- **Auto** To discover fields automatically
+
+### Field lookup
+
+Use this transformation on a field value to lookup additional fields from an external source (currently available: Countries, USA States and Airports). This currently supports spatial data, but will eventually support more formats
+ 
+### Filter by name
 
 Use this transformation to remove portions of the query results.
 
@@ -323,6 +362,34 @@ We would then get :
 
 This transformation enables you to extract key information from your time series and display it in a convenient way.
 
+### Grouping to matrix
+
+Use this transformation to combine three fields that will be used as input for Column, Row and Cell value, from the query output and generate a Matrix. This matrix will be calculated as follows:
+
+Given the original data
+
+| Server ID | CPU Temperature | Server Status |
+| --------- | --------------- | ------------- |
+| server 1  | 82              | Ok            |
+| server 2  | 88.6            | OK            |
+| server 3  | 59.6            | Shutdown      |
+
+We can generate a Matrix using the values of `Server Status` as colum names, the `Server ID` values as rows name and the `CPU Temperatue` as content of each cell. The content of each cell will apear for the existing column (Server Statues) and row combination (Server ID), for the rest of the cells we can select which value to display between: Null, True, False or Empty.
+
+Thus, the output is:
+
+| Server ID\Server Status | OK    | Shutdown |
+| ----------------------- | ----- | -------- |
+| server 1                | 82    |          |
+| server 2                | 88.6  |          |
+| server 3                |       | 59.6     |
+
+### Histogram
+
+Use this transformation to generate a histogram based on the input data. You can select the bucket size as the distance between the lowest item in the bucket (xMin) and the highest item in the bucket (xMax), and its offset (for non-zero based bucket).
+
+Additionally, you can toggle the Combine Series option to create an Histogram using all the available series.
+
 ### Join by field
 
 Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
@@ -398,6 +465,13 @@ In the following example, a template query displays time series data from multip
 I applied a transformation to join the query results using the time field. Now I can run calculations, combine, and organize the results in this new table.
 
 {{< figure src="/static/img/docs/transformations/join-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+### Join by Labels
+
+Use this transformation to join multiple results into a single table. This is especially useful for converting multiple
+time series results into a single wide table with a shared Label field.
+
+Select the label to `Join` by between the labels available or common accross all time series, and the `Value` name for the output result. 
 
 ### Labels to fields
 
