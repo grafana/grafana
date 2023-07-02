@@ -150,7 +150,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 				q, params := filter.Where()
 				recQry, recQryParams := filter.With()
 				params = append(recQryParams, params...)
-				_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+				_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id WHERE "+q, params...).Get(&result)
 				return err
 			})
 			require.NoError(t, err)
@@ -257,7 +257,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 				q, params := filter.Where()
 				recQry, recQryParams := filter.With()
 				params = append(recQryParams, params...)
-				err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
+				err := sess.SQL(recQry+"\nSELECT dashboard.title FROM dashboard LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id WHERE "+q, params...).Find(&result)
 				return err
 			})
 			require.NoError(t, err)
