@@ -1,0 +1,119 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`useContactPoints should return contact points with status 1`] = `
+{
+  "contactPoints": [
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "name": "grafana-default-email",
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "xeKQrBrnk",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "2023-07-02T21:35:34.841+02:00",
+            "lastNotifyAttemptDuration": "1ms",
+            "lastNotifyAttemptError": "failed to send notification to email addresses: gilles.demey@grafana.com: dial tcp 192.168.1.21:1025: connect: connection refused",
+            "name": "email",
+            "sendResolved": true,
+          },
+        },
+      ],
+      "name": "grafana-default-email",
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "name": "provisioned-contact-point",
+          "provenance": "api",
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "s8SdCVjnk",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+        },
+      ],
+      "name": "provisioned-contact-point",
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "name": "lotsa-emails",
+          "secureFields": {},
+          "settings": {
+            "addresses": "gilles.demey+1@grafana.com, gilles.demey+2@grafana.com, gilles.demey+3@grafana.com, gilles.demey+4@grafana.com",
+            "singleEmail": false,
+          },
+          "type": "email",
+          "uid": "af306c96-35a2-4d6e-908a-4993e245dbb2",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "email",
+            "sendResolved": true,
+          },
+        },
+      ],
+      "name": "lotsa-emails",
+    },
+    {
+      "grafana_managed_receiver_configs": [
+        {
+          "disableResolveMessage": false,
+          "name": "Slack with multiple channels",
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts",
+          },
+          "type": "slack",
+          "uid": "c02ad56a-31da-46b9-becb-4348ec0890fd",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+        },
+        {
+          "disableResolveMessage": false,
+          "name": "Slack with multiple channels",
+          "secureFields": {
+            "token": true,
+          },
+          "settings": {
+            "recipient": "test-alerts2",
+          },
+          "type": "slack",
+          "uid": "b286a3be-f690-49e2-8605-b075cbace2df",
+          Symbol(receiver_status): {
+            "lastNotifyAttempt": "",
+            "lastNotifyAttemptDuration": "",
+            "name": "slack",
+            "sendResolved": true,
+          },
+        },
+      ],
+      "name": "Slack with multiple channels",
+    },
+  ],
+  "error": undefined,
+  "isLoading": false,
+}
+`;

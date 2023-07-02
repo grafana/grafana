@@ -16,11 +16,9 @@ import { Strong } from '../Strong';
 
 import { useDeleteContactPointModal } from './Modals';
 import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint } from './useContactPoints';
-import { getReceiverDescription, isProvisioned } from './utils';
+import { getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
 
 const ContactPoints = () => {
-  const styles = useStyles2(getStyles);
-
   // TODO hardcoded for now, change this to allow selecting different alertmanager
   const selectedAlertmanager = 'grafana';
   const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager);
@@ -43,40 +41,71 @@ const ContactPoints = () => {
         {contactPoints.map((contactPoint) => {
           const contactPointKey = selectedAlertmanager + contactPoint.name;
           const provisioned = isProvisioned(contactPoint);
+          const receivers = contactPoint.grafana_managed_receiver_configs;
+          const disabled = updateAlertmanagerState.isLoading;
 
           return (
-            <div className={styles.contactPointWrapper} key={contactPointKey}>
-              <Stack direction="column" gap={0}>
-                <ContactPointHeader
-                  name={contactPoint.name}
-                  policies={[]}
-                  provisioned={provisioned}
-                  disabled={updateAlertmanagerState.isLoading}
-                  onDelete={showDeleteModal}
-                />
-                <div className={styles.receiversWrapper}>
-                  {contactPoint.grafana_managed_receiver_configs?.map((receiver) => {
-                    const diagnostics = receiver[RECEIVER_STATUS_KEY];
-                    const sendingResolved = !Boolean(receiver.disableResolveMessage);
-
-                    return (
-                      <ContactPointReceiver
-                        key={uniqueId()}
-                        type={receiver.type}
-                        description={getReceiverDescription(receiver)}
-                        diagnostics={diagnostics}
-                        sendingResolved={sendingResolved}
-                      />
-                    );
-                  })}
-                </div>
-              </Stack>
-            </div>
+            <ContactPointsListItem
+              key={contactPointKey}
+              name={contactPoint.name}
+              disabled={disabled}
+              onDelete={showDeleteModal}
+              receivers={receivers}
+              provisioned={provisioned}
+            />
           );
         })}
       </Stack>
       {DeleteModal}
     </>
+  );
+};
+
+interface ContactPointsListItemProps {
+  name: string;
+  disabled?: boolean;
+  provisioned?: boolean;
+  receivers: ReceiverConfigWithStatus[];
+  onDelete: (name: string) => void;
+}
+
+export const ContactPointsListItem = ({
+  name,
+  disabled = false,
+  provisioned = false,
+  receivers,
+  onDelete,
+}: ContactPointsListItemProps) => {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles.contactPointWrapper}>
+      <Stack direction="column" gap={0}>
+        <ContactPointHeader
+          name={name}
+          policies={[]}
+          provisioned={provisioned}
+          disabled={disabled}
+          onDelete={onDelete}
+        />
+        <div className={styles.receiversWrapper}>
+          {receivers?.map((receiver) => {
+            const diagnostics = receiver[RECEIVER_STATUS_KEY];
+            const sendingResolved = !Boolean(receiver.disableResolveMessage);
+
+            return (
+              <ContactPointReceiver
+                key={uniqueId()}
+                type={receiver.type}
+                description={getReceiverDescription(receiver)}
+                diagnostics={diagnostics}
+                sendingResolved={sendingResolved}
+              />
+            );
+          })}
+        </div>
+      </Stack>
+    </div>
   );
 };
 
