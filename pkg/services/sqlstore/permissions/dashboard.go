@@ -207,8 +207,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				case true:
 					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
 					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-					builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-					builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
+					builder.WriteString(fmt.Sprintf("(folder.uid IN (SELECT uid FROM %s", recQueryName))
 				default:
 					nestedFoldersSelectors, nestedFoldersArgs := nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder_id", "id")
 					builder.WriteRune('(')
