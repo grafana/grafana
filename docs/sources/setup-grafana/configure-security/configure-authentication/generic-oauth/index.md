@@ -92,7 +92,8 @@ The following table outlines the various generic OAuth2 configuration options av
 | `id_token_attribute_name`    | No       | The name of the key used to extract the ID token from the returned OAuth2 token.                                                                                                                                                                                                          | `id_token`      |
 | `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token.                                                                                                                                                                             |                 |
 | `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as user's display name.                                                                                                                               |                 |
-| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the generic OAuth2 attribute map.                                                                                                                                                                                                     | `email:primary` |
+| `email_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user email lookup from the user information. For more information on how user email is retrieved, refer to [email address]({{< relref "#email-address" >}}) section.                                                  |                 |
+| `email_attribute_name`       | No       | Name of the key to use for user email lookup within the `attributes` map of OAuth2 ID token. For more information on how user email is retrieved, refer to [email address]({{< relref "#email-address" >}}) section.                                                                      | `email:primary` |
 | `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup.                                                                                                                                                                                                  |                 |
 | `role_attribute_strict`      | No       | Set to `true` to deny user login if Grafana role cannot be extracted using `role_attribute_path`.                                                                                                                                                                                         | `false`         |
 | `allow_assign_grafana_admin` | No       | Set to `true` to enable automatic sync of the Grafana server administrator role.                                                                                                                                                                                                          | `false`         |
@@ -112,13 +113,20 @@ The following table outlines the various generic OAuth2 configuration options av
 
 ### Email address
 
-Grafana determines a user's email address by following the steps below until it finds and e-mail address:
+Grafana can resolve a user's email address from the OAuth2 ID token, user information retrieved from the OAuth2 UserInfo endpoint or OAuth2 `/emails` endpoint.
+Grafana looks at these sources in the order listed above until an email address is found.
+If no email is found, then the email address of the user is set to an empty string.
 
-1. Check for the presence of an e-mail address via the `email` field encoded in the OAuth2 ID token.
-1. Check for the presence of an e-mail address using the [JMESPath](http://jmespath.org/examples.html) specified via the `email_attribute_path` configuration option. The JSON used for the path lookup is the HTTP response obtained from querying the UserInfo endpoint specified via the `api_url` configuration option.
-1. Check for the presence of an e-mail address in the `attributes` map encoded in the OAuth2 ID token. By default Grafana will perform a lookup into the attributes map using the `email:primary` key, however, this is configurable and can be adjusted by using the `email_attribute_name` configuration option.
-1. Query the `/emails` endpoint of the OAuth2 provider's API (configured with `api_url`), then check for the presence of an email address marked as a primary address.
-1. If no email address is found in steps (1-4), then the email address of the user is set to an empty string.
+Refer to the following table for information on what you need to configure depending on how your Oauth2 provider returns users' email addresses:
+
+| Source of email address                                                                                                                                   | Required configuration                                                                                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `email` field of the OAuth2 ID token.                                                                                                                     | n/a                                                                                                                  |
+| `attributes` map of the OAuth2 ID token.                                                                                                                  | Set `email_attribute_name` configuration option. By default Grafana will search for email under `email:primary` key. |
+| `upn` field of the OAuth2 ID token.                                                                                                                       | n/a                                                                                                                  |
+| `email` field of the user information from the endpoint specified via the `api_url` configuration option.                                                 | n/a                                                                                                                  |
+| Another field of the user information from the endpoint specified via the `api_url` configuration option.                                                 | Set `email_attribute_path` configuration option.                                                                     |
+| Email address marked as primary from the `/emails` endpoint of the OAuth2 provider (obtained by appending `/emails` to the URL configured with `api_url`) | n/a                                                                                                                  |
 
 ### Login
 
