@@ -311,9 +311,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     if (query.tags) {
       expandedQuery.tags = query.tags.map((tag) => {
+        let val = tag.value;
+        val = this.templateSrv.replace(val, scopedVars);
+        if (tag.operator !== '>' && tag.operator !== '<') {
+          val = val.replace(/\\/g, '\\\\').replace(/\'/g, "\\'");
+        }
+
         return {
           ...tag,
-          value: this.templateSrv.replace(tag.value, scopedVars, 'regex'),
+          value: val,
         };
       });
     }
