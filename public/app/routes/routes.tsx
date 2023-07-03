@@ -364,6 +364,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/featuretoggles',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AdminFeatureTogglesPage" */ 'app/features/admin/AdminFeatureTogglesPage')
+      ),
+    },
+    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
