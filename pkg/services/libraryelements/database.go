@@ -249,6 +249,7 @@ func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signed
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
+		builder.Write(" LEFT OUTER JOIN dashboard AS folder on dashboard.folder_id = folder.id")
 		writeParamSelectorSQL(&builder, params...)
 		builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")
 		builder.Write(` OR dashboard.id=0`)
@@ -363,6 +364,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 		builder.Write(", dashboard.uid as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(l.SQLStore.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id<>0")
+		builder.Write(" LEFT OUTER JOIN dashboard AS folder on dashboard.folder_id = folder.id")
 		builder.Write(` WHERE le.org_id=?`, signedInUser.OrgID)
 		writeKindSQL(query, &builder)
 		writeSearchStringSQL(query, l.SQLStore, &builder)
@@ -601,6 +603,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser *
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
+		builder.Write(" LEFT OUTER JOIN dashboard AS folder on dashboard.folder_id = folder.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if signedInUser.OrgRole != org.RoleAdmin {
 			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")

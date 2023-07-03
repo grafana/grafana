@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -821,7 +820,6 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 	hitList := make([]*model.Hit, 0)
 	hits := make(map[int64]*model.Hit)
 
-	spew.Dump(">>>>", res)
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
@@ -859,6 +857,5 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
-	spew.Dump("<<<", hitList)
 	return hitList
 }
