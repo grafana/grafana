@@ -1260,13 +1260,17 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
+  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
+  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1276,7 +1280,9 @@ steps:
   image: grafana/build-container:1.7.4
   name: postgres-integration-benchmarks
 - commands:
-  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
+  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1285,7 +1291,9 @@ steps:
   image: grafana/build-container:1.7.4
   name: mysql-integration-benchmarks-5.7
 - commands:
-  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
+  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -7355,6 +7363,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: cd2845b0096161b5bbc0f0686d7a77b6c2994604a7da3d054b1cf3a09a457350
+hmac: 91d44913003de0078a5da71c2aeefd0f80e49cb4c8e5076e1d4ca96b0d97001d
 
 ...
