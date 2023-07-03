@@ -25,18 +25,6 @@
     "name": "provisioned-contact-point"
   },
   {
-    "active": true,
-    "integrations": [
-      {
-        "lastNotifyAttempt": "0001-01-01T00:00:00.000Z",
-        "lastNotifyAttemptDuration": "0s",
-        "name": "slack",
-        "sendResolved": true
-      }
-    ],
-    "name": "Slacky"
-  },
-  {
     "active": false,
     "integrations": [
       {
