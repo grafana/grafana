@@ -90,8 +90,8 @@ The following table outlines the various generic OAuth2 configuration options av
 | `allow_sign_up`              | No       | Controls Grafana user creation through the generic OAuth2 login. Only existing Grafana users can log in with generic OAuth if set to' false'.                                                                                                                                             | `true`          |
 | `auto_login`                 | No       | Set to `true` to enable users to bypass the login screen and automatically log in. This setting is ignored if you configure multiple auth providers to use auto-login.                                                                                                                    | `false`         |
 | `id_token_attribute_name`    | No       | The name of the key used to extract the ID token from the returned OAuth2 token.                                                                                                                                                                                                          | `id_token`      |
-| `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token.                                                                                                                                                                             |                 |
-| `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as user's display name.                                                                                                                               |                 |
+| `login_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user login lookup from the user ID token. For more information on how user login is retrieved, refer to [login]({{< relref "#login" >}}) section.                                                                     |                 |
+| `name_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user name lookup from the user ID token. This name will be used as user's display name. For more information on how user display name is retrieved, refer to [display name]({{< relref "#display-name" >}}) section.  |                 |
 | `email_attribute_path`       | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for user email lookup from the user information. For more information on how user email is retrieved, refer to [email address]({{< relref "#email-address" >}}) section.                                                  |                 |
 | `email_attribute_name`       | No       | Name of the key to use for user email lookup within the `attributes` map of OAuth2 ID token. For more information on how user email is retrieved, refer to [email address]({{< relref "#email-address" >}}) section.                                                                      | `email:primary` |
 | `role_attribute_path`        | No       | [JMESPath](http://jmespath.org/examples.html) expression to use for Grafana role lookup.                                                                                                                                                                                                  |                 |
@@ -113,32 +113,50 @@ The following table outlines the various generic OAuth2 configuration options av
 
 ### Email address
 
-Grafana can resolve a user's email address from the OAuth2 ID token, user information retrieved from the OAuth2 UserInfo endpoint or OAuth2 `/emails` endpoint.
+Grafana can resolve user's email address from the OAuth2 ID token, user information retrieved from the OAuth2 UserInfo endpoint or OAuth2 `/emails` endpoint.
 Grafana looks at these sources in the order listed above until an email address is found.
 If no email is found, then the email address of the user is set to an empty string.
 
 Refer to the following table for information on what you need to configure depending on how your Oauth2 provider returns users' email addresses:
 
-| Source of email address                                                                                                                                   | Required configuration                                                                                               |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `email` field of the OAuth2 ID token.                                                                                                                     | n/a                                                                                                                  |
-| `attributes` map of the OAuth2 ID token.                                                                                                                  | Set `email_attribute_name` configuration option. By default Grafana will search for email under `email:primary` key. |
-| `upn` field of the OAuth2 ID token.                                                                                                                       | n/a                                                                                                                  |
-| `email` field of the user information from the endpoint specified via the `api_url` configuration option.                                                 | n/a                                                                                                                  |
-| Another field of the user information from the endpoint specified via the `api_url` configuration option.                                                 | Set `email_attribute_path` configuration option.                                                                     |
-| Email address marked as primary from the `/emails` endpoint of the OAuth2 provider (obtained by appending `/emails` to the URL configured with `api_url`) | n/a                                                                                                                  |
+| Source of email address                                                                                                                                                 | Required configuration                                                                                               |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `email` field of the OAuth2 ID token.                                                                                                                                   | n/a                                                                                                                  |
+| `attributes` map of the OAuth2 ID token.                                                                                                                                | Set `email_attribute_name` configuration option. By default Grafana will search for email under `email:primary` key. |
+| `upn` field of the OAuth2 ID token.                                                                                                                                     | n/a                                                                                                                  |
+| `email` field of the user information from the UserInfo endpoint.                                                                                                       | n/a                                                                                                                  |
+| Another field of the user information from the UserInfo endpoint.                                                                                                       | Set `email_attribute_path` configuration option.                                                                     |
+| Email address marked as primary from the `/emails` endpoint of <br /> the OAuth2 provider (obtained by appending `/emails` to the URL <br /> configured with `api_url`) | n/a                                                                                                                  |
 
 ### Login
 
-Grafana determines a user's login by using the [JMESPath](http://jmespath.org/examples.html) specified via the `login_attribute_path` configuration option.
-The order of operations is as follows:
+Grafana can resolve user's login from the OAuth2 ID token or user information retrieved from the OAuth2 UserInfo endpoint.
+Grafana looks at these sources in the order listed above until a login is found.
+If no login is found, then user's login will be set to user's email address.
 
-1. Evaluate the `login_attribute_path` JMESPath expression against the OAuth2 ID token.
-1. Evaluate the `login_attribute_path` JMESPath expression against the JSON data obtained from UserInfo endpoint, which is specified via the `api_url` configuration option.
+Refer to the following table for information on what you need to configure depending on how your Oauth2 provider returns users' login:
+
+| Source of email address                                                         | Required configuration                           |
+| ------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `login` or `username` field of the OAuth2 ID token.                             | n/a                                              |
+| Another field of the OAuth2 ID token.                                           | Set `login_attribute_path` configuration option. |
+| `login` or `username` field of the user information from the UserInfo endpoint. | n/a                                              |
+| Another field of the user information from the UserInfo endpoint.               | Set `login_attribute_path` configuration option. |
 
 ### Display name
 
-You can set a user's display name with [JMESPath](http://jmespath.org/examples.html) using the `name_attribute_path` configuration option. It operates the same way as the `login_attribute_path` option.
+Grafana can resolve user's display name from the OAuth2 ID token or user information retrieved from the OAuth2 UserInfo endpoint.
+Grafana looks at these sources in the order listed above until a display name is found.
+If no display name is found, then user's login will be displayed instead.
+
+Refer to the following table for information on what you need to configure depending on how your Oauth2 provider returns users' name:
+
+| Source of email address                                                         | Required configuration                          |
+| ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `name` or `display_name` field of the OAuth2 ID token.                          | n/a                                             |
+| Another field of the OAuth2 ID token.                                           | Set `name_attribute_path` configuration option. |
+| `login` or `username` field of the user information from the UserInfo endpoint. | n/a                                             |
+| Another field of the user information from the UserInfo endpoint.               | Set `name_attribute_path` configuration option. |
 
 ### Groups
 
