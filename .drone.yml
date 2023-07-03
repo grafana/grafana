@@ -1261,7 +1261,7 @@ steps:
   name: wire-install
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
     -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
@@ -1269,7 +1269,7 @@ steps:
   name: sqlite-integration-benchmarks
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
     -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
@@ -1281,7 +1281,7 @@ steps:
   name: postgres-integration-benchmarks
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
     -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
@@ -1292,7 +1292,7 @@ steps:
   name: mysql-integration-benchmarks-5.7
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
+  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
     -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
@@ -7363,6 +7363,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 91d44913003de0078a5da71c2aeefd0f80e49cb4c8e5076e1d4ca96b0d97001d
+hmac: 332976c17c01ffb80b9a29e675fb82290cf040d8726152c18721ab7d7e1dee19
 
 ...
