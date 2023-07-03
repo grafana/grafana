@@ -31,6 +31,7 @@ This topic describes how to configure generic OAuth2 authentication.
 
 ## Before you begin
 
+To follow this guide:
 - Ensure that you have access to the [Grafana configuration file]({{< relref "../../../../configure-grafana#configuration-file-location" >}}).
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
