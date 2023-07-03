@@ -1261,16 +1261,12 @@ steps:
   name: wire-install
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
-    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
-    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1281,8 +1277,6 @@ steps:
   name: postgres-integration-benchmarks
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
-    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1292,8 +1286,6 @@ steps:
   name: mysql-integration-benchmarks-5.7
 - commands:
   - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
-  - go test -v -run=^$  -timeout=1h -count=8 -bench="BenchmarkDashboardPermissionFilter_300_10000_0_0|BenchmarkDashboardPermissionFilter_300_10000_10_8"
-    -timeout=1h ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -7363,6 +7355,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 332976c17c01ffb80b9a29e675fb82290cf040d8726152c18721ab7d7e1dee19
+hmac: 1720a5bc8f9afc6da292f4de2a03838bdf5193d095f15de96ce1bbda4a7e4280
 
 ...
