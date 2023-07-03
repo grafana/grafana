@@ -1280,26 +1280,6 @@ steps:
   depends_on:
   - wire-install
   environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
-  name: postgres-integration-benchmarks
-- commands:
-  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
-  depends_on:
-  - wire-install
-  environment:
-    GRAFANA_TEST_DB: postgres
-    PGPASSWORD: grafanatest
-    POSTGRES_HOST: postgres
-  image: grafana/build-container:1.7.4
-  name: postgres-integration-benchmarks
-- commands:
-  - go test -v -run=^$ -timeout=30m -benchtime=2s -bench=. ./pkg/api
-  depends_on:
-  - wire-install
-  environment:
     GRAFANA_TEST_DB: mysql
     MYSQL_HOST: mysql57
   image: grafana/build-container:1.7.4
@@ -7375,6 +7355,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 7addf7b63ae5909a6301fb2112f9451191b9c53fda9974a7dfd4c8f93f232e2b
+hmac: 1720a5bc8f9afc6da292f4de2a03838bdf5193d095f15de96ce1bbda4a7e4280
 
 ...
