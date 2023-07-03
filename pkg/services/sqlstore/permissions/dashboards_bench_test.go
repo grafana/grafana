@@ -62,7 +62,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards, n
 			q, params := filter.Where()
 			recQry, recQryParams := filter.With()
 			params = append(recQryParams, params...)
-			_, err := sess.SQL(recQry+"SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+			_, err := sess.SQL(recQry+"SELECT COUNT(*) FROM dashboard LEFT OUTER JOIN dashboard AS folder ON dashboard.folder_id = folder.id WHERE "+q, params...).Get(&result)
 			return err
 		})
 		require.NoError(b, err)
