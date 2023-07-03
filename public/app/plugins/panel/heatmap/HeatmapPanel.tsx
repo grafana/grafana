@@ -43,11 +43,12 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync } = usePanelContext();
 
-  let scopedVarsFromRawData = []
-  for(const series of data.series) {
-    for(const field of series.fields) {
-      if(field.state?.scopedVars){
-        scopedVarsFromRawData.push(field.state?.scopedVars)
+  //  necessary for enabling datalinks in hover view
+  let scopedVarsFromRawData = [];
+  for (const series of data.series) {
+    for (const field of series.fields) {
+      if (field.state?.scopedVars) {
+        scopedVarsFromRawData.push(field.state?.scopedVars);
       }
     }
   }

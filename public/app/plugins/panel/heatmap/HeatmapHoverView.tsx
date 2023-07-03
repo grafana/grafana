@@ -10,7 +10,7 @@ import {
   TimeRange,
   getLinksSupplier,
   InterpolateFunction,
-  ScopedVars
+  ScopedVars,
 } from '@grafana/data';
 import { HeatmapCellLayout } from '@grafana/schema';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
@@ -127,10 +127,12 @@ const HeatmapHoverCell = ({ data, hover, showHistogram, scopedVars, replaceVars 
   for (const field of visibleFields ?? []) {
     const hasLinks = field.config.links && field.config.links.length > 0;
     if (hasLinks && data.heatmap) {
-      let appropriateScopedVars = scopedVars.filter((sv) => sv && sv.__dataContext && sv.__dataContext.value.field.name === nonNumericOrdinalDisplay)[0]
-      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars ?? {}, replaceVars)
+      let appropriateScopedVars = scopedVars.filter(
+        (sv) => sv && sv.__dataContext && sv.__dataContext.value.field.name === nonNumericOrdinalDisplay
+      )[0];
+      field.getLinks = getLinksSupplier(data.heatmap, field, appropriateScopedVars ?? {}, replaceVars);
     }
-    
+
     if (field.getLinks) {
       const v = field.values[index];
       const disp = field.display ? field.display(v) : { text: `${v}`, numeric: +v };
