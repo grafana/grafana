@@ -128,7 +128,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		},
 		{
 			desc:        "get root folders with nested folders feature disabled",
-			url:         "/api/folders=5000",
+			url:         "/api/folders?limit=5000",
 			expectedLen: withLimit(LEVEL0_FOLDER_NUM),
 			features:    featuremgmt.WithFeatures(),
 		},
