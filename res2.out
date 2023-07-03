@@ -1,0 +1,70 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/grafana/grafana/pkg/api
+BenchmarkFolderListAndSearch
+    folder_bench_test.go:74: setup start
+    folder_bench_test.go:76: setup time: 94.327791ms
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1322218125 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1289237000 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1297917375 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1311723250 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1254502834 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1274858917 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1276310584 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1304046708 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1263157042 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_enabled-8                    1    1258163666 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      9     126714861 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     125134917 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      9     128949329 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     129157859 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     126282370 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      9     127032250 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     127656885 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     127331740 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      9     127602995 ns/op
+BenchmarkFolderListAndSearch/get_subfolders_with_nested_folders_feature_enabled-8                      8     125325984 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2900749084 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2821283125 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2690969167 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2803500625 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2780059709 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2711213208 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2791308125 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2762227000 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2740818500 ns/op
+BenchmarkFolderListAndSearch/search_inherited_dashboards_with_nested_folders_feature_enabled-8                 1     2733352042 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1     248928255375 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1        247028844041 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1        248203971459 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1        248222612042 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1        247368646625 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1        247789047500 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1     246691327250 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1     249867095333 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1     247103000541 ns/op
+BenchmarkFolderListAndSearch/search_for_pattern_with_nested_folders_feature_enabled-8                          1     247824393375 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1     248693201625 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1     247774766292 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        247253315750 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        247310877916 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        249270403208 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        248359104834 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        249261665500 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        248480866083 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        249103471291 ns/op
+BenchmarkFolderListAndSearch/search_for_specific_dashboard_ers_feature_enabled-8                               1        247487658667 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          30          35737104 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          38          32709064 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          33          33606403 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          32          33694934 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          38          31709423 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          39          32442804 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8                          36          31957874 ns/op
+BenchmarkFolderListAndSearch/get_root_folders_with_nested_folders_feature_disabled-8    

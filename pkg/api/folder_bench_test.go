@@ -66,7 +66,6 @@ type benchScenario struct {
 	db *sqlstore.SQLStore
 	// signedInUser is the user that is signed in to the server
 	cfg          *setting.Cfg
-	orgID        int64
 	signedInUser *user.SignedInUser
 	teamSvc      team.Service
 	userSvc      user.Service
