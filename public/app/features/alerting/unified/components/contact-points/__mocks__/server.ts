@@ -10,9 +10,11 @@ import receiversMock from './receivers.mock.json';
 import 'whatwg-fetch';
 
 const server = setupServer(
-  rest.get(`/api/alertmanager/grafana/config/api/v1/alerts`, (_req, res, ctx) =>
+  // this endpoint is a grafana built-in alertmanager
+  rest.get('/api/alertmanager/grafana/config/api/v1/alerts', (_req, res, ctx) =>
     res(ctx.json<AlertManagerCortexConfig>(alertmanagerMock))
   ),
+  // this endpoint is only available for the built-in alertmanager
   rest.get('/api/alertmanager/grafana/config/api/v1/receivers', (_req, res, ctx) =>
     res(ctx.json<ReceiversStateDTO[]>(receiversMock))
   )

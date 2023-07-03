@@ -4,7 +4,12 @@ import { noop } from 'lodash';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import ContactPoints, { ContactPointsListItem } from './ContactPoints.v2';
+import { selectors } from '@grafana/e2e-selectors';
+import { setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+
+import ContactPoints, { ContactPoint } from './ContactPoints.v2';
+import server from './__mocks__/server';
 
 /**
  * These test are kinda bad to maintain – here's what we should do instead.
@@ -16,7 +21,20 @@ import ContactPoints, { ContactPointsListItem } from './ContactPoints.v2';
  *    and if loading / error states are being propagated correctly.
  */
 
-describe('Contact Points', () => {
+describe('ContactPoints', () => {
+  beforeAll(() => {
+    setBackendSrv(backendSrv);
+    server.listen({ onUnhandledRequest: 'error' });
+  });
+
+  beforeEach(() => {
+    server.resetHandlers();
+  });
+
+  afterAll(() => {
+    server.close();
+  });
+
   it('should show / hide loading states', async () => {
     render(
       <TestProvider>
@@ -27,11 +45,14 @@ describe('Contact Points', () => {
     await waitFor(async () => {
       await expect(screen.getByText('Loading...')).toBeInTheDocument();
       await waitForElementToBeRemoved(screen.getByText('Loading...'));
+      await expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
     });
   });
+});
 
+describe('ContactPoint', () => {
   it('should render a single item', () => {
-    render(<ContactPointsListItem name={'my-contact-point'} receivers={[]} onDelete={noop} />);
+    render(<ContactPoint name={'my-contact-point'} receivers={[]} onDelete={noop} />);
 
     // should render the header
     expect(screen.getByText('my-contact-point')).toBeInTheDocument();
@@ -41,7 +62,7 @@ describe('Contact Points', () => {
   it('should call delete when clicked and not disabled', async () => {
     const onDelete = jest.fn();
 
-    render(<ContactPointsListItem name={'my-contact-point'} receivers={[]} onDelete={onDelete} />);
+    render(<ContactPoint name={'my-contact-point'} receivers={[]} onDelete={onDelete} />);
 
     const moreActions = screen.getByTestId('more-actions');
     await userEvent.click(moreActions);
@@ -53,7 +74,7 @@ describe('Contact Points', () => {
   });
 
   it('should disabled buttons', async () => {
-    render(<ContactPointsListItem name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />);
+    render(<ContactPoint name={'my-contact-point'} disabled={true} receivers={[]} onDelete={noop} />);
 
     const moreActions = screen.getByTestId('more-actions');
     const editAction = screen.getByTestId('edit-action');
@@ -63,7 +84,7 @@ describe('Contact Points', () => {
   });
 
   it('should disabled buttons when provisioned', async () => {
-    render(<ContactPointsListItem name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />);
+    render(<ContactPoint name={'my-contact-point'} provisioned={true} receivers={[]} onDelete={noop} />);
 
     expect(screen.getByText(/provisioned/i)).toBeInTheDocument();
 

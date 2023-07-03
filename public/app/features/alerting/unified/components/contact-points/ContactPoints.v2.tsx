@@ -45,7 +45,7 @@ const ContactPoints = () => {
           const disabled = updateAlertmanagerState.isLoading;
 
           return (
-            <ContactPointsListItem
+            <ContactPoint
               key={contactPointKey}
               name={contactPoint.name}
               disabled={disabled}
@@ -61,7 +61,7 @@ const ContactPoints = () => {
   );
 };
 
-interface ContactPointsListItemProps {
+interface ContactPointProps {
   name: string;
   disabled?: boolean;
   provisioned?: boolean;
@@ -69,13 +69,13 @@ interface ContactPointsListItemProps {
   onDelete: (name: string) => void;
 }
 
-export const ContactPointsListItem = ({
+export const ContactPoint = ({
   name,
   disabled = false,
   provisioned = false,
   receivers,
   onDelete,
-}: ContactPointsListItemProps) => {
+}: ContactPointProps) => {
   const styles = useStyles2(getStyles);
 
   return (
