@@ -56,7 +56,7 @@ def integration_benchmarks(trigger, prefix):
     ]
 
     cmd = [
-        "go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api",
+        "go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions",
     ]
 
     benchmark_steps = [

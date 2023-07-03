@@ -1260,13 +1260,13 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1276,7 +1276,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: postgres-integration-benchmarks
 - commands:
-  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -1285,7 +1285,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: mysql-integration-benchmarks-5.7
 - commands:
-  - go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - go test -v -run=^$ -timeout=0 -count=8 -bench=. ./pkg/api ./pkg/services/sqlstore/permissions
   depends_on:
   - wire-install
   environment:
@@ -7355,6 +7355,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 1720a5bc8f9afc6da292f4de2a03838bdf5193d095f15de96ce1bbda4a7e4280
+hmac: cd2845b0096161b5bbc0f0686d7a77b6c2994604a7da3d054b1cf3a09a457350
 
 ...
