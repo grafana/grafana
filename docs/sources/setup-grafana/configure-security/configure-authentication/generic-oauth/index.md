@@ -47,15 +47,21 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 Ensure that the callback URL you provide is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
 For the callback URL to be correct, it might be necessary to set the `root_url` option to `[server]`. For example, if you are serving Grafana behind a proxy.
 
-1. Update `[auth.generic_oauth]` section of Grafana configuration file:
-   1. Update `client_id` and `client_secret` fields to match client ID and client secret from your OAuth2 app.
-   1. Set `auth_url` field to the authorization endpoint of your OAuth2 provider.
-   1. Set `token_url` field to the token endpoint of your OAuth2 provider.
-   1. Set `api_url` field to the user information endpoint of your OAuth2 provider. Information returned by this endpoint has to be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo).
-   1. Update `enabled` field to `true`.
-   1. Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
-1. (Optional) Configure [refresh token]({{< relref "#refresh-token" >}}):
-   1. Enabled `accessTokenExpirationCheck` feature toggle.
+1. Refer to the following table to update field values located in the [auth.generic_oauth] section of the Grafana configuration file:
+
+   | Field                        | Description                                                                                                                                                                                         |
+   | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `client_id`, `client_secret` | These values must match client ID and client secret from your OAuth2 app.                                                                                                                           |
+   | `auth_url`                   | The authorization endpoint of your OAuth2 provider.                                                                                                                                                 |
+   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                         |
+   | `api_url`                    | The user information endpoint of your OAuth2 provider. Information returned by this endpoint has to be compatible with [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo). |
+   | `token_url`                  | The token endpoint of your OAuth2 provider.                                                                                                                                                         |
+   | `enabled`                    | Enables generic OAuth2 authentication. Should be set to `true`.                                                                                                                                     |
+
+   Look at the list of other generic OAuth2 [configuration options]({{< relref "#configuration-options" >}}) and fill in the desired ones.
+
+1. Optional: Configure [refresh token]({{< relref "#refresh-token" >}}):
+   1. Enable `accessTokenExpirationCheck` feature toggle.
    1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
    1. Enable the refresh token on the provider if required.
 1. Configure [role mapping]({{< relref "#role-mapping" >}}).
