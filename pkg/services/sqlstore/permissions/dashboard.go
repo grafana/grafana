@@ -166,6 +166,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	rolesFilter, params := accesscontrol.UserRolesFilter(f.user.OrgID, f.user.UserID, f.user.Teams, accesscontrol.GetOrgRoles(f.user))
 	var args []interface{}
 	builder := strings.Builder{}
+	builder.WriteRune('(')
 
 	permSelector := strings.Builder{}
 	var permSelectorArgs []interface{}
@@ -277,6 +278,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			builder.WriteString("dashboard.is_folder")
 		}
 	}
+	builder.WriteRune(')')
 
 	f.where = clause{string: builder.String(), params: args}
 }
