@@ -3,14 +3,13 @@ import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { createTheme, getDefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { frameOld } from './TraceView.test';
 import { TraceViewContainer } from './TraceViewContainer';
-import { getStyles } from './components/TracePageHeader/SearchBar/NextPrevResult';
 
 jest.mock('@grafana/runtime', () => {
   return {
