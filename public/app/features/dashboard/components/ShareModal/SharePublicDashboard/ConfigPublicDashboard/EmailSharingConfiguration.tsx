@@ -240,19 +240,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
-    label: 'email input';
+    label: email input;
     flex-grow: 1;
   `,
   emailViewOptionsContainer: css`
-    label: 'email view options container';
+    label: email view options container;
     margin-bottom: ${theme.spacing(3)};
   `,
   linkViewOptionsContainer: css`
-    label: 'link view options container';
+    label: link view options container;
     margin-bottom: 0;
   `,
   table: css`
-    label: 'table';
+    label: table;
     display: flex;
     max-height: 220px;
     overflow-y: scroll;

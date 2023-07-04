@@ -124,7 +124,7 @@ const getStyles = (
 
   return {
     alert: css`
-      label: 'alert';
+      label: alert;
       flex-grow: 1;
       position: relative;
       border-radius: ${borderRadius};

@@ -6,6 +6,6 @@ export const SaveDashboardChangesAlert = () => (
   <Alert
     title="Please save your dashboard changes before updating the public configuration"
     severity="warning"
-    bottomSpacing={3}
+    bottomSpacing={0}
   />
 );

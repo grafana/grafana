@@ -130,8 +130,8 @@ const ConfigPublicDashboard = () => {
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
 
-      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
-
+      {/* {hasEmailSharingEnabled && <EmailSharingConfiguration />} */}
+      <EmailSharingConfiguration />
       <Field label="Dashboard URL" className={styles.fieldSpace}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
@@ -216,19 +216,19 @@ const ConfigPublicDashboard = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   configContainer: css`
-    label: 'config container';
+    label: config container;
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
     gap: ${theme.spacing(3)};
   `,
   fieldSpace: css`
-    label: 'field space';
+    label: field space;
     width: 100%;
     margin-bottom: 0;
   `,
   collapsedText: css`
-    label: 'collapsed text';
+    label: collapsed text;
     margin-left: ${theme.spacing.gridSize * 2}px;
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
