@@ -69,6 +69,8 @@ export const ConfigEditor = (props: Props) => {
           onPredefinedOperationsChange={updatePredefinedOperations}
         />
 
+        <Divider hideLine />
+
         <DerivedFields
           fields={options.jsonData.derivedFields}
           onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
