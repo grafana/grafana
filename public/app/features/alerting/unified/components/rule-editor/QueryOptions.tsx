@@ -6,7 +6,7 @@ import { relativeToTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { clearButtonStyles, Icon, RelativeTimeRangePicker, Toggletip, useStyles2 } from '@grafana/ui';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { AlertQueryOptions, DEFAULT_MAX_DATA_POINTS, MaxDataPointsOption } from './QueryWrapper';
+import { AlertQueryOptions, MaxDataPointsOption } from './QueryWrapper';
 
 export interface QueryOptionsProps {
   query: AlertQuery;
