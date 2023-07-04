@@ -1,5 +1,53 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "",
+      "move-button": ""
+    },
+    "dashboards-tree": {
+      "name-column": "",
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
+    "no-results": {
+      "clear": "",
+      "text": ""
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "已复制"
@@ -28,6 +76,14 @@
       "default": "默认"
     },
     "save": "保存"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -114,14 +170,10 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
-  "datasource-onboarding": {
-    "contact-admin": "请联系您的管理员配置数据源。",
-    "explanation": "如需可视化您的数据，请先连接数据。",
-    "new-dashboard": "新建仪表板",
-    "preferred": "连接您的首选数据源：",
-    "sampleData": "或者使用示例数据设置新的仪表板",
-    "viewAll": "查看全部",
-    "welcome": "欢迎使用 Grafana 仪表板 ！"
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
   },
   "folder-picker": {
     "loading": "正在加载文件夹..."
@@ -131,6 +183,10 @@
       "error": "加载选项失败",
       "loading": "正在加载选项...",
       "no-options": "未找到选项"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -152,7 +208,17 @@
       "success": "库面板已保存"
     }
   },
+  "login": {
+    "error": {
+      "blocked": "",
+      "invalid-user-or-password": "",
+      "unknown": ""
+    }
+  },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
@@ -208,6 +274,10 @@
     "config": {
       "title": "管理"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "添加并配置相关性",
       "title": "相关性"
@@ -230,6 +300,10 @@
     "dashboards": {
       "subtitle": "创建并管理仪表板，以将您的数据可视化",
       "title": "仪表板"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "添加并配置数据源",
@@ -393,6 +467,10 @@
       "choose-interval": "自动刷新已关闭。选择刷新时间间隔",
       "duration-selected": "以当前所选间隔 {{durationAriaLabel}} 选择刷新时间间隔"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "开启直播流",
       "label": "直播"
@@ -441,6 +519,12 @@
     "search-input": {
       "include-panels-placeholder": "搜索仪表板和面板",
       "placeholder": "搜索仪表板"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "",
+      "text": ""
     }
   },
   "share-modal": {
@@ -518,6 +602,15 @@
       "copy-button": "复制到剪贴板"
     }
   },
+  "shared": {
+    "preferences": {
+      "theme": {
+        "dark-label": "",
+        "light-label": "",
+        "system-label": ""
+      }
+    }
+  },
   "shared-dashboard": {
     "fields": {
       "timezone-label": "时区"
@@ -533,12 +626,19 @@
       "week-start-label": "每周开始日"
     },
     "theme": {
-      "dark-label": "深色",
-      "default-label": "默认",
-      "light-label": "浅色",
-      "system-label": "系统"
+      "default-label": "默认"
     },
     "title": "首选项"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "加载中...",

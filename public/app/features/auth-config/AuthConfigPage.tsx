@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
@@ -11,6 +12,7 @@ import { StoreState } from 'app/types';
 import ConfigureAuthCTA from './components/ConfigureAuthCTA';
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
+import { AuthProviderInfo } from './types';
 import { getProviderUrl } from './utils';
 
 import { getRegisteredAuthProviders } from '.';
@@ -50,8 +52,31 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   );
   const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
 
+  {
+    /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
+  }
+  const docsLink = (
+    <a
+      className="external-link"
+      href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication/saml-ui/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      documentation.
+    </a>
+  );
+
+  const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
+
+  const onCTAClick = () => {
+    reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
+  };
+  const onProviderCardClick = (provider: AuthProviderInfo) => {
+    reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
+  };
+
   return (
-    <Page navId="authentication">
+    <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
         {!!enabledProviders?.length && (
@@ -63,7 +88,11 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.type}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
+                onClick={() => {
+                  onProviderCardClick(provider);
+                }}
               />
             ))}
           </div>
@@ -77,6 +106,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
             description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
               Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
               No changes will be written into .ini file.`}
+            onClick={onCTAClick}
           />
         )}
         {!!configuresProviders?.length && (
@@ -88,6 +118,7 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
                 displayName={provider.displayName}
                 authType={provider.protocol}
                 enabled={providerStatuses[provider.id]?.enabled}
+                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
                 configPath={provider.configPath}
               />
             ))}
@@ -115,6 +146,15 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     settingName: css`
       padding-left: 25px;
+    `,
+    doclink: css`
+      padding-bottom: 5px;
+      padding-top: -5px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      a {
+        color: ${theme.colors.info.name}; // use theme link color or any other color
+        text-decoration: underline; // underline or none, as you prefer
+      }
     `,
     settingValue: css`
       white-space: break-spaces;

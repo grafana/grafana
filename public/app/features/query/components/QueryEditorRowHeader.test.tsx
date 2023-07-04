@@ -71,13 +71,13 @@ describe('QueryEditorRowHeader', () => {
   it('should show data source picker when callback is passed', async () => {
     renderScenario({ onChangeDataSource: () => {} });
 
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).not.toBeNull();
+    expect(screen.queryByTestId(selectors.components.DataSourcePicker.container)).not.toBeNull();
   });
 
   it('should not show data source picker when no callback is passed', async () => {
     renderScenario({ onChangeDataSource: undefined });
 
-    expect(screen.queryByLabelText(selectors.components.DataSourcePicker.container)).toBeNull();
+    expect(screen.queryByTestId(selectors.components.DataSourcePicker.container)).toBeNull();
   });
 
   it('should render variables in the data source picker', async () => {

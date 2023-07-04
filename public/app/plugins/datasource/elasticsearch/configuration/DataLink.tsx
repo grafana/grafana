@@ -97,6 +97,7 @@ export const DataLink = (props: Props) => {
         <FormField
           className={styles.urlDisplayLabelField}
           inputWidth={null}
+          labelWidth={7}
           label="URL Label"
           type="text"
           value={value.urlDisplayLabel}

@@ -8,10 +8,6 @@ description: Describes how to use organizations to isolate dashboard to users an
 keywords:
   - organizations
   - dashboards
-labels:
-  products:
-    - enterprise
-    - oss
 menuTitle: Manage organizations
 title: Manage organizations
 weight: 200
@@ -88,7 +84,9 @@ For more information about adding users to an organization, refer to [Add a user
 
 This action permanently removes an organization from your Grafana server.
 
-> **Warning:** Deleting the organization also deletes all teams and dashboards associated the organization.
+{{% admonition type="warning" %}}
+Deleting the organization also deletes all teams and dashboards associated the organization.
+{{% /admonition %}}
 
 ### Before you begin
 

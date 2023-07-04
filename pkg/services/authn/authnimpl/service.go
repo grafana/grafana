@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -27,10 +26,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -63,6 +64,7 @@ func ProvideService(
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
+	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
 ) authn.Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -128,6 +130,10 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
+	}
+
 	for name := range socialService.GetOAuthProviders() {
 		oauthCfg := socialService.GetOAuthInfoProvider(name)
 		if oauthCfg != nil && oauthCfg.Enabled {
@@ -136,7 +142,7 @@ func ProvideService(
 			connector, errConnector := socialService.GetConnector(name)
 			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
 			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
 			} else {
 				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 			}
@@ -194,7 +200,7 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 					return nil, err
 				}
 
-				authErr = multierror.Append(authErr, err)
+				authErr = errors.Join(authErr, err)
 				// try next
 				continue
 			}

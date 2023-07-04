@@ -249,7 +249,8 @@ export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDis
 export { ButtonSelect } from './Dropdown/ButtonSelect';
 export { Dropdown } from './Dropdown/Dropdown';
 export { PluginSignatureBadge, type PluginSignatureBadgeProps } from './PluginSignatureBadge/PluginSignatureBadge';
-
+export { UserIcon, type UserIconProps } from './UsersIndicator/UserIcon';
+export { type UserView } from './UsersIndicator/types';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 

@@ -12,7 +12,7 @@ keywords:
   - silence
   - mute
 title: Manage silences
-weight: 600
+weight: 410
 ---
 
 # Manage silences
@@ -61,3 +61,7 @@ To remove a silence, complete the following steps.
 1. Select the silence you want to end, then click **Unsilence**.
 
 > **Note:** You cannot remove a silence manually. Silences that have ended are retained and listed for five days.
+
+## Useful links
+
+[Aggregation operators](/docs/prometheus/latest/querying/operators/#aggregation-operators)

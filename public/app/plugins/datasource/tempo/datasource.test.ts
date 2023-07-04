@@ -1,5 +1,6 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 import { createFetchResponse } from 'test/helpers/createFetchResponse';
+import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import {
   DataFrame,
@@ -11,6 +12,7 @@ import {
   LoadingState,
   createDataFrame,
   PluginType,
+  CoreApp,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -30,6 +32,7 @@ import {
   makeServiceGraphViewRequest,
   makeTempoLink,
   getFieldConfig,
+  getEscapedSpanNames,
 } from './datasource';
 import mockJson from './mockJsonResponse.json';
 import mockServiceGraph from './mockServiceGraph.json';
@@ -72,26 +75,39 @@ describe('Tempo data source', () => {
           refId: 'linked',
           expr: '{instance="$interpolationVar"}',
         },
-        query: '$interpolationVar',
+        query: '$interpolationVarWithPipe',
+        spanName: '$interpolationVar',
+        serviceName: '$interpolationVar',
         search: '$interpolationVar',
         minDuration: '$interpolationVar',
         maxDuration: '$interpolationVar',
         filters: [],
       };
     }
+    let templateSrv: TemplateSrv;
+    const text = 'interpolationText';
+    const textWithPipe = 'interpolationTextOne|interpolationTextTwo';
+
+    beforeEach(() => {
+      templateSrv = initTemplateSrv('key', [
+        {
+          type: 'custom',
+          name: 'interpolationVar',
+          current: { value: [text] },
+        },
+        {
+          type: 'custom',
+          name: 'interpolationVarWithPipe',
+          current: { value: [textWithPipe] },
+        },
+      ]);
+    });
 
     it('when traceId query for dashboard->explore', async () => {
-      const templateSrv: any = { replace: jest.fn() };
       const ds = new TempoDatasource(defaultSettings, templateSrv);
-      const text = 'interpolationText';
-      templateSrv.replace.mockReturnValue(text);
-
-      const queries = ds.interpolateVariablesInQueries([getQuery()], {
-        interpolationVar: { text: text, value: text },
-      });
-      expect(templateSrv.replace).toBeCalledTimes(7);
-      expect(queries[0].linkedQuery?.expr).toBe(text);
-      expect(queries[0].query).toBe(text);
+      const queries = ds.interpolateVariablesInQueries([getQuery()], {});
+      expect(queries[0].linkedQuery?.expr).toBe(`{instance=\"${text}\"}`);
+      expect(queries[0].query).toBe(textWithPipe);
       expect(queries[0].serviceName).toBe(text);
       expect(queries[0].spanName).toBe(text);
       expect(queries[0].search).toBe(text);
@@ -100,22 +116,18 @@ describe('Tempo data source', () => {
     });
 
     it('when traceId query for template variable', async () => {
-      const templateSrv: any = { replace: jest.fn() };
+      const scopedText = 'scopedInterpolationText';
       const ds = new TempoDatasource(defaultSettings, templateSrv);
-      const text = 'interpolationText';
-      templateSrv.replace.mockReturnValue(text);
-
       const resp = ds.applyTemplateVariables(getQuery(), {
-        interpolationVar: { text: text, value: text },
+        interpolationVar: { text: scopedText, value: scopedText },
       });
-      expect(templateSrv.replace).toBeCalledTimes(7);
-      expect(resp.linkedQuery?.expr).toBe(text);
-      expect(resp.query).toBe(text);
-      expect(resp.serviceName).toBe(text);
-      expect(resp.spanName).toBe(text);
-      expect(resp.search).toBe(text);
-      expect(resp.minDuration).toBe(text);
-      expect(resp.maxDuration).toBe(text);
+      expect(resp.linkedQuery?.expr).toBe(`{instance=\"${scopedText}\"}`);
+      expect(resp.query).toBe(textWithPipe);
+      expect(resp.serviceName).toBe(scopedText);
+      expect(resp.spanName).toBe(scopedText);
+      expect(resp.search).toBe(scopedText);
+      expect(resp.minDuration).toBe(scopedText);
+      expect(resp.maxDuration).toBe(scopedText);
     });
   });
 
@@ -448,7 +460,7 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
+      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
     );
 
     expect(response.data).toHaveLength(3);
@@ -587,6 +599,20 @@ describe('Tempo service graph view', () => {
   it('should build link expr correctly', () => {
     let builtQuery = buildLinkExpr('topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))');
     expect(builtQuery).toBe('sum(rate(traces_spanmetrics_calls_total{}[$__rate_interval]))');
+  });
+
+  it('should escape span names correctly', () => {
+    const spanNames = [
+      '/actuator/health/**',
+      '$type + [test]|HTTP POST - post',
+      'server.cluster.local:9090^/sample.test(.*)?',
+    ];
+    let escaped = getEscapedSpanNames(spanNames);
+    expect(escaped).toEqual([
+      '/actuator/health/\\\\*\\\\*',
+      '\\\\$type \\\\+ \\\\[test\\\\]\\\\|HTTP POST - post',
+      'server\\\\.cluster\\\\.local:9090\\\\^/sample\\\\.test\\\\(\\\\.\\\\*\\\\)\\\\?',
+    ]);
   });
 
   it('should get field config correctly', () => {

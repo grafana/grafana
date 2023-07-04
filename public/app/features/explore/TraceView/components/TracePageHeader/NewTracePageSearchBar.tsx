@@ -28,7 +28,7 @@ export type TracePageSearchBarProps = {
   setShowSpanFilterMatchesOnly: (showMatchesOnly: boolean) => void;
   setFocusedSpanIdForSearch: Dispatch<SetStateAction<string>>;
   datasourceType: string;
-  reset: () => void;
+  clear: () => void;
   totalSpans: number;
 };
 
@@ -40,7 +40,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     setShowSpanFilterMatchesOnly,
     setFocusedSpanIdForSearch,
     datasourceType,
-    reset,
+    clear,
     totalSpans,
   } = props;
   const [currentSpanIndex, setCurrentSpanIndex] = useState(-1);
@@ -93,7 +93,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
   };
 
   const buttonEnabled = spanFilterMatches && spanFilterMatches?.size > 0;
-  const resetEnabled = useMemo(() => {
+  const clearEnabled = useMemo(() => {
     return (
       (search.serviceName && search.serviceName !== '') ||
       (search.spanName && search.spanName !== '') ||
@@ -130,16 +130,16 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     <div className={styles.searchBar}>
       <div className={styles.buttons}>
         <>
-          <div className={styles.resetButton}>
+          <div className={styles.clearButton}>
             <Button
               variant="destructive"
-              disabled={!resetEnabled}
+              disabled={!clearEnabled}
               type="button"
               fill="outline"
-              aria-label="Reset filters button"
-              onClick={reset}
+              aria-label="Clear filters button"
+              onClick={clear}
             >
-              Reset
+              Clear
             </Button>
             <div className={styles.matchesOnly}>
               <Switch
@@ -147,6 +147,8 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
               />
+              {/* TODO: fix keyboard a11y */}
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
               <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
             </div>
           </div>
@@ -199,7 +201,7 @@ export const getStyles = () => {
       justify-content: flex-end;
       margin: 5px 0 0 0;
     `,
-    resetButton: css`
+    clearButton: css`
       order: 1;
     `,
     nextPrevButtons: css`

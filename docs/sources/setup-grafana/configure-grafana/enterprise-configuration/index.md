@@ -8,7 +8,7 @@ weight: 100
 
 # Configure Grafana Enterprise
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../../configure-grafana" >}}) for more information about available configuration options.
 
 ## [enterprise]
 
@@ -19,7 +19,9 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-> **Note:** Available in Grafana Enterprise version 7.4 and later.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise version 7.4 and later.
+{{% /admonition %}}
 
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
@@ -27,7 +29,9 @@ the instance.
 
 ### auto_refresh_license
 
-> **Note:** Available in Grafana Enterprise version 7.4 and later.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise version 7.4 and later.
+{{% /admonition %}}
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
@@ -37,9 +41,11 @@ automatically. Defaults to `true`.
 
 ### license_validation_type
 
-> **Note:** Available in Grafana Enterprise version 8.3 and later.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise version 8.3 and later.
+{{% /admonition %}}
 
-When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license/" >}}).
+When set to `aws`, Grafana will validate its license status with Amazon Web Services (AWS) instead of with Grafana Labs. Only use this setting if you purchased an Enterprise license from AWS Marketplace. Defaults to empty, which means that by default Grafana Enterprise will validate using a license issued by Grafana Labs. For details about licenses issued by AWS, refer to [Activate a Grafana Enterprise license purchased through AWS Marketplace]({{< relref "../../../administration/enterprise-licensing/activate-aws-marketplace-license" >}}).
 
 ## [white_labeling]
 
@@ -78,7 +84,7 @@ List the link IDs to use here. Grafana will look for matching link configuration
 
 ## [usage_insights.export]
 
-By [exporting usage logs]({{< relref "../../configure-security/export-logs/" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
+By [exporting usage logs]({{< relref "../../configure-security/export-logs" >}}), you can directly query them and create dashboards of the information that matters to you most, such as dashboard errors, most active organizations, or your top-10 most-used queries.
 
 ### enabled
 
@@ -166,7 +172,7 @@ Name of the TrueType font file with italic style.
 
 ## [auditing]
 
-[Auditing]({{< relref "../../configure-security/audit-grafana/" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+[Auditing]({{< relref "../../configure-security/audit-grafana" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
 
 ### enabled
 
@@ -342,7 +348,9 @@ New duration for renewed tokens. Vault may be configured to ignore this value an
 
 ## [security.egress]
 
-> **Note:** Available in Grafana Enterprise version 7.4 and later.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise version 7.4 and later.
+{{% /admonition %}}
 
 Security egress makes it possible to control outgoing traffic from the Grafana server.
 
@@ -370,7 +378,9 @@ Encryption algorithm used to encrypt secrets stored in the database and cookies.
 
 ## [caching]
 
-> **Note:** Available in Grafana Enterprise version 7.5 and later.
+{{% admonition type="note" %}}
+Available in Grafana Enterprise version 7.5 and later.
+{{% /admonition %}}
 
 When query caching is enabled, Grafana can temporarily store the results of data source queries and serve cached responses to similar requests.
 
@@ -386,7 +396,9 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management/#enable-and-configure-query-caching" >}}).
+{{% admonition type="note" %}}
+This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management#enable-and-configure-query-caching" >}}).
+{{% /admonition %}}
 
 ### ttl
 
@@ -398,7 +410,9 @@ The max duration that a query result is stored in the caching system before it i
 
 The default is `0s` (disabled).
 
-> **Note:** Disabling this constraint is not recommended in production environments.
+{{% admonition type="note" %}}
+Disabling this constraint is not recommended in production environments.
+{{% /admonition %}}
 
 ### max_value_mb
 
@@ -418,7 +432,9 @@ This setting defines the duration to wait for the caching backend to return a ca
 
 The default is `0s` (disabled).
 
-> **Note:** Disabling this timeout is not recommended in production environments.
+{{% admonition type="note" %}}
+Disabling this timeout is not recommended in production environments.
+{{% /admonition %}}
 
 ### write_timeout
 
@@ -426,7 +442,9 @@ This setting defines the number of seconds to wait for the caching backend to st
 
 The default is `0s` (disabled).
 
-> **Note:** Disabling this timeout is not recommended in production environments.
+{{% admonition type="note" %}}
+Disabling this timeout is not recommended in production environments.
+{{% /admonition %}}
 
 ## [caching.encryption]
 
@@ -458,7 +476,9 @@ To disable the maximum, set this value to `0`.
 
 The default is `25`.
 
-> **Note:** Disabling the maximum is not recommended in production environments.
+{{% admonition type="note" %}}
+Disabling the maximum is not recommended in production environments.
+{{% /admonition %}}
 
 ## [caching.redis]
 
@@ -473,9 +493,13 @@ The default is `"redis://localhost:6379"`.
 A comma-separated list of Redis cluster members, either in `host:port` format or using the full Redis URLs (`redis://username:password@localhost:6379`). For example, `localhost:7000, localhost: 7001, localhost:7002`.
 If you use the full Redis URLs, then you can specify the scheme, username, and password only once. For example, `redis://username:password@localhost:0000,localhost:1111,localhost:2222`. You cannot specify a different username and password for each URL.
 
-> **Note:** If you have specify `cluster`, the value for `url` is ignored.
+{{% admonition type="note" %}}
+If you have specify `cluster`, the value for `url` is ignored.
+{{% /admonition %}}
 
-> **Note:** You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
+{{% admonition type="note" %}}
+You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
+{{% /admonition %}}
 
 ### prefix
 

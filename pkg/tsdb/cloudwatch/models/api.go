@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -12,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
-type RequestContextFactoryFunc func(pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
+type RequestContextFactoryFunc func(ctx context.Context, pluginCtx backend.PluginContext, region string) (reqCtx RequestContext, err error)
 
-type RouteHandlerFunc func(pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
+type RouteHandlerFunc func(ctx context.Context, pluginCtx backend.PluginContext, reqContextFactory RequestContextFactoryFunc, parameters url.Values) ([]byte, *HttpError)
 
 type RequestContext struct {
 	MetricsClientProvider MetricsClientProvider

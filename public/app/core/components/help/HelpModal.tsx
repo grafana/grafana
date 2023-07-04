@@ -9,6 +9,7 @@ const getShortcuts = (modKey: string) => {
   return {
     Global: [
       { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
+      { keys: ['g', 'd'], description: 'Go to Dashboards' },
       { keys: ['g', 'e'], description: 'Go to Explore' },
       { keys: ['g', 'p'], description: 'Go to Profile' },
       { keys: [`${modKey} + k`], description: 'Open search' },

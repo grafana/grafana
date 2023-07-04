@@ -10,11 +10,9 @@
 
 import * as common from '@grafana/schema';
 
-export const PanelCfgModelVersion = Object.freeze([0, 0]);
-
-export interface PanelOptions extends common.OptionsWithTimezones {
+export interface Options extends common.OptionsWithTimezones {
   legend: common.VizLegendOptions;
   tooltip: common.VizTooltipOptions;
 }
 
-export interface PanelFieldConfig extends common.GraphFieldConfig {}
+export interface FieldConfig extends common.GraphFieldConfig {}

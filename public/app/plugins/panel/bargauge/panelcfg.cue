@@ -22,21 +22,19 @@ composableKinds: PanelCfg: {
 	maturity: "experimental"
 
 	lineage: {
-		seqs: [
-			{
-				schemas: [
-					{
-						PanelOptions: {
-							common.SingleStatBaseOptions
-							displayMode:  common.BarGaugeDisplayMode & (*"gradient" | _)
-							valueMode:    common.BarGaugeValueMode & (*"color" | _)
-							showUnfilled: bool | *true
-							minVizWidth:  uint32 | *0
-							minVizHeight: uint32 | *10
-						} @cuetsy(kind="interface")
-					},
-				]
-			},
-		]
+		schemas: [{
+			version: [0, 0]
+			schema: {
+				Options: {
+					common.SingleStatBaseOptions
+					displayMode:  common.BarGaugeDisplayMode & (*"gradient" | _)
+					valueMode:    common.BarGaugeValueMode & (*"color" | _)
+					showUnfilled: bool | *true
+					minVizWidth:  uint32 | *0
+					minVizHeight: uint32 | *10
+				} @cuetsy(kind="interface")
+			}
+		}]
+		lenses: []
 	}
 }

@@ -5,9 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/org"
 )
 
 // GetDashboardACLInfoList returns a list of permissions for a dashboard. They can be fetched from three
@@ -94,81 +91,6 @@ func (d *dashboardStore) GetDashboardACLInfoList(ctx context.Context, query *das
 		p.PermissionName = p.Permission.String()
 	}
 
-	return queryResult, nil
-}
-
-// HasEditPermissionInFolders validates that an user have access to a certain folder
-func (d *dashboardStore) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	var queryResult bool
-	if query.SignedInUser.HasRole(org.RoleEditor) {
-		queryResult = true
-		return queryResult, nil
-	}
-
-	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
-	if err != nil {
-		return queryResult, err
-	}
-
-	err = d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
-			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_EDIT)
-
-		type folderCount struct {
-			Count int64
-		}
-
-		resp := make([]*folderCount, 0)
-
-		if err := dbSession.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&resp); err != nil {
-			return err
-		}
-
-		queryResult = len(resp) > 0 && resp[0].Count > 0
-
-		return nil
-	})
-	if err != nil {
-		return queryResult, err
-	}
-	return queryResult, nil
-}
-
-func (d *dashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	var queryResult bool
-	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
-	if err != nil {
-		return queryResult, err
-	}
-
-	err = d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		if query.SignedInUser.HasRole(org.RoleAdmin) {
-			queryResult = true
-			return nil
-		}
-
-		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect(), recursiveQueriesAreSupported)
-		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_ADMIN)
-
-		type folderCount struct {
-			Count int64
-		}
-
-		resp := make([]*folderCount, 0)
-		if err := dbSession.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&resp); err != nil {
-			return err
-		}
-
-		queryResult = len(resp) > 0 && resp[0].Count > 0
-
-		return nil
-	})
-	if err != nil {
-		return queryResult, err
-	}
 	return queryResult, nil
 }
 

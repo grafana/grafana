@@ -9,10 +9,14 @@ load(
 load(
     "scripts/drone/steps/lib.star",
     "get_windows_steps",
-    "windows_go_image",
+    "windows_clone_step",
     "windows_init_enterprise_steps",
     "windows_test_backend_step",
     "windows_wire_install_step",
+)
+load(
+    "scripts/drone/utils/windows_images.star",
+    "windows_images",
 )
 
 def windows_test_backend(trigger, edition, ver_mode):
@@ -26,14 +30,17 @@ def windows_test_backend(trigger, edition, ver_mode):
         A single pipeline running backend tests for Windows
     """
     environment = {"EDITION": edition}
-    steps = []
+    steps = [
+        windows_clone_step(),
+    ]
 
     if edition == "enterprise":
         steps.extend(windows_init_enterprise_steps(ver_mode))
     else:
         steps.extend([{
             "name": "windows-init",
-            "image": windows_go_image,
+            "image": windows_images["windows_go_image"],
+            "depends_on": ["clone"],
             "commands": [],
         }])
 
@@ -41,7 +48,7 @@ def windows_test_backend(trigger, edition, ver_mode):
         windows_wire_install_step(edition),
         windows_test_backend_step(),
     ])
-    return pipeline(
+    pl = pipeline(
         name = "{}-{}-test-backend-windows".format(ver_mode, edition),
         edition = edition,
         trigger = trigger,
@@ -50,6 +57,10 @@ def windows_test_backend(trigger, edition, ver_mode):
         platform = "windows",
         environment = environment,
     )
+    pl["clone"] = {
+        "disable": True,
+    }
+    return pl
 
 def windows(trigger, edition, ver_mode):
     """Generates the pipeline used for building Grafana on Windows.

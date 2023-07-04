@@ -5,7 +5,7 @@ keywords:
   - alerting
   - rules
 title: Alert rules
-weight: 101
+weight: 105
 ---
 
 # Alert rules
@@ -16,7 +16,7 @@ While queries and expressions select the data set to evaluate, a condition sets 
 
 An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
-- [Alert rule types]({{< relref "alert-rule-types/" >}})
-- [Alert instances]({{< relref "alert-instances/" >}})
-- [Organising alert rules]({{< relref "organising-alerts/" >}})
-- [Annotation and labels]({{< relref "../annotation-label/" >}})
+- [Alert rule types]({{< relref "./alert-rule-types" >}})
+- [Alert instances]({{< relref "./alert-instances" >}})
+- [Organising alert rules]({{< relref "./organising-alerts" >}})
+- [Annotation and labels]({{< relref "../annotation-label" >}})

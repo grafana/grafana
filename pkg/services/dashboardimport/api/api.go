@@ -38,7 +38,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 	routeRegister.Group("/api/dashboards", func(route routing.RouteRegister) {
 		route.Post(
 			"/import",
-			authorize(middleware.ReqSignedIn, accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
+			authorize(accesscontrol.EvalPermission(dashboards.ActionDashboardsCreate)),
 			routing.Wrap(api.ImportDashboard),
 		)
 	}, middleware.ReqSignedIn)

@@ -1,7 +1,9 @@
 ---
+menuTitle: Introduction
 aliases:
   - metrics/
   - unified-alerting/fundamentals/
+description: Intro to the key concepts in Alerting and how it works
 title: Introduction to Alerting
 weight: 105
 ---
@@ -44,6 +46,14 @@ Set where, when, and how firing alert instances get routed.
 
 Each notification policy contains a set of label matchers to indicate which alerts rules or instances it is responsible for. It also has a contact point assigned to it that consists of one or more contact point types, such as Slack or email. Contact points define how your contacts are notified when an alert instance fires.
 
+For more information on notification policies, see [fundamentals of Notification Policies]({{< relref "../fundamentals/notification-policies" >}}).
+
+**Message templates**
+
 Use message templates for your notifications to create reusable custom templates and use them in contact points.
 
-Add silences to stop notifications from one or more alert instances or use mute timings to specify time intervals when you don’t want new notifications to be generated or sent out. The difference between the two being that a silence only lasts for only a specified window of time whereas a mute timing recurs on a schedule, for example, during a maintenance period.
+**Silences and mute timings**
+
+Add silences to stop notifications from one or more alert instances or use mute timings to specify time intervals when you don’t want new notifications to be generated or sent out.
+
+The difference between the two being that a silence only lasts for only a specified window of time whereas a mute timing recurs on a schedule, for example, during a maintenance period.

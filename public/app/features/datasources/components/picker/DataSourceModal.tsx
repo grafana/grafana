@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
 import { once } from 'lodash';
 import React, { useState } from 'react';
-import { DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   Modal,
   FileDropzone,
@@ -15,8 +15,13 @@ import {
   Icon,
 } from '@grafana/ui';
 import * as DFImport from 'app/features/dataframe-import';
+import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
+import { getFileDropToQueryHandler } from 'app/plugins/datasource/grafana/utils';
+
+import { useDatasource } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
+import { BuiltInDataSourceList } from './BuiltInDataSourceList';
 import { DataSourceList } from './DataSourceList';
 import { matchDataSourceWithSearch } from './utils';
 
@@ -31,18 +36,28 @@ const INTERACTION_ITEM = {
 };
 
 interface DataSourceModalProps {
-  onChange: (ds: DataSourceInstanceSettings) => void;
+  onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
   recentlyUsed?: string[];
-  enableFileUpload?: boolean;
-  fileUploadOptions?: DropzoneOptions;
   reportedInteractionFrom?: string;
+
+  // DS filters
+  tracing?: boolean;
+  mixed?: boolean;
+  dashboard?: boolean;
+  metrics?: boolean;
+  type?: string | string[];
+  annotations?: boolean;
+  variables?: boolean;
+  alerting?: boolean;
+  pluginId?: string;
+  logs?: boolean;
 }
 
 export function DataSourceModal({
-  enableFileUpload,
-  fileUploadOptions,
+  dashboard,
+  mixed,
   onChange,
   current,
   onDismiss,
@@ -73,6 +88,24 @@ export function DataSourceModal({
     [analyticsInteractionSrc]
   );
 
+  const grafanaDS = useDatasource('-- Grafana --');
+
+  const onFileDrop = getFileDropToQueryHandler((query, fileRejections) => {
+    if (!grafanaDS) {
+      return;
+    }
+    onChange(grafanaDS, [query]);
+
+    reportInteraction(INTERACTION_EVENT_NAME, {
+      item: INTERACTION_ITEM.UPLOAD_FILE,
+      src: analyticsInteractionSrc,
+    });
+
+    if (fileRejections.length < 1) {
+      onDismiss();
+    }
+  });
+
   return (
     <Modal
       title="Select data source"
@@ -86,6 +119,7 @@ export function DataSourceModal({
     >
       <div className={styles.leftColumn}>
         <Input
+          type="search"
           autoFocus
           className={styles.searchInput}
           value={search}
@@ -98,7 +132,6 @@ export function DataSourceModal({
         />
         <CustomScrollbar>
           <DataSourceList
-            className={styles.dataSourceList}
             dashboard={false}
             mixed={false}
             variables
@@ -112,19 +145,26 @@ export function DataSourceModal({
               })
             }
           />
+          <BuiltInDataSourceList
+            dashboard={dashboard}
+            mixed={mixed}
+            className={styles.appendBuiltInDataSourcesList}
+            onChange={onChangeDataSource}
+            current={current}
+          />
         </CustomScrollbar>
       </div>
       <div className={styles.rightColumn}>
         <div className={styles.builtInDataSources}>
-          <DataSourceList
-            className={styles.builtInDataSourceList}
-            filter={(ds) => !!ds.meta.builtIn}
-            dashboard
-            mixed
-            onChange={onChangeDataSource}
-            current={current}
-          />
-          {enableFileUpload && (
+          <CustomScrollbar className={styles.builtInDataSourcesList}>
+            <BuiltInDataSourceList
+              onChange={onChangeDataSource}
+              current={current}
+              dashboard={dashboard}
+              mixed={mixed}
+            />
+          </CustomScrollbar>
+          {config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
@@ -132,22 +172,15 @@ export function DataSourceModal({
                 maxSize: DFImport.maxFileSize,
                 multiple: false,
                 accept: DFImport.acceptedFiles,
-                ...fileUploadOptions,
-                onDrop: (...args) => {
-                  fileUploadOptions?.onDrop?.(...args);
-                  onDismiss();
-                  reportInteraction(INTERACTION_EVENT_NAME, {
-                    item: INTERACTION_ITEM.UPLOAD_FILE,
-                    src: analyticsInteractionSrc,
-                  });
-                },
+                onDrop: onFileDrop,
               }}
             >
               <FileDropzoneDefaultChildren />
             </FileDropzone>
           )}
         </div>
-        <div className={styles.dsCTAs}>
+        <div className={styles.newDSSection}>
+          <span className={styles.newDSDescription}>Open a new tab and configure a data source</span>
           <AddNewDataSourceButton
             variant="secondary"
             onClick={() => {
@@ -195,11 +228,10 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 47%;
         border-right: 0;
         padding-right: 0;
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        padding-bottom: ${theme.spacing(4)};
+        flex: 1;
+        overflow-y: auto;
       }
     `,
     rightColumn: css`
@@ -213,30 +245,44 @@ function getDataSourceModalStyles(theme: GrafanaTheme2) {
 
       ${theme.breakpoints.down('md')} {
         width: 100%;
-        height: 53%;
         padding-left: 0;
-        padding-top: ${theme.spacing(4)};
+        flex: 0;
       }
     `,
     builtInDataSources: css`
-      flex: 1;
+      flex: 1 1;
+      margin-bottom: ${theme.spacing(4)};
+
+      ${theme.breakpoints.down('md')} {
+        flex: 0;
+      }
+    `,
+    builtInDataSourcesList: css`
+      ${theme.breakpoints.down('md')} {
+        display: none;
+        margin-bottom: 0;
+      }
+
       margin-bottom: ${theme.spacing(4)};
     `,
-    dataSourceList: css`
-      height: 100%;
+    appendBuiltInDataSourcesList: css`
+      ${theme.breakpoints.up('md')} {
+        display: none;
+      }
     `,
-    builtInDataSourceList: css`
-      margin-bottom: ${theme.spacing(4)};
-    `,
-    dsCTAs: css`
+    newDSSection: css`
       display: flex;
       flex-direction: row;
       width: 100%;
-      justify-content: flex-end;
-
-      ${theme.breakpoints.down('md')} {
-        padding-bottom: ${theme.spacing(3)};
-      }
+      justify-content: space-between;
+      align-items: center;
+    `,
+    newDSDescription: css`
+      flex: 1 0;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      color: ${theme.colors.text.secondary};
     `,
     searchInput: css`
       width: 100%;

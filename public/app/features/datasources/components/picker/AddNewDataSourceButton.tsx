@@ -25,6 +25,7 @@ export function AddNewDataSourceButton({ variant, onClick }: AddNewDataSourceBut
       disabled={!hasCreateRights}
       tooltip={!hasCreateRights ? 'You do not have permission to configure new data sources' : undefined}
       onClick={onClick}
+      target="_blank"
     >
       Configure a new data source
     </LinkButton>

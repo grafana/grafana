@@ -20,10 +20,18 @@ function useStateHistoryModal() {
 
   const styles = useStyles2(getStyles);
 
-  const implementation =
-    config.unifiedAlerting.alertStateHistoryBackend === StateHistoryImplementation.Loki
-      ? StateHistoryImplementation.Loki
-      : StateHistoryImplementation.Annotations;
+  // can be "loki", "multiple" or "annotations"
+  const stateHistoryBackend = config.unifiedAlerting.alertStateHistoryBackend;
+  // can be "loki" or "annotations"
+  const stateHistoryPrimary = config.unifiedAlerting.alertStateHistoryPrimary;
+
+  // if "loki" is either the backend or the primary, show the new state history implementation
+  const usingNewAlertStateHistory = [stateHistoryBackend, stateHistoryPrimary].some(
+    (implementation) => implementation === StateHistoryImplementation.Loki
+  );
+  const implementation = usingNewAlertStateHistory
+    ? StateHistoryImplementation.Loki
+    : StateHistoryImplementation.Annotations;
 
   const dismissModal = useCallback(() => {
     setRule(undefined);

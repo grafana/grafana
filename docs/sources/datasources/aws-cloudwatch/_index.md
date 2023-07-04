@@ -27,7 +27,9 @@ Administrators can also [provision the data source]({{< relref "#provision-the-d
 
 Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-> **Note:** To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+{{% admonition type="note" %}}
+To troubleshoot issues while setting up the CloudWatch data source, check the `/var/log/grafana/grafana.log` file.
+{{% /admonition %}}
 
 ## Configure the data source
 
@@ -344,7 +346,9 @@ filter @message like /Exception/
     | sort exceptionCount desc
 ```
 
-> **Note:** If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{% admonition type="note" %}}
+If you receive an error like `input data must be a wide series but got ...` when trying to alert on a query, make sure that your query returns valid numeric data that can be output to a Time series panel.
+{{% /admonition %}}
 
 For more information on Grafana alerts, refer to [Alerting]({{< relref "../../alerting" >}}).
 
@@ -355,8 +359,10 @@ Pricing for CloudWatch Logs is based on the amount of data ingested, archived, a
 Each time you select a dimension in the query editor, Grafana issues a `ListMetrics` API request.
 Each time you change queries in the query editor, Grafana issues a new request to the `GetMetricData` API.
 
-> **Note:** Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
-> The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
+{{% admonition type="note" %}}
+Grafana v6.5 and higher replaced all `GetMetricStatistics` API requests with calls to GetMetricData to provide better support for CloudWatch metric math, and enables the automatic generation of search expressions when using wildcards or disabling the `Match Exact` option.
+The `GetMetricStatistics` API qualified for the CloudWatch API free tier, but `GetMetricData` calls don't.
+{{% /admonition %}}
 
 For more information, refer to the [CloudWatch pricing page](https://aws.amazon.com/cloudwatch/pricing/).
 

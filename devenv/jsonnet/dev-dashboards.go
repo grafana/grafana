@@ -50,7 +50,7 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		err = fs.Verify(context.Background(), "")
+		err = fs.Write(context.Background(), "")
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error while writing generated code to disk:\n%s\n", err)
 			os.Exit(1)

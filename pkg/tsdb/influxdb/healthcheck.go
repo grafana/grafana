@@ -20,7 +20,7 @@ const (
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
 	logger := logger.FromContext(ctx)
-	dsInfo, err := s.getDSInfo(req.PluginContext)
+	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
 		return getHealthCheckMessage(logger, "error getting datasource info", err)
 	}

@@ -11,7 +11,9 @@ weight: 20
 
 Grafana server administrators are responsible for creating users, organizations, and managing permissions. For more information about the server administration role, refer to [Grafana server administrators]({{< relref "../../../roles-and-permissions#grafana-server-administrators" >}}).
 
-> **Note:** Server administrators are "super-admins" with full permissions to create, read, update, and delete all resources and users in all organizations, as well as update global settings such as licenses. Only grant this permission to trusted users.
+{{% admonition type="note" %}}
+Server administrators are "super-admins" with full permissions to create, read, update, and delete all resources and users in all organizations, as well as update global settings such as licenses. Only grant this permission to trusted users.
+{{% /admonition %}}
 
 ## Before you begin
 

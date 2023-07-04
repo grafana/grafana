@@ -3,11 +3,11 @@ import { map } from 'rxjs/operators';
 import { DataFrame, DataTransformerID, DataTransformerInfo, Field, getFieldDisplayName, Labels } from '@grafana/data';
 
 import {
-  getFieldConfigFromFrame,
-  FieldToConfigMapping,
-  evaluteFieldMappings,
   EvaluatedMappingResult,
+  evaluteFieldMappings,
   FieldConfigHandlerKey,
+  FieldToConfigMapping,
+  getFieldConfigFromFrame,
 } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 export interface RowToFieldsTransformOptions {
@@ -23,7 +23,7 @@ export const rowsToFieldsTransformer: DataTransformerInfo<RowToFieldsTransformOp
   defaultOptions: {},
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options) => (source) =>

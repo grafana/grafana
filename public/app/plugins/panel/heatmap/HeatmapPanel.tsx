@@ -21,10 +21,10 @@ import { ExemplarModalHeader } from './ExemplarModalHeader';
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
-import { PanelOptions } from './types';
+import { Options } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
-interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
+interface HeatmapPanelProps extends PanelProps<Options> {}
 
 export const HeatmapPanel = ({
   data,
@@ -192,7 +192,7 @@ export const HeatmapPanel = ({
     <>
       <VizLayout width={width} height={height} legend={renderLegend()}>
         {(vizWidth: number, vizHeight: number) => (
-          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight} timeRange={timeRange}>
+          <UPlotChart config={builder} data={facets as any} width={vizWidth} height={vizHeight}>
             {/*children ? children(config, alignedFrame) : null*/}
           </UPlotChart>
         )}

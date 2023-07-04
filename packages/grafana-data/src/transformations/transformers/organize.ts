@@ -22,7 +22,7 @@ export const organizeFieldsTransformer: DataTransformerInfo<OrganizeFieldsTransf
   },
 
   /**
-   * Return a modified copy of the series.  If the transform is not or should not
+   * Return a modified copy of the series. If the transform is not or should not
    * be applied, just return the input series
    */
   operator: (options, ctx) => (source) =>

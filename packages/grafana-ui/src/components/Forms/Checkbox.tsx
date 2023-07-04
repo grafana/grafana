@@ -3,7 +3,7 @@ import React, { HTMLProps, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useStyles2 } from '../../themes';
+import { useTheme2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 import { getLabelStyles } from './Label';
@@ -19,10 +19,15 @@ export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'
   htmlValue?: string | number;
   /** Sets the checkbox into a "mixed" state. This is only a visual change and does not affect the value. */
   indeterminate?: boolean;
+  /** Show an invalid state around the input */
+  invalid?: boolean;
 }
 
 export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, value, htmlValue, onChange, disabled, className, indeterminate, ...inputProps }, ref) => {
+  (
+    { label, description, value, htmlValue, onChange, disabled, className, indeterminate, invalid, ...inputProps },
+    ref
+  ) => {
     const handleOnChange = useCallback(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         if (onChange) {
@@ -31,7 +36,8 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       },
       [onChange]
     );
-    const styles = useStyles2(getCheckboxStyles);
+    const theme = useTheme2();
+    const styles = getCheckboxStyles(theme, invalid);
 
     const ariaChecked = indeterminate ? 'mixed' : undefined;
 
@@ -58,21 +64,25 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
   }
 );
 
-export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
+export const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
   const checkboxSize = 2;
   const labelPadding = 1;
 
+  const getBorderColor = (color: string) => {
+    return invalid ? theme.colors.error.border : color;
+  };
+
   return {
-    wrapper: css`
-      display: inline-grid;
-      align-items: center;
-      column-gap: ${theme.spacing(labelPadding)};
-      grid-template-columns: auto 1fr;
-      grid-template-rows: auto auto;
-      position: relative;
-      vertical-align: middle;
-    `,
+    wrapper: css({
+      display: 'inline-grid',
+      alignItems: 'center',
+      columnGap: theme.spacing(labelPadding),
+      // gridAutoRows is needed to prevent https://github.com/grafana/grafana/issues/68570 in safari
+      gridAutoRows: 'max-content',
+      position: 'relative',
+      verticalAlign: 'middle',
+    }),
     input: css`
       position: absolute;
       z-index: 1;
@@ -98,7 +108,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
        * */
       &:checked + span {
         background: ${theme.colors.primary.main};
-        border: none;
+        border: 1px solid ${getBorderColor(theme.colors.primary.main)};
 
         &:hover {
           background: ${theme.colors.primary.shade};
@@ -108,8 +118,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           content: '';
           position: absolute;
           z-index: 2;
-          left: 5px;
-          top: 1px;
+          left: 4px;
+          top: 0px;
           width: 6px;
           height: 12px;
           border: solid ${theme.colors.primary.contrastText};
@@ -121,6 +131,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:disabled + span {
         background-color: ${theme.colors.action.disabledBackground};
         cursor: not-allowed;
+        border: 1px solid ${getBorderColor(theme.colors.action.disabledBackground)};
 
         &:hover {
           background-color: ${theme.colors.action.disabledBackground};
@@ -134,7 +145,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
     inputIndeterminate: css`
       &[aria-checked='mixed'] + span {
-        border: none;
+        border: 1px solid ${getBorderColor(theme.colors.primary.main)};
         background: ${theme.colors.primary.main};
 
         &:hover {
@@ -145,8 +156,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
           content: '';
           position: absolute;
           z-index: 2;
-          left: 3px;
-          right: 3px;
+          left: 2px;
+          right: 2px;
           top: calc(50% - 1.5px);
           height: 3px;
           border: 1.5px solid ${theme.colors.primary.contrastText};
@@ -157,6 +168,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       }
       &:disabled[aria-checked='mixed'] + span {
         background-color: ${theme.colors.action.disabledBackground};
+        border: 1px solid ${getBorderColor(theme.colors.error.transparent)};
 
         &:after {
           border-color: ${theme.colors.action.disabledText};
@@ -178,11 +190,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       height: ${theme.spacing(checkboxSize)};
       border-radius: ${theme.shape.borderRadius()};
       background: ${theme.components.input.background};
-      border: 1px solid ${theme.components.input.borderColor};
+      border: 1px solid ${getBorderColor(theme.components.input.borderColor)};
 
       &:hover {
         cursor: pointer;
-        border-color: ${theme.components.input.borderHover};
+        border-color: ${getBorderColor(theme.components.input.borderHover)};
       }
     `,
     label: cx(
@@ -208,6 +220,6 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
       `
     ),
   };
-});
+};
 
 Checkbox.displayName = 'Checkbox';

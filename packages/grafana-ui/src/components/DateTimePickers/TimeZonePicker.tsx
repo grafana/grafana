@@ -41,7 +41,7 @@ export const TimeZonePicker = (props: Props) => {
     includeInternal = false,
     disabled = false,
     inputId,
-    menuShouldPortal = false,
+    menuShouldPortal = true,
     openMenuOnFocus = true,
   } = props;
   const groupedTimeZones = useTimeZones(includeInternal);

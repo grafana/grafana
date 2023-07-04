@@ -1,4 +1,4 @@
-import type { PluginExtensionLinkConfig } from '@grafana/data';
+import type { PluginExtensionConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
 
@@ -7,7 +7,7 @@ import * as pluginLoader from './plugin_loader';
 export type PluginPreloadResult = {
   pluginId: string;
   error?: unknown;
-  extensionConfigs: PluginExtensionLinkConfig[];
+  extensionConfigs: PluginExtensionConfig[];
 };
 
 export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<PluginPreloadResult[]> {
@@ -22,7 +22,12 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   const { path, version, id: pluginId } = config;
   try {
     startMeasure(`frontend_plugin_preload_${pluginId}`);
-    const { plugin } = await pluginLoader.importPluginModule(path, version);
+    const { plugin } = await pluginLoader.importPluginModule({
+      path,
+      version,
+      isAngular: config.angularDetected,
+      pluginId,
+    });
     const { extensionConfigs = [] } = plugin;
     return { pluginId, extensionConfigs };
   } catch (error) {

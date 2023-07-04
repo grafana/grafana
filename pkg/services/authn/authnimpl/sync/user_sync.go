@@ -392,8 +392,6 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
-	identity.AuthID = usr.ExternalAuthID
-	identity.AuthModule = usr.ExternalAuthModule
 }
 
 func shouldUpdateLastSeen(t time.Time) bool {

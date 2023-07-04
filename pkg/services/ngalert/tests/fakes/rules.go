@@ -245,7 +245,7 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ *
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser, _ bool) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(_ context.Context, title string, orgID int64, _ *user.SignedInUser) (*folder.Folder, error) {
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.Title == title {
@@ -345,5 +345,9 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 }
 
 func (f *RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
+	return 0, nil
+}
+
+func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u *user.SignedInUser) (int64, error) {
 	return 0, nil
 }

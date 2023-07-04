@@ -120,7 +120,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -230,7 +230,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -239,6 +238,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   event:
   - pull_request
@@ -373,56 +386,6 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    - pkg/**
-    - packaging/**
-    - go.sum
-    - go.mod
-    include: []
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
 name: pr-lint-backend
 node:
   type: no-parallel
@@ -477,6 +440,11 @@ steps:
     CGO_ENABLED: "1"
   image: golang:1.20.4
   name: lint-backend
+- commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
 trigger:
   event:
   - pull_request
@@ -487,6 +455,7 @@ trigger:
     include:
     - pkg/**
     - packaging/**
+    - .drone.yml
     - conf/**
     - go.sum
     - go.mod
@@ -521,7 +490,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -584,6 +553,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: trigger-test-release
   when:
+    branch: main
     paths:
       include:
       - .drone.yml
@@ -749,7 +719,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -797,8 +767,43 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/build build-docker --edition oss --ubuntu -archs amd64
+  depends_on:
+  - copy-packages-for-docker
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk:431.0.0
+  name: build-docker-images-ubuntu
+  volumes:
+  - name: docker
+    path: /var/run/docker.sock
+- commands:
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana
+  depends_on:
+  - build-docker-images
+  - build-docker-images-ubuntu
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password_pr
+    DOCKER_USER:
+      from_secret: docker_username_pr
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  failure: ignore
+  image: google/cloud-sdk:431.0.0
+  name: publish-images-grafana
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -841,7 +846,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -892,7 +899,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1082,7 +1089,7 @@ steps:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:latest
+  image: grafana/docs-base:dbd975af06
   name: build-docs-website
 trigger:
   event:
@@ -1193,7 +1200,7 @@ steps:
   - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
-  image: grafana/docs-base:latest
+  image: grafana/docs-base:dbd975af06
   name: build-docs-website
 trigger:
   branch: main
@@ -1233,7 +1240,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1299,7 +1306,6 @@ steps:
 - commands:
   - yarn run prettier:check
   - yarn run lint
-  - yarn run i18n:compile
   - yarn run typecheck
   depends_on:
   - yarn-install
@@ -1307,6 +1313,20 @@ steps:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.7.4
   name: lint-frontend
+- commands:
+  - |-
+    yarn run i18n:extract || (echo "
+    Extraction failed. Make sure that you have no dynamic translation phrases, such as 't(\`preferences.theme.\$${themeID}\`, themeName)' and that no translation key is used twice. Search the output for '[warning]' to find the offending file." && false)
+  - "\n            file_diff=$(git diff --dirstat public/locales)\n            if
+    [ -n \"$file_diff\" ]; then\n                echo $file_diff\n                echo
+    \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
+    commit the changes and push again.\"\n                exit 1\n            fi\n
+    \           "
+  - yarn run i18n:compile
+  depends_on:
+  - yarn-install
+  image: grafana/build-container:1.7.4
+  name: verify-i18n
 trigger:
   branch: main
   event:
@@ -1443,6 +1463,11 @@ steps:
   image: golang:1.20.4
   name: lint-backend
 - commands:
+  - go run scripts/modowners/modowners.go check go.mod
+  failure: ignore
+  image: golang:1.20.4
+  name: validate-modfile
+- commands:
   - ./bin/build verify-drone
   depends_on:
   - compile-build-cmd
@@ -1485,7 +1510,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1679,7 +1704,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -1761,7 +1786,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -1774,7 +1799,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -1791,7 +1816,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -1811,7 +1842,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -1908,7 +1945,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -1939,7 +1978,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2097,7 +2136,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2135,126 +2174,6 @@ trigger:
     - latest.json
   repo:
   - grafana/grafana
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: main-enterprise-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: grabpl
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout main
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cp -r grafana-enterprise C:\App\grafana-enterprise
-  - rm -r -force grafana-enterprise
-  - cp grabpl.exe C:\App\grabpl.exe
-  - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
-  - cp C:\App\grabpl.exe grabpl.exe
-  depends_on:
-  - clone
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags enterprise ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  branch: main
-  event:
-  - push
-  paths:
-    exclude:
-    - '*.md'
-    - docs/**
-    - latest.json
 type: docker
 volumes:
 - host:
@@ -2382,6 +2301,50 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
+name: release-whatsnew-checker
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.20.4
+  name: compile-build-cmd
+- commands:
+  - ./bin/build whatsnew-checker
+  depends_on:
+  - compile-build-cmd
+  image: golang:1.20.4
+  name: whats-new-checker
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
 name: release-oss-build-e2e-publish
 node:
   type: no-parallel
@@ -2396,7 +2359,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2495,7 +2458,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -2508,7 +2471,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -2587,7 +2550,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -2699,7 +2662,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2839,7 +2802,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2899,7 +2862,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3040,7 +3003,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -3053,7 +3016,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -3133,7 +3096,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -3194,7 +3157,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3292,7 +3255,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3403,7 +3366,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -3419,6 +3382,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    ${DRONE_TAG}
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -3483,7 +3447,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3630,7 +3594,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -3645,7 +3609,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -3664,7 +3628,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -3682,7 +3646,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-enterprise2
   volumes:
   - name: docker
@@ -3744,7 +3714,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3768,7 +3738,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-oss
   volumes:
   - name: docker
@@ -3785,7 +3755,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana
   volumes:
   - name: docker
@@ -3802,7 +3778,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-oss
   volumes:
   - name: docker
@@ -3840,7 +3822,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -3864,7 +3846,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise
   volumes:
   - name: docker
@@ -3881,7 +3863,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-grafana-enterprise
   volumes:
   - name: docker
@@ -3891,85 +3879,6 @@ trigger:
   - promote
   target:
   - public
-type: docker
-volumes:
-- host:
-    path: /var/run/docker.sock
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: publish-docker-enterprise-security
-node:
-  type: no-parallel
-platform:
-  arch: amd64
-  os: linux
-services: []
-steps:
-- commands:
-  - echo $DRONE_RUNNER_NAME
-  image: alpine:3.17.1
-  name: identify-runner
-- commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on: []
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.20.4
-  name: compile-build-cmd
-- commands:
-  - ./bin/build artifacts docker fetch --edition enterprise
-  depends_on:
-  - compile-build-cmd
-  environment:
-    DOCKER_ENTERPRISE2_REPO:
-      from_secret: docker_enterprise2_repo
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_key
-  image: google/cloud-sdk
-  name: fetch-images-enterprise
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-- commands:
-  - ./bin/grabpl artifacts docker publish --security --dockerhub-repo grafana/grafana-enterprise
-    --version-tag ${DRONE_TAG}
-  depends_on:
-  - fetch-images-enterprise
-  environment:
-    DOCKER_PASSWORD:
-      from_secret: docker_password
-    DOCKER_USER:
-      from_secret: docker_username
-    GCP_KEY:
-      from_secret: gcp_key
-  image: google/cloud-sdk
-  name: publish-images-grafana-enterprise
-  volumes:
-  - name: docker
-    path: /var/run/docker.sock
-trigger:
-  event:
-  - promote
-  target:
-  - security
 type: docker
 volumes:
 - host:
@@ -4012,7 +3921,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -4075,7 +3984,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -4178,18 +4087,14 @@ steps:
   image: golang:1.20.4
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
   depends_on:
   - compile-build-cmd
   environment:
-    ENTERPRISE2_SECURITY_PREFIX:
-      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    SECURITY_DEST_BUCKET:
-      from_secret: security_dest_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 - commands:
@@ -4205,6 +4110,17 @@ steps:
       from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-static-assets
+- commands:
+  - ./bin/build artifacts storybook --tag ${DRONE_TAG}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    PRERELEASE_BUCKET:
+      from_secret: prerelease_bucket
+  image: grafana/grafana-ci-deploy:1.3.3
+  name: publish-storybook
 trigger:
   event:
   - promote
@@ -4240,18 +4156,14 @@ steps:
   image: golang:1.20.4
   name: compile-build-cmd
 - commands:
-  - ./bin/build artifacts packages --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  - ./bin/build artifacts packages --tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}
   depends_on:
   - compile-build-cmd
   environment:
-    ENTERPRISE2_SECURITY_PREFIX:
-      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
-    SECURITY_DEST_BUCKET:
-      from_secret: security_dest_bucket
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 - commands:
@@ -4537,13 +4449,60 @@ volumes:
 clone:
   retries: 3
 depends_on:
+- release-oss-build-e2e-publish
+- release-enterprise-build-e2e-publish
+- release-enterprise2-build-e2e-publish
+- release-oss-windows
+- release-enterprise-windows
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: verify-prerelease-assets
+node:
+  type: no-parallel
+platform:
+  arch: amd64
+  os: linux
+services: []
+steps:
+- commands:
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
+  depends_on:
+  - clone
+  environment:
+    BUCKET:
+      from_secret: prerelease_bucket
+    GCP_KEY:
+      from_secret: gcp_key
+  image: google/cloud-sdk:431.0.0
+  name: gsutil-stat
+trigger:
+  event:
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
+type: docker
+volumes:
+- host:
+    path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  retries: 3
+depends_on:
 - main-test-backend
 - main-test-frontend
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when merging
-  to main'
+name: rgm-main-prerelease
 node:
   type: no-parallel
 platform:
@@ -4557,10 +4516,12 @@ steps:
   image: alpine/git
   name: clone-rgm
 - commands:
-  - apk update && apk add docker
+  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4577,6 +4538,12 @@ trigger:
   branch: main
   event:
   - push
+  paths:
+    exclude:
+    - '*.md'
+    - docs/**
+    - packages/**/*.md
+    - latest.json
 type: docker
 volumes:
 - host:
@@ -4589,7 +4556,7 @@ depends_on: []
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: '[RGM] Build and upload a grafana.tar.gz to a prerelease bucket when tagging'
+name: rgm-tag-prerelease
 node:
   type: no-parallel
 platform:
@@ -4603,10 +4570,12 @@ steps:
   image: alpine/git
   name: clone-rgm
 - commands:
-  - apk update && apk add docker
+  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
     DESTINATION:
       from_secret: destination
     GCP_KEY_BASE64:
@@ -4635,14 +4604,13 @@ volumes:
   name: docker
 ---
 clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
+  retries: 3
+depends_on:
+- rgm-tag-prerelease
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: publish-artifacts-page
+name: rgm-tag-verify-prerelease-assets
 node:
   type: no-parallel
 platform:
@@ -4651,62 +4619,83 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/build-container:1.7.4
-  name: clone-enterprise
-- commands:
-  - mv bin/grabpl /tmp/
-  - rmdir bin
-  - mv grafana-enterprise /tmp/
-  - /tmp/grabpl init-enterprise --github-token $${GITHUB_TOKEN} /tmp/grafana-enterprise
-    ${DRONE_TAG}
-  - mv /tmp/grafana-enterprise/deployment_tools_config.json deployment_tools_config.json
-  - mkdir bin
-  - mv /tmp/grabpl bin/
+  - apt-get update && apt-get install -yq gettext
+  - printenv GCP_KEY | base64 -d > /tmp/key.json
+  - gcloud auth activate-service-account --key-file=/tmp/key.json
+  - ./scripts/list-release-artifacts.sh ${DRONE_TAG} | xargs -n1 gsutil stat
   depends_on:
-  - clone-enterprise
-  - grabpl
+  - clone
   environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/build-container:1.7.4
-  name: init-enterprise
-- commands:
-  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
-  depends_on:
-  - init-enterprise
-  environment:
-    CGO_ENABLED: 0
-  image: golang:1.20.4
-  name: compile-build-cmd
-- commands:
-  - ./bin/build artifacts-page
-  depends_on:
-  - compile-build-cmd
-  environment:
+    BUCKET: grafana-prerelease-dev
     GCP_KEY:
       from_secret: gcp_key
-  image: grafana/build-container:1.7.4
-  name: artifacts-page
+  image: google/cloud-sdk:431.0.0
+  name: gsutil-stat
 trigger:
   event:
-  - promote
-  target: security
+    exclude:
+    - promote
+  ref:
+    exclude:
+    - refs/tags/*-cloud*
+    include:
+    - refs/tags/v*
 type: docker
 volumes:
 - host:
     path: /var/run/docker.sock
+  name: docker
+---
+clone:
+  disable: true
+depends_on: []
+environment:
+  EDITION: oss
+image_pull_secrets:
+- dockerconfigjson
+kind: pipeline
+name: testing-oss-test-backend-windows
+platform:
+  arch: amd64
+  os: windows
+  version: "1809"
+services: []
+steps:
+- commands:
+  - git clone "https://$$env:GITHUB_TOKEN@github.com/$$env:DRONE_REPO.git" .
+  - git checkout -f $$env:DRONE_COMMIT
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/ci-wix:0.1.1
+  name: clone
+- commands: []
+  depends_on:
+  - clone
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: windows-init
+- commands:
+  - go install github.com/google/wire/cmd/wire@v0.5.0
+  - wire gen -tags oss ./pkg/server
+  depends_on:
+  - windows-init
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: wire-install
+- commands:
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
+  depends_on:
+  - wire-install
+  image: grafana/grafana-ci-windows-test:0.1.0
+  name: test-backend
+trigger:
+  event:
+  - promote
+  target:
+  - test-windows
+type: docker
+volumes:
+- host:
+    path: //./pipe/docker_engine/
   name: docker
 ---
 clone:
@@ -4731,7 +4720,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4832,7 +4821,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -4845,7 +4834,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -4924,7 +4913,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -5015,7 +5004,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5128,114 +5117,6 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: release-branch-oss-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands: []
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags oss ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  disable: true
-depends_on: []
-environment:
-  EDITION: enterprise
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
-name: release-branch-enterprise-test-backend-windows
-platform:
-  arch: amd64
-  os: windows
-  version: "1809"
-services: []
-steps:
-- commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
-    -OutFile grabpl.exe
-  image: grafana/ci-wix:0.1.1
-  name: grabpl
-- commands:
-  - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
-  - cd grafana-enterprise
-  - git checkout $$env:DRONE_BRANCH
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: clone
-- commands:
-  - cp -r grafana-enterprise C:\App\grafana-enterprise
-  - rm -r -force grafana-enterprise
-  - cp grabpl.exe C:\App\grabpl.exe
-  - rm -force grabpl.exe
-  - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
-  - cp C:\App\grabpl.exe grabpl.exe
-  depends_on:
-  - clone
-  environment:
-    GITHUB_TOKEN:
-      from_secret: github_token
-  image: grafana/ci-wix:0.1.1
-  name: windows-init
-- commands:
-  - go install github.com/google/wire/cmd/wire@v0.5.0
-  - wire gen -tags enterprise ./pkg/server
-  depends_on:
-  - windows-init
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: wire-install
-- commands:
-  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
-  depends_on:
-  - wire-install
-  failure: ignore
-  image: grafana/grafana-ci-windows-test:0.1.0
-  name: test-backend
-trigger:
-  ref:
-  - refs/heads/v[0-9]*
-type: docker
-volumes:
-- host:
-    path: //./pipe/docker_engine/
-  name: docker
----
-clone:
-  retries: 3
-depends_on: []
-environment:
-  EDITION: oss
-image_pull_secrets:
-- dockerconfigjson
-kind: pipeline
 name: release-branch-oss-integration-tests
 node:
   type: no-parallel
@@ -5253,7 +5134,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -5284,7 +5167,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5409,7 +5292,6 @@ clone:
 depends_on:
 - release-branch-oss-build-e2e-publish
 - release-branch-oss-test-frontend
-- release-branch-oss-test-backend-windows
 environment:
   EDITION: oss
 image_pull_secrets:
@@ -5428,7 +5310,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -5478,7 +5360,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5621,7 +5503,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -5634,7 +5516,7 @@ steps:
   environment:
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -5714,7 +5596,7 @@ steps:
     GITHUB_TOKEN:
       from_secret: github_token
   failure: ignore
-  image: google/cloud-sdk:406.0.0
+  image: google/cloud-sdk:431.0.0
   name: e2e-tests-artifacts-upload
   when:
     status:
@@ -5784,7 +5666,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5875,7 +5757,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -5980,7 +5862,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6011,7 +5895,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6182,7 +6066,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/windows/grabpl.exe
     -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -6198,6 +6082,7 @@ steps:
   - cp grabpl.exe C:\App\grabpl.exe
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise --github-token $$env:GITHUB_TOKEN C:\App\grafana-enterprise
+    $$env:DRONE_BRANCH
   - cp C:\App\grabpl.exe grabpl.exe
   depends_on:
   - clone
@@ -6252,7 +6137,7 @@ services: []
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6402,7 +6287,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images
   volumes:
   - name: docker
@@ -6417,7 +6302,7 @@ steps:
       from_secret: docker_enterprise2_repo
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: build-docker-images-ubuntu
   volumes:
   - name: docker
@@ -6436,7 +6321,7 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key
-  image: google/cloud-sdk
+  image: google/cloud-sdk:431.0.0
   name: fetch-images-enterprise2
   volumes:
   - name: docker
@@ -6454,7 +6339,13 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_key_hg
-  image: google/cloud-sdk
+    GITHUB_APP_ID:
+      from_secret: delivery-bot-app-id
+    GITHUB_APP_INSTALLATION_ID:
+      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_PRIVATE_KEY:
+      from_secret: delivery-bot-app-private-key
+  image: google/cloud-sdk:431.0.0
   name: publish-images-enterprise2
   volumes:
   - name: docker
@@ -6513,7 +6404,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6544,7 +6437,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6690,7 +6583,9 @@ services:
   volumes:
   - name: postgres
     path: /var/lib/postgresql/data/pgdata
-- environment:
+- commands:
+  - docker-entrypoint.sh mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  environment:
     MYSQL_DATABASE: grafana_tests
     MYSQL_PASSWORD: password
     MYSQL_ROOT_PASSWORD: rootpass
@@ -6721,7 +6616,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.30/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.39/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -6929,7 +6824,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest
   image: aquasec/trivy:0.21.0
@@ -6959,7 +6854,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main
   image: aquasec/trivy:0.21.0
@@ -6989,7 +6884,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:latest-ubuntu
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:latest-ubuntu
   image: aquasec/trivy:0.21.0
@@ -7020,7 +6915,7 @@ steps:
 - commands:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana:main-ubuntu
   image: aquasec/trivy:0.21.0
-  name: scan-unkown-low-medium-vulnerabilities
+  name: scan-unknown-low-medium-vulnerabilities
 - commands:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana:main-ubuntu
   image: aquasec/trivy:0.21.0
@@ -7031,6 +6926,72 @@ steps:
     channel: grafana-backend-ops
     template: 'Nightly docker image scan job for grafana/grafana:main-ubuntu failed:
       {{build.link}}'
+    webhook:
+      from_secret: slack_webhook_backend
+  when:
+    status: failure
+trigger:
+  cron: nightly
+  event: cron
+type: docker
+---
+clone:
+  retries: 3
+kind: pipeline
+name: scan-build-test-and-publish-docker-images
+platform:
+  arch: amd64
+  os: linux
+steps:
+- commands:
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM google/cloud-sdk:431.0.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/build-container:1.7.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/grafana-ci-deploy:1.3.3
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM alpine:3.17.1
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM byrnedo/alpine-curl:0.1.8
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM golang:1.20.4
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM plugins/slack
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM postgres:12.3-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:5.7.39
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM mysql:8.0.32
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM redis:6.2.11-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM memcached:1.6.9-alpine
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us.gcr.io/kubernetes-dev/package-publish:latest
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM osixia/openldap:1.4.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:dbd975af06
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: aquasec/trivy:0.21.0
+  name: scan-unknown-low-medium-vulnerabilities
+- commands:
+  - trivy --exit-code 1 --severity HIGH,CRITICAL google/cloud-sdk:431.0.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/build-container:1.7.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/grafana-ci-deploy:1.3.3
+  - trivy --exit-code 1 --severity HIGH,CRITICAL alpine:3.17.1
+  - trivy --exit-code 1 --severity HIGH,CRITICAL byrnedo/alpine-curl:0.1.8
+  - trivy --exit-code 1 --severity HIGH,CRITICAL golang:1.20.4
+  - trivy --exit-code 1 --severity HIGH,CRITICAL plugins/slack
+  - trivy --exit-code 1 --severity HIGH,CRITICAL postgres:12.3-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:5.7.39
+  - trivy --exit-code 1 --severity HIGH,CRITICAL mysql:8.0.32
+  - trivy --exit-code 1 --severity HIGH,CRITICAL redis:6.2.11-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL memcached:1.6.9-alpine
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us.gcr.io/kubernetes-dev/package-publish:latest
+  - trivy --exit-code 1 --severity HIGH,CRITICAL osixia/openldap:1.4.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:dbd975af06
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:9.5.1-node16.14.0-slim-chrome99-ff97
+  - trivy --exit-code 1 --severity HIGH,CRITICAL us-docker.pkg.dev/grafanalabs-dev/cloud-data-sources/e2e:latest
+  image: aquasec/trivy:0.21.0
+  name: scan-high-critical-vulnerabilities
+- image: plugins/slack
+  name: slack-notify-failure
+  settings:
+    channel: grafana-backend-ops
+    template: 'Nightly docker image scan job for build-images failed: {{build.link}}'
     webhook:
       from_secret: slack_webhook_backend
   when:
@@ -7174,34 +7135,16 @@ kind: secret
 name: aws_secret_access_key
 ---
 get:
-  name: bucket
-  path: infra/data/ci/grafana-release-eng/security-bucket
-kind: secret
-name: security_dest_bucket
----
-get:
   name: static_asset_editions
   path: infra/data/ci/grafana-release-eng/artifact-publishing
 kind: secret
 name: static_asset_editions
 ---
 get:
-  name: security_prefix
-  path: infra/data/ci/grafana-release-eng/enterprise2
-kind: secret
-name: enterprise2_security_prefix
----
-get:
   name: cdn_path
   path: infra/data/ci/grafana-release-eng/enterprise2
 kind: secret
 name: enterprise2-cdn-path
----
-get:
-  name: security_prefix
-  path: infra/data/ci/grafana-release-eng/enterprise2
-kind: secret
-name: enterprise2_security_prefix
 ---
 get:
   name: gcp_service_account_base64
@@ -7216,12 +7159,36 @@ kind: secret
 name: destination
 ---
 get:
+  name: dagger_token
+  path: infra/data/ci/grafana-release-eng/rgm
+kind: secret
+name: dagger_token
+---
+get:
   name: pat
   path: infra/data/ci/github/grafanabot
 kind: secret
 name: github_token
 ---
+get:
+  name: app-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-id
+---
+get:
+  name: app-installation-id
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-installation-id
+---
+get:
+  name: app-private-key
+  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+kind: secret
+name: delivery-bot-app-private-key
+---
 kind: signature
-hmac: 3e9459f86eb6cc4301481b61d507a8c27b15309c096f7608db29ced62f571689
+hmac: 5b576f21a7afb08759ad4ac7b74a54afcfbf9b5eac0e5894857ce4cdd0feed50
 
 ...

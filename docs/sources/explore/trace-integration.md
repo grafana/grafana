@@ -9,7 +9,7 @@ weight: 20
 
 # Tracing in Explore
 
-Explore allows you to visualize traces from tracing data sources. This is available in Grafana v7.0+.
+You can use Explore to query and visualize traces from tracing data sources.
 
 Supported data sources are:
 
@@ -19,6 +19,18 @@ Supported data sources are:
 - [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information on how to configure queries for the data sources listed above, refer to the documentation for specific data source.
+
+## Query editor
+
+You can query and search tracing data using a data source's query editor.
+
+Each data source can have it's own query editor. The query editor for the Tempo data source is slightly different than the query editor for the Jaegar data source.
+
+For information on querying each data source, refer to their documentation:
+
+- [Tempo query editor]({{< relref "../datasources/tempo/query-editor" >}})
+- [Jaeger query editor]({{< relref "../datasources/jaeger/#query-the-data-source" >}})
+- [Zipkin query editor]({{< relref "../datasources/zipkin/#query-the-data-source" >}})
 
 ## Trace View
 
@@ -42,8 +54,10 @@ Shows condensed view or the trace timeline. Drag your mouse over the minimap to 
 
 ### Span Filters
 
-> **Note:** This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
-> If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% admonition type="note" %}}
+This feature is behind the `newTraceViewHeader` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}).
+If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+{{% /admonition %}}
 
 ![Screenshot of span filtering](/media/docs/tempo/screenshot-grafana-tempo-span-filters.png)
 
@@ -81,7 +95,9 @@ Clicking anywhere on the span row shows span details.
 
 ### Trace to logs
 
-> **Note:** Available in Grafana 7.4 and later versions.
+{{% admonition type="note" %}}
+Available in Grafana 7.4 and later versions.
+{{% /admonition %}}
 
 You can navigate from a span in a trace view directly to logs relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-logs) for configuration instructions.
 
@@ -91,7 +107,9 @@ Click the document icon to open a split view in Explore with the configured data
 
 ### Trace to metrics
 
-> **Note:** This feature is currently in beta & behind the `traceToMetrics` feature toggle.
+{{% admonition type="note" %}}
+This feature is currently in beta & behind the `traceToMetrics` feature toggle.
+{{% /admonition %}}
 
 You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/#trace-to-metrics) for configuration instructions.
 

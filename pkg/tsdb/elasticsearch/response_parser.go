@@ -160,7 +160,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
 	setPreferredVisType(frame, data.VisTypeLogs)
-	setSearchWords(frame, searchWords)
+	setLogsCustomMeta(frame, searchWords, stringToIntWithDefaultValue(target.Metrics[0].Settings.Get("limit").MustString(), defaultSize))
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -1137,7 +1137,7 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	frame.Meta.PreferredVisualization = visType
 }
 
-func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+func setLogsCustomMeta(frame *data.Frame, searchWords map[string]bool, limit int) {
 	i := 0
 	searchWordsList := make([]string, len(searchWords))
 	for searchWord := range searchWords {
@@ -1156,6 +1156,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 
 	frame.Meta.Custom = map[string]interface{}{
 		"searchWords": searchWordsList,
+		"limit":       limit,
 	}
 }
 

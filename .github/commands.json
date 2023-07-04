@@ -53,14 +53,6 @@
   },
   {
     "type":"label",
-    "name":"oss-user-essentials",
-    "action":"addToProject",
-    "addToProject":{
-      "url":"https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type":"label",
     "name":"area/plugins-catalog",
     "action":"addToProject",
     "addToProject":{
@@ -204,22 +196,6 @@
     }
   },
   {
-    "type":"label",
-    "name":"oss-user-essentials",
-    "action":"removeFromProject",
-    "removeFromProject":{
-      "url":"https://github.com/orgs/grafana/projects/78"
-    }
-  },
-  {
-    "type":"label",
-    "name":"oss-user-essentials",
-    "action":"removeFromProject",
-    "removeFromProject":{
-      "url":"https://github.com/grafana/grafana/projects/33"
-    }
-  },
-  {
     "type": "label",
     "name": "team/operator-experience",
     "action": "addToProject",
@@ -352,7 +328,7 @@
     "name": "area/panel/bargauge",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {
@@ -360,7 +336,7 @@
     "name": "area/panel/gauge",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {
@@ -408,7 +384,7 @@
     "name": "area/panel/piechart",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {
@@ -416,7 +392,7 @@
     "name": "area/panel/stat",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {
@@ -453,18 +429,10 @@
   },
   {
     "type": "label",
-    "name": "area/panel/oss-dataviz",
+    "name": "area/panel/trend",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/panel/oss-bi",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/72"
     }
   },
   {

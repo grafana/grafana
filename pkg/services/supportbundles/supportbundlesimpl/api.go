@@ -9,8 +9,6 @@ import (
 	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -22,30 +20,20 @@ const rootUrl = "/api/support-bundles"
 func (s *Service) registerAPIEndpoints(httpServer *grafanaApi.HTTPServer, routeRegister routing.RouteRegister) {
 	authorize := ac.Middleware(s.accessControl)
 
-	orgRoleMiddleware := middleware.ReqGrafanaAdmin
-	if !s.serverAdminOnly {
-		orgRoleMiddleware = middleware.RoleAuth(roletype.RoleAdmin)
-	}
-
 	supportBundlePageAccess := ac.EvalAny(
 		ac.EvalPermission(ActionRead),
 		ac.EvalPermission(ActionCreate),
 	)
 
-	routeRegister.Get("/support-bundles", authorize(orgRoleMiddleware, supportBundlePageAccess), httpServer.Index)
-	routeRegister.Get("/support-bundles/create", authorize(orgRoleMiddleware, ac.EvalPermission(ActionCreate)), httpServer.Index)
+	routeRegister.Get("/support-bundles", authorize(supportBundlePageAccess), httpServer.Index)
+	routeRegister.Get("/support-bundles/create", authorize(ac.EvalPermission(ActionCreate)), httpServer.Index)
 
 	routeRegister.Group(rootUrl, func(subrouter routing.RouteRegister) {
-		subrouter.Get("/", authorize(orgRoleMiddleware,
-			ac.EvalPermission(ActionRead)), routing.Wrap(s.handleList))
-		subrouter.Post("/", authorize(orgRoleMiddleware,
-			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleCreate))
-		subrouter.Get("/:uid", authorize(orgRoleMiddleware,
-			ac.EvalPermission(ActionRead)), s.handleDownload)
-		subrouter.Delete("/:uid", authorize(orgRoleMiddleware,
-			ac.EvalPermission(ActionDelete)), s.handleRemove)
-		subrouter.Get("/collectors", authorize(orgRoleMiddleware,
-			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleGetCollectors))
+		subrouter.Get("/", authorize(ac.EvalPermission(ActionRead)), routing.Wrap(s.handleList))
+		subrouter.Post("/", authorize(ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleCreate))
+		subrouter.Get("/:uid", authorize(ac.EvalPermission(ActionRead)), s.handleDownload)
+		subrouter.Delete("/:uid", authorize(ac.EvalPermission(ActionDelete)), s.handleRemove)
+		subrouter.Get("/collectors", authorize(ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleGetCollectors))
 	})
 }
 

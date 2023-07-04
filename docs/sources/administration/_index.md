@@ -1,10 +1,4 @@
 ---
-cascade:
-  labels:
-    products:
-      - cloud
-      - enterprise
-      - oss
 description: Administration
 title: Administration
 weight: 40

@@ -43,7 +43,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
     nullThresholdApplied: true,
   };
 
-  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls ?? refField.config.interval ?? null);
+  const thresholds = frame.fields.map((field) => field.config.custom?.insertNulls || refField.config.interval || null);
 
   const uniqueThresholds = new Set<number>(thresholds);
 

@@ -39,6 +39,14 @@ func (s *Service) handleCsvContentScenario(ctx context.Context, req *backend.Que
 			return nil, err
 		}
 
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		respD := resp.Responses[q.RefID]
 		respD.Frames = append(respD.Frames, frame)
 		resp.Responses[q.RefID] = respD
@@ -66,6 +74,14 @@ func (s *Service) handleCsvFileScenario(ctx context.Context, req *backend.QueryD
 
 		if err != nil {
 			return nil, err
+		}
+
+		dropPercent := model.Get("dropPercent").MustFloat64(0)
+		if dropPercent > 0 {
+			frame, err = dropValues(frame, dropPercent)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		respD := resp.Responses[q.RefID]
@@ -144,6 +160,16 @@ func LoadCsvContent(ioReader io.Reader, name string) (*data.Frame, error) {
 				timeField := toTimeField(field)
 				if timeField != nil {
 					field = timeField
+				}
+			}
+
+			// Check for labels in the name
+			idx := strings.Index(fieldName, "{")
+			if idx >= 0 {
+				labels := parseLabelsString(fieldName[idx:], fieldIndex) // _ := data.LabelsFromString(fieldName[idx:])
+				if len(labels) > 0 {
+					field.Labels = labels
+					fieldName = fieldName[:idx]
 				}
 			}
 

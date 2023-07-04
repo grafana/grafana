@@ -118,6 +118,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.sign-out.title', 'Sign out');
     case 'search':
       return t('nav.search-dashboards.title', 'Search dashboards');
+    case 'connections':
+      return t('nav.connections.title', 'Connections');
+    case 'connections-add-new-connection':
+      return t('nav.add-new-connections.title', 'Add new connection');
+    case 'connections-datasources':
+      return t('nav.data-sources.title', 'Data sources');
     default:
       return undefined;
   }
@@ -192,6 +198,10 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.monitoring.subtitle', 'Monitoring and infrastructure apps');
     case 'alerts-and-incidents':
       return t('nav.alerts-and-incidents.subtitle', 'Alerting and incident management apps');
+    case 'connections-add-new-connection':
+      return t('nav.connections.subtitle', 'Browse and create new connections');
+    case 'connections-datasources':
+      return t('nav.data-sources.subtitle', 'View and manage your connected data source connections');
     default:
       return undefined;
   }

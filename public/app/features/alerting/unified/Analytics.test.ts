@@ -4,16 +4,17 @@ import { getBackendSrv } from '@grafana/runtime';
 import { isNewUser, USER_CREATION_MIN_DAYS } from './Analytics';
 
 jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn().mockReturnValue({
     get: jest.fn(),
   }),
 }));
 
 describe('isNewUser', function () {
-  it('should return true if the user has been created within the last two weeks', async () => {
+  it('should return true if the user has been created within the last week', async () => {
     const newUser = {
       id: 1,
-      createdAt: dateTime().subtract(14, 'days'),
+      createdAt: dateTime().subtract(6, 'days'),
     };
 
     getBackendSrv().get = jest.fn().mockResolvedValue(newUser);

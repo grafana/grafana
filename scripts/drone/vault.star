@@ -12,6 +12,7 @@ azure_tenant = "azure_tenant"
 rgm_gcp_key_base64 = "gcp_key_base64"
 rgm_destination = "destination"
 rgm_github_token = "github_token"
+rgm_dagger_token = "dagger_token"
 
 def from_secret(secret):
     return {"from_secret": secret}
@@ -99,29 +100,14 @@ def secrets():
             "aws_secret_access_key",
         ),
         vault_secret(
-            "security_dest_bucket",
-            "infra/data/ci/grafana-release-eng/security-bucket",
-            "bucket",
-        ),
-        vault_secret(
             "static_asset_editions",
             "infra/data/ci/grafana-release-eng/artifact-publishing",
             "static_asset_editions",
         ),
         vault_secret(
-            "enterprise2_security_prefix",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "security_prefix",
-        ),
-        vault_secret(
             "enterprise2-cdn-path",
             "infra/data/ci/grafana-release-eng/enterprise2",
             "cdn_path",
-        ),
-        vault_secret(
-            "enterprise2_security_prefix",
-            "infra/data/ci/grafana-release-eng/enterprise2",
-            "security_prefix",
         ),
         vault_secret(
             rgm_gcp_key_base64,
@@ -134,8 +120,29 @@ def secrets():
             "destination",
         ),
         vault_secret(
+            rgm_dagger_token,
+            "infra/data/ci/grafana-release-eng/rgm",
+            "dagger_token",
+        ),
+        vault_secret(
             rgm_github_token,
             "infra/data/ci/github/grafanabot",
             "pat",
+        ),
+        # grafana-delivery-bot secrets
+        vault_secret(
+            "delivery-bot-app-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-installation-id",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-installation-id",
+        ),
+        vault_secret(
+            "delivery-bot-app-private-key",
+            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
+            "app-private-key",
         ),
     ]

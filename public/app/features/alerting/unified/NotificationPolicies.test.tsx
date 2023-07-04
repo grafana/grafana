@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -20,6 +20,7 @@ import { AccessControlAction } from 'app/types';
 
 import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPolicies';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
+import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
@@ -28,10 +29,13 @@ import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
+import 'core-js/stable/structured-clone';
+
 jest.mock('./api/alertmanager');
 jest.mock('./utils/config');
 jest.mock('app/core/services/context_srv');
 jest.mock('./api/buildInfo');
+jest.mock('./useRouteGroupsMatcher');
 
 const mocks = {
   getAllDataSourcesMock: jest.mocked(getAllDataSources),
@@ -388,6 +392,7 @@ describe('NotificationPolicies', () => {
 
     renderNotificationPolicies();
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
+
     expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
     expect(ui.editButton.query()).not.toBeInTheDocument();
   });
@@ -399,6 +404,12 @@ describe('NotificationPolicies', () => {
         message: "Alertmanager has exploded. it's gone. Forget about it.",
       },
     });
+
+    jest.spyOn(alertmanagerApi, 'useGetAlertmanagerAlertGroupsQuery').mockImplementation(() => ({
+      currentData: [],
+      refetch: jest.fn(),
+    }));
+
     await renderNotificationPolicies();
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
@@ -630,8 +641,18 @@ describe('NotificationPolicies', () => {
         },
       },
     });
+
+    jest.spyOn(alertmanagerApi, 'useGetAlertmanagerAlertGroupsQuery').mockImplementation(() => ({
+      currentData: [],
+      refetch: jest.fn(),
+    }));
+
     await renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
+    await waitFor(() =>
+      expect(within(rootRouteContainer).getByTestId('matching-instances')).toHaveTextContent('0instances')
+    );
+
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
     expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
     expect(mocks.api.fetchAlertManagerConfig).not.toHaveBeenCalled();

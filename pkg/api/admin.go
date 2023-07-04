@@ -68,10 +68,6 @@ func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.SignedInUser, bag setting.SettingsBag) (setting.SettingsBag, error) {
-	if hs.AccessControl.IsDisabled() {
-		return bag, nil
-	}
-
 	eval := func(scope string) (bool, error) {
 		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
 	}
@@ -113,10 +109,6 @@ func (hs *HTTPServer) getAuthorizedSettings(ctx context.Context, user *user.Sign
 }
 
 func (hs *HTTPServer) getAuthorizedVerboseSettings(ctx context.Context, user *user.SignedInUser, bag setting.VerboseSettingsBag) (setting.VerboseSettingsBag, error) {
-	if hs.AccessControl.IsDisabled() {
-		return bag, nil
-	}
-
 	eval := func(scope string) (bool, error) {
 		return hs.AccessControl.Evaluate(ctx, user, ac.EvalPermission(ac.ActionSettingsRead, scope))
 	}

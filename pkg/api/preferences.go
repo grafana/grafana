@@ -13,13 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const (
-	defaultTheme string = ""
-	darkTheme    string = "dark"
-	lightTheme   string = "light"
-	systemTheme  string = "system"
-)
-
 // POST /api/preferences/set-home-dash
 func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := pref.SavePreferenceCommand{}
@@ -135,8 +128,8 @@ func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.UpdatePrefsCmd) response.Response {
-	if dtoCmd.Theme != lightTheme && dtoCmd.Theme != darkTheme && dtoCmd.Theme != defaultTheme && dtoCmd.Theme != systemTheme {
-		return response.Error(400, "Invalid theme", nil)
+	if dtoCmd.Theme != "" && !pref.IsValidThemeID(dtoCmd.Theme) {
+		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
 	dashboardID := dtoCmd.HomeDashboardID
@@ -193,7 +186,7 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
-	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme && *dtoCmd.Theme != systemTheme {
+	if dtoCmd.Theme != nil && !pref.IsValidThemeID(*dtoCmd.Theme) {
 		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 

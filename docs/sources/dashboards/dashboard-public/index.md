@@ -17,7 +17,7 @@ This feature is in [public preview](/docs/release-life-cycle/).
 {{% admonition type="caution" %}}
 
 Making your dashboard public could result in a large number of queries to the data sources used by your dashboard.
-This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-caching" >}}) and/or rate limiting features.
+This can be mitigated by utilizing the enterprise [caching]({{< relref "../../administration/data-source-management/#query-and-resource-caching" >}}) and/or rate limiting features.
 
 {{% /admonition %}}
 
@@ -83,26 +83,13 @@ The link no longer works. You must create a new public URL, as in [Make a dashbo
 
 {{% admonition type="note" %}}
 
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+Available in [public preview](/docs/release-life-cycle/) in [Grafana Cloud Pro and Advanced](/docs/grafana-cloud). This feature will have a cost by active users after being promoted into general availability.
+
+Please contact support to have the feature enabled.
 
 {{% /admonition %}}
 
 Email sharing allows you to share your public dashboard with only specific people by email, instead of having it accessible to anyone with the URL. When you use email sharing, recipients receive a one-time use link that's valid for **one hour**. Once the link is used, the viewer has access to the public dashboard for **30 days**.
-
-### Enable email sharing
-
-{{% admonition type="note" %}}
-
-For Grafana Cloud (Pro and Advanced only), contact support to have the feature enabled.
-
-{{% /admonition %}}
-
-Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
-
-```
-[feature_toggles]
-publicDashboardsEmailSharing = true
-```
 
 ### Invite a viewer
 
@@ -157,7 +144,9 @@ If a Grafana user has read access to the parent dashboard, they can view the pub
 
 ## Assess public dashboard usage
 
-> **note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% admonition type="note" %}}
+Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
+{{% /admonition %}}
 
 You can check usage analytics about your public dashboard by clicking the insights icon in the dashboard header:
 

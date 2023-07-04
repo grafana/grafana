@@ -1,9 +1,12 @@
 package folder
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -48,6 +51,16 @@ func (f *Folder) IsGeneral() bool {
 	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
 }
 
+func (f *Folder) WithURL() *Folder {
+	if f == nil || f.URL != "" {
+		return f
+	}
+
+	// copy of dashboards.GetFolderURL()
+	f.URL = fmt.Sprintf("%s/dashboards/f/%s/%s", setting.AppSubUrl, f.UID, slugify.Slugify(f.Title))
+	return f
+}
+
 // NewFolder tales a title and returns a Folder with the Created and Updated
 // fields set to the current time.
 func NewFolder(title string, description string) *Folder {
@@ -77,6 +90,8 @@ type UpdateFolderCommand struct {
 	UID   string `json:"-"`
 	OrgID int64  `json:"-"`
 	// NewUID it's an optional parameter used for overriding the existing folder UID
+	// Starting with 10.0, this is deprecated. It will be removed in a future release.
+	// Please avoid using it because it can result in folder loosing its permissions.
 	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
 	// NewTitle it's an optional parameter used for overriding the existing folder title
 	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
@@ -113,7 +128,7 @@ type DeleteFolderCommand struct {
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
-// Title should be set; if multilpe fields are set by the caller the dashboard
+// Title should be set; if multiple fields are set by the caller the dashboard
 // service will select the field with the most specificity, in order: ID, UID,
 // Title.
 type GetFolderQuery struct {

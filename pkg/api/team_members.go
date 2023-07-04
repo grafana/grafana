@@ -36,14 +36,6 @@ func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Respon
 
 	query := team.GetTeamMembersQuery{OrgID: c.OrgID, TeamID: teamId, SignedInUser: c.SignedInUser}
 
-	// With accesscontrol the permission check has been done at middleware layer
-	// and the membership filtering will be done at DB layer based on user permissions
-	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgID, query.TeamID, c.SignedInUser); err != nil {
-			return response.Error(403, "Not allowed to list team members", err)
-		}
-	}
-
 	queryResult, err := hs.teamService.GetTeamMembers(c.Req.Context(), &query)
 	if err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
@@ -91,12 +83,6 @@ func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgID, cmd.TeamID, c.SignedInUser); err != nil {
-			return response.Error(403, "Not allowed to add team member", err)
-		}
-	}
-
 	isTeamMember, err := hs.teamService.IsTeamMember(c.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return response.Error(500, "Failed to add team member.", err)
@@ -139,12 +125,6 @@ func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 	orgId := c.OrgID
-
-	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-			return response.Error(403, "Not allowed to update team member", err)
-		}
-	}
 
 	isTeamMember, err := hs.teamService.IsTeamMember(orgId, teamId, userId)
 	if err != nil {
@@ -190,12 +170,6 @@ func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Resp
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
-	}
-
-	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), orgId, teamId, c.SignedInUser); err != nil {
-			return response.Error(403, "Not allowed to remove team member", err)
-		}
 	}
 
 	teamIDString := strconv.FormatInt(teamId, 10)

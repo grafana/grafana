@@ -69,7 +69,7 @@ const DroneFrontDisplay = ({ data }: CanvasElementProps<DroneFrontConfig, DroneF
   );
 };
 
-export const droneFrontItem: CanvasElementItem<any, any> = {
+export const droneFrontItem: CanvasElementItem = {
   id: 'droneFront',
   name: 'Drone Front',
   description: 'Drone front',

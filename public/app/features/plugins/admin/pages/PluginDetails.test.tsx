@@ -513,7 +513,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeInTheDocument();
+      expect(queryByText('Add new data source')).toBeInTheDocument();
     });
 
     it('should not display a "Create" button as a post installation step for disabled data source plugins', async () => {
@@ -526,7 +526,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
 
     it('should not display post installation step for panel plugins', async () => {
@@ -538,7 +538,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
 
     it('should display an enable button for app plugins that are not enabled as a post installation step', async () => {
@@ -787,7 +787,7 @@ describe('Plugin details page', () => {
       });
 
       await waitFor(() => queryByText('Uninstall'));
-      expect(queryByText(`Create a ${name} data source`)).toBeNull();
+      expect(queryByText('Add new data source')).toBeNull();
     });
   });
 });

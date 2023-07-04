@@ -2,11 +2,11 @@ import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { TableFieldOptions } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export class TableSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
-    const list = builder.getListAppender<PanelOptions, TableFieldOptions>({
+    const list = builder.getListAppender<Options, TableFieldOptions>({
       name: SuggestionName.Table,
       pluginId: 'table',
       options: {},

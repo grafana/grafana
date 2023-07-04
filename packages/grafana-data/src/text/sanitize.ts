@@ -33,13 +33,13 @@ const sanitizeTextPanelWhitelist = new xss.FilterXSS({
 /**
  * Return a sanitized string that is going to be rendered in the browser to prevent XSS attacks.
  * Note that sanitized tags will be removed, such as "<script>".
- * We don't allow form, pre, or input elements.
+ * We don't allow form or input elements.
  */
 export function sanitize(unsanitizedString: string): string {
   try {
     return DOMPurify.sanitize(unsanitizedString, {
       USE_PROFILES: { html: true },
-      FORBID_TAGS: ['form', 'input', 'pre'],
+      FORBID_TAGS: ['form', 'input'],
     });
   } catch (error) {
     console.error('String could not be sanitized', unsanitizedString);

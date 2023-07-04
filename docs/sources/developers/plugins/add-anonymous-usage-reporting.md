@@ -2,13 +2,17 @@
 title: Add anonymous usage reporting
 ---
 
-# Add anonymous usage reporting to you plugin
+# Add anonymous usage reporting
 
-The Grafana server administrator has the possibility to configure [anonymous usage tracking]({{< relref "../../setup-grafana/configure-grafana/#reporting_enabled" >}}).
+Add anonymous usage tracking to your plugin to send [reporting events]({{< relref "../../setup-grafana/configure-grafana/#reporting_enabled" >}}) that describe how your plugin is being used to a tracking system configured by your Grafana server administrator.
 
-By adding usage tracking to your plugin you will send events of how your plugin is being used to the configured tracking system.
+## Event reporting
 
-Lets say we have a QueryEditor that looks something like the example below. It has an editor field where you can write your query and a query type selector so you can select what kind of query result you are expecting that query to return.
+In this section, we show an example of tracking usage data from a query editor and receiving a report back from the analytics service.
+
+### Sample query editor
+
+Let's say you have a `QueryEditor` that looks similar to the example below. It has a `CodeEditor` field where you can write your query and a query type selector so you can select the kind of query result that you expect to return:
 
 ```ts
 import React, { ReactElement } from 'react';
@@ -17,11 +21,11 @@ import type { EditorProps } from './types';
 
 export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? 'timeseries' };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: 'Timeseries',
+      value: 'timeseries',
     },
     {
       label: 'Table',
@@ -66,7 +70,14 @@ export function QueryEditor(props: EditorProps): ReactElement {
 }
 ```
 
-Lets say that we would like to track how the usage looks between time series and table queries. All you need to do is to add the `usePluginInteractionReporter` to fetch a report function which takes two arguments. The first one is the event name which is used to identify the interaction being made. It need to start with `grafana_plugin_` which makes it easier to differentiate plugin events from Grafana core events. The second argument is optional and should be used to attach contextual data to the event. In our example, that would be the query type. It is optional because it does not make sense to pass contextual data for all user interactions.
+### Track usage with `usePluginInteractionReporter`
+
+Let's say that you want to track how the usage looks between time series and table queries.
+
+What you want to do is to add the `usePluginInteractionReporter` to fetch a report function that takes two arguments:
+
+- Required: An event name that begins with `grafana_plugin_`. It is used to identify the interaction being made.
+- Optional: Attached contextual data. In our example, that is the query type.
 
 ```ts
 import React, { ReactElement } from 'react';
@@ -78,11 +89,11 @@ export function QueryEditor(props: EditorProps): ReactElement {
   const { datasource, query, onChange, onRunQuery } = props;
   const report = usePluginInteractionReporter();
 
-  const queryType = { value: query.value ?? 'timeserie' };
+  const queryType = { value: query.value ?? 'timeseries' };
   const queryTypes = [
     {
-      label: 'Timeserie',
-      value: 'timeserie',
+      label: 'Timeseries',
+      value: 'timeseries',
     },
     {
       label: 'Table',
@@ -132,7 +143,11 @@ export function QueryEditor(props: EditorProps): ReactElement {
 }
 ```
 
-Another benefit of using the `usePluginInteractionReporter` is that the report function that is handed back to you will automatically attach contextual data about the plugin you are tracking to every event. In our example the following information will be sent to the analytics service configured by the Grafana server administrator.
+### Data returned from the analytics service
+
+When you use `usePluginInteractionReporter`, the report function that is handed back to you automatically attaches contextual data about the plugin you are tracking to the events.
+
+In our example, the following information is sent to the analytics service configured by the Grafana server administrator:
 
 ```ts
 {
@@ -145,7 +160,7 @@ Another benefit of using the `usePluginInteractionReporter` is that the report f
     plugin_id: 'grafana-example-datasource',
     plugin_name: 'Example',
     datasource_uid: 'qeSI8VV7z', // will only be added for datasources
-    query_type: 'timeserie'
+    query_type: 'timeseries'
   }
 }
 ```
