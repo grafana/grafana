@@ -110,7 +110,6 @@ describe('Add new connection', () => {
   });
 
   describe('angular badge', () => {
-    // hello
     test('does not show angular badge for non-angular plugins', async () => {
       renderPage([
         getCatalogPluginMock({
@@ -127,7 +126,7 @@ describe('Add new connection', () => {
     });
 
     test('shows angular badge for angular plugins', async () => {
-      /* renderPage([
+      renderPage([
         getCatalogPluginMock({
           id: 'legacy-plugin',
           name: 'Legacy Plugin',
@@ -138,7 +137,7 @@ describe('Add new connection', () => {
       await waitFor(() => {
         expect(screen.queryByText('Legacy Plugin')).toBeInTheDocument();
       });
-      expect(screen.queryByText('Angular')).toBeInTheDocument(); */
+      expect(screen.queryByText('Angular')).toBeInTheDocument();
     });
   });
 });
