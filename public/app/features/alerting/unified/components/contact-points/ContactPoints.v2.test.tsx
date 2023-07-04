@@ -8,6 +8,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
+import { disableRBAC } from '../../mocks';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
+
 import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import server from './__mocks__/server';
 
@@ -20,10 +23,10 @@ import server from './__mocks__/server';
  * 3. Write tests for the hooks we call in the "smart" components to check if we are _indeed_ fetching data
  *    and if loading / error states are being propagated correctly.
  */
-
 describe('ContactPoints', () => {
   beforeAll(() => {
     setBackendSrv(backendSrv);
+    disableRBAC();
     server.listen({ onUnhandledRequest: 'error' });
   });
 
@@ -37,9 +40,10 @@ describe('ContactPoints', () => {
 
   it('should show / hide loading states', async () => {
     render(
-      <TestProvider>
+      <AlertmanagerProvider accessType={'notification'}>
         <ContactPoints />
-      </TestProvider>
+      </AlertmanagerProvider>,
+      { wrapper: TestProvider }
     );
 
     await waitFor(async () => {
@@ -47,18 +51,13 @@ describe('ContactPoints', () => {
       await waitForElementToBeRemoved(screen.getByText('Loading...'));
       await expect(screen.queryByTestId(selectors.components.Alert.alertV2('error'))).not.toBeInTheDocument();
     });
+
+    expect(screen.getByText('grafana-default-email')).toBeInTheDocument();
+    expect(screen.getAllByTestId('contact-point')).toHaveLength(4);
   });
 });
 
 describe('ContactPoint', () => {
-  it('should render a single item', () => {
-    render(<ContactPoint name={'my-contact-point'} receivers={[]} onDelete={noop} />);
-
-    // should render the header
-    expect(screen.getByText('my-contact-point')).toBeInTheDocument();
-    expect(screen.getByText('is not used in any policy')).toBeInTheDocument();
-  });
-
   it('should call delete when clicked and not disabled', async () => {
     const onDelete = jest.fn();
 

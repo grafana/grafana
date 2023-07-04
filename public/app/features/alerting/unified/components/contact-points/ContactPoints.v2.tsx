@@ -78,7 +78,7 @@ export const ContactPoint = ({
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.contactPointWrapper}>
+    <div className={styles.contactPointWrapper} data-testid="contact-point">
       <Stack direction="column" gap={0}>
         <ContactPointHeader
           name={name}
