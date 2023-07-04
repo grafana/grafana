@@ -26,5 +26,6 @@ title: LokiDataQuery kind
 | `queryType`    | string  | No       |         | Specify the query flavor<br/>TODO make this required and give it a default                                                                                                                                                                              |
 | `range`        | boolean | No       |         | @deprecated, now use queryType.                                                                                                                                                                                                                         |
 | `resolution`   | integer | No       |         | Used to scale the interval value.                                                                                                                                                                                                                       |
+| `step`         | string  | No       |         | Used to set step value for range queries.                                                                                                                                                                                                               |
 
 

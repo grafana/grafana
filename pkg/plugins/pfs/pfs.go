@@ -148,7 +148,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 
 	gpv := loadGP(rt.Context())
 
-	fsys, err = ensureCueMod(fsys, pp.Properties)
+	fsys, err = ensureCueMod(fsys, pp.Properties.Id)
 	if err != nil {
 		return ParsedPlugin{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
 	}
@@ -248,7 +248,7 @@ func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kinds
 		},
 	}
 
-	fsys, err := ensureCueMod(fsys, pp.Properties)
+	fsys, err := ensureCueMod(fsys, pp.Properties.Id)
 	if err != nil {
 		return kindsys.Def[kindsys.ComposableProperties]{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
 	}
@@ -275,17 +275,143 @@ func LoadComposableKindDef(fsys fs.FS, rt *thema.Runtime, defpath string) (kinds
 	}, nil
 }
 
-func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
+func ensureCueMod(fsys fs.FS, pluginID string) (fs.FS, error) {
 	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}
 		return merged_fs.NewMergedFS(fsys, fstest.MapFS{
-			"cue.mod/module.cue": &fstest.MapFile{Data: []byte(fmt.Sprintf(`module: "grafana.com/grafana/plugins/%s"`, pdef.Id))},
+			"cue.mod/module.cue": &fstest.MapFile{Data: []byte(fmt.Sprintf(`module: "grafana.com/grafana/plugins/%s"`, pluginID))},
 		}), nil
 	} else if _, err := cuecontext.New().CompileBytes(modf).LookupPath(cue.MakePath(cue.Str("module"))).String(); err != nil {
 		return nil, fmt.Errorf("error reading cue module name: %w", err)
 	}
 
 	return fsys, nil
+}
+
+func CompilePluginProvider(fsys fs.FS, rt *thema.Runtime) (kindsys.Provider, error) {
+	if fsys == nil {
+		return kindsys.Provider{}, ErrEmptyFS
+	}
+	if rt == nil {
+		rt = cuectx.GrafanaThemaRuntime()
+	}
+
+	lin, err := plugindef.Lineage(rt)
+	if err != nil {
+		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
+	}
+	ctx := rt.Context()
+
+	b, err := fs.ReadFile(fsys, "plugin.json")
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return kindsys.Provider{}, ErrNoRootFile
+		}
+		return kindsys.Provider{}, fmt.Errorf("error reading plugin.json: %w", err)
+	}
+
+	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
+	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
+	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))(b)
+	if err != nil {
+		return kindsys.Provider{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
+	}
+	pluginDef := pinst.ValueP()
+	provider := kindsys.Provider{
+		Name:    pluginDef.Id,
+		Version: *pluginDef.Info.Version,
+	}
+
+	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
+		return kindsys.Provider{}, fmt.Errorf("error globbing for cue files in fsys: %w", err)
+	} else if len(cuefiles) == 0 {
+		return provider, nil
+	}
+
+	gpv := loadGP(rt.Context())
+
+	fsys, err = ensureCueMod(fsys, provider.Name)
+	if err != nil {
+		return kindsys.Provider{}, fmt.Errorf("%s has invalid cue.mod: %w", provider.Name, err)
+	}
+
+	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "", load.Package(PackageName))
+	if err != nil || bi.Err != nil {
+		if err == nil {
+			err = bi.Err
+		}
+		return kindsys.Provider{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", provider.Name), err)
+	}
+
+	f, _ := parser.ParseFile("plugin.json", fmt.Sprintf(`{
+		"id": %q,
+		"pascalName": %q
+	}`, pluginDef.Id, pluginDef.PascalName))
+
+	// for _, f := range bi.Files {
+	// 	for _, im := range f.Imports {
+	// 		ip := strings.Trim(im.Path.Value, "\"")
+	// 		if !importAllowed(ip) {
+	// 			return kindsys.Provider{}, errors.Wrap(errors.Newf(im.Pos(),
+	// 				"import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr),
+	// 				ErrDisallowedCUEImport)
+	// 		}
+	// 		pp.CUEImports = append(pp.CUEImports, im)
+	// 	}
+	// }
+
+	// build.Instance.Files has a comment indicating the CUE authors want to change
+	// its behavior. This is a tripwire to tell us if/when they do that - otherwise, if
+	// the change they make ends up making bi.Files empty, the above loop will silently
+	// become a no-op, and we'd lose enforcement of import restrictions in plugins without
+	// realizing it.
+	if len(bi.Files) != len(bi.BuildFiles) {
+		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
+	}
+
+	// Inject the JSON directly into the build so it gets loaded together
+	bi.BuildFiles = append(bi.BuildFiles, &build.File{
+		Filename: "plugin.json",
+		Encoding: build.JSON,
+		Form:     build.Data,
+		Source:   b,
+	})
+	bi.Files = append(bi.Files, f)
+
+	gpi := ctx.BuildInstance(bi)
+	// Temporary hack while we figure out what in the elasticsearch lineage turns
+	// this into an endless loop in thema, and why unifying twice is anything other
+	// than a total no-op.
+	if provider.Name != "elasticsearch" {
+		gpi = gpi.Unify(gpv)
+	}
+	if gpi.Err() != nil {
+		return kindsys.Provider{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, provider.Name), gpi.Err())
+	}
+
+	for _, si := range allsi {
+		iv := gpi.LookupPath(cue.MakePath(cue.Str("composableKinds"), cue.Str(si.Name())))
+		if !iv.Exists() {
+			continue
+		}
+
+		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
+		if err != nil {
+			return kindsys.Provider{}, err
+		}
+
+		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
+			Properties: props,
+			V:          iv,
+		})
+		if err != nil {
+			return kindsys.Provider{}, err
+		}
+		provider.ComposableKinds[si.Name()] = compo
+	}
+
+	// TODO custom kinds
+	return provider, nil
 }

@@ -15,23 +15,24 @@ import (
 
 	"github.com/grafana/grafana"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
+	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 )
 
-func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) pfs.ParsedPlugin {
+func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) kindsys.Provider {
 	sub, err := fs.Sub(grafana.CueSchemaFS, path)
 	if err != nil {
 		panic("could not create fs sub to " + path)
 	}
-	pp, err := pfs.ParsePluginFS(sub, rt)
+	pp, err := pfs.CompilePluginProvider(sub, rt)
 	if err != nil {
 		panic(fmt.Sprintf("error parsing plugin metadata for %s: %s", pkgname, err))
 	}
 	return pp
 }
 
-func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
-	return []pfs.ParsedPlugin{
+func corePlugins(rt *thema.Runtime) []kindsys.Provider {
+	return []kindsys.Provider{
 		parsePluginOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/azuremonitor", "grafana_azure_monitor_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
