@@ -262,12 +262,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.show-on-hover': {
         opacity: '0',
+        visibility: 'hidden',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
+          visibility: 'visible',
         },
       },
 
