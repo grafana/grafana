@@ -20,19 +20,26 @@ export interface Props {
 }
 
 export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
-  const [moveTarget, setMoveTarget] = useState<string>();
+  const [moveTarget, setMoveTarget] = useState<{
+    uid?: string;
+    title?: string;
+  }>({});
   const [isMoving, setIsMoving] = useState(false);
   const selectedFolders = Object.keys(selectedItems.folder).filter((uid) => selectedItems.folder[uid]);
 
   const handleFolderChange = (newFolder: FolderChange) => {
-    setMoveTarget(newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid);
+    // setMoveTarget(newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid);
+    setMoveTarget({
+      uid: newFolder.uid === ROOT_FOLDER ? '' : newFolder.uid,
+      title: newFolder.title,
+    });
   };
 
   const onMove = async () => {
-    if (moveTarget !== undefined) {
+    if (moveTarget.uid !== undefined) {
       setIsMoving(true);
       try {
-        await onConfirm(moveTarget);
+        await onConfirm(moveTarget.uid);
         setIsMoving(false);
         onDismiss();
       } catch {
@@ -63,7 +70,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
         <Button onClick={onDismiss} variant="secondary" fill="outline">
           Cancel
         </Button>
-        <Button disabled={moveTarget === undefined || isMoving} onClick={onMove} variant="primary">
+        <Button disabled={moveTarget.uid === undefined || isMoving} onClick={onMove} variant="primary">
           {isMoving ? 'Moving...' : 'Move'}
         </Button>
       </Modal.ButtonRow>

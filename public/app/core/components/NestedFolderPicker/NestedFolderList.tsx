@@ -13,7 +13,6 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
-const LIST_HEIGHT = ROW_HEIGHT * 6.5; // show 6 and a bit rows
 const CHEVRON_SIZE = 'md';
 
 interface NestedFolderListProps {
@@ -40,8 +39,13 @@ export function NestedFolderList({
 
   return (
     <div className={styles.table}>
-      <div className={styles.headerRow}>Name</div>
-      <List height={LIST_HEIGHT} width="100%" itemData={virtualData} itemSize={ROW_HEIGHT} itemCount={items.length}>
+      <List
+        height={ROW_HEIGHT * Math.min(6.5, items.length)}
+        width="100%"
+        itemData={virtualData}
+        itemSize={ROW_HEIGHT}
+        itemCount={items.length}
+      >
         {Row}
       </List>
     </div>
@@ -151,7 +155,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     table: css({
-      border: `solid 1px ${theme.components.input.borderColor}`,
       background: theme.components.input.background,
     }),
 
@@ -172,7 +175,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       position: 'relative',
       alignItems: 'center',
-      borderTop: `solid 1px ${theme.components.input.borderColor}`,
+      [':not(:first-child)']: {
+        borderTop: `solid 1px ${theme.components.input.borderColor}`,
+      },
     }),
 
     radio: css({

@@ -110,7 +110,13 @@ export function GeneralSettingsUnconnected({
 
           <Field label="Folder">
             {config.featureToggles.nestedFolderPicker ? (
-              <NestedFolderPicker value={dashboard.meta.folderUid} onChange={onFolderChange} />
+              <NestedFolderPicker
+                value={{
+                  title: dashboard.meta.folderTitle,
+                  uid: dashboard.meta.folderUid,
+                }}
+                onChange={onFolderChange}
+              />
             ) : (
               <FolderPicker
                 inputId="dashboard-folder-input"
