@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "",
@@ -8,6 +31,17 @@
     "dashboards-tree": {
       "name-column": "",
       "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -42,6 +76,14 @@
       "default": "Por defecto"
     },
     "save": "Guardar"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -128,6 +170,11 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
@@ -136,6 +183,10 @@
       "error": "No se han podido cargar las opciones",
       "loading": "Cargando las opciones...",
       "no-options": "No se ha encontrado ninguna opción"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -159,11 +210,15 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
@@ -219,6 +274,10 @@
     "config": {
       "title": "Administración"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Añadir y configurar correlaciones",
       "title": "Correlaciones"
@@ -241,6 +300,10 @@
     "dashboards": {
       "subtitle": "Cree y administre paneles de control para visualizar sus datos",
       "title": "Paneles de control"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Añadir y configurar orígenes de datos",
@@ -566,6 +629,16 @@
       "default-label": "Por defecto"
     },
     "title": "Preferencias"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Cargando...",

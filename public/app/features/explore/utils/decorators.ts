@@ -255,7 +255,6 @@ export function decorateData(
     map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
-    map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
     mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
