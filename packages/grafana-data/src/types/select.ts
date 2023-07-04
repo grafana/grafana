@@ -1,7 +1,7 @@
 /**
  * Used in select elements
  */
-export interface SelectableValue<T = any> {
+export interface SelectableValue<T> {
   label?: string;
   ariaLabel?: string;
   value?: T;
@@ -12,7 +12,7 @@ export interface SelectableValue<T = any> {
   // Adds a simple native title attribute to each option.
   title?: string;
   // Optional component that will be shown together with other options. Does not get past any props.
-  component?: React.ComponentType<any>;
+  component?: React.ComponentType<T>;
   isDisabled?: boolean;
   [key: string]: any;
 }
