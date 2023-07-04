@@ -19,7 +19,7 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, color, size));
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} role="listitem">
       <Stack direction="row" gap={0} alignItems="stretch" wrap={false}>
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">

@@ -17,7 +17,7 @@ export const AlertLabels = ({ labels, size }: Props) => {
   const pairs = chain(labels).toPairs().reject(isPrivateKey).value();
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} role="list" aria-label="Labels">
       {pairs.map(([label, value]) => (
         <Label key={label + value} size={size} label={label} value={value} color={getLabelColor(label)} />
       ))}
