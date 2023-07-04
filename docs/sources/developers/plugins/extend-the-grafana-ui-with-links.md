@@ -8,7 +8,7 @@ description: Learn how to add links to the Grafana user interface from an app pl
 Before we go into details we need to cover the two major concepts in the UI extensions feature of Grafana.
 
 1. Extension point - a place in the UI where plugins can provide new functionality to the end user. Examples of extension points are the dashboard panel menu or toolbar in explore.
-2. Extensions - New functionality, ususally registered by an app plugin, that will be displayed at an extension point. Examples of extensions are the possibility to create an incident directly from the dashboard panel menu.
+2. Extensions - New functionality, usually registered by an app plugin, that will be displayed at an extension point. Examples of extensions are the possibility to create an incident directly from the dashboard panel menu.
 
 ![panel menu](https://user-images.githubusercontent.com/172951/242723354-a10d6238-22f1-4458-b85e-ac3c7f014b22.png)
 
@@ -20,12 +20,12 @@ If you have parts of your UI where it would improve the user experience to allow
 
 Examples where it would be useful:
 
-- The user views a dashboard with historical data. By adding an extension point to this part of the UI the Machine Learning app plugin can give the user the ability to create a forcast for that data directly from the panel.
+- The user views a dashboard with historical data. By adding an extension point to this part of the UI the Machine Learning app plugin can give the user the ability to create a forecast for that data directly from the panel.
 - The user views a firing alert. By adding an extension point to this part of the UI the Incident app plugin can give the user the ability to create an incident directly from the alert view.
 
 ## Why should I add an extension point?
 
-Adding an extension point to your UI gives a number of benefits souch as:
+Adding an extension point to your UI gives a number of benefits such as:
 
 - Add the UI extension point once to enable multiple plugins to extend your UI with new functionality. No additional effort needed to provide functionality from more plugins in your UI.
 - Clean separation of concerns. Your application does not need to know anything about the plugin extending your UI.
@@ -43,7 +43,7 @@ The second thing you need to consider is how to design the UI of the extension p
 
 You also need to consider if there are any information from the current view that should be shared with the extensions added to the extension point. It could be information from the current view that could let the extending plugin prefill values etc in the functionality being added via the extension.
 
-Lastly you need to call the `getPluginExtensions` with your extension point ID to recieve the list of configured extensions for your extension point.
+Lastly you need to call the `getPluginExtensions` with your extension point ID to receive the list of configured extensions for your extension point.
 
 ```typescript
 const extensionPointId = 'plugins/myorg-extensionpoint-app/actions';
@@ -64,7 +64,7 @@ const { extensions } = getPluginExtensions({
 Be sure your plugin meets the following requirements before proceeding:
 
 - It must be an app plugin.
-- It must be preloaded (by setting the [preload property]({{< relref "./metadata" >}}) to `true` in the `plugin.json`
+- It must be preloaded by setting the [preload property]({{< relref "./metadata" >}}) to `true` in the `plugin.json`.
 - It must be installed and enabled.
 
 ## Available extension points within Grafana
