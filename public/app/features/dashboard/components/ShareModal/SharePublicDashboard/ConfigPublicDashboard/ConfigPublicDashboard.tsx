@@ -130,8 +130,8 @@ const ConfigPublicDashboard = () => {
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
 
-      {/* {hasEmailSharingEnabled && <EmailSharingConfiguration />} */}
-      <EmailSharingConfiguration />
+      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
+
       <Field label="Dashboard URL" className={styles.fieldSpace}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
