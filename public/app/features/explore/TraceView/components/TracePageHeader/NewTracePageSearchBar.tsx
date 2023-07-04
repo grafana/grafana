@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { memo, Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, clearButtonStyles, Icon, Switch, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Icon, Switch, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { SearchProps } from '../../useSearch';
 import { convertTimeFilter } from '../utils/filter-spans';
@@ -45,9 +45,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     totalSpans,
   } = props;
   const [currentSpanIndex, setCurrentSpanIndex] = useState(-1);
-  const theme = useTheme2();
-  const styles = getStyles(theme);
-  const buttonStyles = useStyles2(clearButtonStyles);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     setCurrentSpanIndex(-1);
@@ -152,7 +150,9 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
               />
               <Button
                 onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}
-                className={cx(buttonStyles, styles.clearMatchesButton)}
+                className={styles.clearMatchesButton}
+                variant="secondary"
+                fill="text"
               >
                 Show matches only
               </Button>
@@ -200,7 +200,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
 
       span {
         cursor: pointer;
-        margin: 0 0 0 5px;
       }
     `,
     buttons: css`
