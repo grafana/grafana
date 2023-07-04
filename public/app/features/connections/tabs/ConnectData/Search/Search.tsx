@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css`
@@ -19,12 +20,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+const placeholder = t('connections.search.placeholder', 'Search all');
+
 export const Search: FC<{ onChange: (e: React.FormEvent<HTMLInputElement>) => void }> = ({ onChange }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.searchContainer}>
-      <Input onChange={onChange} prefix={<Icon name="search" />} placeholder="Search all" aria-label="Search all" />
+      <Input onChange={onChange} prefix={<Icon name="search" />} placeholder={placeholder} aria-label="Search all" />
     </div>
   );
 };
