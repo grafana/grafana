@@ -135,21 +135,21 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
       <span className={styles.matches}>{spanFilterMatches ? matches : `${totalSpans} spans`}</span>
       <div className={buttonEnabled ? styles.buttons : cx(styles.buttons, styles.buttonsDisabled)}>
         <div
-          aria-label='Prev result button'
+          aria-label="Prev result button"
           className={buttonClass}
           onClick={(event) => prevResult(event, buttonEnabled)}
           onKeyDown={(event) => prevResultOnKeyDown(event, buttonEnabled)}
-          role='button'
+          role="button"
           tabIndex={buttonEnabled ? 0 : -1}
         >
           Prev
         </div>
         <div
-          aria-label='Next result button'
+          aria-label="Next result button"
           className={buttonClass}
           onClick={(event) => nextResult(event, buttonEnabled)}
           onKeyDown={(event) => nextResultOnKeyDown(event, buttonEnabled)}
-          role='button'
+          role="button"
           tabIndex={buttonEnabled ? 0 : -1}
         >
           Next
@@ -160,7 +160,13 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
 });
 
 export const getStyles = (theme: GrafanaTheme2, showSpanFilters: boolean) => {
-  const buttonStyles = getButtonStyles({ theme, variant: 'secondary', size: showSpanFilters ? 'md' : 'sm', iconOnly: false, fill: 'outline' });
+  const buttonStyles = getButtonStyles({
+    theme,
+    variant: 'secondary',
+    size: showSpanFilters ? 'md' : 'sm',
+    iconOnly: false,
+    fill: 'outline',
+  });
 
   return {
     buttons: css`
