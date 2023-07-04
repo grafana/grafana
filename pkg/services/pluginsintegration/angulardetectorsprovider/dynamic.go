@@ -19,11 +19,13 @@ import (
 )
 
 const (
-	defaultBackgroundJobInterval = time.Hour * 1
-
 	cacheRestoreTimeout = time.Second * 10
 	gcomFetchTimeout    = time.Minute * 1
 )
+
+// backgroundJobInterval is the interval that passes between background job runs.
+// It can be overwritten in tests.
+var backgroundJobInterval = time.Hour * 1
 
 // Dynamic is an angulardetector.DetectorsProvider that calls GCOM to get Angular detection patterns,
 // converts them to detectors and caches them for all future calls.
@@ -45,19 +47,15 @@ type Dynamic struct {
 
 	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
 	mux sync.RWMutex
-
-	// backgroundJobInterval is the interval between the periodic background job calls.
-	backgroundJobInterval time.Duration
 }
 
 func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, features featuremgmt.FeatureToggles) (*Dynamic, error) {
 	d := &Dynamic{
-		log:                   log.New("plugin.angulardetectorsprovider.dynamic"),
-		features:              features,
-		store:                 store,
-		httpClient:            makeHttpClient(),
-		baseURL:               cfg.GrafanaComURL,
-		backgroundJobInterval: defaultBackgroundJobInterval,
+		log:        log.New("plugin.angulardetectorsprovider.dynamic"),
+		features:   features,
+		store:      store,
+		httpClient: makeHttpClient(),
+		baseURL:    cfg.GrafanaComURL,
 	}
 
 	// Perform the initial restore from db without blocking
@@ -203,9 +201,9 @@ func (d *Dynamic) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("get last updated: %w", err)
 	}
-	nextRunUntil := time.Until(lastUpdate.Add(d.backgroundJobInterval))
+	nextRunUntil := time.Until(lastUpdate.Add(backgroundJobInterval))
 
-	ticker := time.NewTicker(d.backgroundJobInterval)
+	ticker := time.NewTicker(backgroundJobInterval)
 	defer ticker.Stop()
 
 	var tick <-chan time.Time
@@ -236,7 +234,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 			d.log.Debug("Patterns update finished", "duration", time.Since(st))
 
 			// Restore default ticker if we run with a shorter interval the first time
-			ticker.Reset(d.backgroundJobInterval)
+			ticker.Reset(backgroundJobInterval)
 			tick = ticker.C
 		case <-ctx.Done():
 			return ctx.Err()

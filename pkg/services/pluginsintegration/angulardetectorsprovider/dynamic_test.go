@@ -204,6 +204,12 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 	})
 
 	t.Run("background service", func(t *testing.T) {
+		oldBackgroundJobInterval := backgroundJobInterval
+		backgroundJobInterval = time.Millisecond * 500
+		t.Cleanup(func() {
+			backgroundJobInterval = oldBackgroundJobInterval
+		})
+
 		t.Run("is disabled if feature flag is not present", func(t *testing.T) {
 			svc := provideDynamic(t, srv.URL)
 			svc.features = featuremgmt.WithFeatures()
@@ -226,7 +232,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			mockStore := &mockLastUpdatePatternsStore{
 				Service: svc.store,
 				// Expire cache
-				lastUpdated: time.Now().Add(defaultBackgroundJobInterval * -2),
+				lastUpdated: time.Now().Add(backgroundJobInterval * -2),
 			}
 			svc.store = mockStore
 
@@ -257,7 +263,6 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 		})
 
 		t.Run("runs the job periodically", func(t *testing.T) {
-			t.Parallel()
 			const tcRuns = 3
 
 			lastJobTime := time.Now()
@@ -279,7 +284,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			srv := gcom.newHTTPTestServer()
 			t.Cleanup(srv.Close)
 			svc := provideDynamic(t, srv.URL)
-			svc.backgroundJobInterval = jobInterval
+
 			bg := newBackgroundServiceScenario(svc)
 			t.Cleanup(bg.close)
 			// Refresh cache right before running the service, so we skip the initial run
