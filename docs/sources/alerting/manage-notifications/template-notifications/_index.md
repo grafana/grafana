@@ -33,8 +33,6 @@ You cannot use notification templates to:
 
 Learn how to write the content of your notification templates in Go’s templating language.
 
-[Create notification templates]({{< relref "./create-notification-templates" >}})
-
 Create reusable notification templates for your contact points.
 
 [Use notification templates]({{< relref "./use-notification-templates" >}})

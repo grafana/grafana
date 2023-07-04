@@ -12,6 +12,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
@@ -34,11 +35,41 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'labels',
               type: FieldType.string,
               config: {},
+              values: [{ place: 'luna', source: 'data' }],
+            },
+          ],
+        }),
+      });
+      const fields = getAllFields(logRow);
+      expect(fields.length).toBe(2);
+      expect(fields.find((field) => field.keys[0] === 'labels')).not.toBe(undefined);
+    });
+
+    it('should not filter out field with labels name and other type and datalinks', () => {
+      const logRow = createLogRow({
+        entryFieldIndex: 10,
+        dataFrame: new MutableDataFrame({
+          refId: 'A',
+          fields: [
+            testLineField,
+            testStringField,
+            {
+              name: 'labels',
+              type: FieldType.other,
+              config: {
+                links: [
+                  {
+                    title: 'test1',
+                    url: 'url1',
+                  },
+                ],
+              },
               values: [{ place: 'luna', source: 'data' }],
             },
           ],
@@ -55,6 +86,7 @@ describe('logParser', () => {
         dataFrame: new MutableDataFrame({
           refId: 'A',
           fields: [
+            testLineField,
             testStringField,
             {
               name: 'id',
@@ -110,7 +142,7 @@ describe('logParser', () => {
         entryFieldIndex: 10,
         dataFrame: new MutableDataFrame({
           refId: 'A',
-          fields: [{ ...testStringField }],
+          fields: [testLineField, { ...testStringField }],
         }),
       });
 
@@ -181,6 +213,13 @@ describe('logParser', () => {
     });
   });
 });
+
+const testLineField = {
+  name: 'body',
+  type: FieldType.string,
+  config: {},
+  values: ['line1'],
+};
 
 const testStringField = {
   name: 'test_field_string',
