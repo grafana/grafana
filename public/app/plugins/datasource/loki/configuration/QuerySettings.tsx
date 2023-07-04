@@ -1,7 +1,9 @@
 import React from 'react';
 
+import { ConfigSubSection } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
 import { Badge, LegacyForms } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 const { FormField } = LegacyForms;
 
@@ -15,8 +17,16 @@ type Props = {
 export const QuerySettings = (props: Props) => {
   const { maxLines, onMaxLinedChange, predefinedOperations, onPredefinedOperationsChange } = props;
   return (
-    <>
-      <h3 className="page-heading">Queries</h3>
+    <ConfigSubSection
+      title="Queries"
+      description={
+        <ConfigDescriptionLink
+          description="Additional options to customize your querying experience. "
+          suffix="loki/#configure-the-data-source"
+          feature="query settings"
+        />
+      }
+    >
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
@@ -78,6 +88,6 @@ export const QuerySettings = (props: Props) => {
           </div>
         )}
       </div>
-    </>
+    </ConfigSubSection>
   );
 };
