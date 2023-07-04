@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings, useTheme2 } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { Divider } from 'app/core/components/Divider';
 
 import { LokiOptions } from '../types';
 
@@ -40,11 +40,9 @@ export const ConfigEditor = (props: Props) => {
     [options, onOptionsChange]
   );
 
-  const styles = getStyles(useTheme2());
-
   return (
     <>
-      <hr className={styles.sectionDivider} />
+      <Divider />
 
       <DataSourceHttpSettings
         defaultUrl={'http://localhost:3100'}
@@ -54,7 +52,7 @@ export const ConfigEditor = (props: Props) => {
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
 
-      <hr className={styles.sectionDivider} />
+      <Divider />
 
       <ConfigSection
         title="Additional settings"
@@ -79,11 +77,3 @@ export const ConfigEditor = (props: Props) => {
     </>
   );
 };
-
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    sectionDivider: css`
-      margin-bottom: ${theme.spacing(4)};
-    `,
-  };
-}
