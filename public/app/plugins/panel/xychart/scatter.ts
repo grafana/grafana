@@ -115,18 +115,20 @@ function getScatterSeries(
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
     if (f) {
-      const disp =
-        f.display ??
-        getDisplayProcessor({
-          field: f,
-          theme: config.theme2,
-        });
       pointColorMode = getFieldColorModeForField(y);
       if (pointColorMode.isByValue) {
         const index = dims.pointColorIndex;
         pointColor = (frame: DataFrame) => {
-          // Yes we can improve this later
-          return frame.fields[index].values.map((v) => disp(v).color!);
+          const field = frame.fields[index];
+
+          if (field.state?.range) {
+            // this forces local min/max recalc, rather than using global min/max from field.state
+            field.state.range = undefined;
+          }
+
+          field.display = getDisplayProcessor({ field, theme: config.theme2 });
+
+          return field.values.map((v) => field.display!(v).color!); // slow!
         };
       } else {
         seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
@@ -599,23 +601,33 @@ const prepConfig = (
   const frames = getData();
   let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
 
+  let config = xField.config;
+  let customConfig = config.custom;
+  let scaleDistr = customConfig?.scaleDistribution;
+
   builder.addScale({
     scaleKey: 'x',
     isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    min: xField.config.min,
-    max: xField.config.max,
+    distribution: scaleDistr?.type,
+    log: scaleDistr?.log,
+    linearThreshold: scaleDistr?.linearThreshold,
+    min: config.min,
+    max: config.max,
+    softMin: customConfig?.axisSoftMin,
+    softMax: customConfig?.axisSoftMax,
+    centeredZero: customConfig?.axisCenteredZero,
+    decimals: config.decimals,
   });
 
   // why does this fall back to '' instead of null or undef?
-  let xAxisLabel = xField.config.custom.axisLabel;
+  let xAxisLabel = customConfig.axisLabel;
 
   builder.addAxis({
     scaleKey: 'x',
-    placement:
-      xField.config.custom?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
-    show: xField.config.custom?.axisPlacement !== AxisPlacement.Hidden,
+    placement: customConfig?.axisPlacement !== AxisPlacement.Hidden ? AxisPlacement.Bottom : AxisPlacement.Hidden,
+    show: customConfig?.axisPlacement !== AxisPlacement.Hidden,
     theme,
     label:
       xAxisLabel == null || xAxisLabel === ''
@@ -634,23 +646,33 @@ const prepConfig = (
     //const lineWidth = s.lineWidth;
 
     let scaleKey = field.config.unit ?? 'y';
+    let config = field.config;
+    let customConfig = config.custom;
+    let scaleDistr = customConfig?.scaleDistribution;
 
     builder.addScale({
       scaleKey,
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
-      max: field.config.max,
-      min: field.config.min,
+      distribution: scaleDistr?.type,
+      log: scaleDistr?.log,
+      linearThreshold: scaleDistr?.linearThreshold,
+      min: config.min,
+      max: config.max,
+      softMin: customConfig?.axisSoftMin,
+      softMax: customConfig?.axisSoftMax,
+      centeredZero: customConfig?.axisCenteredZero,
+      decimals: config.decimals,
     });
 
-    if (field.config.custom?.axisPlacement !== AxisPlacement.Hidden) {
+    if (customConfig?.axisPlacement !== AxisPlacement.Hidden) {
       // why does this fall back to '' instead of null or undef?
-      let yAxisLabel = field.config.custom?.axisLabel;
+      let yAxisLabel = customConfig?.axisLabel;
 
       builder.addAxis({
         scaleKey,
         theme,
-        placement: field.config.custom?.axisPlacement,
+        placement: customConfig?.axisPlacement,
         label:
           yAxisLabel == null || yAxisLabel === ''
             ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
@@ -675,7 +697,7 @@ const prepConfig = (
       scaleKey: '', // facets' scales used (above)
       lineColor: lineColor as string,
       fillColor: alpha(pointColor, 0.5),
-      show: !field.config.custom.hideFrom?.viz,
+      show: !customConfig.hideFrom?.viz,
     });
   });
 

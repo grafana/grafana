@@ -74,8 +74,8 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       width: 100%;
       ${!scrollableLogsContainer && `margin-bottom: ${theme.spacing(2.25)};`}
     `,
-    contextBackground: css`
-      background: ${hoverBgColor};
+    highlightBackground: css`
+      background-color: ${tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString()};
     `,
     logsRow: css`
       label: logs-row;
@@ -87,6 +87,10 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
         .log-row-menu {
           visibility: visible;
           z-index: 1;
+        }
+
+        .log-row-menu-visible {
+          visibility: hidden;
         }
 
         background: ${hoverBgColor};
@@ -234,6 +238,7 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       margin-left: 0px;
     `,
     rowMenu: css`
+      label: rowMenu;
       display: flex;
       flex-wrap: nowrap;
       flex-direction: row;
@@ -245,10 +250,13 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       bottom: auto;
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      padding: ${theme.spacing(0.5, 0.5, 0.5, 1)};
+      padding: ${theme.spacing(0.5, 1, 0.5, 1)};
       z-index: 100;
-      visibility: hidden;
       gap: ${theme.spacing(0.5)};
+
+      & > button {
+        margin: 0;
+      }
     `,
     logRowMenuCell: css`
       position: sticky;
@@ -285,6 +293,25 @@ export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
       &:hover {
         background-color: ${theme.colors.background.primary};
       }
+    `,
+    visibleRowMenu: css`
+      label: visibleRowMenu;
+      aspect-ratio: 1/1;
+      z-index: 90;
+    `,
+    linkButton: css`
+      label: linkButton;
+      > button {
+        padding-top: ${theme.spacing(0.5)};
+      }
+    `,
+    hidden: css`
+      label: hidden;
+      visibility: hidden;
+    `,
+    unPinButton: css`
+      height: ${theme.spacing(3)};
+      line-height: ${theme.spacing(2.5)};
     `,
   };
 });

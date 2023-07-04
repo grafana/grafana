@@ -1,14 +1,15 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { connect } from 'react-redux';
 
 import { EventBusSrv, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
-import { StoreState } from 'app/types';
-import { ExploreId } from 'app/types/explore';
+import { stopQueryState } from 'app/core/utils/explore';
+import { StoreState, useSelector } from 'app/types';
 
 import Explore from './Explore';
+import { getExploreItemSelector } from './state/selectors';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -26,7 +27,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 interface Props {
-  exploreId: ExploreId;
+  exploreId: string;
 }
 
 /*
@@ -39,6 +40,7 @@ interface Props {
   You can read more about this issue here: https://react-redux.js.org/api/hooks#stale-props-and-zombie-children
 */
 function ExplorePaneContainerUnconnected({ exploreId }: Props) {
+  useStopQueries(exploreId);
   const styles = useStyles2(getStyles);
   const eventBus = useRef(new EventBusSrv());
   const ref = useRef(null);
@@ -64,3 +66,15 @@ function mapStateToProps(state: StoreState, props: Props) {
 const connector = connect(mapStateToProps);
 
 export const ExplorePaneContainer = connector(ExplorePaneContainerUnconnected);
+
+function useStopQueries(exploreId: string) {
+  const paneSelector = useMemo(() => getExploreItemSelector(exploreId), [exploreId]);
+  const paneRef = useRef<ReturnType<typeof paneSelector>>();
+  paneRef.current = useSelector(paneSelector);
+
+  useEffect(() => {
+    return () => {
+      stopQueryState(paneRef.current?.querySubscription);
+    };
+  }, []);
+}
