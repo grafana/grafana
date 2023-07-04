@@ -42,8 +42,8 @@ import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { LogsFrame, parseLogsFrame } from '../features/logs/logsFrame';
-import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
+import { LogsFrame, parseLogsFrame } from './logsFrame';
+import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from './utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
