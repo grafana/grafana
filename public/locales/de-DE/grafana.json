@@ -38,6 +38,11 @@
       "manage-permissions": "",
       "move": ""
     },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -71,6 +76,14 @@
       "default": "Standard"
     },
     "save": "Speichern"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -157,6 +170,11 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -198,6 +216,9 @@
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
@@ -253,6 +274,10 @@
     "config": {
       "title": "Verwaltung"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
       "title": "Korrelationen"
@@ -275,6 +300,10 @@
     "dashboards": {
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
       "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",

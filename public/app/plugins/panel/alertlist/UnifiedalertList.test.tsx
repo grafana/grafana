@@ -89,7 +89,7 @@ const defaultOptions: UnifiedAlertListOptions = {
   folder: { id: 1, title: 'test folder' },
   stateFilter: { firing: true, pending: false, noData: false, normal: true, error: false },
   alertInstanceLabelFilter: '',
-  datasource: 'Alertmanager',
+  datasource: 'grafana',
   viewMode: ViewMode.List,
 };
 
