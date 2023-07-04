@@ -582,14 +582,15 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
           // Keep scanning for results if this was the last scanning transaction
           if (getState().explore.panes[exploreId]!.scanning) {
             if (data.state === LoadingState.Done && data.series.length === 0) {
+              // loading is done, no data, we try again with a shifted time range
               const range = getShiftedTimeRange(-1, getState().explore.panes[exploreId]!.range);
               dispatch(updateTime({ exploreId, absoluteRange: range }));
               dispatch(runQueries({ exploreId }));
-            } else {
-              // We can stop scanning if we have a result
-              if (data.state === LoadingState.Done || data.state === LoadingState.Error) {
-                dispatch(scanStopAction({ exploreId }));
-              }
+            } else if (data.state === LoadingState.Done) {
+              // loading is done, we can stop
+              dispatch(scanStopAction({ exploreId }));
+            } else if (data.state === LoadingState.Error) {
+              dispatch(scanStopAction({ exploreId }));
             }
           }
         },
