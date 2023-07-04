@@ -92,6 +92,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	logger := logger.FromContext(ctx)
 
+	fromAlert := req.Headers["FromAlert"] == "true"
+
 	// get datasource info from context
 	dsInfo, err := s.getDSInfo(ctx, req.PluginContext)
 	if err != nil {
@@ -168,7 +170,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		}
 	}()
 
-	frames, err := s.toDataFrames(logger, res, origRefIds)
+	frames, err := s.toDataFrames(logger, res, origRefIds, fromAlert)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -261,7 +263,7 @@ func (s *Service) parseResponse(logger log.Logger, res *http.Response) ([]Target
 	return data, nil
 }
 
-func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origRefIds map[string]string) (frames data.Frames, error error) {
+func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origRefIds map[string]string, fromAlert bool) (frames data.Frames, error error) {
 	responseData, err := s.parseResponse(logger, response)
 	if err != nil {
 		return nil, err
@@ -293,7 +295,7 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 			values = append(values, value)
 		}
 
-		tags := make(map[string]string)
+		tags := make(map[string]string, len(series.Tags)+1)
 		for name, value := range series.Tags {
 			switch value := value.(type) {
 			case string:
@@ -301,6 +303,9 @@ func (s *Service) toDataFrames(logger log.Logger, response *http.Response, origR
 			case float64:
 				tags[name] = strconv.FormatFloat(value, 'f', -1, 64)
 			}
+		}
+		if len(tags) == 0 && fromAlert {
+			tags["__name__"] = target
 		}
 
 		frames = append(frames, data.NewFrame(refId,

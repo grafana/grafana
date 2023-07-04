@@ -170,7 +170,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{}, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -203,7 +203,36 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{}, false)
+
+		require.NoError(t, err)
+		if !reflect.DeepEqual(expectedFrames, dataFrames) {
+			expectedFramesJSON, _ := json.Marshal(expectedFrames)
+			dataFramesJSON, _ := json.Marshal(dataFrames)
+			t.Errorf("Data frames should have been equal but was, expected:\n%s\nactual:\n%s", expectedFramesJSON, dataFramesJSON)
+		}
+	})
+
+	t.Run("Adds target as __name__ if no tags and is FromAlert", func(*testing.T) {
+		body := `
+		[
+			{
+				"target": "targetTest A",
+				"datapoints": [[50, 1], [null, 2], [100, 3]]
+			}
+		]`
+		a := 50.0
+		b := 100.0
+		expectedFrame := data.NewFrame("A",
+			data.NewField("time", nil, []time.Time{time.Unix(1, 0).UTC(), time.Unix(2, 0).UTC(), time.Unix(3, 0).UTC()}),
+			data.NewField("value", data.Labels{
+				"__name__": "targetTest",
+			}, []*float64{&a, nil, &b}).SetConfig(&data.FieldConfig{DisplayNameFromDS: "targetTest"}),
+		)
+		expectedFrames := data.Frames{expectedFrame}
+
+		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{}, true)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -238,7 +267,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrameA, expectedFrameB}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{})
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{}, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -265,7 +294,7 @@ func TestConvertResponses(t *testing.T) {
 		expectedFrames := data.Frames{expectedFrame}
 
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{"A_A": "A A"})
+		dataFrames, err := service.toDataFrames(logger, httpResponse, map[string]string{"A_A": "A A"}, false)
 
 		require.NoError(t, err)
 		if !reflect.DeepEqual(expectedFrames, dataFrames) {
@@ -284,7 +313,7 @@ func TestConvertResponses(t *testing.T) {
 			}
 		]`
 		httpResponse := &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(body))}
-		_, err := service.toDataFrames(logger, httpResponse, map[string]string{})
+		_, err := service.toDataFrames(logger, httpResponse, map[string]string{}, false)
 		require.Error(t, err)
 	})
 }
