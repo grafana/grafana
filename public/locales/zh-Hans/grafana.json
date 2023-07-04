@@ -38,6 +38,11 @@
       "manage-permissions": "",
       "move": ""
     },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
+    },
     "no-results": {
       "clear": "",
       "text": ""
@@ -71,6 +76,14 @@
       "default": "默认"
     },
     "save": "保存"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -157,6 +170,11 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
@@ -192,11 +210,15 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
@@ -252,6 +274,10 @@
     "config": {
       "title": "管理"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "添加并配置相关性",
       "title": "相关性"
@@ -274,6 +300,10 @@
     "dashboards": {
       "subtitle": "创建并管理仪表板，以将您的数据可视化",
       "title": "仪表板"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "添加并配置数据源",
