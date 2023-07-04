@@ -100,7 +100,7 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
       <>
         {Object.keys(customPickers).map((key) => {
           return (
-            <button className={this.getTabClassName(key)} onClick={this.onTabChange(key)} key={key}>
+            <button className={this.getTabClassName(key)} onClick={this.onTabChange(key)} key={key} type="button">
               {customPickers[key].name}
             </button>
           );
@@ -120,10 +120,10 @@ class UnThemedColorPickerPopover<T extends CustomPickersDescriptor> extends Comp
         */}
         <div tabIndex={-1} className={styles.colorPickerPopover}>
           <div className={styles.colorPickerPopoverTabs}>
-            <button className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')}>
+            <button className={this.getTabClassName('palette')} onClick={this.onTabChange('palette')} type="button">
               Colors
             </button>
-            <button className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')}>
+            <button className={this.getTabClassName('spectrum')} onClick={this.onTabChange('spectrum')} type="button">
               Custom
             </button>
             {this.renderCustomPickerTabs()}

@@ -37,6 +37,8 @@ export const PanelTypeCard = ({
   });
 
   return (
+    // TODO: fix keyboard a11y
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events
     <div
       className={cssClass}
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}

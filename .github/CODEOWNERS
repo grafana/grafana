@@ -304,8 +304,8 @@
 /packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/Gauge/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/BarGauge/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/BarGauge/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
@@ -399,11 +399,11 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/annolist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/barchart/ @grafana/dataviz-squad
-/public/app/plugins/panel/bargauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/debug/ @ryantxu
 /public/app/plugins/panel/datagrid/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/gauge/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
@@ -412,7 +412,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
-/public/app/plugins/panel/piechart/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/piechart/ @grafana/dataviz-squad
 /public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
 /public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/grafana-bi-squad
@@ -424,7 +424,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
 /public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
 /public/app/plugins/panel/news/ @grafana/grafana-frontend-platform
-/public/app/plugins/panel/stat/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-platform
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
@@ -612,11 +612,11 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @marefr
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
-/.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
+/.github/workflows/remove-milestone.yml @grafana/grafana-delivery
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
-/.github/workflows/stale.yml @grafana/grafana-frontend-platform
+/.github/workflows/stale.yml @grafana/grafana-delivery
 /.github/workflows/update-changelog.yml @grafana/grafana-delivery
 /.github/workflows/snyk.yml @grafana/security-team
 /.github/workflows/scripts/kinds/verify-kinds.go @grafana/grafana-as-code

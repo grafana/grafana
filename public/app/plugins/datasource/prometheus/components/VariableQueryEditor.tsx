@@ -1,4 +1,3 @@
-import { debounce } from 'lodash';
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
@@ -36,9 +35,11 @@ const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
   // to select the query type, i.e. label_names, label_values, etc.
   const [qryType, setQryType] = useState<number | undefined>(undefined);
-
   // list of variables for each function
   const [label, setLabel] = useState('');
+
+  const [labelNamesMatch, setLabelNamesMatch] = useState('');
+
   // metric is used for both label_values() and metric()
   // label_values() metric requires a whole/complete metric
   // metric() is expected to be a part of a metric string
@@ -62,10 +63,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     // 2. jsonnet grafana as code passes a variable as a string
     const variableQuery = variableMigration(query);
 
+    setLabelNamesMatch(variableQuery.match ?? '');
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
-    setLabelFilters(query.labelFilters ?? []);
+    setLabelFilters(variableQuery.labelFilters ?? []);
     setVarQuery(variableQuery.varQuery ?? '');
     setSeriesQuery(variableQuery.seriesQuery ?? '');
   }, [query]);
@@ -111,21 +113,21 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       qryType,
       label,
       metric,
+      match: labelNamesMatch,
       varQuery,
       seriesQuery,
       refId: 'PrometheusVariableQueryEditor-VariableQuery',
     };
 
-    const updatedVar = { ...queryVar, ...updateVar };
+    let updateLabelFilters = updLabelFilters ? { labelFilters: updLabelFilters } : { labelFilters: labelFilters };
+
+    const updatedVar = { ...queryVar, ...updateVar, ...updateLabelFilters };
 
     const queryString = migrateVariableEditorBackToVariableSupport(updatedVar);
-
-    const lblFltrs = updLabelFilters ? updLabelFilters : labelFilters;
 
     // setting query.query property allows for update of variable definition
     onChange({
       query: queryString,
-      labelFilters: lblFltrs,
       refId,
     });
   };
@@ -164,15 +166,21 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     }
   };
 
+  const onLabelNamesMatchChange = (regex: string) => {
+    if (qryType === QueryType.LabelNames) {
+      onChangeWithVariableString({ qryType, match: regex });
+    }
+  };
+
   /**
    * Call onchange for metric change if metrics names (regex) query type
    * Debounce this because to not call the API for every keystroke.
    */
-  const onMetricChange = debounce((value: string) => {
+  const onMetricChange = (value: string) => {
     if (qryType === QueryType.MetricNames && value) {
       onChangeWithVariableString({ metric: value });
     }
-  }, 300);
+  };
 
   /**
    *  Do not call onchange for variable query result when query type is var query result
@@ -252,19 +260,49 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
         </>
       )}
 
+      {qryType === QueryType.LabelNames && (
+        <InlineFieldRow>
+          <InlineField
+            label="Metric regex"
+            labelWidth={20}
+            aria-labelledby="Metric regex"
+            tooltip={<div>Returns a list of label names, optionally filtering by specified metric regex.</div>}
+          >
+            <Input
+              type="text"
+              aria-label="Metric regex"
+              placeholder="Metric regex"
+              value={labelNamesMatch}
+              onBlur={(event) => {
+                setLabelNamesMatch(event.currentTarget.value);
+                onLabelNamesMatchChange(event.currentTarget.value);
+              }}
+              onChange={(e) => {
+                setLabelNamesMatch(e.currentTarget.value);
+              }}
+              width={25}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
       {qryType === QueryType.MetricNames && (
         <InlineFieldRow>
           <InlineField
             label="Metric regex"
             labelWidth={20}
+            aria-labelledby="Metric selector"
             tooltip={<div>Returns a list of metrics matching the specified metric regex.</div>}
           >
             <Input
               type="text"
               aria-label="Metric selector"
-              placeholder="Metric Regex"
+              placeholder="Metric regex"
               value={metric}
               onChange={(e) => {
+                setMetric(e.currentTarget.value);
+              }}
+              onBlur={(e) => {
                 setMetric(e.currentTarget.value);
                 onMetricChange(e.currentTarget.value);
               }}

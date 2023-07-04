@@ -1,10 +1,12 @@
+import { String } from '@grafana/lezer-logql';
+
 import {
   getHighlighterExpressionsFromQuery,
   getLokiQueryType,
   isLogsQuery,
   isQueryWithLabelFormat,
   isQueryWithParser,
-  isValidQuery,
+  isQueryWithError,
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
@@ -14,6 +16,7 @@ import {
   isQueryPipelineErrorFiltering,
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
+  getNodePositionsFromQuery,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -185,12 +188,12 @@ describe('getLokiQueryType', () => {
   });
 });
 
-describe('isValidQuery', () => {
+describe('isQueryWithError', () => {
   it('returns false if invalid query', () => {
-    expect(isValidQuery('{job="grafana')).toBe(false);
+    expect(isQueryWithError('{job="grafana')).toBe(true);
   });
   it('returns true if valid query', () => {
-    expect(isValidQuery('{job="grafana"}')).toBe(true);
+    expect(isQueryWithError('{job="grafana"}')).toBe(false);
   });
 });
 
@@ -414,5 +417,26 @@ describe('getLogQueryFromMetricsQuery', () => {
         'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
       )
     ).toBe('{label="$var"} | logfmt | __error__=``');
+  });
+});
+
+describe('getNodePositionsFromQuery', () => {
+  it('returns the right amount of positions without type', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    expect(getNodePositionsFromQuery('{job="grafana"}').length).toBe(9);
+  });
+
+  it('returns the right position of a string in a stream selector', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    const nodePositions = getNodePositionsFromQuery('{job="grafana"}', [String]);
+    expect(nodePositions.length).toBe(1);
+    expect(nodePositions[0].from).toBe(5);
+    expect(nodePositions[0].to).toBe(14);
+  });
+
+  it('returns an empty array with a wrong expr', () => {
+    // LogQL, Expr, LogExpr, Selector, Matchers, Matcher, Identifier, Eq, String
+    const nodePositions = getNodePositionsFromQuery('not loql', [String]);
+    expect(nodePositions.length).toBe(0);
   });
 });
