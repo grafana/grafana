@@ -278,7 +278,8 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:focus-visible': getFocusStyles(theme),
 
-      '&:focus-within': {
+      // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
+      '&:focus-within:not(:focus)': {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
