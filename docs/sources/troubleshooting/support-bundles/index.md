@@ -35,6 +35,15 @@ A support bundle can include any of the following components:
 - **LDAP**: Healthcheck connection and metadata for LDAP (only displayed if LDAP is enabled)
 - **OAuth2**: Healthcheck connection and metadata for each OAuth2 Provider supporter (only displayed if OAuth provider is enabled)
 
+## Before you begin
+
+To follow these instructions, you need the following permissions:
+
+- In Grafana Cloud, you need the organization administrator role. 
+- In Grafana on-premises, you need the Grafana server admininstrator role.
+  
+    Note that you can set `server_admin_only` configuration option to `false` to allow organization admins to access support bundles in Grafana on-premises.
+
 ## Steps
 
 To generate a support bundle and send the support bundle to Grafana Labs via a support ticket:
@@ -70,8 +79,6 @@ server_admin_only = true
 # If set, bundles will be encrypted with the provided public keys separated by whitespace
 public_keys = ""
 ```
-
-> **Note**: By default, only server admins can generate and view a support bundle. The `server_admin_only` option can be used to widen this access to organization admins.
 
 ## Encrypting a support bundle
 
