@@ -19,7 +19,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 
-import { MockObservableDataSourceApi } from '../../test/mocks/datasource_srv';
+import { MockObservableDataSourceApi } from '../../../test/mocks/datasource_srv';
 
 import {
   COMMON_LABELS,
