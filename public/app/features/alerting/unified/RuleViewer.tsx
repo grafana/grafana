@@ -311,6 +311,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     leftSide: css`
       flex: 1;
+      overflow: hidden;
     `,
     rightSide: css`
       padding-right: ${theme.spacing(3)};

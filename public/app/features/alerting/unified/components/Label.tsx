@@ -20,7 +20,7 @@ const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="row" gap={0} alignItems="stretch">
+      <Stack direction="row" gap={0} alignItems="stretch" wrap={false}>
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
             {icon && <Icon name={icon} />} {label ?? ''}
