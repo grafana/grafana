@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, VariableOrigin, DataLinkBuiltInVars } from '@grafana/data';
+import { ConfigSubSection } from '@grafana/experimental';
 import { Button, useTheme2 } from '@grafana/ui';
+import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
 import { DerivedFieldConfig } from '../types';
 
@@ -38,13 +40,16 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
   );
 
   return (
-    <>
-      <h3 className="page-heading">Derived fields</h3>
-
-      <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from a log message and create a link from its value.
-      </div>
-
+    <ConfigSubSection
+      title="Derived fields"
+      description={
+        <ConfigDescriptionLink
+          description="Derived fields can be used to extract new fields from a log message and create a link from its value."
+          suffix="loki/#configure-derived-fields"
+          feature="derived fields"
+        />
+      }
+    >
       <div className="gf-form-group">
         {fields.map((field, index) => {
           return (
@@ -108,6 +113,6 @@ export const DerivedFields = ({ fields = [], onChange }: Props) => {
           />
         </div>
       )}
-    </>
+    </ConfigSubSection>
   );
 };
