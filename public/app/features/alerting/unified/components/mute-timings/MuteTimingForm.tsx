@@ -12,7 +12,7 @@ import {
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from '../../state/AlertmanagerContext';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { renameMuteTimings } from '../../utils/alertmanager';
@@ -57,7 +57,7 @@ const useDefaultValues = (muteTiming?: MuteTimeInterval): MuteTimingFields => {
 
 const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) => {
   const dispatch = useDispatch();
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
   const styles = useStyles2(getStyles);
 
   const [updating, setUpdating] = useState(false);

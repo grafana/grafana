@@ -35,7 +35,7 @@ import {
 } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 import { grafanaNotifiersMock } from '../../mocks/grafana-notifiers';
-import { SelectedAlertmanagerProvider } from '../../state/AlertmanagerContext';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { getAllDataSources } from '../../utils/config';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, ALERTMANAGER_NAME_QUERY_KEY } from '../../utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -92,9 +92,9 @@ const renderReceivers = (alertManagerSourceName?: string) => {
 
   return render(
     <TestProvider>
-      <SelectedAlertmanagerProvider accessType="notification">
+      <AlertmanagerProvider accessType="notification">
         <Receivers />
-      </SelectedAlertmanagerProvider>
+      </AlertmanagerProvider>
     </TestProvider>
   );
 };

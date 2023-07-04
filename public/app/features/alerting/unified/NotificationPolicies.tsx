@@ -31,7 +31,7 @@ import {
 } from './components/notification-policies/Modals';
 import { Policy } from './components/notification-policies/Policy';
 import { useAlertmanagerConfig } from './hooks/useAlertmanagerConfig';
-import { useSelectedAlertmanager } from './state/AlertmanagerContext';
+import { useAlertmanager } from './state/AlertmanagerContext';
 import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
@@ -61,7 +61,7 @@ const AmRoutes = () => {
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 

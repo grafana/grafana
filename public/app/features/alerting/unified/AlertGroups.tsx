@@ -15,7 +15,7 @@ import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useFilteredAmGroups } from './hooks/useFilteredAmGroups';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from './state/AlertmanagerContext';
+import { useAlertmanager } from './state/AlertmanagerContext';
 import { fetchAlertGroupsAction } from './state/actions';
 import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -25,7 +25,7 @@ import { initialAsyncRequestState } from './utils/redux';
 const AlertGroups = () => {
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
 
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const { groupBy = [] } = getFiltersFromUrlParams(queryParams);

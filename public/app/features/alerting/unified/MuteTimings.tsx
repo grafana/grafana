@@ -10,14 +10,14 @@ import { useDispatch } from 'app/types';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import MuteTimingForm from './components/mute-timings/MuteTimingForm';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from './state/AlertmanagerContext';
+import { useAlertmanager } from './state/AlertmanagerContext';
 import { fetchAlertManagerConfigAction } from './state/actions';
 import { initialAsyncRequestState } from './utils/redux';
 
 const MuteTimings = () => {
   const [queryParams] = useQueryParams();
   const dispatch = useDispatch();
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
 
   const amConfigs = useUnifiedAlertingSelector((state) => state.amConfigs);
 

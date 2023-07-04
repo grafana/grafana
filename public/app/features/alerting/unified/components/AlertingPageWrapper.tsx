@@ -7,7 +7,7 @@ import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
 
 import FEATURES from '../features';
-import { SelectedAlertmanagerProvider, useSelectedAlertmanager } from '../state/AlertmanagerContext';
+import { AlertmanagerProvider, useAlertmanager } from '../state/AlertmanagerContext';
 
 import { AlertManagerPicker } from './AlertManagerPicker';
 import { NoAlertManagerWarning } from './NoAlertManagerWarning';
@@ -57,11 +57,11 @@ export const AlertmanagerPageWrapper = ({ children, accessType, ...props }: Aler
   const disableAlertmanager = useIsDisabledAlertmanagerSelection();
 
   return (
-    <SelectedAlertmanagerProvider accessType={accessType}>
+    <AlertmanagerProvider accessType={accessType}>
       <AlertingPageWrapper {...props} actions={<AlertManagerPicker disabled={disableAlertmanager} />}>
         <AlertManagerPagePermissionsCheck>{children}</AlertManagerPagePermissionsCheck>
       </AlertingPageWrapper>
-    </SelectedAlertmanagerProvider>
+    </AlertmanagerProvider>
   );
 };
 
@@ -81,7 +81,7 @@ function useIsDisabledAlertmanagerSelection() {
  * alertmanager doesn't exist
  */
 const AlertManagerPagePermissionsCheck = ({ children }: PropsWithChildren) => {
-  const { availableAlertManagers, selectedAlertmanager } = useSelectedAlertmanager();
+  const { availableAlertManagers, selectedAlertmanager } = useAlertmanager();
 
   if (!selectedAlertmanager) {
     return <NoAlertManagerWarning availableAlertManagers={availableAlertManagers} />;

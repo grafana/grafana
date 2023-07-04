@@ -12,13 +12,13 @@ import SilencesEditor from './components/silences/SilencesEditor';
 import SilencesTable from './components/silences/SilencesTable';
 import { useSilenceNavData } from './hooks/useSilenceNavData';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from './state/AlertmanagerContext';
+import { useAlertmanager } from './state/AlertmanagerContext';
 import { fetchAmAlertsAction, fetchSilencesAction } from './state/actions';
 import { SILENCES_POLL_INTERVAL_MS } from './utils/constants';
 import { AsyncRequestState, initialAsyncRequestState } from './utils/redux';
 
 const Silences = () => {
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
 
   const dispatch = useDispatch();
   const silences = useUnifiedAlertingSelector((state) => state.silences);

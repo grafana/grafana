@@ -6,7 +6,7 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from '../../state/AlertmanagerContext';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
@@ -28,7 +28,7 @@ export default function AlertmanagerConfig(): JSX.Element {
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
-  const { selectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager } = useAlertmanager();
 
   const readOnly = selectedAlertmanager ? isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager) : false;
   const styles = useStyles2(getStyles);

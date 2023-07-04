@@ -9,7 +9,7 @@ import * as useAlertManagerSources from '../hooks/useAlertManagerSources';
 import { ALERTMANAGER_NAME_LOCAL_STORAGE_KEY } from '../utils/constants';
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { SelectedAlertmanagerProvider, useSelectedAlertmanager } from './AlertmanagerContext';
+import { AlertmanagerProvider, useAlertmanager } from './AlertmanagerContext';
 
 const grafanaAm: AlertManagerDataSource = {
   name: GRAFANA_RULES_SOURCE_NAME,
@@ -26,16 +26,16 @@ const externalAmMimir: AlertManagerDataSource = {
   imgUrl: '',
 };
 
-describe('useSelectedAlertmanager', () => {
+describe('useAlertmanager', () => {
   it('Should return undefined alert manager name when there are no available alert managers', () => {
     jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce([]);
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </MemoryRouter>
     );
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(undefined);
   });
 
@@ -43,11 +43,11 @@ describe('useSelectedAlertmanager', () => {
     jest.spyOn(useAlertManagerSources, 'useAlertManagersByPermission').mockReturnValueOnce([grafanaAm]);
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </MemoryRouter>
     );
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(grafanaAm.name);
   });
 
@@ -59,11 +59,11 @@ describe('useSelectedAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </Router>
     );
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
   });
 
@@ -75,11 +75,11 @@ describe('useSelectedAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </Router>
     );
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(undefined);
   });
 
@@ -88,13 +88,13 @@ describe('useSelectedAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <MemoryRouter>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </MemoryRouter>
     );
 
     store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmProm.name);
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
   });
 
@@ -108,13 +108,13 @@ describe('useSelectedAlertmanager', () => {
 
     const wrapper = ({ children }: React.PropsWithChildren) => (
       <Router history={history}>
-        <SelectedAlertmanagerProvider accessType="instance">{children}</SelectedAlertmanagerProvider>
+        <AlertmanagerProvider accessType="instance">{children}</AlertmanagerProvider>
       </Router>
     );
 
     store.set(ALERTMANAGER_NAME_LOCAL_STORAGE_KEY, externalAmMimir.name);
 
-    const { result } = renderHook(() => useSelectedAlertmanager(), { wrapper });
+    const { result } = renderHook(() => useAlertmanager(), { wrapper });
     expect(result.current.selectedAlertmanager).toBe(externalAmProm.name);
   });
 });

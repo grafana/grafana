@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { InlineField, Select, useStyles2 } from '@grafana/ui';
 
-import { useSelectedAlertmanager } from '../state/AlertmanagerContext';
+import { useAlertmanager } from '../state/AlertmanagerContext';
 import { AlertManagerDataSource, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 interface Props {
@@ -18,7 +18,7 @@ function getAlertManagerLabel(alertManager: AlertManagerDataSource) {
 export const AlertManagerPicker = ({ disabled = false }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useSelectedAlertmanager();
+  const { selectedAlertmanager, availableAlertManagers, setSelectedAlertmanager } = useAlertmanager();
 
   const options: Array<SelectableValue<string>> = useMemo(() => {
     return availableAlertManagers.map((ds) => ({

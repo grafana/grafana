@@ -5,7 +5,7 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { useSelectedAlertmanager } from '../../state/AlertmanagerContext';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { fetchAlertManagerConfigAction, fetchGrafanaNotifiersAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
@@ -23,7 +23,7 @@ export interface NotificationErrorProps {
 }
 
 const Receivers = () => {
-  const { selectedAlertmanager: alertManagerSourceName } = useSelectedAlertmanager();
+  const { selectedAlertmanager: alertManagerSourceName } = useAlertmanager();
   const dispatch = useDispatch();
 
   const location = useLocation();

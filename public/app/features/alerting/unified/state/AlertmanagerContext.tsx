@@ -13,13 +13,13 @@ interface Context {
   setSelectedAlertmanager: (name: string) => void;
 }
 
-const SelectedAlertmanagerContext = React.createContext<Context | undefined>(undefined);
+const AlertmanagerContext = React.createContext<Context | undefined>(undefined);
 
 interface Props extends React.PropsWithChildren {
   accessType: 'instance' | 'notification';
 }
 
-const SelectedAlertmanagerProvider = ({ children, accessType }: Props) => {
+const AlertmanagerProvider = ({ children, accessType }: Props) => {
   const [queryParams, updateQueryParams] = useQueryParams();
   const availableAlertManagers = useAlertManagersByPermission(accessType);
 
@@ -56,20 +56,20 @@ const SelectedAlertmanagerProvider = ({ children, accessType }: Props) => {
     setSelectedAlertmanager: updateSelectedAlertmanager,
   };
 
-  return <SelectedAlertmanagerContext.Provider value={value}>{children}</SelectedAlertmanagerContext.Provider>;
+  return <AlertmanagerContext.Provider value={value}>{children}</AlertmanagerContext.Provider>;
 };
 
-function useSelectedAlertmanager() {
-  const context = React.useContext(SelectedAlertmanagerContext);
+function useAlertmanager() {
+  const context = React.useContext(AlertmanagerContext);
 
   if (context === undefined) {
-    throw new Error('useSelectedAlertmanager must be used within a SelectedAlertmanagerContext');
+    throw new Error('useAlertmanager must be used within a AlertmanagerContext');
   }
 
   return context;
 }
 
-export { SelectedAlertmanagerProvider, useSelectedAlertmanager };
+export { AlertmanagerProvider, useAlertmanager };
 
 function isAlertManagerAvailable(availableAlertManagers: AlertManagerDataSource[], alertManagerName: string) {
   const availableAlertManagersNames = availableAlertManagers.map((am) => am.name);
