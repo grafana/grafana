@@ -210,14 +210,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
 			UserId:       7,
+			OrgID:        dashboard.OrgID,
 			PublicDashboard: &PublicDashboardDTO{
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
 				Share:                EmailShareType,
-				DashboardUid:         "NOTTHESAME",
-				OrgId:                dashboard.OrgID,
-				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -237,8 +235,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, *dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
-		// Time settings set by db
-		assert.Equal(t, timeSettings, pubdash.TimeSettings)
 		assert.Equal(t, dto.PublicDashboard.Share, pubdash.Share)
 		// accessToken is valid uuid
 		_, err = uuid.Parse(pubdash.AccessToken)
@@ -298,14 +294,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 			dto := &SavePublicDashboardDTO{
 				DashboardUid: dashboard.UID,
 				UserId:       7,
+				OrgID:        dashboard.OrgID,
 				PublicDashboard: &PublicDashboardDTO{
 					IsEnabled:            tt.IsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					Share:                PublicShareType,
-					DashboardUid:         "NOTTHESAME",
-					OrgId:                dashboard.OrgID,
-					TimeSettings:         timeSettings,
 				},
 			}
 
@@ -338,11 +332,10 @@ func TestCreatePublicDashboard(t *testing.T) {
 		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
+			OrgID:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -373,11 +366,10 @@ func TestCreatePublicDashboard(t *testing.T) {
 		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
+			OrgID:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -418,11 +410,10 @@ func TestCreatePublicDashboard(t *testing.T) {
 		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: "an-id",
+			OrgID:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -459,7 +450,6 @@ func TestCreatePublicDashboard(t *testing.T) {
 			PublicDashboard: &PublicDashboardDTO{
 				AnnotationsEnabled: &annotationsEnabled,
 				IsEnabled:          &isEnabled,
-				TimeSettings:       timeSettings,
 			},
 		}
 
@@ -487,11 +477,10 @@ func TestCreatePublicDashboard(t *testing.T) {
 		isEnabled := true
 		dto := &SavePublicDashboardDTO{
 			DashboardUid: dashboard.UID,
+			OrgID:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				DashboardUid: "NOTTHESAME",
-				OrgId:        dashboard.OrgID,
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -537,7 +526,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
-				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -546,24 +534,19 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 
 		isEnabled, annotationsEnabled, timeSelectionEnabled = true, true, true
-		// attempt to overwrite settings
+
 		dto = &SavePublicDashboardDTO{
+			Uid:          savedPubdash.Uid,
 			DashboardUid: dashboard.UID,
+			OrgID:        9,
 			UserId:       8,
 			PublicDashboard: &PublicDashboardDTO{
-				Uid:          savedPubdash.Uid,
-				OrgId:        9,
-				DashboardUid: "abc1234",
-				CreatedBy:    9,
-				CreatedAt:    time.Time{},
-
 				IsEnabled:            &isEnabled,
 				AnnotationsEnabled:   &annotationsEnabled,
 				TimeSelectionEnabled: &timeSelectionEnabled,
-				TimeSettings:         timeSettings,
-				AccessToken:          "NOTAREALUUID",
 			},
 		}
+
 		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
@@ -578,7 +561,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, *dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
 		assert.Equal(t, *dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
 		assert.Equal(t, *dto.PublicDashboard.TimeSelectionEnabled, updatedPubdash.TimeSelectionEnabled)
-		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
 	})
@@ -604,27 +586,20 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			DashboardUid: dashboard.UID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboardDTO{
-				IsEnabled:    &isEnabled,
-				TimeSettings: timeSettings,
+				IsEnabled: &isEnabled,
 			},
 		}
 
 		savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		// attempt to overwrite settings
 		dto = &SavePublicDashboardDTO{
+			Uid:          savedPubdash.Uid,
 			DashboardUid: dashboard.UID,
+			OrgID:        9,
 			UserId:       8,
 			PublicDashboard: &PublicDashboardDTO{
-				Uid:          savedPubdash.Uid,
-				OrgId:        9,
-				DashboardUid: "abc1234",
-				CreatedBy:    9,
-				CreatedAt:    time.Time{},
-				IsEnabled:    &isEnabled,
-				TimeSettings: &TimeSettings{},
-				AccessToken:  "NOTAREALUUID",
+				IsEnabled: &isEnabled,
 			},
 		}
 
@@ -705,7 +680,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 					IsEnabled:            &isEnabled,
 					AnnotationsEnabled:   &annotationsEnabled,
 					TimeSelectionEnabled: &timeSelectionEnabled,
-					TimeSettings:         timeSettings,
 					Share:                PublicShareType,
 				},
 			}
@@ -714,22 +688,16 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			savedPubdash, err := service.Create(context.Background(), SignedInUser, dto)
 			require.NoError(t, err)
 
-			// attempt to overwrite settings
 			dto = &SavePublicDashboardDTO{
+				Uid:          savedPubdash.Uid,
 				DashboardUid: dashboard.UID,
+				OrgID:        9,
 				UserId:       8,
 				PublicDashboard: &PublicDashboardDTO{
-					Uid:                  savedPubdash.Uid,
-					OrgId:                9,
-					DashboardUid:         "abc1234",
-					CreatedBy:            9,
-					CreatedAt:            time.Time{},
 					IsEnabled:            tt.IsEnabled,
 					AnnotationsEnabled:   tt.AnnotationsEnabled,
 					TimeSelectionEnabled: tt.TimeSelectionEnabled,
-					TimeSettings:         tt.TimeSettings,
 					Share:                tt.ShareType,
-					AccessToken:          "NOTAREALUUID",
 				},
 			}
 			updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
@@ -739,11 +707,6 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			assertOldValueIfNull(t, updatedPubdash.AnnotationsEnabled, savedPubdash.AnnotationsEnabled, dto.PublicDashboard.AnnotationsEnabled)
 			assertOldValueIfNull(t, updatedPubdash.TimeSelectionEnabled, savedPubdash.TimeSelectionEnabled, dto.PublicDashboard.TimeSelectionEnabled)
 
-			if dto.PublicDashboard.TimeSettings == nil {
-				assert.Equal(t, updatedPubdash.TimeSettings, savedPubdash.TimeSettings)
-			} else {
-				assert.Equal(t, updatedPubdash.TimeSettings, dto.PublicDashboard.TimeSettings)
-			}
 			if dto.PublicDashboard.Share == "" {
 				assert.Equal(t, updatedPubdash.Share, savedPubdash.Share)
 			} else {

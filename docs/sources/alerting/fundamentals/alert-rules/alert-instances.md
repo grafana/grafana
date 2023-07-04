@@ -5,7 +5,7 @@ keywords:
   - alerting
   - instances
 title: Alert instances
-weight: 103
+weight: 104
 ---
 
 # Alert instances

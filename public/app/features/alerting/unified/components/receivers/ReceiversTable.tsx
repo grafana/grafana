@@ -26,6 +26,7 @@ import { ActionIcon } from '../rules/ActionIcon';
 import { ReceiversSection } from './ReceiversSection';
 import { ReceiverMetadataBadge } from './grafanaAppReceivers/ReceiverMetadataBadge';
 import { ReceiverMetadata, useReceiversMetadata } from './grafanaAppReceivers/grafanaApp';
+import { AlertmanagerConfigHealth, useAlertmanagerConfigHealth } from './useAlertmanagerConfigHealth';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -268,6 +269,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
 
+  const configHealth = useAlertmanagerConfigHealth(config.alertmanager_config);
   const { contactPointsState, errorStateAvailable } = useContactPointsState(alertManagerName);
   const receiversMetadata = useReceiversMetadata(config.alertmanager_config.receivers ?? []);
 
@@ -289,6 +291,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     }
     setReceiverToDelete(undefined);
   };
+
   const rows: RowItemTableProps[] = useMemo(() => {
     const receivers = config.alertmanager_config.receivers ?? [];
 
@@ -317,6 +320,7 @@ export const ReceiversTable = ({ config, alertManagerName }: Props) => {
     alertManagerName,
     errorStateAvailable,
     contactPointsState,
+    configHealth,
     onClickDeleteReceiver,
     permissions,
     isVanillaAM
@@ -377,8 +381,12 @@ const errorsByReceiver = (contactPointsState: ContactPointsState, receiverName: 
 
 const someNotifiersWithNoAttempt = (contactPointsState: ContactPointsState, receiverName: string) => {
   const notifiers = Object.values(contactPointsState?.receivers[receiverName]?.notifiers ?? {});
-  const hasSomeWitNoAttempt =
-    notifiers.length === 0 || notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
+
+  if (notifiers.length === 0) {
+    return false;
+  }
+
+  const hasSomeWitNoAttempt = notifiers.flat().some((status) => isLastNotifyNullDate(status.lastNotifyAttempt));
   return hasSomeWitNoAttempt;
 };
 
@@ -386,6 +394,7 @@ function useGetColumns(
   alertManagerName: string,
   errorStateAvailable: boolean,
   contactPointsState: ContactPointsState | undefined,
+  configHealth: AlertmanagerConfigHealth,
   onClickDeleteReceiver: (receiverName: string) => void,
   permissions: {
     read: AccessControlAction;
@@ -396,17 +405,22 @@ function useGetColumns(
   isVanillaAM: boolean
 ): RowTableColumnProps[] {
   const tableStyles = useStyles2(getAlertTableStyles);
+
+  const enableHealthColumn =
+    errorStateAvailable || Object.values(configHealth.contactPoints).some((cp) => cp.matchingRoutes === 0);
+
   const baseColumns: RowTableColumnProps[] = [
     {
       id: 'name',
       label: 'Contact point name',
       renderCell: ({ data: { name, provisioned } }) => (
-        <Stack alignItems="center">
+        <>
           <div>{name}</div>
           {provisioned && <ProvisioningBadge />}
-        </Stack>
+        </>
       ),
-      size: 1,
+      size: 3,
+      className: tableStyles.nameCell,
     },
     {
       id: 'type',
@@ -414,15 +428,20 @@ function useGetColumns(
       renderCell: ({ data: { types, metadata } }) => (
         <>{metadata ? <ReceiverMetadataBadge metadata={metadata} /> : types.join(', ')}</>
       ),
-      size: 1,
+      size: 2,
     },
   ];
   const healthColumn: RowTableColumnProps = {
     id: 'health',
     label: 'Health',
     renderCell: ({ data: { name } }) => {
+      if (configHealth.contactPoints[name]?.matchingRoutes === 0) {
+        return <UnusedContactPointBadge />;
+      }
+
       return (
-        contactPointsState && (
+        contactPointsState &&
+        Object.entries(contactPointsState.receivers).length > 0 && (
           <ReceiverHealth
             errorsByReceiver={errorsByReceiver(contactPointsState, name)}
             someWithNoAttempt={someNotifiersWithNoAttempt(contactPointsState, name)}
@@ -430,12 +449,12 @@ function useGetColumns(
         )
       );
     },
-    size: 1,
+    size: '160px',
   };
 
   return [
     ...baseColumns,
-    ...(errorStateAvailable ? [healthColumn] : []),
+    ...(enableHealthColumn ? [healthColumn] : []),
     {
       id: 'actions',
       label: 'Actions',
@@ -459,4 +478,15 @@ function useGetColumns(
       size: '100px',
     },
   ];
+}
+
+function UnusedContactPointBadge() {
+  return (
+    <Badge
+      text="Unused"
+      color="orange"
+      icon="exclamation-triangle"
+      tooltip="This contact point is not used in any notification policy and it will not receive any alerts"
+    />
+  );
 }

@@ -98,7 +98,8 @@ export function ServiceGraphSection({
           <a
             target="_blank"
             rel="noreferrer noopener"
-            href="https://grafana.com/docs/tempo/next/grafana-agent/service-graphs/"
+            href="https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph"
+            className={styles.link}
           >
             Tempo documentation
           </a>
@@ -132,5 +133,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   alert: css`
     max-width: 75ch;
     margin-top: ${theme.spacing(2)};
+  `,
+  link: css`
+    color: ${theme.colors.text.link};
+    text-decoration: underline;
   `,
 });

@@ -208,11 +208,11 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// get existing public dashboard if exists
-	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
+	existingPubdash, err := pd.store.Find(ctx, dto.Uid)
 	if err != nil {
-		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.PublicDashboard.Uid, err)
+		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.Uid, err)
 	} else if existingPubdash == nil {
-		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
+		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
 	}
 
 	publicDashboard := newUpdatePublicDashboard(dto, existingPubdash)
@@ -230,7 +230,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 
 	// 404 if not found
 	if affectedRows == 0 {
-		return nil, ErrPublicDashboardNotFound.Errorf("Update: failed to update public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
+		return nil, ErrPublicDashboardNotFound.Errorf("Update: failed to update public dashboard not found by uid: %s", dto.Uid)
 	}
 
 	// get latest public dashboard to return
@@ -408,27 +408,26 @@ func (pd *PublicDashboardServiceImpl) newCreatePublicDashboard(ctx context.Conte
 	annotationsEnabled := returnValueOrDefault(dto.PublicDashboard.AnnotationsEnabled, false)
 	timeSelectionEnabled := returnValueOrDefault(dto.PublicDashboard.TimeSelectionEnabled, false)
 
-	timeSettings := dto.PublicDashboard.TimeSettings
-	if dto.PublicDashboard.TimeSettings == nil {
-		timeSettings = &TimeSettings{}
-	}
-
 	share := dto.PublicDashboard.Share
 	if dto.PublicDashboard.Share == "" {
 		share = PublicShareType
 	}
 
+	now := time.Now()
+
 	return &PublicDashboard{
 		Uid:                  uid,
 		DashboardUid:         dto.DashboardUid,
-		OrgId:                dto.PublicDashboard.OrgId,
+		OrgId:                dto.OrgID,
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         timeSettings,
+		TimeSettings:         &TimeSettings{},
 		Share:                share,
 		CreatedBy:            dto.UserId,
-		CreatedAt:            time.Now(),
+		CreatedAt:            now,
+		UpdatedBy:            dto.UserId,
+		UpdatedAt:            now,
 		AccessToken:          accessToken,
 	}, nil
 }
@@ -438,15 +437,6 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 	timeSelectionEnabled := returnValueOrDefault(pubdashDTO.TimeSelectionEnabled, pd.TimeSelectionEnabled)
 	isEnabled := returnValueOrDefault(pubdashDTO.IsEnabled, pd.IsEnabled)
 	annotationsEnabled := returnValueOrDefault(pubdashDTO.AnnotationsEnabled, pd.AnnotationsEnabled)
-
-	timeSettings := pubdashDTO.TimeSettings
-	if pubdashDTO.TimeSettings == nil {
-		if pd.TimeSettings == nil {
-			timeSettings = &TimeSettings{}
-		} else {
-			timeSettings = pd.TimeSettings
-		}
-	}
 
 	share := pubdashDTO.Share
 	if pubdashDTO.Share == "" {
@@ -458,7 +448,7 @@ func newUpdatePublicDashboard(dto *SavePublicDashboardDTO, pd *PublicDashboard) 
 		IsEnabled:            isEnabled,
 		AnnotationsEnabled:   annotationsEnabled,
 		TimeSelectionEnabled: timeSelectionEnabled,
-		TimeSettings:         timeSettings,
+		TimeSettings:         pd.TimeSettings,
 		Share:                share,
 		UpdatedBy:            dto.UserId,
 		UpdatedAt:            time.Now(),
