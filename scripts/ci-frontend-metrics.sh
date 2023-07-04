@@ -6,6 +6,7 @@ ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | gre
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
+EMOTION_IMPORTS="$(grep -r -o 'emotion/css' public/app | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
@@ -27,6 +28,7 @@ echo -e "Low vulnerabilities: $LOW_VULNERABILITIES"
 echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
+echo -e "@emotion/css imports: $EMOTION_IMPORTS"
 
 BETTERER_STATS=""
 while read -r name value
@@ -43,5 +45,6 @@ echo "Metrics: {
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
-  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\"
+  \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
+  \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\"
 }"
