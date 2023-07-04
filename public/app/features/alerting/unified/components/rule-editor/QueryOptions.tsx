@@ -57,13 +57,13 @@ export const QueryOptions = ({
         placement="bottom-start"
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
-          Options {showOptions ? <Icon name="angle-down" /> : <Icon name="angle-right" />}
+          Options {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
         </button>
       </Toggletip>
 
       <div className={styles.staticValues}>
-        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}, </span>
-        <span>MD {queryOptions?.maxDataPoints || DEFAULT_MAX_DATA_POINTS.toLocaleString()}</span>
+        <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
+        {queryOptions.maxDataPoints && <span>, MD {queryOptions.maxDataPoints}</span>}
       </div>
     </>
   );
