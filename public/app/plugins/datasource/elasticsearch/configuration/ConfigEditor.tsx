@@ -58,9 +58,7 @@ export const ConfigEditor = (props: Props) => {
         isInitiallyOpen
       >
         <ElasticDetails value={options} onChange={onOptionsChange} />
-
         <Divider hideLine />
-
         <LogsConfig
           value={options.jsonData}
           onChange={(newValue) =>
@@ -70,9 +68,7 @@ export const ConfigEditor = (props: Props) => {
             })
           }
         />
-
         <Divider hideLine />
-
         <DataLinks
           value={options.jsonData.dataLinks}
           onChange={(newValue) => {
