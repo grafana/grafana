@@ -201,8 +201,8 @@ describe(`Azure Monitor QueryEditor`, () => {
       />
     );
     await screen.findByText('testlabel');
-    const labelClear = await screen.findByLabelText('Remove testlabel');
-    await user.click(labelClear);
+    const labelClear = await screen.findAllByLabelText('Remove');
+    await user.click(labelClear[0]);
     mockQuery = setDimensionFilterValue(mockQuery, 0, 'filters', []);
     expect(onQueryChange).toHaveBeenCalledWith({
       ...mockQuery,

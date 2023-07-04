@@ -9,7 +9,7 @@ import { ElasticDatasource } from '../../datasource';
 import { useNextId } from '../../hooks/useNextId';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
-import { isSupportedVersion, unsupportedVersionMessage } from '../../utils';
+import { isSupportedVersion, isTimeSeriesQuery, unsupportedVersionMessage } from '../../utils';
 
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
@@ -82,15 +82,7 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
 
   return (
     <div className={styles.queryItem}>
-      <QueryField
-        query={value}
-        // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
-        // And slate will claim the focus, making it impossible to leave the field.
-        onBlur={() => {}}
-        onChange={onChange}
-        placeholder="Enter a lucene query"
-        portalOrigin="elasticsearch"
-      />
+      <QueryField query={value} onChange={onChange} placeholder="Enter a lucene query" portalOrigin="elasticsearch" />
     </div>
   );
 };
@@ -100,8 +92,7 @@ const QueryEditorForm = ({ value }: Props) => {
   const nextId = useNextId();
   const styles = useStyles2(getStyles);
 
-  // To be considered a time series query, the last bucked aggregation must be a Date Histogram
-  const isTimeSeriesQuery = value?.bucketAggs?.slice(-1)[0]?.type === 'date_histogram';
+  const isTimeSeries = isTimeSeriesQuery(value);
 
   const showBucketAggregationsEditor = value.metrics?.every(
     (metric) => metricAggregationConfig[metric.type].impliedQueryType === 'metrics'
@@ -119,7 +110,7 @@ const QueryEditorForm = ({ value }: Props) => {
         <InlineLabel width={17}>Lucene Query</InlineLabel>
         <ElasticSearchQueryField onChange={(query) => dispatch(changeQuery(query))} value={value?.query} />
 
-        {isTimeSeriesQuery && (
+        {isTimeSeries && (
           <InlineField
             label="Alias"
             labelWidth={15}

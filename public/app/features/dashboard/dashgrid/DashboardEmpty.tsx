@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { H1, H3, P } from '@grafana/ui/src/unstable';
@@ -17,7 +18,7 @@ export interface Props {
   canCreate: boolean;
 }
 
-export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
+const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
@@ -44,7 +45,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
           <Button
             size="lg"
             icon="plus"
-            aria-label="Add new panel"
+            data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
             onClick={() => {
               const id = onCreateNewPanel(dashboard, initialDatasource);
               reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_visualization' });
@@ -73,7 +74,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new row"
+              data-testid={selectors.pages.AddDashboard.itemButton('Create new row button')}
               onClick={() => {
                 reportInteraction('dashboards_emptydashboard_clicked', { item: 'add_row' });
                 onCreateNewRow(dashboard);
@@ -99,7 +100,7 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
             <Button
               icon="plus"
               fill="outline"
-              aria-label="Add new panel from panel library"
+              data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
               onClick={() => {
                 reportInteraction('dashboards_emptydashboard_clicked', { item: 'import_from_library' });
                 onAddLibraryPanel(dashboard);
@@ -114,6 +115,8 @@ export const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
     </div>
   );
 };
+
+export default DashboardEmpty;
 
 function getStyles(theme: GrafanaTheme2) {
   return {

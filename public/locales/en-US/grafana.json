@@ -1,5 +1,48 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Role",
+      "team-label": "Team",
+      "title": "Add permission for",
+      "user-label": "User"
+    },
+    "add-permissions": {
+      "save": "Save"
+    },
+    "permission-list": {
+      "permission": "Permission"
+    },
+    "permissions": {
+      "add-label": "Add a permission",
+      "no-permissions": "There are no permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "role": "Role",
+      "team": "Team",
+      "title": "Permissions",
+      "user": "User"
+    }
+  },
+  "browse-dashboards": {
+    "action": {
+      "delete-button": "Delete",
+      "move-button": "Move"
+    },
+    "dashboards-tree": {
+      "name-column": "Name",
+      "tags-column": "Tags"
+    },
+    "folder-actions-button": {
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
+    },
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
+    }
+  },
   "clipboard-button": {
     "inline-toast": {
       "success": "Copied"
@@ -122,6 +165,10 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
     }
   },
   "library-panel": {
@@ -141,6 +188,12 @@
     "save": {
       "error": "Error saving library panel: \"{{errorMsg}}\"",
       "success": "Library panel saved"
+    }
+  },
+  "login": {
+    "error": {
+      "invalid-user-or-password": "Invalid username or password",
+      "unknown": "Unknown error occurred"
     }
   },
   "nav": {
@@ -384,6 +437,10 @@
       "choose-interval": "Auto refresh turned off. Choose refresh time interval",
       "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Turn on live streaming",
       "label": "Live"
@@ -408,8 +465,8 @@
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
-      "new-dashboard": "New Dashboard",
-      "new-folder": "New Folder"
+      "new-dashboard": "New dashboard",
+      "new-folder": "New folder"
     },
     "folder-view": {
       "go-to-folder": "Go to folder",
@@ -432,6 +489,12 @@
     "search-input": {
       "include-panels-placeholder": "Search for dashboards, folders, and panels",
       "placeholder": "Search for dashboards and folders"
+    }
+  },
+  "search-view": {
+    "no-results": {
+      "clear": "Clear search and filters",
+      "text": "No results found for your query."
     }
   },
   "share-modal": {
@@ -536,6 +599,16 @@
       "default-label": "Default"
     },
     "title": "Preferences"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "Dashboards",
+      "panels": "Panels"
+    },
+    "nav-models": {
+      "alert-rules": "Alert rules",
+      "manage-folder-subtitle": "Manage folder dashboards and permissions"
+    }
   },
   "tag-filter": {
     "loading": "Loading...",

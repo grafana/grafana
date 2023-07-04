@@ -44,7 +44,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: ${theme.spacing(2)} !important; /* TODO How to overcome this? Checkbox does the same 🙁 */
     height: ${theme.spacing(2)};
     border: 1px solid ${theme.colors.border.medium};
-    border-radius: 50%;
+    border-radius: ${theme.shape.radius.circle};
     margin: 3px 0; /* Space for box-shadow when focused */
 
     :checked {

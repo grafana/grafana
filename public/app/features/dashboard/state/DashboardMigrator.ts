@@ -12,6 +12,7 @@ import {
   getActiveThreshold,
   getDataSourceRef,
   isDataSourceRef,
+  isEmptyObject,
   MappingType,
   PanelPlugin,
   SpecialValueMatch,
@@ -584,6 +585,9 @@ export class DashboardMigrator {
           continue;
         }
         const { multi, current } = variable;
+        if (isEmptyObject(current)) {
+          continue;
+        }
         variable.current = alignCurrentWithMulti(current, multi);
       }
     }

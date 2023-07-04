@@ -77,6 +77,7 @@ export const ManualEditor = ({
                 title={'remove'}
                 className={cx(style.actionIcon)}
                 onClick={() => onSeriesDelete(index)}
+                tooltip="Delete series"
               />
             </div>
           );

@@ -37,6 +37,14 @@ var (
 	ErrDuplicateToken                    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
 )
 
+type MigrationResult struct {
+	Total           int      `json:"total"`
+	Migrated        int      `json:"migrated"`
+	Failed          int      `json:"failed"`
+	FailedApikeyIDs []int64  `json:"failedApikeyIDs"`
+	FailedDetails   []string `json:"failedDetails"`
+}
+
 type ServiceAccount struct {
 	Id int64
 }
