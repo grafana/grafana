@@ -83,12 +83,12 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const handleKeyDown = useCallback(
     (ev: React.KeyboardEvent<HTMLInputElement>) => {
       // Expand/collapse folder on arrow keys
-      if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+      if (foldersAreOpenable && (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft')) {
         ev.preventDefault();
         onFolderClick(item.uid, ev.key === 'ArrowRight');
       }
     },
-    [item.uid, onFolderClick]
+    [item.uid, foldersAreOpenable, onFolderClick]
   );
 
   if (item.kind !== 'folder') {
