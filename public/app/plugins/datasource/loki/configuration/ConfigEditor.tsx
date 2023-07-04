@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
+import { ConfigSection } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings, useTheme2 } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
@@ -38,8 +40,12 @@ export const ConfigEditor = (props: Props) => {
     [options, onOptionsChange]
   );
 
+  const styles = getStyles(useTheme2());
+
   return (
     <>
+      <hr className={styles.sectionDivider} />
+
       <DataSourceHttpSettings
         defaultUrl={'http://localhost:3100'}
         dataSourceConfig={options}
@@ -48,19 +54,36 @@ export const ConfigEditor = (props: Props) => {
         secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
       />
 
-      <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
+      <hr className={styles.sectionDivider} />
 
-      <QuerySettings
-        maxLines={options.jsonData.maxLines || ''}
-        onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
-        predefinedOperations={options.jsonData.predefinedOperations || ''}
-        onPredefinedOperationsChange={updatePredefinedOperations}
-      />
+      <ConfigSection
+        title="Additional settings"
+        description="Additional settings are optional settings that can be configured for more control over your data source."
+        isCollapsible={true}
+        isInitiallyOpen
+      >
+        <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
-      <DerivedFields
-        fields={options.jsonData.derivedFields}
-        onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
-      />
+        <QuerySettings
+          maxLines={options.jsonData.maxLines || ''}
+          onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
+          predefinedOperations={options.jsonData.predefinedOperations || ''}
+          onPredefinedOperationsChange={updatePredefinedOperations}
+        />
+
+        <DerivedFields
+          fields={options.jsonData.derivedFields}
+          onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
+        />
+      </ConfigSection>
     </>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    sectionDivider: css`
+      margin-bottom: ${theme.spacing(4)};
+    `,
+  };
+}
