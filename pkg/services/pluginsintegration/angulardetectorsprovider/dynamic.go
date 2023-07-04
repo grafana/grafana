@@ -46,11 +46,6 @@ type Dynamic struct {
 	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
 	mux sync.RWMutex
 
-	// initialRestore is a channel that can be used to await the initial restore to be done.
-	// It is closed when the initial restore from cache is completed.
-	// To wait for the initial restore to be done, simply read a value from this channel.
-	initialRestore chan struct{}
-
 	// backgroundJobInterval is the interval between the periodic background job calls.
 	backgroundJobInterval time.Duration
 }
@@ -63,10 +58,10 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 		httpClient:            makeHttpClient(),
 		baseURL:               cfg.GrafanaComURL,
 		backgroundJobInterval: defaultBackgroundJobInterval,
-		initialRestore:        make(chan struct{}),
 	}
 
 	// Perform the initial restore from db without blocking
+	d.mux.Lock()
 	go func() {
 		d.log.Debug("Restoring cache")
 		ctx, canc := context.WithTimeout(context.Background(), cacheRestoreTimeout)
@@ -74,8 +69,7 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 		if err := d.setDetectorsFromCache(ctx); err != nil {
 			d.log.Warn("Cache restore failed", "error", err)
 		}
-		// Unblock all goroutines reading from d.initialRestore (waiting for the initial restore to be completed)
-		close(d.initialRestore)
+		d.mux.Unlock()
 	}()
 
 	return d, nil
@@ -171,6 +165,7 @@ func (d *Dynamic) updateDetectors(ctx context.Context) error {
 }
 
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
+// The caller must Lock d.mux before calling this function.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	var cachedPatterns GCOMPatterns
 	rawCached, ok, err := d.store.Get(ctx)
@@ -189,7 +184,8 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("convert to detectors: %w", err)
 	}
-	d.setDetectors(cachedDetectors)
+	// Do not use setDetectors or it will cause a deadlock
+	d.detectors = cachedDetectors
 	return nil
 }
 
@@ -250,11 +246,6 @@ func (d *Dynamic) Run(ctx context.Context) error {
 
 // ProvideDetectors returns the cached detectors. It returns an empty slice if there's no value.
 func (d *Dynamic) ProvideDetectors(_ context.Context) []angulardetector.AngularDetector {
-	// Wait for initial restore to be done.
-	// This channel is closed after the restore is done, so it will always return immediately once the
-	// initial restore is done.
-	<-d.initialRestore
-
 	d.mux.RLock()
 	r := d.detectors
 	d.mux.RUnlock()

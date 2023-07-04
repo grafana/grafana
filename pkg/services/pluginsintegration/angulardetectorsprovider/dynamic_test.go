@@ -74,14 +74,6 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			svc := provideDynamic(t, srv.URL)
 			svc.store = mockStore
 
-			// Await initial restore
-			select {
-			case <-svc.initialRestore:
-				break
-			case <-time.After(time.Second * 10):
-				t.Fatal("timeout")
-			}
-
 			// First call to ProvideDetectors should restore from store
 			r := svc.ProvideDetectors(context.Background())
 			checkMockDetectors(t, r)
