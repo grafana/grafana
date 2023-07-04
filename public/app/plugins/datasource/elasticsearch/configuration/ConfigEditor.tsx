@@ -39,6 +39,8 @@ export const ConfigEditor = (props: Props) => {
         </Alert>
       )}
 
+      <Divider />
+
       <DataSourceHttpSettings
         defaultUrl="http://localhost:9200"
         dataSourceConfig={options}
