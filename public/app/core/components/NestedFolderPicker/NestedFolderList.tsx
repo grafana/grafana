@@ -125,7 +125,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
             onClick={handleClick}
             // tabIndex not needed here because we handle keyboard navigation at the radio button level
             tabIndex={-1}
-            aria-label={isOpen ? 'Collapse folder' : 'Expand folder'}
+            aria-label={isOpen ? `Collapse folder ${item.title}` : `Expand folder ${item.title}`}
             name={isOpen ? 'angle-down' : 'angle-right'}
           />
         ) : (

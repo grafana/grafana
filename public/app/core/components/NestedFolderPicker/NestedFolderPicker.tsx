@@ -175,6 +175,7 @@ export function NestedFolderPicker({ value, onChange }: NestedFolderPickerProps)
         placeholder={label ?? 'Search folder'}
         value={search}
         escapeRegex={false}
+        className={styles.search}
         onChange={(val) => setSearch(val)}
       />
       <fieldset
@@ -225,7 +226,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       zIndex: theme.zIndex.portal,
     }),
-
     loader: css({
       position: 'absolute',
       top: 0,
@@ -233,6 +233,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       right: 0,
       zIndex: theme.zIndex.portal + 1,
       overflow: 'hidden', // loading bar overflows its container, so we need to clip it
+    }),
+    search: css({
+      input: {
+        cursor: 'default',
+      },
     }),
   };
 };
