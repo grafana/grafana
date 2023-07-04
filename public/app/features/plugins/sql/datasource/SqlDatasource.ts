@@ -89,7 +89,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
 
     if (Array.isArray(value)) {
       const quotedValues = value.map((v) => this.getQueryModel().quoteLiteral(v));
-      return quotedValues.join(',');
+      return quotedValues.join(',').slice(1, -1);
     }
 
     return value;
