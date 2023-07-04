@@ -99,14 +99,14 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 
 	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 	basePath := ToBasePathWithAccountRedirect(gcn.tmpl.ExternalURL, types.Alerts(as...))
-	ruleURL := joinUrlPath(basePath, "/alerting/list", gcn.log)
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", gcn.log))
 	//LOGZ.IO GRAFANA CHANGE :: end
 	// Add a button widget (link to Grafana).
 	widgets = append(widgets, buttonWidget{
 		Buttons: []button{
 			{
 				TextButton: textButton{
-					Text: "OPEN IN GRAFANA",
+					Text: "OPEN IN LOGZIO", // LOGZ.IO GRAFANA CHANGE :: DEV-40291 FIx Google chat notification messages
 					OnClick: onClick{
 						OpenLink: openLink{
 							URL: ToLogzioAppPath(ruleURL), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
@@ -120,7 +120,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	// Add text paragraph widget for the build version and timestamp.
 	widgets = append(widgets, textParagraphWidget{
 		Text: text{
-			Text: "Grafana v" + setting.BuildVersion + " | " + (timeNow()).Format(time.RFC822),
+			Text: (timeNow()).Format(time.RFC822), // LOGZ.IO GRAFANA CHANGE :: DEV-40291 FIx Google chat notification messages
 		},
 	})
 
