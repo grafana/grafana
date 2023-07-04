@@ -112,6 +112,8 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       }),
     }),
 
+    // BIG TODO HERE; we have a bunch of logic in "fetchAlertManagerConfigAction" that deals with the various Alertmanager flavors
+    // and the "lazyConfigInit" from Mimir – ideally we should move that logic here and call it in "fetchAlertManagerConfigAction" instead.
     getAlertmanagerConfiguration: build.query<AlertManagerCortexConfig, string>({
       query: (alertmanagerSourceName) => ({
         url: `/api/alertmanager/${getDatasourceAPIUid(alertmanagerSourceName)}/config/api/v1/alerts`,

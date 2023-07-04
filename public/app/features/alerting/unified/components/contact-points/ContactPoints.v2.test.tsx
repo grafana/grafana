@@ -15,13 +15,18 @@ import ContactPoints, { ContactPoint } from './ContactPoints.v2';
 import server from './__mocks__/server';
 
 /**
- * These test are kinda bad to maintain – here's what we should do instead.
+ * There are lots of ways in which we test our pages and components. Here's my opinionated approach to testing them.
  *
- * 1. Make sure we have "dumb" components we can test without mocking data, use these for writing assertions
- *    on what the component should look like
- * 2. For testing the "smart" components, just check if the hooks are being called. If they are it means we're probably fetching data
- * 3. Write tests for the hooks we call in the "smart" components to check if we are _indeed_ fetching data
- *    and if loading / error states are being propagated correctly.
+ *  Use MSW to mock API responses, you can copy the JSON results from the network panel and use them in a __mocks__ folder.
+ *
+ * 1. Make sure we have "presentation" components we can test without mocking data,
+ *    test these if they have some logic in them (hiding / showing things) and sad paths.
+ *
+ * 2. For testing the "container" components, check if data fetching is working as intended (you can use loading state)
+ *    and check if we're not in an error state (although you can test for that too for sad path).
+ *
+ * 3. Write tests for the hooks we call in the "container" components
+ *    if those have any logic or data structure transformations in them.
  */
 describe('ContactPoints', () => {
   beforeAll(() => {

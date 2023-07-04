@@ -9,7 +9,6 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { AlertingFeature } from './features';
-
 // TODO add pagenav back in – what are we missing if we don't specify it?
 const ContactPoints = (props: GrafanaRouteComponentProps): JSX.Element => (
   <AlertmanagerPageWrapper pageId="receivers" accessType="notification">
