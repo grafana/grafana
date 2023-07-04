@@ -21,10 +21,12 @@ export const AddRemove = ({ index, onAdd, onRemove, elements }: Props) => {
         display: flex;
       `}
     >
-      {index === 0 && <Button variant="secondary" fill="text" icon="plus" onClick={onAdd} tooltip="Add" />}
+      {index === 0 && (
+        <Button variant="secondary" fill="text" icon="plus" onClick={onAdd} tooltip="Add" aria-label="Add" />
+      )}
 
       {elements.length >= 2 && (
-        <Button variant="secondary" fill="text" icon="minus" onClick={onRemove} tooltip="Remove" />
+        <Button variant="secondary" fill="text" icon="minus" onClick={onRemove} tooltip="Remove" aria-label="Remove" />
       )}
     </div>
   );

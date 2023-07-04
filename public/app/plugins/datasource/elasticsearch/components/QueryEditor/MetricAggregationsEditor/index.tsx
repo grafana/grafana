@@ -54,6 +54,7 @@ export const MetricAggregationsEditor = ({ nextId }: Props) => {
                     icon="plus"
                     onClick={() => dispatch(addMetric(nextId))}
                     tooltip="Add metric"
+                    aria-label="Add metric"
                   />
                 )}
               </QueryEditorRow>

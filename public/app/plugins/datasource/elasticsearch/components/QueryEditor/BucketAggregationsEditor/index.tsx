@@ -36,6 +36,7 @@ export const BucketAggregationsEditor = ({ nextId }: Props) => {
               icon="plus"
               onClick={() => dispatch(addBucketAggregation(nextId))}
               tooltip="Add grouping condition"
+              aria-label="Add grouping condition"
             />
           )}
         </QueryEditorRow>
