@@ -7,6 +7,7 @@ import { onCallApi, OnCallIntegration } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
+import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 
 const GRAFANA_INTEGRATION_TYPE = 'grafana';
 
@@ -110,7 +111,15 @@ export function useOnCallIntegration() {
   );
 
   return {
-    onCallNotifier,
+    onCallNotifier: {
+      dto: onCallNotifier,
+      meta: {
+        enabled: isOnCallEnabled,
+        order: 1,
+        description: 'The best Contact Point',
+        iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
+      },
+    },
     onCallFormValidators,
     mapWebhookReceiversToOnCalls,
     mapOnCallReceiversToWebhooks,

@@ -7,7 +7,7 @@ import {
   Receiver,
   TestReceiversAlert,
 } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO, NotifierType, useDispatch } from 'app/types';
+import { useDispatch } from 'app/types';
 
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction, updateAlertManagerConfigAction } from '../../../state/actions';
@@ -25,6 +25,7 @@ import { useOnCallIntegration } from '../grafanaAppReceivers/onCall/useOnCallInt
 import { GrafanaCommonChannelSettings } from './GrafanaCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
 import { TestContactPointModal } from './TestContactPointModal';
+import { Notifier } from './notifiers';
 
 interface Props {
   alertManagerSourceName: string;
@@ -128,11 +129,11 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
   const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
 
-  if (isLoadingNotifiers) {
+  if (isLoadingNotifiers || isLoadingOnCallIntegrations) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
-  const notifiers: Array<NotifierDTO<NotifierType>> = [...grafanaNotifiers, onCallNotifier];
+  const notifiers: Notifier[] = [...grafanaNotifiers.map((n) => ({ dto: n })), onCallNotifier];
 
   return (
     <>

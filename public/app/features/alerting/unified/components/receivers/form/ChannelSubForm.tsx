@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
+import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
-import { NotifierDTO } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType } from '../../../types/receiver-form';
 
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
+import { Notifier } from './notifiers';
 
 interface Props<R extends FieldValues> {
   defaultValues: R;
   initialValues?: R;
   pathPrefix: string;
-  notifiers: NotifierDTO[];
+  notifiers: Notifier[];
   onDuplicate: () => void;
   onTest?: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
@@ -84,12 +85,15 @@ export function ChannelSubForm<R extends ChannelValues>({
 
   const typeOptions = useMemo(
     (): SelectableValue[] =>
-      notifiers
-        .map(({ name, type }) => ({
+      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 1000, dto.name])
+        // .notifiers.sort((a, b) => a.dto.name.localeCompare(b.dto.name))
+        .map<SelectableValue>(({ dto: { name, type }, meta }) => ({
           label: name,
           value: type,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+          description: meta?.description,
+          isDisabled: meta ? !meta.enabled : false,
+          imgUrl: meta?.iconUrl,
+        })),
     [notifiers]
   );
 
@@ -102,11 +106,11 @@ export function ChannelSubForm<R extends ChannelValues>({
     }
   };
 
-  const notifier = notifiers.find(({ type }) => type === selectedType);
+  const notifier = notifiers.find(({ dto: { type } }) => type === selectedType);
   // if there are mandatory options defined, optional options will be hidden by a collapse
   // if there aren't mandatory options, all options will be shown without collapse
-  const mandatoryOptions = notifier?.options.filter((o) => o.required);
-  const optionalOptions = notifier?.options.filter((o) => !o.required);
+  const mandatoryOptions = notifier?.dto.options.filter((o) => o.required);
+  const optionalOptions = notifier?.dto.options.filter((o) => !o.required);
 
   const contactPointTypeInputId = `contact-point-type-${pathPrefix}`;
 
@@ -180,10 +184,10 @@ export function ChannelSubForm<R extends ChannelValues>({
             customValidators={customValidators}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <CollapsibleSection label={`Optional ${notifier.name} settings`}>
-              {notifier.info !== '' && (
+            <CollapsibleSection label={`Optional ${notifier.dto.name} settings`}>
+              {notifier.dto.info !== '' && (
                 <Alert title="" severity="info">
-                  {notifier.info}
+                  {notifier.dto.info}
                 </Alert>
               )}
               <ChannelOptions<R>

@@ -16,6 +16,7 @@ import {
 
 import { CloudCommonChannelSettings } from './CloudCommonChannelSettings';
 import { ReceiverForm } from './ReceiverForm';
+import { Notifier } from './notifiers';
 
 interface Props {
   alertManagerSourceName: string;
@@ -31,6 +32,8 @@ const defaultChannelValues: CloudChannelValues = Object.freeze({
   secureFields: {},
   type: 'email',
 });
+
+const cloudNotifiers = cloudNotifierTypes.map<Notifier>((n) => ({ dto: n }));
 
 export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: Props) => {
   const dispatch = useDispatch();
@@ -79,7 +82,7 @@ export const CloudReceiverForm = ({ existing, alertManagerSourceName, config }: 
         config={config}
         onSubmit={onSubmit}
         initialValues={existingValue}
-        notifiers={cloudNotifierTypes}
+        notifiers={cloudNotifiers}
         alertManagerSourceName={alertManagerSourceName}
         defaultItem={defaultChannelValues}
         takenReceiverNames={takenReceiverNames}

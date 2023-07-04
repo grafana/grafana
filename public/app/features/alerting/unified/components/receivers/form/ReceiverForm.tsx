@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { FieldErrors, FormProvider, useForm, Validate } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -7,7 +7,6 @@ import { Alert, Button, Field, Input, LinkButton, useStyles2 } from '@grafana/ui
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { NotifierDTO } from 'app/types';
 
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -17,11 +16,12 @@ import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
+import { Notifier } from './notifiers';
 import { normalizeFormValues } from './util';
 
 interface Props<R extends ChannelValues> {
   config: AlertManagerCortexConfig;
-  notifiers: NotifierDTO[];
+  notifiers: Notifier[];
   defaultItem: R;
   alertManagerSourceName: string;
   onTestChannel?: (channel: R) => void;
@@ -78,14 +78,7 @@ export function ReceiverForm<R extends ChannelValues>({
     register,
     formState: { errors },
     getValues,
-    reset,
   } = formAPI;
-
-  useEffect(() => {
-    // TS issue with react-form-hooks and generic types
-    // @ts-expect-error
-    reset(normalizeFormValues(initialValues));
-  }, [initialValues, reset]);
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
