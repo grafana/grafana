@@ -66,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       width: 6px;
       height: 6px;
       background-color: ${theme.colors.text.disabled};
-      border-radius: 50%;
+      border-radius: ${theme.shape.radius.circle};
       display: inline-block;
       position: absolute;
       top: 4px;

@@ -16,7 +16,7 @@ if [ "$BASE_URL" != "" ]; then
     echo -e "BASE_URL set, skipping starting server"
 else
   # Start it in the background
-  GF_PATHS_PLUGINS=../../../e2e/custom-plugins/ ./scripts/grafana-server/start-server $LICENSE_PATH 2>&1 > scripts/grafana-server/server.log &
+  ./scripts/grafana-server/start-server $LICENSE_PATH 2>&1 > scripts/grafana-server/server.log &
   ./scripts/grafana-server/wait-for-grafana
 fi
 

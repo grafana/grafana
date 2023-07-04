@@ -41,11 +41,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: 50%;
       transform: translate(-50%, -50%);
     `,
-    entry: css`
+    sticky: css`
       position: sticky;
       z-index: 1;
       top: -1px;
       bottom: -1px;
+    `,
+    entry: css`
       & > td {
         padding: ${theme.spacing(1)} 0 ${theme.spacing(1)} 0;
       }
@@ -53,6 +55,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       & > table {
         margin-bottom: 0;
+      }
+
+      & .log-row-menu {
+        margin-top: -6px;
       }
     `,
     datasourceUi: css`
@@ -177,6 +183,8 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
   const dispatch = useDispatch();
   const theme = useTheme2();
   const styles = getStyles(theme);
+
+  const [sticky, setSticky] = useState(true);
 
   // we need to keep both the "above" and "below" rows
   // in the same react-state, to be able to atomically change both
@@ -362,6 +370,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     };
   }); // on every render, why not
 
+  const scrollToCenter = useCallback(() => {
+    preEntryElement.current?.scrollIntoView({ block: 'center' });
+    entryElement.current?.scrollIntoView({ block: 'center' });
+  }, [preEntryElement, entryElement]);
+
   useLayoutEffect(() => {
     const scrollE = scrollElement.current;
     if (scrollE == null) {
@@ -373,8 +386,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
     prevClientHeightRef.current = currentClientHeight;
     if (prevClientHeight !== currentClientHeight) {
       // height has changed, we scroll to the center
-      preEntryElement.current?.scrollIntoView({ block: 'center' });
-      entryElement.current?.scrollIntoView({ block: 'center' });
+      scrollToCenter();
       return;
     }
 
@@ -385,7 +397,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       const newScrollTop = scrollE.scrollTop + (currentHeight - prevScrollHeight);
       scrollE.scrollTop = newScrollTop;
     }
-  }, [context.above.rows]);
+  }, [context.above.rows, scrollToCenter]);
 
   useAsync(updateContextQuery, [getRowContextQuery, row]);
 
@@ -405,7 +417,11 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
       )}
       <div className={cx(styles.flexRow, styles.paddingBottom)}>
         <div>
-          <LogContextButtons wrapLines={wrapLines} onChangeWrapLines={setWrapLines} />
+          <LogContextButtons
+            wrapLines={wrapLines}
+            onChangeWrapLines={setWrapLines}
+            onScrollCenterClick={scrollToCenter}
+          />
         </div>
       </div>
       <div ref={scrollElement} className={styles.logRowGroups}>
@@ -440,7 +456,7 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
               </td>
             </tr>
             <tr ref={preEntryElement}></tr>
-            <tr ref={entryElement} className={styles.entry}>
+            <tr ref={entryElement} className={cx(styles.entry, sticky ? styles.sticky : null)} data-testid="entry-row">
               <td className={styles.noMarginBottom}>
                 <LogRows
                   logRows={[row]}
@@ -454,6 +470,9 @@ export const LogRowContextModal: React.FunctionComponent<LogRowContextModalProps
                   displayedFields={displayedFields}
                   onClickShowField={showField}
                   onClickHideField={hideField}
+                  onUnpinLine={() => setSticky(false)}
+                  onPinLine={() => setSticky(true)}
+                  pinnedRowId={sticky ? row.uid : undefined}
                 />
               </td>
             </tr>
