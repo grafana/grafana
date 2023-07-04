@@ -7,6 +7,8 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Input, InlineSwitch } from '@grafana/ui';
 import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
 
+import { IntervalInput } from '../IntervalInput/IntervalInput';
+
 import { TagMappingInput } from './TagMappingInput';
 
 // @deprecated use getTraceToLogsOptions to get the v2 version of this config from jsonData
@@ -123,15 +125,23 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         </InlineField>
       </InlineFieldRow>
 
-      <TimeRangeShift
-        type={'start'}
+      <IntervalInput
+        label={getTimeShiftLabel('start')}
+        tooltip={getTimeShiftTooltip('start')}
         value={traceToLogs.spanStartTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanStartTimeShift: val })}
+        onChange={(val) => {
+          updateTracesToLogs({ spanStartTimeShift: val });
+        }}
+        isInvalidError={invalidTimeShiftError}
       />
-      <TimeRangeShift
-        type={'end'}
+      <IntervalInput
+        label={getTimeShiftLabel('end')}
+        tooltip={getTimeShiftTooltip('end')}
         value={traceToLogs.spanEndTimeShift || ''}
-        onChange={(val) => updateTracesToLogs({ spanEndTimeShift: val })}
+        onChange={(val) => {
+          updateTracesToLogs({ spanEndTimeShift: val });
+        }}
+        isInvalidError={invalidTimeShiftError}
       />
 
       <InlineFieldRow>
@@ -222,31 +232,15 @@ function IdFilter(props: IdFilterProps) {
   );
 }
 
-interface TimeRangeShiftProps {
-  type: 'start' | 'end';
-  value: string;
-  onChange: (val: string) => void;
-}
-function TimeRangeShift(props: TimeRangeShiftProps) {
-  return (
-    <InlineFieldRow>
-      <InlineField
-        label={`Span ${props.type} time shift`}
-        labelWidth={26}
-        grow
-        tooltip={`Shifts the ${props.type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`}
-      >
-        <Input
-          type="text"
-          placeholder="0"
-          width={40}
-          onChange={(e) => props.onChange(e.currentTarget.value)}
-          value={props.value}
-        />
-      </InlineField>
-    </InlineFieldRow>
-  );
-}
+export const getTimeShiftLabel = (type: 'start' | 'end') => {
+  return `Span ${type} time shift`;
+};
+
+export const getTimeShiftTooltip = (type: 'start' | 'end') => {
+  return `Shifts the ${type} time of the span. Default: 0 (Time units can be used here, for example: 5s, -1m, 3h)`;
+};
+
+export const invalidTimeShiftError = 'Invalid time shift. See tooltip for examples.';
 
 export const TraceToLogsSection = ({ options, onOptionsChange }: DataSourcePluginOptionsEditorProps) => {
   return (

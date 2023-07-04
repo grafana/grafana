@@ -383,6 +383,8 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {topOfViewRefType === TopOfViewRefType.Explore && (
           <small className={styles.debugInfo}>
+            {/* TODO: fix keyboard a11y */}
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
             <a
               {...focusSpanLink}
               onClick={(e) => {

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
-import { ToolbarButton } from '@grafana/ui';
+import { Modal, ToolbarButton } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
-import { getExploreItemSelector } from '../state/selectors';
+import { getExploreItemSelector } from '../../state/selectors';
 
-import { AddToDashboardModal } from './AddToDashboardModal';
+import { AddToDashboardForm } from './AddToDashboardForm';
+import { getAddToDashboardTitle } from './getAddToDashboardTitle';
 
 interface Props {
   exploreId: string;
@@ -15,6 +16,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectExploreItem = getExploreItemSelector(exploreId);
   const explorePaneHasQueries = !!useSelector(selectExploreItem)?.queries?.length;
+  const onClose = useCallback(() => setIsOpen(false), []);
 
   return (
     <>
@@ -28,7 +30,11 @@ export const AddToDashboard = ({ exploreId }: Props) => {
         Add to dashboard
       </ToolbarButton>
 
-      {isOpen && <AddToDashboardModal onClose={() => setIsOpen(false)} exploreId={exploreId} />}
+      {isOpen && (
+        <Modal title={getAddToDashboardTitle()} onDismiss={onClose} isOpen>
+          <AddToDashboardForm onClose={onClose} exploreId={exploreId} />
+        </Modal>
+      )}
     </>
   );
 };
