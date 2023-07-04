@@ -166,6 +166,7 @@ class UnthemedCodeEditor extends PureComponent<Props> {
           }}
           beforeMount={this.handleBeforeMount}
           onMount={this.handleOnMount}
+          keepCurrentModel={true}
         />
       </div>
     );

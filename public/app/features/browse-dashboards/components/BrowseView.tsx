@@ -110,7 +110,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
     [flatTree]
   );
 
-  const handleLoadMore = useLoadNextChildrenPage(folderUID);
+  const handleLoadMore = useLoadNextChildrenPage();
 
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (

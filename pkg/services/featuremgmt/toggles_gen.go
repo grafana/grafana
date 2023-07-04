@@ -159,6 +159,10 @@ const (
 	// Enable folder nesting
 	FlagNestedFolders = "nestedFolders"
 
+	// FlagNestedFolderPicker
+	// Enables the still in-development new folder picker to support nested folders
+	FlagNestedFolderPicker = "nestedFolderPicker"
+
 	// FlagAccessTokenExpirationCheck
 	// Enable OAuth access_token expiration check and token refresh using the refresh_token
 	FlagAccessTokenExpirationCheck = "accessTokenExpirationCheck"
@@ -354,4 +358,8 @@ const (
 	// FlagElasticToggleableFilters
 	// Enable support to toggle filters off from the query through the Logs Details component
 	FlagElasticToggleableFilters = "elasticToggleableFilters"
+
+	// FlagVizAndWidgetSplit
+	// Split panels between vizualizations and widgets
+	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
 )

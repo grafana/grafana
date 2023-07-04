@@ -291,6 +291,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           For more information on queries and expressions, see Query and transform data.`}
               externalLink={`https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/`}
               linkText={`Read about query and condition`}
+              title="Define query and alert condition"
             />
           </Stack>
 
