@@ -5,6 +5,7 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -157,7 +158,9 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} data-testid={testid}>
+    // tabIndex={0} is needed for keyboard accessibility in the plot area
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
@@ -273,9 +276,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       },
 
-      '&:focus-visible': {
-        outline: `1px solid ${theme.colors.action.focus}`,
-      },
+      '&:focus-visible': getFocusStyles(theme),
 
       '&:focus-within': {
         '.show-on-hover': {
