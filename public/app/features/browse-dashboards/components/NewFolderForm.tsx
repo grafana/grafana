@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Button, Input, Form, Field, HorizontalGroup } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 
@@ -17,7 +17,6 @@ interface FormModel {
 const initialFormModel: FormModel = { folderName: '' };
 
 export function NewFolderForm({ onCancel, onConfirm }: Props) {
-  const translatedFoldername = t('browse-dashboards.action.new-folder-label', 'Folder name');
   const translatedFolderNameRequiredPhrase = t(
     'browse-dashboards.action.new-folder-name-required-phrase',
     'Folder name is required.'
@@ -35,12 +34,14 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
     }
   };
 
+  const fieldNameLabel = t('browse-dashboards.new-folder-form.name-label', 'Folder name');
+
   return (
     <Form defaultValues={initialFormModel} onSubmit={(form: FormModel) => onConfirm(form.folderName)}>
       {({ register, errors }) => (
         <>
           <Field
-            label={translatedFoldername}
+            label={fieldNameLabel}
             invalid={!!errors.folderName}
             error={errors.folderName && errors.folderName.message}
           >
@@ -54,10 +55,10 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
           </Field>
           <HorizontalGroup>
             <Button variant="secondary" fill="outline" onClick={onCancel}>
-              <Trans i18nKey="browse-dashboards.action.cancel-button">Cancel</Trans>
+              <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
             </Button>
             <Button type="submit">
-              <Trans i18nKey="browse-dashboards.action.create-button">Create</Trans>
+              <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
             </Button>
           </HorizontalGroup>
         </>

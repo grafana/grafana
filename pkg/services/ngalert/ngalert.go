@@ -124,7 +124,7 @@ type AlertNG struct {
 	NotificationService notifications.Service
 	Log                 log.Logger
 	renderService       rendering.Service
-	imageService        image.ImageService
+	ImageService        image.ImageService
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -164,7 +164,7 @@ func (ng *AlertNG) init() error {
 	if err != nil {
 		return err
 	}
-	ng.imageService = imageService
+	ng.ImageService = imageService
 
 	// Let's make sure we're able to complete an initial sync of Alertmanagers before we start the alerting components.
 	if err := ng.MultiOrgAlertmanager.LoadAndSyncAlertmanagersForOrgs(initCtx); err != nil {
@@ -215,7 +215,7 @@ func (ng *AlertNG) init() error {
 		Metrics:                 ng.Metrics.GetStateMetrics(),
 		ExternalURL:             appUrl,
 		InstanceStore:           ng.store,
-		Images:                  ng.imageService,
+		Images:                  ng.ImageService,
 		Clock:                   clk,
 		Historian:               history,
 		DoNotSaveNormalState:    ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),

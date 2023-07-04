@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
@@ -12,6 +12,7 @@ import { contextSrv } from 'app/core/core';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
+import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
@@ -130,7 +131,7 @@ const Policy: FC<PolicyComponentProps> = ({
         <div className={styles.policyItemWrapper}>
           <Stack direction="column" gap={1}>
             {/* Matchers and actions */}
-            <div className={styles.matchersRow}>
+            <div>
               <Stack direction="row" alignItems="center" gap={1}>
                 {isDefaultPolicy ? (
                   <DefaultPolicyIndicator />
@@ -345,18 +346,13 @@ const InheritedProperties: FC<{ properties: InhertitableProperties }> = ({ prope
     placement="top"
     content={
       <Stack direction="row" gap={0.5}>
-        {Object.entries(properties).map(([key, value]) => {
-          // no idea how to do this with TypeScript without type casting...
-          return (
-            <Label
-              key={key}
-              // @ts-ignore
-              label={routePropertyToLabel(key)}
-              // @ts-ignore
-              value={<Strong>{routePropertyToValue(key, value)}</Strong>}
-            />
-          );
-        })}
+        {Object.entries(properties).map(([key, value]) => (
+          <Label
+            key={key}
+            label={routePropertyToLabel(key)}
+            value={<Strong>{routePropertyToValue(key, value)}</Strong>}
+          />
+        ))}
       </Stack>
     }
   >
@@ -433,18 +429,6 @@ interface ContactPointDetailsProps {
   contactPoint: string;
   receivers: Receiver[];
 }
-
-const INTEGRATION_ICONS: Record<string, IconName> = {
-  discord: 'discord',
-  email: 'envelope',
-  googlechat: 'google-hangouts-alt',
-  hipchat: 'hipchat',
-  line: 'line',
-  pagerduty: 'pagerduty',
-  slack: 'slack',
-  teams: 'microsoft',
-  telegram: 'telegram-alt',
-};
 
 // @TODO make this work for cloud AMs too
 const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
@@ -524,7 +508,7 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
   return contactPointErrors;
 }
 
-const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
+const routePropertyToLabel = (key: keyof InhertitableProperties | string): string => {
   switch (key) {
     case 'receiver':
       return 'Contact Point';
@@ -538,10 +522,15 @@ const routePropertyToLabel = (key: keyof InhertitableProperties): string => {
       return 'Mute timings';
     case 'repeat_interval':
       return 'Repeat interval';
+    default:
+      return key;
   }
 };
 
-const routePropertyToValue = (key: keyof InhertitableProperties, value: string | string[]): React.ReactNode => {
+const routePropertyToValue = (
+  key: keyof InhertitableProperties | string,
+  value: string | string[]
+): React.ReactNode => {
   const isNotGrouping = key === 'group_by' && Array.isArray(value) && value[0] === '...';
   const isSingleGroup = key === 'group_by' && Array.isArray(value) && value.length === 0;
 
@@ -601,10 +590,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   metadataRow: css`
     background: ${theme.colors.background.secondary};
 
-    border-bottom-left-radius: ${theme.shape.borderRadius(1)};
-    border-bottom-right-radius: ${theme.shape.borderRadius(1)};
+    border-bottom-left-radius: ${theme.shape.borderRadius(2)};
+    border-bottom-right-radius: ${theme.shape.borderRadius(2)};
   `,
-  matchersRow: css``,
   policyWrapper: (hasFocus = false) => css`
     flex: 1;
     position: relative;

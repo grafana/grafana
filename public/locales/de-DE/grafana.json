@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
       "cancel-button": "",
@@ -21,8 +44,18 @@
     },
     "dashboards-tree": {
       "name-column": "",
-      "tags-column": "",
-      "type-column": ""
+      "tags-column": ""
+    },
+    "folder-actions-button": {
+      "delete": "",
+      "folder-actions": "",
+      "manage-permissions": "",
+      "move": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "manage-folder-nav": {
       "alert-rules": "",
@@ -34,11 +67,6 @@
     "no-results": {
       "clear": "",
       "text": ""
-    },
-    "type-cell": {
-      "dashboard": "",
-      "folder": "",
-      "panel": ""
     }
   },
   "clipboard-button": {
@@ -69,6 +97,14 @@
       "default": "Standard"
     },
     "save": "Speichern"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -155,6 +191,11 @@
       "unmark-favorite": "Markierung als Favorit entfernen"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
@@ -163,6 +204,10 @@
       "error": "Fehler beim Laden der Optionen",
       "loading": "Optionen werden geladen ...",
       "no-options": "Keine Optionen gefunden"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -186,11 +231,15 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
@@ -246,6 +295,10 @@
     "config": {
       "title": "Verwaltung"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "Füge Korrelationen hinzu und konfiguriere sie",
       "title": "Korrelationen"
@@ -268,6 +321,10 @@
     "dashboards": {
       "subtitle": "Erstelle und verwalte Dashboards, um deine Daten zu visualisieren",
       "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "Füge Datenquellen hinzu und konfiguriere sie",
@@ -431,6 +488,10 @@
       "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
       "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
+    "auto-option": {
+      "aria-label": "",
+      "label": ""
+    },
     "live-option": {
       "aria-label": "Live-Streaming einschalten",
       "label": "Live"
@@ -589,6 +650,16 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
+  },
+  "state": {
+    "nav-model": {
+      "dashboards": "",
+      "panels": ""
+    },
+    "nav-models": {
+      "alert-rules": "",
+      "manage-folder-subtitle": ""
+    }
   },
   "tag-filter": {
     "loading": "Wird geladen ...",
