@@ -8,6 +8,8 @@ import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
 import { option } from '../../../../utils/notifier-types';
 
+const GRAFANA_INTEGRATION_TYPE = 'grafana';
+
 export function useOnCallIntegration() {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
 
@@ -20,7 +22,7 @@ export function useOnCallIntegration() {
   );
 
   const grafanaOnCallIntegrations = useMemo(() => {
-    return onCallIntegrations.filter((i) => i.integration === 'grafana_alerting');
+    return onCallIntegrations.filter((i) => i.integration === GRAFANA_INTEGRATION_TYPE);
   }, [onCallIntegrations]);
 
   const onCallNotifier = useOnCallNotifier(grafanaOnCallIntegrations);
@@ -84,7 +86,7 @@ export function useOnCallIntegration() {
 
       const createNewOnCallIntegrationJobs = newOnCallIntegrations.map(async (c) => {
         const newIntegration = await createIntegrationMutation({
-          integration: 'grafana',
+          integration: GRAFANA_INTEGRATION_TYPE,
           verbal_name: c.settings['integration_name'],
         }).unwrap();
         c.type = 'webhook';

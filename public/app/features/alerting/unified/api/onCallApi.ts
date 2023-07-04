@@ -17,6 +17,7 @@ export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getOnCallIntegrations: build.query<OnCallIntegration[], void>({
       query: () => ({ url: '/api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels/' }),
+      providesTags: ['OnCallIntegrations'],
     }),
     createIntegration: build.mutation<OnCallIntegration, CreateIntegrationDTO>({
       query: (integration) => ({
@@ -24,6 +25,7 @@ export const onCallApi = alertingApi.injectEndpoints({
         data: integration,
         method: 'POST',
       }),
+      invalidatesTags: ['OnCallIntegrations'],
     }),
   }),
 });
