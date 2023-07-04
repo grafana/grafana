@@ -46,8 +46,22 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 	keepCookies := map[string]*http.Cookie{}
 	for _, c := range req.Cookies() {
 		for _, v := range keepCookiesNames {
-			if c.Name == v {
+			// match all
+			if v == "[]" {
 				keepCookies[c.Name] = c
+				continue
+			}
+
+			l := len(v) - 2
+			if v[l:] == "[]" {
+				if len(c.Name) >= l && c.Name[:l] == v[:l] {
+					keepCookies[c.Name] = c
+				}
+			} else {
+				// look for exact match
+				if c.Name == v {
+					keepCookies[c.Name] = c
+				}
 			}
 		}
 	}
