@@ -66,10 +66,8 @@ httpMethod: POST
 manageAlerts: true
 prometheusType: Prometheus
 prometheusVersion: 2.44.0
-incrementalQuerying: true
-incrementalQueryOverlapWindow: 10m
 cacheLevel: 'High'
-incrementalQuerying: true
+disableRecordingRules: false
 incrementalQueryOverlapWindow: 10m
 exemplarTraceIdDestinations:
 # Field with internal link pointing to data source in Grafana.
@@ -141,3 +139,7 @@ This can be toggled on or off in the data source configuration or provisioning f
 Additionally, the amount of overlap between incremental queries can be configured using the `incrementalQueryOverlapWindow` jsonData field, the default value is `10m` (10 minutes).
 
 Increasing the duration of the `incrementalQueryOverlapWindow` will increase the size of every incremental query, but might be helpful for instances that have inconsistent results for recent data.
+
+## Recording Rules (beta)
+
+The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).

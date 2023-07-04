@@ -35,10 +35,10 @@ import {
   DataSourceWithQueryManipulationSupport,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 
+import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
 import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
@@ -54,7 +54,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addFilterToQuery, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import { addFilterToQuery, escapeFilter, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -952,10 +952,15 @@ export class ElasticDatasource
       return query;
     }
     const esFilters = adhocFilters.map((filter) => {
-      const { key, operator, value } = filter;
+      let { key, operator, value } = filter;
       if (!key || !value) {
         return;
       }
+      /**
+       * Keys and values in ad hoc filters may contain characters such as
+       * colons, which needs to be escaped.
+       */
+      key = escapeFilter(key);
       switch (operator) {
         case '=':
           return `${key}:"${value}"`;

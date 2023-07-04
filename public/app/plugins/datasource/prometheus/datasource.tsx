@@ -106,6 +106,7 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  disableRecordingRules: boolean;
   defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
@@ -144,6 +145,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
+    this.disableRecordingRules = instanceSettings.jsonData.disableRecordingRules ?? false;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
@@ -164,7 +166,9 @@ export class PrometheusDatasource
   }
 
   init = async () => {
-    this.loadRules();
+    if (!this.disableRecordingRules) {
+      this.loadRules();
+    }
     this.exemplarsAvailable = await this.areExemplarsAvailable();
   };
 
