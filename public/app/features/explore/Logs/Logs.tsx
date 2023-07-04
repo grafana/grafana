@@ -283,6 +283,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
     if (this.props.onStartScanning) {
       this.props.onStartScanning();
     }
+    reportInteraction('grafana_explore_logs_scanning_button_clicked', {
+      type: 'start',
+      datasourceType: this.props.datasourceType,
+    });
   };
 
   onClickStopScan = (event: React.SyntheticEvent) => {
