@@ -42,4 +42,9 @@ export type TopTableValue = {
   unitValue: string;
 };
 
+export enum ColorScheme {
+  ValueBased = 'valueBased',
+  PackageBased = 'packageBased',
+}
+
 export type TextAlign = 'left' | 'right';
