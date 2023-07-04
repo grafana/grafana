@@ -801,6 +801,17 @@ export function scanStart(exploreId: string): ThunkResult<void> {
   };
 }
 
+/**
+ * Stops a running scan
+ * @param exploreId Explore area
+ */
+export function scanStop(exploreId: string): ThunkResult<void> {
+  return (dispatch, getState) => {
+    dispatch(scanStopAction({ exploreId }));
+    dispatch(cancelQueries(exploreId));
+  };
+}
+
 export function addResultsToCache(exploreId: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const queryResponse = getState().explore.panes[exploreId]!.queryResponse;

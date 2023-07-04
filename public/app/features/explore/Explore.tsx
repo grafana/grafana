@@ -59,7 +59,7 @@ import {
   addQueryRow,
   modifyQueries,
   scanStart,
-  scanStopAction,
+  scanStop,
   selectIsWaitingForData,
   setQueries,
   setSupplementaryQueryEnabled,
@@ -226,7 +226,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   };
 
   onStopScanning = () => {
-    this.props.scanStopAction({ exploreId: this.props.exploreId });
+    this.props.scanStop(this.props.exploreId);
   };
 
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
@@ -588,7 +588,7 @@ const mapDispatchToProps = {
   changeSize,
   modifyQueries,
   scanStart,
-  scanStopAction,
+  scanStop,
   setQueries,
   updateTimeRange,
   makeAbsoluteTime,
