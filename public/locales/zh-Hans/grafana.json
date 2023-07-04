@@ -26,12 +26,10 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "",
-      "create-button": "",
       "delete-button": "",
       "delete-modal-text": "",
       "delete-modal-title": "",
       "deleting": "",
-      "folder-actions-button": "",
       "manage-permissions-button": "",
       "move-button": "",
       "move-modal-alert": "",
@@ -39,7 +37,6 @@
       "move-modal-text": "",
       "move-modal-title": "",
       "moving": "",
-      "new-folder-label": "",
       "new-folder-name-required-phrase": ""
     },
     "dashboards-tree": {
@@ -52,17 +49,17 @@
       "manage-permissions": "",
       "move": ""
     },
-    "new-folder-form": {
-      "cancel-label": "",
-      "create-label": "",
-      "name-label": ""
-    },
     "manage-folder-nav": {
       "alert-rules": "",
       "dashboards": "",
       "panels": "",
       "permissions": "",
       "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -650,16 +647,6 @@
       "default-label": "默认"
     },
     "title": "首选项"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
   },
   "tag-filter": {
     "loading": "加载中...",
