@@ -88,6 +88,8 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
                 onChange={(value) => setShowSpanFilterMatchesOnly(value.currentTarget.checked ?? false)}
                 label="Show matches only switch"
               />
+              {/* TODO: fix keyboard a11y */}
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
               <span onClick={() => setShowSpanFilterMatchesOnly(!showSpanFilterMatchesOnly)}>Show matches only</span>
             </div>
           </div>
