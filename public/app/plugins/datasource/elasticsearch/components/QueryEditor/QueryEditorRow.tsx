@@ -34,7 +34,7 @@ export const QueryEditorRow = ({
                 size="sm"
                 aria-pressed={hidden}
                 className={styles.icon}
-                tooltip="Hide metric"
+                tooltip="Hide row"
               />
             )}
             <IconButton
