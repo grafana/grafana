@@ -12,8 +12,12 @@ jobs:
     steps:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v3"
+
+      - name: "Checkout kind-registry repo"
+        uses: "actions/checkout@v3"
         with:
-          fetch-depth: 0
+          repository: grafana/kind-registry
+          path: ./kind-registry
 
       - name: "Setup Go"
         uses: "actions/setup-go@v4"
@@ -21,7 +25,6 @@ jobs:
           go-version: '1.20.4'
 
       - name: "Verify kinds"
-        run: go run .github/workflows/scripts/kinds/verify-kinds.go
+        run: go run .github/workflows/scripts/kinds/verify-kinds.go ${{ github.workspace }}/kind-registry
         env:
           CODEGEN_VERIFY: 1
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
