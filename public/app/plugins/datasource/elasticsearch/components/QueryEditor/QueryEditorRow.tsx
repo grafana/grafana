@@ -43,7 +43,7 @@ export const QueryEditorRow = ({
               className={styles.icon}
               onClick={onRemoveClick || noop}
               disabled={!onRemoveClick}
-              tooltip="Remove metric"
+              tooltip="Remove row"
             />
           </span>
         </InlineLabel>
