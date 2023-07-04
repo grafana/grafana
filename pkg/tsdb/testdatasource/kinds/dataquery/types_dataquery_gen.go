@@ -40,6 +40,7 @@ const (
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
+	TestDataQueryTypeFlameGraphEmpty              TestDataQueryType = "flame_graph_empty"
 	TestDataQueryTypeGrafanaApi                   TestDataQueryType = "grafana_api"
 	TestDataQueryTypeLinearHeatmapBucketData      TestDataQueryType = "linear_heatmap_bucket_data"
 	TestDataQueryTypeLive                         TestDataQueryType = "live"
