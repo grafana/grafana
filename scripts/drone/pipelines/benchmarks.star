@@ -26,6 +26,7 @@ load(
 
 def integration_benchmarks(trigger, prefix):
     """Generate a pipeline for integration tests.
+
     Args:
       trigger: controls which events can trigger the pipeline execution.
       prefix: used in the naming of the pipeline.
