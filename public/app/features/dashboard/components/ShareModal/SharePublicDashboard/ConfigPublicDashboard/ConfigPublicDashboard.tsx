@@ -122,7 +122,7 @@ const ConfigPublicDashboard = () => {
   }
 
   return (
-    <div>
+    <div className={styles.configContainer}>
       {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
       {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
@@ -130,8 +130,8 @@ const ConfigPublicDashboard = () => {
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
 
-      {/* {hasEmailSharingEnabled && <EmailSharingConfiguration />} */}
-      <EmailSharingConfiguration />
+      {hasEmailSharingEnabled && <EmailSharingConfiguration />}
+
       <Field label="Dashboard URL" className={styles.fieldSpace}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
@@ -215,18 +215,17 @@ const ConfigPublicDashboard = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  titleContainer: css`
-    label: 'title container';
-    margin-bottom: ${theme.spacing(2)};
-  `,
-  title: css`
-    label: 'title';
-    margin: 0;
+  configContainer: css`
+    label: 'config container';
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
   `,
   fieldSpace: css`
     label: 'field space';
     width: 100%;
-    margin-bottom: ${theme.spacing(3)};
+    margin-bottom: 0;
   `,
   collapsedText: css`
     label: 'collapsed text';

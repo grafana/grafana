@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useWindowSize } from 'react-use';
@@ -154,7 +154,13 @@ export const EmailSharingConfiguration = () => {
 
   return (
     <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
-      <Field label="Can view dashboard">
+      <Field
+        label="Can view dashboard"
+        className={cx(
+          { [styles.emailViewOptionsContainer]: watch('shareType') === PublicDashboardShareType.EMAIL },
+          { [styles.linkViewOptionsContainer]: watch('shareType') === PublicDashboardShareType.PUBLIC }
+        )}
+      >
         <InputControl
           name="shareType"
           control={control}
@@ -184,6 +190,7 @@ export const EmailSharingConfiguration = () => {
             description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
+            className={styles.emailField}
           >
             <div className={styles.emailContainer}>
               <Input
@@ -221,16 +228,31 @@ export const EmailSharingConfiguration = () => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(2)};
+    label: 'sharing config container';
+  `,
+  emailField: css`
+    label: 'email field';
+    margin-bottom: 0;
   `,
   emailContainer: css`
+    label: 'email container';
     display: flex;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
+    label: 'email input';
     flex-grow: 1;
   `,
+  emailViewOptionsContainer: css`
+    label: 'email view options container';
+    margin-bottom: ${theme.spacing(3)};
+  `,
+  linkViewOptionsContainer: css`
+    label: 'link view options container';
+    margin-bottom: 0;
+  `,
   table: css`
+    label: 'table';
     display: flex;
     max-height: 220px;
     overflow-y: scroll;
