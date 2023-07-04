@@ -254,9 +254,13 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				}
 			default:
 				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
-				builder.WriteString("WHERE d.uid IN ")
-				builder.WriteString(permSelector.String())
-				args = append(args, permSelectorArgs...)
+				if len(permSelectorArgs) > 0 {
+					builder.WriteString("WHERE d.uid IN ")
+					builder.WriteString(permSelector.String())
+					args = append(args, permSelectorArgs...)
+				} else {
+					builder.WriteString("WHERE 1 = 0")
+				}
 			}
 			builder.WriteString(") AND NOT dashboard.is_folder)")
 		} else {
@@ -317,9 +321,13 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					args = append(args, nestedFoldersArgs...)
 				}
 			default:
-				builder.WriteString("(dashboard.uid IN ")
-				builder.WriteString(permSelector.String())
-				args = append(args, permSelectorArgs...)
+				if len(permSelectorArgs) > 0 {
+					builder.WriteString("(dashboard.uid IN ")
+					builder.WriteString(permSelector.String())
+					args = append(args, permSelectorArgs...)
+				} else {
+					builder.WriteString("(1 = 0")
+				}
 			}
 			builder.WriteString(" AND dashboard.is_folder)")
 		} else {
