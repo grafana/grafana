@@ -319,6 +319,12 @@ abstract class DataSourceApi<
   targetContainsTemplate?(query: TQuery): boolean;
 
   /**
+   * Used in explore
+   * @deprecated instead implement `DataSourceWithQueryManipulationSupport`
+   */
+  modifyQuery?(query: TQuery, action: QueryFixAction): TQuery;
+
+  /**
    * @deprecated since version 8.2.0
    * Not used anymore.
    */
