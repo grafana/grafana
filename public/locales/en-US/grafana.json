@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "access-control": {
+    "add-permission": {
+      "role-label": "Role",
+      "team-label": "Team",
+      "title": "Add permission for",
+      "user-label": "User"
+    },
+    "add-permissions": {
+      "save": "Save"
+    },
+    "permission-list": {
+      "permission": "Permission"
+    },
+    "permissions": {
+      "add-label": "Add a permission",
+      "no-permissions": "There are no permissions",
+      "permissions-change-warning": "This will change permissions for this folder and all its descendants. In total, this will affect:",
+      "role": "Role",
+      "team": "Team",
+      "title": "Permissions",
+      "user": "User"
+    }
+  },
   "browse-dashboards": {
     "action": {
       "delete-button": "Delete",
@@ -10,7 +33,15 @@
       "tags-column": "Tags"
     },
     "folder-actions-button": {
-      "folder-actions": "Folder actions"
+      "delete": "Delete",
+      "folder-actions": "Folder actions",
+      "manage-permissions": "Manage permissions",
+      "move": "Move"
+    },
+    "new-folder-form": {
+      "cancel-label": "Cancel",
+      "create-label": "Create",
+      "name-label": "Folder name"
     },
     "no-results": {
       "clear": "Clear search and filters",
@@ -45,6 +76,14 @@
       "default": "Default"
     },
     "save": "Save"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": "Data sources"
+    },
+    "search": {
+      "placeholder": "Search all"
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -131,6 +170,11 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": "Add new data source"
+    }
+  },
   "folder-picker": {
     "loading": "Loading folders..."
   },
@@ -139,6 +183,10 @@
       "error": "Failed to load options",
       "loading": "Loading options...",
       "no-options": "No options found"
+    },
+    "select": {
+      "no-options-label": "No options found",
+      "placeholder": "Choose"
     }
   },
   "library-panel": {
@@ -162,11 +210,15 @@
   },
   "login": {
     "error": {
+      "blocked": "You have exceeded the number of login attempts for this user. Please try again later.",
       "invalid-user-or-password": "Invalid username or password",
       "unknown": "Unknown error occurred"
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": "Add new connection"
+    },
     "admin": {
       "subtitle": "Manage server-wide settings and access to resources such as organizations, users, and licenses",
       "title": "Server admin"
@@ -222,6 +274,10 @@
     "config": {
       "title": "Administration"
     },
+    "connections": {
+      "subtitle": "Browse and create new connections",
+      "title": "Connections"
+    },
     "correlations": {
       "subtitle": "Add and configure correlations",
       "title": "Correlations"
@@ -244,6 +300,10 @@
     "dashboards": {
       "subtitle": "Create and manage dashboards to visualize your data",
       "title": "Dashboards"
+    },
+    "data-sources": {
+      "subtitle": "View and manage your connected data source connections",
+      "title": "Data sources"
     },
     "datasources": {
       "subtitle": "Add and configure data sources",
