@@ -91,3 +91,4 @@ elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,fa
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
 prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true
 awsDatasourcesTempCredentials,experimental,@grafana/aws-datasources,false,false,false,false
+transformationsRedesign,experimental,@grafana/observability-metrics,false,false,false,true

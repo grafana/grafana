@@ -123,6 +123,7 @@ Experimental features might be changed or removed without prior notice.
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
 | `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
+| `transformationsRedesign`                   | Enables the transformations redesign                                                                         |
 
 ## Development feature toggles
 
