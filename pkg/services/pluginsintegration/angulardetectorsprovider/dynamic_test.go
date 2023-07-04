@@ -21,12 +21,11 @@ import (
 )
 
 func TestDynamicAngularDetectorsProvider(t *testing.T) {
+	mockGCOMPatterns := newMockGCOMPatterns()
 	gcom := newDefaultGCOMScenario()
 	srv := gcom.newHTTPTestServer()
 	t.Cleanup(srv.Close)
 
-	var mockGCOMPatterns GCOMPatterns
-	require.NoError(t, json.Unmarshal(mockGCOMResponse, &mockGCOMPatterns))
 	svc := provideDynamic(t, srv.URL)
 	mockGCOMDetectors, err := svc.patternsToDetectors(mockGCOMPatterns)
 	require.NoError(t, err)
@@ -202,6 +201,13 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			require.Equal(t, mockGCOMDetectors, svc.detectors)
 		})
 	})
+}
+
+func TestDynamicAngularDetectorsProviderBackgroundService(t *testing.T) {
+	mockGCOMPatterns := newMockGCOMPatterns()
+	gcom := newDefaultGCOMScenario()
+	srv := gcom.newHTTPTestServer()
+	t.Cleanup(srv.Close)
 
 	t.Run("background service", func(t *testing.T) {
 		oldBackgroundJobInterval := backgroundJobInterval
@@ -237,7 +243,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 			svc.store = mockStore
 
 			// Store mock GCOM patterns
-			err = mockStore.Set(context.Background(), mockGCOMPatterns)
+			err := mockStore.Set(context.Background(), mockGCOMPatterns)
 			require.NoError(t, err)
 
 			// Ensure the detectors are initially empty
@@ -331,6 +337,14 @@ func checkMockDetectors(t *testing.T, detectors []angulardetector.AngularDetecto
 	rd, ok := detectors[1].(*angulardetector.RegexDetector)
 	require.True(t, ok)
 	require.Equal(t, `["']QueryCtrl["']`, rd.Regex.String())
+}
+
+func newMockGCOMPatterns() GCOMPatterns {
+	var mockGCOMPatterns GCOMPatterns
+	if err := json.Unmarshal(mockGCOMResponse, &mockGCOMPatterns); err != nil {
+		panic(err)
+	}
+	return mockGCOMPatterns
 }
 
 type counter struct {
