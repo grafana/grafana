@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // GoogleChatNotifier is responsible for sending
@@ -106,7 +105,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		Buttons: []button{
 			{
 				TextButton: textButton{
-					Text: "OPEN IN GRAFANA",
+					Text: "OPEN IN LOGZIO", // LOGZ.IO GRAFANA CHANGE :: DEV-40291 FIx Google chat notification messages
 					OnClick: onClick{
 						OpenLink: openLink{
 							URL: ToLogzioAppPath(ruleURL), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
@@ -120,7 +119,7 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 	// Add text paragraph widget for the build version and timestamp.
 	widgets = append(widgets, textParagraphWidget{
 		Text: text{
-			Text: "Grafana v" + setting.BuildVersion + " | " + (timeNow()).Format(time.RFC822),
+			Text: (timeNow()).Format(time.RFC822), // LOGZ.IO GRAFANA CHANGE :: DEV-40291 FIx Google chat notification messages
 		},
 	})
 
