@@ -3,11 +3,12 @@ import React, { useCallback } from 'react';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { DataSourceHttpSettings } from '@grafana/ui';
 import { Divider } from 'app/core/components/Divider';
 
 import { LokiOptions } from '../types';
 
+import { AlertingSettings } from './AlertingSettings';
 import { DerivedFields } from './DerivedFields';
 import { QuerySettings } from './QuerySettings';
 
@@ -60,17 +61,15 @@ export const ConfigEditor = (props: Props) => {
         isCollapsible={true}
         isInitiallyOpen
       >
-        <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
-
+        <AlertingSettings options={options} onOptionsChange={onOptionsChange} />
+        <Divider hideLine />
         <QuerySettings
           maxLines={options.jsonData.maxLines || ''}
           onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
           predefinedOperations={options.jsonData.predefinedOperations || ''}
           onPredefinedOperationsChange={updatePredefinedOperations}
         />
-
         <Divider hideLine />
-
         <DerivedFields
           fields={options.jsonData.derivedFields}
           onChange={(value) => onOptionsChange(setDerivedFields(options, value))}
