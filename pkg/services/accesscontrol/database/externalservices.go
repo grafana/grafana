@@ -2,17 +2,23 @@ package database
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+// extServiceRoleUID generates a unique ID using SHA256 that fits within the 40 character limit of the role UID.
 func extServiceRoleUID(externalServiceID string) string {
 	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
-	return uid
+	hasher := fnv.New128a()
+	hasher.Write([]byte(uid))
+
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func extServiceRoleName(externalServiceID string) string {

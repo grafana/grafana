@@ -2,8 +2,10 @@ package database
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -163,7 +165,7 @@ func TestAccessControlStore_SaveExternalServiceRole(t *testing.T) {
 				require.NoError(t, err)
 
 				errDBSession := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
-					storedRole, err := getRoleByUID(ctx, sess, fmt.Sprintf("externalservice_%s_permissions", tt.runs[i].cmd.ExternalServiceID))
+					storedRole, err := getRoleByUID(ctx, sess, fnvHash(fmt.Sprintf("externalservice_%s_permissions", tt.runs[i].cmd.ExternalServiceID)))
 					require.NoError(t, err)
 					require.NotNil(t, storedRole)
 					require.Equal(t, tt.runs[i].cmd.Global, storedRole.Global(), "Incorrect global state of the role")
@@ -299,4 +301,10 @@ func TestAccessControlStore_DeleteExternalServiceRole(t *testing.T) {
 			})
 		})
 	}
+}
+
+func fnvHash(text string) string {
+	h := fnv.New128a()
+	_, _ = h.Write([]byte(text))
+	return hex.EncodeToString(h.Sum(nil))
 }
