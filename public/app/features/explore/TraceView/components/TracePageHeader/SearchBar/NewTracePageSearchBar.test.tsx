@@ -32,6 +32,7 @@ describe('<NewTracePageSearchBar>', () => {
       datasourceType: '',
       clear: jest.fn(),
       totalSpans: 100,
+      showSpanFilters: true,
     };
 
     return <NewTracePageSearchBar {...searchBarProps} />;
