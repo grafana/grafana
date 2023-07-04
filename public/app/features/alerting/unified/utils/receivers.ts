@@ -1,4 +1,4 @@
-import { capitalize } from 'lodash';
+import { capitalize, isEmpty, times } from 'lodash';
 
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaManagedReceiverConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
@@ -9,7 +9,7 @@ import { NotifierDTO } from 'app/types';
 type NotifierTypeCounts = Record<string, number>; // name : count
 
 export function extractNotifierTypeCounts(receiver: Receiver, grafanaNotifiers: NotifierDTO[]): NotifierTypeCounts {
-  if (receiver['grafana_managed_receiver_configs']) {
+  if ('grafana_managed_receiver_configs' in receiver) {
     return getGrafanaNotifierTypeCounts(receiver.grafana_managed_receiver_configs ?? [], grafanaNotifiers);
   }
   return getCortexAlertManagerNotifierTypeCounts(receiver);
@@ -27,6 +27,30 @@ function getCortexAlertManagerNotifierTypeCounts(receiver: Receiver): NotifierTy
         [name]: (acc[name] ?? 0) + (Array.isArray(value) ? value.length : 1),
       };
     }, {});
+}
+
+export function extractReceivers(receiver: Receiver): GrafanaManagedReceiverConfig[] {
+  if ('grafana_managed_receiver_configs' in receiver) {
+    return receiver.grafana_managed_receiver_configs ?? [];
+  }
+
+  const integrations = Object.entries(receiver)
+    .filter(([key]) => key !== 'grafana_managed_receiver_configs' && key.endsWith('_configs'))
+    .filter(([_, value]) => Array.isArray(value) && !isEmpty(value))
+    .reduce((acc: GrafanaManagedReceiverConfig[], [key, value]) => {
+      const type = key.replace('_configs', '');
+
+      const configs = times(value.length, () => ({
+        name: receiver.name,
+        type: type,
+        settings: [], // we don't normalize the configuration values
+        disableResolveMessage: false,
+      }));
+
+      return acc.concat(configs);
+    }, []);
+
+  return integrations;
 }
 
 function getGrafanaNotifierTypeCounts(

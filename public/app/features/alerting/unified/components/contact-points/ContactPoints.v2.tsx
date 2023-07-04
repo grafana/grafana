@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniqueId } from 'lodash';
+import { uniqueId, upperFirst } from 'lodash';
 import React, { ReactNode } from 'react';
 
 import { dateTime, GrafanaTheme2 } from '@grafana/data';
@@ -7,8 +7,10 @@ import { Stack } from '@grafana/experimental';
 import { Alert, Badge, Button, Dropdown, Icon, LoadingPlaceholder, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
+import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaNotifierType, NotifierStatus } from 'app/types/alerting';
 
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { MetaText } from '../MetaText';
 import { Spacer } from '../Spacer';
@@ -19,10 +21,9 @@ import { RECEIVER_STATUS_KEY, useContactPointsWithStatus, useDeleteContactPoint 
 import { getReceiverDescription, isProvisioned, ReceiverConfigWithStatus } from './utils';
 
 const ContactPoints = () => {
-  // TODO hardcoded for now, change this to allow selecting different alertmanager
-  const selectedAlertmanager = 'grafana';
-  const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager);
-  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager);
+  const { selectedAlertmanager } = useAlertmanager();
+  const { isLoading, error, contactPoints } = useContactPointsWithStatus(selectedAlertmanager!);
+  const { deleteTrigger, updateAlertmanagerState } = useDeleteContactPoint(selectedAlertmanager!);
 
   const [DeleteModal, showDeleteModal] = useDeleteContactPointModal(deleteTrigger, updateAlertmanagerState.isLoading);
 
@@ -30,7 +31,6 @@ const ContactPoints = () => {
     return <Alert title="Failed to fetch contact points">{String(error)}</Alert>;
   }
 
-  // TODO show loading skeleton?
   if (isLoading) {
     return <LoadingPlaceholder text={'Loading...'} />;
   }
@@ -41,7 +41,6 @@ const ContactPoints = () => {
         {contactPoints.map((contactPoint) => {
           const contactPointKey = selectedAlertmanager + contactPoint.name;
           const provisioned = isProvisioned(contactPoint);
-          const receivers = contactPoint.grafana_managed_receiver_configs;
           const disabled = updateAlertmanagerState.isLoading;
 
           return (
@@ -50,7 +49,7 @@ const ContactPoints = () => {
               name={contactPoint.name}
               disabled={disabled}
               onDelete={showDeleteModal}
-              receivers={receivers}
+              receivers={contactPoint.grafana_managed_receiver_configs}
               provisioned={provisioned}
             />
           );
@@ -202,6 +201,8 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
 
   const iconName = INTEGRATION_ICONS[type];
   const hasMetadata = diagnostics !== undefined;
+  // TODO get the actual name of the type from /ngalert if grafanaManaged AM
+  const receiverName = receiverTypeNames[type] ?? upperFirst(type);
 
   return (
     <div className={styles.integrationWrapper}>
@@ -211,7 +212,7 @@ const ContactPointReceiver = (props: ContactPointReceiverProps) => {
             <Stack direction="row" alignItems="center" gap={0.5}>
               {iconName && <Icon name={iconName} />}
               <Span variant="body" color="primary">
-                {type}
+                {receiverName}
               </Span>
             </Stack>
             {description && (

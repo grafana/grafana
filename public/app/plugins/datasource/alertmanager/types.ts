@@ -79,7 +79,12 @@ export type GrafanaManagedReceiverConfig = {
   provenance?: string;
 };
 
-export type Receiver = {
+export interface GrafanaManagedContactPoint {
+  name: string;
+  grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
+}
+
+export interface AlertmanagerReceiver {
   name: string;
 
   email_configs?: EmailConfig[];
@@ -90,9 +95,11 @@ export type Receiver = {
   webhook_configs?: WebhookConfig[];
   victorops_configs?: any[];
   wechat_configs?: any[];
-  grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
-  [key: string]: any; // what? Why? – Gilles
-};
+
+  [key: `${string}_configs`]: any; // this is supposedly to support any *_configs
+}
+
+export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
 
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 

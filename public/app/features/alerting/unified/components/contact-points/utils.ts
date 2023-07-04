@@ -3,14 +3,16 @@ import { ReactNode } from 'react';
 
 import {
   AlertManagerCortexConfig,
+  GrafanaManagedContactPoint,
   GrafanaManagedReceiverConfig,
-  Receiver,
 } from 'app/plugins/datasource/alertmanager/types';
 import { NotifierStatus, ReceiversStateDTO } from 'app/types';
 
+import { extractReceivers } from '../../utils/receivers';
+
 import { RECEIVER_STATUS_KEY } from './useContactPoints';
 
-export function isProvisioned(contactPoint: Receiver) {
+export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
   // for some reason the provenance is on the receiver and not the entire contact point
   const provenance = contactPoint.grafana_managed_receiver_configs?.find((receiver) => receiver.provenance)?.provenance;
 
@@ -21,7 +23,8 @@ export function isProvisioned(contactPoint: Receiver) {
 export function getReceiverDescription(receiver: GrafanaManagedReceiverConfig): ReactNode | undefined {
   switch (receiver.type) {
     case 'email': {
-      return summarizeEmailAddresses(receiver.settings['addresses']);
+      const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
+      return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
     }
     case 'slack': {
       const channelName = receiver.settings['recipient'];
@@ -60,7 +63,7 @@ export interface ReceiverConfigWithStatus extends GrafanaManagedReceiverConfig {
   [RECEIVER_STATUS_KEY]?: NotifierStatus | undefined;
 }
 
-export interface ContactPointWithStatus extends Receiver {
+export interface ContactPointWithStatus extends GrafanaManagedContactPoint {
   grafana_managed_receiver_configs: ReceiverConfigWithStatus[];
 }
 
@@ -76,7 +79,7 @@ export function enhanceContactPointsWithStatus(
   const contactPoints = result.alertmanager_config.receivers ?? [];
 
   return contactPoints.map((contactPoint) => {
-    const receivers = contactPoint.grafana_managed_receiver_configs ?? [];
+    const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 
     return {

@@ -9,7 +9,7 @@ import { remove } from 'lodash';
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { ContactPointWithStatus, enhanceContactPointsWithStatus } from './utils';
+import { enhanceContactPointsWithStatus } from './utils';
 
 export const RECEIVER_STATUS_KEY = Symbol('receiver_status');
 const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
@@ -47,7 +47,7 @@ export function useContactPointsWithStatus(selectedAlertmanager: string) {
   const error = fetchAlertmanagerConfiguration.error ?? fetchContactPointsStatus.error;
   const isLoading = fetchAlertmanagerConfiguration.isLoading || fetchContactPointsStatus.isLoading;
 
-  const contactPoints: ContactPointWithStatus[] = fetchAlertmanagerConfiguration.contactPoints;
+  const contactPoints = fetchAlertmanagerConfiguration.contactPoints;
 
   return {
     error,
