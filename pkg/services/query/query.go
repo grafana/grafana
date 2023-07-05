@@ -140,7 +140,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			// Handle panics in the datasource qery
 			defer recoveryFn(subDTO.Queries)
 
-			ctxCopy := contexthandler.CopyReqContext(ctx)
+			ctxCopy := contexthandler.CopyWithReqContext(ctx)
 			subResp, err := s.QueryData(ctxCopy, user, skipDSCache, subDTO)
 			if err == nil {
 				reqCtx, header := contexthandler.FromContext(ctxCopy), http.Header{}
