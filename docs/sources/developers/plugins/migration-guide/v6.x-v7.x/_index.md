@@ -1,4 +1,6 @@
 ---
+title: Migrate plugins from Grafana version 6.x to 7.0
+menuTitle: v6.x to v7.x
 description: Guide for migrating plugins from Grafana v6.x to v7.x
 keywords:
   - grafana
@@ -6,8 +8,6 @@ keywords:
   - migration
   - plugin
   - documentation
-title: Migrate plugins from Grafana version 6.x to 7.x
-menutitle: v6.x to v7.x
 weight: 2500
 ---
 
@@ -23,7 +23,7 @@ Plugins built using Angular still work in the near term, but we strongly encoura
 
 ### New data format
 
-Along with the move to React, the new plugin platform introduced a new internal data format called [data frames](data-frames.md).
+Along with the move to React, the new plugin platform introduced a new internal data format called [data frames]({{< relref "../../introduction-to-plugin-development/data-frames" >}}).
 
 Previously, data source plugins could send data either as time series or tables. With data frames, data sources can send any data in a table-like structure. This gives you more flexibility to visualize your data in Grafana.
 
@@ -78,7 +78,7 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 
 ## Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management/#allow-unsigned-plugins" >}}).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../../../administration/plugin-management#allow-unsigned-plugins" >}}).
 
 ## From version 6.5.x to 7.3.0
 
