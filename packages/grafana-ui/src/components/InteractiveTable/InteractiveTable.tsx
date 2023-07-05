@@ -197,7 +197,6 @@ export function InteractiveTable<TableData extends object>({
         {rows.map((row) => {
           const { key, ...otherRowProps } = row.getRowProps();
           const rowId = getRowHTMLID(row);
-          // @ts-expect-error react-table doesn't ship with useExpanded types and we can't use declaration merging without affecting the table viz
           const isExpanded = row.isExpanded;
 
           return (
