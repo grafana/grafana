@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { H1, Span } from '@grafana/ui/src/unstable';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -65,6 +66,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
+        <AppChromeUpdate pageNav={{ text: rule.name }} />
         <Stack direction="column" gap={3}>
           {/* breadcrumb and actions */}
           <Stack>
