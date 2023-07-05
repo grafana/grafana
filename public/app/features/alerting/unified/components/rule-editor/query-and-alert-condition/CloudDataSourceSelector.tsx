@@ -34,8 +34,6 @@ export const CloudDataSourceSelector = ({ dataSourceSelected }: { dataSourceSele
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}
-                  value={dataSourceSelected}
-                  name={dataSourceSelected ?? undefined}
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
                     setValue('location', undefined);

@@ -155,15 +155,15 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
       // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
       const query = updatedQueries[0];
-      if (isPromOrLokiQuery(query.model)) {
-        const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-        if (!dataSourceSettings) {
-          throw new Error('The Data source has not been defined.');
-        }
+      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+      if (!dataSourceSettings) {
+        throw new Error('The Data source has not been defined.');
+      }
+      setValue('dataSourceName', dataSourceSettings.name);
 
+      if (isPromOrLokiQuery(query.model)) {
         const expression = query.model.expr;
 
-        setValue('dataSourceName', dataSourceSettings.name);
         setValue('expression', expression);
       }
 
@@ -458,14 +458,18 @@ function SmartAlertTypeDetector({
   const [buttonClicked, setButtonClicked] = useState(false);
 
   const switchType = useCallback(() => {
-    setButtonClicked(true);
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
     }
-  }, [getValues, setValue, setButtonClicked]);
+  }, [getValues, setValue]);
+
+  const onClickSwitch = useCallback(() => {
+    setButtonClicked(true);
+    switchType();
+  }, [switchType, setButtonClicked]);
 
   useEffect(() => {
     if (!buttonClicked && canSwitch) {
@@ -501,7 +505,7 @@ function SmartAlertTypeDetector({
           />
 
           {canSwitch && (
-            <Button type="button" onClick={switchType} variant="secondary" className={styles.switchButton}>
+            <Button type="button" onClick={onClickSwitch} variant="secondary" className={styles.switchButton}>
               Switch to {switchToLabel} alert rule
             </Button>
           )}
