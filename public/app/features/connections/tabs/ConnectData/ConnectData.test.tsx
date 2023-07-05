@@ -32,16 +32,39 @@ const mockCatalogDataSourcePlugin = getCatalogPluginMock({
 
 const originalHasPermission = contextSrv.hasPermission;
 
+describe('Angular badge', () => {
+  test('does not show angular badge for non-angular plugins', async () => {
+    renderPage([
+      getCatalogPluginMock({
+        id: 'react-plugin',
+        name: 'React Plugin',
+        type: PluginType.datasource,
+        angularDetected: false,
+      }),
+    ]);
+    await waitFor(() => {
+      expect(screen.queryByText('React Plugin')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Angular')).not.toBeInTheDocument();
+  });
+
+  test('shows angular badge for angular plugins', async () => {
+    renderPage([
+      getCatalogPluginMock({
+        id: 'legacy-plugin',
+        name: 'Legacy Plugin',
+        type: PluginType.datasource,
+        angularDetected: true,
+      }),
+    ]);
+    await waitFor(() => {
+      expect(screen.queryByText('Legacy Plugin')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Angular')).toBeInTheDocument();
+  });
+});
+
 describe('Add new connection', () => {
-  let consoleErrorMock: jest.SpyInstance;
-  beforeAll(() => {
-    consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterAll(() => {
-    consoleErrorMock.mockRestore();
-  });
-
   beforeEach(() => {
     contextSrv.hasPermission = originalHasPermission;
   });
@@ -107,37 +130,5 @@ describe('Add new connection', () => {
     // Should not show the modal when clicking a card
     fireEvent.click(await screen.findByText('Sample data source'));
     expect(screen.queryByText(new RegExp(exampleSentenceInModal))).not.toBeInTheDocument();
-  });
-
-  describe('angular badge', () => {
-    test('does not show angular badge for non-angular plugins', async () => {
-      renderPage([
-        getCatalogPluginMock({
-          id: 'react-plugin',
-          name: 'React Plugin',
-          type: PluginType.datasource,
-          angularDetected: false,
-        }),
-      ]);
-      await waitFor(() => {
-        expect(screen.queryByText('React Plugin')).toBeInTheDocument();
-      });
-      expect(screen.queryByText('Angular')).not.toBeInTheDocument();
-    });
-
-    test('shows angular badge for angular plugins', async () => {
-      renderPage([
-        getCatalogPluginMock({
-          id: 'legacy-plugin',
-          name: 'Legacy Plugin',
-          type: PluginType.datasource,
-          angularDetected: true,
-        }),
-      ]);
-      await waitFor(() => {
-        expect(screen.queryByText('Legacy Plugin')).toBeInTheDocument();
-      });
-      expect(screen.queryByText('Angular')).toBeInTheDocument();
-    });
   });
 });
