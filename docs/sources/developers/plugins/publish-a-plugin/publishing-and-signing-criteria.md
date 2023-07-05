@@ -16,7 +16,7 @@ weight: 200
 
 # Plugin publishing and signing criteria
 
-Grafana plugins must adhere to the Grafana Labs [Plugin Policy](https://grafana.com/legal/plugins/). Our review process for publishing and signing will examine your compliance with this policy.
+Grafana plugins must adhere to the Grafana Labs [Plugin Policy](/legal/plugins/). Our review process for publishing and signing will examine your compliance with this policy.
 
 > **Important:** Grafana Labs reserves the right to decline or remove any plugin at its discretion. Failure to comply with publishing and signing criteria may result in immediate removal from the Grafana plugin catalog.
 
