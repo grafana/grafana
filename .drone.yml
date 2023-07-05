@@ -1295,13 +1295,9 @@ steps:
   name: mysql8-integration-benchmarks-8.0
 trigger:
   event:
-  - pull_request
-  paths:
-    exclude:
-    - docs/**
-    - '*.md'
-    include:
-    - pkg/*/*_bench_*
+  - promote
+  target:
+  - gobenchmarks
 type: docker
 volumes:
 - host:
@@ -7355,6 +7351,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2edbcfe12784ebab2351816e197aa8898ffa9be1a5ee22ff5e1012c0342b3bdc
+hmac: 4d92a0441f33b1b9e215301b6f92c0e71d1ab4971e7754e539394f80ba204516
 
 ...

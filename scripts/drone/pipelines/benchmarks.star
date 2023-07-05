@@ -24,11 +24,10 @@ load(
     "images",
 )
 
-def integration_benchmarks(trigger, prefix):
+def integration_benchmarks(prefix):
     """Generate a pipeline for integration tests.
 
     Args:
-      trigger: controls which events can trigger the pipeline execution.
       prefix: used in the naming of the pipeline.
     Returns:
       Drone pipeline.
@@ -103,7 +102,10 @@ def integration_benchmarks(trigger, prefix):
     return pipeline(
         name = "{}-integration-benchmarks".format(prefix),
         edition = "oss",
-        trigger = trigger,
+        trigger = {
+            "event": ["promote"],
+            "target": ["gobenchmarks"],
+        },
         environment = environment,
         services = services,
         volumes = volumes,

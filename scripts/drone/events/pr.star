@@ -138,11 +138,6 @@ def pr_pipelines():
         docs_pipelines(ver_mode, trigger_docs_pr()),
         shellcheck_pipeline(),
         integration_benchmarks(
-            get_pr_trigger(
-                include_paths = [
-                    "pkg/*/*_bench_*",
-                ],
-            ),
             prefix = ver_mode,
         ),
     ]
