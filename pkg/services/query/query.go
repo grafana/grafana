@@ -168,8 +168,12 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 		}
 		if reqCtx != nil {
 			for k, v := range result.header {
-				for _, s := range v {
-					reqCtx.Resp.Header().Add(k, s)
+				for _, val := range v {
+					if !slices.Contains(reqCtx.Resp.Header().Values(k), val) {
+						reqCtx.Resp.Header().Add(k, val)
+					} else {
+						s.log.Warn("skipped duplicate response header", "header", k, "value", val)
+					}
 				}
 			}
 		}
