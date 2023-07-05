@@ -246,15 +246,23 @@ export const fetchRulerRulesAction = createAsyncThunk(
 export function fetchPromAndRulerRulesAction({
   rulesSourceName,
   identifier,
+  filter,
+  limitAlerts,
+  matcher,
+  state,
 }: {
   rulesSourceName: string;
   identifier?: RuleIdentifier;
+  filter?: FetchPromRulesFilter;
+  limitAlerts?: number;
+  matcher?: Matcher[];
+  state?: string[];
 }): ThunkResult<void> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
 
-    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier }));
+    await dispatch(fetchPromRulesAction({ rulesSourceName, identifier, filter, limitAlerts, matcher, state }));
     if (dsConfig.rulerConfig) {
       await dispatch(fetchRulerRulesAction({ rulesSourceName }));
     }
