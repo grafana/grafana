@@ -9,6 +9,7 @@ on:
     branches:
       - "main"
       - "v*.*.*"
+      - "release-*"
 
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
