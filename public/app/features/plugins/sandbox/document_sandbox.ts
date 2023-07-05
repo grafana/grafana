@@ -1,10 +1,13 @@
 import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 
+import { config } from '@grafana/runtime';
+
 import { forbiddenElements } from './constants';
-import { isReactClassComponent } from './utils';
+import { isReactClassComponent, logWarning } from './utils';
 
 // IMPORTANT: NEVER export this symbol from a public (e.g `@grafana/*`) package
 const SANDBOX_LIVE_VALUE = Symbol.for('@@SANDBOX_LIVE_VALUE');
+const monitorOnly = Boolean(config.featureToggles.frontendSandboxMonitorOnly);
 
 export function getSafeSandboxDomElement(element: Element, pluginId: string): Element {
   const nodeName = Reflect.get(element, 'nodeName');
@@ -26,7 +29,14 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
   }
 
   if (forbiddenElements.includes(nodeName)) {
-    throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
+    logWarning('<' + nodeName + '> is not allowed in sandboxed plugins', {
+      pluginId,
+      param: nodeName,
+    });
+
+    if (!monitorOnly) {
+      throw new Error('<' + nodeName + '> is not allowed in sandboxed plugins');
+    }
   }
 
   // allow elements inside the sandbox or the sandbox body
@@ -38,10 +48,15 @@ export function getSafeSandboxDomElement(element: Element, pluginId: string): El
     return element;
   }
 
-  // any other element gets a mock
-  const mockElement = document.createElement(nodeName);
-  mockElement.dataset.grafanaPluginSandboxElement = 'true';
-  return mockElement;
+  if (!monitorOnly) {
+    // any other element gets a mock
+    const mockElement = document.createElement(nodeName);
+    mockElement.dataset.grafanaPluginSandboxElement = 'true';
+    // we are not logging this because a high number of warnings can be generated
+    return mockElement;
+  } else {
+    return element;
+  }
 }
 
 export function isDomElement(obj: unknown): obj is Element {

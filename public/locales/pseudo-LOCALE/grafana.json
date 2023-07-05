@@ -25,8 +25,19 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "Cäŉčęľ",
       "delete-button": "Đęľęŧę",
-      "move-button": "Mővę"
+      "delete-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ đęľęŧę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "delete-modal-title": "Đęľęŧę",
+      "deleting": "Đęľęŧįŉģ...",
+      "manage-permissions-button": "Mäŉäģę pęřmįşşįőŉş",
+      "move-button": "Mővę",
+      "move-modal-alert": "Mővįŉģ ŧĥįş įŧęm mäy čĥäŉģę įŧş pęřmįşşįőŉş.",
+      "move-modal-field-label": "Főľđęř ŉämę",
+      "move-modal-text": "Ŧĥįş äčŧįőŉ ŵįľľ mővę ŧĥę ƒőľľőŵįŉģ čőŉŧęŉŧ:",
+      "move-modal-title": "Mővę",
+      "moving": "Mővįŉģ...",
+      "new-folder-name-required-phrase": "Főľđęř ŉämę įş řęqūįřęđ."
     },
     "dashboards-tree": {
       "name-column": "Ńämę",
@@ -37,6 +48,13 @@
       "folder-actions": "Főľđęř äčŧįőŉş",
       "manage-permissions": "Mäŉäģę pęřmįşşįőŉş",
       "move": "Mővę"
+    },
+    "manage-folder-nav": {
+      "alert-rules": "Åľęřŧ řūľęş",
+      "dashboards": "Đäşĥþőäřđş",
+      "panels": "Päŉęľş",
+      "permissions": "Pęřmįşşįőŉş",
+      "settings": "Ŝęŧŧįŉģş"
     },
     "new-folder-form": {
       "cancel-label": "Cäŉčęľ",
@@ -629,16 +647,6 @@
       "default-label": "Đęƒäūľŧ"
     },
     "title": "Přęƒęřęŉčęş"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "Đäşĥþőäřđş",
-      "panels": "Päŉęľş"
-    },
-    "nav-models": {
-      "alert-rules": "Åľęřŧ řūľęş",
-      "manage-folder-subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
-    }
   },
   "tag-filter": {
     "loading": "Ŀőäđįŉģ...",

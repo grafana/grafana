@@ -79,6 +79,7 @@ dataSourcePageHeader,preview,@grafana/enterprise-datasources,false,false,false,t
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,false,true
 pluginsFrontendSandbox,experimental,@grafana/plugins-platform-backend,false,false,false,true
+frontendSandboxMonitorOnly,experimental,@grafana/plugins-platform-backend,false,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/grafana-bi-squad,false,false,false,true
 cloudWatchLogsMonacoEditor,experimental,@grafana/aws-plugins,false,false,false,true
 exploreScrollableLogsContainer,experimental,@grafana/observability-logs,false,false,false,true
@@ -88,3 +89,4 @@ alertingLokiRangeToInstant,experimental,@grafana/alerting-squad,false,false,fals
 flameGraphV2,experimental,@grafana/observability-traces-and-profiling,false,false,false,true
 elasticToggleableFilters,experimental,@grafana/observability-logs,false,false,false,true
 vizAndWidgetSplit,experimental,@grafana/dashboards-squad,false,false,false,true
+prometheusIncrementalQueryInstrumentation,experimental,@grafana/observability-metrics,false,false,false,true

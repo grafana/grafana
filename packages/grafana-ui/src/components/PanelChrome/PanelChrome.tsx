@@ -6,6 +6,7 @@ import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
+import { getFocusStyles } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -285,20 +286,21 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '.show-on-hover': {
         opacity: '0',
+        visibility: 'hidden',
       },
 
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           opacity: '1',
+          visibility: 'visible',
         },
       },
 
-      '&:focus-visible': {
-        outline: `1px solid ${theme.colors.action.focus}`,
-      },
+      '&:focus-visible': getFocusStyles(theme),
 
-      '&:focus-within': {
+      // The not:(:focus) clause is so that this rule is only applied when decendants are focused (important otherwise the hover header is visible when panel is clicked).
+      '&:focus-within:not(:focus)': {
         '.show-on-hover': {
           visibility: 'visible',
           opacity: '1',
