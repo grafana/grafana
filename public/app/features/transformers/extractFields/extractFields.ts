@@ -77,6 +77,10 @@ function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptions): Da
       }
     }
 
+    if (!obj) {
+      continue;
+    }
+
     for (const [key, val] of Object.entries(obj)) {
       let buffer = values.get(key);
       if (buffer == null) {
