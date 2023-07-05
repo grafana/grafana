@@ -15,25 +15,25 @@ AND data_source.type = 'influxdb'
   AND data_source.database <> ''
   AND (
       json_extract(json_data, '$.dbName') IS NULL
-      OR json_extract(json_data, '$.dbName') = ''
+      	OR
+      json_extract(json_data, '$.dbName') = ''
       );
-
-UPDATE data_source
-SET data_source.database = ''
-WHERE JSON_VALID(json_data)
-  AND data_source.type = 'influxdb'
-  AND data_source.database IS NOT NULL
-  AND data_source.database <> ''
-  AND (
-        json_extract(json_data, '$.dbName') IS NOT NULL
-        OR json_extract(json_data, '$.dbName') <> ''
-    )
 `).
 		Postgres(`
 UPDATE data_source
-SET json_data = jsonb_set(cast(json_data AS jsonb), '{dbName}', concat('"', data_source.database, '"')::jsonb)
-    AND data_source.database IS NOT NULL
-    AND (data_source.database <> '') IS NOT TRUE
+SET json_data = jsonb_set(
+        json_data::jsonb,
+        '{dbName}',
+        concat('"', data_source.database, '"')::jsonb
+    )
+WHERE data_source.type = 'influxdb'
+  AND data_source.database IS NOT NULL
+  AND data_source.database <> ''
+  AND (
+     json_data::jsonb ->> 'dbName' = ''
+         OR
+     json_data::jsonb ->> 'dbName' IS NULL
+    )
 `).
 		Mysql(`
 UPDATE data_source
@@ -44,8 +44,8 @@ WHERE JSON_VALID(json_data)
   AND type = 'influxdb'
   AND (
         json_extract(json_data, '$.dbName') IS NULL
-        OR json_extract(json_data, '$.dbName') = ''
+        	OR
+        json_extract(json_data, '$.dbName') = ''
     );
 `))
-
 }
