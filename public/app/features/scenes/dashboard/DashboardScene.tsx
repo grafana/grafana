@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectState } from '@grafana/scenes';
 import { ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
+import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 import { Page } from 'app/core/components/Page/Page';
 
 interface DashboardSceneState extends SceneObjectState {
@@ -38,7 +39,7 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
   }
 
   return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas}>
+    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Custom} className={styles.wrapper}>
       <AppChromeUpdate actions={toolbarActions} />
       {controls && (
         <div className={styles.controls}>
@@ -56,17 +57,27 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    wrapper: css({
+      // needed for sticky
+      height: 'auto',
+    }),
     body: css({
       flexGrow: 1,
       display: 'flex',
       gap: '8px',
+      padding: theme.spacing(2),
     }),
     controls: css({
       display: 'flex',
-      paddingBottom: theme.spacing(2),
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1),
+      position: 'sticky',
+      top: TOP_BAR_LEVEL_HEIGHT * 2,
+      background: theme.colors.background.canvas,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      zIndex: 1,
+      padding: theme.spacing(2),
     }),
   };
 }
