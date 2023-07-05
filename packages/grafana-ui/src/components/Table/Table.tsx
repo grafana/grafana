@@ -248,8 +248,8 @@ export const Table = memo((props: Props) => {
 
       prepareRow(row);
 
-      if (rowSubData === undefined || rowSubData.length === 0) {
-        row.cells = row.cells.filter((cell) => cell.column.id !== 'expander');
+      if (rowSubData !== undefined && rowSubData.length > 0) {
+        row.canExpand = true;
       }
 
       return (
