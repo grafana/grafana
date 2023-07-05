@@ -1,0 +1,65 @@
+name: When an issue changes and it's part of the dashboards project, add the dashboards squad label
+on:
+  issues:
+    types: [opened, closed, edited, reopened, assigned, unassigned, labeled, unlabeled]
+      
+env:
+  GITHUB_TOKEN: ${{ secrets.ISSUE_COMMANDS_TOKEN }}
+  ORGANIZATION: ${{ github.repository_owner }}
+  REPO: ${{ github.event.repository.name }}
+  TARGET_PROJECT: 202
+  LABEL_IDs: "LA_kwDOAOaWjc8AAAABT38U-A"
+    
+concurrency:
+  group: issue-label-when-in-project-${{ github.event.number }}
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: log in
+        run: gh api user -q .login
+      - name: Check if issue is in target project
+        run: |
+          gh api graphql -f query='
+            query($org: String!, $repo: String!) {
+              repository(name: $repo, owner: $org) {
+                issue (number: ${{ github.event.issue.number }}) {
+                  projectItems(first:20) {
+                    nodes {
+                      id,
+                      project {
+                        number,
+                        title
+                      },
+                      fieldValueByName(name:"Status") {
+                        ... on ProjectV2ItemFieldSingleSelectValue {
+                          optionId
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
+            
+            echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .project != null' projects_data.json) >> $GITHUB_ENV
+            echo 'ITEM_ID='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number==${{ env.TARGET_PROJECT }}) | .id' projects_data.json) >> $GITHUB_ENV
+      - name: Set up label array
+        if: env.IN_TARGET_PROJ
+        run: |
+          IFS=',' read -ra LABEL_IDs <<< "${{ env.LABEL_IDs }}"
+          for item in "${LABEL_IDs[@]}"; do
+            echo "Item: $item"
+          done
+      - name: Add label to issue
+        if: env.IN_TARGET_PROJ
+        run: |
+          gh api graphql -f query='
+            mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+              addLabelsToLabelable(
+                input: {labelableId: $labelableId, labelIds: $labelIds}
+              ) {
+                  clientMutationId
+              }
+            }' -f labelableId=$ITEM_ID -f labelIds=${{ env.LABEL_IDs }}

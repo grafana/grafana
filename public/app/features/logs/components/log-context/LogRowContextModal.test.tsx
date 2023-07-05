@@ -10,7 +10,8 @@ import {
   LogsSortOrder,
   SplitOpenOptions,
 } from '@grafana/data';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
+
+import { dataFrameToLogsModel } from '../../logsModel';
 
 import { LogRowContextModal } from './LogRowContextModal';
 
@@ -333,5 +334,45 @@ describe('LogRowContextModal', () => {
     await userEvent.click(splitViewButton);
 
     await waitFor(() => expect(dispatchMock).toHaveBeenCalledWith(splitOpenSym));
+  });
+
+  it('should make the center row sticky on load', async () => {
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).toHaveStyle('position: sticky');
+    });
+  });
+
+  it('should make the center row unsticky on unPinClick', async () => {
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      const rows = screen.getByTestId('entry-row');
+      expect(rows).toHaveStyle('position: sticky');
+    });
+    const unpinButtons = screen.getAllByLabelText('Unpin line')[0];
+    await userEvent.click(unpinButtons);
+    const rows = screen.getByTestId('entry-row');
+    expect(rows).not.toHaveStyle('position: sticky');
   });
 });

@@ -1,9 +1,43 @@
 {
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "access-control": {
+    "add-permission": {
+      "role-label": "",
+      "team-label": "",
+      "title": "",
+      "user-label": ""
+    },
+    "add-permissions": {
+      "save": ""
+    },
+    "permission-list": {
+      "permission": ""
+    },
+    "permissions": {
+      "add-label": "",
+      "no-permissions": "",
+      "permissions-change-warning": "",
+      "role": "",
+      "team": "",
+      "title": "",
+      "user": ""
+    }
+  },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -14,6 +48,18 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
+    },
+    "new-folder-form": {
+      "cancel-label": "",
+      "create-label": "",
+      "name-label": ""
     },
     "no-results": {
       "clear": "",
@@ -48,6 +94,14 @@
       "default": "默认"
     },
     "save": "保存"
+  },
+  "connections": {
+    "connect-data": {
+      "category-header-label": ""
+    },
+    "search": {
+      "placeholder": ""
+    }
   },
   "dashboard": {
     "add-menu": {
@@ -134,6 +188,11 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "data-sources": {
+    "datasource-add-button": {
+      "label": ""
+    }
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
   },
@@ -142,6 +201,10 @@
       "error": "加载选项失败",
       "loading": "正在加载选项...",
       "no-options": "未找到选项"
+    },
+    "select": {
+      "no-options-label": "",
+      "placeholder": ""
     }
   },
   "library-panel": {
@@ -165,11 +228,15 @@
   },
   "login": {
     "error": {
+      "blocked": "",
       "invalid-user-or-password": "",
       "unknown": ""
     }
   },
   "nav": {
+    "add-new-connections": {
+      "title": ""
+    },
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
@@ -225,6 +292,10 @@
     "config": {
       "title": "管理"
     },
+    "connections": {
+      "subtitle": "",
+      "title": ""
+    },
     "correlations": {
       "subtitle": "添加并配置相关性",
       "title": "相关性"
@@ -247,6 +318,10 @@
     "dashboards": {
       "subtitle": "创建并管理仪表板，以将您的数据可视化",
       "title": "仪表板"
+    },
+    "data-sources": {
+      "subtitle": "",
+      "title": ""
     },
     "datasources": {
       "subtitle": "添加并配置数据源",
@@ -572,16 +647,6 @@
       "default-label": "默认"
     },
     "title": "首选项"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
   },
   "tag-filter": {
     "loading": "加载中...",

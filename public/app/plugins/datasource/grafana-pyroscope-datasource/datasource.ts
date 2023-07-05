@@ -114,7 +114,7 @@ export const defaultQuery: Partial<Query> = {
 };
 
 export function normalizeQuery(query: Query, app?: CoreApp | string) {
-  let normalized = { ...query, ...defaultQuery };
+  let normalized = { ...defaultQuery, ...query };
   if (app !== CoreApp.Explore && normalized.queryType === 'both') {
     // In dashboards and other places, we can't show both types of graphs at the same time.
     // This will also be a default when having 'both' query and adding it from explore to dashboard
