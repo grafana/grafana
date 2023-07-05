@@ -1,83 +1,55 @@
-import { css } from '@emotion/css';
-import React from 'react';
+import {
+  getUrlSyncManager,
+  SceneGridItem,
+  SceneObject,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectStateChangedEvent,
+} from '@grafana/scenes';
 
-import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { SceneObjectBase, SceneComponentProps, SceneObject, SceneObjectState } from '@grafana/scenes';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
-import { Page } from 'app/core/components/Page/Page';
+import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 
-interface DashboardSceneState extends SceneObjectState {
+export interface DashboardSceneState extends SceneObjectState {
   title: string;
   uid?: string;
   body: SceneObject;
   actions?: SceneObject[];
   controls?: SceneObject[];
+  isEditing?: boolean;
+  isDirty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public static Component = DashboardSceneRenderer;
-}
 
-function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, body, actions = [], uid, controls } = model.useState();
-  const styles = useStyles2(getStyles);
+  public constructor(state: DashboardSceneState) {
+    super(state);
 
-  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
+    this.addActivationHandler(() => {
+      return () => getUrlSyncManager().cleanUp(this);
+    });
 
-  if (uid?.length) {
-    toolbarActions.push(
-      <ToolbarButton
-        icon="apps"
-        onClick={() => locationService.push(`/d/${uid}`)}
-        tooltip="View as Dashboard"
-        key="scene-to-dashboard-switch"
-      />
-    );
+    this.subscribeToEvent(SceneObjectStateChangedEvent, this.onChildStateChanged);
   }
 
-  return (
-    <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Custom} className={styles.wrapper}>
-      <AppChromeUpdate actions={toolbarActions} />
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-        </div>
-      )}
-      <div className={styles.body}>
-        <body.Component model={body} />
-      </div>
-    </Page>
-  );
-}
+  public onChildStateChanged = (event: SceneObjectStateChangedEvent) => {
+    // Temporary hacky way to detect changes
+    if (event.payload.changedObject instanceof SceneGridItem) {
+      this.setState({ isDirty: true });
+    }
+  };
 
-function getStyles(theme: GrafanaTheme2) {
-  return {
-    wrapper: css({
-      // needed for sticky
-      height: 'auto',
-    }),
-    body: css({
-      flexGrow: 1,
-      display: 'flex',
-      gap: '8px',
-      padding: theme.spacing(2),
-    }),
-    controls: css({
-      display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      position: 'sticky',
-      top: TOP_BAR_LEVEL_HEIGHT * 2,
-      background: theme.colors.background.canvas,
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-      zIndex: 1,
-      padding: theme.spacing(2),
-    }),
+  public initUrlSync() {
+    getUrlSyncManager().initSync(this);
+  }
+
+  public onEnterEditMode = () => {
+    this.setState({ isEditing: true });
+  };
+
+  public onDiscard = () => {
+    // TODO open confirm modal if dirty
+    // TODO actually discard changes
+    this.setState({ isEditing: false });
   };
 }
