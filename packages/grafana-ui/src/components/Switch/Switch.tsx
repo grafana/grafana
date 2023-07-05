@@ -143,6 +143,10 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
           top: 50%;
           transform: translate3d(2px, -50%, 0);
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
+
+          @media (forced-colors: active) {
+            border: 1px solid transparent;
+          }
         }
       }
     `,

@@ -98,6 +98,7 @@ export interface FeatureToggles {
   extraThemes?: boolean;
   lokiPredefinedOperations?: boolean;
   pluginsFrontendSandbox?: boolean;
+  frontendSandboxMonitorOnly?: boolean;
   sqlDatasourceDatabaseSelection?: boolean;
   cloudWatchLogsMonacoEditor?: boolean;
   exploreScrollableLogsContainer?: boolean;
@@ -107,5 +108,6 @@ export interface FeatureToggles {
   flameGraphV2?: boolean;
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
+  prometheusIncrementalQueryInstrumentation?: boolean;
   mlExpressions?: boolean;
 }

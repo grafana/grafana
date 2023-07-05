@@ -23,7 +23,7 @@ import { useMeasure } from 'react-use';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { ClickedItemData, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -46,6 +46,7 @@ type Props = {
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
+  colorScheme: ColorScheme;
 };
 
 const FlameGraph = ({
@@ -62,6 +63,7 @@ const FlameGraph = ({
   sandwichItem,
   onFocusPillClick,
   onSandwichPillClick,
+  colorScheme,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -96,6 +98,7 @@ const FlameGraph = ({
     search,
     textAlign,
     totalTicks,
+    colorScheme,
     focusedItemData
   );
 

@@ -183,6 +183,8 @@ export function DataSourceDropdown(props: DataSourceDropdownProps) {
       {isOpen ? (
         <Portal>
           <div {...underlayProps} />
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             ref={ref}
             {...overlayProps}
