@@ -14,6 +14,7 @@ import {
   TraceSpanRow,
   dateTimeFormat,
   FieldDTO,
+  createDataFrame,
 } from '@grafana/data';
 
 import { createGraphFrames } from './graphTransform';
@@ -574,7 +575,7 @@ export function createTableFrameFromTraceQlQuery(
   data: TraceSearchMetadata[],
   instanceSettings: DataSourceInstanceSettings
 ): DataFrame[] {
-  const frame = new MutableDataFrame({
+  const frame = createDataFrame({
     fields: [
       {
         name: 'traceID',
@@ -623,32 +624,37 @@ export function createTableFrameFromTraceQlQuery(
           },
         },
       },
+      {
+        name: 'spansets',
+        type: FieldType.trace,
+        config: {
+          nested: true,
+        },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
     },
   });
+  frame.length = data.length;
 
   if (!data?.length) {
     return [frame];
   }
 
-  const subDataFrames: DataFrame[] = [];
-  const tableRows = data
+  data
     // Show the most recent traces
     .sort((a, b) => parseInt(b?.startTimeUnixNano!, 10) / 1000000 - parseInt(a?.startTimeUnixNano!, 10) / 1000000)
-    .reduce((rows: TraceTableData[], trace, currentIndex) => {
+    .forEach((trace, currentIndex) => {
       const traceData: TraceTableData = transformToTraceData(trace);
-      rows.push(traceData);
-      subDataFrames.push(traceSubFrame(trace, instanceSettings, currentIndex));
-      return rows;
-    }, []);
+      frame.fields[0].values.push(traceData.traceID);
+      frame.fields[1].values.push(traceData.startTime);
+      frame.fields[2].values.push(traceData.traceName);
+      frame.fields[3].values.push(traceData.traceDuration);
+      frame.fields[4].values.push(traceSubFrame(trace, instanceSettings, currentIndex));
+    });
 
-  for (const row of tableRows) {
-    frame.add(row);
-  }
-
-  return [frame, ...subDataFrames];
+  return [frame];
 }
 
 const traceSubFrame = (
@@ -738,9 +744,6 @@ const traceSubFrame = (
     ],
     meta: {
       preferredVisualisationType: 'table',
-      custom: {
-        parentRowIndex: currentIndex,
-      },
     },
   });
 
