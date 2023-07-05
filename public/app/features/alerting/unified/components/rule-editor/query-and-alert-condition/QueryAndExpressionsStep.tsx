@@ -285,19 +285,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              const expression =
-                !editingExistingRule && queries[0]?.model
-                  ? isPromOrLokiQuery(queries[0]?.model)
-                    ? queries[0]?.model.expr
-                    : undefined
-                  : undefined;
-              if (!editingExistingRule) {
-                getValues('expression') !== expression && expression && setValue('expression', expression);
-              }
               return (
                 <ExpressionEditor
                   {...field}
-                  value={expression ?? field.value}
+                  value={getValues('expression')}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
                 />
