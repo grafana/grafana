@@ -107,9 +107,16 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           setVisible((_isVisible = false));
 
           // TODO: this should be done by Dashboards onmouseleave
-          let ctnr = u.root.closest<HTMLElement>('.react-grid-item');
+          let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
           if (ctnr != null) {
-            ctnr.style.zIndex = 'auto';
+            // panel edit
+            if (ctnr.matches('.SplitPane')) {
+              ctnr.style.overflow = 'hidden';
+            }
+            // dashboard grid
+            else {
+              ctnr.style.zIndex = 'auto';
+            }
           }
 
           // prolly not needed since dom will be destroyed, so this should be GCd
@@ -158,9 +165,16 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           setVisible((_isVisible = true));
 
           // TODO: this should be done by Dashboards onmouseenter
-          let ctnr = u.root.closest<HTMLElement>('.react-grid-item');
+          let ctnr = u.root.closest<HTMLElement>('.react-grid-item, .SplitPane');
           if (ctnr != null) {
-            ctnr.style.zIndex = '1';
+            // panel edit
+            if (ctnr.matches('.SplitPane')) {
+              ctnr.style.overflow = '';
+            }
+            // dashboard grid
+            else {
+              ctnr.style.zIndex = '1';
+            }
           }
 
           // boo setTimeout!
