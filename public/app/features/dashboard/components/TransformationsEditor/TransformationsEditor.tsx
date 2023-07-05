@@ -380,6 +380,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                   <div
                     role="button"
                     tabIndex={0}
+                    onKeyPress={() => {
+                      this.setState({ showPicker: false });
+                    }}
                     onClick={() => {
                       this.setState({ showPicker: false });
                     }}
