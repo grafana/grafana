@@ -195,6 +195,7 @@ export function roundToFiscal(fyStartMonth: number, dateTime: any, unit: string,
       if (roundUp) {
         roundToFiscal(fyStartMonth, dateTime, unit, false).add(2, 'M').endOf('M');
       } else {
+        // why + 12? to ensure this number is always a positive offset from fyStartMonth
         dateTime.subtract((dateTime.month() - fyStartMonth + 12) % 3, 'M').startOf('M');
       }
       return dateTime;
