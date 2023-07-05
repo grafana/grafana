@@ -169,7 +169,9 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} data-testid={testid} ref={ref}>
+    // tabIndex={0} is needed for keyboard accessibility in the plot area
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div className={styles.container} style={containerStyles} data-testid={testid} tabIndex={0} ref={ref}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
           <LoadingBar width={loadingBarWidth} ariaLabel="Panel loading bar" />
