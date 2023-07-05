@@ -53,7 +53,7 @@ export interface DataSourceDropdownProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
-  uploadCSV?: boolean;
+  uploadFile?: boolean;
   filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
@@ -247,7 +247,7 @@ export interface PickerContentProps extends DataSourceDropdownProps {
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {
-  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, uploadCSV } = props;
+  const { filterTerm, onChange, onClose, onClickAddCSV, current, filter, uploadFile } = props;
   const changeCallback = useCallback(
     (ds: DataSourceInstanceSettings) => {
       onChange(ds);
@@ -303,6 +303,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
                   pluginId: props.pluginId,
                   logs: props.logs,
                   filter: props.filter,
+                  uploadFile: props.uploadFile,
                   current: props.current,
                   onDismiss: hideModal,
                   onChange: (ds, defaultQueries) => {
@@ -318,7 +319,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
             </Button>
           )}
         </ModalsController>
-        {uploadCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+        {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
           <Button variant="secondary" size="sm" onClick={clickAddCSVCallback}>
             Add csv or spreadsheet
           </Button>

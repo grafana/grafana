@@ -101,7 +101,7 @@ describe('DataSourceDropdown', () => {
     it('only displays the file drop area when the the ff is enabled', async () => {
       const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
       config.featureToggles.editPanelCSVDragAndDrop = true;
-      setup({ uploadCSV: true });
+      setup({ uploadFile: true });
 
       expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
@@ -111,7 +111,7 @@ describe('DataSourceDropdown', () => {
       const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
       config.featureToggles.editPanelCSVDragAndDrop = false;
 
-      setup({ uploadCSV: true });
+      setup({ uploadFile: true });
       expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeNull();
 
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
@@ -127,10 +127,10 @@ describe('DataSourceDropdown', () => {
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
 
-    it('should display the drop zone when uploadCSV is enabled', async () => {
+    it('should display the drop zone when uploadFile is enabled', async () => {
       const defaultValue = config.featureToggles.editPanelCSVDragAndDrop;
       config.featureToggles.editPanelCSVDragAndDrop = true;
-      setup({ uploadCSV: true });
+      setup({ uploadFile: true });
 
       expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
@@ -192,7 +192,7 @@ describe('DataSourceDropdown', () => {
     it('calls the onChange with the default query containing the file', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
-      setup({ onChange, uploadCSV: true });
+      setup({ onChange, uploadFile: true });
 
       const fileInput = (
         await screen.queryByTestId('file-drop-zone-default-children')!

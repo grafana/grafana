@@ -54,7 +54,7 @@ export interface DataSourceModalProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
-  uploadCSV?: boolean;
+  uploadFile?: boolean;
 }
 
 export function DataSourceModal({
@@ -68,7 +68,7 @@ export function DataSourceModal({
   alerting,
   pluginId,
   logs,
-  uploadCSV,
+  uploadFile,
   filter,
   onChange,
   current,
@@ -195,7 +195,7 @@ export function DataSourceModal({
           <CustomScrollbar className={styles.builtInDataSourcesList}>
             <BuiltInList />
           </CustomScrollbar>
-          {uploadCSV && config.featureToggles.editPanelCSVDragAndDrop && (
+          {uploadFile && config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}

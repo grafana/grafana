@@ -277,7 +277,7 @@ export class QueryGroup extends PureComponent<Props, State> {
       dashboard: true,
       variables: true,
       current: this.props.options.dataSource,
-      uploadCSV: true,
+      uploadFile: true,
       onChange: async (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
         await this.onChangeDataSource(ds, defaultQueries);
         this.onCloseDataSourceModal();
