@@ -30,11 +30,6 @@ export const getStyles = ({ v1: { colors: v1Colors, spacing }, colors }: Grafana
         ${labelStyles}
       }
     `,
-    actions: css`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `,
     disabledRow: css`
       background-color: ${colors.action.disabledBackground} !important;
       opacity: ${colors.action.disabledOpacity};

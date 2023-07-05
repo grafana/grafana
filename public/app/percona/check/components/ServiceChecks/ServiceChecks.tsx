@@ -63,14 +63,6 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageIndex, pageSize, serviceId]);
 
-  const onSilenceClick = useCallback(
-    async (alertId: string, silenced: boolean) => {
-      await CheckService.silenceAlert(alertId, !silenced);
-      fetchChecks();
-    },
-    [fetchChecks]
-  );
-
   const columns = useMemo(
     (): Array<ExtendedColumn<ServiceFailedCheck>> => [
       {
@@ -104,22 +96,8 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
             </a>
           ) : null,
       },
-      {
-        Header: 'Actions',
-        accessor: 'silenced',
-        width: '30px',
-        Cell: ({ value, row }) => (
-          <span className={styles.actions}>
-            <SilenceBell
-              tooltip={value ? Messages.activate : Messages.silence}
-              silenced={value}
-              onClick={() => onSilenceClick(row.original.alertId, row.original.silenced)}
-            />
-          </span>
-        ),
-      },
     ],
-    [styles.link, styles.actions, onSilenceClick]
+    [styles.link]
   );
 
   const onPaginationChanged = useCallback(
