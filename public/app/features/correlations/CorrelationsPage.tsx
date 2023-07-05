@@ -101,7 +101,7 @@ export default function CorrelationsPage() {
           <DeleteButton
             aria-label="delete correlation"
             onConfirm={() =>
-              handleDelete({ sourceUID, uid }, page.current > 0 && index === 0 && data?.correlations.length === 1)
+              handleDelete({ sourceUID, uid }, page.current > 1 && index === 0 && data?.correlations.length === 1)
             }
             closeOnConfirm
           />

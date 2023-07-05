@@ -77,7 +77,7 @@ const renderWithContext = async (
           merge(
             createFetchCorrelationsResponse({
               url: options.url,
-              data: { correlations, page: 0, limit: 5, totalCount: 0 },
+              data: { correlations, page: 1, limit: 5, totalCount: 0 },
             })
           )
         );
