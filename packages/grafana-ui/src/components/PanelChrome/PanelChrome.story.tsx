@@ -300,7 +300,18 @@ export const ExamplesHoverHeader = () => {
   );
 };
 
-export const Basic: StoryFn<typeof PanelChrome> = (args: PanelChromeProps) => {
+export const Basic: StoryFn<typeof PanelChrome> = (overrides?: Partial<PanelChromeProps>) => {
+  const args = {
+    width: 400,
+    height: 200,
+    title: 'Very long title that should get ellipsis when there is no more space',
+    description,
+    menu,
+    children: () => undefined,
+  };
+
+  merge(args, overrides);
+
   const contentStyle = getContentStyle();
 
   return (
@@ -343,14 +354,6 @@ Basic.argTypes = {
       },
     },
   },
-};
-
-Basic.args = {
-  width: 400,
-  height: 200,
-  title: 'Very long title that should get ellipsis when there is no more space',
-  description,
-  menu,
 };
 
 export default meta;

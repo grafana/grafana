@@ -60,7 +60,7 @@ interface BaseProps {
 interface FixedDimensions extends BaseProps {
   width: number;
   height: number;
-  children: (innerWidth: number, innerHeight: number) => ReactNode | ReactNode;
+  children: (innerWidth: number, innerHeight: number) => ReactNode;
 }
 
 interface AutoSize extends BaseProps {
