@@ -366,4 +366,8 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagPrometheusIncrementalQueryInstrumentation
+	// Adds RudderStack events to incremental queries
+	FlagPrometheusIncrementalQueryInstrumentation = "prometheusIncrementalQueryInstrumentation"
 )
