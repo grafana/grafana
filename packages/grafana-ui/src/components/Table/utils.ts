@@ -103,6 +103,7 @@ export function getColumns(
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
     if (fieldTableOptions.hidden || field.config.nested) {
+      console.log('Skipping hidden or nested field', field);
       continue;
     }
 
