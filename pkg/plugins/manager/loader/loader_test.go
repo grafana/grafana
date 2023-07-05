@@ -20,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/stages"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -1257,11 +1259,9 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	child.Parent = parent
 
 	t.Run("Load nested External plugins", func(t *testing.T) {
-		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		l := newLoader(t, &config.Cfg{}, func(l *Loader) {
-			l.pluginRegistry = reg
 			l.processManager = procMgr
 			l.pluginInitializer = initializer.New(&config.Cfg{}, procPrvdr, fakes.NewFakeLicensingService())
 		})
@@ -1286,7 +1286,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 		}
 
-		verifyState(t, expected, reg, procPrvdr, procMgr)
+		verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
 
 		t.Run("Load will exclude plugins that already exist", func(t *testing.T) {
 			got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1308,7 +1308,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(got, expected, compareOpts...))
 			}
 
-			verifyState(t, expected, reg, procPrvdr, procMgr)
+			verifyState(t, expected, l.pluginRegistry, procPrvdr, procMgr)
 		})
 	})
 
@@ -1491,11 +1491,13 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 
 func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	angularInspector, err := angularinspector.NewStaticInspector()
+	reg := fakes.NewFakePluginRegistry()
+	assets := assetpath.ProvideService(pluginscdn.ProvideService(cfg))
 	require.NoError(t, err)
-	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
+	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
-		assetpath.ProvideService(pluginscdn.ProvideService(cfg)), finder.NewLocalFinder(cfg),
-		signature.ProvideService(cfg, statickey.New()), angularInspector, &fakes.FakeOauthService{})
+		assets, angularInspector, &fakes.FakeOauthService{},
+		stages.NewDiscovery(finder.NewLocalFinder(cfg), reg, signature.ProvideService(cfg, statickey.New()), assets))
 
 	for _, cb := range cbs {
 		cb(l)
@@ -1504,13 +1506,15 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	return l
 }
 
-func verifyState(t *testing.T, ps []*plugins.Plugin, reg *fakes.FakePluginRegistry,
+func verifyState(t *testing.T, ps []*plugins.Plugin, reg registry.Service,
 	procPrvdr *fakes.FakeBackendProcessProvider, procMngr *fakes.FakeProcessManager) {
 	t.Helper()
 
 	for _, p := range ps {
-		if !cmp.Equal(p, reg.Store[p.ID], compareOpts...) {
-			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, reg.Store[p.ID], compareOpts...))
+		regP, exists := reg.Plugin(context.Background(), p.ID)
+		require.True(t, exists)
+		if !cmp.Equal(p, regP, compareOpts...) {
+			t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(p, regP, compareOpts...))
 		}
 
 		if p.Backend {
