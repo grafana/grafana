@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -52,13 +53,14 @@ func ClearCookieHeader(req *http.Request, keepCookiesNames []string, skipCookies
 				continue
 			}
 
-			l := len(v) - 2
-			if v[l:] == "[]" {
-				if len(c.Name) >= l && c.Name[:l] == v[:l] {
+			if strings.HasSuffix(v, "[]") {
+				// match prefix
+				pattern := strings.TrimSuffix(v, "[]")
+				if strings.HasPrefix(c.Name, pattern) {
 					keepCookies[c.Name] = c
 				}
 			} else {
-				// look for exact match
+				// exact match
 				if c.Name == v {
 					keepCookies[c.Name] = c
 				}
