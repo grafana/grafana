@@ -75,7 +75,7 @@ export function PluginDetailsPage({
     <Page navId={navId} pageNav={navModel} actions={actions} subTitle={subtitle} info={info}>
       <Page.Contents>
         <TabContent className={styles.tabContent}>
-          {plugin.angularDetected && (
+          {plugin.angularMeta?.angularDetected && (
             <PluginDetailsAngularDeprecation
               className={styles.alert}
               angularSupportEnabled={config?.angularSupportEnabled}

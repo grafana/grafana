@@ -81,7 +81,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   signatureType?: PluginSignatureType;
   signatureOrg?: string;
   live?: boolean;
-  angularMeta: PluginAngularMeta;
+  angularMeta?: PluginAngularMeta;
 }
 
 export interface PluginAngularMeta {

@@ -58,7 +58,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   installedVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
-  angularMeta: PluginAngularMeta;
+  angularMeta?: PluginAngularMeta;
 }
 
 export interface CatalogPluginDetails {
@@ -159,7 +159,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   state: string;
   type: PluginType;
   dependencies: PluginDependencies;
-  angularMeta: PluginAngularMeta;
+  angularMeta?: PluginAngularMeta;
 };
 
 interface Rel {

@@ -194,8 +194,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     // Only local plugins have access control metadata
     accessControl: local?.accessControl,
     angularMeta: {
-      angularDetected: (local?.angularMeta.angularDetected || remote?.angularDetected) ?? false,
-      disableDeprecationUIFeatures: local?.angularMeta.angularDetected || false,
+      angularDetected: (local?.angularMeta?.angularDetected || remote?.angularDetected) ?? false,
+      disableDeprecationUIFeatures: local?.angularMeta?.angularDetected || false,
     },
   };
 }

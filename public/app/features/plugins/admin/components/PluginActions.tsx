@@ -45,7 +45,7 @@ export const PluginActions = ({ plugin }: Props) => {
               <ExternallyManagedButton
                 pluginId={plugin.id}
                 pluginStatus={pluginStatus}
-                angularDetected={plugin.angularMeta.angularDetected}
+                angularDetected={plugin.angularMeta?.angularDetected}
               />
             ) : (
               <InstallControlsButton

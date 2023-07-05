@@ -40,7 +40,7 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angularMeta.angularDetected,
+    isAngular: meta.angularMeta?.angularDetected,
     pluginId: meta.id,
   })
     .then((pluginExports) => {
