@@ -28,7 +28,7 @@ Select a Prometheus data source query type and enter the required inputs:
 
 | Query Type     | Input(\* required)        | Description                                                                           | Used API endpoints                             |
 | -------------- | ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `Label names`  | none                      | Returns a list of all label names.                                                    | /api/v1/labels                                 |
+| `Label names`  | `metric`                  | Returns a list of all label names matching the specified `metric` regex.              | /api/v1/labels                                 |
 | `Label values` | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric. | /api/v1/label/`label`/values or /api/v1/series |
 | `Metrics`      | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                      | /api/v1/label/\_\_name\_\_/values              |
 | `Query result` | `query`                   | Returns a list of Prometheus query result for the `query`.                            | /api/v1/query                                  |

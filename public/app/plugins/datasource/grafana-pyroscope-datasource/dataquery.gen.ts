@@ -10,8 +10,6 @@
 
 import * as common from '@grafana/schema';
 
-export const DataQueryModelVersion = Object.freeze([0, 0]);
-
 export type PhlareQueryType = ('metrics' | 'profile' | 'both');
 
 export const defaultPhlareQueryType: PhlareQueryType = 'both';

@@ -142,11 +142,8 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 			logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
-	if res.StatusCode/100 != 2 {
-		return &backend.QueryDataResponse{}, fmt.Errorf("InfluxDB returned error status: %s", res.Status)
-	}
 
-	resp := s.responseParser.Parse(res.Body, queries)
+	resp := s.responseParser.Parse(res.Body, res.StatusCode, queries)
 
 	return resp, nil
 }

@@ -14,11 +14,11 @@ import {
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
-import { dataFrameToLogsModel } from '../../../core/logsModel';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
+import { dataFrameToLogsModel } from '../../logs/logsModel';
 import { sortLogsResult } from '../../logs/utils';
 
 /**
@@ -254,7 +254,6 @@ export function decorateData(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
     map(decorateWithCorrelations({ queries, correlations })),
     map(decorateWithFrameTypeMetadata),
-    map(decorateWithGraphResult),
     map(decorateWithGraphResult),
     map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
     mergeMap(decorateWithRawPrometheusResult),

@@ -23,7 +23,7 @@ import { useMeasure } from 'react-use';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { ClickedItemData, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, TextAlign } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -46,6 +46,7 @@ type Props = {
   onSandwich: (label: string) => void;
   onFocusPillClick: () => void;
   onSandwichPillClick: () => void;
+  colorScheme: ColorScheme;
 };
 
 const FlameGraph = ({
@@ -62,6 +63,7 @@ const FlameGraph = ({
   sandwichItem,
   onFocusPillClick,
   onSandwichPillClick,
+  colorScheme,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -96,6 +98,7 @@ const FlameGraph = ({
     search,
     textAlign,
     totalTicks,
+    colorScheme,
     focusedItemData
   );
 
@@ -143,13 +146,23 @@ const FlameGraph = ({
         );
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          tooltipRef.current.style.top = e.clientY + 'px';
-          if (document.documentElement.clientWidth - e.clientX < 400) {
-            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
-            tooltipRef.current.style.left = 'auto';
+          // tooltip has a set number of lines of text so 200 should be good enough (with some buffer) without going
+          // into measuring rendered sizes
+          if (e.clientY < document.documentElement.clientHeight - 200) {
+            tooltipRef.current.style.top = e.clientY + 'px';
+            tooltipRef.current.style.bottom = 'auto';
           } else {
+            tooltipRef.current.style.bottom = document.documentElement.clientHeight - e.clientY + 'px';
+            tooltipRef.current.style.top = 'auto';
+          }
+
+          // 400 is max width of the tooltip
+          if (e.clientX < document.documentElement.clientWidth - 400) {
             tooltipRef.current.style.left = e.clientX + 15 + 'px';
             tooltipRef.current.style.right = 'auto';
+          } else {
+            tooltipRef.current.style.right = document.documentElement.clientWidth - e.clientX + 15 + 'px';
+            tooltipRef.current.style.left = 'auto';
           }
 
           setTooltipItem(levels[levelIndex][barIndex]);

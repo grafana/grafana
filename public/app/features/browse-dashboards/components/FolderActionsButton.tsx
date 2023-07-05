@@ -4,6 +4,7 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents, contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -85,11 +86,15 @@ export function FolderActionsButton({ folder }: Props) {
     );
   };
 
+  const managePermissionsLabel = t('browse-dashboards.folder-actions-button.manage-permissions', 'Manage permissions');
+  const moveLabel = t('browse-dashboards.folder-actions-button.move', 'Move');
+  const deleteLabel = t('browse-dashboards.folder-actions-button.delete', 'Delete');
+
   const menu = (
     <Menu>
-      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label="Manage permissions" />}
-      {canMoveFolder && <MenuItem onClick={showMoveModal} label="Move" />}
-      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label="Delete" />}
+      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
+      {canMoveFolder && <MenuItem onClick={showMoveModal} label={moveLabel} />}
+      {canDeleteFolder && <MenuItem destructive onClick={showDeleteModal} label={deleteLabel} />}
     </Menu>
   );
 
@@ -101,13 +106,13 @@ export function FolderActionsButton({ folder }: Props) {
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
         <Button variant="secondary">
-          Folder actions
+          <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showPermissionsDrawer && (
         <Drawer
-          title="Permissions"
+          title={t('browse-dashboards.action.manage-permissions-button', 'Manage permissions')}
           subtitle={folder.title}
           scrollableContent
           onClose={() => setShowPermissionsDrawer(false)}
