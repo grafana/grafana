@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { DataFrame, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, getFieldDisplayName, TransformerCategory } from '@grafana/data';
 
 export function useAllFieldNamesFromDataFrames(input: DataFrame[]): string[] {
   return useMemo(() => {
@@ -37,3 +37,13 @@ export function getDistinctLabels(input: DataFrame[]): Set<string> {
   }
   return distinct;
 }
+
+export const categoriesLabels: { [K in TransformerCategory]: string } = {
+  combine: 'Combine',
+  calculateNewFields: 'Calculate new fields',
+  createNewVisualization: 'Create new visualization',
+  filter: 'Filter',
+  performSpatialOperations: 'Perform spatial operations',
+  reformat: 'Reformat',
+  reorderAndRename: 'Reorder and rename',
+};
