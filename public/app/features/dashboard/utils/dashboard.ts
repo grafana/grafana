@@ -23,7 +23,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
 export function onCreateNewWidgetPanel(dashboard: DashboardModel, widgetType: string): number | undefined {
   const newPanel: Partial<PanelModel> = {
     type: widgetType,
-    title: 'Panel Title',
+    title: 'Widget title',
     gridPos: calculateNewPanelGridPos(dashboard),
     datasource: null,
     isNew: true,
