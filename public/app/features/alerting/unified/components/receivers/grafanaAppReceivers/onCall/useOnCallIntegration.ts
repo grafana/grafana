@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { Receiver } from '../../../../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../../../../types';
+import { alertmanagerApi } from '../../../../api/alertmanagerApi';
 import { onCallApi, OnCallIntegration } from '../../../../api/onCallApi';
 import { usePluginBridge } from '../../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../../types/pluginBridges';
@@ -12,9 +13,10 @@ import { GRAFANA_APP_RECEIVERS_SOURCE_IMAGE } from '../types';
 const GRAFANA_INTEGRATION_TYPE = 'grafana';
 
 export function useOnCallIntegration() {
-  const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
+  const { installed: isOnCallEnabled, loading: isPluginBridgeLoading } = usePluginBridge(SupportedPlugin.OnCall);
 
   const { useCreateIntegrationMutation, useGetOnCallIntegrationsQuery } = onCallApi;
+
   const [createIntegrationMutation] = useCreateIntegrationMutation();
 
   const { data: onCallIntegrations = [], isLoading: isLoadingOnCallIntegrations } = useGetOnCallIntegrationsQuery(
@@ -22,11 +24,16 @@ export function useOnCallIntegration() {
     { skip: !isOnCallEnabled }
   );
 
+  const { useGrafanaNotifiersQuery } = alertmanagerApi;
+  const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery(undefined, {
+    skip: !isOnCallEnabled,
+  });
+
   const grafanaOnCallIntegrations = useMemo(() => {
     return onCallIntegrations.filter((i) => i.integration === GRAFANA_INTEGRATION_TYPE);
   }, [onCallIntegrations]);
 
-  const onCallNotifier = useOnCallNotifier(grafanaOnCallIntegrations);
+  const onCallNotifier = useOnCallNotifier(grafanaOnCallIntegrations, grafanaNotifiers);
 
   const onCallFormValidators = useMemo(
     () => ({
@@ -116,24 +123,28 @@ export function useOnCallIntegration() {
       meta: {
         enabled: isOnCallEnabled,
         order: 1,
-        description: 'The best Contact Point',
+        description: 'Connect effortlessly to Grafana OnCall',
         iconUrl: GRAFANA_APP_RECEIVERS_SOURCE_IMAGE[SupportedPlugin.OnCall],
       },
     },
     onCallFormValidators,
     mapWebhookReceiversToOnCalls,
     mapOnCallReceiversToWebhooks,
-    isLoadingOnCallIntegrations,
+    isLoadingOnCallIntegration: isLoadingOnCallIntegrations || isLoadingNotifiers || isPluginBridgeLoading,
   };
 }
 
-function useOnCallNotifier(onCallIntegrations: OnCallIntegration[]) {
+function useOnCallNotifier(onCallIntegrations: OnCallIntegration[], notifiers: NotifierDTO[]) {
   return useMemo<NotifierDTO>(() => {
+    const webhookReceiver = notifiers.find((n) => n.type === 'webhook');
+    const webhookOptions = webhookReceiver?.options.filter((o) => o.propertyName !== 'url') ?? [];
+
     return {
       name: 'Grafana OnCall',
       type: 'oncall',
       description: 'Grafana OnCall contact point',
-      heading: 'OnCall heading',
+      heading: 'Grafana OnCall',
+      info: '',
       options: [
         option('integration_type', 'How to connect to OnCall', '', {
           required: true,
@@ -165,13 +176,8 @@ function useOnCallNotifier(onCallIntegrations: OnCallIntegration[]) {
             value: i.integration_url,
           })),
         }),
-        option(
-          'max_alerts',
-          'Max alerts',
-          'The maximum number of alerts to include in a single webhook message. Alerts above this threshold are truncated. When leaving this at its default value of 0, all alerts are included.',
-          { placeholder: '0', validationRule: '(^\\d+$|^$)' }
-        ),
+        ...webhookOptions,
       ],
     };
-  }, [onCallIntegrations]);
+  }, [onCallIntegrations, notifiers]);
 }

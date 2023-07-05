@@ -50,11 +50,10 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     onCallFormValidators,
     mapWebhookReceiversToOnCalls,
     mapOnCallReceiversToWebhooks,
-    isLoadingOnCallIntegrations,
+    isLoadingOnCallIntegration,
   } = useOnCallIntegration();
 
   const { useGrafanaNotifiersQuery } = alertmanagerApi;
-
   const { data: grafanaNotifiers = [], isLoading: isLoadingNotifiers } = useGrafanaNotifiersQuery();
 
   const [testChannelValues, setTestChannelValues] = useState<GrafanaChannelValues>();
@@ -64,13 +63,13 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
     ReceiverFormValues<GrafanaChannelValues> | undefined,
     Record<string, GrafanaManagedReceiverConfig>
   ] => {
-    if (!existing || isLoadingNotifiers || isLoadingOnCallIntegrations) {
+    if (!existing || isLoadingNotifiers || isLoadingOnCallIntegration) {
       return [undefined, {}];
     }
 
     const existingWithOnCall = mapWebhookReceiversToOnCalls(existing);
     return grafanaReceiverToFormValues(existingWithOnCall, grafanaNotifiers);
-  }, [existing, isLoadingNotifiers, grafanaNotifiers, isLoadingOnCallIntegrations, mapWebhookReceiversToOnCalls]);
+  }, [existing, isLoadingNotifiers, grafanaNotifiers, isLoadingOnCallIntegration, mapWebhookReceiversToOnCalls]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
     const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
@@ -129,7 +128,7 @@ export const GrafanaReceiverForm = ({ existing, alertManagerSourceName, config }
   const isEditable = isManageableAlertManagerDataSource && !hasProvisionedItems;
   const isTestable = isManageableAlertManagerDataSource || hasProvisionedItems;
 
-  if (isLoadingNotifiers || isLoadingOnCallIntegrations) {
+  if (isLoadingNotifiers || isLoadingOnCallIntegration) {
     return <LoadingPlaceholder text="Loading notifiers..." />;
   }
 
