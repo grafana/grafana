@@ -35,7 +35,7 @@ const INTERACTION_ITEM = {
   DISMISS: 'dismiss',
 };
 
-interface DataSourceModalProps {
+export interface DataSourceModalProps {
   onChange: (ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => void;
   current: DataSourceRef | string | null | undefined;
   onDismiss: () => void;
@@ -54,6 +54,7 @@ interface DataSourceModalProps {
   alerting?: boolean;
   pluginId?: string;
   logs?: boolean;
+  uploadCSV?: boolean;
 }
 
 export function DataSourceModal({
@@ -67,6 +68,7 @@ export function DataSourceModal({
   alerting,
   pluginId,
   logs,
+  uploadCSV,
   filter,
   onChange,
   current,
@@ -193,7 +195,7 @@ export function DataSourceModal({
           <CustomScrollbar className={styles.builtInDataSourcesList}>
             <BuiltInList />
           </CustomScrollbar>
-          {config.featureToggles.editPanelCSVDragAndDrop && (
+          {uploadCSV && config.featureToggles.editPanelCSVDragAndDrop && (
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={() => undefined}
