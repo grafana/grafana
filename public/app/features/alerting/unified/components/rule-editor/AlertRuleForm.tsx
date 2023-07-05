@@ -7,6 +7,7 @@ import { Link, useParams } from 'react-router-dom';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -192,49 +193,56 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
+  const actionButtons = (
+    <HorizontalGroup height="auto" justify="flex-end">
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, false), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule
+      </Button>
+      <Button
+        variant="primary"
+        type="button"
+        size="sm"
+        onClick={handleSubmit((values) => submit(values, true), onInvalid)}
+        disabled={submitState.loading}
+      >
+        {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
+        Save rule and exit
+      </Button>
+      <Link to={returnTo}>
+        <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation} size="sm">
+          Cancel
+        </Button>
+      </Link>
+      {existing ? (
+        <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
+          Delete
+        </Button>
+      ) : null}
+      {isCortexLokiOrRecordingRule(watch) && (
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setShowEditYaml(true)}
+          disabled={submitState.loading}
+          size="sm"
+        >
+          Edit YAML
+        </Button>
+      )}
+    </HorizontalGroup>
+  );
+
   return (
     <FormProvider {...formAPI}>
+      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
-        <HorizontalGroup height="auto" justify="flex-end">
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule
-          </Button>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={handleSubmit((values) => submit(values, true), onInvalid)}
-            disabled={submitState.loading}
-          >
-            {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
-            Save rule and exit
-          </Button>
-          <Link to={returnTo}>
-            <Button variant="secondary" disabled={submitState.loading} type="button" onClick={cancelRuleCreation}>
-              Cancel
-            </Button>
-          </Link>
-          {existing ? (
-            <Button variant="destructive" type="button" onClick={() => setShowDeleteModal(true)}>
-              Delete
-            </Button>
-          ) : null}
-          {isCortexLokiOrRecordingRule(watch) && (
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => setShowEditYaml(true)}
-              disabled={submitState.loading}
-            >
-              Edit YAML
-            </Button>
-          )}
-        </HorizontalGroup>
         <div className={styles.contentOuter}>
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
