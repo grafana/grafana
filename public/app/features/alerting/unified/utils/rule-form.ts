@@ -131,7 +131,6 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     return {
       grafana_alert: {
         title: name,
-        uid: values.uid,
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
@@ -157,7 +156,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       return {
         ...defaultFormValues,
         name: ga.title,
-        uid: ga.uid,
         type: RuleFormType.grafana,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,

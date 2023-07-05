@@ -162,6 +162,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
 
   tokenExpirationDayLimit: undefined;
+  disableFrontendSandboxForPlugins: string[] = [];
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -194,7 +195,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
       systemDateFormats.update(this.dateFormats);
     }
 
-    overrideFeatureTogglesFromUrl(this);
+    if (this.buildInfo.env === 'development') {
+      overrideFeatureTogglesFromUrl(this);
+    }
 
     if (this.featureToggles.disableAngular) {
       this.angularSupportEnabled = false;

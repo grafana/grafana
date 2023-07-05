@@ -499,6 +499,8 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events
       <div
         key={this.UID}
         ref={this.initElement}

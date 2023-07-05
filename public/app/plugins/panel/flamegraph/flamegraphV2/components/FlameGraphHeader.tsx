@@ -1,16 +1,17 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import useDebounce from 'react-use/lib/useDebounce';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import { CoreApp, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Input, Menu, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { config } from '../../../../../core/config';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
-import { SelectedView, TextAlign } from './types';
+import { byPackageGradient, byValueGradient } from './FlameGraph/colors';
+import { ColorScheme, SelectedView, TextAlign } from './types';
 
 type Props = {
   app: CoreApp;
@@ -23,6 +24,8 @@ type Props = {
   textAlign: TextAlign;
   onTextAlignChange: (align: TextAlign) => void;
   showResetButton: boolean;
+  colorScheme: ColorScheme;
+  onColorSchemeChange: (colorScheme: ColorScheme) => void;
 };
 
 const FlameGraphHeader = ({
@@ -36,6 +39,8 @@ const FlameGraphHeader = ({
   textAlign,
   onTextAlignChange,
   showResetButton,
+  colorScheme,
+  onColorSchemeChange,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
   function interaction(name: string, context: Record<string, string | number>) {
@@ -93,7 +98,7 @@ const FlameGraphHeader = ({
             aria-label={'Reset focus and sandwich state'}
           />
         )}
-
+        <ColorSchemeButton app={app} value={colorScheme} onChange={onColorSchemeChange} />
         <RadioButtonGroup<TextAlign>
           size="sm"
           disabled={selectedView === SelectedView.TopTable}
@@ -118,6 +123,42 @@ const FlameGraphHeader = ({
     </div>
   );
 };
+
+type ColorSchemeButtonProps = {
+  app: CoreApp;
+  value: ColorScheme;
+  onChange: (colorScheme: ColorScheme) => void;
+};
+function ColorSchemeButton(props: ColorSchemeButtonProps) {
+  const styles = useStyles2((theme) => getStyles(theme, props.app));
+  const menu = (
+    <Menu>
+      <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
+      <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
+    </Menu>
+  );
+  return (
+    <Dropdown overlay={menu}>
+      <Button
+        variant={'secondary'}
+        fill={'outline'}
+        size={'sm'}
+        tooltip={'Change color scheme'}
+        onClick={() => {}}
+        className={styles.buttonSpacing}
+        aria-label={'Change color scheme'}
+      >
+        <span
+          className={cx(
+            styles.colorDot,
+            // Show a bit different gradient as a way to indicate selected value
+            props.value === ColorScheme.ValueBased ? styles.colorDotByValue : styles.colorDotByPackage
+          )}
+        />
+      </Button>
+    </Dropdown>
+  );
+}
 
 const alignOptions: Array<SelectableValue<TextAlign>> = [
   { value: 'left', description: 'Align text left', icon: 'align-left' },
@@ -208,6 +249,21 @@ const getStyles = (theme: GrafanaTheme2, app: CoreApp) => ({
     label: resetButtonIcon;
     padding: 0 5px;
     color: ${theme.colors.text.disabled};
+  `,
+  colorDot: css`
+    label: colorDot;
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  `,
+  colorDotByValue: css`
+    label: colorDotByValue;
+    background: ${byValueGradient};
+  `,
+  colorDotByPackage: css`
+    label: colorDotByPackage;
+    background: ${byPackageGradient};
   `,
 });
 
