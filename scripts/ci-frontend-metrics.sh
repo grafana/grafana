@@ -30,6 +30,7 @@ echo -e "Med vulnerabilities: $MED_VULNERABILITIES"
 echo -e "High vulnerabilities: $HIGH_VULNERABILITIES"
 echo -e "Critical vulnerabilities: $CRITICAL_VULNERABILITIES"
 echo -e "@emotion/css imports: $EMOTION_IMPORTS"
+echo -e "Total TS files: $TS_FILES"
 
 BETTERER_STATS=""
 while read -r name value
@@ -47,5 +48,6 @@ echo "Metrics: {
   \"grafana.ci-code.legacyForms\": \"${LEGACY_FORMS}\",
   \"grafana.ci-code.bundleFolderSize\": \"${TOTAL_BUNDLE}\",
   \"grafana.ci-code.dependencies.outdated\": \"${OUTDATED_DEPENDENCIES}\",
-  \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\"
+  \"grafana.ci-code.imports.emotion\": \"${EMOTION_IMPORTS}\",
+  \"grafana.ci-code.tsFiles\": \"${TS_FILES}\"
 }"
