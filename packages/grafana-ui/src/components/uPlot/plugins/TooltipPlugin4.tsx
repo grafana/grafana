@@ -30,6 +30,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   const style = useStyles2(getStyles);
 
   useLayoutEffect(() => {
+    let _plot = plot;
     let _isVisible = isVisible;
     let _isPinned = isPinned;
 
@@ -43,6 +44,13 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     let winHeight = htmlEl.clientHeight - 16;
 
     let closestSeriesIdx: number | null = null;
+
+    let pendingRender = false;
+
+    const _render = () => {
+      pendingRender = false;
+      setContents(render(_plot!, _plot!.cursor.idxs!, closestSeriesIdx, _isPinned));
+    };
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -62,7 +70,7 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     });
 
     config.addHook('init', (u) => {
-      setPlot(u);
+      setPlot(_plot = u);
 
       // TODO: use cursor.lock & and mousedown/mouseup here (to prevent unlocking)
       u.over.addEventListener('click', (e) => {
@@ -82,9 +90,12 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       });
     });
 
-    // fires on data value hovers/unhovers
+    // fires on data value hovers/unhovers (before setSeries)
     config.addHook('setLegend', (u) => {
-      setContents(render(u, u.cursor.idxs!, closestSeriesIdx, _isPinned));
+      if (!pendingRender) {
+        pendingRender = true;
+        queueMicrotask(_render);
+      }
     });
 
     // fires on series focus/proximity changes
@@ -92,10 +103,13 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       if (closestSeriesIdx !== seriesIdx) {
-        setContents(render(u, u.cursor.idxs!, seriesIdx, _isPinned));
-      }
+        closestSeriesIdx = seriesIdx;
 
-      closestSeriesIdx = seriesIdx;
+        if (!pendingRender) {
+          pendingRender = true;
+          queueMicrotask(_render);
+        }
+      }
     });
 
     // fires on mousemoves
