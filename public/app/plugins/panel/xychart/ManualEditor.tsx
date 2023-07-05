@@ -66,6 +66,8 @@ export const ManualEditor = ({
       <div className={style.marginBot}>
         {value.map((series, index) => {
           return (
+            // TODO: fix keyboard a11y
+            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
             <div key={`series/${index}`} className={getRowStyle(index)} onMouseDown={() => setSelected(index)}>
               <LayerName
                 name={series.name ?? `Series ${index + 1}`}

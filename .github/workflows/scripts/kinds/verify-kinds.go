@@ -351,7 +351,7 @@ func (j *kindregjenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	path := filepath.Join(j.path, "next", "core", name+".cue")
+	path := filepath.Join(j.path, "next", "core", name, name+".cue")
 	return codejen.NewFile(path, newKindBytes, j), nil
 }
 
@@ -399,6 +399,8 @@ func (j *ckrJenny) Generate(k kindsys.Composable) (*codejen.File, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	newKindBytes = []byte(fmt.Sprintf("package kind\n\n%s", newKindBytes))
 
 	return codejen.NewFile(filepath.Join(j.path, "next", "composable", name+".cue"), newKindBytes, j), nil
 }

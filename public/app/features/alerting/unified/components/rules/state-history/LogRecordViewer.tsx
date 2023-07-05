@@ -19,21 +19,27 @@ interface LogRecordViewerProps {
   onLabelClick?: (label: string) => void;
 }
 
+function groupRecordsByTimestamp(records: LogRecord[]) {
+  // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
+  const groupedLines = records.reduce((acc, current) => {
+    const tsGroup = acc.get(current.timestamp);
+    if (tsGroup) {
+      tsGroup.push(current);
+    } else {
+      acc.set(current.timestamp, [current]);
+    }
+
+    return acc;
+  }, new Map<number, LogRecord[]>());
+
+  return new Map([...groupedLines].sort((a, b) => b[0] - a[0]));
+}
+
 export const LogRecordViewerByTimestamp = React.memo(
   ({ records, commonLabels, onLabelClick, onRecordsRendered }: LogRecordViewerProps) => {
     const styles = useStyles2(getStyles);
 
-    // groupBy has been replaced by the reduce to avoid back and forth conversion of timestamp from number to string
-    const groupedLines = records.reduce((acc, current) => {
-      const tsGroup = acc.get(current.timestamp);
-      if (tsGroup) {
-        tsGroup.push(current);
-      } else {
-        acc.set(current.timestamp, [current]);
-      }
-
-      return acc;
-    }, new Map<number, LogRecord[]>());
+    const groupedLines = groupRecordsByTimestamp(records);
 
     const timestampRefs = new Map<number, HTMLElement>();
     useEffect(() => {
