@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/exp/slices"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -50,6 +52,7 @@ func ProvideService(
 		pluginClient:           pluginClient,
 		pCtxProvider:           pCtxProvider,
 		log:                    log.New("query_data"),
+		concurrentQueryLimit:   cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 	}
 	g.log.Info("Query Service initialization")
 	return g
@@ -72,6 +75,7 @@ type ServiceImpl struct {
 	pluginClient           plugins.Client
 	pCtxProvider           *plugincontext.Provider
 	log                    log.Logger
+	concurrentQueryLimit   int
 }
 
 // Run ServiceImpl.
@@ -109,7 +113,7 @@ type splitResponse struct {
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
 func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.SignedInUser, skipDSCache bool, reqDTO dtos.MetricRequest, queriesbyDs map[string][]parsedQuery) (*backend.QueryDataResponse, error) {
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(8) // arbitrary limit to prevent too many concurrent requests
+	g.SetLimit(s.concurrentQueryLimit) // prevent too many concurrent requests
 	rchan := make(chan splitResponse, len(queriesbyDs))
 
 	// Create panic recovery function for loop below

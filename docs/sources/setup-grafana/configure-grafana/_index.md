@@ -1666,6 +1666,14 @@ Enable or disable the Profile section. Default is `enabled`.
 
 Enables the news feed section. Default is `true`
 
+<hr>
+
+## [query]
+
+### concurrent_query_limit
+
+Set the number of queries that can be executed concurrently in a mixed data source panel. Default is the number of CPUs.
+
 ## [query_history]
 
 Configures Query history in Explore.
@@ -1673,6 +1681,8 @@ Configures Query history in Explore.
 ### enabled
 
 Enable or disable the Query history. Default is `enabled`.
+
+<hr>
 
 ## [metrics]
 
