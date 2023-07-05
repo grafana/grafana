@@ -188,7 +188,7 @@ describe('Fields from JSON', () => {
     `);
   });
 
-  it('adds fields from JSON in string', async () => {
+  it('skips null values', async () => {
     const cfg: ExtractFieldsOptions = {
       source: 'line',
       replace: false,
