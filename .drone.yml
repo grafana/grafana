@@ -1260,13 +1260,15 @@ steps:
   image: grafana/build-container:1.7.4
   name: wire-install
 - commands:
-  - go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
   image: grafana/build-container:1.7.4
   name: sqlite-integration-benchmarks
 - commands:
-  - go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
   environment:
@@ -1276,7 +1278,8 @@ steps:
   image: grafana/build-container:1.7.4
   name: postgres-integration-benchmarks
 - commands:
-  - go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
   environment:
@@ -1285,7 +1288,8 @@ steps:
   image: grafana/build-container:1.7.4
   name: mysql-integration-benchmarks-5.7
 - commands:
-  - go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api
+  - if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi
+  - go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}
   depends_on:
   - wire-install
   environment:
@@ -7351,6 +7355,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 4d92a0441f33b1b9e215301b6f92c0e71d1ab4971e7754e539394f80ba204516
+hmac: 2a743d0d59621ac380d2481f696322c6217e09cc6393d912dcbd341398e56d90
 
 ...

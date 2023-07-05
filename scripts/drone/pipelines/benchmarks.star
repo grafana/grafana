@@ -56,7 +56,8 @@ def integration_benchmarks(prefix):
     ]
 
     cmd = [
-        "go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api",
+        "if [ -z ${GO_PACKAGES} ]; then echo 'missing GO_PACKAGES'; false; fi",
+        "go test -v -run=^$ -benchmem -timeout=1h -count=8 -bench=. ${GO_PACKAGES}",
     ]
 
     benchmark_steps = [
