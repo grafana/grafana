@@ -97,8 +97,8 @@ export function useOnCallIntegration() {
           integration: GRAFANA_INTEGRATION_TYPE,
           verbal_name: c.settings['integration_name'],
         }).unwrap();
-        c.type = 'webhook';
-        c.settings['url'] = newIntegration.integration_url;
+
+        c.settings['oncall_url'] = newIntegration.integration_url;
       });
 
       await Promise.all(createNewOnCallIntegrationJobs);
@@ -110,6 +110,7 @@ export function useOnCallIntegration() {
             c.settings['url'] = c.settings['oncall_url'];
             delete c.settings['oncall_url'];
             delete c.settings['integration_type'];
+            delete c.settings['integration_name'];
           }
         });
       });
