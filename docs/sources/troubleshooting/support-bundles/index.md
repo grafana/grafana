@@ -39,10 +39,10 @@ A support bundle can include any of the following components:
 
 To follow these instructions, you need the following permissions:
 
-- In Grafana Cloud, you need the organization administrator role. 
+- In Grafana Cloud, you need the organization administrator role.
 - In Grafana on-premises, you need the Grafana server administrator role.
-  
-    Note that you can set `server_admin_only` configuration option to `false` to allow organization administrators to access support bundles in Grafana on-premises.
+
+  Note that you can set `server_admin_only` configuration option to `false` to allow organization administrators to access support bundles in Grafana on-premises.
 
 ## Steps
 
