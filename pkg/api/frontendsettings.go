@@ -151,7 +151,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		CSPReportOnlyEnabled:                hs.Cfg.CSPReportOnlyEnabled,
 		DateFormats:                         hs.Cfg.DateFormats,
 		SecureSocksDSProxyEnabled:           hs.Cfg.SecureSocksDSProxy.Enabled && hs.Cfg.SecureSocksDSProxy.ShowUI,
-		FrontendSandboxDisableForPlugins:    hs.Cfg.FrontendSandboxDisableForPlugins,
+		DisableFrontendSandboxForPlugins:    hs.Cfg.DisableFrontendSandboxForPlugins,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,

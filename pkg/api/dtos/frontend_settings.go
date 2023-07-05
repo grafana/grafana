@@ -175,7 +175,7 @@ type FrontendSettingsDTO struct {
 	DisableSanitizeHtml                 bool     `json:"disableSanitizeHtml"`
 	TrustedTypesDefaultPolicyEnabled    bool     `json:"trustedTypesDefaultPolicyEnabled"`
 	CSPReportOnlyEnabled                bool     `json:"cspReportOnlyEnabled"`
-	FrontendSandboxDisableForPlugins    []string `json:"frontendSandboxDisableForPlugins"`
+	DisableFrontendSandboxForPlugins    []string `json:"disableFrontendSandboxForPlugins"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 
