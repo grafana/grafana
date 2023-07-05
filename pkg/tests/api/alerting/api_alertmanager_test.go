@@ -875,6 +875,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			rulegroup       string
 			interval        model.Duration
 			rule            apimodels.PostableExtendedRuleNode
+			expectedCode    int
 			expectedMessage string
 		}{
 			{
@@ -1042,7 +1043,18 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: failed to build query 'A': data source not found",
+				expectedCode: func() int {
+					if setting.IsEnterprise {
+						return http.StatusUnauthorized
+					}
+					return http.StatusBadRequest
+				}(),
+				expectedMessage: func() string {
+					if setting.IsEnterprise {
+						return "user is not authorized to create a new alert rule 'AlwaysFiring' because the user does not have read permissions for one or many datasources the rule uses"
+					}
+					return "failed to update rule group: invalid alert rule 'AlwaysFiring': failed to build query 'A': data source not found"
+				}(),
 			},
 			{
 				desc:      "alert rule with invalid condition",
@@ -1072,7 +1084,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						},
 					},
 				},
-				expectedMessage: "invalid rule specification at index [0]: failed to validate condition of alert rule AlwaysFiring: condition B does not exist, must be one of [A]",
+				expectedMessage: "invalid rule specification at index [0]: invalid alert rule: condition B does not exist, must be one of [A]",
 			},
 		}
 
@@ -1091,8 +1103,11 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 				require.NoError(t, err)
 
 				assert.Equal(t, tc.expectedMessage, res.Message)
-
-				assert.Equal(t, http.StatusBadRequest, status)
+				expectedCode := tc.expectedCode
+				if expectedCode == 0 {
+					expectedCode = http.StatusBadRequest
+				}
+				assert.Equal(t, expectedCode, status)
 			})
 		}
 	}

@@ -28,8 +28,8 @@ import (
 const (
 	HeaderPluginID       = "X-Plugin-Id"         // can be used for routing
 	HeaderDatasourceUID  = "X-Datasource-Uid"    // can be used for routing/ load balancing
-	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debuging slow queries
-	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debuging slow queries
+	HeaderDashboardUID   = "X-Dashboard-Uid"     // mainly useful for debugging slow queries
+	HeaderPanelID        = "X-Panel-Id"          // mainly useful for debugging slow queries
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
 )
@@ -122,7 +122,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user *user.S
 			} else if theErrString, ok := r.(string); ok {
 				err = fmt.Errorf(theErrString)
 			} else {
-				err = fmt.Errorf("unexpected error, see the server log for details")
+				err = fmt.Errorf("unexpected error - %s", s.cfg.UserFacingDefaultError)
 			}
 			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
 			rchan <- buildErrorResponses(err, queries)
@@ -287,7 +287,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user *user.SignedI
 		}
 
 		datasourcesByUid[ds.UID] = ds
-		if expr.IsDataSource(ds.UID) {
+		if expr.NodeTypeFromDatasourceUID(ds.UID) != expr.TypeDatasourceNode {
 			req.hasExpression = true
 		} else {
 			req.dsTypes[ds.Type] = true
@@ -339,8 +339,8 @@ func (s *ServiceImpl) getDataSourceFromQuery(ctx context.Context, user *user.Sig
 		return ds, nil
 	}
 
-	if expr.IsDataSource(uid) {
-		return expr.DataSourceModel(), nil
+	if kind := expr.NodeTypeFromDatasourceUID(uid); kind != expr.TypeDatasourceNode {
+		return expr.DataSourceModelFromNodeType(kind)
 	}
 
 	if uid == grafanads.DatasourceUID {
