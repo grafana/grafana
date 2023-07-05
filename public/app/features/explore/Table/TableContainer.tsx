@@ -99,10 +99,8 @@ export class TableContainer extends PureComponent<Props> {
       });
     } else if (mainFrames.length > 1) {
       mainFrames?.forEach((frame) => {
-        let subFrames: DataFrame[] = [];
-        if (frame.meta?.custom?.tableKey !== undefined) {
-          subFrames = dataFrames?.filter((df) => df.meta?.custom?.tableKey === frame.meta?.custom?.tableKey) || [];
-        }
+        const subFrames =
+          dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) || [];
         tableData.push({ main: frame, sub: subFrames.length > 0 ? subFrames : undefined });
       });
     }
@@ -115,7 +113,7 @@ export class TableContainer extends PureComponent<Props> {
         {tableData.length > 0 &&
           tableData.map((data, i) => (
             <PanelChrome
-              key={data.main.meta?.custom?.tableKey || `table-${i}`}
+              key={data.main.refId || `table-${i}`}
               title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
               width={width}
               height={this.getTableHeight(data.main.length, tableData.length === 1)}
