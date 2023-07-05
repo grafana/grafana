@@ -38,8 +38,8 @@ interface DashboardsTreeProps {
   requestLoadMore: (folderUid: string | undefined) => void;
 }
 
-const HEADER_HEIGHT = 35;
-const ROW_HEIGHT = 35;
+const HEADER_HEIGHT = 36;
+const ROW_HEIGHT = 36;
 
 export function DashboardsTree({
   items,

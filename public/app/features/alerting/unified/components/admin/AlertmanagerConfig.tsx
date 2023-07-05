@@ -5,9 +5,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, useStyles2 } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
-import { useAlertManagerSourceName } from '../../hooks/useAlertManagerSourceName';
-import { useAlertManagersByPermission } from '../../hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
+import { useAlertmanager } from '../../state/AlertmanagerContext';
 import {
   deleteAlertManagerConfigAction,
   fetchAlertManagerConfigAction,
@@ -15,7 +14,6 @@ import {
 } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { AlertManagerPicker } from '../AlertManagerPicker';
 
 import AlertmanagerConfigSelector, { ValidAmConfigOption } from './AlertmanagerConfigSelector';
 import { ConfigEditor } from './ConfigEditor';
@@ -26,14 +24,13 @@ export interface FormValues {
 
 export default function AlertmanagerConfig(): JSX.Element {
   const dispatch = useDispatch();
-  const alertManagers = useAlertManagersByPermission('notification');
-  const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
 
   const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
   const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
   const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+  const { selectedAlertmanager } = useAlertmanager();
 
-  const readOnly = alertManagerSourceName ? isVanillaPrometheusAlertManagerDataSource(alertManagerSourceName) : false;
+  const readOnly = selectedAlertmanager ? isVanillaPrometheusAlertManagerDataSource(selectedAlertmanager) : false;
   const styles = useStyles2(getStyles);
 
   const configRequests = useUnifiedAlertingSelector((state) => state.amConfigs);
@@ -44,17 +41,17 @@ export default function AlertmanagerConfig(): JSX.Element {
     result: config,
     loading: isLoadingConfig,
     error: loadingError,
-  } = (alertManagerSourceName && configRequests[alertManagerSourceName]) || initialAsyncRequestState;
+  } = (selectedAlertmanager && configRequests[selectedAlertmanager]) || initialAsyncRequestState;
 
   useEffect(() => {
-    if (alertManagerSourceName) {
-      dispatch(fetchAlertManagerConfigAction(alertManagerSourceName));
+    if (selectedAlertmanager) {
+      dispatch(fetchAlertManagerConfigAction(selectedAlertmanager));
     }
-  }, [alertManagerSourceName, dispatch]);
+  }, [selectedAlertmanager, dispatch]);
 
   const resetConfig = () => {
-    if (alertManagerSourceName) {
-      dispatch(deleteAlertManagerConfigAction(alertManagerSourceName));
+    if (selectedAlertmanager) {
+      dispatch(deleteAlertManagerConfigAction(selectedAlertmanager));
     }
     setShowConfirmDeleteAMConfig(false);
   };
@@ -76,12 +73,12 @@ export default function AlertmanagerConfig(): JSX.Element {
   const loading = isDeleting || isLoadingConfig || isSaving;
 
   const onSubmit = (values: FormValues) => {
-    if (alertManagerSourceName && config) {
+    if (selectedAlertmanager && config) {
       dispatch(
         updateAlertManagerConfigAction({
           newConfig: JSON.parse(values.configJSON),
           oldConfig: config,
-          alertManagerSourceName,
+          alertManagerSourceName: selectedAlertmanager,
           successMessage: 'Alertmanager configuration updated.',
           refetch: true,
         })
@@ -91,11 +88,6 @@ export default function AlertmanagerConfig(): JSX.Element {
 
   return (
     <div className={styles.container}>
-      <AlertManagerPicker
-        current={alertManagerSourceName}
-        onChange={setAlertManagerSourceName}
-        dataSources={alertManagers}
-      />
       {loadingError && !loading && (
         <>
           <Alert
@@ -105,7 +97,7 @@ export default function AlertmanagerConfig(): JSX.Element {
             {loadingError.message || 'Unknown error.'}
           </Alert>
 
-          {alertManagerSourceName === GRAFANA_RULES_SOURCE_NAME && (
+          {selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME && (
             <AlertmanagerConfigSelector
               onChange={setSelectedAmConfig}
               selectedAmConfig={selectedAmConfig}
@@ -117,18 +109,18 @@ export default function AlertmanagerConfig(): JSX.Element {
           )}
         </>
       )}
-      {isDeleting && alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME && (
+      {isDeleting && selectedAlertmanager !== GRAFANA_RULES_SOURCE_NAME && (
         <Alert severity="info" title="Resetting Alertmanager configuration">
           It might take a while...
         </Alert>
       )}
-      {alertManagerSourceName && config && (
+      {selectedAlertmanager && config && (
         <ConfigEditor
           defaultValues={defaultValues}
           onSubmit={(values) => onSubmit(values)}
           readOnly={readOnly}
           loading={loading}
-          alertManagerSourceName={alertManagerSourceName}
+          alertManagerSourceName={selectedAlertmanager}
           showConfirmDeleteAMConfig={showConfirmDeleteAMConfig}
           onReset={() => setShowConfirmDeleteAMConfig(true)}
           onConfirmReset={resetConfig}

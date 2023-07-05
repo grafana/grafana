@@ -1,7 +1,8 @@
 import uFuzzy from '@leeoniya/ufuzzy';
 import { RefObject, useEffect, useMemo, useState } from 'react';
 
-import { colors } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { colors, useTheme2 } from '@grafana/ui';
 
 import {
   BAR_BORDER_WIDTH,
@@ -11,8 +12,9 @@ import {
   LABEL_THRESHOLD,
   PIXELS_PER_LEVEL,
 } from '../../constants';
-import { ClickedItemData, TextAlign } from '../types';
+import { ClickedItemData, ColorScheme, TextAlign } from '../types';
 
+import { getBarColorByPackage, getBarColorByValue } from './colors';
 import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 const ufuzzy = new uFuzzy();
@@ -27,6 +29,7 @@ export function useFlameRender(
   search: string,
   textAlign: TextAlign,
   totalTicks: number,
+  colorScheme: ColorScheme,
   focusedItemData?: ClickedItemData
 ) {
   const foundLabels = useMemo(() => {
@@ -47,6 +50,7 @@ export function useFlameRender(
   }, [search, data]);
 
   const ctx = useSetupCanvas(canvasRef, wrapperWidth, levels.length);
+  const theme = useTheme2();
 
   useEffect(() => {
     if (!ctx) {
@@ -63,7 +67,19 @@ export function useFlameRender(
       for (const rect of dimensions) {
         const focusedLevel = focusedItemData ? focusedItemData.level : 0;
         // Render each rectangle based on the computed dimensions
-        renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, levelIndex, focusedLevel, foundLabels, textAlign);
+        renderRect(
+          ctx,
+          rect,
+          totalTicks,
+          rangeMin,
+          rangeMax,
+          levelIndex,
+          focusedLevel,
+          foundLabels,
+          textAlign,
+          colorScheme,
+          theme
+        );
       }
     }
   }, [
@@ -78,6 +94,8 @@ export function useFlameRender(
     foundLabels,
     textAlign,
     totalTicks,
+    colorScheme,
+    theme,
   ]);
 }
 
@@ -175,7 +193,9 @@ export function renderRect(
   levelIndex: number,
   topLevelIndex: number,
   foundNames: Set<string> | undefined,
-  textAlign: TextAlign
+  textAlign: TextAlign,
+  colorScheme: ColorScheme,
+  theme: GrafanaTheme2
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -184,28 +204,36 @@ export function renderRect(
   ctx.beginPath();
   ctx.rect(rect.x + (rect.collapsed ? 0 : BAR_BORDER_WIDTH), rect.y, rect.width, rect.height);
 
-  //  / (rangeMax - rangeMin) here so when you click a bar it will adjust the top (clicked)bar to the most 'intense' color
-  const intensity = Math.min(1, rect.ticks / totalTicks / (rangeMax - rangeMin));
-  const h = 50 - 50 * intensity;
-  const l = 65 + 7 * intensity;
+  const color =
+    colorScheme === ColorScheme.ValueBased
+      ? getBarColorByValue(rect.ticks, totalTicks, rangeMin, rangeMax)
+      : getBarColorByPackage(rect.label, theme);
 
-  const name = rect.label;
-
-  if (!rect.collapsed) {
-    ctx.stroke();
-
-    if (foundNames) {
-      ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
-    } else {
-      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
-    }
+  if (foundNames) {
+    // Means we are searching, we use color for matches and gray the rest
+    ctx.fillStyle = foundNames.has(rect.label) ? color.toHslString() : colors[55];
   } else {
-    ctx.fillStyle = foundNames && foundNames.has(name) ? getBarColor(h, l) : colors[55];
+    // No search
+    if (rect.collapsed) {
+      // Collapsed are always grayed
+      ctx.fillStyle = colors[55];
+    } else {
+      // Mute if we are above the focused symbol
+      ctx.fillStyle = levelIndex > topLevelIndex - 1 ? color.toHslString() : color.lighten(15).toHslString();
+    }
   }
+
+  if (rect.collapsed) {
+    // Only fill the collapsed rects
+    ctx.fill();
+    return;
+  }
+
+  ctx.stroke();
   ctx.fill();
 
-  if (!rect.collapsed && rect.width >= LABEL_THRESHOLD) {
-    renderLabel(ctx, name, rect, textAlign);
+  if (rect.width >= LABEL_THRESHOLD) {
+    renderLabel(ctx, rect.label, rect, textAlign);
   }
 }
 
@@ -249,8 +277,4 @@ function renderLabel(ctx: CanvasRenderingContext2D, name: string, rect: RectData
  */
 export function getBarX(offset: number, totalTicks: number, rangeMin: number, pixelsPerTick: number) {
   return (offset - totalTicks * rangeMin) * pixelsPerTick;
-}
-
-function getBarColor(h: number, l: number) {
-  return `hsl(${h}, 100%, ${l}%)`;
 }

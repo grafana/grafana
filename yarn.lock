@@ -4018,9 +4018,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.15.0":
-  version: 0.15.0
-  resolution: "@grafana/scenes@npm:0.15.0"
+"@grafana/scenes@npm:0.17.2":
+  version: 0.17.2
+  resolution: "@grafana/scenes@npm:0.17.2"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -4028,7 +4028,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 2d30a1a1af4cc198c2a42fefa196e8e29ce16e5185ecc6fee30bc5ec890465822c6c17f12a04881d1bb95c6c1c374732264ae013472cf40e44525674c9a5f8a8
+  checksum: 407d928fd0e76df7bb0381e1f75cd1ff176473ff24fa6921e790722bf12da4755c0509429241d4351c79cb8f11a6611e62fe0281bd1d0a32b1fc0fef8f778d26
   languageName: node
   linkType: hard
 
@@ -4094,7 +4094,7 @@ __metadata:
     "@grafana/faro-web-sdk": 1.1.0
     "@grafana/schema": 10.1.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@leeoniya/ufuzzy": 1.0.6
+    "@leeoniya/ufuzzy": 1.0.8
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.5.1
     "@popperjs/core": 2.11.6
@@ -4850,10 +4850,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:1.0.6":
-  version: 1.0.6
-  resolution: "@leeoniya/ufuzzy@npm:1.0.6"
-  checksum: e09672848e094745726331feebe6744d42563ccf160b38796eed4d72105daa052838fdec1944d5b44a27e328fc74a00547d00b894710e2720aa692ed5d3d6e3b
+"@leeoniya/ufuzzy@npm:1.0.8":
+  version: 1.0.8
+  resolution: "@leeoniya/ufuzzy@npm:1.0.8"
+  checksum: 899a9269fa72c773c4806ff6ca7277a9ed69a8e3e7f0e8db9d3f4c9aa9c23d1d5c1df1e5cbea47d720af85ae6aa2ad88822443cd18ef94631876b96d23f4d7e2
   languageName: node
   linkType: hard
 
@@ -18829,13 +18829,13 @@ __metadata:
     "@grafana/lezer-logql": 0.1.5
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.15.0
+    "@grafana/scenes": 0.17.2
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.3.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": ^7.4.0
-    "@leeoniya/ufuzzy": 1.0.6
+    "@leeoniya/ufuzzy": 1.0.8
     "@lezer/common": 1.0.2
     "@lezer/highlight": 1.1.3
     "@lezer/lr": 1.3.3

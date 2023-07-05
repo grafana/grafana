@@ -34,7 +34,7 @@
     "alertgroupspanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/alerting-squad-frontend"
+        "grafana/alerting-frontend"
       ],
       "currentVersion": [
         0,
