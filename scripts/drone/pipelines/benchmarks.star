@@ -57,7 +57,7 @@ def integration_benchmarks(trigger, prefix):
     ]
 
     cmd = [
-        "go test -v -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api",
+        "go test -v -benchmem -run=^$ -timeout=1h -count=8 -bench=. ./pkg/api",
     ]
 
     benchmark_steps = [
