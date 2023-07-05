@@ -34,7 +34,7 @@ export const DataLinks = (props: Props) => {
 
   return (
     <ConfigSubSection
-      title="Logs"
+      title="Data links"
       description={
         <ConfigDescriptionLink
           description="Add links to existing fields. Links will be shown in log row details next to the field value."
