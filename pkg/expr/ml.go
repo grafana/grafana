@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	jsoniter "github.com/json-iterator/go"
 	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -18,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
-var errMLPluginDoesNotExist = errors.New("expression type Machine Learning is not supported. Plugin 'grafana-ml-app' must be enabled")
+var (
+	errMLPluginDoesNotExist = errors.New("expression type Machine Learning cannot be executed. Plugin 'grafana-ml-app' must be installed and initialized")
+)
 
 const (
 	mlDatasourceID = -200
@@ -58,6 +61,11 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 			return result, errMLPluginDoesNotExist
 		}
 		return result, fmt.Errorf("failed to get plugin settings: %w", err)
+	}
+
+	// Plugin must be initialized by the admin first. This will create service account and let other use it.
+	if pCtx.AppInstanceSettings == nil || !jsoniter.Get(pCtx.AppInstanceSettings.JSONData, "initialized").ToBool() {
+		return mathexp.Results{}, errMLPluginDoesNotExist
 	}
 
 	// responseType and respStatus will be updated below. Use defer to ensure that debug log message is always emitted

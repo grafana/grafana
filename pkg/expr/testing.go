@@ -14,6 +14,7 @@ type fakePluginContextProvider struct {
 		method string
 		params []interface{}
 	}
+	result      map[string]*backend.AppInstanceSettings
 	errorResult error
 }
 
@@ -39,7 +40,7 @@ func (f *fakePluginContextProvider) Get(_ context.Context, pluginID string, user
 		OrgID:                      orgID,
 		PluginID:                   pluginID,
 		User:                       u,
-		AppInstanceSettings:        nil,
+		AppInstanceSettings:        f.result[pluginID],
 		DataSourceInstanceSettings: nil,
 	}, nil
 }

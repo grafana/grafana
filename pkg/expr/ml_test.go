@@ -2,6 +2,7 @@ package expr
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"testing"
@@ -45,7 +46,13 @@ func TestMLNodeExecute(t *testing.T) {
 		response: expectedResponse,
 	}
 
-	pluginCtx := &fakePluginContextProvider{}
+	pluginCtx := &fakePluginContextProvider{
+		result: map[string]*backend.AppInstanceSettings{
+			mlPluginID: {
+				JSONData: json.RawMessage(`{ "initialized": true }`),
+			},
+		},
+	}
 
 	s := &Service{
 		cfg:           nil,
@@ -160,6 +167,27 @@ func TestMLNodeExecute(t *testing.T) {
 
 		_, err := node.Execute(context.Background(), timeNow, nil, s)
 		require.ErrorIs(t, err, expectedErr)
+	})
+
+	t.Run("should fail if plugin is not initialized", func(t *testing.T) {
+		s := &Service{
+			cfg:         nil,
+			dataService: nil,
+			pCtxProvider: &fakePluginContextProvider{
+				result: map[string]*backend.AppInstanceSettings{
+					mlPluginID: {
+						JSONData: json.RawMessage(`{}`),
+					},
+				},
+			},
+			features:      nil,
+			pluginsClient: nil,
+			tracer:        nil,
+			metrics:       nil,
+		}
+
+		_, err := node.Execute(context.Background(), timeNow, nil, s)
+		require.ErrorIs(t, err, errMLPluginDoesNotExist)
 	})
 
 	t.Run("should return QueryError if command failed", func(t *testing.T) {
