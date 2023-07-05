@@ -259,7 +259,7 @@ export function FileDropzoneDefaultChildren({ primaryText = 'Drop file here or c
   const styles = getStyles(theme);
 
   return (
-    <div className={cx(styles.defaultDropZone)} data-test-id="file-drop-zone-default-children">
+    <div className={cx(styles.defaultDropZone)} data-testid="file-drop-zone-default-children">
       <Icon className={cx(styles.icon)} name="upload" size="xl" />
       <h6 className={cx(styles.primaryText)}>{primaryText}</h6>
       <small className={styles.small}>{secondaryText}</small>
