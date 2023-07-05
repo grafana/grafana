@@ -103,7 +103,7 @@ describe('DataSourceDropdown', () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       setup({ uploadCSV: true });
 
-      expect(await screen.findByText('Drop file here or click to upload')).toBeInTheDocument();
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
 
@@ -112,7 +112,7 @@ describe('DataSourceDropdown', () => {
       config.featureToggles.editPanelCSVDragAndDrop = false;
 
       setup({ uploadCSV: true });
-      expect(screen.queryByText('Drop file here or click to upload')).toBeNull();
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeNull();
 
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
@@ -132,7 +132,7 @@ describe('DataSourceDropdown', () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       setup({ uploadCSV: true });
 
-      expect(await screen.findByText('Drop file here or click to upload')).toBeInTheDocument();
+      expect(await screen.queryByTestId('file-drop-zone-default-children')).toBeInTheDocument();
       config.featureToggles.editPanelCSVDragAndDrop = defaultValue;
     });
 
@@ -195,7 +195,7 @@ describe('DataSourceDropdown', () => {
       setup({ onChange, uploadCSV: true });
 
       const fileInput = (
-        await screen.findByText('Drop file here or click to upload')
+        await screen.queryByTestId('file-drop-zone-default-children')!
       ).parentElement!.parentElement!.querySelector('input');
       const file = new File([''], 'test.csv', { type: 'text/plain' });
       await user.upload(fileInput!, file);
