@@ -6,7 +6,7 @@ ACCESSIBILITY_ERRORS="$(grep -oP '\"errors\":(\d+),' pa11y-ci-results.json | gre
 DIRECTIVES="$(grep -r -o  directive public/app/ | wc -l)"
 CONTROLLERS="$(grep -r -oP 'class .*Ctrl' public/app/ | wc -l)"
 LEGACY_FORMS="$(grep -r -oP 'LegacyForms;' public/app | wc -l)"
-EMOTION_IMPORTS="$(grep -r -o 'emotion/css' public/app | wc -l)"
+EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" "\{.*css.*\} from '@emotion/css'" public/app | wc -l)"
 
 TOTAL_BUNDLE="$(du -sk ./public/build | cut -f1)"
 OUTDATED_DEPENDENCIES="$(yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)')"
