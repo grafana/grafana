@@ -30,7 +30,7 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
-	return path.Join("public/plugins", pluginJSON.ID), nil
+	return path.Join("/public/plugins", pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
@@ -41,8 +41,7 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.AssetURL(pluginJSON.ID, pluginJSON.Info.Version, "module.js")
 	}
-	path := path.Join("public", "plugins", pluginJSON.ID, "module.js")
-	return fmt.Sprintf("%s%s", "./", path), nil
+	return path.Join("/public", "plugins", pluginJSON.ID, "module.js"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.

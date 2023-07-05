@@ -66,7 +66,7 @@ func TestService(t *testing.T) {
 
 				base, err = svc.Base(jsonData["two"], plugins.ClassExternal, extPath("two"))
 				require.NoError(t, err)
-				require.Equal(t, "public/plugins/two", base)
+				require.Equal(t, "/public/plugins/two", base)
 
 				base, err = svc.Base(jsonData["table-old"], plugins.ClassCore, tableOldPath)
 				require.NoError(t, err)
@@ -83,7 +83,7 @@ func TestService(t *testing.T) {
 
 				module, err = svc.Module(jsonData["two"], plugins.ClassExternal, extPath("two"))
 				require.NoError(t, err)
-				require.Equal(t, "./public/plugins/two/module.js", module)
+				require.Equal(t, "/public/plugins/two/module.js", module)
 
 				module, err = svc.Module(jsonData["table-old"], plugins.ClassCore, tableOldPath)
 				require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestService(t *testing.T) {
 					},
 					"two": {
 						JSONData: plugins.JSONData{ID: "two", Info: plugins.Info{Version: "2.0.0"}},
-						BaseURL:  "public/pluginsMap/two",
+						BaseURL:  "/public/pluginsMap/two",
 					},
 				}
 				u, err := svc.RelativeURL(pluginsMap["one"], "", "default")
@@ -111,7 +111,7 @@ func TestService(t *testing.T) {
 
 				u, err = svc.RelativeURL(pluginsMap["two"], "path/to/file.txt", "default")
 				require.NoError(t, err)
-				require.Equal(t, "public/pluginsMap/two/path/to/file.txt", u)
+				require.Equal(t, "/public/pluginsMap/two/path/to/file.txt", u)
 
 				u, err = svc.RelativeURL(pluginsMap["two"], "default", "default")
 				require.NoError(t, err)
