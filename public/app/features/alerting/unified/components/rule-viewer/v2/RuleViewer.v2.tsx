@@ -66,7 +66,6 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
     return (
       <>
-        <AppChromeUpdate pageNav={{ text: rule.name }} />
         <Stack direction="column" gap={3}>
           {/* breadcrumb and actions */}
           <Stack>
