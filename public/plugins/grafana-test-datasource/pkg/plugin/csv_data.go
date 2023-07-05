@@ -100,7 +100,8 @@ func (s *Service) loadCsvFile(fileName string) (*data.Frame, error) {
 	}
 
 	csvFilepath := filepath.Clean(filepath.Join("/", fileName))
-	filePath := filepath.Join(s.cfg.StaticRootPath, "testdata", csvFilepath)
+	// StaticRootPath has been removed to avoid a dependency from the Grafana config
+	filePath := filepath.Join("public/testdata", csvFilepath)
 
 	// Can ignore gosec G304 here, because we check the file pattern above
 	// nolint:gosec

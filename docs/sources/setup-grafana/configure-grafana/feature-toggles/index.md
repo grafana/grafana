@@ -120,6 +120,7 @@ Experimental features might be changed or removed without prior notice.
 | `flameGraphV2`                           | New version of flame graph with new features                                                                 |
 | `elasticToggleableFilters`               | Enable support to toggle filters off from the query through the Logs Details component                       |
 | `vizAndWidgetSplit`                      | Split panels between vizualizations and widgets                                                              |
+| `runCorePluginsAsExternals`              | Load core plugins as external plugins                                                                        |
 
 ## Development feature toggles
 

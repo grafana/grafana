@@ -362,4 +362,8 @@ const (
 	// FlagVizAndWidgetSplit
 	// Split panels between vizualizations and widgets
 	FlagVizAndWidgetSplit = "vizAndWidgetSplit"
+
+	// FlagRunCorePluginsAsExternals
+	// Load core plugins as external plugins
+	FlagRunCorePluginsAsExternals = "runCorePluginsAsExternals"
 )

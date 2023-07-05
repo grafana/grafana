@@ -244,26 +244,31 @@ export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): 
     version: meta.info?.version,
     isAngular: meta.angularDetected,
     pluginId: meta.id,
-  }).then((pluginExports) => {
-    if (pluginExports.plugin) {
-      const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
-      dsPlugin.meta = meta;
-      return dsPlugin;
-    }
+  })
+    .then((pluginExports) => {
+      if (pluginExports.plugin) {
+        const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
+        dsPlugin.meta = meta;
+        return dsPlugin;
+      }
 
-    if (pluginExports.Datasource) {
-      const dsPlugin = new grafanaData.DataSourcePlugin<
-        grafanaData.DataSourceApi<grafanaData.DataQuery, grafanaData.DataSourceJsonData>,
-        grafanaData.DataQuery,
-        grafanaData.DataSourceJsonData
-      >(pluginExports.Datasource);
-      dsPlugin.setComponentsFromLegacyExports(pluginExports);
-      dsPlugin.meta = meta;
-      return dsPlugin;
-    }
+      if (pluginExports.Datasource) {
+        const dsPlugin = new grafanaData.DataSourcePlugin<
+          grafanaData.DataSourceApi<grafanaData.DataQuery, grafanaData.DataSourceJsonData>,
+          grafanaData.DataQuery,
+          grafanaData.DataSourceJsonData
+        >(pluginExports.Datasource);
+        dsPlugin.setComponentsFromLegacyExports(pluginExports);
+        dsPlugin.meta = meta;
+        return dsPlugin;
+      }
 
-    throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
-  });
+      throw new Error('Plugin module is missing DataSourcePlugin or Datasource constructor export');
+    })
+    .catch((err) => {
+      console.error('Failed to import data source plugin', err);
+      throw err;
+    });
 }
 
 export function importAppPlugin(meta: grafanaData.PluginMeta): Promise<grafanaData.AppPlugin> {

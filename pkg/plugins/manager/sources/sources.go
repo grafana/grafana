@@ -2,12 +2,12 @@ package sources
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,19 +27,39 @@ func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg) *Service {
 
 func (s *Service) List(_ context.Context) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		NewLocalSource(plugins.ClassCore, corePluginPaths(s.gCfg.StaticRootPath)),
+		NewLocalSource(plugins.ClassCore, s.corePluginPaths()),
 		NewLocalSource(plugins.ClassBundled, []string{s.gCfg.BundledPluginsPath}),
-		NewLocalSource(plugins.ClassExternal, append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)),
+		NewLocalSource(plugins.ClassExternal, s.externalPluginPaths()),
 	}
 }
 
 // corePluginPaths provides a list of the Core plugin file system paths
-func corePluginPaths(staticRootPath string) []string {
-	datasourcePaths := filepath.Join(staticRootPath, "app/plugins/datasource")
-	panelsPath := filepath.Join(staticRootPath, "app/plugins/panel")
-	pluginsPath, err := filepath.Abs(filepath.Join(staticRootPath, "plugins"))
-	fmt.Println("failed abs", "error", err)
+func (s *Service) corePluginPaths() []string {
+	datasourcePaths := filepath.Join(s.gCfg.StaticRootPath, "app/plugins/datasource")
+	panelsPath := filepath.Join(s.gCfg.StaticRootPath, "app/plugins/panel")
+	if s.cfg.Features.IsEnabled(featuremgmt.FlagRunCorePluginsAsExternals) {
+		return []string{datasourcePaths, panelsPath}
+	}
+	pluginsPath, err := filepath.Abs(filepath.Join(s.gCfg.StaticRootPath, "plugins"))
+	if err != nil {
+		s.log.Error("failed to get absolute path", "error", err)
+		return []string{datasourcePaths, panelsPath}
+	}
 	return []string{datasourcePaths, panelsPath, pluginsPath}
+}
+
+func (s *Service) externalPluginPaths() []string {
+	res := append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)
+	if s.cfg.Features.IsEnabled(featuremgmt.FlagRunCorePluginsAsExternals) {
+		pluginsPath, err := filepath.Abs(filepath.Join(s.gCfg.StaticRootPath, "plugins"))
+		if err != nil {
+			s.log.Error("failed to get absolute path", "error", err)
+			return res
+		}
+		res = append(res, pluginsPath)
+		return res
+	}
+	return res
 }
 
 // pluginSettingPaths provides plugin file system paths defined in cfg.PluginSettings

@@ -607,5 +607,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 		},
+		{
+			Name:         "runCorePluginsAsExternals",
+			Description:  "Load core plugins as external plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
 	}
 )

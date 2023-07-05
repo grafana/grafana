@@ -10,11 +10,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/public/plugins/grafana-test-datasource/pkg/plugin/sims"
 )
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService() *Service {
 	s := &Service{
 		queryMux:  datasource.NewQueryTypeMux(),
 		scenarios: map[string]*Scenario{},
@@ -30,7 +29,6 @@ func ProvideService(cfg *setting.Cfg) *Service {
 			data.NewField("Value", nil, make([]float64, 1)),
 		),
 		logger: log.New("tsdb.testdata"),
-		cfg:    cfg,
 	}
 
 	var err error
@@ -46,7 +44,6 @@ func ProvideService(cfg *setting.Cfg) *Service {
 }
 
 type Service struct {
-	cfg             *setting.Cfg
 	logger          log.Logger
 	scenarios       map[string]*Scenario
 	frame           *data.Frame
