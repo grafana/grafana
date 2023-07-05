@@ -44,8 +44,8 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 1. Create an OAuth2 application in your chosen OAuth2 provider.
 1. Set the callback URL for your OAuth2 app to `http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/generic_oauth`.
 
-Ensure that the callback URL you provide is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
-For the callback URL to be correct, it might be necessary to set the `root_url` option to `[server]`. For example, if you are serving Grafana behind a proxy.
+   Ensure that the callback URL you provide is the complete HTTP address that you use to access Grafana via your browser, but with the appended path of `/login/generic_oauth`.
+   For the callback URL to be correct, it might be necessary to set the `root_url` option to `[server]`. For example, if you are serving Grafana behind a proxy.
 
 1. Refer to the following table to update field values located in the [auth.generic_oauth] section of the Grafana configuration file:
 
