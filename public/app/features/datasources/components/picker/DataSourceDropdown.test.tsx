@@ -266,7 +266,7 @@ describe('DataSourceDropdown', () => {
     it('should call onChange with the default query when add csv is clicked', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
-      await setupOpenDropdown(user, { onChange });
+      await setupOpenDropdown(user, { onChange, uploadFile: true });
 
       await user.click(await screen.findByText('Add csv or spreadsheet'));
 
