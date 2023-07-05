@@ -288,7 +288,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               return (
                 <ExpressionEditor
                   {...field}
-                  value={getValues('expression')}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
                 />
