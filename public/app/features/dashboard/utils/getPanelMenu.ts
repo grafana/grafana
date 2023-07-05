@@ -1,11 +1,10 @@
 import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
-  isPluginExtensionLink,
   AngularComponent,
   getDataSourceSrv,
-  getPluginExtensions,
   locationService,
   reportInteraction,
+  getPluginLinkExtensions,
 } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -275,31 +274,64 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginExtensions({
+  const { extensions } = getPluginLinkExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
     limitPerPlugin: 2,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
-    const extensionsMenu: PanelMenuItem[] = [];
+    const categorized: Record<string, PanelMenuItem[]> = {};
+    const uncategorized: PanelMenuItem[] = [];
 
     for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
+      const category = extension.category;
+
+      if (!category) {
+        uncategorized.push({
           text: truncateTitle(extension.title, 25),
           href: extension.path,
           onClick: extension.onClick,
         });
         continue;
       }
+
+      if (!Array.isArray(categorized[category])) {
+        categorized[category] = [];
+      }
+
+      categorized[category].push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+        onClick: extension.onClick,
+      });
+    }
+
+    const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
+      subMenu.push({
+        text: category,
+        type: 'group',
+        subMenu: categorized[category],
+      });
+      return subMenu;
+    }, []);
+
+    if (uncategorized.length > 0) {
+      if (subMenu.length > 0) {
+        subMenu.push({
+          text: 'divider',
+          type: 'divider',
+        });
+      }
+
+      Array.prototype.push.apply(subMenu, uncategorized);
     }
 
     menu.push({
       text: 'Extensions',
       iconClassName: 'plug',
       type: 'submenu',
-      subMenu: extensionsMenu,
+      subMenu: subMenu,
     });
   }
 
