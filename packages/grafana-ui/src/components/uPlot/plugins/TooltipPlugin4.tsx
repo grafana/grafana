@@ -73,6 +73,12 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
 
         // @ts-ignore
         u.cursor._lock = _isPinned;
+
+        // hack to trigger cursor to new position after unlock
+        // (should not be necessary after using the cursor.lock API)
+        if (!_isPinned) {
+          u.setCursor({ left: e.clientX - u.rect.left, top: e.clientY - u.rect.top });
+        }
       });
     });
 
