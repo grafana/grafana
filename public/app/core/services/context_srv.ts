@@ -240,13 +240,12 @@ export class ContextSrv {
   }
 
   private canScheduleRotation() {
-    // skip if feature toggle is not enabled
-    if (!config.featureToggles.clientTokenRotation) {
-      return false;
-    }
-
     // skip if user is not signed in, this happens on login page or when using anonymous auth
     if (!this.isSignedIn) {
+      return false;
+    }
+    // skip if feature toggle is not enabled
+    if (!config.featureToggles.clientTokenRotation) {
       return false;
     }
 
