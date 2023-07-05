@@ -41,7 +41,6 @@ export const Table = memo((props: Props) => {
   const {
     ariaLabel,
     data,
-    subData,
     height,
     onCellFilterAdded,
     width,
@@ -106,10 +105,12 @@ export const Table = memo((props: Props) => {
       footerOptions.reducer[0] === ReducerID.count
   );
 
+  const nestedFields = useMemo(() => data.fields.filter((f) => f.config.nested), [data]);
+
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
+    () => getColumns(data, width, columnMinWidth, !!nestedFields?.length, footerItems, isCountRowsSet),
+    [data, width, columnMinWidth, footerItems, nestedFields, isCountRowsSet]
   );
 
   // Internal react table state reducer
@@ -207,35 +208,37 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const renderSubTable = useCallback(
+  const renderSubTables = useCallback(
     (rowIndex: number) => {
-      if (state.expanded[rowIndex]) {
-        const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
-        if (rowSubData) {
-          const noHeader = !!rowSubData.meta?.custom?.noHeader;
-          const subTableStyle: CSSProperties = {
-            height: tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)), // account for the header with + 1
-            background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
-            paddingLeft: EXPANDER_WIDTH,
-            position: 'absolute',
-            bottom: 0,
-          };
+      return nestedFields?.map((nf) => {
+        if (state.expanded[rowIndex]) {
+          const rowSubData = nf.values[rowIndex];
+          if (rowSubData) {
+            const noHeader = !!rowSubData.meta?.custom?.noHeader;
+            const subTableStyle: CSSProperties = {
+              height: tableStyles.rowHeight * (rowSubData.length + (noHeader ? 0 : 1)), // account for the header with + 1
+              background: theme.colors.emphasize(theme.colors.background.primary, 0.015),
+              paddingLeft: EXPANDER_WIDTH,
+              position: 'absolute',
+              bottom: 0,
+            };
 
-          return (
-            <div style={subTableStyle}>
-              <Table
-                data={rowSubData}
-                width={width - EXPANDER_WIDTH}
-                height={tableStyles.rowHeight * (rowSubData.length + 1)}
-                noHeader={noHeader}
-              />
-            </div>
-          );
+            return (
+              <div style={subTableStyle} key={nf.name}>
+                <Table
+                  data={rowSubData}
+                  width={width - EXPANDER_WIDTH}
+                  height={tableStyles.rowHeight * (rowSubData.length + 1)}
+                  noHeader={noHeader}
+                />
+              </div>
+            );
+          }
         }
-      }
-      return null;
+        return null;
+      });
     },
-    [state.expanded, subData, tableStyles.rowHeight, theme.colors, width]
+    [state.expanded, tableStyles.rowHeight, theme.colors, width, nestedFields]
   );
 
   const RenderRow = useCallback(
@@ -250,7 +253,7 @@ export const Table = memo((props: Props) => {
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {renderSubTable(rowIndex)}
+          {renderSubTables(rowIndex)}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -265,7 +268,7 @@ export const Table = memo((props: Props) => {
         </div>
       );
     },
-    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTable, timeRange]
+    [onCellFilterAdded, page, enablePagination, prepareRow, rows, tableStyles, renderSubTables, timeRange]
   );
 
   const onNavigate = useCallback(
@@ -303,12 +306,17 @@ export const Table = memo((props: Props) => {
 
   const getItemSize = (index: number): number => {
     if (state.expanded[index]) {
-      const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === index);
-      if (rowSubData) {
-        const noHeader = !!rowSubData.meta?.custom?.noHeader;
-        return tableStyles.rowHeight * (rowSubData.length + 1 + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
-      }
+      const height = nestedFields?.reduce((acc, nf) => {
+        const rowSubData = nf.values[index];
+        if (rowSubData) {
+          const noHeader = !!rowSubData.meta?.custom?.noHeader;
+          return acc + tableStyles.rowHeight * (rowSubData.length + 1 + (noHeader ? 0 : 1)); // account for the header and the row data with + 1 + 1
+        }
+        return acc;
+      }, 0);
+      return height ?? tableStyles.rowHeight;
     }
+
     return tableStyles.rowHeight;
   };
 

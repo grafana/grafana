@@ -85,8 +85,6 @@ export interface Props {
   footerValues?: FooterItem[];
   enablePagination?: boolean;
   cellHeight?: TableCellHeight;
-  /** @alpha */
-  subData?: DataFrame[];
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
 }
