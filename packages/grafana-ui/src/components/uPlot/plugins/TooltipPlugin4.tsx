@@ -107,7 +107,10 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           setVisible((_isVisible = false));
 
           // TODO: this should be done by Dashboards onmouseleave
-          u.root.closest('.react-grid-item')!.style.zIndex = 'auto';
+          let ctnr = u.root.closest<HTMLElement>('.react-grid-item');
+          if (ctnr != null) {
+            ctnr.style.zIndex = 'auto';
+          }
 
           // prolly not needed since dom will be destroyed, so this should be GCd
           resizeObserver.unobserve(domRef.current!);
@@ -155,7 +158,10 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           setVisible((_isVisible = true));
 
           // TODO: this should be done by Dashboards onmouseenter
-          u.root.closest('.react-grid-item')!.style.zIndex = '1';
+          let ctnr = u.root.closest<HTMLElement>('.react-grid-item');
+          if (ctnr != null) {
+            ctnr.style.zIndex = '1';
+          }
 
           // boo setTimeout!
           setTimeout(() => {
