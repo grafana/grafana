@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Stack } from '@grafana/experimental';
 import { Alert, Button, Icon, LoadingPlaceholder, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { H1, Span } from '@grafana/ui/src/unstable';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -32,7 +31,7 @@ enum Tabs {
 }
 
 // @TODO
-// hook up tabs to query params
+// hook up tabs to query params or path segment
 // figure out why we needed <AlertingPageWrapper>
 // add provisioning and federation stuff back in
 const RuleViewer = ({ match }: RuleViewerProps) => {
@@ -42,8 +41,7 @@ const RuleViewer = ({ match }: RuleViewerProps) => {
 
   const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
 
-  // we're setting the document title ourselves, the pageNav isn't very well suited to dynamic titles
-  // (it does work) but requires a lot of boilerplate code
+  // we're setting the document title and the breadcrumb manually
   useRuleViewerPageTitle(rule);
 
   if (loading) {
@@ -129,8 +127,6 @@ interface BreadcrumbProps {
   evaluationGroup: string;
 }
 
-// @TODO
-// make folder and group clickable
 const BreadCrumb = ({ folder, evaluationGroup }: BreadcrumbProps) => (
   <Stack alignItems="center" gap={0.5}>
     <Span color="secondary">
