@@ -34,7 +34,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Alertmanager",
@@ -76,7 +79,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Annotations list",
@@ -113,7 +119,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Azure Monitor",
@@ -172,7 +181,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Bar chart",
@@ -209,7 +221,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Bar gauge",
@@ -246,7 +261,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Candlestick",
@@ -283,7 +301,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Canvas",
@@ -320,7 +341,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "CloudWatch",
@@ -357,7 +381,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Dashboard list",
@@ -394,7 +421,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Datagrid",
@@ -431,7 +461,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Elasticsearch",
@@ -473,7 +506,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Flame Graph",
@@ -510,7 +546,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Gauge",
@@ -547,7 +586,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Geomap",
@@ -584,7 +626,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Getting Started",
@@ -621,7 +666,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Google Cloud Monitoring",
@@ -658,7 +706,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Grafana Pyroscope",
@@ -700,7 +751,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Graph (old)",
@@ -737,7 +791,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Graphite",
@@ -783,7 +840,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Heatmap",
@@ -820,7 +880,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Histogram",
@@ -857,7 +920,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "InfluxDB",
@@ -894,7 +960,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Jaeger",
@@ -940,7 +1009,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Logs",
@@ -977,7 +1049,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Loki",
@@ -1023,7 +1098,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Microsoft SQL Server",
@@ -1060,7 +1138,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "MySQL",
@@ -1097,7 +1178,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "News",
@@ -1134,7 +1218,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Node Graph",
@@ -1171,7 +1258,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "OpenTSDB",
@@ -1208,7 +1298,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Parca",
@@ -1250,7 +1343,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Pie chart",
@@ -1287,7 +1383,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "PostgreSQL",
@@ -1324,7 +1423,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Prometheus",
@@ -1366,7 +1468,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Stat",
@@ -1403,7 +1508,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "State timeline",
@@ -1440,7 +1548,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Status history",
@@ -1477,7 +1588,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Table",
@@ -1514,7 +1628,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Table (old)",
@@ -1551,7 +1668,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Tempo",
@@ -1593,7 +1713,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "TestData",
@@ -1630,7 +1753,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Text",
@@ -1667,7 +1793,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Time series",
@@ -1704,7 +1833,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Traces",
@@ -1741,7 +1873,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Trend",
@@ -1778,7 +1913,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Welcome",
@@ -1815,7 +1953,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "XY Chart",
@@ -1852,7 +1993,10 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   },
   {
     "name": "Zipkin",
@@ -1894,6 +2038,9 @@
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": "",
-    "angularDetected": false
+    "angularMeta": {
+      "angularDetected": false,
+      "disableDeprecationUIFeatures": false
+    }
   }
 ]
