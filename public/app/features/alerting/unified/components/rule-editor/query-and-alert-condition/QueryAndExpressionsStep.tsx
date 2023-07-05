@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
@@ -262,8 +262,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
       {/* This is the cloud data source selector */}
-      {type === RuleFormType.cloudRecording ||
-        (type === RuleFormType.cloudAlerting && <CloudDataSourceSelector dataSourceSelected={dataSourceName} />)}
+      {(type === RuleFormType.cloudRecording || type === RuleFormType.cloudAlerting) && (
+        <CloudDataSourceSelector dataSourceSelected={dataSourceName} />
+      )}
 
       {/* This is the PromQL Editor for recording rules */}
       {isRecordingRuleType && dataSourceName && (
@@ -463,19 +464,28 @@ function SmartAlertTypeDetector({
     ((cloudTypeEnabled && canBeCloud && ruleFormType === RuleFormType.grafana) ||
       (ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled));
 
-  // we don't show any alert box if this is a recording rule
-  if (isRecordingRuleType) {
-    return null;
-  }
+  const [buttonClicked, setButtonClicked] = useState(false);
 
-  const switchType = () => {
+  const switchType = useCallback(() => {
+    setButtonClicked(true);
     const typeInForm = getValues('type');
     if (typeInForm === RuleFormType.cloudAlerting) {
       setValue('type', RuleFormType.grafana);
     } else {
       setValue('type', RuleFormType.cloudAlerting);
     }
-  };
+  }, [getValues, setValue, setButtonClicked]);
+
+  useEffect(() => {
+    if (!buttonClicked && canSwitch) {
+      switchType();
+    }
+  }, [canSwitch, buttonClicked, switchType]);
+
+  // we don't show any alert box if this is a recording rule
+  if (isRecordingRuleType) {
+    return null;
+  }
 
   // texts and labels for the alert box
   const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
