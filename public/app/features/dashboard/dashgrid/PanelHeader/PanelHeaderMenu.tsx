@@ -44,10 +44,32 @@ export class PanelHeaderMenu extends PureComponent<Props> {
   render() {
     return (
       <div className={classnames('panel-menu-container', 'dropdown', 'open', this.props.className)}>
-        {this.renderItems(this.props.items)}
+        {this.renderItems(flattenGroups(this.props.items))}
       </div>
     );
   }
+}
+
+function flattenGroups(items: PanelMenuItem[]): PanelMenuItem[] {
+  return items.reduce((all: PanelMenuItem[], item) => {
+    if (Array.isArray(item.subMenu) && item.type === 'submenu') {
+      all.push({
+        ...item,
+        subMenu: flattenGroups(item.subMenu),
+      });
+      return all;
+    }
+
+    if (Array.isArray(item.subMenu) && item.type === 'group') {
+      const { subMenu, ...rest } = item;
+      all.push(rest);
+      all.push.apply(all, flattenGroups(subMenu));
+      return all;
+    }
+
+    all.push(item);
+    return all;
+  }, []);
 }
 
 export function PanelHeaderMenuNew({ items }: Props) {
