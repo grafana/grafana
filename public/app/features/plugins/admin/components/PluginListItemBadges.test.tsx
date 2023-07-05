@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { PluginErrorCode, PluginSignatureStatus } from '@grafana/data';
+import { PluginErrorCode, PluginSignatureStatus, PluginAngularMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { CatalogPlugin } from '../types';
@@ -9,6 +9,10 @@ import { CatalogPlugin } from '../types';
 import { PluginListItemBadges } from './PluginListItemBadges';
 
 describe('PluginListItemBadges', () => {
+  const angularMeta: PluginAngularMeta = {
+    angularDetected: false,
+    disableDeprecationUIFeatures: false,
+  };
   const plugin: CatalogPlugin = {
     description: 'The test plugin',
     downloads: 5,
@@ -32,6 +36,7 @@ describe('PluginListItemBadges', () => {
     isEnterprise: false,
     isDisabled: false,
     isPublished: true,
+    angularMeta,
   };
 
   afterEach(() => {
@@ -77,12 +82,12 @@ describe('PluginListItemBadges', () => {
   });
 
   it('renders an angular badge (when plugin is angular)', () => {
-    render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: true }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, angularDetected: true } }} />);
     expect(screen.getByText(/angular/i)).toBeVisible();
   });
 
   it('does not render an angular badge (when plugin is not angular)', () => {
-    render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: false }} />);
+    render(<PluginListItemBadges plugin={{ ...plugin, angularMeta: { ...angularMeta, angularDetected: false } }} />);
     expect(screen.queryByText(/angular/i)).toBeNull();
   });
 });

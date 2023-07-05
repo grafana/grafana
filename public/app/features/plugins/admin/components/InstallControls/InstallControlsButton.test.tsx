@@ -2,13 +2,17 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { PluginSignatureStatus } from '@grafana/data';
+import { PluginSignatureStatus, PluginAngularMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
 
+const angularMeta: PluginAngularMeta = {
+  angularDetected: false,
+  disableDeprecationUIFeatures: false,
+};
 const plugin: CatalogPlugin = {
   description: 'The test plugin',
   downloads: 5,
@@ -29,6 +33,7 @@ const plugin: CatalogPlugin = {
   isEnterprise: false,
   isDisabled: false,
   isPublished: true,
+  angularMeta,
 };
 
 function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean }) {
@@ -36,7 +41,7 @@ function setup(opts: { angularSupportEnabled: boolean; angularDetected: boolean 
   render(
     <TestProvider>
       <InstallControlsButton
-        plugin={{ ...plugin, angularDetected: opts.angularDetected }}
+        plugin={{ ...plugin, angularMeta: { ...angularMeta, ...{ angularDetected: opts.angularDetected } } }}
         pluginStatus={PluginStatus.INSTALL}
       />
     </TestProvider>

@@ -7,6 +7,7 @@ import {
   PluginDependencies,
   PluginErrorCode,
   WithAccessControlMetadata,
+  PluginAngularMeta,
 } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 import { StoreState, PluginsState } from 'app/types';
@@ -57,7 +58,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   installedVersion?: string;
   details?: CatalogPluginDetails;
   error?: PluginErrorCode;
-  angularDetected?: boolean;
+  angularMeta: PluginAngularMeta;
 }
 
 export interface CatalogPluginDetails {
@@ -158,7 +159,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   state: string;
   type: PluginType;
   dependencies: PluginDependencies;
-  angularDetected: boolean;
+  angularMeta: PluginAngularMeta;
 };
 
 interface Rel {
