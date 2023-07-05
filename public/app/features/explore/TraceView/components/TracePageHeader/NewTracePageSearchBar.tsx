@@ -125,7 +125,17 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
     (depth: number, services: number) => {
       const matchedServices: string[] = [];
       const matchedDepth: number[] = [];
-      let metadata;
+      let metadata = (
+        <>
+          <span>{`${trace.spans.length} spans`}</span>
+          {getTooltip(
+            <>
+              <div>Services: {services}</div>
+              <div>Depth: {depth}</div>
+            </>
+          )}
+        </>
+      );
 
       if (spanFilterMatches) {
         spanFilterMatches.forEach((spanID) => {
@@ -174,17 +184,6 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
 
   const services = new Set(values(trace.processes).map((p) => p.serviceName)).size;
   const depth = get(maxBy(trace.spans, 'depth'), 'depth', 0) + 1;
-  const defaultMetadata = (
-    <>
-      <span>{`${trace.spans.length} spans`}</span>
-      {getTooltip(
-        <>
-          <div>Services: {services}</div>
-          <div>Depth: {depth}</div>
-        </>
-      )}
-    </>
-  );
 
   return (
     <div className={styles.searchBar}>
@@ -213,9 +212,7 @@ export default memo(function NewTracePageSearchBar(props: TracePageSearchBarProp
             </div>
           </div>
           <div className={styles.nextPrevButtons}>
-            <span className={styles.matches}>
-              {spanFilterMatches ? getMatchesMetadata(depth, services) : defaultMetadata}
-            </span>
+            <span className={styles.matches}>{getMatchesMetadata(depth, services)}</span>
             <Button
               variant="secondary"
               disabled={!buttonEnabled}
