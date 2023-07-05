@@ -381,41 +381,16 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
             {config.featureToggles.transformationsRedesign && (
               <>
                 {!noTransforms && (
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onKeyPress={() => {
-                      this.setState({ showPicker: false });
-                    }}
+                  <Button
+                    variant="secondary"
+                    fill="text"
+                    icon="angle-left"
                     onClick={() => {
                       this.setState({ showPicker: false });
                     }}
-                    className={css`
-                      margin-bottom: ${config.theme2.spacing(2)};
-                      color: ${config.theme2.colors.text.secondary};
-                      display: inline-block;
-                      padding-right: ${config.theme2.spacing(1)};
-                      border-bottom: 1px solid transparent;
-                      &:hover {
-                        border-bottom: 1px solid ${config.theme2.colors.text.secondary};
-                      }
-                    `}
                   >
-                    <Icon
-                      className={css`
-                        color: ${config.theme2.colors.text.secondary};
-                      `}
-                      name="angle-left"
-                      size="xl"
-                    />{' '}
-                    <span
-                      className={css`
-                        vertical-align: middle;
-                      `}
-                    >
-                      Go back to <i>Transformations in use</i>
-                    </span>
-                  </div>
+                    Go back to <i>Transformations in use</i>
+                  </Button>
                 )}
                 <div
                   className={css`
