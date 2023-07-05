@@ -22,7 +22,7 @@ describe('TopSearchBarSection', () => {
 
     const { container } = renderComponent();
 
-    expect(container.querySelector('[data-test-id="wrapper"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="wrapper"]')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /test item/i })).toBeInTheDocument();
   });
 
@@ -35,7 +35,7 @@ describe('TopSearchBarSection', () => {
 
     const { container } = renderComponent();
 
-    expect(container.querySelector('[data-test-id="wrapper"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[data-testid="wrapper"]')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /test item/i })).toBeInTheDocument();
   });
 });
