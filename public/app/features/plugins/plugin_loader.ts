@@ -99,7 +99,10 @@ const importMap = {
   'app/core/time_series2': { default: TimeSeries, __useDefault: true },
   'app/core/utils/datemath': grafanaData.dateMath,
   'app/core/utils/flatten': flatten,
-  'app/core/utils/kbn': kbn,
+  'app/core/utils/kbn': {
+    default: kbn,
+    __useDefault: true,
+  },
   'app/core/utils/ticks': ticks,
   'app/features/dashboard/impression_store': {
     impressions: impressionSrv,

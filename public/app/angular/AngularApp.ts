@@ -26,7 +26,10 @@ import { registerComponents } from './registerComponents';
 // Angular plugin dependencies map
 const importMap = {
   angular: angular,
-  'app/core/core_module': coreModule,
+  'app/core/core_module': {
+    default: coreModule,
+    __useDefault: true,
+  },
   'app/core/core': {
     appEvents: appEvents,
     contextSrv: contextSrv,
