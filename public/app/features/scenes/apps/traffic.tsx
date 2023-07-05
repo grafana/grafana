@@ -108,7 +108,7 @@ export interface HandlerDrilldownViewBehaviorState extends SceneObjectState {
 export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldownViewBehaviorState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['handler'] });
 
-  public constructor() {
+  constructor() {
     super({});
 
     this.addActivationHandler(() => {
@@ -143,11 +143,11 @@ export class HandlerDrilldownViewBehavior extends SceneObjectBase<HandlerDrilldo
     });
   }
 
-  public getUrlState() {
+  getUrlState() {
     return { handler: this.state.handler };
   }
 
-  public updateFromUrl(values: SceneObjectUrlValues) {
+  updateFromUrl(values: SceneObjectUrlValues) {
     if (typeof values.handler === 'string' || values.handler === undefined) {
       this.setState({ handler: values.handler });
     }
