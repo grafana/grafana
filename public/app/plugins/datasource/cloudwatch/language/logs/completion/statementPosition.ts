@@ -1,6 +1,17 @@
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { StatementPosition } from '../../monarch/types';
-import { DISPLAY, FIELDS, FILTER, STATS, SORT, LIMIT, PARSE, UNMASK, LOGS_LOGIC_OPERATORS } from '../language';
+import {
+  DISPLAY,
+  FIELDS,
+  FILTER,
+  STATS,
+  SORT,
+  LIMIT,
+  PARSE,
+  LOGS_COMMANDS,
+  LOGS_FUNCTION_OPERATORS,
+  LOGS_LOGIC_OPERATORS,
+} from '../language';
 
 import { LogsTokenTypes } from './types';
 
@@ -39,22 +50,61 @@ import { LogsTokenTypes } from './types';
 //  fields @timestamp, unmask(@message) |
 
 const d = (...args: Array<string | LinkedToken | null | undefined>) => console.log('getStatementPosition:', ...args);
+// const d = (...args: Array<string | LinkedToken | null | undefined>) => {};
 
 export const getStatementPosition = (currentToken: LinkedToken | null): StatementPosition => {
   const previousKeyword = currentToken?.getPreviousKeyword();
   const previousNonWhiteSpace = currentToken?.getPreviousNonWhiteSpaceToken();
+  const nextNonWhiteSpace = currentToken?.getNextNonWhiteSpaceToken();
 
   const normalizedCurrentToken = currentToken?.value?.toLowerCase();
-  // const normalizedPreviousKeyword = previousKeyword?.value?.toLowerCase();
+  const normalizedPreviousKeyword = previousKeyword?.value?.toLowerCase();
   const normalizedPreviousNonWhiteSpace = previousNonWhiteSpace?.value?.toLowerCase();
 
   d('currentToken', currentToken);
   d('previousKeyword', previousKeyword);
   d('previousNonWhiteSpace', previousNonWhiteSpace);
 
-  if (currentToken === null || previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, '|')) {
+  if (currentToken?.is(LogsTokenTypes.Comment)) {
+    d('(StatementPosition.Comment)');
+    return StatementPosition.Comment;
+  }
+
+  if (currentToken?.isFunction()) {
+    d('(StatementPosition.Function)');
+    return StatementPosition.Function;
+  }
+
+  if (
+    currentToken === null ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace === null && nextNonWhiteSpace === null) ||
+    (previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, '|') && currentToken?.isWhiteSpace()) ||
+    (currentToken?.isIdentifier() &&
+      (previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, '|') || previousNonWhiteSpace === null))
+  ) {
     d('(StatementPosition.NewCommand)');
     return StatementPosition.NewCommand;
+  }
+
+  if (
+    currentToken?.is(LogsTokenTypes.Delimiter, ')') ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, ')'))
+  ) {
+    const openingParenthesis = currentToken?.getPreviousOfType(LogsTokenTypes.Delimiter, '(');
+    const normalizedNonWhitespacePreceedingOpeningParenthesis = openingParenthesis
+      ?.getPreviousNonWhiteSpaceToken()
+      ?.value?.toLowerCase();
+
+    if (normalizedNonWhitespacePreceedingOpeningParenthesis) {
+      if (LOGS_COMMANDS.includes(normalizedNonWhitespacePreceedingOpeningParenthesis)) {
+        d('(StatementPosition.AfterCommand)');
+        return StatementPosition.AfterCommand;
+      }
+      if (LOGS_FUNCTION_OPERATORS.includes(normalizedNonWhitespacePreceedingOpeningParenthesis)) {
+        d('(StatementPosition.AfterFunction)');
+        return StatementPosition.AfterFunction;
+      }
+    }
   }
 
   if (currentToken?.isKeyword() && normalizedCurrentToken) {
@@ -80,9 +130,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       case SORT:
         d('(StatementPosition.SortKeyword)');
         return StatementPosition.SortKeyword;
-      case UNMASK:
-        d('(StatementPosition.UnmaskKeyword)');
-        return StatementPosition.UnmaskKeyword;
       case 'as':
         d('(StatementPosition.AsKeyword)');
         return StatementPosition.AsKeyword;
@@ -121,9 +168,6 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
       case SORT:
         d('(StatementPosition.AfterSortKeyword)');
         return StatementPosition.AfterSortKeyword;
-      case UNMASK:
-        d('(StatementPosition.AfterUnmaskKeyword)');
-        return StatementPosition.AfterUnmaskKeyword;
       case 'as':
         d('(StatementPosition.AfterAsKeyword)');
         return StatementPosition.AfterAsKeyword;
@@ -139,37 +183,86 @@ export const getStatementPosition = (currentToken: LinkedToken | null): Statemen
     }
   }
 
-  if (currentToken?.isFunction()) {
-    d('(StatementPosition.Function)');
-    return StatementPosition.Function;
-  }
+  if (currentToken?.is(LogsTokenTypes.Operator) && normalizedCurrentToken) {
+    if (['+', '-', '*', '/', '^', '%'].includes(normalizedCurrentToken)) {
+      d('(StatementPosition.ArithmeticOperator)');
+      return StatementPosition.ArithmeticOperator;
+    }
 
-  if (
-    (currentToken?.is(LogsTokenTypes.Parenthesis, '()') && previousNonWhiteSpace?.isFunction()) ||
-    ((previousNonWhiteSpace?.isNumber() || previousNonWhiteSpace?.isIdentifier()) &&
-      (currentToken?.is(LogsTokenTypes.Parenthesis, ')') ||
-        currentToken?.is(LogsTokenTypes.Delimiter, ',') ||
-        currentToken?.getNextNonWhiteSpaceToken()?.is(LogsTokenTypes.Parenthesis, ')') ||
-        currentToken?.getNextNonWhiteSpaceToken()?.is(LogsTokenTypes.Delimiter, ',')))
-  ) {
-    d('(StatementPosition.FunctionArg)');
-    return StatementPosition.FunctionArg;
+    if (['=', '!=', '<', '>', '<=', '>='].includes(normalizedCurrentToken)) {
+      d('(StatementPosition.ComparisonOperator)');
+      return StatementPosition.ComparisonOperator;
+    }
+
+    if (LOGS_LOGIC_OPERATORS.includes(normalizedCurrentToken)) {
+      d('(StatementPosition.BooleanOperator)');
+      return StatementPosition.BooleanOperator;
+    }
   }
 
   if (previousNonWhiteSpace?.is(LogsTokenTypes.Operator) && normalizedPreviousNonWhiteSpace) {
     if (['+', '-', '*', '/', '^', '%'].includes(normalizedPreviousNonWhiteSpace)) {
-      d('(StatementPosition.ArithmeticOperatorSecondArg)');
-      return StatementPosition.ArithmeticOperatorSecondArg;
+      d('(StatementPosition.ArithmeticOperatorArg)');
+      return StatementPosition.ArithmeticOperatorArg;
     }
 
     if (['=', '!=', '<', '>', '<=', '>='].includes(normalizedPreviousNonWhiteSpace)) {
-      d('(StatementPosition.ComparisonOperatorSecondArg)');
-      return StatementPosition.ComparisonOperatorSecondArg;
+      d('(StatementPosition.ComparisonOperatorArg)');
+      return StatementPosition.ComparisonOperatorArg;
     }
 
     if (LOGS_LOGIC_OPERATORS.includes(normalizedPreviousNonWhiteSpace)) {
-      d('(StatementPosition.BooleanOperatorSecondArg)');
-      return StatementPosition.BooleanOperatorSecondArg;
+      d('(StatementPosition.BooleanOperatorArg)');
+      return StatementPosition.BooleanOperatorArg;
+    }
+  }
+
+  if (currentToken?.is(LogsTokenTypes.Regexp) && normalizedPreviousKeyword === PARSE) {
+    d('(StatementPosition.ParseRegularExpression)');
+    return StatementPosition.ParseRegularExpression;
+  }
+
+  if (
+    currentToken?.isIdentifier() ||
+    currentToken?.isNumber() ||
+    currentToken?.is(LogsTokenTypes.Parenthesis, '()') ||
+    currentToken?.is(LogsTokenTypes.Delimiter, ',') ||
+    currentToken?.is(LogsTokenTypes.Parenthesis, ')') ||
+    (currentToken?.isWhiteSpace() && previousNonWhiteSpace?.is(LogsTokenTypes.Delimiter, ','))
+  ) {
+    const nearestKeyword = currentToken?.getPreviousOfType(LogsTokenTypes.Keyword);
+    const nearestFunction = currentToken?.getPreviousOfType(LogsTokenTypes.Function);
+
+    if (nearestKeyword !== null && nearestFunction === null) {
+      d('(StatementPosition.CommandArg)', '0');
+      return StatementPosition.CommandArg;
+    }
+
+    if (nearestFunction !== null && nearestKeyword === null) {
+      d('(StatementPosition.FunctionArg)', '0');
+      return StatementPosition.FunctionArg;
+    }
+
+    if (nearestKeyword !== null && nearestFunction !== null) {
+      if (nearestKeyword.range.startLineNumber > nearestFunction.range.startLineNumber) {
+        d('(StatementPosition.CommandArg)', '1');
+        return StatementPosition.CommandArg;
+      }
+
+      if (nearestFunction.range.startLineNumber > nearestKeyword.range.startLineNumber) {
+        d('(StatementPosition.FunctionArg)', '2');
+        return StatementPosition.FunctionArg;
+      }
+
+      if (nearestKeyword.range.endColumn > nearestFunction.range.endColumn) {
+        d('(StatementPosition.CommandArg)', '3');
+        return StatementPosition.CommandArg;
+      }
+
+      if (nearestFunction.range.endColumn > nearestKeyword.range.endColumn) {
+        d('(StatementPosition.FunctionArg)', '4');
+        return StatementPosition.FunctionArg;
+      }
     }
   }
 
