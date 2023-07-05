@@ -21,7 +21,6 @@ import { EditCloudGroupModal, evaluateEveryValidationOptions } from '../rules/Ed
 import { FolderAndGroup, useGetGroupOptionsFromFolder } from './FolderAndGroup';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
-import { Folder } from './RuleFolderPicker';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 
@@ -115,11 +114,9 @@ export const EvaluateEveryNewGroup = ({ rules }: { rules: RulerRulesConfigDTO | 
 };
 
 function FolderGroupAndEvaluationInterval({
-  initialFolder,
   evaluateEvery,
   setEvaluateEvery,
 }: {
-  initialFolder: Folder | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
 }) {
@@ -167,7 +164,7 @@ function FolderGroupAndEvaluationInterval({
 
   return (
     <div>
-      <FolderAndGroup initialFolder={initialFolder} />
+      <FolderAndGroup />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
           namespace={existingNamespace ?? emptyNamespace}
@@ -249,12 +246,10 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
 }
 
 export function GrafanaEvaluationBehavior({
-  initialFolder,
   evaluateEvery,
   setEvaluateEvery,
   existing,
 }: {
-  initialFolder: Folder | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
   existing: boolean;
@@ -270,11 +265,7 @@ export function GrafanaEvaluationBehavior({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection stepNo={3} title="Alert evaluation behavior">
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        <FolderGroupAndEvaluationInterval
-          initialFolder={initialFolder}
-          setEvaluateEvery={setEvaluateEvery}
-          evaluateEvery={evaluateEvery}
-        />
+        <FolderGroupAndEvaluationInterval setEvaluateEvery={setEvaluateEvery} evaluateEvery={evaluateEvery} />
         <ForInput evaluateEvery={evaluateEvery} />
 
         {existing && (

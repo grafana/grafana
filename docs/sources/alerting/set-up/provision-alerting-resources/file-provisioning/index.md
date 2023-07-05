@@ -66,7 +66,7 @@ groups:
         # <string, required> which query should be used for the condition
         condition: A
         # <list, required> list of query objects that should be executed on each
-        #                  evaluation - should be obtained trough the API
+        #                  evaluation - should be obtained through the API
         data:
           - refId: A
             datasourceUid: '__expr__'

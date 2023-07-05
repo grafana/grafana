@@ -42,12 +42,6 @@ func (j *ptsJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 		}
 	}
 
-	v := decl.Lineage.Latest().Version()
-
-	tsf.Nodes = append(tsf.Nodes, tsast.Raw{
-		Data: fmt.Sprintf("export const %sModelVersion = Object.freeze([%v, %v]);", decl.SchemaInterface.Name(), v[0], v[1]),
-	})
-
 	jf, err := j.inner.Generate(decl)
 	if err != nil {
 		return nil, err

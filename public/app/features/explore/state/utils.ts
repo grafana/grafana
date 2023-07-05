@@ -53,7 +53,6 @@ export const makeExplorePaneState = (): ExploreItemState => ({
     to: null,
   } as any,
   scanning: false,
-  loading: false,
   queryKeys: [],
   isLive: false,
   isPaused: false,

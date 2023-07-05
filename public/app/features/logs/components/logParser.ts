@@ -86,9 +86,26 @@ export const getDataframeFields = memoizeOne(
 );
 
 function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
+  // hidden field, remove
+  if (field.config.custom?.hidden) {
+    return true;
+  }
+
+  // field with data-links, keep
+  if ((field.config.links ?? []).length > 0) {
+    return false;
+  }
+
+  // field that has empty value (we want to keep 0 or empty string)
+  if (field.values[row.rowIndex] == null) {
+    return true;
+  }
+
+  // the remaining checks use knowledge of how we parse logs-dataframes
+
   // Remove field if it is:
   // "labels" field that is in Loki used to store all labels
-  if (field.name === 'labels' && field.type === FieldType.other && (field.config.links?.length || 0) === 0) {
+  if (field.name === 'labels' && field.type === FieldType.other) {
     return true;
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
@@ -103,13 +120,12 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   ) {
     return true;
   }
-  // hidden field
-  if (field.config.custom?.hidden) {
+
+  // first string-field is the log-line
+  const firstStringFieldIndex = row.dataFrame.fields.findIndex((f) => f.type === FieldType.string);
+  if (firstStringFieldIndex === index) {
     return true;
   }
-  // field that has empty value (we want to keep 0 or empty string)
-  if (field.values[row.rowIndex] == null) {
-    return true;
-  }
+
   return false;
 }

@@ -3,7 +3,8 @@ aliases:
   - ../../../auth/google/
 description: Grafana OAuthentication Guide
 title: Configure Google OAuth2 authentication
-weight: 300
+menuTitle: Google OAuth2
+weight: 1100
 ---
 
 # Configure Google OAuth2 authentication
@@ -36,9 +37,10 @@ allow_sign_up = true
 auto_login = false
 client_id = CLIENT_ID
 client_secret = CLIENT_SECRET
-scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
-auth_url = https://accounts.google.com/o/oauth2/auth
-token_url = https://accounts.google.com/o/oauth2/token
+scopes = openid email profile
+auth_url = https://accounts.google.com/o/oauth2/v2/auth
+token_url = https://oauth2.googleapis.com/token
+api_url = https://openidconnect.googleapis.com/v1/userinfo
 allowed_domains = mycompany.com mycompany.org
 hosted_domain = mycompany.com
 use_pkce = true
@@ -98,3 +100,26 @@ We do not currently sync roles from Google and instead set the AutoAssigned role
 # ..
 skip_org_role_sync = true
 ```
+
+### Configure team sync for Google OAuth
+
+> Available in Grafana v10.1.0 and later versions.
+
+With team sync, you can easily add users to teams by utilizing their Google groups. To set up team sync for Google OAuth, refer to the following example.
+
+1. Enable the Google Cloud Identity API on your [organization's dashboard](https://console.cloud.google.com/apis/api/cloudidentity.googleapis.com/).
+
+1. Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` configuration:
+
+   Example:
+
+   ```ini
+   [auth.google]
+   # ..
+   scopes = openid email profile https://www.googleapis.com/auth/cloud-identity.groups.readonly
+   ```
+
+1. Configure team sync in your Grafana team's `External group sync` tab.
+   The external group ID for a Google group is the group's email address, such as `dev@grafana.com`.
+
+To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
