@@ -19,6 +19,7 @@ import React from 'react';
 import { defaultFilters } from '../../useSearch';
 
 import NewTracePageSearchBar, { getStyles } from './NewTracePageSearchBar';
+import { trace } from './TracePageHeader.test';
 
 describe('<NewTracePageSearchBar>', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -34,6 +35,7 @@ describe('<NewTracePageSearchBar>', () => {
 
   const NewTracePageSearchBarWithProps = (props: { matches: string[] | undefined }) => {
     const searchBarProps = {
+      trace: trace,
       search: defaultFilters,
       spanFilterMatches: props.matches ? new Set(props.matches) : undefined,
       showSpanFilterMatchesOnly: false,
@@ -41,7 +43,6 @@ describe('<NewTracePageSearchBar>', () => {
       setFocusedSpanIdForSearch: jest.fn(),
       datasourceType: '',
       clear: jest.fn(),
-      totalSpans: 100,
     };
 
     return <NewTracePageSearchBar {...searchBarProps} />;
@@ -66,11 +67,11 @@ describe('<NewTracePageSearchBar>', () => {
 
   it('renders total spans', async () => {
     render(<NewTracePageSearchBarWithProps matches={undefined} />);
-    expect(screen.getByText('100 spans')).toBeDefined();
+    expect(screen.getByText('3 spans')).toBeDefined();
   });
 
   it('renders buttons that can be used to search if filters added', () => {
-    render(<NewTracePageSearchBarWithProps matches={['2ed38015486087ca']} />);
+    render(<NewTracePageSearchBarWithProps matches={['264afda25df92413']} />);
     const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(nextResButton).toBeInTheDocument();
@@ -81,7 +82,7 @@ describe('<NewTracePageSearchBar>', () => {
   });
 
   it('renders correctly when moving through matches', async () => {
-    render(<NewTracePageSearchBarWithProps matches={['1ed38015486087ca', '2ed38015486087ca', '3ed38015486087ca']} />);
+    render(<NewTracePageSearchBarWithProps matches={['264afda25df92413', '364afda25df92413', '464afda25df92413']} />);
     const nextResButton = screen.queryByRole('button', { name: 'Next result button' });
     const prevResButton = screen.queryByRole('button', { name: 'Prev result button' });
     expect(screen.getByText('3 matches')).toBeDefined();
@@ -102,12 +103,24 @@ describe('<NewTracePageSearchBar>', () => {
   it('renders correctly when there are no matches i.e. too many filters added', async () => {
     const { container } = render(<NewTracePageSearchBarWithProps matches={[]} />);
     const styles = getStyles();
-    const tooltip = container.querySelector('.' + styles.matchesTooltip);
+    const tooltip = container.querySelector('.' + styles.tooltip);
     expect(screen.getByText('0 matches')).toBeDefined();
     userEvent.hover(tooltip!);
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
       expect(screen.getByText(/0 span matches for the filters selected/)).toBeDefined();
+    });
+  });
+
+  it('renders services, depth correctly', async () => {
+    const { container } = render(<NewTracePageSearchBarWithProps matches={['264afda25df92413', '364afda25df92413']} />);
+    const styles = getStyles();
+    const tooltip = container.querySelector('.' + styles.tooltip);
+    userEvent.hover(tooltip!);
+    jest.advanceTimersByTime(1000);
+    await waitFor(() => {
+      expect(screen.getByText(/Services: 2\/3/)).toBeDefined();
+      expect(screen.getByText(/Depth: 1\/1/)).toBeDefined();
     });
   });
 

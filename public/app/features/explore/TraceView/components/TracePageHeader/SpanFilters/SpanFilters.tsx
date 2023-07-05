@@ -419,6 +419,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
 
         <NewTracePageSearchBar
+          trace={trace}
           search={search}
           spanFilterMatches={spanFilterMatches}
           showSpanFilterMatchesOnly={showSpanFilterMatchesOnly}
@@ -426,7 +427,6 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
           datasourceType={datasourceType}
           clear={clear}
-          totalSpans={trace.spans.length}
         />
       </Collapse>
     </div>
