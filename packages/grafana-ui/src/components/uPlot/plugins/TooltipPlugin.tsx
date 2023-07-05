@@ -22,6 +22,8 @@ import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../Viz
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
 
+import { getRandomContent } from '@grafana/ui/src/components/uPlot/plugins/utils';
+
 interface TooltipPluginProps {
   timeZone: TimeZone;
   data: DataFrame;
@@ -278,11 +280,7 @@ export const TooltipPlugin = ({
     <Portal>
       {coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
-          Lorem ipsum dolor sit amet, consectetur<br/>
-          sed do eiusmod tempor incididunt ut labore et dolore magna<br/>
-          esse cillum dolore<br/>
-          occaecat cupidatat non<br/>
-          deserunt mollit anim id est laborum.<br/>
+          {getRandomContent()}
         </VizTooltipContainer>
       )}
     </Portal>
