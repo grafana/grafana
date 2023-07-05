@@ -2,17 +2,21 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceInstanceSettings, getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import { H5 } from '@grafana/ui/src/unstable';
+import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
+import { AccessControlAction, useDispatch } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { DataSourceJsonData } from '../../../../../../../../packages/grafana-data/compiled/types/datasource';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
+import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { isPromOrLokiQuery } from '../../../utils/rule-form';
@@ -24,7 +28,7 @@ import { RecordingRuleEditor } from '../RecordingRuleEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromSeries, refIdExists } from '../util';
 
-import { AlertType } from './AlertType';
+import { CloudDataSourceSelector } from './CloudDataSourceSelector';
 import {
   addNewDataQuery,
   addNewExpression,
@@ -67,6 +71,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   const isGrafanaManagedType = type === RuleFormType.grafana;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
   const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
+
+  const dispatch_ = useDispatch();
+  useEffect(() => {
+    dispatch_(fetchAllPromBuildInfoAction());
+  }, [dispatch_]);
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
@@ -143,6 +152,20 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
       setValue('queries', updatedQueries, { shouldValidate: false });
+
+      // update data source name and expression if it's been changed in the queries from the reducer when prom or loki query
+      const query = updatedQueries[0];
+      if (isPromOrLokiQuery(query.model)) {
+        const dataSourceSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
+        if (!dataSourceSettings) {
+          throw new Error('The Data source has not been defined.');
+        }
+
+        const expression = query.model.expr;
+
+        setValue('dataSourceName', dataSourceSettings.name);
+        setValue('expression', expression);
+      }
 
       dispatch(setDataQueries(updatedQueries));
       dispatch(updateExpressionTimeRange());
@@ -238,7 +261,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   return (
     <RuleEditorSection stepNo={2} title="Define query and alert condition">
-      <AlertType editingExistingRule={editingExistingRule} />
+      {/* This is the cloud data source selector */}
+      {type === RuleFormType.cloudRecording ||
+        (type === RuleFormType.cloudAlerting && <CloudDataSourceSelector dataSourceSelected={dataSourceName} />)}
 
       {/* This is the PromQL Editor for recording rules */}
       {isRecordingRuleType && dataSourceName && (
@@ -259,9 +284,19 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
+              const expression =
+                !editingExistingRule && queries[0]?.model
+                  ? isPromOrLokiQuery(queries[0]?.model)
+                    ? queries[0]?.model.expr
+                    : undefined
+                  : undefined;
+              if (!editingExistingRule) {
+                getValues('expression') !== expression && expression && setValue('expression', expression);
+              }
               return (
                 <ExpressionEditor
                   {...field}
+                  value={expression ?? field.value}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
                 />
@@ -362,9 +397,118 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           )}
         </Stack>
       )}
+      <SmartAlertTypeDetector
+        editingExistingRule={editingExistingRule}
+        rulesSourcesWithRuler={rulesSourcesWithRuler}
+        queries={queries}
+      />
     </RuleEditorSection>
   );
 };
+
+function getAvailableRuleTypes() {
+  const canCreateGrafanaRules = contextSrv.hasAccess(
+    AccessControlAction.AlertingRuleCreate,
+    contextSrv.hasEditPermissionInFolders
+  );
+  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
+  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
+
+  const enabledRuleTypes: RuleFormType[] = [];
+  if (canCreateGrafanaRules) {
+    enabledRuleTypes.push(RuleFormType.grafana);
+  }
+  if (canCreateCloudRules) {
+    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
+  }
+
+  return { enabledRuleTypes, defaultRuleType };
+}
+
+function SmartAlertTypeDetector({
+  editingExistingRule,
+  rulesSourcesWithRuler,
+  queries,
+}: {
+  editingExistingRule: boolean;
+  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
+  queries: AlertQuery[];
+}) {
+  const { getValues, setValue } = useFormContext<RuleFormValues>();
+
+  const ruleFormType = getValues('type');
+  const styles = useStyles2(getStyles);
+
+  // get available rule types
+  const availableRuleTypes = getAvailableRuleTypes();
+  // check if we have only one query in queries and if it's a cloud datasource
+  const dataSourceIdFromQueries = queries.length === 1 ? queries[0]?.datasourceUid : '';
+  const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
+  // it's a smart type if we are creating a new rule and it's not a recording rule type
+  const showSmartTypeSwitch = !editingExistingRule && !isRecordingRuleType;
+  //let's check if we have a smart cloud type
+  const canBeCloud =
+    showSmartTypeSwitch &&
+    queries.length === 1 &&
+    rulesSourcesWithRuler.some(
+      (dsJsonData: DataSourceInstanceSettings<DataSourceJsonData>) => dsJsonData.uid === dataSourceIdFromQueries
+    );
+  // check for enabled types
+  const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
+  const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);
+  // can we switch to the other type? (cloud or grafana)
+  const canSwitch =
+    !editingExistingRule &&
+    !isRecordingRuleType &&
+    ((cloudTypeEnabled && canBeCloud && ruleFormType === RuleFormType.grafana) ||
+      (ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled));
+
+  // we don't show any alert box if this is a recording rule
+  if (isRecordingRuleType) {
+    return null;
+  }
+
+  const switchType = () => {
+    const typeInForm = getValues('type');
+    if (typeInForm === RuleFormType.cloudAlerting) {
+      setValue('type', RuleFormType.grafana);
+    } else {
+      setValue('type', RuleFormType.cloudAlerting);
+    }
+  };
+
+  // texts and labels for the alert box
+  const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
+  const typeLabel = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
+  const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
+  const contentText =
+    ruleFormType === RuleFormType.cloudAlerting
+      ? 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.'
+      : 'Cloud alert rules are stored in the Grafana Cloud database and are managed by Grafana Cloud.';
+  const titleLabel = `Based on the selected data sources this alert rule will be ${typeLabel}`;
+
+  return (
+    <div className={styles.alert}>
+      <Alert severity="info" title={typeTitle}>
+        <Stack gap={1} direction="row" alignItems={'center'}>
+          {!editingExistingRule && titleLabel}
+          <NeedHelpInfo
+            contentText={contentText}
+            externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
+            linkText={`Read about alert rule types`}
+            title=" Alert rule types"
+          />
+
+          {canSwitch && (
+            <Button type="button" onClick={switchType} variant="secondary" className={styles.switchButton}>
+              Switch to {switchToLabel} alert rule
+            </Button>
+          )}
+        </Stack>
+      </Alert>
+    </div>
+  );
+}
 
 function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
   const newMenu = (
@@ -392,6 +536,12 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  switchButton: css`
+    margin-left: ${theme.spacing(1)};
+  `,
+  alert: css`
+    margin-top: ${theme.spacing(2)};
+  `,
   mutedText: css`
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.size.sm};

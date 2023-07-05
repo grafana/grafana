@@ -4,24 +4,14 @@ import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, InputControl, useStyles2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
-import { RuleTypePicker } from '../rule-types/RuleTypePicker';
 
-interface Props {
-  editingExistingRule: boolean;
-}
-
-export const AlertType = ({ editingExistingRule }: Props) => {
-  const { enabledRuleTypes, defaultRuleType } = getAvailableRuleTypes();
-
+export const CloudDataSourceSelector = ({ dataSourceSelected }: { dataSourceSelected: string | null }) => {
   const {
     control,
     formState: { errors },
-    getValues,
     setValue,
     watch,
   } = useFormContext<RuleFormValues & { location?: string }>();
@@ -31,26 +21,6 @@ export const AlertType = ({ editingExistingRule }: Props) => {
 
   return (
     <>
-      {!editingExistingRule && ruleFormType !== RuleFormType.cloudRecording && (
-        <Field error={errors.type?.message} invalid={!!errors.type?.message} data-testid="alert-type-picker">
-          <InputControl
-            render={({ field: { onChange } }) => (
-              <RuleTypePicker
-                aria-label="Rule type"
-                selected={getValues('type') ?? defaultRuleType}
-                onChange={onChange}
-                enabledTypes={enabledRuleTypes}
-              />
-            )}
-            name="type"
-            control={control}
-            rules={{
-              required: { value: true, message: 'Please select alert type' },
-            }}
-          />
-        </Field>
-      )}
-
       <div className={styles.flexRow}>
         {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
           <Field
@@ -64,6 +34,8 @@ export const AlertType = ({ editingExistingRule }: Props) => {
               render={({ field: { onChange, ref, ...field } }) => (
                 <CloudRulesSourcePicker
                   {...field}
+                  value={dataSourceSelected}
+                  name={dataSourceSelected ?? undefined}
                   onChange={(ds: DataSourceInstanceSettings) => {
                     // reset location if switching data sources, as different rules source will have different groups and namespaces
                     setValue('location', undefined);
@@ -85,25 +57,6 @@ export const AlertType = ({ editingExistingRule }: Props) => {
     </>
   );
 };
-
-function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasAccess(
-    AccessControlAction.AlertingRuleCreate,
-    contextSrv.hasEditPermissionInFolders
-  );
-  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
-  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
-
-  const enabledRuleTypes: RuleFormType[] = [];
-  if (canCreateGrafanaRules) {
-    enabledRuleTypes.push(RuleFormType.grafana);
-  }
-  if (canCreateCloudRules) {
-    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
-  }
-
-  return { enabledRuleTypes, defaultRuleType };
-}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formInput: css`
