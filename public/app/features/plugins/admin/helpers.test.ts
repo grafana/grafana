@@ -108,6 +108,7 @@ describe('Plugins/Helpers', () => {
         signature: 'valid',
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
+        angularMeta: { angularDetected: false, disableDeprecationUIFeatures: false },
       });
     });
 
@@ -218,6 +219,7 @@ describe('Plugins/Helpers', () => {
         type: 'app',
         updatedAt: '2021-05-18T14:53:01.000Z',
         installedVersion: '4.2.2',
+        angularMeta: { angularDetected: false, disableDeprecationUIFeatures: false },
       });
     });
 

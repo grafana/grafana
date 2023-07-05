@@ -30,7 +30,7 @@ jest.mock('../state/hooks', () => ({
       isEnterprise: false,
       isDisabled: false,
       isPublished: true,
-      angularDetected: id === 'angular',
+      angularMeta: { angularDetected: id === 'angular' },
     };
   }),
 }));
