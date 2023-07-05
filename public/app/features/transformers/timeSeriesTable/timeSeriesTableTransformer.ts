@@ -15,7 +15,7 @@ export interface TimeSeriesTableTransformerOptions {}
 export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTransformerOptions> = {
   id: DataTransformerID.timeSeriesTable,
   name: 'Time series to table transform',
-  description: 'Time series to table rows',
+  description: 'Time series to table rows.',
   defaultOptions: {},
 
   operator: (options) => (source) =>

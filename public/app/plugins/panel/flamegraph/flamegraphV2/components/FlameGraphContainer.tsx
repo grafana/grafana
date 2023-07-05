@@ -12,7 +12,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { ClickedItemData, SelectedView, TextAlign } from './types';
+import { ClickedItemData, ColorScheme, SelectedView, TextAlign } from './types';
 
 type Props = {
   data?: DataFrame;
@@ -30,6 +30,7 @@ const FlameGraphContainer = (props: Props) => {
   const [textAlign, setTextAlign] = useState<TextAlign>('left');
   // This is a label of the item because in sandwich view we group all items by label and present a merged graph
   const [sandwichItem, setSandwichItem] = useState<string>();
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(ColorScheme.ValueBased);
 
   const theme = useTheme2();
 
@@ -86,6 +87,8 @@ const FlameGraphContainer = (props: Props) => {
             textAlign={textAlign}
             onTextAlignChange={setTextAlign}
             showResetButton={Boolean(focusedItemData || sandwichItem)}
+            colorScheme={colorScheme}
+            onColorSchemeChange={setColorScheme}
           />
 
           <div className={styles.body}>
@@ -102,7 +105,6 @@ const FlameGraphContainer = (props: Props) => {
                       grafana_version: config.buildInfo.version,
                     });
                     setSearch(symbol);
-                    resetFocus();
                   }
                 }}
                 height={selectedView === SelectedView.TopTable ? 600 : undefined}
@@ -127,6 +129,7 @@ const FlameGraphContainer = (props: Props) => {
                 }}
                 onFocusPillClick={resetFocus}
                 onSandwichPillClick={resetSandwich}
+                colorScheme={colorScheme}
               />
             )}
           </div>

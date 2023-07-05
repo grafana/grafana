@@ -115,6 +115,8 @@ export class LogRowMessage extends PureComponent<Props> {
         </td>
         <td className={cx('log-row-menu-cell', styles.logRowMenuCell)}>
           {pinned && (
+            // TODO: fix keyboard a11y
+            // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
             <span className={cx('log-row-menu', 'log-row-menu-visible', styles.rowMenu)} onClick={this.onLogRowClick}>
               <IconButton
                 className={styles.unPinButton}
@@ -127,6 +129,8 @@ export class LogRowMessage extends PureComponent<Props> {
               />
             </span>
           )}
+          {/* TODO: fix keyboard a11y */}
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <span className={cx('log-row-menu', styles.rowMenu, styles.hidden)} onClick={this.onLogRowClick}>
             {shouldShowContextToggle && (
               <IconButton
