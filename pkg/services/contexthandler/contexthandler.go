@@ -111,8 +111,9 @@ func FromContext(c context.Context) *contextmodel.ReqContext {
 	return nil
 }
 
-// CopyWithReqContext returns a copy of the parent context with a cloned version of its RequestContext value
-func CopyReqContext(ctx context.Context) context.Context {
+// CopyWithReqContext returns a copy of the parent context with a semi-shallow copy of the ReqContext as a value.
+// The ReqContexts's *web.Context is deep copied so that headers are thread-safe; additional properties are shallow copied and should be treated as read-only.
+func CopyWithReqContext(ctx context.Context) context.Context {
 	origReqCtx := FromContext(ctx)
 	if origReqCtx == nil {
 		return ctx
