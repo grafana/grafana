@@ -10,7 +10,7 @@ import { testIds } from '../../components/LokiQueryEditor';
 import { LokiQueryField } from '../../components/LokiQueryField';
 import { getStats } from '../../components/stats';
 import { LokiQueryEditorProps } from '../../components/types';
-import { formatLokiQuery } from '../../formatter';
+import { formatLogqlQuery } from '../../queryUtils';
 import { QueryStats } from '../../types';
 
 import { LokiQueryBuilderExplained } from './LokiQueryBuilderExplained';
@@ -35,7 +35,7 @@ export function LokiQueryCodeEditor({
   const styles = useStyles2(getStyles);
 
   const lokiFormatQuery = config.featureToggles.lokiFormatQuery;
-  const onClickFormatQueryButton = async () => onChange({ ...query, expr: formatLokiQuery(query.expr) });
+  const onClickFormatQueryButton = async () => onChange({ ...query, expr: formatLogqlQuery(query.expr) });
 
   return (
     <div className={styles.wrapper}>

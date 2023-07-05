@@ -19,10 +19,11 @@ import {
   Identifier,
   Distinct,
   Range,
+  formatLokiQuery,
 } from '@grafana/lezer-logql';
 import { DataQuery } from '@grafana/schema';
 
-import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
+import { ErrorId, replaceVariables, returnVariables } from '../prometheus/querybuilder/shared/parsingUtils';
 
 import { getStreamSelectorPositions, NodePosition } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
@@ -293,3 +294,28 @@ export const getLokiQueryFromDataQuery = (query?: DataQuery): LokiQuery | undefi
 
   return query;
 };
+
+export function formatLogqlQuery(query: string) {
+  let transformedQuery = replaceVariables(query);
+  const transformationMatches = [];
+  const tree = parser.parse(transformedQuery);
+
+  // Variables are considered errors inside of the parser, so we need to remove them before formatting
+  // We replace all variables with [0s] and keep track of the replaced variables
+  // After formatting we replace [0s] with the original variable
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    const pattern = /\[__V_[0-2]__\w+__V__\]/g;
+    transformationMatches.push(...transformedQuery.matchAll(pattern));
+    transformedQuery = transformedQuery.replace(pattern, '[0s]');
+  }
+
+  let formatted = formatLokiQuery(transformedQuery);
+
+  if (tree.topNode.firstChild?.firstChild?.type.id === MetricExpr) {
+    transformationMatches.forEach((match) => {
+      formatted = formatted.replace('[0s]', match[0]);
+    });
+  }
+
+  return returnVariables(formatted);
+}
