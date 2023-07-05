@@ -53,7 +53,7 @@ type Plugin struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	AngularMeta AngularMeta
 
 	ExternalService *oauth.ExternalService
 
@@ -90,7 +90,7 @@ type PluginDTO struct {
 	Module  string
 	BaseURL string
 
-	AngularDetected bool
+	AngularMeta AngularMeta
 
 	// This will be moved to plugin.json when we have general support in gcom
 	Alias string `json:"alias,omitempty"`
@@ -448,7 +448,7 @@ func (p *Plugin) ToDTO() PluginDTO {
 		SignatureError:    p.SignatureError,
 		Module:            p.Module,
 		BaseURL:           p.BaseURL,
-		AngularDetected:   p.AngularDetected,
+		AngularMeta:       p.AngularMeta,
 		Alias:             p.Alias,
 	}
 }
@@ -525,4 +525,10 @@ func (pt Type) IsValid() bool {
 		return true
 	}
 	return false
+}
+
+// AngularMeta contains metadata about angular deprecation for this plugin
+type AngularMeta struct {
+	// AngularDetected is true if the plugin has been detected as an angular plugin
+	AngularDetected bool `json:"angularDetected"`
 }

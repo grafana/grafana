@@ -128,19 +128,19 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 	result := make(dtos.PluginList, 0)
 	for _, pluginDef := range filteredPluginDefinitions {
 		listItem := dtos.PluginListItem{
-			Id:              pluginDef.ID,
-			Name:            pluginDef.Name,
-			Type:            string(pluginDef.Type),
-			Category:        pluginDef.Category,
-			Info:            pluginDef.Info,
-			Dependencies:    pluginDef.Dependencies,
-			DefaultNavUrl:   path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
-			State:           pluginDef.State,
-			Signature:       pluginDef.Signature,
-			SignatureType:   pluginDef.SignatureType,
-			SignatureOrg:    pluginDef.SignatureOrg,
-			AccessControl:   pluginsMetadata[pluginDef.ID],
-			AngularDetected: pluginDef.AngularDetected,
+			Id:            pluginDef.ID,
+			Name:          pluginDef.Name,
+			Type:          string(pluginDef.Type),
+			Category:      pluginDef.Category,
+			Info:          pluginDef.Info,
+			Dependencies:  pluginDef.Dependencies,
+			DefaultNavUrl: path.Join(hs.Cfg.AppSubURL, pluginDef.DefaultNavURL),
+			State:         pluginDef.State,
+			Signature:     pluginDef.Signature,
+			SignatureType: pluginDef.SignatureType,
+			SignatureOrg:  pluginDef.SignatureOrg,
+			AccessControl: pluginsMetadata[pluginDef.ID],
+			AngularMeta:   pluginDef.AngularMeta,
 		}
 
 		update, exists := hs.pluginsUpdateChecker.HasUpdate(c.Req.Context(), pluginDef.ID)
@@ -197,7 +197,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		SignatureType:    plugin.SignatureType,
 		SignatureOrg:     plugin.SignatureOrg,
 		SecureJsonFields: map[string]bool{},
-		AngularDetected:  plugin.AngularDetected,
+		AngularMeta:      plugin.AngularMeta,
 	}
 
 	if plugin.IsApp() {

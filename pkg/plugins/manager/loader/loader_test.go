@@ -1122,9 +1122,9 @@ func TestLoader_AngularClass(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].AngularDetected, "angular detection should run")
+				require.True(t, p[0].AngularMeta.AngularDetected, "angular detection should run")
 			} else {
-				require.False(t, p[0].AngularDetected, "angular detection should not run")
+				require.False(t, p[0].AngularMeta.AngularDetected, "angular detection should not run")
 			}
 		})
 	}

@@ -294,7 +294,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Type:    plugins.TypeApp,
 								Preload: true,
 							},
-							AngularDetected: true,
+							AngularMeta: plugins.AngularMeta{AngularDetected: true},
 						},
 					},
 				}
@@ -307,11 +307,11 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						AngularDetected: true,
+						ID:          "test-app",
+						Preload:     true,
+						Path:        "/test-app/module.js",
+						Version:     "0.5.0",
+						AngularMeta: plugins.AngularMeta{AngularDetected: true},
 					},
 				},
 			},

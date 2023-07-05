@@ -192,7 +192,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			var err error
 
 			cctx, canc := context.WithTimeout(ctx, time.Minute*1)
-			p.AngularDetected, err = l.angularInspector.Inspect(cctx, p)
+			p.AngularMeta.AngularDetected, err = l.angularInspector.Inspect(cctx, p)
 			canc()
 
 			if err != nil {
@@ -200,7 +200,7 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 			}
 
 			// Do not initialize plugins if they're using Angular and Angular support is disabled
-			if p.AngularDetected && !l.cfg.AngularSupportEnabled {
+			if p.AngularMeta.AngularDetected && !l.cfg.AngularSupportEnabled {
 				l.log.Error("Refusing to initialize plugin because it's using Angular, which has been disabled", "pluginID", p.ID)
 				continue
 			}
@@ -299,11 +299,12 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 		return nil, fmt.Errorf("module url: %w", err)
 	}
 	plugin := &plugins.Plugin{
-		JSONData: pluginJSON,
-		FS:       files,
-		BaseURL:  baseURL,
-		Module:   moduleURL,
-		Class:    class,
+		JSONData:    pluginJSON,
+		FS:          files,
+		BaseURL:     baseURL,
+		Module:      moduleURL,
+		Class:       class,
+		AngularMeta: plugins.AngularMeta{},
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))

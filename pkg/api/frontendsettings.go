@@ -69,18 +69,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			Alias:           panel.Alias,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
-			HideFromList:    panel.HideFromList,
-			ReleaseState:    string(panel.State),
-			Signature:       string(panel.Signature),
-			Sort:            getPanelSort(panel.ID),
-			AngularDetected: panel.AngularDetected,
+			ID:            panel.ID,
+			Name:          panel.Name,
+			Alias:         panel.Alias,
+			Info:          panel.Info,
+			Module:        panel.Module,
+			BaseURL:       panel.BaseURL,
+			SkipDataQuery: panel.SkipDataQuery,
+			HideFromList:  panel.HideFromList,
+			ReleaseState:  string(panel.State),
+			Signature:     string(panel.Signature),
+			Sort:          getPanelSort(panel.ID),
+			AngularMeta:   panel.AngularMeta,
 		}
 	}
 
@@ -328,7 +328,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Module:    plugin.Module,
 			BaseURL:   plugin.BaseURL,
 		}
-		dsDTO.AngularDetected = plugin.AngularDetected
+		dsDTO.AngularMeta = plugin.AngularMeta
 
 		if ds.JsonData == nil {
 			dsDTO.JSONData = make(map[string]interface{})
@@ -411,7 +411,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Module:    ds.Module,
 					BaseURL:   ds.BaseURL,
 				},
-				AngularDetected: ds.AngularDetected,
+				AngularMeta: ds.AngularMeta,
 			}
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
@@ -426,11 +426,11 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.AppDTO {
 	app := &plugins.AppDTO{
-		ID:              plugin.ID,
-		Version:         plugin.Info.Version,
-		Path:            plugin.Module,
-		Preload:         false,
-		AngularDetected: plugin.AngularDetected,
+		ID:          plugin.ID,
+		Version:     plugin.Info.Version,
+		Path:        plugin.Module,
+		Preload:     false,
+		AngularMeta: plugin.AngularMeta,
 	}
 
 	if settings.Enabled {
