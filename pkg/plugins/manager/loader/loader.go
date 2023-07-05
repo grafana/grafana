@@ -205,6 +205,9 @@ func (l *Loader) loadPlugins(ctx context.Context, src plugins.PluginSource, foun
 				continue
 			}
 		}
+		if settings, ok := l.cfg.PluginSettings[p.ID]; ok {
+			p.AngularMeta.DisableDeprecationUIFeatures = settings["disable_angular_deprecation_ui"] == "true"
+		}
 
 		if p.ExternalServiceRegistration != nil && l.cfg.Features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
 			s, err := l.externalServiceRegistry.RegisterExternalService(ctx, p.ID, p.ExternalServiceRegistration)
