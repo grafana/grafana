@@ -57,6 +57,7 @@ export const TooltipPlugin = ({
   const [coords, setCoords] = useState<CartesianCoords2D | null>(null);
   const [isActive, setIsActive] = useState<boolean>(false);
   const isMounted = useMountedState();
+  let parentWithFocus: HTMLElement | null = null;
 
   const pluginId = `TooltipPlugin`;
 
@@ -92,11 +93,15 @@ export const TooltipPlugin = ({
     config.addHook('init', (u) => {
       plotInstance.current = u;
 
-      u.root.parentElement?.addEventListener('focus', plotEnter);
       u.over.addEventListener('mouseenter', plotEnter);
-
-      u.root.parentElement?.addEventListener('blur', plotLeave);
       u.over.addEventListener('mouseleave', plotLeave);
+
+      parentWithFocus = u.root.closest('[tabindex]');
+
+      if (parentWithFocus) {
+        parentWithFocus.addEventListener('focus', plotEnter);
+        parentWithFocus.addEventListener('blur', plotLeave);
+      }
 
       if (sync && sync() === DashboardCursorSync.Crosshair) {
         u.root.classList.add('shared-crosshair');
@@ -162,11 +167,15 @@ export const TooltipPlugin = ({
 
     return () => {
       setCoords(null);
+
       if (plotInstance.current) {
         plotInstance.current.over.removeEventListener('mouseleave', plotLeave);
         plotInstance.current.over.removeEventListener('mouseenter', plotEnter);
-        plotInstance.current.root.parentElement?.removeEventListener('focus', plotEnter);
-        plotInstance.current.root.parentElement?.removeEventListener('blur', plotLeave);
+
+        if (parentWithFocus) {
+          parentWithFocus.removeEventListener('focus', plotEnter);
+          parentWithFocus.removeEventListener('blur', plotLeave);
+        }
       }
     };
   }, [config, setCoords, setIsActive, setFocusedPointIdx, setFocusedPointIdxs]);
