@@ -416,7 +416,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.5.0",
     "tween-functions": "^1.2.0",
-    "uplot": "leeoniya/uPlot#644b1eb172a9121e6962b22ff1eeeefee6cac745",
+    "uplot": "leeoniya/uPlot#18c27e6f6f90930091c4184431c243fe6b61cea6",
     "uuid": "9.0.0",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",

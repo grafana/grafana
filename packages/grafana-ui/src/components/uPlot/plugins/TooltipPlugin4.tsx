@@ -32,7 +32,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
   useLayoutEffect(() => {
     let _isVisible = isVisible;
     let _isPinned = isPinned;
-    let overRect: DOMRect;
 
     let offsetX = 0;
     let offsetY = 0;
@@ -77,11 +76,6 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
       });
     });
 
-    // fires during mouseenters to re-sync the DOMRect of .u-over (offsetParent) after any resize/scrolls
-    config.addHook('syncRect', (u, rect) => {
-      overRect = rect;
-    });
-
     // fires on data value hovers/unhovers
     config.addHook('setLegend', (u) => {
       setContents(render(u, u.cursor.idxs!, closestSeriesIdx, _isPinned));
@@ -113,8 +107,8 @@ export const TooltipPlugin4 = ({ config, render }: TooltipPlugin4Props) => {
           resizeObserver.unobserve(domRef.current!);
         }
       } else {
-        let clientX = overRect.left + left;
-        let clientY = overRect.top + top;
+        let clientX = u.rect.left + left;
+        let clientY = u.rect.top + top;
 
         if (offsetY) {
           if (clientY + height < winHeight || clientY - height < 0) {
