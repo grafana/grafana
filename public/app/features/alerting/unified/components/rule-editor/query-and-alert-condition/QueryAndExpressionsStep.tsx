@@ -1,20 +1,18 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { DataSourceInstanceSettings, getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
+import { getDefaultRelativeTimeRange, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Dropdown, Field, Icon, InputControl, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
 import { H5 } from '@grafana/ui/src/unstable';
-import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionQueryType, expressionTypes } from 'app/features/expressions/types';
-import { AccessControlAction, useDispatch } from 'app/types';
+import { useDispatch } from 'app/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { DataSourceJsonData } from '../../../../../../../../packages/grafana-data/compiled/types/datasource';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { fetchAllPromBuildInfoAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
@@ -29,6 +27,7 @@ import { RuleEditorSection } from '../RuleEditorSection';
 import { errorFromSeries, refIdExists } from '../util';
 
 import { CloudDataSourceSelector } from './CloudDataSourceSelector';
+import { SmartAlertTypeDetector } from './SmartAlertTypeDetector';
 import {
   addNewDataQuery,
   addNewExpression,
@@ -397,123 +396,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
   );
 };
 
-function getAvailableRuleTypes() {
-  const canCreateGrafanaRules = contextSrv.hasAccess(
-    AccessControlAction.AlertingRuleCreate,
-    contextSrv.hasEditPermissionInFolders
-  );
-  const canCreateCloudRules = contextSrv.hasAccess(AccessControlAction.AlertingRuleExternalWrite, contextSrv.isEditor);
-  const defaultRuleType = canCreateGrafanaRules ? RuleFormType.grafana : RuleFormType.cloudAlerting;
-
-  const enabledRuleTypes: RuleFormType[] = [];
-  if (canCreateGrafanaRules) {
-    enabledRuleTypes.push(RuleFormType.grafana);
-  }
-  if (canCreateCloudRules) {
-    enabledRuleTypes.push(RuleFormType.cloudAlerting, RuleFormType.cloudRecording);
-  }
-
-  return { enabledRuleTypes, defaultRuleType };
-}
-
-function SmartAlertTypeDetector({
-  editingExistingRule,
-  rulesSourcesWithRuler,
-  queries,
-}: {
-  editingExistingRule: boolean;
-  rulesSourcesWithRuler: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
-  queries: AlertQuery[];
-}) {
-  const { getValues, setValue } = useFormContext<RuleFormValues>();
-
-  const ruleFormType = getValues('type');
-  const styles = useStyles2(getStyles);
-
-  // get available rule types
-  const availableRuleTypes = getAvailableRuleTypes();
-  // check if we have only one query in queries and if it's a cloud datasource
-  const dataSourceIdFromQueries = queries.length === 1 ? queries[0]?.datasourceUid : '';
-  const isRecordingRuleType = ruleFormType === RuleFormType.cloudRecording;
-  // it's a smart type if we are creating a new rule and it's not a recording rule type
-  const showSmartTypeSwitch = !editingExistingRule && !isRecordingRuleType;
-  //let's check if we have a smart cloud type
-  const canBeCloud =
-    showSmartTypeSwitch &&
-    queries.length === 1 &&
-    rulesSourcesWithRuler.some(
-      (dsJsonData: DataSourceInstanceSettings<DataSourceJsonData>) => dsJsonData.uid === dataSourceIdFromQueries
-    );
-  // check for enabled types
-  const grafanaTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.grafana);
-  const cloudTypeEnabled = availableRuleTypes.enabledRuleTypes.includes(RuleFormType.cloudAlerting);
-  // can we switch to the other type? (cloud or grafana)
-  const canSwitch =
-    !editingExistingRule &&
-    !isRecordingRuleType &&
-    ((cloudTypeEnabled && canBeCloud && ruleFormType === RuleFormType.grafana) ||
-      (ruleFormType === RuleFormType.cloudAlerting && grafanaTypeEnabled));
-
-  const [buttonClicked, setButtonClicked] = useState(false);
-
-  const switchType = useCallback(() => {
-    const typeInForm = getValues('type');
-    if (typeInForm === RuleFormType.cloudAlerting) {
-      setValue('type', RuleFormType.grafana);
-    } else {
-      setValue('type', RuleFormType.cloudAlerting);
-    }
-  }, [getValues, setValue]);
-
-  const onClickSwitch = useCallback(() => {
-    setButtonClicked(true);
-    switchType();
-  }, [switchType, setButtonClicked]);
-
-  useEffect(() => {
-    if (!buttonClicked && canSwitch) {
-      switchType();
-    }
-  }, [canSwitch, buttonClicked, switchType]);
-
-  // we don't show any alert box if this is a recording rule
-  if (isRecordingRuleType) {
-    return null;
-  }
-
-  // texts and labels for the alert box
-  const typeTitle = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud alert rule' : 'Grafana-managed alert rule';
-  const typeLabel = ruleFormType === RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
-  const switchToLabel = ruleFormType !== RuleFormType.cloudAlerting ? 'Cloud' : 'Grafana-managed';
-  const contentText =
-    ruleFormType === RuleFormType.cloudAlerting
-      ? 'Grafana-managed alert rules are stored in the Grafana database and are managed by Grafana.'
-      : 'Cloud alert rules are stored in the Grafana Cloud database and are managed by Grafana Cloud.';
-  const titleLabel = `Based on the selected data sources this alert rule will be ${typeLabel}`;
-
-  return (
-    <div className={styles.alert}>
-      <Alert severity="info" title={typeTitle}>
-        <Stack gap={1} direction="row" alignItems={'center'}>
-          {!editingExistingRule && titleLabel}
-          <NeedHelpInfo
-            contentText={contentText}
-            externalLink={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/alert-rule-types/`}
-            linkText={`Read about alert rule types`}
-            title=" Alert rule types"
-          />
-
-          {canSwitch && (
-            <Button type="button" onClick={onClickSwitch} variant="secondary" className={styles.switchButton}>
-              Switch to {switchToLabel} alert rule
-            </Button>
-          )}
-        </Stack>
-      </Alert>
-    </div>
-  );
-}
-
 function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQueryType) => void }) {
   const newMenu = (
     <Menu>
@@ -540,12 +422,6 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  switchButton: css`
-    margin-left: ${theme.spacing(1)};
-  `,
-  alert: css`
-    margin-top: ${theme.spacing(2)};
-  `,
   mutedText: css`
     color: ${theme.colors.text.secondary};
     font-size: ${theme.typography.size.sm};
