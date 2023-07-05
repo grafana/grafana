@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// extServiceRoleUID generates a unique ID using SHA256 that fits within the 40 character limit of the role UID.
+// extServiceRoleUID generates a unique ID using FNV-1a (128 bit) that fits within the 40 characters limit of the role UID.
 func extServiceRoleUID(externalServiceID string) string {
 	uid := fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, externalServiceID)
 	hasher := fnv.New128a()
