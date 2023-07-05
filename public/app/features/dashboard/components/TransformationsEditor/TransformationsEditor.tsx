@@ -32,6 +32,7 @@ import {
   IconButton,
   useStyles2,
   Card,
+  Switch,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import config from 'app/core/config';
@@ -67,6 +68,7 @@ interface State {
   scrollTop?: number;
   showRemoveAllModal?: boolean;
   selectedFilter?: FilterCategory;
+  showIllustrations?: boolean;
 }
 
 class UnThemedTransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
@@ -85,6 +87,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
       data: [],
       search: '',
       selectedFilter: 'viewAll',
+      showIllustrations: true,
     };
   }
 
@@ -282,6 +285,7 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
   };
 
   renderTransformsPicker() {
+    const styles = getTransformationsGridStyles(config.theme2);
     const { transformations, search } = this.state;
     let suffix: React.ReactNode = null;
     let xforms = standardTransformersRegistry.list().sort((a, b) => (a.name > b.name ? 1 : b.name > a.name ? -1 : 0));
@@ -439,15 +443,61 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
               </>
             )}
             <VerticalGroup>
-              <Input
-                aria-label={selectors.components.Transforms.searchInput}
-                value={search ?? ''}
-                autoFocus={!noTransforms}
-                placeholder="Search for transformation"
-                onChange={this.onSearchChange}
-                onKeyDown={this.onSearchKeyDown}
-                suffix={suffix}
-              />
+              {!config.featureToggles.transformationsRedesign && (
+                <Input
+                  aria-label={selectors.components.Transforms.searchInput}
+                  value={search ?? ''}
+                  autoFocus={!noTransforms}
+                  placeholder="Search for transformation"
+                  onChange={this.onSearchChange}
+                  onKeyDown={this.onSearchKeyDown}
+                  suffix={suffix}
+                />
+              )}
+
+              {!config.featureToggles.transformationsRedesign &&
+                xforms.map((t) => {
+                  return (
+                    <TransformationCard
+                      key={t.name}
+                      transform={t}
+                      onClick={() => {
+                        this.onTransformationAdd({ value: t.id });
+                      }}
+                    />
+                  );
+                })}
+
+              {config.featureToggles.transformationsRedesign && (
+                <div className={styles.searchWrapper}>
+                  <Input
+                    aria-label={selectors.components.Transforms.searchInput}
+                    className={css`
+                      flex-grow: 1;
+                      width: initial;
+                    `}
+                    value={search ?? ''}
+                    autoFocus={!noTransforms}
+                    placeholder="Search for transformation"
+                    onChange={this.onSearchChange}
+                    onKeyDown={this.onSearchKeyDown}
+                    suffix={suffix}
+                  />
+                  <div className={styles.showImages}>
+                    <span
+                      className={css`
+                        white-space: nowrap;
+                      `}
+                    >
+                      Show images
+                    </span>{' '}
+                    <Switch
+                      value={this.state.showIllustrations}
+                      onChange={() => this.setState({ showIllustrations: !this.state.showIllustrations })}
+                    />
+                  </div>
+                </div>
+              )}
 
               {config.featureToggles.transformationsRedesign && (
                 <div
@@ -472,21 +522,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
                 </div>
               )}
 
-              {!config.featureToggles.transformationsRedesign &&
-                xforms.map((t) => {
-                  return (
-                    <TransformationCard
-                      key={t.name}
-                      transform={t}
-                      onClick={() => {
-                        this.onTransformationAdd({ value: t.id });
-                      }}
-                    />
-                  );
-                })}
-
               {config.featureToggles.transformationsRedesign && (
                 <TransformationsGrid
+                  showIllustrations={this.state.showIllustrations}
                   transformations={xforms}
                   onClick={(id) => {
                     this.onTransformationAdd({ value: id });
@@ -612,10 +650,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 interface TransformationsGridProps {
   transformations: Array<TransformerRegistryItem<any>>;
+  showIllustrations?: boolean;
   onClick: (id: string) => void;
 }
 
-function TransformationsGrid({ transformations, onClick }: TransformationsGridProps) {
+function TransformationsGrid({ showIllustrations, transformations, onClick }: TransformationsGridProps) {
   const styles = useStyles2(getTransformationsGridStyles);
 
   return (
@@ -642,9 +681,11 @@ function TransformationsGrid({ transformations, onClick }: TransformationsGridPr
           <Card.Description className={styles.description}>
             <>
               <span>{getTransformationsRedesignDescriptions(transform.id)}</span>
-              <span>
-                <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
-              </span>
+              {showIllustrations && (
+                <span>
+                  <img className={styles.image} src={getImagePath(transform.id)} alt={transform.name} />
+                </span>
+              )}
             </>
           </Card.Description>
         </Card>
@@ -689,6 +730,19 @@ const getTransformationsGridStyles = (theme: GrafanaTheme2) => {
       display: block;
       max-width: 100%;
       margin-top: ${theme.spacing(2)};
+    `,
+    searchWrapper: css`
+      display: flex;
+      flex-wrap: wrap;
+      column-gap: 27px;
+      row-gap: 16px;
+      width: 100%;
+    `,
+    showImages: css`
+      flex-basis: 0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
     `,
   };
 };
