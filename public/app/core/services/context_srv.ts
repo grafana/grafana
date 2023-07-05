@@ -244,6 +244,7 @@ export class ContextSrv {
     if (!this.isSignedIn) {
       return false;
     }
+
     // skip if feature toggle is not enabled
     if (!config.featureToggles.clientTokenRotation) {
       return false;
