@@ -212,24 +212,26 @@ const originalResolve = systemJSPrototype.resolve;
 
 systemJSPrototype.resolve = function (id: string, parentUrl: string) {
   const isHostedAtCDN = Boolean(config.pluginsCDNBaseURL) && id.startsWith(config.pluginsCDNBaseURL);
-  // CDN paths are unique as they contain the version in the path
-  const shouldUseQueryCache = id.endsWith('module.js') && !isHostedAtCDN;
-  const cachedId = shouldUseQueryCache ? locateWithCache(id) : id;
+
   try {
-    let url = originalResolve.apply(this, [cachedId, parentUrl]);
+    let url = originalResolve.apply(this, [id, parentUrl]);
     if (url.endsWith('!')) {
       url = url.slice(0, -1);
     }
     // handle legacy SystemJS.config.defaultExtension for System.register deps like './my_ctrl' that are missing extension
-    const shouldAddDefaultExtension = url.startsWith('app:') || endsWithFileExtension.test(url);
-    const result = shouldAddDefaultExtension ? url : url + '.js';
+    const shouldAddDefaultExtension = !url.startsWith('app:') && !endsWithFileExtension.test(url);
+    const urlWithExtension = shouldAddDefaultExtension ? url + '.js' : url;
 
-    return result;
+    // Add a cache query param for filesystem module.js requests
+    // CDN hosted plugins contain the version in the path so skip
+    const shouldAddCacheQueryParam = urlWithExtension.endsWith('module.js') && !isHostedAtCDN;
+
+    return shouldAddCacheQueryParam ? locateWithCache(urlWithExtension) : urlWithExtension;
   } catch (err) {
     // For backwards compatiblity with older plugins that use `loadPluginCss`
     // we need to translate the path for systemjs 6.x.x to understand
     if (loadPluginCssRegEx.test(id)) {
-      return `./public/${id}`;
+      return `/public/${id}`;
     }
     console.log(`SystemJS: failed to resolve '${id}'`);
     return id;
@@ -238,7 +240,7 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 
 // Older plugins load .css files which results in a module that matches the CSS Module spec.
 // https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
-// Because they can be nested deps here we listen for any css files which are loaded and apply their styles.
+// Because they can be nested deps here we listen for any css files which are loaded and apply their styles onload.
 systemJSPrototype.onload = function (err: unknown, id: string, deps: string[], isErrSource: boolean) {
   if (id.endsWith('.css') && !err) {
     const module = SystemJS.get(id);
