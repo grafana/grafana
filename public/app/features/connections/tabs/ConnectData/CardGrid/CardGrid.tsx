@@ -78,7 +78,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
               )}
               <div>
                 <h4 className={styles.label}>{item.name}</h4>
-                {item.angularDetected && <PluginAngularBadge />}
+                {item.angularDetected ? <PluginAngularBadge /> : null}
               </div>
             </div>
           </Card.Heading>
