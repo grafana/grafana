@@ -186,31 +186,27 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   /**
    * Used by Logs details.
    */
-  analyzeQuery = async (check: string, key: string, value: string) => {
-    let isActive = false;
-    const { queries } = this.props;
-    for (const query of queries) {
+  isFilterLabelActive = async (key: string, value: string) => {
+    if (this.props.queries.length === 0) {
+      return false;
+    }
+    for (const query of this.props.queries) {
       const ds = await getDataSourceSrv().get(query.datasource);
-      if (hasQueryManipulationSupport(ds, 'analyzeQuery') && ds.analyzeQuery) {
-        isActive = ds.analyzeQuery(query, {
-          check,
-          attributes: {
-            key,
-            value,
-          },
-        });
-      } else {
+      if (!hasQueryManipulationSupport(ds, 'analyzeQuery') || !ds.analyzeQuery) {
+        return false;
+      }
+      const hasFilter = ds.analyzeQuery(query, {
+        check: 'HAS_FILTER',
+        attributes: {
+          key,
+          value,
+        },
+      });
+      if (!hasFilter) {
         return false;
       }
     }
-    return isActive;
-  };
-
-  /**
-   * Used by Logs details.
-   */
-  isFilterLabelActive = async (key: string, value: string) => {
-    return await this.analyzeQuery('HAS_FILTER', key, value);
+    return true;
   };
 
   /**
