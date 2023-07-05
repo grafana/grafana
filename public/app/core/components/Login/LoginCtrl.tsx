@@ -169,8 +169,12 @@ function getErrorMessage(err: FetchError<undefined | { messageId?: string; messa
     case 'password-auth.empty':
     case 'password-auth.failed':
     case 'password-auth.invalid':
-    case 'login-attempt.blocked':
       return t('login.error.invalid-user-or-password', 'Invalid username or password');
+    case 'login-attempt.blocked':
+      return t(
+        'login.error.blocked',
+        'You have exceeded the number of login attempts for this user. Please try again later.'
+      );
     default:
       return err.data?.message;
   }

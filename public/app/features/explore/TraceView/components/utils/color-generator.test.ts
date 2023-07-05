@@ -51,8 +51,8 @@ it('should not allow colors with a contrast ratio < 3 in light mode', () => {
 });
 
 it('should not allow colors with a contrast ratio < 3 in dark mode', () => {
-  expect(colorsToFilter.indexOf('#890F02')).toBe(11);
-  expect(colorsToFilter.indexOf('#0A437C')).toBe(12);
+  expect(colorsToFilter.indexOf('#890F02')).toBe(12);
+  expect(colorsToFilter.indexOf('#0A437C')).toBe(13);
   const filteredColors = getFilteredColors(colorsToFilter, createTheme({ colors: { mode: 'dark' } }));
   expect(filteredColors.indexOf('#890F02')).toBe(-1);
   expect(filteredColors.indexOf('#0A437C')).toBe(-1);
