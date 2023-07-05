@@ -21,7 +21,7 @@ export const PanelHeaderMenuItem = (props: Props & PanelMenuItem) => {
     case 'group':
       return (
         <li>
-          <span className="dropdown-item-text">{props.text}</span>
+          <span className={styles.groupLabel}>{props.text}</span>
         </li>
       );
     default:
@@ -82,6 +82,11 @@ function getStyles(theme: GrafanaTheme2) {
       top: '7px',
       right: theme.spacing(0.5),
       color: theme.colors.text.secondary,
+    }),
+    groupLabel: css({
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.size.sm,
+      padding: theme.spacing(0.5, 1),
     }),
   };
 }
