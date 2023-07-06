@@ -136,6 +136,7 @@ steps:
   image: grafana/build-container:1.7.4
   name: betterer-frontend
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -199,6 +200,7 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -287,6 +289,7 @@ platform:
 services: []
 steps:
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -406,6 +409,7 @@ steps:
   image: golang:1.20.4
   name: compile-build-cmd
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -878,6 +882,7 @@ services:
   name: memcached
 steps:
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -1208,6 +1213,7 @@ services:
   name: memcached
 steps:
 - commands:
+  - echo $DRONE_PULL_REQUEST
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
     | jq .head.repo.fork)
   - if [ "$is_fork" != false ]; then return 1; fi
@@ -7355,6 +7361,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 2a743d0d59621ac380d2481f696322c6217e09cc6393d912dcbd341398e56d90
+hmac: 5ff6f40dc13103dec970e69aea7cc791ad98798ea1a7857c904b3614ad95c258
 
 ...
