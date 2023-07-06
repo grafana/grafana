@@ -252,8 +252,8 @@ For information on how to provision alert rule using Terraform, see [Provision a
 
 {{% docs/reference %}}
 [set-up]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up"
-[set-up]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up"
+[set-up]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up"
 
 [terraform-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
-[terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+[terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 {{% /docs/reference %}}

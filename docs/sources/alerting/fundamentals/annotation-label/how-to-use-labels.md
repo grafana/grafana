@@ -50,7 +50,7 @@ Grafana reserved labels can be used in the same way as manually configured label
 
 {{% docs/reference %}}
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
-[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
 [unified-alerting-reserved-labels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"
 [unified-alerting-reserved-labels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#unified_alertingreserved_labels"

@@ -61,14 +61,14 @@ If you do not want to manage alerting rules for a particular Loki or Prometheus 
 
 {{% docs/reference %}}
 [alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
-[alerting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting"
+[alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 
 [edit-mimir-loki-namespace-group]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/edit-mimir-loki-namespace-group"
-[edit-mimir-loki-namespace-group]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules/edit-mimir-loki-namespace-group"
+[edit-mimir-loki-namespace-group]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/edit-mimir-loki-namespace-group"
 
 [fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
-[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
 {{% /docs/reference %}}

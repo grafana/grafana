@@ -104,5 +104,5 @@ An example of an alert configuration.
 
 {{% docs/reference %}}
 [notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
 {{% /docs/reference %}}

@@ -43,5 +43,5 @@ Annotations are named pairs that add additional information to existing alerts. 
 
 {{% docs/reference %}}
 [variables-label-annotation]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label/variables-label-annotation"
-[variables-label-annotation]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label/variables-label-annotation"
+[variables-label-annotation]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/variables-label-annotation"
 {{% /docs/reference %}}

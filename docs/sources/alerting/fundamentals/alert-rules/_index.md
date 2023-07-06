@@ -23,14 +23,14 @@ An interval specifies how frequently an alerting rule is evaluated. Duration, wh
 
 {{% docs/reference %}}
 [alert-instances]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-instances"
-[alert-instances]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-instances"
+[alert-instances]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-instances"
 
 [alert-rule-types]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
-[alert-rule-types]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/alert-rule-types"
+[alert-rule-types]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/alert-rule-types"
 
 [annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
-[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 
 [organising-alerts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/organising-alerts"
-[organising-alerts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alert-rules/organising-alerts"
+[organising-alerts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/organising-alerts"
 {{% /docs/reference %}}

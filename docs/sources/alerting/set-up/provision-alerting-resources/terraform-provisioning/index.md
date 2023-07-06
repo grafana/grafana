@@ -324,7 +324,7 @@ For example, if you chose Slack as a contact point, Grafana’s embedded [Alertm
 
 {{% docs/reference %}}
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
-[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
 [api-keys]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/api-keys"
 [api-keys]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/api-keys"

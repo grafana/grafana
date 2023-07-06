@@ -30,8 +30,8 @@ In the Contact points tab, you can see a list of your contact points.
 
 {{% docs/reference %}}
 [create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
-[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
+[create-notification-templates]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/create-notification-templates"
 
 [using-go-templating-language]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language"
-[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/using-go-templating-language"
+[using-go-templating-language]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/manage-notifications/template-notifications/using-go-templating-language"
 {{% /docs/reference %}}

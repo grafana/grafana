@@ -60,5 +60,5 @@ The difference between the two being that a silence only lasts for only a specif
 
 {{% docs/reference %}}
 [notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
 {{% /docs/reference %}}

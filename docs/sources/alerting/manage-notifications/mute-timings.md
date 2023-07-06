@@ -75,5 +75,5 @@ If you want to specify an exact duration, specify all the options. For example, 
 [datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/alertmanager"
 
 [fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alertmanager"
-[fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alertmanager"
+[fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager"
 {{% /docs/reference %}}
