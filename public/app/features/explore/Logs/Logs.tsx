@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { PureComponent, createRef } from 'react';
+import { lastValueFrom } from 'rxjs';
 
 import {
   rangeUtil,
@@ -29,6 +30,13 @@ import {
   ExplorePanelsState,
   serializeStateToUrlParam,
   urlUtil,
+  applyFieldOverrides,
+  ValueLinkConfig,
+  TimeRange,
+  transformDataFrame,
+  FieldType,
+  sortDataFrame,
+  getTimeField,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -41,6 +49,7 @@ import {
   withTheme2,
   Themeable2,
   Collapse,
+  Table,
 } from '@grafana/ui';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -51,6 +60,7 @@ import { LogRows } from '../../logs/components/LogRows';
 import { LogRowContextModal } from '../../logs/components/log-context/LogRowContextModal';
 import { getUrlStateFromPaneState } from '../hooks/useStateSync';
 import { changePanelState } from '../state/explorePane';
+import { getFieldLinksForExplore } from '../utils/links';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
@@ -93,7 +103,11 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   scrollElement?: HTMLDivElement;
+  logsFrames?: DataFrame[];
+  range: TimeRange;
 }
+
+type VisualisationType = 'table' | 'logs';
 
 interface State {
   showLabels: boolean;
@@ -108,6 +122,8 @@ interface State {
   forceEscape: boolean;
   contextOpen: boolean;
   contextRow?: LogRowModel;
+  tableFrame?: DataFrame;
+  visualisationType?: VisualisationType;
 }
 
 const scrollableLogsContainer = config.featureToggles.exploreScrollableLogsContainer;
@@ -150,6 +166,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
     forceEscape: false,
     contextOpen: false,
     contextRow: undefined,
+    tableFrame: undefined,
+    visualisationType: 'logs',
   };
 
   constructor(props: Props) {
@@ -177,6 +195,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
         })
       );
     }
+
+    if (this.props.logsFrames !== prevProps.logsFrames) {
+      this.prepareTableData();
+    }
+  }
+
+  componentDidMount(): void {
+    this.prepareTableData();
   }
 
   onLogRowHover = (row?: LogRowModel) => {
@@ -210,6 +236,12 @@ class UnthemedLogs extends PureComponent<Props, State> {
   onEscapeNewlines = () => {
     this.setState((prevState) => ({
       forceEscape: !prevState.forceEscape,
+    }));
+  };
+
+  onChangeVisualisation = (visualisation: VisualisationType) => {
+    this.setState(() => ({
+      visualisationType: visualisation,
     }));
   };
 
@@ -427,6 +459,93 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   scrollToTopLogs = () => this.topLogsRef.current?.scrollIntoView();
 
+  prepareTableFrame = memoizeOne((frame: DataFrame): DataFrame => {
+    const { timeZone, splitOpen, range } = this.props;
+
+    const { timeIndex } = getTimeField(frame);
+    const sortedFrame = sortDataFrame(frame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
+
+    // `getLinks` and `applyFieldOverrides` is taken from TableContainer.tsx
+    for (const field of sortedFrame.fields) {
+      field.getLinks = (config: ValueLinkConfig) => {
+        return getFieldLinksForExplore({
+          field,
+          rowIndex: config.valueRowIndex!,
+          splitOpenFn: splitOpen,
+          range: range,
+          dataFrame: sortedFrame!,
+        });
+      };
+    }
+
+    return applyFieldOverrides({
+      data: [frame],
+      timeZone,
+      theme: config.theme2,
+      replaceVariables: (v: string) => v,
+      fieldConfig: {
+        defaults: {},
+        overrides: [],
+      },
+    })[0];
+  });
+
+  prepareTableData = async () => {
+    const { logsFrames } = this.props;
+    if (!logsFrames || !logsFrames.length) {
+      return;
+    }
+    // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
+    let dataFrame = logsFrames[0];
+
+    const { timeIndex } = getTimeField(dataFrame);
+    dataFrame = sortDataFrame(dataFrame, timeIndex, this.state.logsSortOrder === LogsSortOrder.Descending);
+
+    // create extract JSON transformation for every field that is `json.RawMessage`
+    const transformations = dataFrame.fields
+      .filter((field: Field & { typeInfo?: { frame: string } }) => {
+        return field.type === FieldType.other && field.typeInfo?.frame === 'json.RawMessage';
+      })
+      .flatMap((field: Field) => {
+        return [
+          {
+            id: 'extractFields',
+            options: {
+              format: 'json',
+              keepTime: false,
+              replace: false,
+              source: field.name,
+            },
+          },
+          // hide the field that was extracted
+          {
+            id: 'organize',
+            options: {
+              excludeByName: {
+                [field.name]: true,
+              },
+            },
+          },
+        ];
+      });
+
+    if (transformations.length > 0) {
+      const [transformedDataFrame] = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
+      this.setState({
+        tableFrame: this.prepareTableFrame(transformedDataFrame),
+      });
+    } else {
+      this.setState({
+        tableFrame: this.prepareTableFrame(dataFrame),
+      });
+    }
+  };
+
+  getTableHeight = memoizeOne((length: number) => {
+    // from TableContainer.tsx
+    return Math.min(600, Math.max(length * 36, 300) + 40 + 46);
+  });
+
   render() {
     const {
       width,
@@ -565,24 +684,44 @@ class UnthemedLogs extends PureComponent<Props, State> {
             </InlineFieldRow>
             <div>
               <InlineField label="Display results" className={styles.horizontalInlineLabel} transparent>
-                <RadioButtonGroup
-                  disabled={isFlipping}
-                  options={[
-                    {
-                      label: 'Newest first',
-                      value: LogsSortOrder.Descending,
-                      description: 'Show results newest to oldest',
-                    },
-                    {
-                      label: 'Oldest first',
-                      value: LogsSortOrder.Ascending,
-                      description: 'Show results oldest to newest',
-                    },
-                  ]}
-                  value={logsSortOrder}
-                  onChange={this.onChangeLogsSortOrder}
-                  className={styles.radioButtons}
-                />
+                <>
+                  <RadioButtonGroup
+                    disabled={isFlipping}
+                    options={[
+                      {
+                        label: 'Newest first',
+                        value: LogsSortOrder.Descending,
+                        description: 'Show results newest to oldest',
+                      },
+                      {
+                        label: 'Oldest first',
+                        value: LogsSortOrder.Ascending,
+                        description: 'Show results oldest to newest',
+                      },
+                    ]}
+                    value={logsSortOrder}
+                    onChange={this.onChangeLogsSortOrder}
+                    className={styles.radioButtons}
+                  />
+                  &nbsp;
+                  <RadioButtonGroup
+                    options={[
+                      {
+                        label: 'Table',
+                        value: 'table',
+                        description: 'Show results in table visualisation',
+                      },
+                      {
+                        label: 'Logs',
+                        value: 'logs',
+                        description: 'Show results in logs visualisation',
+                      },
+                    ]}
+                    value={this.state.visualisationType}
+                    onChange={this.onChangeVisualisation}
+                    className={styles.radioButtons}
+                  />
+                </>
               </InlineField>
             </div>
           </div>
@@ -599,50 +738,62 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
-              <LogRows
-                logRows={logRows}
-                deduplicatedRows={dedupedRows}
-                dedupStrategy={dedupStrategy}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                showContextToggle={showContextToggle}
-                showLabels={showLabels}
-                showTime={showTime}
-                enableLogDetails={true}
-                forceEscape={forceEscape}
-                wrapLogMessage={wrapLogMessage}
-                prettifyLogMessage={prettifyLogMessage}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-                logsSortOrder={logsSortOrder}
-                displayedFields={displayedFields}
-                onClickShowField={this.showField}
-                onClickHideField={this.hideField}
-                app={CoreApp.Explore}
-                onLogRowHover={this.onLogRowHover}
-                onOpenContext={this.onOpenContext}
-                onPermalinkClick={this.onPermalinkClick}
-                permalinkedRowId={this.props.panelState?.logs?.id}
-                scrollIntoView={this.scrollIntoView}
-              />
-              {!loading && !hasData && !scanning && (
-                <div className={styles.noData}>
-                  No logs found.
-                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                    Scan for older logs
-                  </Button>
-                </div>
-              )}
-              {scanning && (
-                <div className={styles.noData}>
-                  <span>{scanText}</span>
-                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                    Stop scan
-                  </Button>
-                </div>
-              )}
-            </div>
+            {this.state.visualisationType === 'table' && this.state.tableFrame && (
+              <div className={styles.logRows}>
+                {/* Width should be full width minus logsnavigation and padding */}
+                <Table
+                  data={this.state.tableFrame}
+                  width={width - 80}
+                  height={this.getTableHeight(this.props.logsFrames?.length ?? 0)}
+                />
+              </div>
+            )}
+            {this.state.visualisationType === 'logs' && (
+              <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
+                <LogRows
+                  logRows={logRows}
+                  deduplicatedRows={dedupedRows}
+                  dedupStrategy={dedupStrategy}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  showContextToggle={showContextToggle}
+                  showLabels={showLabels}
+                  showTime={showTime}
+                  enableLogDetails={true}
+                  forceEscape={forceEscape}
+                  wrapLogMessage={wrapLogMessage}
+                  prettifyLogMessage={prettifyLogMessage}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                  logsSortOrder={logsSortOrder}
+                  displayedFields={displayedFields}
+                  onClickShowField={this.showField}
+                  onClickHideField={this.hideField}
+                  app={CoreApp.Explore}
+                  onLogRowHover={this.onLogRowHover}
+                  onOpenContext={this.onOpenContext}
+                  onPermalinkClick={this.onPermalinkClick}
+                  permalinkedRowId={this.props.panelState?.logs?.id}
+                  scrollIntoView={this.scrollIntoView}
+                />
+                {!loading && !hasData && !scanning && (
+                  <div className={styles.noData}>
+                    No logs found.
+                    <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                      Scan for older logs
+                    </Button>
+                  </div>
+                )}
+                {scanning && (
+                  <div className={styles.noData}>
+                    <span>{scanText}</span>
+                    <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                      Stop scan
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
             <LogsNavigation
               logsSortOrder={logsSortOrder}
               visibleRange={navigationRange ?? absoluteRange}
