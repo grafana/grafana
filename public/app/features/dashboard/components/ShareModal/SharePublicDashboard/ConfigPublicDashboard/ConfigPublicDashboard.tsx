@@ -16,6 +16,7 @@ import {
   Switch,
   useStyles2,
   TimeRangeLabel,
+  ControlledCollapse,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -65,7 +66,8 @@ const ConfigPublicDashboard = () => {
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
+  const isDataLoading = isUpdateLoading || isGetLoading;
+  const disableInputs = !hasWritePermissions || isDataLoading;
   const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
@@ -110,13 +112,21 @@ const ConfigPublicDashboard = () => {
       return undefined;
     }
 
+    if (isDataLoading) {
+      return (
+        <div className={styles.collapsed}>
+          <Spinner inline={true} size={14} />
+        </div>
+      );
+    }
+
     return (
       <>
-        <div className={styles.collapsedText}>
-          Time range = <TimeRangeLabel value={timeRange} />
+        <div className={styles.collapsed}>
+          Time range = <TimeRangeLabel className={styles.timeRange} value={timeRange} />
         </div>
-        <div className={styles.collapsedText}>{`Time range picker = ${publicDashboard?.timeSelectionEnabled}`}</div>
-        <div className={styles.collapsedText}>{`Annotations = ${publicDashboard?.annotationsEnabled}`}</div>
+        <div className={styles.collapsed}>{`Time range picker = ${publicDashboard?.timeSelectionEnabled}`}</div>
+        <div className={styles.collapsed}>{`Annotations = ${publicDashboard?.annotationsEnabled}`}</div>
       </>
     );
   }
@@ -186,6 +196,17 @@ const ConfigPublicDashboard = () => {
         </QueryOperationRow>
       </Field>
 
+      <Field className={styles.fieldSpace}>
+        <ControlledCollapse
+          label="Settings"
+          isOpen={isSettingsOpen}
+          loading={isDataLoading}
+          className={styles.settingsContainer}
+        >
+          <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
+        </ControlledCollapse>
+      </Field>
+
       <Layout
         orientation={isDesktop ? 0 : 1}
         justify={isDesktop ? 'flex-end' : 'flex-start'}
@@ -227,11 +248,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: 100%;
     margin-bottom: 0;
   `,
-  collapsedText: css`
+  collapsed: css`
     label: collapsed text;
     margin-left: ${theme.spacing.gridSize * 2}px;
     font-size: ${theme.typography.bodySmall.fontSize};
     color: ${theme.colors.text.secondary};
+  `,
+  timeRange: css({
+    display: 'inline-block',
+  }),
+  settingsContainer: css`
+    label: Settings;
+    padding: ${theme.spacing(0.5, 0.5)};
+    border-radius: ${theme.shape.borderRadius(1)};
+    background: ${theme.colors.background.secondary};
+    min-height: ${theme.spacing(4)};
+    display: grid;
+    grid-template-columns: minmax(100px, max-content) min-content;
+    align-items: center;
+    justify-content: space-between;
+    white-space: nowrap;
+
+    &:focus {
+      outline: none;
+    }
   `,
 });
 type StylesType = ReturnType<typeof getStyles>;
