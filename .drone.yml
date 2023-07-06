@@ -4512,7 +4512,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_main.sh
+  - ./scripts/drone_publish_main.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -4566,7 +4566,7 @@ services: []
 steps:
 - commands:
   - export GRAFANA_DIR=$$(pwd)
-  - cd rgm && ./scripts/drone_publish_tag.sh
+  - ./scripts/drone_publish_tag.sh
   environment:
     _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
       from_secret: dagger_token
@@ -7189,6 +7189,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 130637652bedd7b75bfad0e3b60aeacd18086d9571f6a2fc806337cc7f83758b
+hmac: cd68232fbb3d47ae9625ecc595d235884e3a549783457849a8eeacfc0bcbb7f1
 
 ...
