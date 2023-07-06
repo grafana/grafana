@@ -70,7 +70,7 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 
 	libc := "-musl"
-	baseImage := fmt.Sprintf("%salpine:3.17", baseArch)
+	baseImage := fmt.Sprintf("%salpine:3.18", baseArch)
 	tagSuffix := ""
 	if useUbuntu {
 		libc = ""
