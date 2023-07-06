@@ -1,0 +1,28 @@
+import { Meta, Story, Preview, ArgTypes } from '@storybook/blocks';
+import { Divider } from './Divider';
+
+<Meta title="MDX|Divider" component={Divider} />
+
+# Divider
+
+Used to create separation between large sections of page content. Or used to separate smaller sections
+of components. i.e in the info section of the header.
+
+<ArgTypes of={Divider} />
+
+### Usage
+
+````tsx
+import { Divider } from '@grafana/ui';
+
+   <Header>
+        <h1>My title here</h1>
+        <img src="logo.png" alt="logo" />
+    </Header>
+        <Divider />
+    <Main>
+        <p>Main content goes here</p>
+    </Main>
+
+```tsx
+````
