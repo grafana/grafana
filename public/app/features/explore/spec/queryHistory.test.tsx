@@ -1,4 +1,3 @@
-// tests in here should be more global, most of tests here are covered in explore/RichHistory component tests
 import React from 'react';
 import { of } from 'rxjs';
 
@@ -16,6 +15,7 @@ import {
   assertQueryHistoryExists,
   assertQueryHistoryIsStarred,
   assertQueryHistoryTabIsSelected,
+  assertQueryHistoryIsEmpty,
 } from './helper/assert';
 import {
   commentQueryHistory,
@@ -163,7 +163,7 @@ describe('Explore: Query History', () => {
     await openQueryHistory('right');
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], 'right');
 
-    // star one one query
+    // star one query
     await starQueryHistory(1, 'left');
     await assertQueryHistoryIsStarred([false, true], 'left');
     await assertQueryHistoryIsStarred([false, true], 'right');
@@ -197,6 +197,31 @@ describe('Explore: Query History', () => {
 
     await commentQueryHistory(0, 'test comment');
     await assertQueryHistoryComment(['test comment'], 'left');
+  });
+
+  it('removes the query item from the history panel when user deletes a regular query', async () => {
+    const urlParams = {
+      left: serializeStateToUrlParam({
+        datasource: 'loki',
+        queries: [{ refId: 'A', expr: 'query #1' }],
+        range: { from: 'now-1h', to: 'now' },
+      }),
+    };
+
+    const { datasources } = setupExplore({ urlParams });
+    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+
+    await waitForExplore();
+    await openQueryHistory();
+
+    // queries in history
+    await assertQueryHistory(['{"expr":"query #1"}'], 'left');
+
+    // delete query
+    await deleteQueryHistory(0, 'left');
+
+    // there was only one query in history so assert that query history is empty
+    await assertQueryHistoryIsEmpty('left');
   });
 
   it('updates query history settings', async () => {
