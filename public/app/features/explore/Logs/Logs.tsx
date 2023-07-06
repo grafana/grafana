@@ -493,6 +493,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   prepareTableData = async () => {
     const { logsFrames } = this.props;
     if (!logsFrames || !logsFrames.length) {
+      this.setState({ tableFrame: undefined });
       return;
     }
     // TODO: This does not work with multiple logs queries for now, as we currently only support one logs frame.
@@ -742,7 +743,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             clearDetectedFields={this.clearDetectedFields}
           />
           <div className={styles.logsSection}>
-            {this.state.visualisationType === 'table' && this.state.tableFrame && (
+            {this.state.visualisationType === 'table' && hasData && this.state.tableFrame && (
               <div className={styles.logRows}>
                 {/* Width should be full width minus logsnavigation and padding */}
                 <Table
@@ -752,7 +753,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 />
               </div>
             )}
-            {this.state.visualisationType === 'logs' && (
+            {this.state.visualisationType === 'logs' && hasData && (
               <div className={styles.logRows} data-testid="logRows" ref={this.logsContainer}>
                 <LogRows
                   logRows={logRows}
@@ -780,22 +781,26 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   permalinkedRowId={this.props.panelState?.logs?.id}
                   scrollIntoView={this.scrollIntoView}
                 />
-                {!loading && !hasData && !scanning && (
-                  <div className={styles.noData}>
-                    No logs found.
-                    <Button size="sm" variant="secondary" onClick={this.onClickScan}>
-                      Scan for older logs
-                    </Button>
-                  </div>
-                )}
-                {scanning && (
-                  <div className={styles.noData}>
-                    <span>{scanText}</span>
-                    <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
-                      Stop scan
-                    </Button>
-                  </div>
-                )}
+              </div>
+            )}
+            {!loading && !hasData && !scanning && (
+              <div className={styles.logRows}>
+                <div className={styles.noData}>
+                  No logs found.
+                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                    Scan for older logs
+                  </Button>
+                </div>
+              </div>
+            )}
+            {scanning && (
+              <div className={styles.logRows}>
+                <div className={styles.noData}>
+                  <span>{scanText}</span>
+                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                    Stop scan
+                  </Button>
+                </div>
               </div>
             )}
             <LogsNavigation
