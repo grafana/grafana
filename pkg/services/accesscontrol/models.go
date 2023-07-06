@@ -436,6 +436,9 @@ const (
 	// Alerting provisioning actions
 	ActionAlertingProvisioningRead  = "alert.provisioning:read"
 	ActionAlertingProvisioningWrite = "alert.provisioning:write"
+
+	// Feature Management actions
+	ActionFeatureManagementRead = "featuremgmt.read"
 )
 
 var (
