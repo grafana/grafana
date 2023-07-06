@@ -211,14 +211,14 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:        "redshiftAsyncQueryDataSupport",
 			Description: "Enable async query data support for Redshift",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
-			Owner:       awsPluginsSquad,
+			Owner:       awsDatasourcesSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
@@ -226,7 +226,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Expression:   "true", // enabled by default
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -571,7 +571,7 @@ var (
 			Description:  "Enables the Monaco editor for CloudWatch Logs queries",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        awsPluginsSquad,
+			Owner:        awsDatasourcesSquad,
 		},
 		{
 			Name:         "exploreScrollableLogsContainer",
@@ -627,6 +627,12 @@ var (
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:        "awsDatasourcesTempCredentials",
+			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
+			Stage:       FeatureStageExperimental,
+			Owner:       awsDatasourcesSquad,
 		},
 	}
 )
