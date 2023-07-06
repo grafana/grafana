@@ -703,24 +703,28 @@ class UnthemedLogs extends PureComponent<Props, State> {
                     onChange={this.onChangeLogsSortOrder}
                     className={styles.radioButtons}
                   />
-                  &nbsp;
-                  <RadioButtonGroup
-                    options={[
-                      {
-                        label: 'Table',
-                        value: 'table',
-                        description: 'Show results in table visualisation',
-                      },
-                      {
-                        label: 'Logs',
-                        value: 'logs',
-                        description: 'Show results in logs visualisation',
-                      },
-                    ]}
-                    value={this.state.visualisationType}
-                    onChange={this.onChangeVisualisation}
-                    className={styles.radioButtons}
-                  />
+                  {config.featureToggles.logsExploreTableVisualisation && (
+                    <>
+                      &nbsp;
+                      <RadioButtonGroup
+                        options={[
+                          {
+                            label: 'Table',
+                            value: 'table',
+                            description: 'Show results in table visualisation',
+                          },
+                          {
+                            label: 'Logs',
+                            value: 'logs',
+                            description: 'Show results in logs visualisation',
+                          },
+                        ]}
+                        value={this.state.visualisationType}
+                        onChange={this.onChangeVisualisation}
+                        className={styles.radioButtons}
+                      />
+                    </>
+                  )}
                 </>
               </InlineField>
             </div>
