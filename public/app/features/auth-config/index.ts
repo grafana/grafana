@@ -45,5 +45,5 @@ export async function getAuthProviderStatus(providerId: string): Promise<AuthPro
     const getStatusHook = authProvidersConfigHooks[providerId];
     return getStatusHook();
   }
-  return { configured: false, enabled: false };
+  return { configuredInIni: false, enabled: false, configuredInUI: false, enabledInUI: false };
 }

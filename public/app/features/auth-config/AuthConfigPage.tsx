@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import React, { useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -43,14 +42,14 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
   }, [loadSettings]);
 
   const authProviders = getRegisteredAuthProviders();
-  const enabledProviders = authProviders.filter((p) => providerStatuses[p.id]?.enabled);
-  const configuresProviders = authProviders.filter(
-    (p) => providerStatuses[p.id]?.configured && !providerStatuses[p.id]?.enabled
-  );
-  const availableProviders = authProviders.filter(
-    (p) => !providerStatuses[p.id]?.enabled && !providerStatuses[p.id]?.configured
-  );
-  const firstAvailableProvider = availableProviders?.length ? availableProviders[0] : null;
+  const alreadyConfiguredProviders = authProviders.filter((p) => {
+    console.log(providerStatuses[p.id]?.configuredInUI);
+    console.log(providerStatuses[p.id]?.enabledInUI);
+    console.log(providerStatuses[p.id]?.enabled);
+    return (
+      providerStatuses[p.id]?.configuredInUI || providerStatuses[p.id]?.enabledInUI || providerStatuses[p.id]?.enabled
+    );
+  });
 
   {
     /* TODO: make generic for the provider of the configuration or make the documentation point to a collection of all our providers */
@@ -68,8 +67,8 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
 
   const subTitle = <span>Manage your auth settings and configure single sign-on. Find out more in our {docsLink}</span>;
 
-  const onCTAClick = () => {
-    reportInteraction('authentication_ui_created', { provider: firstAvailableProvider?.type });
+  const onCTAClick = (provider: AuthProviderInfo) => {
+    reportInteraction('authentication_ui_created', { provider: provider.type });
   };
   const onProviderCardClick = (provider: AuthProviderInfo) => {
     reportInteraction('authentication_ui_provider_clicked', { provider: provider.type });
@@ -79,50 +78,32 @@ export const AuthConfigPageUnconnected = ({ providerStatuses, isLoading, loadSet
     <Page navId="authentication" subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
         <h3 className={styles.sectionHeader}>Configured authentication</h3>
-        {!!enabledProviders?.length && (
-          <div className={styles.cardsContainer}>
-            {enabledProviders.map((provider) => (
+        {authProviders.map((provider) =>
+          alreadyConfiguredProviders.includes(provider) ? (
+            <div className={styles.cardsContainer} key={provider.id}>
               <ProviderCard
-                key={provider.id}
                 providerId={provider.id}
                 displayName={provider.displayName}
                 authType={provider.type}
-                enabled={providerStatuses[provider.id]?.enabled}
-                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
+                enabled={providerStatuses[provider.id]?.enabled || providerStatuses[provider.id]?.enabledInUI}
                 configPath={provider.configPath}
                 onClick={() => {
                   onProviderCardClick(provider);
                 }}
               />
-            ))}
-          </div>
-        )}
-        {!enabledProviders?.length && firstAvailableProvider && !isEmpty(providerStatuses) && (
-          <ConfigureAuthCTA
-            title={`You have no ${firstAvailableProvider.type} configuration created at the moment`}
-            buttonIcon="plus-circle"
-            buttonLink={getProviderUrl(firstAvailableProvider)}
-            buttonTitle={`Configure ${firstAvailableProvider.type}`}
-            description={`Important: if you have ${firstAvailableProvider.type} configuration enabled via the .ini file Grafana is using it.
-              Configuring ${firstAvailableProvider.type} via UI will take precedence over any configuration in the .ini file.
-              No changes will be written into .ini file.`}
-            onClick={onCTAClick}
-          />
-        )}
-        {!!configuresProviders?.length && (
-          <div className={styles.cardsContainer}>
-            {configuresProviders.map((provider) => (
-              <ProviderCard
-                key={provider.id}
-                providerId={provider.id}
-                displayName={provider.displayName}
-                authType={provider.protocol}
-                enabled={providerStatuses[provider.id]?.enabled}
-                configFoundInIniFile={providerStatuses[provider.id]?.configFoundInIniFile}
-                configPath={provider.configPath}
-              />
-            ))}
-          </div>
+            </div>
+          ) : (
+            <ConfigureAuthCTA
+              key={provider.id}
+              title={`You have no ${provider.type} configuration created at the moment`}
+              buttonIcon="plus-circle"
+              buttonLink={getProviderUrl(provider)}
+              buttonTitle={`Configure ${provider.type}`}
+              onClick={() => {
+                onCTAClick(provider);
+              }}
+            />
+          )
         )}
       </Page.Contents>
     </Page>
