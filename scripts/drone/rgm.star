@@ -37,8 +37,7 @@ def rgm_build(script = "drone_publish_main.sh"):
         "image": "grafana/grafana-build:main",
         "commands": [
             "export GRAFANA_DIR=$$(pwd)",
-            "ls -al", "ls -al scripts",
-            "./scripts/{}".format(script),
+            "/src/scripts/{}".format(script),
         ],
         "environment": rgm_env_secrets,
         # The docker socket is a requirement for running dagger programs
