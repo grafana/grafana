@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/stages"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature/statickey"
@@ -1497,7 +1497,7 @@ func newLoader(t *testing.T, cfg *config.Cfg, cbs ...func(loader *Loader)) *Load
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), reg,
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakeRoleRegistry(),
 		assets, angularInspector, &fakes.FakeOauthService{},
-		stages.NewDiscovery(finder.NewLocalFinder(cfg), reg, signature.ProvideService(cfg, statickey.New()), assets))
+		discovery.NewDiscoveryStage(finder.NewLocalFinder(cfg), reg, signature.ProvideService(statickey.New()), assets))
 
 	for _, cb := range cbs {
 		cb(l)

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/stages"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/stages/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -29,7 +29,7 @@ import (
 var _ plugins.ErrorResolver = (*Loader)(nil)
 
 type Loader struct {
-	discovery stages.Discoverer
+	discovery discovery.Discoverer
 
 	processManager          process.Service
 	pluginRegistry          registry.Service
@@ -52,14 +52,14 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		roleRegistry, assetPath, angularInspector, externalServiceRegistry,
-		stages.NewDiscovery(pluginFinder, pluginRegistry, signatureCalculator, assetPath))
+		discovery.NewDiscoveryStage(pluginFinder, pluginRegistry, signatureCalculator, assetPath))
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, roleRegistry plugins.RoleRegistry, assetPath *assetpath.Service,
 	angularInspector angularinspector.Inspector, externalServiceRegistry oauth.ExternalServiceRegistry,
-	discovery stages.Discoverer) *Loader {
+	discovery discovery.Discoverer) *Loader {
 	return &Loader{
 		pluginRegistry:          pluginRegistry,
 		pluginInitializer:       initializer.New(cfg, backendProvider, license),
