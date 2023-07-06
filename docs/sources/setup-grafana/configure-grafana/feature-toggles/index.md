@@ -122,7 +122,7 @@ Experimental features might be changed or removed without prior notice.
 | `elasticToggleableFilters`                  | Enable support to toggle filters off from the query through the Logs Details component                       |
 | `vizAndWidgetSplit`                         | Split panels between vizualizations and widgets                                                              |
 | `prometheusIncrementalQueryInstrumentation` | Adds RudderStack events to incremental queries                                                               |
-| `awsDatasourcesTempCredentials`          | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
+| `awsDatasourcesTempCredentials`             | Support temporary security credentials in AWS plugins for Grafana Cloud customers                            |
 
 ## Development feature toggles
 
