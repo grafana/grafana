@@ -215,6 +215,11 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.Uid)
 	}
 
+	// validate the public dashboard belongs to the dashboard
+	if existingPubdash.DashboardUid != dto.DashboardUid {
+		return nil, ErrInvalidUid.Errorf("Update: the public dashboard does not belong to the dashboard")
+	}
+
 	publicDashboard := newUpdatePublicDashboard(dto, existingPubdash)
 
 	// set values to update

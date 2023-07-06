@@ -553,6 +553,13 @@ var (
 			Owner:        grafanaAsCodeSquad,
 		},
 		{
+			Name:         "frontendSandboxMonitorOnly",
+			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
 			Name:         "sqlDatasourceDatabaseSelection",
 			Description:  "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly: true,
@@ -613,6 +620,13 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+		},
+		{
+			Name:         "prometheusIncrementalQueryInstrumentation",
+			Description:  "Adds RudderStack events to incremental queries",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

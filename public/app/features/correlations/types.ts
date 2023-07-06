@@ -44,6 +44,10 @@ export interface Correlation {
   config: CorrelationConfig;
 }
 
+export type GetCorrelationsParams = {
+  page: number;
+};
+
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
 export type CreateCorrelationParams = Omit<Correlation, 'uid'>;
 export type UpdateCorrelationParams = Omit<Correlation, 'targetUID'>;
