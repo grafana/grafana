@@ -52,7 +52,7 @@ In subsequent releases, we’ll be refining and enhancing the user interface for
 
 _Available in public preview in all editions of Grafana._
 
-Scenes is a new front-end library by Grafana that empowers application engineers to effortlessly build stunning dashboard experiences right into their products. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
+Scenes is a new front-end library by Grafana that empowers Grafana plugin developers to effortlessly build stunning dashboard-like experiences into their Grafana app plugins. With Scenes, you can easily create apps that mirror the Grafana dashboarding experience, complete with template variable support, flexible layouts, dynamic panel rendering, and so much more.
 
 To try it out, go to the [@grafana/scenes](https://github.com/grafana/scenes) repository.
 
