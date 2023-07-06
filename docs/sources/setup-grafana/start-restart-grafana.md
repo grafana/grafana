@@ -22,7 +22,7 @@ The following subsections describe three methods of starting and restarting the 
 
 ### Start the Grafana server with systemd
 
-Complete the following steps to start the Grafana server using systemd and verify that it is running:
+Complete the following steps to start the Grafana server using systemd and verify that it is running.
 
 1. To start the service, run the following commands:
 
