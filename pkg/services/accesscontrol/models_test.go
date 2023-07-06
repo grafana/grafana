@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -107,4 +108,33 @@ func TestSaveExternalServiceRoleCommand_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPermission_ScopeSplit(t *testing.T) {
+	type testCase struct {
+		desc       string
+		scope      string
+		kind       string
+		attribute  string
+		identifier string
+	}
+
+	tests := []testCase{
+		{desc: "all fields should be empty for empty scope", scope: "", kind: "", attribute: "", identifier: ""},
+		{desc: "only identifier should not be empty for wildcard", scope: "*", kind: "", attribute: "", identifier: "*"},
+		{desc: "kind and identifier should not be empty for a wildcard with kind prefix", scope: "dashboards:*", kind: "dashboards", attribute: "", identifier: "*"},
+		{desc: "all fields should be set correctly", scope: "dashboards:uid:123", kind: "dashboards", attribute: "uid", identifier: "123"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			p := Permission{Scope: tt.scope}
+
+			kind, attribute, identifier := p.SplitScope()
+			assert.Equal(t, tt.kind, kind)
+			assert.Equal(t, tt.attribute, attribute)
+			assert.Equal(t, tt.identifier, identifier)
+		})
+	}
+
 }

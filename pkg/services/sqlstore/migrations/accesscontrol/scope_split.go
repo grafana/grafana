@@ -1,8 +1,6 @@
 package accesscontrol
 
 import (
-	"strings"
-
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -43,17 +41,11 @@ func (m *scopeSplitMigrator) Exec(sess *xorm.Session, mig *migrator.Migrator) er
 	sess.SQL("SELECT * FROM permission WHERE scope IS NOT ''").Find(&permissions)
 
 	for i, p := range permissions {
-		str := strings.Split(p.Scope, ":")
-		if len(str) == 1 { // wildcard without kind and attribute prefix
-			permissions[i].Identifier = str[0]
-		} else if len(str) == 2 { // wildcard without attribute prefix
-			permissions[i].Kind = str[0]
-			permissions[i].Identifier = str[1]
-		} else if len(str) == 3 {
-			permissions[i].Kind = str[0]
-			permissions[i].Attribute = str[1]
-			permissions[i].Identifier = str[2]
-		}
+		kind, attribute, identifier := p.SplitScope()
+
+		permissions[i].Kind = kind
+		permissions[i].Attribute = attribute
+		permissions[i].Identifier = identifier
 
 		// TODO: batch update
 		_, err := sess.Exec("UPDATE permission SET kind = ?, attribute = ?, identifier = ? WHERE id = ?", permissions[i].Kind, permissions[i].Attribute, permissions[i].Identifier, permissions[i].ID)
