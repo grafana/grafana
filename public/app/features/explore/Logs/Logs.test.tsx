@@ -101,6 +101,11 @@ describe('Logs', () => {
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
         }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
+        }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
         clearCache={() => {}}
@@ -158,6 +163,11 @@ describe('Logs', () => {
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
         }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
+        }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
         clearCache={() => {}}
@@ -194,6 +204,11 @@ describe('Logs', () => {
         absoluteRange={{
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
         }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
@@ -235,6 +250,11 @@ describe('Logs', () => {
         absoluteRange={{
           from: toUtc('2019-01-01 10:00:00').valueOf(),
           to: toUtc('2019-01-01 16:00:00').valueOf(),
+        }}
+        range={{
+          from: toUtc('2019-01-01 10:00:00'),
+          to: toUtc('2019-01-01 16:00:00'),
+          raw: { from: 'now-1h', to: 'now' },
         }}
         addResultsToCache={() => {}}
         onChangeTime={() => {}}
