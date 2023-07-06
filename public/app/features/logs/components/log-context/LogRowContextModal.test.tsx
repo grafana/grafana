@@ -10,7 +10,8 @@ import {
   LogsSortOrder,
   SplitOpenOptions,
 } from '@grafana/data';
-import { dataFrameToLogsModel } from 'app/core/logsModel';
+
+import { dataFrameToLogsModel } from '../../logsModel';
 
 import { LogRowContextModal } from './LogRowContextModal';
 

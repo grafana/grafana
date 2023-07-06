@@ -28,6 +28,21 @@ export interface TransformerRegistryItem<TOptions> extends RegistryItem {
    * React component used as UI for the transformer
    */
   editor: React.ComponentType<TransformerUIProps<TOptions>>;
+
+  /**
+   * Set of categories associated with the transformer
+   */
+  categories?: Set<TransformerCategory>;
+}
+
+export enum TransformerCategory {
+  Combine = 'combine',
+  CalculateNewFields = 'calculateNewFields',
+  CreateNewVisualization = 'createNewVisualization',
+  Filter = 'filter',
+  PerformSpatialOperations = 'performSpatialOperations',
+  Reformat = 'reformat',
+  ReorderAndRename = 'reorderAndRename',
 }
 
 /**
