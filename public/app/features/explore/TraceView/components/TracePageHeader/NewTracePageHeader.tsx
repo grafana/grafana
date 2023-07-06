@@ -107,6 +107,7 @@ export const NewTracePageHeader = memo((props: TracePageHeaderProps) => {
         {title}
         <TracePageActions traceId={trace.traceID} data={data} app={app} />
       </div>
+
       <div className={styles.subtitle}>
         <span className={styles.timestamp}>{timestamp(trace, timeZone, styles)}</span>
         <span className={styles.tagMeta}>
