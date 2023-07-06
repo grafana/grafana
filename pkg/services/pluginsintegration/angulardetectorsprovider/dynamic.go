@@ -37,7 +37,7 @@ type Dynamic struct {
 	store angularpatternsstore.Service
 
 	// detectors contains the cached angular detectors, which are created from the remote angular patterns.
-	// Use setDetectors and ProvideDetectors to write/read this value.
+	// mux should be acquired before reading from/writing to this field.
 	detectors []angulardetector.AngularDetector
 
 	// mux is the mutex used to read/write the cached detectors in a concurrency-safe way.
@@ -52,17 +52,11 @@ func ProvideDynamic(cfg *config.Cfg, store angularpatternsstore.Service, feature
 		httpClient: makeHttpClient(),
 		baseURL:    cfg.GrafanaComURL,
 	}
-
-	// Perform the initial restore from db without blocking
-	d.mux.Lock()
-	go func() {
-		d.log.Debug("Restoring cache")
-		if err := d.setDetectorsFromCache(context.Background()); err != nil {
-			d.log.Warn("Cache restore failed", "error", err)
-		}
-		d.mux.Unlock()
-	}()
-
+	// Perform the initial restore from db
+	d.log.Debug("Restoring cache")
+	if err := d.setDetectorsFromCache(context.Background()); err != nil {
+		d.log.Warn("Cache restore failed", "error", err)
+	}
 	return d, nil
 }
 
@@ -123,17 +117,12 @@ func (d *Dynamic) fetch(ctx context.Context) (GCOMPatterns, error) {
 	return out, nil
 }
 
-// setDetectors sets the detectors by acquiring the lock first.
-func (d *Dynamic) setDetectors(newDetectors []angulardetector.AngularDetector) {
-	d.mux.Lock()
-	d.detectors = newDetectors
-	d.mux.Unlock()
-}
-
 // updateDetectors fetches the patterns from GCOM, converts them to detectors,
 // stores the patterns in the database and update the cached detectors.
 func (d *Dynamic) updateDetectors(ctx context.Context) error {
 	// Fetch patterns from GCOM
+	d.mux.Lock()
+	defer d.mux.Unlock()
 	patterns, err := d.fetch(ctx)
 	if err != nil {
 		return fmt.Errorf("fetch: %w", err)
@@ -151,13 +140,16 @@ func (d *Dynamic) updateDetectors(ctx context.Context) error {
 	}
 
 	// Update cached detectors
-	d.setDetectors(newDetectors)
+	d.detectors = newDetectors
 	return nil
 }
 
 // setDetectorsFromCache sets the in-memory detectors from the patterns in the store.
 // The caller must Lock d.mux before calling this function.
 func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
+	d.mux.Lock()
+	defer d.mux.Unlock()
+
 	var cachedPatterns GCOMPatterns
 	rawCached, ok, err := d.store.Get(ctx)
 	if !ok {
@@ -175,7 +167,6 @@ func (d *Dynamic) setDetectorsFromCache(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("convert to detectors: %w", err)
 	}
-	// Do not use setDetectors or it will cause a deadlock
 	d.detectors = cachedDetectors
 	return nil
 }
