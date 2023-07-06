@@ -150,8 +150,8 @@ const importMap = {
 
 export function buildImportMap(importMap: Record<string, System.Module>) {
   return Object.keys(importMap).reduce((acc, key) => {
-    // Use the 'app:' prefix to act as a URL instead of a bare specifier
-    const module_name = `app:${key}`;
+    // Use the 'package:' prefix to act as a URL instead of a bare specifier
+    const module_name = `${SHARED_DEP_PREFIX}:${key}`;
     // expose dependency to SystemJS
     SystemJS.set(module_name, importMap[key]);
 
@@ -163,6 +163,7 @@ export function buildImportMap(importMap: Record<string, System.Module>) {
   }, {} as Record<string, string>);
 }
 
+const SHARED_DEP_PREFIX = 'package';
 const imports = buildImportMap(importMap);
 
 // pass the map of module names so systemjs can resolve them
@@ -177,9 +178,8 @@ const isSystemModule = /System.register\(/;
 const systemJSPrototype = SystemJS.constructor.prototype;
 const systemJSFetch = systemJSPrototype.fetch;
 
-// Ideally we'd only use fetch/eval for CDN loading
-// but Monaco Editors reliance on RequireJS means we need to transform
-// the content of the plugin code at runtime.
+// Monaco Editors reliance on RequireJS means we need to transform
+// the content of the plugin code at runtime which can only be done with fetch/eval.
 systemJSPrototype.shouldFetch = () => true;
 
 systemJSPrototype.fetch = function (url: string, options: Record<string, unknown>) {
@@ -215,18 +215,12 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
 
   try {
     let url = originalResolve.apply(this, [id, parentUrl]);
-    if (url.endsWith('!')) {
-      url = url.slice(0, -1);
-    }
-    // handle legacy SystemJS.config.defaultExtension for System.register deps like './my_ctrl' that are missing extension
-    const shouldAddDefaultExtension = !url.startsWith('app:') && !endsWithFileExtension.test(url);
-    const urlWithExtension = shouldAddDefaultExtension ? url + '.js' : url;
-
+    const cleanedUrl = getBackWardsCompatibleUrl(url);
     // Add a cache query param for filesystem module.js requests
     // CDN hosted plugins contain the version in the path so skip
-    const shouldAddCacheQueryParam = urlWithExtension.endsWith('module.js') && !isHostedAtCDN;
+    const shouldAddCacheQueryParam = cleanedUrl.endsWith('module.js') && !isHostedAtCDN;
 
-    return shouldAddCacheQueryParam ? locateWithCache(urlWithExtension) : urlWithExtension;
+    return shouldAddCacheQueryParam ? locateWithCache(cleanedUrl) : cleanedUrl;
   } catch (err) {
     // For backwards compatiblity with older plugins that use `loadPluginCss`
     // we need to translate the path for systemjs 6.x.x to understand
@@ -237,6 +231,16 @@ systemJSPrototype.resolve = function (id: string, parentUrl: string) {
     return id;
   }
 };
+
+// Handle legacy SystemJS ! in urls to understand which loader to use and provide
+// support for legacy config.defaultExtension for System.register deps like './my_ctrl' that lack an extension
+function getBackWardsCompatibleUrl(url: string) {
+  if (url.endsWith('!')) {
+    url = url.slice(0, -1);
+  }
+  const shouldAddDefaultExtension = !url.startsWith(`${SHARED_DEP_PREFIX}:`) && !endsWithFileExtension.test(url);
+  return shouldAddDefaultExtension ? url + '.js' : url;
+}
 
 // Older plugins load .css files which results in a module that matches the CSS Module spec.
 // https://github.com/WICG/webcomponents/blob/gh-pages/proposals/css-modules-v1-explainer.md#importing-a-css-module
