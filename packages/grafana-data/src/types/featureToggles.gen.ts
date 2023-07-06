@@ -110,4 +110,5 @@ export interface FeatureToggles {
   elasticToggleableFilters?: boolean;
   vizAndWidgetSplit?: boolean;
   prometheusIncrementalQueryInstrumentation?: boolean;
+  awsDatasourcesTempCredentials?: boolean;
 }
