@@ -22,8 +22,6 @@ import { SeriesTable, SeriesTableRowProps, VizTooltipContainer } from '../../Viz
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 import { findMidPointYPosition, pluginLog } from '../utils';
 
-import { getRandomContent } from '@grafana/ui/src/components/uPlot/plugins/utils';
-
 interface TooltipPluginProps {
   timeZone: TimeZone;
   data: DataFrame;
@@ -191,12 +189,11 @@ export const TooltipPlugin = ({
   if (!xField) {
     return null;
   }
-  // const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
-  // let tooltip: React.ReactNode = null;
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, timeZone, theme });
+  let tooltip: React.ReactNode = null;
 
-  // let xVal = xFieldFmt(xField!.values[focusedPointIdx]).text;
+  let xVal = xFieldFmt(xField!.values[focusedPointIdx]).text;
 
-  /*
   if (!renderTooltip) {
     // when interacting with a point in single mode
     if (mode === TooltipDisplayMode.Single && focusedSeriesIdx !== null) {
@@ -274,13 +271,12 @@ export const TooltipPlugin = ({
   } else {
     tooltip = renderTooltip(otherProps.data, focusedSeriesIdx, focusedPointIdx);
   }
-  */
 
   return (
     <Portal>
       {coords && (
         <VizTooltipContainer position={{ x: coords.x, y: coords.y }} offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}>
-          {getRandomContent()}
+          {tooltip}
         </VizTooltipContainer>
       )}
     </Portal>
