@@ -4511,12 +4511,6 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_main.sh
   environment:
@@ -4528,8 +4522,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -4565,12 +4565,6 @@ platform:
 services: []
 steps:
 - commands:
-  - git clone https://github.com/grafana/grafana-build.git rgm
-  failure: ignore
-  image: alpine/git
-  name: clone-rgm
-- commands:
-  - apk update && apk add docker bash
   - export GRAFANA_DIR=$$(pwd)
   - cd rgm && ./scripts/drone_publish_tag.sh
   environment:
@@ -4582,8 +4576,14 @@ steps:
       from_secret: gcp_key_base64
     GITHUB_TOKEN:
       from_secret: github_token
+    GPG_PASSPHRASE:
+      from_secret: packages_gpg_passphrase
+    GPG_PRIVATE_KEY:
+      from_secret: packages_gpg_private_key
+    GPG_PUBLIC_KEY:
+      from_secret: packages_gpg_public_key
   failure: ignore
-  image: golang:1.20.3-alpine
+  image: grafana/grafana-build:main
   name: rgm-build
   volumes:
   - name: docker
@@ -7189,6 +7189,6 @@ kind: secret
 name: delivery-bot-app-private-key
 ---
 kind: signature
-hmac: 5b576f21a7afb08759ad4ac7b74a54afcfbf9b5eac0e5894857ce4cdd0feed50
+hmac: 130637652bedd7b75bfad0e3b60aeacd18086d9571f6a2fc806337cc7f83758b
 
 ...
