@@ -211,7 +211,7 @@ func (d *Dynamic) Run(ctx context.Context) error {
 		select {
 		case <-tick:
 			st := time.Now()
-			d.log.Info("Updating patterns")
+			d.log.Debug("Updating patterns")
 
 			if err := d.updateDetectors(context.Background()); err != nil {
 				d.log.Error("Error while updating detectors", "error", err)
