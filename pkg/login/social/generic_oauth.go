@@ -143,7 +143,7 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 		}
 
 		if (userInfo.Role == "" || userInfo.Role == s.defaultRole()) && !s.skipOrgRoleSync {
-			role, grafanaAdmin, err := s.extractRoleAndAdmin(data.rawJSON, []string{})
+			role, grafanaAdmin, err := s.extractRoleAndAdminOptional(data.rawJSON, []string{})
 			if err != nil {
 				return nil, err
 			}
@@ -151,10 +151,6 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 			if s.allowAssignGrafanaAdmin {
 				userInfo.IsGrafanaAdmin = &grafanaAdmin
 			}
-		}
-
-		if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
-			s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 		}
 
 		if len(userInfo.Groups) == 0 {
@@ -166,6 +162,14 @@ func (s *SocialGenericOAuth) UserInfo(ctx context.Context, client *http.Client, 
 				userInfo.Groups = groups
 			}
 		}
+	}
+
+	if userInfo.Role == "" && !s.skipOrgRoleSync {
+		userInfo.Role = s.defaultRole()
+	}
+
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	if userInfo.Email == "" {

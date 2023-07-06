@@ -372,29 +372,34 @@ func (s *SocialBase) SupportBundleContent(bf *bytes.Buffer) error {
 	return nil
 }
 
-func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
+func (s *SocialBase) extractRoleAndAdminOptional(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
 	if s.roleAttributePath == "" {
 		if s.roleAttributeStrict {
 			return "", false, errRoleAttributePathNotSet.Errorf("role_attribute_path not set and role_attribute_strict is set")
 		}
-		return s.defaultRole(), false, nil
+		return "", false, nil
 	}
 
-	role, gAdmin := s.searchRole(rawJSON, groups)
-	if !role.IsValid() {
-		if s.roleAttributeStrict {
-			return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
-		}
+	if role, gAdmin := s.searchRole(rawJSON, groups); role.IsValid() {
+		return role, gAdmin, nil
+	} else if role != "" {
+		return "", false, errInvalidRole.Errorf("invalid role: %s", role)
+	}
 
-		if role != "" {
-			return "", false, errInvalidRole.Errorf("invalid role: %s", role)
-		}
+	if s.roleAttributeStrict {
+		return "", false, errRoleAttributeStrictViolation.Errorf("idP did not return a role attribute, but role_attribute_strict is set")
+	}
 
+	return "", false, nil
+}
+
+func (s *SocialBase) extractRoleAndAdmin(rawJSON []byte, groups []string) (org.RoleType, bool, error) {
+	role, gAdmin, err := s.extractRoleAndAdminOptional(rawJSON, groups)
+	if role == "" {
 		role = s.defaultRole()
-		gAdmin = false
 	}
 
-	return role, gAdmin, nil
+	return role, gAdmin, err
 }
 
 func (s *SocialBase) searchRole(rawJSON []byte, groups []string) (org.RoleType, bool) {
@@ -421,6 +426,7 @@ func (s *SocialBase) defaultRole() org.RoleType {
 		return org.RoleType(s.autoAssignOrgRole)
 	}
 
+	// should never happen
 	return org.RoleViewer
 }
 
