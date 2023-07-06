@@ -63,18 +63,15 @@ export function TraceViewContainer(props: Props) {
   return (
     <PanelChrome
       padding="none"
-      title={getTraceName(traceProp.spans)} // name it just "Trace" or use {getTraceName(traceProp.spans)} - but inside the component itself
+      title="Trace"
       titleItems={
         <span className={style.duration}>
-          {config.featureToggles.newTraceViewHeader ? (
+          {config.featureToggles.newTraceViewHeader && (
             <>
               {formatDuration(traceProp.duration)}
               {links && links.length > 0 && <ExternalLinks links={links} />}
             </>
-          ) : (
-            traceProp.traceID
           )}
-          {!config.featureToggles.newTraceViewHeader && links && links.length > 0 && <ExternalLinks links={links} />}
         </span>
       }
       actions={
