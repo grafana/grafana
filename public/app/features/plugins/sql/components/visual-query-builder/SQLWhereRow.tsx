@@ -2,6 +2,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLExpression, SQLQuery, SQLSelectableValue } from '../../types';
@@ -31,6 +32,13 @@ export function SQLWhereRow({ query, fields, onQueryChange, db }: WhereRowProps)
       config={{ fields: state.value || {} }}
       sql={query.sql!}
       onSqlChange={(val: SQLExpression) => {
+        const templateSrv = getTemplateSrv();
+
+        if (templateSrv.containsTemplate(val.whereString)) {
+          const str = templateSrv.replace(val.whereString, undefined, 'singlequote');
+          val.whereString = str.replaceAll("''", "'");
+        }
+
         onSqlChange(val);
       }}
     />
