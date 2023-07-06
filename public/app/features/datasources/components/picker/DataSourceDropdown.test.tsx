@@ -100,7 +100,7 @@ describe('DataSourceDropdown', () => {
   describe('configuration', () => {
     const user = userEvent.setup();
 
-    it('should call the dataSourceSrv.getDatasourceList with the correct filters', async () => {
+    it('should fetch the DS applying the correct filters consistently across lists', async () => {
       const filters = {
         mixed: true,
         tracing: true,
@@ -119,12 +119,27 @@ describe('DataSourceDropdown', () => {
         current: mockDS1.name,
         ...filters,
       };
-      const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
 
-      const searchBox = dropdown.container.querySelector('input');
+      render(
+        <ModalsProvider>
+          <DataSourceDropdown {...props}></DataSourceDropdown>
+          <ModalRoot />
+        </ModalsProvider>
+      );
+
+      const searchBox = await screen.findByRole('textbox');
       expect(searchBox).toBeInTheDocument();
+
+      getListMock.mockClear();
       await user.click(searchBox!);
-      expect(getListMock.mock.lastCall[0]).toEqual(filters);
+      await user.click(await screen.findByText('Open advanced data source picker'));
+      expect(await screen.findByText('Select data source')); //Data source modal is open
+      // Every call to the service must contain same filters
+      getListMock.mock.calls.forEach((call) =>
+        expect(call[0]).toMatchObject({
+          ...filters,
+        })
+      );
     });
 
     it('should dispaly the current selected DS in the selector', async () => {
@@ -180,7 +195,7 @@ describe('DataSourceDropdown', () => {
       // Doesn't try to get the default DS
       expect(getListMock).not.toBeCalled();
       expect(getInstanceSettingsMock).not.toBeCalled();
-      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', 'Select a data source');
+      expect(screen.getByTestId('Select a data source')).toHaveAttribute('placeholder', 'Select data source');
     });
   });
 
@@ -251,7 +266,7 @@ describe('DataSourceDropdown', () => {
     it('should call onChange with the default query when add csv is clicked', async () => {
       config.featureToggles.editPanelCSVDragAndDrop = true;
       const onChange = jest.fn();
-      await setupOpenDropdown(user, { onChange });
+      await setupOpenDropdown(user, { onChange, uploadFile: true });
 
       await user.click(await screen.findByText('Add csv or spreadsheet'));
 
