@@ -45,7 +45,3 @@ scrape_configs:
   #   metrics_path: /metrics/plugins/grafana-test-datasource
   #   static_configs:
   #     - targets: ['host.docker.internal:3000']
-
-    basic_auth:
-      username: 'admin'
-      password: 'admin'
