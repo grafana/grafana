@@ -26,7 +26,7 @@ export const SaveDashboardForm = ({ dashboard, onCancel, onSubmit, onSuccess, sa
     setSaving(true);
     onSubmit(saveModel.clone)
       .then(() => {
-        notifyApp.success('Dashboard saved');
+        notifyApp.success('Dashboard saved locally');
         onSuccess();
       })
       .catch((error) => {
