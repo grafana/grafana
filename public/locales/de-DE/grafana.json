@@ -25,8 +25,19 @@
   },
   "browse-dashboards": {
     "action": {
+      "cancel-button": "",
       "delete-button": "",
-      "move-button": ""
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "deleting": "",
+      "manage-permissions-button": "",
+      "move-button": "",
+      "move-modal-alert": "",
+      "move-modal-field-label": "",
+      "move-modal-text": "",
+      "move-modal-title": "",
+      "moving": "",
+      "new-folder-name-required-phrase": ""
     },
     "dashboards-tree": {
       "name-column": "",
@@ -37,6 +48,13 @@
       "folder-actions": "",
       "manage-permissions": "",
       "move": ""
+    },
+    "manage-folder-nav": {
+      "alert-rules": "",
+      "dashboards": "",
+      "panels": "",
+      "permissions": "",
+      "settings": ""
     },
     "new-folder-form": {
       "cancel-label": "",
@@ -629,16 +647,6 @@
       "default-label": "Standard"
     },
     "title": "Einstellungen"
-  },
-  "state": {
-    "nav-model": {
-      "dashboards": "",
-      "panels": ""
-    },
-    "nav-models": {
-      "alert-rules": "",
-      "manage-folder-subtitle": ""
-    }
   },
   "tag-filter": {
     "loading": "Wird geladen ...",

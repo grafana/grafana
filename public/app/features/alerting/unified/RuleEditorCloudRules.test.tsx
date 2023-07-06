@@ -63,6 +63,10 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
+jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
+  AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
+}));
+
 jest.spyOn(config, 'getAllDataSources');
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
