@@ -9,6 +9,7 @@ import { Stack } from '@grafana/experimental';
 import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { Span } from '@grafana/ui/src/unstable';
 import { contextSrv } from 'app/core/core';
+import ConditionalWrap from 'app/features/alerting/components/ConditionalWrap';
 import { RouteWithID, Receiver, ObjectMatcher, AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 import { ReceiversState } from 'app/types';
 
@@ -31,6 +32,7 @@ interface PolicyComponentProps {
   alertGroups?: AlertmanagerGroup[];
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
+  provisioned?: boolean;
   inheritedProperties?: Partial<InhertitableProperties>;
   routesMatchingFilters?: RouteWithID[];
   // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
@@ -50,6 +52,7 @@ const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
   contactPointsState,
   readOnly = false,
+  provisioned = false,
   alertGroups = [],
   alertManagerSourceName,
   currentRoute,
@@ -143,51 +146,61 @@ const Policy: FC<PolicyComponentProps> = ({
                 <Spacer />
                 {/* TODO maybe we should move errors to the gutter instead? */}
                 {errors.length > 0 && <Errors errors={errors} />}
-                {!readOnly && (
-                  <Stack direction="row" gap={0.5}>
-                    <Button
-                      variant="secondary"
-                      icon="plus"
-                      size="sm"
-                      onClick={() => onAddPolicy(currentRoute)}
-                      type="button"
-                    >
-                      New nested policy
-                    </Button>
-                    <Dropdown
-                      overlay={
-                        <Menu>
-                          <Menu.Item
-                            icon="edit"
-                            disabled={!isEditable}
-                            label="Edit"
-                            onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                          />
-                          {isDeletable && (
-                            <>
-                              <Menu.Divider />
-                              <Menu.Item
-                                destructive
-                                icon="trash-alt"
-                                label="Delete"
-                                onClick={() => onDeletePolicy(currentRoute)}
-                              />
-                            </>
-                          )}
-                        </Menu>
-                      }
-                    >
-                      <Button
-                        icon="ellipsis-h"
-                        variant="secondary"
-                        size="sm"
-                        type="button"
-                        aria-label="more-actions"
-                        data-testid="more-actions"
-                      />
-                    </Dropdown>
-                  </Stack>
-                )}
+                {provisioned && <Badge text="Provisioned" color="purple" />}
+                {readOnly
+                  ? null
+                  : provisioned && (
+                      <Stack direction="row" gap={0.5}>
+                        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                          <Button
+                            variant="secondary"
+                            icon="plus"
+                            size="sm"
+                            onClick={() => onAddPolicy(currentRoute)}
+                            disabled={provisioned}
+                            type="button"
+                          >
+                            New nested policy
+                          </Button>
+                        </ConditionalWrap>
+
+                        <ConditionalWrap shouldWrap={provisioned} wrap={ProvisionedTooltip}>
+                          <Dropdown
+                            overlay={
+                              <Menu>
+                                <Menu.Item
+                                  icon="edit"
+                                  disabled={!isEditable}
+                                  label="Edit"
+                                  onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                                />
+                                {isDeletable && (
+                                  <>
+                                    <Menu.Divider />
+                                    <Menu.Item
+                                      destructive
+                                      icon="trash-alt"
+                                      label="Delete"
+                                      onClick={() => onDeletePolicy(currentRoute)}
+                                    />
+                                  </>
+                                )}
+                              </Menu>
+                            }
+                          >
+                            <Button
+                              icon="ellipsis-h"
+                              variant="secondary"
+                              size="sm"
+                              type="button"
+                              aria-label="more-actions"
+                              data-testid="more-actions"
+                              disabled={provisioned}
+                            />
+                          </Dropdown>
+                        </ConditionalWrap>
+                      </Stack>
+                    )}
               </Stack>
             </div>
 
@@ -270,7 +283,7 @@ const Policy: FC<PolicyComponentProps> = ({
               currentRoute={child}
               receivers={receivers}
               contactPointsState={contactPointsState}
-              readOnly={readOnly}
+              readOnly={readOnly || provisioned}
               inheritedProperties={childInheritedProperties}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
@@ -287,6 +300,12 @@ const Policy: FC<PolicyComponentProps> = ({
     </Stack>
   );
 };
+
+const ProvisionedTooltip = (children: ReactNode) => (
+  <Tooltip content="Provisioned items cannot be edited in the UI" placement="top">
+    <span>{children}</span>
+  </Tooltip>
+);
 
 const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
   <HoverCard
